@@ -6,7 +6,9 @@ Admin endpoints for managing feature flags:
 - View statistics and audit logs
 """
 
+from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
@@ -30,6 +32,139 @@ from app.schemas.feature_flag import (
 )
 
 router = APIRouter()
+
+
+def _to_flag_mapping(flag: Any) -> dict[str, Any]:
+    if isinstance(flag, dict):
+        return flag
+    raw = getattr(flag, "__dict__", None)
+    if isinstance(raw, dict):
+        return raw
+    return {}
+
+
+def _to_uuid(value: Any) -> UUID | None:
+    if value is None:
+        return None
+    if isinstance(value, UUID):
+        return value
+    try:
+        return UUID(str(value))
+    except (TypeError, ValueError, AttributeError):
+        return None
+
+
+def _to_datetime(value: Any, *, default: datetime) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            return default
+    return default
+
+
+def _to_str_list(value: Any) -> list[str] | None:
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, str)]
+    return None
+
+
+def _to_dict(value: Any) -> dict[str, Any] | None:
+    if isinstance(value, dict):
+        return value
+    return None
+
+
+def _normalize_variants(value: Any) -> dict[str, float] | None:
+    parsed: dict[str, float] = {}
+
+    if value is None:
+        return None
+
+    if isinstance(value, dict):
+        for key, weight in value.items():
+            try:
+                parsed[str(key)] = float(weight)
+            except (TypeError, ValueError):
+                continue
+    elif isinstance(value, list):
+        for item in value:
+            if not isinstance(item, dict):
+                continue
+            key = item.get("key")
+            weight = item.get("weight")
+            if key is None or weight is None:
+                continue
+            try:
+                parsed[str(key)] = float(weight)
+            except (TypeError, ValueError):
+                continue
+    else:
+        return None
+
+    if not parsed:
+        return None
+
+    total = sum(parsed.values())
+    if 1.01 < total <= 100.0:
+        parsed = {k: v / 100.0 for k, v in parsed.items()}
+        total = sum(parsed.values())
+
+    if not (0.99 <= total <= 1.01):
+        return None
+    if any(weight < 0.0 or weight > 1.0 for weight in parsed.values()):
+        return None
+    return parsed
+
+
+def _normalize_feature_flag(flag: Any) -> FeatureFlagResponse:
+    now = datetime.now(UTC)
+    data = _to_flag_mapping(flag)
+
+    key = data.get("key")
+    if not isinstance(key, str) or not key:
+        key = "unknown-feature"
+
+    name = data.get("name")
+    if not isinstance(name, str) or not name:
+        name = key.replace("-", " ").title()
+
+    flag_type = data.get("flag_type")
+    if not isinstance(flag_type, str) or flag_type not in {
+        "boolean",
+        "percentage",
+        "variant",
+    }:
+        flag_type = "boolean"
+
+    return FeatureFlagResponse(
+        id=_to_uuid(data.get("id")) or uuid4(),
+        key=key,
+        name=name,
+        description=data.get("description")
+        if isinstance(data.get("description"), str)
+        else None,
+        flag_type=flag_type,
+        enabled=bool(data.get("enabled", False)),
+        rollout_percentage=(
+            float(data["rollout_percentage"])
+            if data.get("rollout_percentage") is not None
+            else None
+        ),
+        environments=_to_str_list(data.get("environments")),
+        target_user_ids=_to_str_list(data.get("target_user_ids")),
+        target_roles=_to_str_list(data.get("target_roles")),
+        variants=_normalize_variants(data.get("variants")),
+        dependencies=_to_str_list(data.get("dependencies")),
+        custom_attributes=_to_dict(data.get("custom_attributes")),
+        created_by=_to_uuid(data.get("created_by")),
+        created_at=_to_datetime(data.get("created_at"), default=now),
+        updated_at=_to_datetime(data.get("updated_at"), default=now),
+    )
 
 
 @router.post(
@@ -63,9 +198,11 @@ async def create_feature_flag(
             custom_attributes=flag_in.custom_attributes,
             created_by=str(current_user.id),
         )
-        return flag
+        return _normalize_feature_flag(flag)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
 
 
 @router.get("/", response_model=FeatureFlagListResponse)
@@ -94,7 +231,7 @@ async def list_feature_flags(
     total_pages = (total + page_size - 1) // page_size
 
     return FeatureFlagListResponse(
-        flags=paginated_flags,
+        flags=[_normalize_feature_flag(flag) for flag in paginated_flags],
         total=total,
         page=page,
         page_size=page_size,
@@ -119,14 +256,14 @@ async def get_feature_flag_stats(
     flags_by_environment = await _get_flags_by_environment(db)
 
     return FeatureFlagStatsResponse(
-        total_flags=stats["total_flags"],
-        enabled_flags=stats["enabled_flags"],
-        disabled_flags=stats["disabled_flags"],
-        percentage_rollout_flags=stats["percentage_rollout_flags"],
-        variant_flags=stats["variant_flags"],
+        total_flags=int(stats.get("total_flags", 0)),
+        enabled_flags=int(stats.get("enabled_flags", 0)),
+        disabled_flags=int(stats.get("disabled_flags", 0)),
+        percentage_rollout_flags=int(stats.get("percentage_rollout_flags", 0)),
+        variant_flags=int(stats.get("variant_flags", 0)),
         flags_by_environment=flags_by_environment,
-        recent_evaluations=stats["recent_evaluations"],
-        unique_users=stats["unique_users"],
+        recent_evaluations=int(stats.get("recent_evaluations", 0)),
+        unique_users=int(stats.get("unique_users", 0)),
     )
 
 
@@ -150,7 +287,7 @@ async def get_feature_flag(
             detail=f"Feature flag '{key}' not found",
         )
 
-    return flag
+    return _normalize_feature_flag(flag)
 
 
 @router.put("/{key}", response_model=FeatureFlagResponse)
@@ -180,9 +317,9 @@ async def update_feature_flag(
         flag = await service.update_flag(
             key=key, updates=updates, updated_by=str(current_user.id), reason=reason
         )
-        return flag
+        return _normalize_feature_flag(flag)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 @router.delete("/{key}", status_code=status.HTTP_204_NO_CONTENT)
@@ -306,9 +443,9 @@ async def enable_feature_flag(
             updated_by=str(current_user.id),
             reason=reason or "Flag enabled via API",
         )
-        return flag
+        return _normalize_feature_flag(flag)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 @router.post("/{key}/disable", response_model=FeatureFlagResponse)
@@ -333,9 +470,9 @@ async def disable_feature_flag(
             updated_by=str(current_user.id),
             reason=reason or "Flag disabled via API",
         )
-        return flag
+        return _normalize_feature_flag(flag)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 async def _get_flags_by_environment(db: Session) -> dict[str, Any]:

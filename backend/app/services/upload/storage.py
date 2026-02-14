@@ -188,7 +188,7 @@ class LocalStorageBackend(StorageBackend):
 
         except Exception as e:
             logger.error(f"Failed to save file: {e}")
-            raise StorageError(f"Failed to save file: {e}")
+            raise StorageError(f"Failed to save file: {e}") from e
 
     def get(self, file_id: str) -> bytes:
         """
@@ -208,7 +208,7 @@ class LocalStorageBackend(StorageBackend):
             return file_path.read_bytes()
         except Exception as e:
             logger.error(f"Failed to read file {file_id}: {e}")
-            raise StorageError(f"Failed to read file: {e}")
+            raise StorageError(f"Failed to read file: {e}") from e
 
     def delete(self, file_id: str) -> bool:
         """
@@ -230,7 +230,7 @@ class LocalStorageBackend(StorageBackend):
             return True
         except Exception as e:
             logger.error(f"Failed to delete file {file_id}: {e}")
-            raise StorageError(f"Failed to delete file: {e}")
+            raise StorageError(f"Failed to delete file: {e}") from e
 
     def exists(self, file_id: str) -> bool:
         """Check if file exists."""
@@ -308,10 +308,10 @@ class S3StorageBackend(StorageBackend):
             from botocore.exceptions import ClientError
 
             self.ClientError = ClientError
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "boto3 is required for S3 storage. Install with: pip install boto3"
-            )
+            ) from e
 
         self.bucket_name = bucket_name
         self.region = region
@@ -402,10 +402,10 @@ class S3StorageBackend(StorageBackend):
 
         except self.ClientError as e:
             logger.error(f"S3 upload failed: {e}")
-            raise StorageError(f"S3 upload failed: {e}")
+            raise StorageError(f"S3 upload failed: {e}") from e
         except Exception as e:
             logger.error(f"Failed to save file to S3: {e}")
-            raise StorageError(f"Failed to save file: {e}")
+            raise StorageError(f"Failed to save file: {e}") from e
 
     def get(self, file_id: str) -> bytes:
         """
@@ -426,7 +426,7 @@ class S3StorageBackend(StorageBackend):
             return response["Body"].read()
         except self.ClientError as e:
             logger.error(f"Failed to get file from S3: {e}")
-            raise StorageError(f"Failed to get file: {e}")
+            raise StorageError(f"Failed to get file: {e}") from e
 
     def delete(self, file_id: str) -> bool:
         """
@@ -448,7 +448,7 @@ class S3StorageBackend(StorageBackend):
             return True
         except self.ClientError as e:
             logger.error(f"Failed to delete file from S3: {e}")
-            raise StorageError(f"Failed to delete file: {e}")
+            raise StorageError(f"Failed to delete file: {e}") from e
 
     def exists(self, file_id: str) -> bool:
         """Check if file exists in S3."""
@@ -486,7 +486,7 @@ class S3StorageBackend(StorageBackend):
             return url
         except self.ClientError as e:
             logger.error(f"Failed to generate pre-signed URL: {e}")
-            raise StorageError(f"Failed to generate URL: {e}")
+            raise StorageError(f"Failed to generate URL: {e}") from e
 
     def _find_s3_key(self, file_id: str) -> str | None:
         """

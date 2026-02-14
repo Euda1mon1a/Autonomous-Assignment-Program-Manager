@@ -119,7 +119,7 @@ async def save_version(request: VersionSaveRequest) -> VersionSaveResponse:
     """
     try:
         version = changelog_generator.save_current_version(
-            current_schema=request.schema,
+            current_schema=request.openapi_schema,
             version=request.version,
             metadata=request.metadata,
         )
@@ -135,7 +135,7 @@ async def save_version(request: VersionSaveRequest) -> VersionSaveResponse:
         raise HTTPException(
             status_code=500,
             detail="Failed to save version snapshot",
-        )
+        ) from e
 
 
 @router.post("/generate", response_model=ChangelogResponse)
@@ -175,12 +175,12 @@ async def generate_changelog(request: ChangelogRequest) -> ChangelogResponse:
     # Validate output format
     try:
         output_format = OutputFormat(request.output_format.lower())
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid output format: {request.output_format}. "
             f"Valid formats: markdown, json, html",
-        )
+        ) from e
 
     # Generate changelog
     changelog = changelog_generator.generate_from_versions(
@@ -240,12 +240,12 @@ async def generate_changelog_from_schemas(
     # Validate output format
     try:
         output_format = OutputFormat(request.output_format.lower())
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid output format: {request.output_format}. "
             f"Valid formats: markdown, json, html",
-        )
+        ) from e
 
     try:
         changelog = changelog_generator.generate_changelog(
@@ -271,7 +271,7 @@ async def generate_changelog_from_schemas(
         raise HTTPException(
             status_code=500,
             detail="Failed to generate changelog",
-        )
+        ) from e
 
 
 @router.post("/diff", response_model=APIDiffResponse)

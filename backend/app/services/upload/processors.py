@@ -48,10 +48,10 @@ class ImageProcessor:
 
             self.Image = Image
             self.ImageOps = ImageOps
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "Pillow is required for image processing. Install with: pip install Pillow"
-            )
+            ) from e
 
     def process_image(
         self,
@@ -140,7 +140,7 @@ class ImageProcessor:
 
         except Exception as e:
             logger.error(f"Image processing failed: {e}")
-            raise ProcessorError(f"Image processing failed: {e}")
+            raise ProcessorError(f"Image processing failed: {e}") from e
 
     def generate_thumbnail(
         self,
@@ -187,7 +187,7 @@ class ImageProcessor:
 
         except Exception as e:
             logger.error(f"Thumbnail generation failed: {e}")
-            raise ProcessorError(f"Thumbnail generation failed: {e}")
+            raise ProcessorError(f"Thumbnail generation failed: {e}") from e
 
     def _resize_image(self, image: Any, max_width: int, max_height: int) -> Any:
         """
@@ -333,7 +333,7 @@ class DocumentProcessor:
             return {"num_pages": None, "info": {}}
         except Exception as e:
             logger.error(f"PDF processing failed: {e}")
-            raise ProcessorError(f"PDF processing failed: {e}")
+            raise ProcessorError(f"PDF processing failed: {e}") from e
 
 
 class FileProcessorFactory:

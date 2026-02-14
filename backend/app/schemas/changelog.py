@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ChangelogRequest(BaseModel):
@@ -40,11 +40,17 @@ class ChangelogSchemaRequest(BaseModel):
 class VersionSaveRequest(BaseModel):
     """Request to save a version snapshot."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     version: str | None = Field(
         default=None,
         description="Version identifier (auto-detected from schema if not provided)",
     )
-    schema: dict[str, Any] = Field(..., description="OpenAPI schema to save")  # type: ignore
+    openapi_schema: dict[str, Any] = Field(
+        ...,
+        alias="schema",
+        description="OpenAPI schema to save",
+    )
     metadata: dict[str, Any] | None = Field(
         default=None,
         description="Additional metadata",

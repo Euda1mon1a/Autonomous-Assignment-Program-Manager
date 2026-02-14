@@ -78,6 +78,107 @@ def get_upload_service() -> UploadService:
     return UploadService(storage_backend=storage, validator=validator)
 
 
+def get_upload_service_dependency(request: Request) -> UploadService:
+    """Resolve upload service while honoring test overrides and monkeypatching."""
+    override = request.app.dependency_overrides.get(get_upload_service)
+    if override:
+        return override()
+    return get_upload_service()
+
+
+def _normalize_upload_result(
+    result: dict[str, Any], *, fallback_filename: str
+) -> dict[str, Any]:
+    """Normalize legacy and current upload payloads to a stable API contract."""
+    file_id = str(result.get("file_id") or "")
+    filename = str(result.get("filename") or fallback_filename)
+    mime_type = str(result.get("mime_type") or result.get("content_type") or "unknown")
+
+    try:
+        size_bytes = int(result.get("size_bytes") or result.get("size") or 0)
+    except (TypeError, ValueError):
+        size_bytes = 0
+
+    versions = result.get("versions")
+    if not isinstance(versions, dict):
+        versions = None
+
+    image_data = result.get("image_data")
+    if not isinstance(image_data, dict):
+        image_data = None
+
+    thumbnails = result.get("thumbnails")
+    if not isinstance(thumbnails, dict):
+        thumbnails = None
+
+    metadata = result.get("metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+
+    return {
+        "upload_id": str(result.get("upload_id") or file_id),
+        "file_id": file_id,
+        "filename": filename,
+        "original_filename": str(result.get("original_filename") or filename),
+        "url": str(result.get("url") or f"/api/v1/upload/{file_id}/download"),
+        "mime_type": mime_type,
+        "size_bytes": size_bytes,
+        "checksum": str(result.get("checksum") or ""),
+        "category": str(result.get("category") or "document"),
+        "uploaded_at": str(result.get("uploaded_at") or datetime.utcnow().isoformat()),
+        "storage_backend": str(result.get("storage_backend") or "local"),
+        "versions": versions,
+        "image_data": image_data,
+        "metadata": metadata,
+        # Legacy aliases used by existing clients/tests.
+        "size": size_bytes,
+        "content_type": mime_type,
+        "thumbnails": thumbnails,
+    }
+
+
+def _normalize_upload_progress(
+    progress: dict[str, Any], *, requested_upload_id: str
+) -> dict[str, Any]:
+    """Normalize progress payloads from legacy and current service formats."""
+    try:
+        total_size = int(progress.get("total_size") or progress.get("total_bytes") or 0)
+    except (TypeError, ValueError):
+        total_size = 0
+
+    try:
+        uploaded_size = int(
+            progress.get("uploaded_size") or progress.get("bytes_uploaded") or 0
+        )
+    except (TypeError, ValueError):
+        uploaded_size = 0
+
+    raw_progress = progress.get("progress_percent")
+    if raw_progress is None:
+        raw_progress = progress.get("progress")
+    try:
+        progress_percent = float(raw_progress or 0.0)
+    except (TypeError, ValueError):
+        progress_percent = 0.0
+
+    started_at = progress.get("started_at") or datetime.utcnow().isoformat()
+    completed_at = progress.get("completed_at")
+
+    return {
+        "upload_id": str(progress.get("upload_id") or requested_upload_id),
+        "total_size": total_size,
+        "uploaded_size": uploaded_size,
+        "progress_percent": progress_percent,
+        "status": str(progress.get("status") or "in_progress"),
+        "started_at": str(started_at),
+        "completed_at": str(completed_at) if completed_at else None,
+        # Legacy aliases used by existing clients/tests.
+        "progress": progress_percent,
+        "bytes_uploaded": uploaded_size,
+        "total_bytes": total_size,
+    }
+
+
 @router.post("", response_model=UploadResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("2/minute")
 async def upload_file(
@@ -94,7 +195,7 @@ async def upload_file(
     related_entity_id: str | None = Form(None, description="Related entity ID"),
     related_entity_type: str | None = Form(None, description="Related entity type"),
     current_user: User = Depends(get_current_active_user),
-    upload_service: UploadService = Depends(get_upload_service),
+    upload_service: UploadService = Depends(get_upload_service_dependency),
 ) -> UploadResponse:
     """
     Upload a file with validation, processing, and storage.
@@ -145,27 +246,30 @@ async def upload_file(
             metadata=metadata_dict,
         )
 
-        return UploadResponse(**result)
+        normalized_result = _normalize_upload_result(
+            result, fallback_filename=file.filename
+        )
+        return UploadResponse(**normalized_result)
 
     except UploadValidationError as e:
         logger.warning(f"Upload validation failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
-        )
+        ) from e
     except Exception as e:
         logger.error(f"Upload failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Upload failed. Please try again.",
-        )
+        ) from e
 
 
 @router.get("/progress/{upload_id}", response_model=UploadProgressResponse)
 async def get_upload_progress(
     upload_id: str,
     current_user: User = Depends(get_current_active_user),
-    upload_service: UploadService = Depends(get_upload_service),
+    upload_service: UploadService = Depends(get_upload_service_dependency),
 ) -> UploadProgressResponse:
     """
     Get upload progress for a specific upload.
@@ -182,7 +286,10 @@ async def get_upload_progress(
             detail=f"Upload not found: {upload_id}",
         )
 
-    return UploadProgressResponse(**progress)
+    normalized_progress = _normalize_upload_progress(
+        progress, requested_upload_id=upload_id
+    )
+    return UploadProgressResponse(**normalized_progress)
 
 
 @router.get("/{file_id}/url", response_model=FileUrlResponse)
@@ -190,7 +297,7 @@ async def get_file_url(
     file_id: str,
     expires_in: int = 3600,
     current_user: User = Depends(get_current_active_user),
-    upload_service: UploadService = Depends(get_upload_service),
+    upload_service: UploadService = Depends(get_upload_service_dependency),
 ) -> FileUrlResponse:
     """
     Get URL to access a file.
@@ -218,14 +325,14 @@ async def get_file_url(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"File not found: {file_id}",
-        )
+        ) from e
 
 
 @router.get("/{file_id}/download")
 async def download_file(
     file_id: str,
     current_user: User = Depends(get_current_active_user),
-    upload_service: UploadService = Depends(get_upload_service),
+    upload_service: UploadService = Depends(get_upload_service_dependency),
 ) -> StreamingResponse:
     """
     Download a file by ID.
@@ -252,14 +359,14 @@ async def download_file(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"File not found: {file_id}",
-        )
+        ) from e
 
 
 @router.delete("/{file_id}", response_model=DeleteFileResponse)
 async def delete_file(
     file_id: str,
     current_user: User = Depends(get_current_active_user),
-    upload_service: UploadService = Depends(get_upload_service),
+    upload_service: UploadService = Depends(get_upload_service_dependency),
 ) -> DeleteFileResponse:
     """
     Delete a file by ID.
@@ -290,15 +397,15 @@ async def delete_file(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete file",
-        )
+        ) from e
 
 
 @router.get("/{file_id}/exists")
 async def check_file_exists(
     file_id: str,
     current_user: User = Depends(get_current_active_user),
-    upload_service: UploadService = Depends(get_upload_service),
-) -> dict[str, bool]:
+    upload_service: UploadService = Depends(get_upload_service_dependency),
+) -> dict[str, Any]:
     """
     Check if a file exists in storage.
 

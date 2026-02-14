@@ -54,20 +54,53 @@ class FeatureFlagBase(BaseModel):
             raise ValueError(f"flag_type must be one of: {', '.join(allowed_types)}")
         return v
 
-    @field_validator("variants")
+    @field_validator("variants", mode="before")
     @classmethod
-    def validate_variants(cls, v: dict[str, float] | None) -> dict[str, float] | None:
-        """Validate variant weights sum to 1.0."""
-        if v is not None:
-            total = sum(v.values())
-            if not (0.99 <= total <= 1.01):  # Allow small floating point errors
-                raise ValueError(f"Variant weights must sum to 1.0, got {total}")
+    def validate_variants(
+        cls, v: dict[str, float] | list[dict[str, Any]] | None
+    ) -> dict[str, float] | None:
+        """Validate variants and support legacy list payloads."""
+        if v is None:
+            return None
+
+        parsed: dict[str, float] = {}
+
+        if isinstance(v, dict):
             for variant_name, weight in v.items():
-                if not (0.0 <= weight <= 1.0):
+                parsed[str(variant_name)] = float(weight)
+        elif isinstance(v, list):
+            for item in v:
+                if not isinstance(item, dict):
                     raise ValueError(
-                        f"Variant weight must be between 0.0 and 1.0, got {weight} for {variant_name}"
+                        "Variant list entries must be objects with key/weight"
                     )
-        return v
+                variant_name = item.get("key")
+                weight = item.get("weight")
+                if variant_name is None or weight is None:
+                    raise ValueError(
+                        "Variant list entries must include key and weight fields"
+                    )
+                parsed[str(variant_name)] = float(weight)
+        else:
+            raise ValueError(
+                "variants must be a dictionary or list of key/weight pairs"
+            )
+
+        total = sum(parsed.values())
+        if 1.01 < total <= 100.0:
+            parsed = {name: weight / 100.0 for name, weight in parsed.items()}
+            total = sum(parsed.values())
+
+        if not (0.99 <= total <= 1.01):  # Allow small floating point errors
+            raise ValueError(f"Variant weights must sum to 1.0, got {total}")
+
+        for variant_name, weight in parsed.items():
+            if not (0.0 <= weight <= 1.0):
+                raise ValueError(
+                    f"Variant weight must be between 0.0 and 1.0, got {weight} for {variant_name}"
+                )
+
+        return parsed
 
     @field_validator("environments")
     @classmethod
@@ -138,15 +171,46 @@ class FeatureFlagUpdate(BaseModel):
                 )
         return v
 
-    @field_validator("variants")
+    @field_validator("variants", mode="before")
     @classmethod
-    def validate_variants(cls, v: dict[str, float] | None) -> dict[str, float] | None:
-        """Validate variant weights sum to 1.0."""
-        if v is not None:
-            total = sum(v.values())
-            if not (0.99 <= total <= 1.01):
-                raise ValueError(f"Variant weights must sum to 1.0, got {total}")
-        return v
+    def validate_variants(
+        cls, v: dict[str, float] | list[dict[str, Any]] | None
+    ) -> dict[str, float] | None:
+        """Validate variants and support legacy list payloads."""
+        if v is None:
+            return None
+
+        parsed: dict[str, float] = {}
+
+        if isinstance(v, dict):
+            for variant_name, weight in v.items():
+                parsed[str(variant_name)] = float(weight)
+        elif isinstance(v, list):
+            for item in v:
+                if not isinstance(item, dict):
+                    raise ValueError(
+                        "Variant list entries must be objects with key/weight"
+                    )
+                variant_name = item.get("key")
+                weight = item.get("weight")
+                if variant_name is None or weight is None:
+                    raise ValueError(
+                        "Variant list entries must include key and weight fields"
+                    )
+                parsed[str(variant_name)] = float(weight)
+        else:
+            raise ValueError(
+                "variants must be a dictionary or list of key/weight pairs"
+            )
+
+        total = sum(parsed.values())
+        if 1.01 < total <= 100.0:
+            parsed = {name: weight / 100.0 for name, weight in parsed.items()}
+            total = sum(parsed.values())
+
+        if not (0.99 <= total <= 1.01):
+            raise ValueError(f"Variant weights must sum to 1.0, got {total}")
+        return parsed
 
     @field_validator("environments")
     @classmethod
@@ -241,7 +305,7 @@ class FeatureFlagStatsResponse(BaseModel):
     disabled_flags: int
     percentage_rollout_flags: int
     variant_flags: int
-    flags_by_environment: dict[str, int]
+    flags_by_environment: dict[str, Any]
     recent_evaluations: int
     unique_users: int
 

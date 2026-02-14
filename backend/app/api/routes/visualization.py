@@ -6,7 +6,7 @@ and workload visualization.
 
 import io
 import logging
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -17,8 +17,10 @@ from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.visualization import (
+    CoverageGap,
     CoverageHeatmapResponse,
     ExportRequest,
+    HeatmapData,
     HeatmapResponse,
     UnifiedHeatmapRequest,
 )
@@ -26,6 +28,153 @@ from app.services.cached_schedule_service import CachedHeatmapService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _as_mapping(value: object) -> dict:
+    if isinstance(value, dict):
+        return value
+    raw = getattr(value, "__dict__", None)
+    if isinstance(raw, dict):
+        return raw
+    return {}
+
+
+def _as_datetime(value: object) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            return datetime.utcnow()
+    return datetime.utcnow()
+
+
+def _normalize_heatmap_data(payload: dict) -> HeatmapData:
+    nested = payload.get("data")
+    if isinstance(nested, HeatmapData):
+        return nested
+    if isinstance(nested, dict):
+        return HeatmapData(**nested)
+
+    z_values = payload.get("z_values")
+    if not isinstance(z_values, list):
+        z_values = nested if isinstance(nested, list) else []
+
+    x_labels = payload.get("x_labels")
+    if not isinstance(x_labels, list):
+        x_labels = []
+
+    y_labels = payload.get("y_labels")
+    if not isinstance(y_labels, list):
+        y_labels = []
+
+    color_scale = payload.get("color_scale")
+    if not isinstance(color_scale, str):
+        color_scale = "Viridis"
+
+    return HeatmapData(
+        x_labels=[str(label) for label in x_labels],
+        y_labels=[str(label) for label in y_labels],
+        z_values=z_values,
+        color_scale=color_scale,
+        annotations=None,
+    )
+
+
+def _normalize_heatmap_response(
+    raw: object, *, default_title: str = "Schedule Heatmap"
+) -> HeatmapResponse:
+    if isinstance(raw, HeatmapResponse):
+        data = raw.data
+        return HeatmapResponse(
+            data=data,
+            x_labels=raw.x_labels or data.x_labels,
+            y_labels=raw.y_labels or data.y_labels,
+            z_values=raw.z_values or data.z_values,
+            color_scale=raw.color_scale or data.color_scale,
+            title=raw.title,
+            generated_at=raw.generated_at,
+            metadata=raw.metadata,
+        )
+
+    payload = _as_mapping(raw)
+    data = _normalize_heatmap_data(payload)
+    title_value = payload.get("title")
+    title = title_value if isinstance(title_value, str) else default_title
+    metadata_value = payload.get("metadata")
+    metadata = metadata_value if isinstance(metadata_value, dict) else {}
+
+    return HeatmapResponse(
+        data=data,
+        x_labels=data.x_labels,
+        y_labels=data.y_labels,
+        z_values=data.z_values,
+        color_scale=data.color_scale,
+        title=title,
+        generated_at=_as_datetime(payload.get("generated_at")),
+        metadata=metadata,
+    )
+
+
+def _normalize_coverage_heatmap_response(raw: object) -> CoverageHeatmapResponse:
+    payload = _as_mapping(raw)
+    data = _normalize_heatmap_data(payload)
+
+    coverage_percentage = payload.get("coverage_percentage")
+    if coverage_percentage is None and isinstance(payload.get("summary"), dict):
+        coverage_rate = payload["summary"].get("coverage_rate")
+        if isinstance(coverage_rate, (int, float)):
+            coverage_percentage = (
+                coverage_rate * 100.0 if float(coverage_rate) <= 1.0 else coverage_rate
+            )
+    if not isinstance(coverage_percentage, (int, float)):
+        coverage_percentage = 0.0
+
+    normalized_gaps = []
+    raw_gaps = payload.get("gaps")
+    if isinstance(raw_gaps, list):
+        for gap in raw_gaps:
+            if not isinstance(gap, dict):
+                continue
+            gap_date = gap.get("date")
+            parsed_date = (
+                gap_date
+                if isinstance(gap_date, date)
+                else (
+                    date.fromisoformat(gap_date)
+                    if isinstance(gap_date, str)
+                    else datetime.utcnow().date()
+                )
+            )
+            normalized_gaps.append(
+                CoverageGap(
+                    date=parsed_date,
+                    time_of_day=(
+                        gap.get("time_of_day")
+                        if isinstance(gap.get("time_of_day"), str)
+                        else "AM"
+                    ),
+                    rotation=gap.get("rotation")
+                    if isinstance(gap.get("rotation"), str)
+                    else None,
+                    severity=(
+                        gap.get("severity")
+                        if isinstance(gap.get("severity"), str)
+                        else "medium"
+                    ),
+                )
+            )
+
+    title_value = payload.get("title")
+    title = title_value if isinstance(title_value, str) else "Coverage Heatmap"
+    return CoverageHeatmapResponse(
+        data=data,
+        coverage_percentage=float(coverage_percentage),
+        gaps=normalized_gaps,
+        title=title,
+        generated_at=_as_datetime(payload.get("generated_at")),
+    )
 
 
 @router.get("/heatmap", response_model=HeatmapResponse)
@@ -73,7 +222,7 @@ async def get_unified_heatmap(
 
     # Use cached service for better performance
     service = CachedHeatmapService()
-    return service.generate_unified_heatmap(
+    result = service.generate_unified_heatmap(
         db=db,
         start_date=start_date,
         end_date=end_date,
@@ -82,6 +231,7 @@ async def get_unified_heatmap(
         include_fmit=include_fmit,
         group_by=group_by_lower,
     )
+    return _normalize_heatmap_response(result)
 
 
 @router.post("/heatmap/unified", response_model=HeatmapResponse)
@@ -121,7 +271,7 @@ async def get_unified_heatmap_with_time_range(
         start_date, end_date = service.calculate_date_range(request.time_range)
     except ValueError as e:
         logger.error(f"Invalid visualization parameters: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail="Invalid request parameters")
+        raise HTTPException(status_code=400, detail="Invalid request parameters") from e
 
     # Generate unified heatmap (cached)
     result = service.generate_unified_heatmap(
@@ -134,14 +284,16 @@ async def get_unified_heatmap_with_time_range(
         group_by=group_by_lower,
     )
 
-    # Add calculated date range to metadata
-    if result.metadata is None:
-        result.metadata = {}
-    result.metadata["time_range_type"] = request.time_range.range_type
-    result.metadata["calculated_start_date"] = start_date.isoformat()
-    result.metadata["calculated_end_date"] = end_date.isoformat()
+    normalized_result = _normalize_heatmap_response(result)
 
-    return result
+    # Add calculated date range to metadata
+    if normalized_result.metadata is None:
+        normalized_result.metadata = {}
+    normalized_result.metadata["time_range_type"] = request.time_range.range_type
+    normalized_result.metadata["calculated_start_date"] = start_date.isoformat()
+    normalized_result.metadata["calculated_end_date"] = end_date.isoformat()
+
+    return normalized_result
 
 
 @router.get("/heatmap/image")
@@ -220,7 +372,7 @@ async def get_heatmap_image(
         logger.error(f"Error generating visualization image: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred generating the image"
-        )
+        ) from e
 
     # Determine media type
     media_types = {
@@ -264,9 +416,10 @@ async def get_coverage_heatmap(
 
     # Use cached service for better performance
     service = CachedHeatmapService()
-    return service.generate_coverage_heatmap(
+    result = service.generate_coverage_heatmap(
         db=db, start_date=start_date, end_date=end_date
     )
+    return _normalize_coverage_heatmap_response(result)
 
 
 @router.get("/workload", response_model=HeatmapResponse)
@@ -302,13 +455,14 @@ async def get_workload_heatmap(
 
     # Use cached service for better performance
     service = CachedHeatmapService()
-    return service.generate_person_workload_heatmap(
+    result = service.generate_person_workload_heatmap(
         db=db,
         person_ids=person_ids,
         start_date=start_date,
         end_date=end_date,
         include_weekends=include_weekends,
     )
+    return _normalize_heatmap_response(result, default_title="Workload Heatmap")
 
 
 @router.post("/export")
@@ -373,7 +527,7 @@ async def export_heatmap(
             )
     except Exception as e:
         logger.error(f"Invalid export request parameters: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail="Invalid request parameters")
+        raise HTTPException(status_code=400, detail="Invalid request parameters") from e
 
     # Export as image
     try:
@@ -388,7 +542,7 @@ async def export_heatmap(
         logger.error(f"Error generating visualization image: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred generating the image"
-        )
+        ) from e
 
     # Determine media type
     media_types = {
@@ -403,7 +557,9 @@ async def export_heatmap(
         io.BytesIO(image_bytes),
         media_type=media_type,
         headers={
-            "Content-Disposition": f"attachment; filename={request.heatmap_type}_heatmap.{request.format}"
+            "Content-Disposition": (
+                f"attachment; filename={request.heatmap_type}_heatmap.{request.format}"
+            )
         },
     )
 
