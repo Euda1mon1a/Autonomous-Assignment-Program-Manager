@@ -8,17 +8,12 @@
 # the planes ensuring order is maintained. Like Modrons, this hook ensures
 # frontend-backend type contracts remain in perfect mechanical harmony.
 #
-# "The Great Modron March enforces order across the multiverse.
-#  This script enforces order across your type definitions."
-#
 # Purpose: Ensures frontend TypeScript types match backend Pydantic schemas
 # Trigger: Pre-commit when API-related files are modified
 #
-# How it works:
-# 1. Detects if any "wiring" files were modified
-# 2. Regenerates TypeScript types from OpenAPI spec
-# 3. Compares against committed types
-# 4. Blocks commit if drift detected
+# Two validation modes:
+#   1. ONLINE (backend running): Regenerate types, compare against committed
+#   2. OFFLINE (backend down): Compare committed hash file against actual content
 #
 # Wiring files (trigger validation when changed):
 # - backend/app/schemas/*.py (Pydantic models)
@@ -41,6 +36,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+GENERATED_TYPES="$PROJECT_ROOT/frontend/src/types/api-generated.ts"
+HASH_FILE="$PROJECT_ROOT/frontend/src/types/.api-generated.hash"
 
 # Wiring file patterns (files that affect API contract)
 WIRING_PATTERNS=(
@@ -73,22 +71,31 @@ log_error() {
     echo -e "${RED}[MODRON]${NC} $1"
 }
 
+# Cross-platform md5
+content_hash() {
+    if command -v md5 >/dev/null 2>&1; then
+        md5 -q
+    else
+        md5sum | cut -d' ' -f1
+    fi
+}
+
 # Check if any staged files match wiring patterns
 check_wiring_files_changed() {
     local changed_files
     changed_files=$(git diff --cached --name-only 2>/dev/null || git diff --name-only HEAD~1 2>/dev/null || echo "")
 
     if [ -z "$changed_files" ]; then
-        return 1  # No files changed
+        return 1
     fi
 
     for pattern in "${WIRING_PATTERNS[@]}"; do
         if echo "$changed_files" | grep -q "$pattern"; then
-            return 0  # Wiring file changed
+            return 0
         fi
     done
 
-    return 1  # No wiring files changed
+    return 1
 }
 
 # List which wiring files changed
@@ -106,7 +113,7 @@ list_changed_wiring_files() {
     done
 }
 
-# Check if backend is running (needed to fetch OpenAPI spec)
+# Check if backend is running
 check_backend_available() {
     local api_url="${API_URL:-http://localhost:8000}"
     if curl -s --max-time 2 "${api_url}/openapi.json" > /dev/null 2>&1; then
@@ -115,57 +122,49 @@ check_backend_available() {
     return 1
 }
 
-# Generate and compare types via frontend generator (camelCase-safe)
-run_generate_types_check() {
+# ONLINE: Generate and compare types via frontend generator
+run_online_check() {
     local api_url="${API_URL:-http://localhost:8000}"
 
-    log_info "Running frontend type check against $api_url..."
+    log_info "Backend available — running full type regeneration check..."
     (
         cd "$PROJECT_ROOT/frontend"
         BACKEND_URL="$api_url" ./scripts/generate-api-types.sh --check
     )
 }
 
-# Validate specific type mappings
-validate_critical_types() {
-    log_info "Validating critical type mappings..."
-
-    local errors=0
-
-    # Check FairnessAuditResponse (domain type in resilience.ts, re-exported by useFairness.ts)
-    if ! validate_type_exists "FairnessAuditResponse" "frontend/src/types/resilience.ts"; then
-        log_error "FairnessAuditResponse not found in resilience.ts"
-        ((errors++))
-    fi
-
-    # Check OverallStatus
-    if ! validate_type_exists "OverallStatus" "frontend/src/types/resilience.ts"; then
-        log_error "OverallStatus not found in resilience.ts"
-        ((errors++))
-    fi
-
-    # Check DefenseLevel
-    if ! validate_type_exists "DefenseLevel" "frontend/src/types/resilience.ts"; then
-        log_error "DefenseLevel not found in resilience.ts"
-        ((errors++))
-    fi
-
-    return $errors
-}
-
-validate_type_exists() {
-    local type_name="$1"
-    local file_path="$PROJECT_ROOT/$2"
-
-    if [ ! -f "$file_path" ]; then
+# OFFLINE: Compare committed hash against actual file content
+run_offline_check() {
+    if [ ! -f "$GENERATED_TYPES" ]; then
+        log_error "api-generated.ts not found"
         return 1
     fi
 
-    if grep -q "export.*$type_name" "$file_path" 2>/dev/null; then
+    if [ ! -f "$HASH_FILE" ]; then
+        log_warn "No hash file found at $HASH_FILE"
+        log_warn "Generate types first: cd frontend && npm run generate:types"
+        log_warn "Skipping offline hash check (hash file not yet created)"
         return 0
     fi
 
-    return 1
+    local committed_hash
+    committed_hash=$(cat "$HASH_FILE" | tr -d '[:space:]')
+
+    local actual_hash
+    actual_hash=$(tail -n +30 "$GENERATED_TYPES" | content_hash | tr -d '[:space:]')
+
+    if [ "$committed_hash" = "$actual_hash" ]; then
+        log_success "Offline hash check passed — types match committed hash"
+        return 0
+    else
+        log_error "Hash mismatch! api-generated.ts was modified without regenerating."
+        log_error "  Committed hash: $committed_hash"
+        log_error "  Actual hash:    $actual_hash"
+        log_error ""
+        log_error "To fix: cd frontend && npm run generate:types"
+        log_error "Then commit both api-generated.ts and .api-generated.hash"
+        return 1
+    fi
 }
 
 # Check for snake_case in TypeScript interfaces (should be camelCase)
@@ -174,10 +173,9 @@ check_naming_convention() {
 
     local errors=0
     local ts_files
-    ts_files=$(find "$PROJECT_ROOT/frontend/src/types" -name "*.ts" ! -name "api-generated*" 2>/dev/null || echo "")
+    ts_files=$(find "$PROJECT_ROOT/frontend/src/types" -name "*.ts" ! -name "api-generated*" ! -name ".api-generated*" 2>/dev/null || echo "")
 
     for file in $ts_files; do
-        # Look for snake_case in interface properties (but not in string literals)
         local snake_case_props
         snake_case_props=$(grep -En "^\s+[a-z]+_[a-z]+[?:]" "$file" 2>/dev/null | grep -v "'" | grep -v '"' || true)
 
@@ -191,34 +189,25 @@ check_naming_convention() {
     return $errors
 }
 
-# Main validation
-run_validation() {
+# Validate specific type mappings
+validate_critical_types() {
+    log_info "Validating critical type mappings..."
+
     local errors=0
 
-    # 1. Check naming conventions (always)
-    if ! check_naming_convention; then
+    if ! grep -q "export.*FairnessAuditResponse" "$PROJECT_ROOT/frontend/src/types/resilience.ts" 2>/dev/null; then
+        log_error "FairnessAuditResponse not found in resilience.ts"
         ((errors++))
     fi
 
-    # 2. Validate critical types exist
-    if ! validate_critical_types; then
+    if ! grep -q "export.*OverallStatus" "$PROJECT_ROOT/frontend/src/types/resilience.ts" 2>/dev/null; then
+        log_error "OverallStatus not found in resilience.ts"
         ((errors++))
     fi
 
-    # 3. If backend available, do full OpenAPI comparison
-    if check_backend_available; then
-        log_info "Backend available - performing full type comparison..."
-
-        if ! run_generate_types_check; then
-            log_error "Generated types differ from committed types!"
-            log_error "Run 'cd frontend && npm run generate:types' and commit the changes."
-            ((errors++))
-        else
-            log_success "Generated types match committed types"
-        fi
-    else
-        log_warn "Backend not available - skipping OpenAPI comparison"
-        log_warn "To enable full validation, start the backend: docker-compose up -d"
+    if ! grep -q "export.*DefenseLevel" "$PROJECT_ROOT/frontend/src/types/resilience.ts" 2>/dev/null; then
+        log_error "DefenseLevel not found in resilience.ts"
+        ((errors++))
     fi
 
     return $errors
@@ -229,12 +218,12 @@ run_validation() {
 # =============================================================================
 
 main() {
-    log_info "Modron March - Frontend-Backend Type Integrity Check"
+    log_info "Modron March — Frontend-Backend Type Integrity Check"
     echo ""
 
     # Check if wiring files changed
     if ! check_wiring_files_changed; then
-        log_success "No wiring files changed - skipping validation"
+        log_success "No wiring files changed — skipping validation"
         exit 0
     fi
 
@@ -242,20 +231,46 @@ main() {
     list_changed_wiring_files
     echo ""
 
-    # Run validation
-    if run_validation; then
-        log_success "Type contracts validated - Mechanus approves!"
-        exit 0
+    local errors=0
+
+    # 1. Naming convention check (always, no backend needed)
+    if ! check_naming_convention; then
+        ((errors++))
+    fi
+
+    # 2. Critical types exist (always, no backend needed)
+    if ! validate_critical_types; then
+        ((errors++))
+    fi
+
+    # 3. Type drift check — online or offline
+    if check_backend_available; then
+        if ! run_online_check; then
+            log_error "Run 'cd frontend && npm run generate:types' and commit the changes."
+            ((errors++))
+        fi
     else
-        log_error "Type contract violation detected - Modrons disapprove!"
+        log_warn "Backend not running — using offline hash check"
+        if ! run_offline_check; then
+            ((errors++))
+        fi
+    fi
+
+    # Result
+    if [ $errors -gt 0 ]; then
+        echo ""
+        log_error "Type contract violation detected — Modrons disapprove!"
         echo ""
         log_error "To fix:"
-        log_error "  1. Ensure frontend types match backend schemas"
-        log_error "  2. Run: cd frontend && npm run generate-types"
-        log_error "  3. Check for snake_case in TypeScript interfaces (should be camelCase)"
-        log_error "  4. See CLAUDE.md 'API Type Naming Convention' section"
+        log_error "  1. Start backend if needed"
+        log_error "  2. Run: cd frontend && npm run generate:types"
+        log_error "  3. Commit both api-generated.ts and .api-generated.hash"
+        log_error "  4. See CLAUDE.md 'OpenAPI Type Contract' section"
         echo ""
         exit 1
+    else
+        log_success "Type contracts validated — Mechanus approves!"
+        exit 0
     fi
 }
 

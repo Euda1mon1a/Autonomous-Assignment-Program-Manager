@@ -388,19 +388,10 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
-  # PHASE 21: API Contract Validation (Session 084 - ARCHITECT Domain)
+  # PHASE 21: API Contract Validation — REMOVED
+  # Merged into Modron March (Phase 25) which covers the same check plus more.
+  # Original script kept at scripts/validate-api-contract.sh for reference.
   # ============================================================================
-
-  # Backend/frontend type sync validation
-  - repo: local
-    hooks:
-      - id: api-contract
-        name: API Contract Validation
-        entry: scripts/validate-api-contract.sh
-        language: script
-        pass_filenames: false
-        files: ^(backend/app/schemas/|frontend/src/types/).*\.(py|ts)$
-        stages: [pre-commit]
 
   # ============================================================================
   # PHASE 22: Performance Regression (Session 085 - QA Domain)

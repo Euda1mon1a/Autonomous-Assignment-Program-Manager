@@ -38,8 +38,18 @@ NC='\033[0m'
 BACKEND_URL="${BACKEND_URL:-http://localhost:8000}"
 OPENAPI_URL="$BACKEND_URL/openapi.json"
 OUTPUT_FILE="src/types/api-generated.ts"
+HASH_FILE="src/types/.api-generated.hash"
 TEMP_FILE="/tmp/api-generated-new.ts"
 CHECK_MODE=false
+
+# Cross-platform md5 (macOS uses md5 -q, Linux uses md5sum)
+content_hash() {
+    if command -v md5 >/dev/null 2>&1; then
+        md5 -q
+    else
+        md5sum | cut -d' ' -f1
+    fi
+}
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -247,8 +257,8 @@ if [ "$CHECK_MODE" = true ]; then
     fi
 
     # Compare (ignoring timestamp in header)
-    EXISTING_HASH=$(tail -n +30 "$OUTPUT_FILE" | md5sum | cut -d' ' -f1)
-    NEW_HASH=$(tail -n +30 "$TEMP_FILE" | md5sum | cut -d' ' -f1)
+    EXISTING_HASH=$(tail -n +30 "$OUTPUT_FILE" | content_hash)
+    NEW_HASH=$(tail -n +30 "$TEMP_FILE" | content_hash)
 
     if [ "$EXISTING_HASH" = "$NEW_HASH" ]; then
         echo -e "${GREEN}✓ No drift detected - types are in sync!${NC}"
@@ -273,12 +283,17 @@ fi
 
 # Normal mode - write output
 mv "$TEMP_FILE" "$OUTPUT_FILE"
+
+# Write content hash (excluding timestamp header) for offline drift detection
+HASH_FILE="src/types/.api-generated.hash"
+tail -n +30 "$OUTPUT_FILE" | content_hash > "$HASH_FILE"
 echo ""
 echo -e "${GREEN}✓ Types generated successfully!${NC}"
 echo "Output: $OUTPUT_FILE"
+echo "Hash:   $HASH_FILE"
 echo ""
 echo -e "${CYAN}Summary:${NC}"
 echo "  - Schema properties: camelCase (for response data)"
 echo "  - Query/path params: snake_case (for URLs)"
 echo ""
-echo -e "${CYAN}REMINDER: Commit this file with your backend schema changes.${NC}"
+echo -e "${CYAN}REMINDER: Commit both $OUTPUT_FILE and $HASH_FILE with your backend schema changes.${NC}"
