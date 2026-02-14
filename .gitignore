@@ -264,8 +264,12 @@ docs/thinkos_cli_browser_pairing_plan.md
 # EXTERNAL AI TOOLS (user-specific config)
 # ============================================================================
 
-# Codex CLI config (user-specific MCP/perplexity setup)
+# Codex CLI — shared guardrails committed, user-specific state ignored
 .codex/
+!.codex/AGENTS.md
+!.codex/config.toml
+!.codex/config.toml.example
+!.codex/setup.sh
 !.codex/skills/
 !.codex/skills/codex-app-automation-triage/
 !.codex/skills/codex-app-automation-triage/SKILL.md
