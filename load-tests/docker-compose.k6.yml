@@ -14,29 +14,29 @@ services:
       # API configuration
       - API_BASE_URL=${API_BASE_URL:-http://backend:8000}
       - TEST_ENV=${TEST_ENV:-docker}
-      
+
       # Test configuration
       - K6_OUT=${K6_OUT:-json=/results/test-results.json}
       - K6_WEB_DASHBOARD=${K6_WEB_DASHBOARD:-true}
       - K6_WEB_DASHBOARD_EXPORT=${K6_WEB_DASHBOARD_EXPORT:-/results/html-report.html}
-      
+
       # Optional: InfluxDB output for Grafana
       # - K6_OUT=influxdb=http://influxdb:8086/k6
-      
+
       # Optional: Prometheus Remote Write
       # - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
-      
+
     # Command can be overridden when running specific tests
     # Default: run a smoke test
-    command: run /load-tests/scenarios/smoke-test.js
-    
+    command: run /load-tests/k6/scenarios/smoke-test.js
+
     # Only run when explicitly started
     profiles:
       - load-testing
-    
+
     depends_on:
       - backend
-    
+
   # Optional: InfluxDB for time-series metrics storage
   influxdb:
     image: influxdb:2.7-alpine
@@ -56,7 +56,7 @@ services:
       - influxdb-data:/var/lib/influxdb2
     profiles:
       - load-testing-metrics
-  
+
   # Optional: Grafana for visualization
   grafana-k6:
     image: grafana/grafana:latest

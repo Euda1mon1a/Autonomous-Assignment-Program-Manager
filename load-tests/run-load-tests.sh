@@ -16,9 +16,12 @@
 
 set -e
 
+# Make relative paths deterministic regardless of invocation directory.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Default configuration
 BASE_URL=${K6_BASE_URL:-http://localhost:8000}
-RESULTS_DIR="results"
+RESULTS_DIR="${SCRIPT_DIR}/results"
 COOLDOWN_SECONDS=60
 RUN_RATE_LIMIT=true
 RUN_AUTH=true
@@ -141,7 +144,7 @@ OVERALL_STATUS=0
 if [ "$RUN_RATE_LIMIT" = true ]; then
     run_test \
         "Rate Limit Attack Simulation" \
-        "load-tests/scenarios/rate-limit-attack.js" \
+        "$SCRIPT_DIR/scenarios/rate-limit-attack.js" \
         "$RESULTS_DIR/rate-limit-attack_$TIMESTAMP.json" || OVERALL_STATUS=1
 
     # Cooldown period between tests
@@ -157,7 +160,7 @@ fi
 if [ "$RUN_AUTH" = true ]; then
     run_test \
         "Authentication Security Tests" \
-        "load-tests/scenarios/auth-security.js" \
+        "$SCRIPT_DIR/scenarios/auth-security.js" \
         "$RESULTS_DIR/auth-security_$TIMESTAMP.json" || OVERALL_STATUS=1
 fi
 

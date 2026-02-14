@@ -28,6 +28,7 @@ const soakRequests = new Counter('soak_requests');
 const soakErrors = new Counter('soak_errors');
 const responseTimeBuckets = new Trend('response_time_buckets');
 const memoryIndicator = new Trend('memory_indicator');  // Proxy via response times
+const DIVIDER = '='.repeat(80);
 
 // Test configuration - Soak test (2 hours)
 export const options = {
@@ -49,9 +50,9 @@ export const options = {
 };
 
 export function setup() {
-  console.log('=' * 80);
+  console.log(DIVIDER);
   console.log('SOAK TEST - 2 HOUR ENDURANCE TEST');
-  console.log('=' * 80);
+  console.log(DIVIDER);
   console.log('This test will run for 2 hours to identify memory leaks');
   console.log('and gradual performance degradation.');
   console.log();
@@ -181,9 +182,9 @@ export default function(data) {
 export function teardown(data) {
   const duration = (Date.now() - data.startTime) / 1000 / 60;
 
-  console.log('\n' + '=' * 80);
+  console.log('\n' + DIVIDER);
   console.log('SOAK TEST COMPLETE');
-  console.log('=' * 80);
+  console.log(DIVIDER);
   console.log(`Duration: ${duration.toFixed(1)} minutes`);
   console.log(`Total Requests: ${soakRequests.value || 0}`);
   console.log(`Total Errors: ${soakErrors.value || 0}`);
@@ -195,7 +196,7 @@ export function teardown(data) {
   console.log('3. Review response time trend (should be stable)');
   console.log('4. Check for file descriptor leaks');
   console.log('5. Inspect logs for gradual degradation warnings');
-  console.log('=' * 80);
+  console.log(DIVIDER);
 }
 
 /**
