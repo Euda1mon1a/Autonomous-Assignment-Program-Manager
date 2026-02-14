@@ -13,6 +13,87 @@ This document provides guidance for AI coding assistants (Codex, Claude, etc.) w
 
 ---
 
+## Instruction File Discovery (Claude Code vs Codex CLI)
+
+Two AI systems work on this repo. They read **different files** by default. Understanding this prevents guardrails from being invisible to one system.
+
+### Claude Code (Opus 4.6 / Sonnet 4.5)
+
+| Priority | File | Scope |
+|----------|------|-------|
+| 1 | `CLAUDE.md` (repo root) | Always injected into context |
+| 2 | `.claude/` directory | Project settings, memory, skills |
+| 3 | MCP tools (97+) | Validation, compliance, RAG search |
+| 4 | Pre-commit hooks (30+) | Enforce rules at commit time |
+| 5 | `~/.claude/projects/.../memory/` | Private auto memory (per-project, persistent) |
+
+**Key point:** Claude Code does NOT read `AGENTS.md` unless told to. All project guardrails live in `CLAUDE.md`.
+
+### Codex CLI (GPT-5.3-codex)
+
+| Priority | File | Scope |
+|----------|------|-------|
+| 1 | `~/.codex/AGENTS.md` | Global instructions (if exists) |
+| 2 | `AGENTS.override.md` | Per-directory override (root → CWD walk) |
+| 3 | `AGENTS.md` | Per-directory instructions (root → CWD walk) |
+| 4 | `project_doc_fallback_filenames` | Config: extra files to read (e.g., `CLAUDE.md`) |
+| 5 | `.codex/config.toml` | Repo-level Codex configuration |
+
+**Key point:** Codex does NOT read `CLAUDE.md` unless configured as a fallback in `project_doc_fallback_filenames`. It also does NOT run pre-commit hooks during file modification (only at `git commit`).
+
+### Current Configuration (post-Feb 2026 fix)
+
+After the Feb 2026 audit, both systems are configured to cross-read:
+
+```toml
+# ~/.codex/config.toml AND .codex/config.toml
+project_doc_fallback_filenames = ["AGENTS.md", "CLAUDE.md"]
+project_doc_max_bytes = 65536
+```
+
+### Guardrail File Hierarchy
+
+| File | Purpose | Read by Claude | Read by Codex |
+|------|---------|----------------|---------------|
+| `CLAUDE.md` | Full project rules, security, API contracts | Always | Via fallback config |
+| `AGENTS.md` (root) | Condensed hard boundaries | If referenced | Always at startup |
+| `.codex/AGENTS.md` | Full Codex rules + anti-patterns | If referenced | Always (directory walk) |
+| `docs/development/AGENTS.md` | This file: monitoring patterns, shared context | If referenced | If referenced |
+
+### Why This Matters (Feb 2026 Lesson)
+
+On Feb 14, 2026, an audit of Codex CLI output on `continuous/codex-work` found **20 issues (3 P1)** across 101 modified files. Root cause: all guardrails (validation rules, security requirements, "never modify" lists) were in `CLAUDE.md` — a file Codex never read. `.codex/AGENTS.md` line 179 said "See CLAUDE.md" but that was a dead reference.
+
+**Fix:** Inline all critical guardrails directly into the files each system reads. The fallback config is belt-and-suspenders — the primary defense is having rules IN the file, not just referencing another file.
+
+### Known Codex Failure Patterns (from audit)
+
+These patterns recurred when Codex lacked guardrails. They are now documented in `.codex/AGENTS.md` and root `AGENTS.md` as FORBIDDEN:
+
+| Pattern | Risk | Description |
+|---------|------|-------------|
+| Flexible Validation | P1 | Removes Pydantic `min_length`, `max_length`, `ge`, `le` constraints |
+| Route Alias | P1 | Registers same router at multiple URL prefixes |
+| Normalization Layer | P2 | Adds backend `_normalize_*()` functions (axios already handles this) |
+| Improved Error Messages | P2 | Replaces generic errors with `str(e)`, leaking internals |
+| Defensive Fallback | P2 | Wraps ops in try/except with silent alternate path |
+| Type Weakening | P2 | Changes `dict[str, int]` to `dict[str, Any]`, adds `extra="allow"` |
+| Smuggled Changes | P2 | Changes algorithm constants while calling commit "import cleanup" |
+
+### Enforcement Layers
+
+| Layer | Claude Code | Codex CLI |
+|-------|-------------|-----------|
+| Instruction files | `CLAUDE.md` (always) | `AGENTS.md` (always) |
+| Pre-commit hooks | 30+ hooks enforce at commit | Same hooks at `git commit` only |
+| MCP tools | 97+ tools for validation | Same tools if MCP configured |
+| Runtime validation | Pydantic, SQLAlchemy constraints | Same (runtime) |
+| File modification | Hooks fire during edits | No enforcement during edits |
+
+**Gap:** Codex modifies files freely, then hooks only catch violations at commit time. If Codex commits with `--no-verify` or the hook doesn't cover the pattern, violations slip through.
+
+---
+
 ## Codex Background Monitoring Instructions
 
 When performing background code health assessments, focus on these categories of subtle issues that accumulate over time.
