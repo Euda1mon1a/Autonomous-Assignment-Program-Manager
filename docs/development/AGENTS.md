@@ -92,6 +92,17 @@ These patterns recurred when Codex lacked guardrails. They are now documented in
 
 **Gap:** Codex modifies files freely, then hooks only catch violations at commit time. If Codex commits with `--no-verify` or the hook doesn't cover the pattern, violations slip through.
 
+### Codex Model Tiers
+
+Two Codex models are available. Default stays on full 5.3-Codex for automations; Spark is opt-in for interactive use.
+
+| Model | ID | Speed | Context | Best For |
+|-------|----|-------|---------|----------|
+| 5.3-Codex | `gpt-5.3-codex` | Standard | 192K | Nightly automations, multi-file tasks, deep analysis |
+| 5.3-Codex-Spark | `gpt-5.3-codex-spark` | 1000+ tok/s | 128K | Interactive pairing, quick single-file fixes |
+
+**Spark** (Feb 2026, Cerebras WSE-3) is a speed-optimized variant. All guardrails still apply. Spark should self-limit to single-file scope; multi-file or FORBIDDEN-category tasks stay on regular Codex or Claude.
+
 ---
 
 ## Codex Background Monitoring Instructions
