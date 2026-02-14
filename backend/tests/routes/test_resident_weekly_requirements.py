@@ -40,3 +40,34 @@ def test_apply_outpatient_defaults_creates_requirement(
     assert requirement.fm_clinic_min_per_week == 2
     assert requirement.academics_required is True
     assert requirement.protected_slots.get("wed_am") == "conference"
+
+
+def test_delete_requirement_by_template_removes_row(
+    client: TestClient, auth_headers, db
+):
+    template = RotationTemplate(
+        id=uuid4(),
+        name="Outpatient Clinic",
+        rotation_type="outpatient",
+        template_category="rotation",
+        leave_eligible=True,
+    )
+    db.add(template)
+    db.commit()
+
+    requirement = ResidentWeeklyRequirement(rotation_template_id=template.id)
+    db.add(requirement)
+    db.commit()
+
+    response = client.delete(
+        f"/api/v1/resident-weekly-requirements/by-template/{template.id}",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 204
+    remaining = (
+        db.query(ResidentWeeklyRequirement)
+        .filter(ResidentWeeklyRequirement.rotation_template_id == template.id)
+        .first()
+    )
+    assert remaining is None
