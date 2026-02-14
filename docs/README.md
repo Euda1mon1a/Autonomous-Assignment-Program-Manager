@@ -250,7 +250,7 @@ Important files at the docs/ root:
 
 | Document | Description |
 |----------|-------------|
-| [ARCHITECTURAL_DISCONNECTS.md](ARCHITECTURAL_DISCONNECTS.md) | Known architectural inconsistencies |
+| [ARCHITECTURAL_DISCONNECTS.md](archived/superseded/ARCHITECTURAL_DISCONNECTS.md) | Known architectural inconsistencies |
 | [EMAIL_NOTIFICATION_INFRASTRUCTURE.md](EMAIL_NOTIFICATION_INFRASTRUCTURE.md) | Email notification system design |
 | [MCP_IDE_INTEGRATION.md](MCP_IDE_INTEGRATION.md) | Model Context Protocol IDE integration |
 | [MASTER_PRIORITY_LIST.md](MASTER_PRIORITY_LIST.md) | Current development priorities |

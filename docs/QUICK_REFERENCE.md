@@ -522,4 +522,4 @@ const residents = await api.getPeople('resident');
 - [Installation Guide](guides/installation.md)
 - [CLI Reference](operations/cli-reference.md)
 - [Troubleshooting](guides/SCHEDULE_GENERATION_RUNBOOK.md#troubleshooting)
-- [CLAUDE.md](CLAUDE.md) - AI development guidelines
+- [CLAUDE.md](../CLAUDE.md) - AI development guidelines

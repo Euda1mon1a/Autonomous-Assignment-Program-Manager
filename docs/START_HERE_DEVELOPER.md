@@ -253,12 +253,12 @@ pytest --capture=no -v
 - [Contributing Guide](development/contributing.md)
 - [Code Style Guide](development/code-style.md)
 - [Testing Guide](development/testing.md)
-- [PR Review Process](development/pr-review.md)
+- [PR Review Process](development/contributing.md)
 
 ### Domain Knowledge
 - [ACGME Rules](rag-knowledge/acgme-rules.md) - Compliance rules
 - [Scheduling Concepts](rag-knowledge/scheduling-policies.md) - Domain model
-- [Resilience Framework](guides/RESILIENCE_FRAMEWORK_GUIDE.md) - System resilience
+- [Resilience Framework](guides/resilience-framework.md) - System resilience
 
 ---
 
