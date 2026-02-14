@@ -385,6 +385,6 @@ function SchedulePage() {
 
 ## Related Documentation
 
-- [3D Voxel Visualization Architecture](/docs/architecture/3d-voxel-visualization.md)
-- [Visualization API Reference](/docs/api/visualization.md)
-- [Frontend Architecture](/docs/architecture/frontend.md)
+- [3D Voxel Visualization Architecture](../architecture/3d-voxel-visualization.md)
+- [Visualization API Reference](../api/visualization.md)
+- [Frontend Architecture](../architecture/frontend.md)

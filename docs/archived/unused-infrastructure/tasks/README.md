@@ -40,4 +40,4 @@ This directory contains task documents for autonomous execution by agentic brows
 pending → in_progress → completed
 ```
 
-See [Expert Consultation Protocol](/docs/architecture/expert-consultation-protocol.md) for full documentation.
+See [Expert Consultation Protocol](../../../architecture/expert-consultation-protocol.md) for full documentation.

@@ -135,7 +135,7 @@ See **[Advanced Scheduling Architecture](advanced-scheduling.md)** for full deta
 
 - **[Advanced Scheduling Architecture](advanced-scheduling.md)** - Cross-disciplinary algorithms (AIS, tensegrity, etc.)
 - **[Complete Resilience Framework Guide](../guides/resilience-framework.md)** - Comprehensive implementation details
-- **[Cross-Disciplinary Resilience Extensions](../guides/cross-disciplinary-resilience.md)** - Advanced monitoring from 7 industries
+- **[Cross-Disciplinary Resilience Extensions](cross-disciplinary-resilience.md)** - Advanced monitoring from 7 industries
 - **[System Architecture](overview.md)** - Overall system design
 - **[Backend Architecture](backend.md)** - Backend implementation details
 - **[Operations Metrics](../operations/metrics.md)** - Monitoring and metrics

@@ -1045,10 +1045,10 @@ async def analyze_catastrophe_risk(
 
 ## Related Documentation
 
-- [Exotic Frontier Concepts](/docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md) - Detailed concept explanations
-- [Cross-Disciplinary Resilience](/docs/architecture/cross-disciplinary-resilience.md) - Framework overview
-- [MCP Tools Reference](/docs/api/MCP_TOOLS_REFERENCE.md) - AI agent tools
-- [Testing Strategy](/docs/development/testing.md) - Test patterns for exotic modules
+- [Exotic Frontier Concepts](../architecture/EXOTIC_FRONTIER_CONCEPTS.md) - Detailed concept explanations
+- [Cross-Disciplinary Resilience](../architecture/cross-disciplinary-resilience.md) - Framework overview
+- [MCP Tools Reference](MCP_TOOLS_REFERENCE.md) - AI agent tools
+- [Testing Strategy](../development/testing.md) - Test patterns for exotic modules
 
 ---
 

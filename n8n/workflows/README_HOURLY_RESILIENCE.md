@@ -649,7 +649,7 @@ When upgrading n8n:
 - [Slack Block Kit Builder](https://app.slack.com/block-kit-builder/)
 - [Crontab Guru](https://crontab.guru/) - Cron expression validator
 - [PagerDuty Events API](https://developer.pagerduty.com/docs/ZG9jOjExMDI5NTgw-events-api-v2-overview)
-- [Resilience API Documentation](/docs/api/resilience.md)
+- [Resilience API Documentation](../../docs/api/endpoints/resilience.md)
 
 ## Support
 
