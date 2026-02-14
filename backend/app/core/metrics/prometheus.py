@@ -7,8 +7,9 @@ Provides type-safe metric definitions and helper methods.
 
 import logging
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -474,7 +475,7 @@ class MetricsRegistry:
     # =========================================================================
 
     @contextmanager
-    def time_database_query(self, operation: str):  # type: ignore[no-untyped-def]
+    def time_database_query(self, operation: str) -> Iterator[None]:
         """
         Context manager to time database queries.
 
@@ -498,7 +499,7 @@ class MetricsRegistry:
             self.db_queries_total.labels(operation=operation).inc()
 
     @contextmanager
-    def time_cache_operation(self, operation: str):  # type: ignore[no-untyped-def]
+    def time_cache_operation(self, operation: str) -> Iterator[None]:
         """
         Context manager to time cache operations.
 
@@ -523,7 +524,7 @@ class MetricsRegistry:
             )
 
     @contextmanager
-    def time_background_task(self, task_name: str):  # type: ignore[no-untyped-def]
+    def time_background_task(self, task_name: str) -> Iterator[None]:
         """
         Context manager to time background task execution.
 
@@ -558,7 +559,7 @@ class MetricsRegistry:
             self.background_tasks_in_progress.labels(task_name=task_name).dec()
 
     @contextmanager
-    def time_schedule_generation(self, algorithm: str):  # type: ignore[no-untyped-def]
+    def time_schedule_generation(self, algorithm: str) -> Iterator[None]:
         """
         Context manager to time schedule generation.
 
@@ -672,7 +673,7 @@ class MetricsRegistry:
             ).inc()
 
     @contextmanager
-    def time_constraint_evaluation(self, constraint_name: str):  # type: ignore[no-untyped-def]
+    def time_constraint_evaluation(self, constraint_name: str) -> Iterator[None]:
         """
         Context manager to time constraint evaluation.
 
@@ -766,7 +767,7 @@ def get_metrics() -> MetricsRegistry:
 class _MetricsProxy:
     """Proxy to support lazy initialization while keeping 'metrics' as module-level."""
 
-    def __getattr__(self, name: str):  # type: ignore[no-untyped-def]
+    def __getattr__(self, name: str) -> Any:
         return getattr(get_metrics(), name)
 
 

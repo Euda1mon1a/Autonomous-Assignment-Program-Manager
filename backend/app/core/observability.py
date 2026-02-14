@@ -28,7 +28,8 @@ import uuid
 from collections.abc import Callable
 from contextvars import ContextVar
 from functools import wraps
-from typing import Literal, Optional
+from types import TracebackType
+from typing import Literal, Optional, ParamSpec, TypeVar
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -40,6 +41,9 @@ logger = get_logger(__name__)
 
 # Context variable for request correlation ID
 request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 try:
     from prometheus_client import REGISTRY, Counter, Gauge, Histogram
@@ -262,7 +266,12 @@ class IdempotencyTimer:
         self.start_time = time.perf_counter()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> Literal[False]:  # type: ignore[no-untyped-def]
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> Literal[False]:
         if self.metrics._enabled and self.start_time:
             duration = time.perf_counter() - self.start_time
             self.metrics.idempotency_lookup_duration.observe(duration)
@@ -281,7 +290,12 @@ class ScheduleTimer:
         self.start_time = time.perf_counter()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> Literal[False]:  # type: ignore[no-untyped-def]
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> Literal[False]:
         if self.metrics._enabled and self.start_time:
             duration = time.perf_counter() - self.start_time
             self.metrics.schedule_duration.labels(algorithm=self.algorithm).observe(
@@ -342,7 +356,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
             request_id_ctx.reset(token)
 
 
-def with_request_id(func: Callable) -> Callable:
+def with_request_id(func: Callable[P, R]) -> Callable[P, R]:
     """
     Decorator to include request ID in log messages.
 
@@ -356,7 +370,7 @@ def with_request_id(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         request_id = get_request_id()
         if request_id:
             # Set request ID in logging context for this call

@@ -508,5 +508,5 @@ export CONSTRAINT_PRESET=call_scheduling
 ## See Also
 
 - [Constraint System Architecture](./SOLVER_ALGORITHM.md)
-- [ACGME Compliance](./ACGME_COMPLIANCE.md)
+- [ACGME Compliance](../user-guide/compliance.md)
 - [Resilience Framework](./cross-disciplinary-resilience.md)

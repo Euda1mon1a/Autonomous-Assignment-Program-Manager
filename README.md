@@ -1,6 +1,6 @@
 # Residency Scheduler
 
-> **Last Updated:** 2026-02-10
+> **Last Updated:** 2026-02-14
 
 <p align="center">
   <strong>A comprehensive medical residency scheduling system with ACGME compliance validation and AI-assisted development infrastructure</strong>
@@ -111,7 +111,7 @@ Track faculty qualifications for supervising medical procedures:
 - **Certification Management**: Track BLS, ACLS, PALS, and other required certifications
 - **Compliance Monitoring**: Ensure qualified supervisors are scheduled for procedure blocks
 
-See [API Documentation](docs/api/authentication.md) for endpoint details.
+See [API Documentation](docs/api/AUTH_API.md) for endpoint details.
 
 ### Resilience Framework
 Built-in system resilience inspired by cross-industry best practices:

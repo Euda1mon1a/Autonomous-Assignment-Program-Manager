@@ -59,7 +59,7 @@ cd frontend && npm test
 ### Development Workflow
 
 1. **Create feature branch**: `git checkout -b feature/my-feature`
-2. **Make changes**: Follow [CLAUDE.md](CLAUDE.md) guidelines
+2. **Make changes**: Follow [CLAUDE.md](../CLAUDE.md) guidelines
 3. **Run tests**: Ensure all tests pass
 4. **Create PR**: Push to GitHub and open pull request
 5. **Wait for review**: Address feedback
@@ -118,7 +118,7 @@ python -m app.cli data seed --type all
 ## Next Steps
 
 - **Users**: Read [User Workflows](guides/user-workflows.md)
-- **Developers**: Read [Development Guide](CLAUDE.md)
+- **Developers**: Read [Development Guide](../CLAUDE.md)
 - **Admins**: Read [Admin Manual](admin-manual/)
 
 ---

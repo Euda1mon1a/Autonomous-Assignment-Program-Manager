@@ -95,7 +95,7 @@ Modify system settings and parameters.
 ### Database Maintenance
 Manage database health and performance.
 - **Guide**: [Database Utilities](database/DATABASE_UTILITIES_GUIDE.md)
-- **Migration**: [Alembic Guide](development/migrations.md)
+- **Migration**: [Alembic Guide](database/MIGRATION_PROCEDURES.md)
 
 ---
 

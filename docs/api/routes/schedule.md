@@ -792,7 +792,7 @@ curl -X POST "http://localhost:8000/api/v1/schedule/swaps/candidates" \
 
 - [Assignments API](assignments.md) - View and manage generated assignments
 - [Blocks API](blocks.md) - Block structure and management
-- [ACGME Compliance](../../architecture/acgme-compliance.md) - Compliance rules
+- [ACGME Compliance](../../user-guide/compliance.md) - Compliance rules
 - [Solver Algorithm](../../architecture/SOLVER_ALGORITHM.md) - Scheduling engine details
 
 ---

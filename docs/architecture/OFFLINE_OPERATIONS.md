@@ -212,7 +212,7 @@ The core logic is in:
 
 These are pure Python with minimal dependencies. Could be ported to:
 - Java, C#, Go, or any language with constraint solver libraries
-- The ACGME rules are documented in `docs/architecture/acgme-compliance.md`
+- The ACGME rules are documented in `docs/user-guide/compliance.md`
 
 ---
 

@@ -608,7 +608,7 @@ NEW_TOKEN=$(echo $REFRESH_RESPONSE | jq -r '.access_token')
 - **[OpenAPI Specification](openapi.yaml)** - Machine-readable API definition
 - **[Postman Collection](postman_collection.json)** - Interactive API testing
 - **[CLAUDE.md](../../CLAUDE.md)** - Project guidelines and architecture
-- **[ACGME Compliance](../architecture/ACGME_COMPLIANCE.md)** - Regulatory requirements
+- **[ACGME Compliance](../user-guide/compliance.md)** - Regulatory requirements
 - **[Solver Algorithm](../architecture/SOLVER_ALGORITHM.md)** - Schedule generation details
 - **[Resilience Framework](../architecture/cross-disciplinary-resilience.md)** - System resilience concepts
 

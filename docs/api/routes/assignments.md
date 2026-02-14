@@ -542,7 +542,7 @@ curl -X DELETE "http://localhost:8000/api/v1/assignments?start_date=2025-01-01&e
 - [People API](people.md) - Person (resident/faculty) management
 - [Blocks API](blocks.md) - Block (time slot) management
 - [Schedule API](schedule.md) - Schedule generation and validation
-- [ACGME Compliance](../../architecture/acgme-compliance.md) - Compliance rules
+- [ACGME Compliance](../../user-guide/compliance.md) - Compliance rules
 
 ---
 
