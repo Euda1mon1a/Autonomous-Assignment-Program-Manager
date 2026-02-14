@@ -137,7 +137,7 @@ class PeopleSearchRequest(BaseModel):
     """Specialized request schema for people search."""
 
     query: str = Field(
-        ..., min_length=0, max_length=500, description="Search query text"
+        ..., min_length=1, max_length=500, description="Search query text"
     )
     type: str | None = Field(None, description="Filter by type: resident or faculty")
     pgy_level: int | None = Field(None, ge=1, le=3, description="Filter by PGY level")
@@ -167,7 +167,7 @@ class RotationSearchRequest(BaseModel):
     """Specialized request schema for rotation search."""
 
     query: str = Field(
-        ..., min_length=0, max_length=500, description="Search query text"
+        ..., min_length=1, max_length=500, description="Search query text"
     )
     category: str | None = Field(None, description="Filter by category")
     page: int = Field(default=1, ge=1, description="Page number")

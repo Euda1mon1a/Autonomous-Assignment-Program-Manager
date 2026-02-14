@@ -15,7 +15,6 @@ Provides endpoints for monitoring and managing Celery background tasks:
 
 import logging
 from datetime import datetime
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -54,264 +53,6 @@ from app.services.job_monitor import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-def _pick_value(payload: dict[str, Any], *keys: str, default: Any = None) -> Any:
-    """Return the first non-null value from a payload for the provided keys."""
-    for key in keys:
-        if key in payload and payload[key] is not None:
-            return payload[key]
-    return default
-
-
-def _now_iso() -> str:
-    return datetime.utcnow().isoformat()
-
-
-def _normalize_task_statistics(
-    stats: dict[str, Any], task_name: str | None, hours: int
-) -> dict[str, Any]:
-    average_runtime = float(
-        _pick_value(
-            stats, "averageRuntimeSeconds", "average_runtime_seconds", default=0.0
-        )
-    )
-    success_rate = float(_pick_value(stats, "successRate", "success_rate", default=0.0))
-    total_tasks = int(_pick_value(stats, "totalTasks", "total_tasks", default=0))
-    return {
-        "taskName": _pick_value(
-            stats, "taskName", "task_name", default=task_name or "all"
-        ),
-        "timeRangeHours": int(
-            _pick_value(stats, "timeRangeHours", "time_range_hours", default=hours)
-        ),
-        "totalTasks": total_tasks,
-        "successfulTasks": int(
-            _pick_value(stats, "successfulTasks", "successful_tasks", default=0)
-        ),
-        "failedTasks": int(
-            _pick_value(stats, "failedTasks", "failed_tasks", default=0)
-        ),
-        "pendingTasks": int(
-            _pick_value(stats, "pendingTasks", "pending_tasks", default=0)
-        ),
-        "retriedTasks": int(
-            _pick_value(stats, "retriedTasks", "retried_tasks", default=0)
-        ),
-        "successRate": success_rate,
-        "failureRate": float(
-            _pick_value(
-                stats,
-                "failureRate",
-                "failure_rate",
-                default=(100.0 - success_rate if total_tasks > 0 else 0.0),
-            )
-        ),
-        "averageRuntimeSeconds": average_runtime,
-        "minRuntimeSeconds": float(
-            _pick_value(
-                stats,
-                "minRuntimeSeconds",
-                "min_runtime_seconds",
-                default=average_runtime,
-            )
-        ),
-        "maxRuntimeSeconds": float(
-            _pick_value(
-                stats,
-                "maxRuntimeSeconds",
-                "max_runtime_seconds",
-                default=average_runtime,
-            )
-        ),
-        "timestamp": _pick_value(stats, "timestamp", default=_now_iso()),
-    }
-
-
-def _normalize_retry_statistics(
-    stats: dict[str, Any], task_name: str | None
-) -> dict[str, Any]:
-    retry_reasons = _pick_value(
-        stats, "commonRetryReasons", "common_retry_reasons", default=[]
-    )
-    if isinstance(retry_reasons, str):
-        retry_reasons = [retry_reasons]
-    elif not isinstance(retry_reasons, list):
-        retry_reasons = list(retry_reasons) if retry_reasons else []
-
-    return {
-        "taskName": _pick_value(
-            stats, "taskName", "task_name", default=task_name or "all"
-        ),
-        "totalRetries": int(
-            _pick_value(stats, "totalRetries", "total_retries", default=0)
-        ),
-        "tasksWithRetries": int(
-            _pick_value(stats, "tasksWithRetries", "tasks_with_retries", default=0)
-        ),
-        "maxRetriesUsed": int(
-            _pick_value(stats, "maxRetriesUsed", "max_retries_used", default=0)
-        ),
-        "averageRetriesPerTask": float(
-            _pick_value(
-                stats, "averageRetriesPerTask", "average_retries_per_task", default=0.0
-            )
-        ),
-        "retrySuccessRate": float(
-            _pick_value(stats, "retrySuccessRate", "retry_success_rate", default=0.0)
-        ),
-        "commonRetryReasons": retry_reasons,
-        "timestamp": _pick_value(stats, "timestamp", default=_now_iso()),
-    }
-
-
-def _normalize_performance_metrics(
-    metrics: dict[str, Any], task_name: str | None, hours: int
-) -> dict[str, Any]:
-    p50_runtime = float(
-        _pick_value(metrics, "p50RuntimeSeconds", "p50_runtime_seconds", default=0.0)
-    )
-    p95_runtime = float(
-        _pick_value(
-            metrics, "p95RuntimeSeconds", "p95_runtime_seconds", default=p50_runtime
-        )
-    )
-
-    return {
-        "taskName": _pick_value(
-            metrics, "taskName", "task_name", default=task_name or "all"
-        ),
-        "timeRangeHours": int(
-            _pick_value(metrics, "timeRangeHours", "time_range_hours", default=hours)
-        ),
-        "totalExecutions": int(
-            _pick_value(metrics, "totalExecutions", "total_executions", default=0)
-        ),
-        "averageRuntimeSeconds": float(
-            _pick_value(
-                metrics,
-                "averageRuntimeSeconds",
-                "average_runtime_seconds",
-                default=p50_runtime,
-            )
-        ),
-        "medianRuntimeSeconds": float(
-            _pick_value(
-                metrics,
-                "medianRuntimeSeconds",
-                "median_runtime_seconds",
-                default=p50_runtime,
-            )
-        ),
-        "p50RuntimeSeconds": p50_runtime,
-        "p75RuntimeSeconds": float(
-            _pick_value(
-                metrics, "p75RuntimeSeconds", "p75_runtime_seconds", default=p50_runtime
-            )
-        ),
-        "p90RuntimeSeconds": float(
-            _pick_value(
-                metrics, "p90RuntimeSeconds", "p90_runtime_seconds", default=p95_runtime
-            )
-        ),
-        "p95RuntimeSeconds": p95_runtime,
-        "p99RuntimeSeconds": float(
-            _pick_value(
-                metrics, "p99RuntimeSeconds", "p99_runtime_seconds", default=p95_runtime
-            )
-        ),
-        "minRuntimeSeconds": float(
-            _pick_value(
-                metrics, "minRuntimeSeconds", "min_runtime_seconds", default=p50_runtime
-            )
-        ),
-        "maxRuntimeSeconds": float(
-            _pick_value(
-                metrics, "maxRuntimeSeconds", "max_runtime_seconds", default=p95_runtime
-            )
-        ),
-        "stdDevRuntimeSeconds": float(
-            _pick_value(
-                metrics, "stdDevRuntimeSeconds", "std_dev_runtime_seconds", default=0.0
-            )
-        ),
-        "timestamp": _pick_value(metrics, "timestamp", default=_now_iso()),
-    }
-
-
-def _normalize_throughput_metrics(
-    metrics: dict[str, Any], queue: str | None, hours: int
-) -> dict[str, Any]:
-    tasks_per_hour = float(
-        _pick_value(metrics, "tasksPerHour", "tasks_per_hour", default=0.0)
-    )
-    average_queue_time = float(
-        _pick_value(
-            metrics,
-            "averageQueueTimeSeconds",
-            "average_queue_time_seconds",
-            default=0.0,
-        )
-    )
-
-    return {
-        "queueName": _pick_value(
-            metrics, "queueName", "queue_name", default=queue or "all"
-        ),
-        "timeRangeHours": int(
-            _pick_value(metrics, "timeRangeHours", "time_range_hours", default=hours)
-        ),
-        "totalTasksProcessed": int(
-            _pick_value(
-                metrics, "totalTasksProcessed", "total_tasks_processed", default=0
-            )
-        ),
-        "tasksPerMinute": float(
-            _pick_value(
-                metrics,
-                "tasksPerMinute",
-                "tasks_per_minute",
-                default=tasks_per_hour / 60.0,
-            )
-        ),
-        "tasksPerHour": tasks_per_hour,
-        "peakThroughputPerHour": float(
-            _pick_value(
-                metrics,
-                "peakThroughputPerHour",
-                "peak_throughput_per_hour",
-                default=tasks_per_hour,
-            )
-        ),
-        "averageQueueTimeSeconds": average_queue_time,
-        "averageProcessingTimeSeconds": float(
-            _pick_value(
-                metrics,
-                "averageProcessingTimeSeconds",
-                "average_processing_time_seconds",
-                default=average_queue_time,
-            )
-        ),
-        "timestamp": _pick_value(metrics, "timestamp", default=_now_iso()),
-    }
-
-
-def _normalize_slow_task_record(task: dict[str, Any]) -> dict[str, Any]:
-    started_at = _pick_value(task, "startedAt", "started_at", default=_now_iso())
-    return {
-        "taskId": str(_pick_value(task, "taskId", "task_id", default="unknown")),
-        "taskName": _pick_value(task, "taskName", "task_name", default="unknown"),
-        "runtimeSeconds": float(
-            _pick_value(task, "runtimeSeconds", "runtime_seconds", default=0.0)
-        ),
-        "startedAt": started_at,
-        "completedAt": _pick_value(
-            task, "completedAt", "completed_at", default=started_at
-        ),
-        "worker": _pick_value(task, "worker"),
-        "queue": _pick_value(task, "queue"),
-        "status": _pick_value(task, "status", default="UNKNOWN"),
-    }
 
 
 # ============================================================================
@@ -380,9 +121,7 @@ async def get_jobs_dashboard_overview(
 
     except (ValueError, KeyError, AttributeError) as e:
         logger.error(f"Error getting jobs dashboard overview: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail="Error fetching dashboard overview"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching dashboard overview")
 
 
 # ============================================================================
@@ -435,9 +174,7 @@ async def get_active_tasks(
 
     except Exception as e:
         logger.error(f"Error getting active tasks: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching active tasks"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching active tasks")
 
 
 @router.get("/scheduled", response_model=list[ScheduledTaskInfo])
@@ -482,9 +219,7 @@ async def get_scheduled_tasks(
 
     except Exception as e:
         logger.error(f"Error getting scheduled tasks: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching scheduled tasks"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching scheduled tasks")
 
 
 @router.get("/reserved", response_model=list[ReservedTaskInfo])
@@ -529,9 +264,7 @@ async def get_reserved_tasks(
 
     except Exception as e:
         logger.error(f"Error getting reserved tasks: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching reserved tasks"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching reserved tasks")
 
 
 # ============================================================================
@@ -583,9 +316,7 @@ async def get_task_info(
         raise
     except Exception as e:
         logger.error(f"Error getting task info for {task_id}: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching task information"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching task information")
 
 
 # ============================================================================
@@ -645,9 +376,7 @@ async def get_worker_stats(
 
     except Exception as e:
         logger.error(f"Error getting worker stats: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching worker statistics"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching worker statistics")
 
 
 @router.get("/workers/health", response_model=WorkerHealth)
@@ -680,9 +409,7 @@ async def get_worker_health(
 
     except Exception as e:
         logger.error(f"Error getting worker health: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching worker health"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching worker health")
 
 
 @router.get("/workers/utilization", response_model=WorkerUtilization)
@@ -715,9 +442,7 @@ async def get_worker_utilization(
 
     except Exception as e:
         logger.error(f"Error getting worker utilization: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching worker utilization"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching worker utilization")
 
 
 # ============================================================================
@@ -764,9 +489,7 @@ async def get_queue_statistics(
 
     except Exception as e:
         logger.error(f"Error getting queue statistics: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching queue statistics"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching queue statistics")
 
 
 # ============================================================================
@@ -804,16 +527,12 @@ async def get_task_statistics(
         stats = stats_service.get_task_statistics(
             task_name=task_name, time_range_hours=hours
         )
-        normalized_stats = _normalize_task_statistics(
-            stats, task_name=task_name, hours=hours
-        )
-        return TaskStatistics(**normalized_stats)
+
+        return TaskStatistics(**stats)
 
     except Exception as e:
         logger.error(f"Error getting task statistics: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching task statistics"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching task statistics")
 
 
 @router.get("/statistics/retries", response_model=RetryStatistics)
@@ -842,14 +561,12 @@ async def get_retry_statistics(
     try:
         stats_service = JobStatsService()
         stats = stats_service.get_retry_statistics(task_name=task_name)
-        normalized_stats = _normalize_retry_statistics(stats, task_name=task_name)
-        return RetryStatistics(**normalized_stats)
+
+        return RetryStatistics(**stats)
 
     except Exception as e:
         logger.error(f"Error getting retry statistics: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching retry statistics"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching retry statistics")
 
 
 @router.get("/statistics/performance", response_model=PerformanceMetrics)
@@ -881,16 +598,14 @@ async def get_performance_metrics(
         metrics = stats_service.get_performance_metrics(
             task_name=task_name, time_range_hours=hours
         )
-        normalized_metrics = _normalize_performance_metrics(
-            metrics, task_name=task_name, hours=hours
-        )
-        return PerformanceMetrics(**normalized_metrics)
+
+        return PerformanceMetrics(**metrics)
 
     except Exception as e:
         logger.error(f"Error getting performance metrics: {e}")
         raise HTTPException(
             status_code=500, detail="Error fetching performance metrics"
-        ) from e
+        )
 
 
 @router.get("/statistics/throughput", response_model=ThroughputMetrics)
@@ -922,16 +637,12 @@ async def get_throughput_metrics(
         metrics = stats_service.get_throughput_metrics(
             queue_name=queue, time_range_hours=hours
         )
-        normalized_metrics = _normalize_throughput_metrics(
-            metrics, queue=queue, hours=hours
-        )
-        return ThroughputMetrics(**normalized_metrics)
+
+        return ThroughputMetrics(**metrics)
 
     except Exception as e:
         logger.error(f"Error getting throughput metrics: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching throughput metrics"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching throughput metrics")
 
 
 # ============================================================================
@@ -984,9 +695,7 @@ async def get_task_history(
 
     except Exception as e:
         logger.error(f"Error getting task history: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching task history"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching task history")
 
 
 @router.get("/history/failures", response_model=list[FailureRecord])
@@ -1022,9 +731,7 @@ async def get_recent_failures(
 
     except Exception as e:
         logger.error(f"Error getting recent failures: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching recent failures"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching recent failures")
 
 
 @router.get("/history/slow", response_model=list[SlowTaskRecord])
@@ -1058,13 +765,12 @@ async def get_slow_tasks(
         slow_tasks = history_service.get_slow_tasks(
             threshold_seconds=threshold, limit=limit, hours=hours
         )
-        return [
-            SlowTaskRecord(**_normalize_slow_task_record(task)) for task in slow_tasks
-        ]
+
+        return [SlowTaskRecord(**task) for task in slow_tasks]
 
     except Exception as e:
         logger.error(f"Error getting slow tasks: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching slow tasks") from e
+        raise HTTPException(status_code=500, detail="Error fetching slow tasks")
 
 
 # ============================================================================
@@ -1113,9 +819,7 @@ async def get_scheduled_tasks_summary(
 
     except Exception as e:
         logger.error(f"Error getting scheduled tasks summary: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching scheduled tasks"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching scheduled tasks")
 
 
 # ============================================================================
@@ -1169,7 +873,7 @@ async def revoke_task(
 
     except Exception as e:
         logger.error(f"Error revoking task {request.task_id}: {e}")
-        raise HTTPException(status_code=500, detail="Error revoking task") from e
+        raise HTTPException(status_code=500, detail="Error revoking task")
 
 
 @router.post("/queues/purge", response_model=QueuePurgeResponse)
@@ -1214,7 +918,7 @@ async def purge_queue(
         raise
     except Exception as e:
         logger.error(f"Error purging queue {request.queue_name}: {e}")
-        raise HTTPException(status_code=500, detail="Error purging queue") from e
+        raise HTTPException(status_code=500, detail="Error purging queue")
 
 
 # ============================================================================
@@ -1250,6 +954,4 @@ async def get_registered_tasks(
 
     except Exception as e:
         logger.error(f"Error getting registered tasks: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error fetching registered tasks"
-        ) from e
+        raise HTTPException(status_code=500, detail="Error fetching registered tasks")

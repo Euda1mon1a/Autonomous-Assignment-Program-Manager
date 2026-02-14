@@ -12,8 +12,6 @@ from unittest.mock import AsyncMock, MagicMock, patch, mock_open
 import tempfile
 import os
 
-yaml = pytest.importorskip("yaml")
-
 
 # Test data
 MOCK_REGISTRY = {
@@ -101,6 +99,7 @@ class TestSpawnAgentTool:
 
             # Write registry
             registry_path = claude_dir / "agents.yaml"
+            import yaml
             with open(registry_path, 'w') as f:
                 yaml.dump(MOCK_REGISTRY, f)
 
@@ -133,6 +132,7 @@ class TestSpawnAgentTool:
         assert identity_file.exists()
 
         # Verify registry content
+        import yaml
         with open(registry_path) as f:
             registry = yaml.safe_load(f)
         assert "agents" in registry

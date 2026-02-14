@@ -279,8 +279,8 @@ def sanitize_url(url: str, allowed_schemes: set[str] | None = None) -> str:
     # Parse URL
     try:
         parsed = urlparse(url)
-    except Exception as e:
-        raise XSSDetectionError("Invalid URL format") from e
+    except Exception:
+        raise XSSDetectionError("Invalid URL format")
 
     # Check scheme
     if parsed.scheme:

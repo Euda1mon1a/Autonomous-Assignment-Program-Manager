@@ -158,21 +158,21 @@ class FindSwapMatchesTool(
                 candidates=candidates,
             )
 
-        except (ConnectionError, TimeoutError):
+        except (ConnectionError, TimeoutError) as e:
             # Network connectivity issues
             return FindSwapMatchesResponse(
                 person_id=request.person_id,
                 total_candidates=0,
                 candidates=[],
             )
-        except KeyError:
+        except KeyError as e:
             # Person not found or missing data
             return FindSwapMatchesResponse(
                 person_id=request.person_id,
                 total_candidates=0,
                 candidates=[],
             )
-        except Exception:
+        except Exception as e:
             # Unexpected errors
             return FindSwapMatchesResponse(
                 person_id=request.person_id,

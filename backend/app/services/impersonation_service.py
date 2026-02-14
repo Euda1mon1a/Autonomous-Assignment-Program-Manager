@@ -248,7 +248,7 @@ class ImpersonationService:
 
         except JWTError as e:
             logger.warning(f"Failed to end impersonation - JWT error: {e}")
-            raise ImpersonationTokenError(f"Invalid or expired token: {e}") from e
+            raise ImpersonationTokenError(f"Invalid or expired token: {e}")
 
     def get_impersonation_status(self, token: str) -> ImpersonationStatus:
         """Check the current impersonation status for a token.

@@ -8,8 +8,6 @@ Provides endpoints for:
 """
 
 import logging
-from inspect import isawaitable
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -35,40 +33,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def _resolve(value: Any) -> Any:
-    """Resolve sync or async service return values."""
-    if isawaitable(value):
-        return await value
-    return value
-
-
-def _normalize_result_item(item: Any) -> SearchResultItem:
-    """Normalize legacy search payloads to SearchResultItem schema."""
-    if isinstance(item, SearchResultItem):
-        return item
-
-    if hasattr(item, "model_dump"):
-        payload = item.model_dump()
-    elif isinstance(item, dict):
-        payload = dict(item)
-    else:
-        payload = {}
-
-    highlights = payload.get("highlights", payload.get("highlight", {}))
-    if not isinstance(highlights, dict):
-        highlights = {}
-
-    return SearchResultItem(
-        id=str(payload.get("id", "")),
-        type=str(payload.get("type", payload.get("entity_type", "unknown"))),
-        title=str(payload.get("title", payload.get("name", ""))),
-        subtitle=str(payload.get("subtitle", payload.get("description", ""))),
-        score=float(payload.get("score", 0.0) or 0.0),
-        highlights=highlights,
-        entity=payload.get("entity"),
-    )
-
-
 @router.post("", response_model=SearchResponse)
 async def search(
     request: SearchRequest,
@@ -89,20 +53,18 @@ async def search(
     """
     try:
         service = SearchService(db)
-        results = await _resolve(
-            service.search(
-                query_string=request.query,
-                entity_types=request.entity_types,
-                filters=request.filters,
-                page=request.page,
-                page_size=request.page_size,
-                sort_by=request.sort_by,
-                sort_order=request.sort_order,
-            )
+        results = await service.search(
+            query_string=request.query,
+            entity_types=request.entity_types,
+            filters=request.filters,
+            page=request.page,
+            page_size=request.page_size,
+            sort_by=request.sort_by,
+            sort_order=request.sort_order,
         )
 
         return SearchResponse(
-            items=[_normalize_result_item(item) for item in results["items"]],
+            items=[SearchResultItem(**item) for item in results["items"]],
             total=results["total"],
             page=results["page"],
             page_size=results["page_size"],
@@ -111,10 +73,10 @@ async def search(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
         logger.exception("Search failed")
-        raise HTTPException(status_code=500, detail="Search failed") from e
+        raise HTTPException(status_code=500, detail="Search failed")
 
 
 @router.get("/quick", response_model=QuickSearchResponse)
@@ -134,24 +96,22 @@ async def quick_search(
     try:
         service = SearchService(db)
         indexer = service.indexer
-        items = await _resolve(
-            indexer.quick_search(
-                query_string=query,
-                entity_type=entity_type,
-                limit=limit,
-            )
+        items = await indexer.quick_search(
+            query_string=query,
+            entity_type=entity_type,
+            limit=limit,
         )
 
         return QuickSearchResponse(
-            items=[_normalize_result_item(item) for item in items],
+            items=[SearchResultItem(**item) for item in items],
             query=query,
             entity_type=entity_type,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
         logger.exception("Quick search failed")
-        raise HTTPException(status_code=500, detail="Quick search failed") from e
+        raise HTTPException(status_code=500, detail="Quick search failed")
 
 
 @router.post("/people", response_model=SearchResponse)
@@ -172,18 +132,16 @@ async def search_people(
     """
     try:
         service = SearchService(db)
-        results = await _resolve(
-            service.search_people(
-                query_string=request.query,
-                person_type=request.type,
-                pgy_level=request.pgy_level,
-                page=request.page,
-                page_size=request.page_size,
-            )
+        results = await service.search_people(
+            query_string=request.query,
+            person_type=request.type,
+            pgy_level=request.pgy_level,
+            page=request.page,
+            page_size=request.page_size,
         )
 
         return SearchResponse(
-            items=[_normalize_result_item(item) for item in results["items"]],
+            items=[SearchResultItem(**item) for item in results["items"]],
             total=results["total"],
             page=results["page"],
             page_size=results["page_size"],
@@ -192,10 +150,10 @@ async def search_people(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
         logger.exception("People search failed")
-        raise HTTPException(status_code=500, detail="People search failed") from e
+        raise HTTPException(status_code=500, detail="People search failed")
 
 
 @router.post("/rotations", response_model=SearchResponse)
@@ -213,17 +171,15 @@ async def search_rotations(
     try:
         service = SearchService(db)
         indexer = service.indexer
-        results = await _resolve(
-            indexer.search_rotations(
-                query_string=request.query,
-                category=request.category,
-                page=request.page,
-                page_size=request.page_size,
-            )
+        results = await indexer.search_rotations(
+            query_string=request.query,
+            category=request.category,
+            page=request.page,
+            page_size=request.page_size,
         )
 
         return SearchResponse(
-            items=[_normalize_result_item(item) for item in results["items"]],
+            items=[SearchResultItem(**item) for item in results["items"]],
             total=results["total"],
             page=results["page"],
             page_size=results["page_size"],
@@ -232,10 +188,10 @@ async def search_rotations(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
         logger.exception("Rotation search failed")
-        raise HTTPException(status_code=500, detail="Rotation search failed") from e
+        raise HTTPException(status_code=500, detail="Rotation search failed")
 
 
 @router.post("/procedures", response_model=SearchResponse)
@@ -253,16 +209,14 @@ async def search_procedures(
     try:
         service = SearchService(db)
         indexer = service.indexer
-        results = await _resolve(
-            indexer.search_procedures(
-                query_string=request.query,
-                page=request.page,
-                page_size=request.page_size,
-            )
+        results = await indexer.search_procedures(
+            query_string=request.query,
+            page=request.page,
+            page_size=request.page_size,
         )
 
         return SearchResponse(
-            items=[_normalize_result_item(item) for item in results["items"]],
+            items=[SearchResultItem(**item) for item in results["items"]],
             total=results["total"],
             page=results["page"],
             page_size=results["page_size"],
@@ -271,10 +225,10 @@ async def search_procedures(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
         logger.exception("Procedure search failed")
-        raise HTTPException(status_code=500, detail="Procedure search failed") from e
+        raise HTTPException(status_code=500, detail="Procedure search failed")
 
 
 @router.post("/global", response_model=SearchResponse)
@@ -294,16 +248,14 @@ async def global_search(
     try:
         service = SearchService(db)
         indexer = service.indexer
-        results = await _resolve(
-            indexer.global_search(
-                query_string=query,
-                page=page,
-                page_size=page_size,
-            )
+        results = await indexer.global_search(
+            query_string=query,
+            page=page,
+            page_size=page_size,
         )
 
         return SearchResponse(
-            items=[_normalize_result_item(item) for item in results["items"]],
+            items=[SearchResultItem(**item) for item in results["items"]],
             total=results["total"],
             page=results["page"],
             page_size=results["page_size"],
@@ -312,10 +264,10 @@ async def global_search(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
         logger.exception("Global search failed")
-        raise HTTPException(status_code=500, detail="Global search failed") from e
+        raise HTTPException(status_code=500, detail="Global search failed")
 
 
 @router.post("/suggest", response_model=SuggestionResponse)
@@ -332,12 +284,10 @@ async def get_suggestions(
     """
     try:
         service = SearchService(db)
-        suggestions = await _resolve(
-            service.suggest(
-                query_string=request.query,
-                entity_type=request.entity_type,
-                limit=request.limit,
-            )
+        suggestions = await service.suggest(
+            query_string=request.query,
+            entity_type=request.entity_type,
+            limit=request.limit,
         )
 
         return SuggestionResponse(
@@ -346,10 +296,10 @@ async def get_suggestions(
             entity_type=request.entity_type,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
         logger.exception("Suggestion request failed (POST)")
-        raise HTTPException(status_code=500, detail="Suggestion request failed") from e
+        raise HTTPException(status_code=500, detail="Suggestion request failed")
 
 
 @router.get("/suggest", response_model=SuggestionResponse)
@@ -372,12 +322,10 @@ async def get_suggestions_get(
     """
     try:
         service = SearchService(db)
-        suggestions = await _resolve(
-            service.suggest(
-                query_string=query,
-                entity_type=entity_type,
-                limit=limit,
-            )
+        suggestions = await service.suggest(
+            query_string=query,
+            entity_type=entity_type,
+            limit=limit,
         )
 
         return SuggestionResponse(
@@ -386,7 +334,7 @@ async def get_suggestions_get(
             entity_type=entity_type,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
         logger.exception("Suggestion request failed (GET)")
-        raise HTTPException(status_code=500, detail="Suggestion request failed") from e
+        raise HTTPException(status_code=500, detail="Suggestion request failed")

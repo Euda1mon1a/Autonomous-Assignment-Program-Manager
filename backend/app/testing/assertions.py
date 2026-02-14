@@ -146,9 +146,7 @@ def assert_json_match(
                 f"got {len(actual)}"
             )
 
-        for i, (actual_item, expected_item) in enumerate(
-            zip(actual, expected, strict=False)
-        ):
+        for i, (actual_item, expected_item) in enumerate(zip(actual, expected)):
             assert_json_match(
                 actual=actual_item,
                 expected=expected_item,
@@ -457,11 +455,11 @@ def assert_valid_date(
     """
     try:
         datetime.strptime(value, date_format)
-    except ValueError as e:
+    except ValueError:
         error_msg = (
             message or f"Expected valid date (format: {date_format}), got '{value}'"
         )
-        raise AssertionError(error_msg) from e
+        raise AssertionError(error_msg)
 
 
 def assert_paginated_response(

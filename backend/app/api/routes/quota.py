@@ -13,7 +13,7 @@ import logging
 from datetime import datetime
 
 import redis
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.config import get_settings
 from app.core.security import get_admin_user, get_current_active_user
@@ -67,16 +67,16 @@ def get_redis_client() -> redis.Redis:
         )
         client.ping()
         return client
-    except (redis.ConnectionError, redis.TimeoutError, ValueError) as e:
+    except (redis.ConnectionError, redis.TimeoutError) as e:
         logger.error(f"Failed to connect to Redis: {e}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Quota service temporarily unavailable",
-        ) from e
+        )
 
 
 def get_quota_manager(
-    redis_client: redis.Redis,
+    redis_client: redis.Redis = Depends(get_redis_client),
 ) -> QuotaManager:
     """
     Get QuotaManager instance.
@@ -90,21 +90,10 @@ def get_quota_manager(
     return QuotaManager(redis_client)
 
 
-def get_quota_manager_dependency(request: Request) -> QuotaManager:
-    """Resolve quota manager while honoring test overrides and monkeypatching."""
-    override = request.app.dependency_overrides.get(get_quota_manager)
-    if override:
-        return override()
-
-    redis_override = request.app.dependency_overrides.get(get_redis_client)
-    redis_client = redis_override() if redis_override else get_redis_client()
-    return get_quota_manager(redis_client)
-
-
 @router.get("/status", response_model=QuotaStatus)
 async def get_quota_status(
     current_user: User = Depends(get_current_active_user),
-    quota_manager: QuotaManager = Depends(get_quota_manager_dependency),
+    quota_manager: QuotaManager = Depends(get_quota_manager),
 ) -> QuotaStatus:
     """
     Get current quota status for the authenticated user.
@@ -142,13 +131,13 @@ async def get_quota_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve quota status",
-        ) from e
+        )
 
 
 @router.get("/alerts", response_model=QuotaAlertsResponse)
 async def get_quota_alerts(
     current_user: User = Depends(get_current_active_user),
-    quota_manager: QuotaManager = Depends(get_quota_manager_dependency),
+    quota_manager: QuotaManager = Depends(get_quota_manager),
 ) -> QuotaAlertsResponse:
     """
     Get quota usage alerts for the authenticated user.
@@ -182,14 +171,14 @@ async def get_quota_alerts(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve alerts",
-        ) from e
+        )
 
 
 @router.get("/report", response_model=QuotaUsageReport)
 async def get_quota_report(
-    request: Request,
     period: str = "monthly",
     current_user: User = Depends(get_current_active_user),
+    quota_manager: QuotaManager = Depends(get_quota_manager),
 ) -> QuotaUsageReport:
     """
     Get quota usage report for the authenticated user.
@@ -218,7 +207,6 @@ async def get_quota_report(
         )
 
     try:
-        quota_manager = get_quota_manager_dependency(request)
         summary = quota_manager.get_usage_summary(
             str(current_user.id), current_user.role
         )
@@ -246,14 +234,12 @@ async def get_quota_report(
             usage_percentage=round(usage_percentage, 2),
             generated_at=datetime.utcnow().isoformat(),
         )
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Failed to generate report for user {current_user.id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate usage report",
-        ) from e
+        )
 
 
 @router.get("/policies", response_model=AllPoliciesResponse)
@@ -357,7 +343,7 @@ async def get_quota_policies(
 async def set_custom_quota(
     request: SetCustomQuotaRequest,
     admin_user: User = Depends(get_admin_user),
-    quota_manager: QuotaManager = Depends(get_quota_manager_dependency),
+    quota_manager: QuotaManager = Depends(get_quota_manager),
 ) -> SetCustomQuotaResponse:
     """
     Set custom quota for a user (admin only).
@@ -435,14 +421,14 @@ async def set_custom_quota(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to set custom quota",
-        ) from e
+        )
 
 
 @router.delete("/custom/{user_id}")
 async def remove_custom_quota(
     user_id: str,
     admin_user: User = Depends(get_admin_user),
-    quota_manager: QuotaManager = Depends(get_quota_manager_dependency),
+    quota_manager: QuotaManager = Depends(get_quota_manager),
 ):
     """
     Remove custom quota for a user (admin only).
@@ -476,14 +462,14 @@ async def remove_custom_quota(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to remove custom quota",
-        ) from e
+        )
 
 
 @router.post("/reset", response_model=ResetQuotaResponse)
 async def reset_quota(
     request: ResetQuotaRequest,
     admin_user: User = Depends(get_admin_user),
-    quota_manager: QuotaManager = Depends(get_quota_manager_dependency),
+    quota_manager: QuotaManager = Depends(get_quota_manager),
 ) -> ResetQuotaResponse:
     """
     Reset quota for a user (admin only).
@@ -534,14 +520,14 @@ async def reset_quota(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to reset quota",
-        ) from e
+        )
 
 
 @router.post("/record", response_model=RecordUsageResponse)
 async def record_usage(
     request: RecordUsageRequest,
     admin_user: User = Depends(get_admin_user),
-    quota_manager: QuotaManager = Depends(get_quota_manager_dependency),
+    quota_manager: QuotaManager = Depends(get_quota_manager),
 ) -> RecordUsageResponse:
     """
     Manually record usage for a user (admin only).
@@ -585,4 +571,4 @@ async def record_usage(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to record usage",
-        ) from e
+        )

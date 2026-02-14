@@ -5,7 +5,6 @@ Coordinates file validation, processing, and storage.
 
 import logging
 from datetime import datetime
-from pathlib import Path
 from typing import Any, BinaryIO
 from uuid import UUID, uuid4
 
@@ -141,7 +140,7 @@ class UploadService:
                 else:
                     raise UploadValidationError("Invalid file content type")
 
-            # Initialize progress tracking
+                    # Initialize progress tracking
             progress = UploadProgress(upload_id, len(file_content))
             self.upload_progress[upload_id] = progress
 
@@ -175,7 +174,7 @@ class UploadService:
             if metadata:
                 upload_metadata.update(metadata)
 
-            # Process images if enabled
+                # Process images if enabled
             processed_versions = None
             if process_images and validation_result["mime_type"].startswith("image/"):
                 logger.info(f"Processing image: {filename}")
@@ -187,7 +186,7 @@ class UploadService:
                 )
                 progress.update(len(file_content) // 4)  # 50% - processing complete
 
-            # Store original file
+                # Store original file
             logger.info(f"Storing file: {filename}")
             storage_result = self.storage_backend.save(
                 file_content,
@@ -248,7 +247,7 @@ class UploadService:
             if version_results:
                 result["versions"] = version_results
 
-            # Add image-specific data
+                # Add image-specific data
             if processed_versions:
                 result["image_data"] = {
                     "width": processed_versions["original"]["width"],
@@ -343,4 +342,10 @@ class UploadService:
         sizes_to_generate = thumbnail_sizes or ["thumbnail", "medium"]
         if generate_thumbnails:
             return processor.process_image(file_content, sizes=sizes_to_generate)
-        return processor.process_image(file_content, sizes=None)
+        else:
+            return processor.process_image(file_content, sizes=None)
+
+            # Import Path for filename operations
+
+
+from pathlib import Path

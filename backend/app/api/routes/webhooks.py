@@ -8,13 +8,11 @@ Provides endpoints for:
 """
 
 import logging
-from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from app.core.security import get_current_active_user
 from app.db.session import get_db
@@ -38,81 +36,6 @@ from app.webhooks.service import WebhookService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-
-def _value(item: Any, key: str, default: Any = None) -> Any:
-    """Read a field from dict-like or object-like payloads."""
-    if isinstance(item, dict):
-        return item.get(key, default)
-    return getattr(item, key, default)
-
-
-def _normalize_webhook(item: Any) -> dict[str, Any]:
-    """Normalize legacy webhook payloads to WebhookResponse shape."""
-    now = datetime.utcnow()
-    return {
-        "id": _value(item, "id", UUID(int=0)),
-        "url": _value(item, "url", ""),
-        "name": _value(item, "name", ""),
-        "description": _value(item, "description"),
-        "event_types": _value(item, "event_types", []),
-        "status": _value(item, "status", "active"),
-        "retry_enabled": _value(item, "retry_enabled", True),
-        "max_retries": _value(item, "max_retries", 5),
-        "timeout_seconds": _value(item, "timeout_seconds", 30),
-        "custom_headers": _value(item, "custom_headers", {}),
-        "metadata": _value(item, "metadata", {}),
-        "owner_id": _value(item, "owner_id"),
-        "created_at": _value(item, "created_at", now),
-        "updated_at": _value(item, "updated_at", now),
-        "last_triggered_at": _value(item, "last_triggered_at"),
-    }
-
-
-def _normalize_delivery(item: Any) -> dict[str, Any]:
-    """Normalize legacy delivery payloads to WebhookDeliveryResponse shape."""
-    now = datetime.utcnow()
-    return {
-        "id": _value(item, "id", UUID(int=0)),
-        "webhook_id": _value(item, "webhook_id", UUID(int=0)),
-        "event_type": _value(item, "event_type", ""),
-        "event_id": _value(item, "event_id"),
-        "payload": _value(item, "payload", {}),
-        "status": _value(item, "status", "pending"),
-        "attempt_count": _value(item, "attempt_count", 0),
-        "max_attempts": _value(item, "max_attempts", 3),
-        "next_retry_at": _value(item, "next_retry_at"),
-        "http_status_code": _value(
-            item, "http_status_code", _value(item, "response_code")
-        ),
-        "response_body": _value(item, "response_body"),
-        "response_time_ms": _value(item, "response_time_ms"),
-        "error_message": _value(item, "error_message"),
-        "created_at": _value(item, "created_at", now),
-        "first_attempted_at": _value(item, "first_attempted_at"),
-        "last_attempted_at": _value(item, "last_attempted_at"),
-        "completed_at": _value(item, "completed_at"),
-    }
-
-
-def _normalize_dead_letter(item: Any) -> dict[str, Any]:
-    """Normalize legacy dead-letter payloads to WebhookDeadLetterResponse shape."""
-    now = datetime.utcnow()
-    return {
-        "id": _value(item, "id", UUID(int=0)),
-        "delivery_id": _value(item, "delivery_id", UUID(int=0)),
-        "webhook_id": _value(item, "webhook_id", UUID(int=0)),
-        "event_type": _value(item, "event_type", ""),
-        "payload": _value(item, "payload", {}),
-        "total_attempts": _value(item, "total_attempts", 0),
-        "last_error_message": _value(item, "last_error_message"),
-        "last_http_status": _value(item, "last_http_status"),
-        "resolved": _value(item, "resolved", False),
-        "resolved_at": _value(item, "resolved_at"),
-        "resolved_by": _value(item, "resolved_by"),
-        "resolution_notes": _value(item, "resolution_notes"),
-        "created_at": _value(item, "created_at", now),
-    }
 
 
 def get_webhook_service() -> WebhookService:
@@ -153,17 +76,15 @@ async def create_webhook(
             owner_id=current_user.id if hasattr(current_user, "id") else None,
             metadata=webhook_data.metadata,
         )
-        return _normalize_webhook(webhook)
+        return webhook
     except ValueError as e:
         logger.error(f"Validation error creating webhook: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        ) from e
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except (TypeError, KeyError) as e:
         logger.error(f"Data error creating webhook: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid webhook data"
-        ) from e
+        )
 
 
 @router.get("", response_model=WebhookListResponse)
@@ -188,17 +109,16 @@ async def list_webhooks(
     webhooks = await service.list_webhooks(
         db=db, status=status_filter, skip=skip, limit=limit
     )
-    normalized_webhooks = [_normalize_webhook(webhook) for webhook in webhooks]
 
     return WebhookListResponse(
-        webhooks=normalized_webhooks,
-        total=len(normalized_webhooks),  # Note: This is limited by the query
+        webhooks=webhooks,
+        total=len(webhooks),  # Note: This is limited by the query
         skip=skip,
         limit=limit,
     )
 
 
-@router.get("/{webhook_id:uuid}", response_model=WebhookResponse)
+@router.get("/{webhook_id}", response_model=WebhookResponse)
 async def get_webhook(
     webhook_id: UUID,
     db: Session = Depends(get_db),
@@ -218,10 +138,10 @@ async def get_webhook(
             detail=f"Webhook {webhook_id} not found",
         )
 
-    return _normalize_webhook(webhook)
+    return webhook
 
 
-@router.put("/{webhook_id:uuid}", response_model=WebhookResponse)
+@router.put("/{webhook_id}", response_model=WebhookResponse)
 async def update_webhook(
     webhook_id: UUID,
     webhook_data: WebhookUpdate,
@@ -249,10 +169,10 @@ async def update_webhook(
             detail=f"Webhook {webhook_id} not found",
         )
 
-    return _normalize_webhook(webhook)
+    return webhook
 
 
-@router.delete("/{webhook_id:uuid}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{webhook_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_webhook(
     webhook_id: UUID,
     db: Session = Depends(get_db),
@@ -273,7 +193,7 @@ async def delete_webhook(
         )
 
 
-@router.post("/{webhook_id:uuid}/pause", response_model=WebhookResponse)
+@router.post("/{webhook_id}/pause", response_model=WebhookResponse)
 async def pause_webhook(
     webhook_id: UUID,
     db: Session = Depends(get_db),
@@ -296,10 +216,10 @@ async def pause_webhook(
             detail=f"Webhook {webhook_id} not found",
         )
 
-    return _normalize_webhook(webhook)
+    return webhook
 
 
-@router.post("/{webhook_id:uuid}/resume", response_model=WebhookResponse)
+@router.post("/{webhook_id}/resume", response_model=WebhookResponse)
 async def resume_webhook(
     webhook_id: UUID,
     db: Session = Depends(get_db),
@@ -319,7 +239,7 @@ async def resume_webhook(
             detail=f"Webhook {webhook_id} not found",
         )
 
-    return _normalize_webhook(webhook)
+    return webhook
 
     # ============================================================================
     # Event Trigger Endpoints
@@ -390,17 +310,16 @@ async def list_deliveries(
         skip=skip,
         limit=limit,
     )
-    normalized_deliveries = [_normalize_delivery(delivery) for delivery in deliveries]
 
     return WebhookDeliveryListResponse(
-        deliveries=normalized_deliveries,
-        total=len(normalized_deliveries),  # Note: This is limited by the query
+        deliveries=deliveries,
+        total=len(deliveries),  # Note: This is limited by the query
         skip=skip,
         limit=limit,
     )
 
 
-@router.get("/deliveries/{delivery_id:uuid}", response_model=WebhookDeliveryResponse)
+@router.get("/deliveries/{delivery_id}", response_model=WebhookDeliveryResponse)
 async def get_delivery(
     delivery_id: UUID,
     db: Session = Depends(get_db),
@@ -420,7 +339,7 @@ async def get_delivery(
             detail=f"Delivery {delivery_id} not found",
         )
 
-    return _normalize_delivery(delivery)
+    return delivery
 
 
 @router.post("/deliveries/retry", response_model=WebhookDeliveryResponse)
@@ -445,7 +364,7 @@ async def retry_delivery(
 
         # Return updated delivery status
     delivery = await service.get_delivery_status(db, retry_data.delivery_id)
-    return _normalize_delivery(delivery)
+    return delivery
 
     # ============================================================================
     # Dead Letter Queue Endpoints
@@ -479,21 +398,17 @@ async def list_dead_letters(
     dead_letters = await service.list_dead_letters(
         db=db, webhook_id=webhook_id, resolved=resolved, skip=skip, limit=limit
     )
-    normalized_dead_letters = [
-        _normalize_dead_letter(dead_letter) for dead_letter in dead_letters
-    ]
 
     return WebhookDeadLetterListResponse(
-        dead_letters=normalized_dead_letters,
-        total=len(normalized_dead_letters),  # Note: This is limited by the query
+        dead_letters=dead_letters,
+        total=len(dead_letters),  # Note: This is limited by the query
         skip=skip,
         limit=limit,
     )
 
 
 @router.post(
-    "/dead-letters/{dead_letter_id:uuid}/resolve",
-    response_model=WebhookDeadLetterResponse,
+    "/dead-letters/{dead_letter_id}/resolve", response_model=WebhookDeadLetterResponse
 )
 async def resolve_dead_letter(
     dead_letter_id: UUID,
@@ -527,9 +442,9 @@ async def resolve_dead_letter(
         )
 
         # Return updated dead letter
-    dead_letters = await service.list_dead_letters(db=db, skip=0, limit=1)
+    dead_letters = await service.list_dead_letters(db, skip=0, limit=1)
     if dead_letters:
-        return _normalize_dead_letter(dead_letters[0])
+        return dead_letters[0]
 
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,

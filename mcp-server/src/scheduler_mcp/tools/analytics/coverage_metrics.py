@@ -117,7 +117,7 @@ class CoverageMetricsTool(BaseTool[CoverageMetricsRequest, CoverageMetricsRespon
                 rotations=rotations,
             )
 
-        except Exception:
+        except Exception as e:
             # Return empty metrics
             return CoverageMetricsResponse(
                 start_date=request.start_date,

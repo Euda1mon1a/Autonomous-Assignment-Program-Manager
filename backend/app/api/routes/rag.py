@@ -10,7 +10,7 @@ Provides endpoints for:
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user
@@ -79,10 +79,10 @@ async def retrieve_documents(
         return response
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"RAG retrieval failed: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Retrieval failed") from e
+        raise HTTPException(status_code=500, detail="Retrieval failed")
 
 
 @router.get("/health", response_model=RAGHealthResponse)
@@ -121,7 +121,7 @@ async def get_rag_health(
 
     except Exception as e:
         logger.error(f"RAG health check failed: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Health check failed") from e
+        raise HTTPException(status_code=500, detail="Health check failed")
 
 
 @router.post("/ingest", response_model=IngestResponse)
@@ -166,10 +166,10 @@ async def ingest_document(
         return response
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Document ingestion failed: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Ingestion failed") from e
+        raise HTTPException(status_code=500, detail="Ingestion failed")
 
 
 @router.post("/context", response_model=RAGContext)
@@ -212,10 +212,10 @@ async def build_context(
         return response
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Context building failed: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Context building failed") from e
+        raise HTTPException(status_code=500, detail="Context building failed")
 
 
 @router.delete("/documents/{doc_type}")
@@ -249,7 +249,7 @@ async def delete_documents_by_type(
 
     except Exception as e:
         logger.error(f"Document deletion failed: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Deletion failed") from e
+        raise HTTPException(status_code=500, detail="Deletion failed")
 
 
 @router.get("/stats")
@@ -284,4 +284,4 @@ async def get_rag_stats(
 
     except Exception as e:
         logger.error(f"RAG stats failed: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Stats retrieval failed") from e
+        raise HTTPException(status_code=500, detail="Stats retrieval failed")

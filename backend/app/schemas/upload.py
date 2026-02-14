@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, BaseModel, Field
 
 
 class UploadMetadata(BaseModel):
@@ -75,17 +75,11 @@ class UploadResponse(BaseModel):
     image_data: ImageData | None = Field(
         None, description="Image-specific data (for images only)"
     )
-    size: int | None = Field(None, description="Legacy alias for size_bytes (bytes)")
-    content_type: str | None = Field(None, description="Legacy alias for mime_type")
-    thumbnails: dict[str, str] | None = Field(
-        None, description="Legacy thumbnail URL mapping"
-    )
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Upload metadata"
     )
 
     model_config = ConfigDict(
-        extra="allow",
         json_schema_extra={
             "example": {
                 "upload_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -95,15 +89,10 @@ class UploadResponse(BaseModel):
                 "url": "/api/v1/uploads/660e8400-e29b-41d4-a716-446655440001",
                 "mime_type": "image/jpeg",
                 "size_bytes": 1024000,
-                "size": 1024000,
-                "content_type": "image/jpeg",
                 "checksum": "abc123...",
                 "category": "image",
                 "uploaded_at": "2025-12-20T10:30:00Z",
                 "storage_backend": "local",
-                "thumbnails": {
-                    "thumbnail": "/api/v1/uploads/660e8400-e29b-41d4-a716-446655440002"
-                },
                 "versions": {
                     "thumbnail": {
                         "file_id": "660e8400-e29b-41d4-a716-446655440002",
@@ -121,7 +110,7 @@ class UploadResponse(BaseModel):
                 },
                 "metadata": {},
             }
-        },
+        }
     )
 
 
@@ -132,13 +121,6 @@ class UploadProgressResponse(BaseModel):
     total_size: int = Field(..., description="Total file size in bytes")
     uploaded_size: int = Field(..., description="Bytes uploaded so far")
     progress_percent: float = Field(..., description="Upload progress percentage")
-    progress: float | None = Field(
-        None, description="Legacy alias for progress_percent"
-    )
-    bytes_uploaded: int | None = Field(
-        None, description="Legacy alias for uploaded_size"
-    )
-    total_bytes: int | None = Field(None, description="Legacy alias for total_size")
     status: str = Field(
         ..., description="Upload status (in_progress, completed, failed)"
     )
@@ -146,21 +128,17 @@ class UploadProgressResponse(BaseModel):
     completed_at: str | None = Field(None, description="Upload completion timestamp")
 
     model_config = ConfigDict(
-        extra="allow",
         json_schema_extra={
             "example": {
                 "upload_id": "550e8400-e29b-41d4-a716-446655440000",
                 "total_size": 1024000,
                 "uploaded_size": 512000,
                 "progress_percent": 50.0,
-                "progress": 50.0,
-                "bytes_uploaded": 512000,
-                "total_bytes": 1024000,
                 "status": "in_progress",
                 "started_at": "2025-12-20T10:30:00Z",
                 "completed_at": None,
             }
-        },
+        }
     )
 
 

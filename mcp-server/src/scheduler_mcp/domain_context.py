@@ -9,7 +9,8 @@ Created: 2025-12-24
 """
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional, List, Any
+
 
 # =============================================================================
 # ABBREVIATIONS

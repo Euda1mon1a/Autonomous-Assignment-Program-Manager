@@ -529,7 +529,7 @@ async def analyze_workload_trend(
 
     # Compute confidence intervals (±2 sigma)
     confidence_intervals = []
-    for x_est, P in zip(result["filtered"], result["errors"], strict=False):
+    for i, (x_est, P) in enumerate(zip(result["filtered"], result["errors"])):
         std_dev = np.sqrt(P)
         confidence_intervals.append({
             "lower": x_est - 2 * std_dev,
@@ -638,8 +638,8 @@ async def detect_workload_anomalies(
 
     # Detect anomalies
     anomalies = []
-    for idx, (measured, filtered, residual) in enumerate(
-        zip(request.workload_history, result["filtered"], residuals, strict=False)
+    for i, (measured, filtered, residual) in enumerate(
+        zip(request.workload_history, result["filtered"], residuals)
     ):
         # Compute residual in standard deviations
         if residual_std > 0:
@@ -659,7 +659,7 @@ async def detect_workload_anomalies(
 
             anomalies.append(
                 AnomalyPoint(
-                    index=idx,
+                    index=i,
                     measured_value=measured,
                     filtered_value=filtered,
                     residual=float(residual),

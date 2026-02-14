@@ -6,14 +6,17 @@ from app.api.routes import (
     absences,
     academic_blocks,
     activities,
-    admin_block_assignments,
-    admin_dashboard,
     admin_delete_impact,
+    admin_dashboard,
+    admin_block_assignments,
+    # approval_chain,  # QUARANTINED: requires_coordinator_or_above not implemented
+    faculty_activities,
+    faculty_schedule_preferences,
     admin_users,
     analytics,
     assignments,
-    audience_tokens,
     audit,
+    audience_tokens,
     auth,
     backup,
     batch,
@@ -37,9 +40,6 @@ from app.api.routes import (
     experiments,
     export,
     exports,
-    # approval_chain,  # QUARANTINED: requires_coordinator_or_above not implemented
-    faculty_activities,
-    faculty_schedule_preferences,
     fairness,
     fatigue_risk,
     features,
@@ -48,10 +48,10 @@ from app.api.routes import (
     fmit_timeline,
     game_theory,
     half_day_assignments,
-    half_day_imports,
     health,
     impersonation,
     import_staging,
+    half_day_imports,
     imports,
     institutional_events,
     jobs,
@@ -74,7 +74,6 @@ from app.api.routes import (
     reports,
     resident_weekly_requirements,
     resilience,
-    role_filter_example,
     role_views,
     rotation_templates,
     schedule,
@@ -110,9 +109,6 @@ api_router.include_router(changelog.router, prefix="/changelog", tags=["changelo
 
 api_router.include_router(people.router, prefix="/people", tags=["people"])
 api_router.include_router(blocks.router, prefix="/blocks", tags=["blocks"])
-# Legacy matrix endpoints live at /matrix/*.
-api_router.include_router(academic_blocks.router, tags=["academic-blocks"])
-# Keep explicit alias for newer /academic-blocks namespace.
 api_router.include_router(
     academic_blocks.router, prefix="/academic-blocks", tags=["academic-blocks"]
 )
@@ -206,8 +202,9 @@ api_router.include_router(
 api_router.include_router(
     game_theory.router, prefix="/game-theory", tags=["game-theory"]
 )
-# scheduler_ops router already defines prefix="/scheduler"
-api_router.include_router(scheduler_ops.router, tags=["scheduler-ops"])
+api_router.include_router(
+    scheduler_ops.router, prefix="/scheduler", tags=["scheduler-ops"]
+)
 api_router.include_router(procedures.router, prefix="/procedures", tags=["procedures"])
 api_router.include_router(
     constraints.router, prefix="/constraints", tags=["constraints"]
@@ -237,7 +234,6 @@ api_router.include_router(
 )
 api_router.include_router(rate_limit.router, prefix="/rate-limit", tags=["rate-limit"])
 api_router.include_router(quota.router, prefix="/quota", tags=["quota"])
-api_router.include_router(role_filter_example.router, tags=["role-filter-example"])
 api_router.include_router(
     scheduling_catalyst.router,
     prefix="/scheduling-catalyst",
@@ -267,13 +263,11 @@ api_router.include_router(
     conflict_resolution.router, prefix="/conflicts", tags=["conflict-resolution"]
 )
 
-api_router.include_router(role_views.router, prefix="/role-views", tags=["role-views"])
+api_router.include_router(role_views.router, prefix="/views", tags=["role-views"])
 api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 api_router.include_router(queue.router, prefix="/queue", tags=["queue"])
 api_router.include_router(upload.router, prefix="/uploads", tags=["upload"])
-# Backward-compatibility alias for legacy clients that call /api/upload
-api_router.include_router(upload.router, prefix="/upload", tags=["upload"])
 api_router.include_router(imports.router, prefix="/imports", tags=["imports"])
 api_router.include_router(
     import_staging.router, prefix="/import", tags=["import-staging"]
@@ -299,9 +293,6 @@ api_router.include_router(
 api_router.include_router(sessions.router, prefix="/sessions", tags=["sessions"])
 api_router.include_router(profiling.router, prefix="/profiling", tags=["profiling"])
 api_router.include_router(claude_chat.router, tags=["claude-chat"])  # prefix in router
-api_router.include_router(
-    scheduler.router, prefix="/scheduler", tags=["scheduler-jobs"]
-)
 api_router.include_router(
     scheduler.router, prefix="/scheduler-jobs", tags=["scheduler-jobs"]
 )

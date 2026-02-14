@@ -191,19 +191,19 @@ class GetSwapHistoryTool(
                 records=records,
             )
 
-        except (ConnectionError, TimeoutError):
+        except (ConnectionError, TimeoutError) as e:
             # Network connectivity issues
             return GetSwapHistoryResponse(
                 total_records=0,
                 records=[],
             )
-        except (KeyError, ValueError):
+        except (KeyError, ValueError) as e:
             # Data parsing errors
             return GetSwapHistoryResponse(
                 total_records=0,
                 records=[],
             )
-        except Exception:
+        except Exception as e:
             # Unexpected errors
             return GetSwapHistoryResponse(
                 total_records=0,

@@ -76,7 +76,7 @@ async def export_all_calendars(
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred generating the calendar"
-        ) from e
+        )
 
 
 @router.get("/export/ics/{person_id}")
@@ -124,12 +124,12 @@ async def export_person_ics(
         )
     except ValueError as e:
         logger.error(f"Invalid request for calendar export: {e}", exc_info=True)
-        raise HTTPException(status_code=404, detail="Resource not found") from e
+        raise HTTPException(status_code=404, detail="Resource not found")
     except (KeyError, AttributeError) as e:
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred generating the calendar"
-        ) from e
+        )
 
 
 @router.get("/export/person/{person_id}")
@@ -177,12 +177,12 @@ async def export_person_calendar(
         )
     except ValueError as e:
         logger.error(f"Invalid request for calendar export: {e}", exc_info=True)
-        raise HTTPException(status_code=404, detail="Resource not found") from e
+        raise HTTPException(status_code=404, detail="Resource not found")
     except (KeyError, AttributeError) as e:
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred generating the calendar"
-        ) from e
+        )
 
 
 @router.get("/export/rotation/{rotation_id}")
@@ -225,12 +225,12 @@ async def export_rotation_calendar(
         )
     except ValueError as e:
         logger.error(f"Invalid request for calendar export: {e}", exc_info=True)
-        raise HTTPException(status_code=404, detail="Resource not found") from e
+        raise HTTPException(status_code=404, detail="Resource not found")
     except (KeyError, AttributeError) as e:
         logger.error(f"Error generating calendar export: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred generating the calendar"
-        ) from e
+        )
 
         # =============================================================================
         # Webcal Subscription Endpoints
@@ -300,12 +300,12 @@ async def create_subscription(
         )
     except ValueError as e:
         logger.error(f"Invalid request for calendar subscription: {e}", exc_info=True)
-        raise HTTPException(status_code=404, detail="Resource not found") from e
+        raise HTTPException(status_code=404, detail="Resource not found")
     except Exception as e:
         logger.error(f"Error creating calendar subscription: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred creating the subscription"
-        ) from e
+        )
 
 
 @router.get("/subscribe/{token}")
@@ -373,7 +373,7 @@ async def get_subscription_feed(
         logger.error(f"Error generating calendar feed: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="An error occurred generating the calendar feed"
-        ) from e
+        )
 
 
 @router.get("/subscriptions", response_model=CalendarSubscriptionListResponse)

@@ -1,7 +1,8 @@
 """Chart Generator - Generates charts for reports."""
 
-import base64
+from typing import Any, Dict, List
 import logging
+import base64
 from io import BytesIO
 
 logger = logging.getLogger(__name__)
@@ -226,7 +227,7 @@ class ChartGenerator:
         )
 
         # Draw bars
-        for i, (cat, val) in enumerate(zip(categories, values, strict=False)):
+        for i, (cat, val) in enumerate(zip(categories, values)):
             x = margin + i * bar_spacing + (bar_spacing - bar_width) / 2
             bar_height = (val - min_val) / val_range * plot_height
             y = height - margin - bar_height
@@ -287,7 +288,7 @@ class ChartGenerator:
         colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
         start_angle = -90  # Start at top
 
-        for idx, (label, pct) in enumerate(zip(labels, percentages, strict=False)):
+        for idx, (label, pct) in enumerate(zip(labels, percentages)):
             color = colors[idx % len(colors)]
             slice_angle = (pct / 100) * 360
 

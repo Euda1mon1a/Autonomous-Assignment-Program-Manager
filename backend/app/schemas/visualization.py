@@ -64,11 +64,6 @@ class HeatmapResponse(BaseModel):
     """Response schema for heatmap."""
 
     data: HeatmapData = Field(..., description="Heatmap data")
-    # Backward-compatible flattened fields used by existing route consumers/tests.
-    x_labels: list[str] | None = Field(None, description="X-axis labels (legacy)")
-    y_labels: list[str] | None = Field(None, description="Y-axis labels (legacy)")
-    z_values: list[list[float]] | None = Field(None, description="Z matrix (legacy)")
-    color_scale: str | None = Field(None, description="Color scale (legacy)")
     title: str = Field(..., description="Title for the heatmap")
     generated_at: datetime.datetime = Field(
         default_factory=datetime.datetime.utcnow,

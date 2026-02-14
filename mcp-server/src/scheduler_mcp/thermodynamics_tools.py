@@ -524,6 +524,8 @@ async def get_entropy_monitor_state(
     logger.info(f"Getting entropy monitor state (window={history_window})")
 
     try:
+        from app.resilience.thermodynamics.entropy import ScheduleEntropyMonitor
+
         # In production, would get the actual monitor instance
         # For now, return mock data showing the structure
         logger.warning("Entropy monitor using placeholder data")
@@ -726,6 +728,11 @@ async def analyze_phase_transitions(
 
         except Exception as api_error:
             logger.warning(f"Backend API call failed, using fallback: {api_error}")
+
+        from app.resilience.thermodynamics.phase_transitions import (
+            PhaseTransitionDetector,
+            TransitionSeverity,
+        )
 
         # Fallback: use placeholder data
         logger.warning("Phase transition analysis using placeholder data (backend unavailable)")

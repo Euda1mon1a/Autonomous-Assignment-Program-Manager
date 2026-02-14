@@ -92,7 +92,7 @@ class DeleteAssignmentTool(BaseTool[DeleteAssignmentRequest, DeleteAssignmentRes
                 success=False,
                 message=f"Backend service unavailable: {type(e).__name__}",
             )
-        except KeyError:
+        except KeyError as e:
             return DeleteAssignmentResponse(
                 success=False,
                 message=f"Assignment not found: {request.assignment_id}",

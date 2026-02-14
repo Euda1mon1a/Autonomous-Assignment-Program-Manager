@@ -75,11 +75,11 @@ class ExportFactory:
         if isinstance(format, str):
             try:
                 format = ExportFormat(format.lower())
-            except ValueError as e:
+            except ValueError:
                 raise ValueError(
                     f"Unsupported export format: {format}. "
                     f"Supported formats: {', '.join([f.value for f in ExportFormat])}"
-                ) from e
+                )
 
         return self._exporters[format]
 
@@ -104,11 +104,11 @@ class ExportFactory:
         if isinstance(export_type, str):
             try:
                 export_type = ExportType(export_type.lower())
-            except ValueError as e:
+            except ValueError:
                 raise ValueError(
                     f"Unsupported export type: {export_type}. "
                     f"Supported types: {', '.join([t.value for t in ExportType])}"
-                ) from e
+                )
 
         # Get appropriate exporter
         exporter = self.get_exporter(format)
@@ -148,11 +148,11 @@ class ExportFactory:
         if isinstance(export_type, str):
             try:
                 export_type = ExportType(export_type.lower())
-            except ValueError as e:
+            except ValueError:
                 raise ValueError(
                     f"Unsupported export type: {export_type}. "
                     f"Supported types: {', '.join([t.value for t in ExportType])}"
-                ) from e
+                )
 
         # Get appropriate exporter
         exporter = self.get_exporter(format)
@@ -200,8 +200,8 @@ class ExportFactory:
         if isinstance(export_type, str):
             try:
                 export_type = ExportType(export_type.lower())
-            except ValueError as e:
-                raise ValueError(f"Unsupported export type: {export_type}") from e
+            except ValueError:
+                raise ValueError(f"Unsupported export type: {export_type}")
 
         exporter = self.get_exporter(format)
         return exporter.get_filename(

@@ -19,9 +19,9 @@ import time
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, ParamSpec, TypeVar, cast
+from typing import Any, Callable, TypeVar, ParamSpec, cast
 
 from pydantic import BaseModel, Field
 
@@ -438,7 +438,7 @@ def retry_with_backoff(
 
                     await asyncio.sleep(delay)
 
-                except Exception:
+                except Exception as e:
                     # Non-retryable exception, fail immediately
                     logger.error(
                         f"Non-retryable error in {func.__name__}",
@@ -602,7 +602,7 @@ class CircuitBreaker:
             await self._on_success()
             return result
 
-        except self.config.monitored_exceptions:
+        except self.config.monitored_exceptions as e:
             # Record failure
             await self._on_failure()
             raise

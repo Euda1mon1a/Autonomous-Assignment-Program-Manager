@@ -28,7 +28,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -349,7 +349,7 @@ async def calculate_schedule_energy(
     try:
         from .api_client import get_api_client
 
-        client = await get_api_client()
+        client = get_api_client()
 
         result = await client.post(
             "/api/v1/resilience/exotic/hopfield/energy",
@@ -394,6 +394,8 @@ async def calculate_schedule_energy(
         logger.warning("Hopfield energy using placeholder data")
 
         # Mock energy calculation showing realistic values
+        import numpy as np
+
         # Simulate a schedule state
         state_dim = 200  # e.g., 10 faculty × 20 time blocks
         num_assignments = 156
@@ -576,7 +578,7 @@ async def find_nearby_attractors(
     try:
         from .api_client import get_api_client
 
-        client = await get_api_client()
+        client = get_api_client()
 
         result = await client.post(
             "/api/v1/resilience/exotic/hopfield/attractors",
@@ -783,7 +785,7 @@ async def measure_basin_depth(
     try:
         from .api_client import get_api_client
 
-        client = await get_api_client()
+        client = get_api_client()
 
         result = await client.post(
             "/api/v1/resilience/exotic/hopfield/basin-depth",
@@ -824,6 +826,7 @@ async def measure_basin_depth(
     try:
         logger.warning("Basin depth measurement using placeholder data")
 
+        import numpy as np
 
         # Simulate basin depth measurements
         # Energy barriers from perturbation experiments
@@ -1018,7 +1021,7 @@ async def detect_spurious_attractors(
     try:
         from .api_client import get_api_client
 
-        client = await get_api_client()
+        client = get_api_client()
 
         result = await client.post(
             "/api/v1/resilience/exotic/hopfield/spurious",

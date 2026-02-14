@@ -10,14 +10,10 @@ class StaffRole(str, Enum):
     COORDINATOR = "coordinator"
     FACULTY = "faculty"
     CLINICAL_STAFF = "clinical_staff"  # rn, lpn, msa
-    RN = "rn"
-    LPN = "lpn"
-    MSA = "msa"
     RESIDENT = "resident"
 
 
 class ViewPermissions(BaseModel):
-    # Canonical permission fields
     can_view_all_schedules: bool = False
     can_view_own_schedule: bool = True
     can_view_manifest: bool = True
@@ -26,11 +22,6 @@ class ViewPermissions(BaseModel):
     can_view_compliance: bool = False
     can_view_conflicts: bool = False
     can_manage_swaps: bool = False
-    # Legacy compatibility fields still expected by older clients/tests
-    can_view_schedules: bool = False
-    can_edit_schedules: bool = False
-    can_approve_swaps: bool = False
-    can_request_swaps: bool = False
 
 
 class RoleViewConfig(BaseModel):

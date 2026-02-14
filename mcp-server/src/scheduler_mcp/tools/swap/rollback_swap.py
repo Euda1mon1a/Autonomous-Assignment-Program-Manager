@@ -117,7 +117,7 @@ class RollbackSwapTool(BaseTool[RollbackSwapRequest, RollbackSwapResponse]):
                 message=f"Backend service unavailable: {type(e).__name__}",
                 swap_id=request.swap_id,
             )
-        except KeyError:
+        except KeyError as e:
             return RollbackSwapResponse(
                 success=False,
                 message=f"Swap not found: {request.swap_id}",

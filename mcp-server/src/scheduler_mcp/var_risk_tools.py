@@ -26,9 +26,10 @@ import logging
 import random
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
+
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -280,13 +281,10 @@ def calculate_var(losses: list[float], confidence: float) -> float:
         return 0.0
 
     sorted_losses = sorted(losses)
-    # Use a lower-quantile nearest-rank baseline.
-    # Example with 10 samples: 90% -> index 8 (value 9), 95% -> index 8 (value 9).
-    index = int(confidence * len(sorted_losses)) - 1
-    # For larger samples at very high confidence, step into the first tail bucket
-    # to avoid optimistic cutoffs when many values are tied near the boundary.
-    if len(sorted_losses) >= 50 and confidence >= 0.95:
-        index += 1
+    # VaR at confidence level X means X% of losses are below this value
+    # For 95% confidence, we want the 95th percentile (upper tail)
+    index = int(confidence * len(losses))
+    # Ensure index is within bounds
     index = max(0, min(index, len(sorted_losses) - 1))
     return sorted_losses[index]
 
@@ -338,7 +336,7 @@ def classify_risk_severity(
         return RiskSeverity.CRITICAL
     elif var_value >= threshold_moderate:
         return RiskSeverity.HIGH
-    elif var_value >= threshold_moderate * 0.75:
+    elif var_value >= threshold_moderate * 0.5:
         return RiskSeverity.MODERATE
     else:
         return RiskSeverity.LOW
@@ -372,11 +370,13 @@ async def calculate_coverage_var(request: CoverageVaRRequest) -> CoverageVaRResp
         },
     )
 
+    now = datetime.utcnow()
+
     try:
         # Import API client for backend communication
         from .api_client import get_api_client
 
-        client = await get_api_client()
+        client = get_api_client()
 
         # Call backend coverage analytics endpoint
         result = await client.post(
@@ -491,7 +491,7 @@ async def calculate_workload_var(request: WorkloadVaRRequest) -> WorkloadVaRResp
     try:
         from .api_client import get_api_client
 
-        client = await get_api_client()
+        client = get_api_client()
 
         result = await client.post(
             "/api/v1/analytics/workload-var",
@@ -698,7 +698,7 @@ async def calculate_conditional_var(
     try:
         from .api_client import get_api_client
 
-        client = await get_api_client()
+        client = get_api_client()
 
         result = await client.post(
             "/api/v1/analytics/conditional-var",

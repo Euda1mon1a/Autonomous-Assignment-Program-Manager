@@ -2,7 +2,6 @@
 Get violations tool for retrieving compliance violations.
 """
 
-import inspect
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -117,7 +116,13 @@ class GetViolationsTool(BaseTool[GetViolationsRequest, GetViolationsResponse]):
         client = self._require_api_client()
 
         try:
-            data = await self._fetch_violations_payload(client, request)
+            # Get violations via API client
+            data = await client.get_violations(
+                start_date=request.start_date,
+                end_date=request.end_date,
+                rule_types=request.rule_types,
+                severity=request.severity,
+            )
 
             # Parse violations
             violations = []
@@ -147,7 +152,7 @@ class GetViolationsTool(BaseTool[GetViolationsRequest, GetViolationsResponse]):
                 violations=violations,
             )
 
-        except Exception:
+        except Exception as e:
             # Return empty result on error
             return GetViolationsResponse(
                 start_date=request.start_date,
@@ -157,61 +162,3 @@ class GetViolationsTool(BaseTool[GetViolationsRequest, GetViolationsResponse]):
                 warning_count=0,
                 violations=[],
             )
-
-    async def _fetch_violations_payload(
-        self, client: Any, request: GetViolationsRequest
-    ) -> dict[str, Any]:
-        """Fetch and normalize violations payload for real and mocked API clients."""
-        payload = {
-            "start_date": request.start_date,
-            "end_date": request.end_date,
-            "rule_types": request.rule_types,
-            "severity": request.severity,
-        }
-
-        get_fn = getattr(client, "get_violations", None)
-        if callable(get_fn):
-            result = get_fn(**payload)
-            if inspect.isawaitable(result):
-                result = await result
-            result = await self._normalize_response_payload(result)
-            if isinstance(result, dict):
-                return result
-
-        params: dict[str, Any] = {
-            "start_date": request.start_date,
-            "end_date": request.end_date,
-        }
-        if request.rule_types:
-            params["rule_types"] = ",".join(request.rule_types)
-        if request.severity:
-            params["severity"] = request.severity
-
-        headers = await client._ensure_authenticated()
-        response = await client.client.get(
-            f"{client.config.api_prefix}/compliance/violations",
-            headers=headers,
-            params=params,
-        )
-        response.raise_for_status()
-
-        response_data = response.json()
-        if inspect.isawaitable(response_data):
-            response_data = await response_data
-        if not isinstance(response_data, dict):
-            raise ValueError("Unexpected violations response payload")
-        return response_data
-
-    async def _normalize_response_payload(self, result: Any) -> dict[str, Any] | None:
-        """Normalize either a dict payload or a response-like object."""
-        if isinstance(result, dict):
-            return result
-        json_fn = getattr(result, "json", None)
-        if not callable(json_fn):
-            return None
-        payload = json_fn()
-        if inspect.isawaitable(payload):
-            payload = await payload
-        if isinstance(payload, dict):
-            return payload
-        return None

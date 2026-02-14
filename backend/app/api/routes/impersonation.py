@@ -136,13 +136,13 @@ async def start_impersonation(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e),
-        ) from e
+        )
     except ValueError as e:
         logger.warning("Impersonation target not found: %s", e)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
-        ) from e
+        )
 
 
 @router.post("/end-impersonation", response_model=EndImpersonationResponse)
@@ -198,7 +198,7 @@ async def end_impersonation(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
-        ) from e
+        )
 
 
 @router.get("/impersonation-status", response_model=ImpersonationStatus)

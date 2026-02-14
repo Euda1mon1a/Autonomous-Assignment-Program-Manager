@@ -22,6 +22,7 @@ class WebhookCreate(BaseModel):
     )
     secret: str | None = Field(
         None,
+        min_length=32,
         description="Shared secret (auto-generated if not provided)",
     )
     custom_headers: dict[str, str] | None = Field(
@@ -47,7 +48,7 @@ class WebhookUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=255)
     description: str | None = None
     event_types: list[str] | None = Field(None, min_length=1)
-    secret: str | None = None
+    secret: str | None = Field(None, min_length=32)
     custom_headers: dict[str, str] | None = None
     timeout_seconds: int | None = Field(None, ge=1, le=300)
     max_retries: int | None = Field(None, ge=0, le=10)

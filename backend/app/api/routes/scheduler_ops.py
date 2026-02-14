@@ -33,7 +33,6 @@ from app.schemas.scheduler_ops import (
     ApprovalAction,
     ApprovalRequest,
     ApprovalResponse,
-    ApprovalTokenRequest,
     ApprovedTaskInfo,
     CoverageMetrics,
     FixItMode,
@@ -636,7 +635,7 @@ async def get_situation_report(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate situation report",
-        ) from e
+        )
 
 
 @router.post("/fix-it", response_model=FixItResponse)
@@ -790,7 +789,7 @@ async def initiate_fix_it_mode(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Fix-it mode failed: {str(e)}",
-        ) from e
+        )
 
 
 @router.post("/approve", response_model=ApprovalResponse)
@@ -924,12 +923,14 @@ async def approve_task(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Approval processing failed: {str(e)}",
-        ) from e
+        )
 
 
 @router.post("/approve/token/generate")
 async def generate_approval_token(
-    request: ApprovalTokenRequest,
+    task_ids: list[str],
+    task_type: str = "schedule_change",
+    expires_in_hours: int = 24,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> dict:
@@ -944,7 +945,7 @@ async def generate_approval_token(
     Requires authentication.
     """
     logger.info(
-        f"Generating approval token for {len(request.task_ids)} tasks by {current_user.username}"
+        f"Generating approval token for {len(task_ids)} tasks by {current_user.username}"
     )
 
     try:
@@ -953,24 +954,24 @@ async def generate_approval_token(
 
         # Store token data
         _approval_tokens[token] = {
-            "task_ids": request.task_ids,
-            "task_type": request.task_type,
+            "task_ids": task_ids,
+            "task_type": task_type,
             "created_by": current_user.username,
             "created_at": datetime.utcnow(),
-            "expires_at": datetime.utcnow() + timedelta(hours=request.expires_in_hours),
+            "expires_at": datetime.utcnow() + timedelta(hours=expires_in_hours),
             "used": False,
         }
 
         logger.info(
-            f"Generated approval token {token[:8]}... for {len(request.task_ids)} tasks"
+            f"Generated approval token {token[:8]}... for {len(task_ids)} tasks"
         )
 
         return {
             "token": token,
-            "task_ids": request.task_ids,
-            "task_type": request.task_type,
+            "task_ids": task_ids,
+            "task_type": task_type,
             "expires_at": _approval_tokens[token]["expires_at"].isoformat(),
-            "message": f"Approval token generated for {len(request.task_ids)} task(s)",
+            "message": f"Approval token generated for {len(task_ids)} task(s)",
         }
 
     except Exception as e:
@@ -978,7 +979,7 @@ async def generate_approval_token(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Token generation failed: {str(e)}",
-        ) from e
+        )
 
 
 # ============================================================================
@@ -1072,7 +1073,7 @@ async def abort_solver_run(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to abort solver: {str(e)}",
-        ) from e
+        )
 
 
 @router.get("/runs/{run_id}/progress", response_model=SolverProgressResponse)
@@ -1117,7 +1118,7 @@ async def get_solver_progress(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get solver progress: {str(e)}",
-        ) from e
+        )
 
 
 @router.get("/runs/active", response_model=ActiveSolversResponse)
@@ -1159,4 +1160,4 @@ async def get_active_solvers(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get active solvers: {str(e)}",
-        ) from e
+        )

@@ -121,8 +121,8 @@ class RoleFilterService:
         """
         try:
             return UserRole(role_str.lower())
-        except ValueError as e:
-            raise ValueError(f"Invalid role: {role_str}") from e
+        except ValueError:
+            raise ValueError(f"Invalid role: {role_str}")
 
     @classmethod
     def normalize_clinical_staff_role(cls, role: UserRole) -> UserRole:

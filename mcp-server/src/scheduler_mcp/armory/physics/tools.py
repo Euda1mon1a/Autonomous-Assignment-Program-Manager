@@ -32,35 +32,37 @@ def register_physics_tools(mcp: "FastMCP") -> int:
         Number of tools registered
     """
     # Import response types and helper functions (... goes up two levels to scheduler_mcp)
-    from ...hopfield_attractor_tools import (
-        BasinDepthResponse,
-        EnergyLandscapeResponse,
-        HopfieldEnergyResponse,
-        NearbyAttractorsResponse,
-        SpuriousAttractorsResponse,
-        analyze_energy_landscape,
-        calculate_hopfield_energy,
-        detect_spurious_attractors,
-        find_nearby_attractors,
-        measure_basin_depth,
-    )
     from ...thermodynamics_tools import (
-        EntropyMonitorStateResponse,
-        FreeEnergyOptimizationResponse,
-        PhaseTransitionRiskResponse,
         ScheduleEntropyResponse,
-        analyze_phase_transitions,
+        EntropyMonitorStateResponse,
+        PhaseTransitionRiskResponse,
+        FreeEnergyOptimizationResponse,
         calculate_schedule_entropy,
         get_entropy_monitor_state,
+        analyze_phase_transitions,
         optimize_free_energy,
     )
+    from ...hopfield_attractor_tools import (
+        HopfieldEnergyResponse,
+        NearbyAttractorsResponse,
+        BasinDepthResponse,
+        SpuriousAttractorsResponse,
+        EnergyLandscapeResponse,
+        calculate_hopfield_energy,
+        find_nearby_attractors,
+        measure_basin_depth,
+        detect_spurious_attractors,
+        analyze_energy_landscape,
+    )
     from ...time_crystal_tools import (
-        CheckpointStatusResponse,
         SchedulePeriodicityResponse,
         TimeCrystalObjectiveResponse,
+        CheckpointStatusResponse,
+        TimeCrystalHealthResponse,
         analyze_schedule_periodicity,
         calculate_time_crystal_objective,
         get_checkpoint_status,
+        get_time_crystal_health,
     )
 
     tools_registered = 0

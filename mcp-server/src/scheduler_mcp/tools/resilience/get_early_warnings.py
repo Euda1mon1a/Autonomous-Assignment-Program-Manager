@@ -173,7 +173,7 @@ class GetEarlyWarningsTool(
                 warnings=warnings,
             )
 
-        except (ConnectionError, TimeoutError):
+        except (ConnectionError, TimeoutError) as e:
             # Network connectivity issues
             return GetEarlyWarningsResponse(
                 start_date=request.start_date,
@@ -183,7 +183,7 @@ class GetEarlyWarningsTool(
                 high_count=0,
                 warnings=[],
             )
-        except (KeyError, ValueError):
+        except (KeyError, ValueError) as e:
             # Data parsing errors
             return GetEarlyWarningsResponse(
                 start_date=request.start_date,
@@ -193,7 +193,7 @@ class GetEarlyWarningsTool(
                 high_count=0,
                 warnings=[],
             )
-        except Exception:
+        except Exception as e:
             # Unexpected errors
             return GetEarlyWarningsResponse(
                 start_date=request.start_date,

@@ -55,11 +55,12 @@ import logging
 from datetime import date as date_type
 from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any
 
 import numpy as np
 from pydantic import BaseModel, Field
 from scipy.integrate import odeint
-from scipy.optimize import least_squares
+from scipy.optimize import curve_fit, least_squares
 
 logger = logging.getLogger(__name__)
 
@@ -536,9 +537,7 @@ async def analyze_supply_demand_cycles(
     # Build predicted trajectory
     predicted_trajectory = [
         {"day": int(day), "capacity": float(cap), "demand": float(dem)}
-        for day, cap, dem in zip(
-            t[::10], capacity_traj[::10], demand_traj[::10], strict=False
-        )  # Subsample for readability
+        for day, cap, dem in zip(t[::10], capacity_traj[::10], demand_traj[::10])  # Subsample for readability
     ]
 
     # Ecological interpretation
@@ -672,9 +671,7 @@ async def predict_capacity_crunch(
     # Build trajectory
     predicted_trajectory = [
         {"day": int(day), "capacity": float(cap), "demand": float(dem)}
-        for day, cap, dem in zip(
-            t[::10], capacity_traj[::10], demand_traj[::10], strict=False
-        )
+        for day, cap, dem in zip(t[::10], capacity_traj[::10], demand_traj[::10])
     ]
 
     return CapacityCrunchResponse(
@@ -895,16 +892,12 @@ async def simulate_intervention(
     # Build trajectories
     baseline_trajectory = [
         {"day": int(day), "capacity": float(cap), "demand": float(dem)}
-        for day, cap, dem in zip(
-            t_baseline[::10], cap_baseline[::10], dem_baseline[::10], strict=False
-        )
+        for day, cap, dem in zip(t_baseline[::10], cap_baseline[::10], dem_baseline[::10])
     ]
 
     intervention_trajectory = [
         {"day": int(day), "capacity": float(cap), "demand": float(dem)}
-        for day, cap, dem in zip(
-            t_int[::10], cap_int[::10], dem_int[::10], strict=False
-        )
+        for day, cap, dem in zip(t_int[::10], cap_int[::10], dem_int[::10])
     ]
 
     return InterventionResponse(

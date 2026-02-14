@@ -461,6 +461,8 @@ async def assess_immune_response(
         except Exception as api_error:
             logger.warning(f"Backend API call failed, using fallback: {api_error}")
 
+        from app.resilience.immune_system import ScheduleImmuneSystem
+
         # Fallback to placeholder data
         logger.warning("Immune system assessment using placeholder data (backend unavailable)")
 
@@ -655,6 +657,8 @@ async def check_memory_cells(
     logger.info(f"Checking memory cells (include_inactive={include_inactive})")
 
     try:
+        from app.resilience.immune_system import ScheduleImmuneSystem
+
         # In production, would access actual memory cell data
         logger.warning("Memory cell check using placeholder data")
 
@@ -782,6 +786,8 @@ async def analyze_antibody_response(
     logger.info(f"Analyzing antibody response (schedule_state={schedule_state is not None})")
 
     try:
+        from app.resilience.immune_system import ScheduleImmuneSystem
+
         # In production, would access actual immune system
         logger.warning("Antibody analysis using placeholder data")
 

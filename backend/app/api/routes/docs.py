@@ -56,7 +56,7 @@ async def get_enhanced_openapi(request: Request) -> JSONResponse:
         logger.error(f"Failed to generate enhanced OpenAPI schema: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate enhanced OpenAPI schema"
-        ) from e
+        )
 
 
 @router.get("/markdown")
@@ -81,7 +81,7 @@ async def get_markdown_docs(request: Request) -> PlainTextResponse:
         logger.error(f"Failed to generate Markdown documentation: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate Markdown documentation"
-        ) from e
+        )
 
 
 @router.get("/endpoint")
@@ -126,7 +126,7 @@ async def get_endpoint_documentation(
         logger.error(f"Failed to generate endpoint documentation: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate endpoint documentation"
-        ) from e
+        )
 
 
 @router.get("/examples")
@@ -168,9 +168,7 @@ async def get_code_examples(
 
     except Exception as e:
         logger.error(f"Failed to generate code examples: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail="Failed to generate code examples"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to generate code examples")
 
 
 @router.get("/errors")
@@ -196,7 +194,7 @@ async def get_error_documentation(request: Request) -> JSONResponse:
         logger.error(f"Failed to generate error documentation: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate error documentation"
-        ) from e
+        )
 
 
 @router.get("/changelog")
@@ -220,9 +218,7 @@ async def get_changelog(request: Request) -> PlainTextResponse:
 
     except Exception as e:
         logger.error(f"Failed to generate changelog: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail="Failed to generate changelog"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to generate changelog")
 
 
 @router.get("/version")
@@ -256,9 +252,7 @@ async def get_version_info(request: Request) -> JSONResponse:
 
     except Exception as e:
         logger.error(f"Failed to get version info: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail="Failed to get version information"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to get version information")
 
 
 @router.get("/stats")
@@ -303,7 +297,7 @@ async def get_documentation_stats(request: Request) -> JSONResponse:
         logger.error(f"Failed to generate documentation stats: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate documentation statistics"
-        ) from e
+        )
 
 
 @router.get("/export/openapi")
@@ -344,7 +338,7 @@ async def export_openapi_schema(
         logger.error(f"Failed to export OpenAPI schema: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Failed to export OpenAPI schema: {str(e)}"
-        ) from e
+        )
 
 
 @router.get("/export/markdown")
@@ -385,7 +379,7 @@ async def export_markdown_documentation(
         logger.error(f"Failed to export Markdown documentation: {e}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Failed to export Markdown documentation: {str(e)}"
-        ) from e
+        )
 
 
 @router.get("/")

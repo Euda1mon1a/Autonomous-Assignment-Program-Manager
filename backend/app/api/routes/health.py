@@ -263,11 +263,11 @@ async def check_service(service_name: str) -> dict[str, Any]:
         result = await health_aggregator.check_service(service_name)
         return result.model_dump()
 
-    except ValueError as e:
+    except ValueError:
         raise HTTPException(
             status_code=404,
             detail=f"Unknown service: {service_name}. Valid services: database, redis, celery, circuit_breakers",
-        ) from e
+        )
 
 
 @router.get("/history")

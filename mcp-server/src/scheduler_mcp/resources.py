@@ -8,11 +8,11 @@ They are automatically refreshed and can be subscribed to for updates.
 import logging
 import os
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session, joinedload
 
 logger = logging.getLogger(__name__)
@@ -429,7 +429,7 @@ async def get_compliance_summary(
             sorted_dates = sorted(blocks_by_date.keys())
 
             # Check 80-hour rule - rolling 4-week windows
-            for window_start in sorted_dates:
+            for i, window_start in enumerate(sorted_dates):
                 window_end = window_start + timedelta(days=27)  # 4 weeks - 1 day
 
                 total_blocks = sum(

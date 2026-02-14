@@ -122,7 +122,7 @@ class WorkloadDistributionTool(
                 people=people,
             )
 
-        except Exception:
+        except Exception as e:
             # Return empty metrics
             return WorkloadDistributionResponse(
                 start_date=request.start_date,
