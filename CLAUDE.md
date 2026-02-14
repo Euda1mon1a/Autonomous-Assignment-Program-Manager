@@ -209,7 +209,7 @@ frontend/src/types/api.ts (barrel export + utilities)
 **If types are stale:**
 ```bash
 cd frontend && npm run generate:types
-git add src/types/api-generated.ts
+git add src/types/api-generated.ts src/types/.api-generated.hash
 ```
 
 > RAG: `rag_search('code style examples')` for detailed patterns
