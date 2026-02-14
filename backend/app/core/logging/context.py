@@ -12,7 +12,7 @@ Provides:
 import contextvars
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, UTC
-from typing import Any
+from typing import Any, Callable, ParamSpec, TypeVar
 from uuid import uuid4
 
 from loguru import logger
@@ -34,6 +34,9 @@ span_id_ctx: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "span_id", default=None
 )
 custom_ctx: contextvars.ContextVar[dict[str, Any]] = contextvars.ContextVar("custom")
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def _get_custom_ctx_default() -> dict[str, Any]:
@@ -367,7 +370,7 @@ def create_request_context(
     )
 
 
-def with_log_context(**context_fields: Any):  # type: ignore[no-untyped-def]
+def with_log_context(**context_fields: Any) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Decorator to add context to function logging.
 
@@ -380,8 +383,8 @@ def with_log_context(**context_fields: Any):  # type: ignore[no-untyped-def]
             logger.info("Starting")  # Will include operation="schedule_generation"
     """
 
-    def decorator(func):  # type: ignore[no-untyped-def]
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             # Set custom fields
             for key, value in context_fields.items():
                 set_custom_field(key, value)
