@@ -311,6 +311,22 @@ Wrapping operations in try/except with a silent fallback path. Example: if `sche
 
 ---
 
+## Model Selection: Spark vs Regular Codex
+
+If you are running as `gpt-5.3-codex-spark`, you are the **speed tier** — optimized for interactive, small-scope work.
+
+**Spark scope limits:**
+- Single-file fixes only (typos, `from e`, import cleanup, type annotations)
+- Guardrail compliance checks
+- Quick debugging with instant feedback
+- If your task touches >5 files, switch to regular `gpt-5.3-codex` or flag for human
+
+**Spark must still follow ALL guardrails above.** Speed does not exempt you from safety classification.
+
+**If running as `gpt-5.3-codex` (default for automations):** No additional scope limits beyond the standard guardrails.
+
+---
+
 ## Conventions
 
 See `docs/development/AGENTS.md` for:

@@ -41,6 +41,44 @@ Without explicit model selection, all agents inherit the parent model (typically
 
 ---
 
+## Codex Model Tiers (GPT-5.3 Family)
+
+In addition to Claude models, the project uses OpenAI Codex for automated background work and interactive coding.
+
+| Model | Model ID | Speed | Context | Best For |
+|-------|----------|-------|---------|----------|
+| **5.3-Codex** | `gpt-5.3-codex` | Standard | 192K | Nightly automations, multi-file tasks, deep analysis |
+| **5.3-Codex-Spark** | `gpt-5.3-codex-spark` | 1000+ tok/s | 128K | Interactive pairing, quick single-file fixes, real-time iteration |
+
+### Spark vs Regular Codex
+
+**Spark** (released Feb 12, 2026) runs on Cerebras WSE-3 hardware for near-instant response. It trades some capability for speed — more capable than GPT-5.1-Codex-mini but smaller than full 5.3-Codex. Research preview for ChatGPT Pro subscribers.
+
+**When to use Spark:**
+- Interactive pairing sessions where sub-second response matters
+- Quick single-file fixes (typos, `from e` chaining, import cleanup)
+- Guardrail compliance checks on small changesets
+- Rapid prototyping and UI iteration
+
+**When to use regular 5.3-Codex:**
+- All 15 nightly automations (need full capability, not speed)
+- Multi-file refactors (>5 files)
+- Tasks touching scheduling, ACGME compliance, or resilience
+- PR-level code reviews requiring deep reasoning
+
+**CLI usage:** `codex --model gpt-5.3-codex-spark` or `/model` mid-session. Default remains `gpt-5.3-codex` for automations.
+
+### Cross-System Model Comparison
+
+| Tier | Claude | Codex | Role |
+|------|--------|-------|------|
+| Heavy | Opus 4.6 | 5.3-Codex | Complex reasoning, orchestration, multi-file |
+| Medium | Sonnet 4.5 | — | Tactical code gen, reviews |
+| Light | Haiku 4.5 | — | Simple execution, quick lookups |
+| Speed | — | 5.3-Codex-Spark | Real-time iteration, interactive pairing |
+
+---
+
 ## Architecture
 
 ### Database Schema (pgvector)
