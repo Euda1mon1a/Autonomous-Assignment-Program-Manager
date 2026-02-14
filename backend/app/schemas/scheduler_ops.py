@@ -206,6 +206,26 @@ class FixItResponse(BaseModel):
 # Approval Schemas
 
 
+class ApprovalTokenRequest(BaseModel):
+    """Request to generate an approval token for one or more tasks."""
+
+    task_ids: list[str] = Field(
+        ..., min_length=1, description="Task IDs requiring approval"
+    )
+    task_type: str = Field(
+        default="schedule_change",
+        min_length=1,
+        max_length=100,
+        description="Task type/category for audit context",
+    )
+    expires_in_hours: int = Field(
+        default=24,
+        ge=1,
+        le=168,
+        description="Token expiration window in hours",
+    )
+
+
 class ApprovalRequest(BaseModel):
     """Request to approve or deny a task."""
 

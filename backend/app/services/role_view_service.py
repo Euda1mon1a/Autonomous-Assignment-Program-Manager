@@ -4,6 +4,13 @@ from typing import Any, Dict, List, Optional
 
 from app.schemas.role_views import RoleViewConfig, StaffRole, ViewPermissions
 
+CLINICAL_STAFF_ROLES = {
+    StaffRole.CLINICAL_STAFF,
+    StaffRole.RN,
+    StaffRole.LPN,
+    StaffRole.MSA,
+}
+
 ROLE_PERMISSIONS = {
     StaffRole.ADMIN: ViewPermissions(
         can_view_all_schedules=True,
@@ -11,25 +18,56 @@ ROLE_PERMISSIONS = {
         can_view_compliance=True,
         can_view_conflicts=True,
         can_manage_swaps=True,
+        can_view_schedules=True,
+        can_edit_schedules=True,
+        can_approve_swaps=True,
+        can_request_swaps=True,
     ),
     StaffRole.COORDINATOR: ViewPermissions(
         can_view_all_schedules=True,
         can_view_academic_blocks=True,
         can_view_conflicts=True,
         can_manage_swaps=True,
+        can_view_schedules=True,
+        can_edit_schedules=True,
+        can_approve_swaps=True,
+        can_request_swaps=True,
     ),
     StaffRole.FACULTY: ViewPermissions(
         can_view_conflicts=True,
         can_manage_swaps=True,
+        can_view_schedules=True,
+        can_request_swaps=True,
     ),
     StaffRole.CLINICAL_STAFF: ViewPermissions(
         can_view_all_schedules=False,
         can_view_academic_blocks=False,
         can_view_compliance=False,
+        can_view_schedules=True,
+    ),
+    StaffRole.RN: ViewPermissions(
+        can_view_all_schedules=False,
+        can_view_academic_blocks=False,
+        can_view_compliance=False,
+        can_view_schedules=True,
+    ),
+    StaffRole.LPN: ViewPermissions(
+        can_view_all_schedules=False,
+        can_view_academic_blocks=False,
+        can_view_compliance=False,
+        can_view_schedules=True,
+    ),
+    StaffRole.MSA: ViewPermissions(
+        can_view_all_schedules=False,
+        can_view_academic_blocks=False,
+        can_view_compliance=False,
+        can_view_schedules=True,
     ),
     StaffRole.RESIDENT: ViewPermissions(
         can_view_conflicts=True,
         can_manage_swaps=True,
+        can_view_schedules=True,
+        can_request_swaps=True,
     ),
 }
 
@@ -97,7 +135,7 @@ class RoleViewService:
             filtered_data.pop("swap_management", None)
 
         # For clinical staff, limit to manifest and call roster
-        if role == StaffRole.CLINICAL_STAFF:
+        if role in CLINICAL_STAFF_ROLES:
             # Keep only manifest and call roster
             allowed_keys = {"manifest", "call_roster", "today_assignments"}
             keys_to_remove = [
@@ -130,7 +168,7 @@ class RoleViewService:
             return schedules
 
         # Clinical staff sees only today's manifest
-        if role == StaffRole.CLINICAL_STAFF:
+        if role in CLINICAL_STAFF_ROLES:
             from datetime import date
 
             today = date.today().isoformat()

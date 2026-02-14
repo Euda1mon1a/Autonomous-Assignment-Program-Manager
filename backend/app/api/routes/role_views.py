@@ -29,12 +29,12 @@ async def get_role_permissions(
     try:
         permissions = RoleViewService.get_permissions(role)
         return permissions
-    except Exception:
+    except Exception as e:
         logger.exception("Failed to retrieve permissions for role %s", role)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred retrieving permissions",
-        )
+        ) from e
 
 
 @router.get("/views/config/{role}", response_model=RoleViewConfig)
@@ -53,12 +53,12 @@ async def get_role_config(
     try:
         config = RoleViewService.get_role_config(role)
         return config
-    except Exception:
+    except Exception as e:
         logger.exception("Failed to retrieve role config for %s", role)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred retrieving role configuration",
-        )
+        ) from e
 
 
 @router.get("/views/config")
@@ -74,12 +74,12 @@ async def get_current_user_view_config(
     try:
         config = RoleViewService.get_role_config(current_user.role)
         return config
-    except Exception:
+    except Exception as e:
         logger.exception("Failed to retrieve role config for current user")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred retrieving role configuration",
-        )
+        ) from e
 
 
 @router.post("/views/check-access")
@@ -106,12 +106,12 @@ async def check_endpoint_access(
             "can_access": can_access,
             "permissions": RoleViewService.get_permissions(role),
         }
-    except Exception:
+    except Exception as e:
         logger.exception("Failed to check endpoint access for role %s", role)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred checking access",
-        )
+        ) from e
 
 
 @router.get("/views/roles", response_model=list)
