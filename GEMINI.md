@@ -75,3 +75,9 @@ If there is any conflict, follow the strictest rule.
 - **MCP Server**: 97+ AI tools at `http://127.0.0.1:8081/mcp`
 
 See `CLAUDE.md` for full project rules, API type contracts, and security requirements.
+
+### Task Lists (Single Source of Truth)
+
+- **Agent tasks:** `TODO.md` (root) — prioritized batches for autonomous work
+- **Human tasks:** `HUMAN_TODO.md` (root) — requires human action (accounts, config, decisions)
+- **Do NOT create separate task lists** — all agents share the same `TODO.md`

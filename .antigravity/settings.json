@@ -1,7 +1,7 @@
 {
   "$schema": "https://antigravityai.org/schemas/settings.json",
   "version": "1.0.0",
-  "lastUpdated": "2026-01-09",
+  "lastUpdated": "2026-02-14",
 
   "autopilot": {
     "enabled": true,
@@ -53,9 +53,9 @@
   },
 
   "models": {
-    "default": "claude-sonnet-4-5",
-    "thinking": "claude-sonnet-4-5-thinking",
-    "complex": "claude-opus-4-5-thinking",
+    "default": "claude-sonnet-4-5-20250929",
+    "thinking": "claude-sonnet-4-5-20250929",
+    "complex": "claude-opus-4-6",
     "quick": "gemini-3-flash"
   },
 
@@ -70,30 +70,32 @@
   },
 
   "mcp": {
-    "autoConnect": false,
+    "autoConnect": true,
     "serverPath": "../mcp-server",
     "healthCheckInterval": 60,
-    "note": "Disabled - conflicts with Claude Code .mcp.json schema"
+    "configMethod": "gemini-settings-json",
+    "note": "Configured in ~/.gemini/settings.json mcpServers (httpUrl), not .mcp.json"
   },
 
   "projectContext": {
-    "instructionsFile": "../CLAUDE.md",
-    "architectureFile": "../ARCHITECTURE.md"
+    "instructionsFile": "../GEMINI.md",
+    "fallbackFile": "../CLAUDE.md",
+    "architectureFile": "../ARCHITECTURE.md",
+    "taskList": "../TODO.md",
+    "humanTaskList": "../HUMAN_TODO.md"
   },
 
   "agentIdentity": {
     "claudeModels": {
       "identity": "ASTRONAUT",
-      "identityFile": "../.claude/Identities/ASTRONAUT.identity.md",
-      "skillFile": "../.claude/skills/astronaut/SKILL.md",
-      "governance": "../.claude/Governance/HIERARCHY.md",
-      "reportsTo": "ORCHESTRATOR",
-      "model": "claude-opus-4-5",
-      "note": "When Claude model selected, operate as ASTRONAUT agent with PAI governance"
+      "model": "claude-opus-4-6",
+      "note": "When Claude model selected, follow CLAUDE.md guardrails"
     },
     "geminiModels": {
       "identity": "AUTOPILOT",
-      "note": "Native Antigravity autopilot without PAI governance bridge"
+      "model": "gemini-3-flash",
+      "instructionsFile": "../GEMINI.md",
+      "note": "Native Antigravity autopilot — follows GEMINI.md guardrails"
     }
   },
 
