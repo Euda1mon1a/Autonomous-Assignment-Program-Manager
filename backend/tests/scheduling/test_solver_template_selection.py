@@ -41,6 +41,11 @@ def test_select_template_returns_none_for_empty_list():
 def test_cpsat_allows_templates_requiring_procedure_credential():
     """CP-SAT should consider templates even when they require credentials."""
     resident = SimpleNamespace(id=uuid4())
+    faculty = SimpleNamespace(
+        id=uuid4(),
+        min_clinic_halfdays_per_week=0,
+        max_clinic_halfdays_per_week=4,
+    )
     block = SimpleNamespace(
         id=uuid4(),
         date=date(2026, 1, 6),
@@ -56,7 +61,7 @@ def test_cpsat_allows_templates_requiring_procedure_credential():
 
     context = SchedulingContext(
         residents=[resident],
-        faculty=[],
+        faculty=[faculty],
         blocks=[block],
         templates=[template],
     )
@@ -71,6 +76,11 @@ def test_cpsat_allows_templates_requiring_procedure_credential():
 def test_cpsat_respects_locked_blocks():
     """CP-SAT should not assign residents into locked blocks."""
     resident = SimpleNamespace(id=uuid4())
+    faculty = SimpleNamespace(
+        id=uuid4(),
+        min_clinic_halfdays_per_week=0,
+        max_clinic_halfdays_per_week=4,
+    )
     locked_block = SimpleNamespace(
         id=uuid4(),
         date=date(2026, 1, 6),
@@ -92,7 +102,7 @@ def test_cpsat_respects_locked_blocks():
 
     context = SchedulingContext(
         residents=[resident],
-        faculty=[],
+        faculty=[faculty],
         blocks=[locked_block, unlocked_block],
         templates=[template],
         locked_blocks={(resident.id, locked_block.id)},

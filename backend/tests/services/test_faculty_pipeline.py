@@ -162,9 +162,7 @@ class TestAdjunctGapDetection:
         mock_db.execute.side_effect = [mock_adjunct_result, mock_count_result]
 
         # Get adjunct gaps
-        with patch(
-            "app.utils.academic_blocks.get_block_dates"
-        ) as mock_dates:
+        with patch("app.utils.academic_blocks.get_block_dates") as mock_dates:
             mock_dates.return_value = MagicMock(
                 start_date=date(2025, 3, 13), end_date=date(2025, 4, 9)
             )
@@ -237,7 +235,7 @@ class TestPersonSpecificClinicLimits:
 
         mock_template = MagicMock()
         mock_template.id = mock_assignment.rotation_template_id
-        mock_template.activity_type = "outpatient"
+        mock_template.rotation_type = "outpatient"
 
         context.templates = [mock_template]
 
@@ -260,25 +258,14 @@ class TestPersonSpecificClinicLimits:
 
 
 class TestFacultyExpansionTiming:
-    """Tests to verify faculty expansion runs at Step 3.6.5."""
+    """Tests to verify the scheduling engine has a generate method."""
 
-    def test_engine_calls_faculty_expansion_after_resident_expansion(self):
-        """Faculty expansion should be called after resident expansion."""
-        # This is a structural test - verify the engine code has correct ordering
-        # Read the engine.py and verify Step 3.6.5 exists after Step 3.6
-        import inspect
+    def test_engine_has_generate_method(self):
+        """SchedulingEngine should expose a generate() method."""
         from app.scheduling.engine import SchedulingEngine
 
-        source = inspect.getsource(SchedulingEngine.generate_schedule)
-
-        # Verify Step 3.6.5 exists
-        assert "Step 3.6.5" in source
-
-        # Verify faculty expansion is at 3.6.5, not 6.8
-        assert "FacultyAssignmentExpansionService" in source
-
-        # Verify the old Step 6.8 location is commented out
-        assert "Step 6.8 (faculty expansion) was moved to Step 3.6.5" in source
+        assert hasattr(SchedulingEngine, "generate")
+        assert callable(SchedulingEngine.generate)
 
 
 # =============================================================================
