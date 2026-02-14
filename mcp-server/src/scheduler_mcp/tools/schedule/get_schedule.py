@@ -163,7 +163,7 @@ class GetScheduleTool(BaseTool[GetScheduleRequest, GetScheduleResponse]):
                 date_range_days=date_range_days,
             )
 
-        except (ConnectionError, TimeoutError) as e:
+        except (ConnectionError, TimeoutError):
             # Network connectivity issues - return empty schedule
             return GetScheduleResponse(
                 start_date=request.start_date,
@@ -172,7 +172,7 @@ class GetScheduleTool(BaseTool[GetScheduleRequest, GetScheduleResponse]):
                 assignments=[],
                 date_range_days=0,
             )
-        except (KeyError, ValueError, TypeError) as e:
+        except (KeyError, ValueError, TypeError):
             # Data parsing errors - return empty schedule
             return GetScheduleResponse(
                 start_date=request.start_date,
@@ -181,7 +181,7 @@ class GetScheduleTool(BaseTool[GetScheduleRequest, GetScheduleResponse]):
                 assignments=[],
                 date_range_days=0,
             )
-        except Exception as e:
+        except Exception:
             # Unexpected errors - return empty schedule
             return GetScheduleResponse(
                 start_date=request.start_date,

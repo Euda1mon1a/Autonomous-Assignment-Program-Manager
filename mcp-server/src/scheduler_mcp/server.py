@@ -226,6 +226,7 @@ from .resilience_integration import (
     CognitiveLoadResponse,
     DefenseLevelResponse,
     EquilibriumAnalysisResponse,
+    FallbackScheduleInfo,
     HomeostasisStatusResponse,
     HubAnalysisResponse,
     LeChatelierAnalysisRequest,
@@ -233,7 +234,6 @@ from .resilience_integration import (
     MTFComplianceRequest,
     MTFComplianceResponse,
     SacrificeHierarchyResponse,
-    StaticFallbacksResponse,
     StigmergyAnalysisRequest,
     StigmergyAnalysisResponse,
     UtilizationResponse,
@@ -1119,7 +1119,7 @@ async def run_contingency_analysis_resilience_tool(
 
 
 @mcp.tool()
-async def get_static_fallbacks_tool() -> StaticFallbacksResponse:
+async def get_static_fallbacks_tool() -> list[FallbackScheduleInfo]:
     """
     [MOCK] Get pre-computed fallback schedules (AWS static stability).
 
@@ -2271,7 +2271,7 @@ async def detect_schedule_changepoints_tool(
 
     # Combine and summarize
     all_changepoints = []
-    for method_name, method_result in results.items():
+    for method_result in results.values():
         all_changepoints.extend(method_result.get("change_points", []))
 
     logger.info(
@@ -5662,7 +5662,7 @@ Examples:
                 "SSE fallback does not support authentication - this is unsafe for remote access. "
                 "Either set MCP_API_KEY (will log warning but run) or use HTTP transport with proper auth."
             )
-            raise RuntimeError("SSE transport on non-localhost requires MCP_API_KEY to be set")
+            raise RuntimeError("SSE transport on non-localhost requires MCP_API_KEY to be set") from e
 
         if not api_key:
             logger.warning(

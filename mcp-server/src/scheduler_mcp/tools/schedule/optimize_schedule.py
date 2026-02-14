@@ -174,7 +174,7 @@ class OptimizeScheduleTool(
                 optimization_time_ms=data.get("optimization_time_ms"),
             )
 
-        except TimeoutError as e:
+        except TimeoutError:
             return OptimizeScheduleResponse(
                 success=False,
                 message=f"Optimization timed out after {request.timeout_seconds}s",

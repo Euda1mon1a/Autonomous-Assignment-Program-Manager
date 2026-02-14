@@ -2,6 +2,7 @@
 Check day-off tool for ACGME 1-in-7 rule compliance.
 """
 
+import inspect
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -107,13 +108,7 @@ class CheckDayOffTool(BaseTool[DayOffCheckRequest, DayOffCheckResponse]):
         client = self._require_api_client()
 
         try:
-            # Check day-off via API client
-            data = await client.check_day_off(
-                start_date=request.start_date,
-                end_date=request.end_date,
-                person_id=request.person_id,
-                include_details=True,
-            )
+            data = await self._fetch_day_off_payload(client, request)
 
             # Parse people data
             people = []
@@ -143,7 +138,7 @@ class CheckDayOffTool(BaseTool[DayOffCheckRequest, DayOffCheckResponse]):
                 people=people,
             )
 
-        except (ConnectionError, TimeoutError) as e:
+        except (ConnectionError, TimeoutError):
             # Network connectivity issues
             return DayOffCheckResponse(
                 start_date=request.start_date,
@@ -154,7 +149,7 @@ class CheckDayOffTool(BaseTool[DayOffCheckRequest, DayOffCheckResponse]):
                 overall_compliant=False,
                 people=[],
             )
-        except KeyError as e:
+        except KeyError:
             # Missing required data fields
             return DayOffCheckResponse(
                 start_date=request.start_date,
@@ -165,7 +160,7 @@ class CheckDayOffTool(BaseTool[DayOffCheckRequest, DayOffCheckResponse]):
                 overall_compliant=False,
                 people=[],
             )
-        except Exception as e:
+        except Exception:
             # Unexpected errors
             return DayOffCheckResponse(
                 start_date=request.start_date,
@@ -176,3 +171,60 @@ class CheckDayOffTool(BaseTool[DayOffCheckRequest, DayOffCheckResponse]):
                 overall_compliant=False,
                 people=[],
             )
+
+    async def _fetch_day_off_payload(
+        self, client: Any, request: DayOffCheckRequest
+    ) -> dict[str, Any]:
+        """Fetch and normalize day-off payload for real and mocked API clients."""
+        payload = {
+            "start_date": request.start_date,
+            "end_date": request.end_date,
+            "person_id": request.person_id,
+            "include_details": True,
+        }
+
+        check_fn = getattr(client, "check_day_off", None)
+        if callable(check_fn):
+            result = check_fn(**payload)
+            if inspect.isawaitable(result):
+                result = await result
+            result = await self._normalize_response_payload(result)
+            if isinstance(result, dict):
+                return result
+
+        params: dict[str, Any] = {
+            "start_date": request.start_date,
+            "end_date": request.end_date,
+            "include_details": True,
+        }
+        if request.person_id:
+            params["person_id"] = request.person_id
+
+        headers = await client._ensure_authenticated()
+        response = await client.client.get(
+            f"{client.config.api_prefix}/compliance/day-off",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+
+        response_data = response.json()
+        if inspect.isawaitable(response_data):
+            response_data = await response_data
+        if not isinstance(response_data, dict):
+            raise ValueError("Unexpected day-off response payload")
+        return response_data
+
+    async def _normalize_response_payload(self, result: Any) -> dict[str, Any] | None:
+        """Normalize either a dict payload or a response-like object."""
+        if isinstance(result, dict):
+            return result
+        json_fn = getattr(result, "json", None)
+        if not callable(json_fn):
+            return None
+        payload = json_fn()
+        if inspect.isawaitable(payload):
+            payload = await payload
+        if isinstance(payload, dict):
+            return payload
+        return None

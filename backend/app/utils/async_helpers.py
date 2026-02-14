@@ -62,19 +62,17 @@ async def retry_async(
     Raises:
         Exception: The last exception if all retries fail
     """
-    last_exception = None
     current_delay = delay
 
     for attempt in range(max_retries + 1):
         try:
             return await coro_func()
-        except Exception as e:
-            last_exception = e
+        except Exception:
             if attempt < max_retries:
                 await asyncio.sleep(current_delay)
                 current_delay *= backoff
             else:
-                raise last_exception
+                raise
 
 
 def async_cache(ttl: int):

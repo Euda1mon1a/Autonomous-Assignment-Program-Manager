@@ -282,7 +282,7 @@ async def request_audience_token(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
-        )
+        ) from e
     except Exception as e:
         logger.error(
             f"Error creating audience token: user={current_user.username}, "
@@ -292,7 +292,7 @@ async def request_audience_token(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create audience token",
-        )
+        ) from e
 
 
 @router.post("/tokens/revoke", response_model=RevokeTokenResponse)
@@ -456,7 +456,7 @@ async def revoke_token(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to revoke token",
-        )
+        ) from e
 
 
 # Example of using audience authentication in a protected endpoint

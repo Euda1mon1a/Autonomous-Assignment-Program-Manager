@@ -5,10 +5,8 @@ This module provides common validation functions for tool inputs.
 """
 
 import re
-from datetime import date, datetime
+from datetime import date
 from typing import Any
-
-from pydantic import ValidationError as PydanticValidationError
 
 from .base import ValidationError
 
@@ -47,7 +45,7 @@ def validate_date_string(value: str, field_name: str = "date") -> str:
         raise ValidationError(
             f"{field_name} is not a valid date: {e}",
             details={"field": field_name, "value": value},
-        )
+        ) from e
 
     return value
 
@@ -185,11 +183,11 @@ def validate_positive_int(
     if not isinstance(value, int):
         try:
             value = int(value)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
             raise ValidationError(
                 f"{field_name} must be an integer",
                 details={"field": field_name, "type": type(value).__name__},
-            )
+            ) from e
 
     if value < 0:
         raise ValidationError(
@@ -230,11 +228,11 @@ def validate_float_range(
     if not isinstance(value, (int, float)):
         try:
             value = float(value)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
             raise ValidationError(
                 f"{field_name} must be a number",
                 details={"field": field_name, "type": type(value).__name__},
-            )
+            ) from e
 
     if min_value is not None and value < min_value:
         raise ValidationError(

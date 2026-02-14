@@ -240,7 +240,6 @@ async def analyze_schedule_rigidity(
         # Fallback: Import here to avoid circular dependencies
         from app.scheduling.periodicity.anti_churn import (
             ScheduleSnapshot,
-            calculate_schedule_rigidity,
             estimate_churn_impact,
             hamming_distance_by_person,
         )
@@ -376,8 +375,10 @@ async def analyze_schedule_periodicity(
 
     try:
         from app.scheduling.periodicity import (
-            analyze_periodicity,
-            detect_subharmonics,
+            analyze_periodicity as _analyze_periodicity,  # noqa: F401
+        )
+        from app.scheduling.periodicity import (
+            detect_subharmonics as _detect_subharmonics,  # noqa: F401
         )
     except ImportError:
         logger.warning("Periodicity module not available, using placeholder")
@@ -603,7 +604,9 @@ async def get_checkpoint_status(
         logger.warning(f"Backend API call failed, using fallback: {api_error}")
 
     try:
-        from app.scheduling.periodicity import StroboscopicScheduleManager
+        from app.scheduling.periodicity import (
+            StroboscopicScheduleManager as _StroboscopicScheduleManager,  # noqa: F401
+        )
     except ImportError:
         logger.warning("Stroboscopic manager not available, using placeholder")
 

@@ -14,7 +14,7 @@ Modules Exposed:
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -594,9 +594,6 @@ async def calculate_process_capability(
         # Get detailed summary
         summary = analyzer.get_capability_summary(report)
 
-        # Calculate coefficient of variation
-        cv = report.std_dev / report.mean if report.mean > 0 else 0.0
-
         # Determine severity mapping
         severity_map = {
             "EXCELLENT": "excellent",
@@ -749,7 +746,7 @@ async def calculate_equity_metrics(
     logger.info(f"Calculating equity metrics for {len(provider_hours)} providers")
 
     try:
-        from app.resilience.equity_metrics import equity_report, gini_coefficient
+        from app.resilience.equity_metrics import equity_report
 
         # Get comprehensive report
         report = equity_report(

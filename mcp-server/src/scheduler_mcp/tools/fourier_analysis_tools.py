@@ -24,11 +24,10 @@ References:
 """
 
 import logging
-from datetime import date, datetime, timedelta
 from typing import Any
 
 import numpy as np
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -610,12 +609,15 @@ async def calculate_spectral_entropy(
         power_normalized = power_no_dc / np.sum(power_no_dc)
 
         # Shannon entropy: H = -Σ p * log2(p)
-        # Avoid log(0) by filtering near-zero values
-        power_nonzero = power_normalized[power_normalized > 1e-10]
+        # Filter negligible frequency bins (<0.1% total power) to reduce
+        # numerical-noise inflation from tiny FFT tails.
+        power_nonzero = power_normalized[power_normalized > 1e-3]
+        if len(power_nonzero) == 0:
+            power_nonzero = power_normalized[power_normalized > 1e-10]
         entropy_raw = -np.sum(power_nonzero * np.log2(power_nonzero))
 
         # Normalize to [0, 1] by dividing by max possible entropy
-        max_entropy = np.log2(len(power_no_dc))
+        max_entropy = np.log2(len(power_nonzero))
         spectral_entropy = float(entropy_raw / max_entropy) if max_entropy > 0 else 0.0
 
         # Count significant frequency components (>5% of max power)

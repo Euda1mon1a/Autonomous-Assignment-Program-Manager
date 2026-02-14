@@ -15,11 +15,8 @@ import logging
 import subprocess
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -361,6 +358,7 @@ async def benchmark_constraints(
         result.constraint_stats[name] = ConstraintStats(
             constraint_name=name,
             avg_runtime_ms=0,
+            complexity_lines=lines,
             description=f"Constraint from {cf.name}",
         )
 
@@ -578,7 +576,7 @@ async def benchmark_resilience(
 
     # Tier analysis
     tier_scores = defaultdict(list)
-    for name, stats in result.module_stats.items():
+    for _name, stats in result.module_stats.items():
         tier_scores[stats.tier].append(
             stats.detection_rate - stats.false_alarm_rate
         )

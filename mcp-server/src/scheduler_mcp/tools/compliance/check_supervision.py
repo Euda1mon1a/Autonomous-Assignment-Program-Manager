@@ -2,6 +2,7 @@
 Check supervision tool for ACGME supervision ratio compliance.
 """
 
+import inspect
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -109,11 +110,7 @@ class CheckSupervisionTool(
         client = self._require_api_client()
 
         try:
-            # Check supervision via API client
-            data = await client.check_supervision(
-                date=request.date,
-                session=request.session,
-            )
+            data = await self._fetch_supervision_payload(client, request)
 
             # Parse ratios
             ratios = []
@@ -140,7 +137,7 @@ class CheckSupervisionTool(
                 total_faculty=data.get("total_faculty", 0),
             )
 
-        except (ConnectionError, TimeoutError) as e:
+        except (ConnectionError, TimeoutError):
             # Network connectivity issues
             return SupervisionCheckResponse(
                 date=request.date,
@@ -150,7 +147,7 @@ class CheckSupervisionTool(
                 total_residents=0,
                 total_faculty=0,
             )
-        except KeyError as e:
+        except KeyError:
             # Missing required data fields
             return SupervisionCheckResponse(
                 date=request.date,
@@ -160,7 +157,7 @@ class CheckSupervisionTool(
                 total_residents=0,
                 total_faculty=0,
             )
-        except Exception as e:
+        except Exception:
             # Unexpected errors
             return SupervisionCheckResponse(
                 date=request.date,
@@ -170,3 +167,50 @@ class CheckSupervisionTool(
                 total_residents=0,
                 total_faculty=0,
             )
+
+    async def _fetch_supervision_payload(
+        self, client: Any, request: SupervisionCheckRequest
+    ) -> dict[str, Any]:
+        """Fetch and normalize supervision payload for real and mocked API clients."""
+        payload = {
+            "date": request.date,
+            "session": request.session,
+        }
+
+        check_fn = getattr(client, "check_supervision", None)
+        if callable(check_fn):
+            result = check_fn(**payload)
+            if inspect.isawaitable(result):
+                result = await result
+            result = await self._normalize_response_payload(result)
+            if isinstance(result, dict):
+                return result
+
+        headers = await client._ensure_authenticated()
+        response = await client.client.get(
+            f"{client.config.api_prefix}/compliance/supervision",
+            headers=headers,
+            params=payload,
+        )
+        response.raise_for_status()
+
+        response_data = response.json()
+        if inspect.isawaitable(response_data):
+            response_data = await response_data
+        if not isinstance(response_data, dict):
+            raise ValueError("Unexpected supervision response payload")
+        return response_data
+
+    async def _normalize_response_payload(self, result: Any) -> dict[str, Any] | None:
+        """Normalize either a dict payload or a response-like object."""
+        if isinstance(result, dict):
+            return result
+        json_fn = getattr(result, "json", None)
+        if not callable(json_fn):
+            return None
+        payload = json_fn()
+        if inspect.isawaitable(payload):
+            payload = await payload
+        if isinstance(payload, dict):
+            return payload
+        return None

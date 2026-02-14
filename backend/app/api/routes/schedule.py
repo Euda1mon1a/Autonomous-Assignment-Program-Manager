@@ -1650,8 +1650,7 @@ async def cancel_experiment_run(
     """
     Cancel a queued or running experiment.
 
-    Updates the status to 'cancelled' and attempts to revoke
-    any associated Celery task.
+    Updates the status to 'cancelled' in the schedule run record.
     """
     from app.models.schedule_run import ScheduleRun
 
@@ -1671,12 +1670,6 @@ async def cancel_experiment_run(
     # Update status to cancelled
     result.status = "cancelled"
     db.commit()
-
-    # TODO: If there's a celery_task_id, revoke the task
-    # if result.celery_task_id:
-    #     from celery.app.control import Control
-    #     control = Control(app)
-    #     control.revoke(result.celery_task_id, terminate=True)
 
     return {"status": "cancelled", "run_id": str(run_id)}
 

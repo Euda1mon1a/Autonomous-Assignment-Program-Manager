@@ -1106,7 +1106,6 @@ Assess trade-offs:
             Ordered list of tasks
         """
         # Build dependency graph
-        task_map = {t.id: t for t in tasks}
         ordered = []
         completed = set()
 

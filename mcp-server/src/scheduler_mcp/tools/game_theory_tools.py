@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
@@ -599,7 +599,7 @@ async def analyze_nash_stability(
             max_gain = 0.0
 
             # Simulate potential swaps (simplified game-theoretic analysis)
-            for other_person_id, other_assignments in assignments_by_person.items():
+            for other_person_id, _other_assignments in assignments_by_person.items():
                 if other_person_id == person_id:
                     continue
 

@@ -138,7 +138,7 @@ class RAGService:
             try:
                 # Create RAGDocument records
                 chunk_ids = []
-                for chunk_text, embedding in zip(chunks, embeddings):
+                for chunk_text, embedding in zip(chunks, embeddings, strict=False):
                     rag_doc = RAGDocument(
                         content=chunk_text,
                         embedding=embedding,

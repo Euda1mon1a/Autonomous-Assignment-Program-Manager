@@ -1,7 +1,6 @@
 """Date utility functions for schedule management."""
 
 from datetime import date, timedelta
-from typing import Tuple
 
 
 def get_week_bounds(target_date: date) -> tuple[date, date]:

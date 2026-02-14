@@ -2,6 +2,7 @@
 Check work hours tool for ACGME 80-hour rule compliance.
 """
 
+import inspect
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -115,13 +116,7 @@ class CheckWorkHoursTool(BaseTool[WorkHoursCheckRequest, WorkHoursCheckResponse]
         client = self._require_api_client()
 
         try:
-            # Check work hours via API client
-            data = await client.check_work_hours(
-                start_date=request.start_date,
-                end_date=request.end_date,
-                person_id=request.person_id,
-                include_details=request.include_details,
-            )
+            data = await self._fetch_work_hours_payload(client, request)
 
             # Parse people data
             people = []
@@ -152,7 +147,7 @@ class CheckWorkHoursTool(BaseTool[WorkHoursCheckRequest, WorkHoursCheckResponse]
                 people=people,
             )
 
-        except (ConnectionError, TimeoutError) as e:
+        except (ConnectionError, TimeoutError):
             # Network connectivity issues
             return WorkHoursCheckResponse(
                 start_date=request.start_date,
@@ -163,7 +158,7 @@ class CheckWorkHoursTool(BaseTool[WorkHoursCheckRequest, WorkHoursCheckResponse]
                 overall_compliant=False,
                 people=[],
             )
-        except KeyError as e:
+        except KeyError:
             # Missing required data fields
             return WorkHoursCheckResponse(
                 start_date=request.start_date,
@@ -174,7 +169,7 @@ class CheckWorkHoursTool(BaseTool[WorkHoursCheckRequest, WorkHoursCheckResponse]
                 overall_compliant=False,
                 people=[],
             )
-        except Exception as e:
+        except Exception:
             # Unexpected errors
             return WorkHoursCheckResponse(
                 start_date=request.start_date,
@@ -185,3 +180,60 @@ class CheckWorkHoursTool(BaseTool[WorkHoursCheckRequest, WorkHoursCheckResponse]
                 overall_compliant=False,
                 people=[],
             )
+
+    async def _fetch_work_hours_payload(
+        self, client: Any, request: WorkHoursCheckRequest
+    ) -> dict[str, Any]:
+        """Fetch and normalize work-hours payload for real and mocked API clients."""
+        payload = {
+            "start_date": request.start_date,
+            "end_date": request.end_date,
+            "person_id": request.person_id,
+            "include_details": request.include_details,
+        }
+
+        check_fn = getattr(client, "check_work_hours", None)
+        if callable(check_fn):
+            result = check_fn(**payload)
+            if inspect.isawaitable(result):
+                result = await result
+            result = await self._normalize_response_payload(result)
+            if isinstance(result, dict):
+                return result
+
+        params: dict[str, Any] = {
+            "start_date": request.start_date,
+            "end_date": request.end_date,
+            "include_details": request.include_details,
+        }
+        if request.person_id:
+            params["person_id"] = request.person_id
+
+        headers = await client._ensure_authenticated()
+        response = await client.client.get(
+            f"{client.config.api_prefix}/compliance/work-hours",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+
+        response_data = response.json()
+        if inspect.isawaitable(response_data):
+            response_data = await response_data
+        if not isinstance(response_data, dict):
+            raise ValueError("Unexpected work-hours response payload")
+        return response_data
+
+    async def _normalize_response_payload(self, result: Any) -> dict[str, Any] | None:
+        """Normalize either a dict payload or a response-like object."""
+        if isinstance(result, dict):
+            return result
+        json_fn = getattr(result, "json", None)
+        if not callable(json_fn):
+            return None
+        payload = json_fn()
+        if inspect.isawaitable(payload):
+            payload = await payload
+        if isinstance(payload, dict):
+            return payload
+        return None

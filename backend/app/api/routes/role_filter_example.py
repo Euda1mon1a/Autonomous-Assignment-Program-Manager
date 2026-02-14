@@ -20,7 +20,7 @@ from app.services.role_filter_service import (
     UserRole,
 )
 
-router = APIRouter(prefix="/api/example", tags=["Role Filter Examples"])
+router = APIRouter(prefix="/example", tags=["Role Filter Examples"])
 
 
 @router.get("/permissions")
@@ -271,10 +271,10 @@ async def create_user(
     # Validate role
     try:
         RoleFilterService.get_role_from_string(role)
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid role: {role}"
-        )
+        ) from e
 
     return {
         "message": "User created (admin only endpoint)",

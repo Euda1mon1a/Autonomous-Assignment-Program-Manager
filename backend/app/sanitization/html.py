@@ -109,8 +109,26 @@ def strip_all_tags(text: str) -> str:
     if not text:
         return ""
 
-    # Remove HTML tags using regex
-    clean_text = re.sub(r"<[^>]+>", "", text)
+    clean_text = text
+
+    # Remove dangerous block tags and their content first.
+    # This avoids leaving payload text like `alert("xss")` behind.
+    for tag in DANGEROUS_TAGS:
+        clean_text = re.sub(
+            rf"<{tag}\b[^>]*>.*?</{tag}\s*>",
+            " ",
+            clean_text,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        clean_text = re.sub(
+            rf"<{tag}\b[^>]*/\s*>",
+            " ",
+            clean_text,
+            flags=re.IGNORECASE,
+        )
+
+    # Remove remaining HTML tags.
+    clean_text = re.sub(r"<[^>]+>", "", clean_text)
 
     # Unescape HTML entities
     clean_text = html.unescape(clean_text)
@@ -208,7 +226,7 @@ def sanitize_html(
         return text.strip()
 
     except Exception as e:
-        raise HTMLSanitizationError(f"Failed to sanitize HTML: {e}")
+        raise HTMLSanitizationError(f"Failed to sanitize HTML: {e}") from e
 
 
 def sanitize_rich_text(text: str) -> str:

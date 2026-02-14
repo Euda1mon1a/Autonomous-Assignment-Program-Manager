@@ -193,7 +193,7 @@ async def get_or_create_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create user: {str(e)}",
-        )
+        ) from e
 
 
 def create_session(response: Response, user: User) -> dict:
@@ -329,7 +329,7 @@ async def saml_acs(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"SAML response validation failed: {str(e)}",
-        )
+        ) from e
 
     # Extract user attributes
     attributes = saml_data["attributes"]
@@ -454,7 +454,7 @@ async def oauth2_callback(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Token exchange failed: {str(e)}",
-        )
+        ) from e
 
     # Validate ID token if present (OIDC)
     id_token = token_response.get("id_token")
@@ -465,7 +465,7 @@ async def oauth2_callback(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"ID token validation failed: {str(e)}",
-            )
+            ) from e
     else:
         id_token_claims = {}
 

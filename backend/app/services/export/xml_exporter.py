@@ -11,8 +11,8 @@ import xml.etree.ElementTree as ET
 from collections.abc import AsyncIterator
 from datetime import date, datetime
 from typing import Any
-from defusedxml import minidom
 
+from defusedxml import minidom
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload

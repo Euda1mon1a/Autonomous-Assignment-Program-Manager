@@ -140,7 +140,7 @@ class GenerateScheduleTool(
                 details=result,
             )
 
-        except TimeoutError as e:
+        except TimeoutError:
             return GenerateScheduleResponse(
                 success=False,
                 message=f"Schedule generation timed out after {request.timeout_seconds}s",

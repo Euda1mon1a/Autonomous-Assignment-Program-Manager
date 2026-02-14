@@ -19,9 +19,8 @@ Cross-Disciplinary Science:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -678,7 +677,6 @@ async def run_spc_analysis(
     try:
         from app.resilience.spc_monitoring import (
             WorkloadControlChart,
-            calculate_control_limits,
             calculate_process_capability,
         )
 

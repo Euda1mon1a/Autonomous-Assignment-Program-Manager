@@ -538,7 +538,7 @@ async def list_active_tasks(
 
         # Flatten tasks from all workers
         all_tasks = []
-        for worker_name, tasks_list in active_tasks_dict.items():
+        for _worker_name, tasks_list in active_tasks_dict.items():
             for task_info in tasks_list:
                 task_name = task_info.get("name", "unknown")
                 task_id = task_info.get("id", "unknown")

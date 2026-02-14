@@ -1176,8 +1176,6 @@ async def promote_to_production(
         ValueError: If validation fails or approval is invalid
         PermissionError: If approval token is invalid
     """
-    start_time = datetime.utcnow()
-
     logger.info(
         f"Promoting to production: staging version {request.staging_version}"
     )

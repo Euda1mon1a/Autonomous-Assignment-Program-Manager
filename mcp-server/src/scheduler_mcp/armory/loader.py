@@ -18,10 +18,10 @@ Domains:
 
 import logging
 import os
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Dict, List, Set
 
 if TYPE_CHECKING:
-    from fastmcp import FastMCP
+    pass
 
 logger = logging.getLogger(__name__)
 

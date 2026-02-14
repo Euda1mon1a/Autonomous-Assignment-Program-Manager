@@ -13,7 +13,7 @@ from typing import Any
 from apscheduler.triggers.cron import CronTrigger as APCronTrigger
 from apscheduler.triggers.date import DateTrigger as APDateTrigger
 from apscheduler.triggers.interval import IntervalTrigger as APIntervalTrigger
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class CronTriggerConfig(BaseModel):
@@ -107,6 +107,20 @@ class IntervalTriggerConfig(BaseModel):
     start_date: datetime | None = None
     end_date: datetime | None = None
     timezone: str = "UTC"
+
+    @model_validator(mode="after")
+    def validate_non_negative_intervals(self) -> "IntervalTriggerConfig":
+        """Reject negative interval values early with a clear validation error."""
+        interval_values = (
+            self.weeks,
+            self.days,
+            self.hours,
+            self.minutes,
+            self.seconds,
+        )
+        if any(value < 0 for value in interval_values):
+            raise ValueError("Interval values must be non-negative")
+        return self
 
     def to_apscheduler_trigger(self) -> APIntervalTrigger:
         """

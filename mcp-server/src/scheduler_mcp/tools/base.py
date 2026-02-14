@@ -152,7 +152,7 @@ class BaseTool(ABC, Generic[TRequest, TResponse]):
             raise ToolError(
                 f"Unexpected error in {self.name}: {e}",
                 details={"type": type(e).__name__, "message": str(e)},
-            )
+            ) from e
 
     @abstractmethod
     def validate_input(self, **kwargs: Any) -> TRequest:

@@ -120,11 +120,14 @@ def detect_sql_injection(input_string: str, strict: bool = True) -> bool:
         if re.search(pattern, input_lower, re.IGNORECASE):
             return True
 
-    # In strict mode, also check for dangerous keywords
+    # In strict mode, also check for dangerous keywords.
+    # "union" is handled by dedicated UNION SELECT patterns above to avoid
+    # false positives in normal phrases like "union membership".
     if strict:
+        strict_keywords = DANGEROUS_SQL_KEYWORDS - {"union"}
         words = re.findall(r"\b\w+\b", input_lower)
         for word in words:
-            if word in DANGEROUS_SQL_KEYWORDS:
+            if word in strict_keywords:
                 return True
 
     # Check for multiple SQL statements (semicolon followed by keyword)
