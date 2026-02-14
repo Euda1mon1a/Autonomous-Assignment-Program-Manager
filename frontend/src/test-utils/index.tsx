@@ -78,7 +78,7 @@ export function TestProviders({ children, queryClient }: TestProvidersProps) {
 // Custom Render
 // ============================================================================
 
-interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
+interface CustomRenderOptions extends RenderOptions {
   queryClient?: QueryClient;
 }
 
