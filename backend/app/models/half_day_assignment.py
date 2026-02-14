@@ -57,8 +57,8 @@ class HalfDayAssignment(Base):
     This is the source of truth for the daily schedule.
 
     Example:
-        Dr. Chu on 2026-03-13 AM has FMIT (source=preload, from inpatient_preloads)
-        Dr. Kinkennon on 2026-03-13 AM has C (source=solver, computed by CP-SAT)
+        Faculty A on 2026-03-13 AM has FMIT (source=preload, from inpatient_preloads)
+        Faculty B on 2026-03-13 AM has C (source=solver, computed by CP-SAT)
 
     Attributes:
         person_id: Who is assigned

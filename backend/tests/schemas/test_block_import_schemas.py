@@ -70,10 +70,10 @@ class TestParsedFMITWeekSchema:
             week_number=2,
             start_date="2026-03-12",
             end_date="2026-03-18",
-            faculty_name="Dr. Chu",
+            faculty_name="Dr. Faculty A",
             is_holiday_call=True,
         )
-        assert r.faculty_name == "Dr. Chu"
+        assert r.faculty_name == "Dr. Faculty A"
         assert r.is_holiday_call is True
 
 
@@ -124,7 +124,9 @@ class TestBlockParseResponse:
         resident = ResidentRosterItem(
             name="Smith, Jane", template="R2", role="PGY 2", row=10
         )
-        fmit = ParsedFMITWeekSchema(block_number=10, week_number=1, faculty_name="Chu")
+        fmit = ParsedFMITWeekSchema(
+            block_number=10, week_number=1, faculty_name="Faculty A"
+        )
         assignment = ParsedBlockAssignmentSchema(
             person_name="Smith, Jane",
             date="2026-03-12",

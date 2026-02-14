@@ -105,13 +105,13 @@ class BlockParseResponse(BaseModel):
                     {
                         "block_number": 10,
                         "week_number": 1,
-                        "faculty_name": "Chu",
+                        "faculty_name": "Faculty A",
                         "is_holiday_call": False,
                     },
                     {
                         "block_number": 10,
                         "week_number": 2,
-                        "faculty_name": "Bevis",
+                        "faculty_name": "Faculty B",
                         "is_holiday_call": False,
                     },
                 ],

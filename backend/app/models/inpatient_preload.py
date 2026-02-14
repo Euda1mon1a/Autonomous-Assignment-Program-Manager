@@ -18,11 +18,11 @@ FMIT Week Structure:
 - PC (Post-Call/Day Off): Friday after FMIT ends
 
 Block 10 FMIT Faculty Example:
-- Week 1 (Mar 13-19): Tagawa (overlaps from Block 9)
-- Week 2 (Mar 20-26): Chu
-- Week 3 (Mar 27-Apr 2): Bevis
-- Week 4 (Apr 3-9): Chu
-- (LaBounty overlaps into Block 11)
+- Week 1: Faculty A (overlaps from Block 9)
+- Week 2: Faculty B
+- Week 3: Faculty C
+- Week 4: Faculty B
+- (Faculty D overlaps into Block 11)
 """
 
 import uuid
@@ -76,8 +76,8 @@ class InpatientPreload(Base):
     the highest priority source (source='preload' in half_day_assignments).
 
     Example:
-        Dr. Chu on FMIT Week 2 (Mar 20-26):
-        - person_id: Chu's UUID
+        Faculty B on FMIT Week 2 (Mar 20-26):
+        - person_id: Faculty B's UUID
         - rotation_type: FMIT
         - start_date: 2026-03-20 (Friday)
         - end_date: 2026-03-26 (Thursday)

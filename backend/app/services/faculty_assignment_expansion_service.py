@@ -236,7 +236,7 @@ class FacultyAssignmentExpansionService:
         # Note: W, HOL, DEP are uppercase (from 20260120 migration)
         # LV-AM, LV-PM for leave (matches SyncPreloadService)
         # gme, dfm, sm_clinic are lowercase (from 20260109 migration)
-        # sm_clinic is for Sports Medicine faculty (Tagawa has admin_type='SM')
+        # sm_clinic is for Sports Medicine faculty (admin_type='SM')
         activity_codes = [
             "W",
             "HOL",
@@ -482,8 +482,8 @@ class FacultyAssignmentExpansionService:
         """Check if person is deployed on the date.
 
         Deployment-like absences that should use DEP activity instead of LV:
-        - deployment: Actual deployment (e.g., Colgan)
-        - tdy: Temporary duty (off-site, e.g., Hilo)
+        - deployment: Actual deployment (off-island)
+        - tdy: Temporary duty (off-site)
         - training: Training duty
         - military_duty: Other military obligations
         """

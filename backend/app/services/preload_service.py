@@ -17,11 +17,11 @@ Order of Operations (per TAMC skill):
 10. Load protected time (SIM, PI, MM)
 
 Block 10 FMIT Faculty:
-- Week 1 (Mar 13-19): Tagawa (overlaps from Block 9)
-- Week 2 (Mar 20-26): Chu
-- Week 3 (Mar 27-Apr 2): Bevis
-- Week 4 (Apr 3-9): Chu
-- (LaBounty overlaps into Block 11)
+- Week 1: Faculty A (overlaps from Block 9)
+- Week 2: Faculty B
+- Week 3: Faculty C
+- Week 4: Faculty B
+- (Faculty D overlaps into Block 11)
 
 FMIT Residents: Petrie (R3), Cataquiz (R2)
 """
@@ -1173,7 +1173,7 @@ class PreloadService:
 
     async def _load_sm_preloads(self, start_date: date, end_date: date) -> int:
         """Load aSM (Academic Sports Med) for SM faculty on Wednesday AM."""
-        # Find SM faculty (Tagawa)
+        # Find SM faculty (admin_type='SM')
         stmt = select(Person).where(
             and_(
                 Person.type == "faculty",
