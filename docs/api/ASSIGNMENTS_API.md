@@ -592,4 +592,4 @@ if (result.violations.length > 0) {
 
 - [Schedule API](SCHEDULE_API.md)
 - [People API](PEOPLE_API.md)
-- [ACGME Compliance Rules](../architecture/ACGME_COMPLIANCE.md)
+- [ACGME Compliance Rules](../user-guide/compliance.md)

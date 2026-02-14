@@ -666,7 +666,7 @@ See [Error Codes Reference](./error-codes-reference.md) for a complete list of a
 
 - [RFC 7807: Problem Details for HTTP APIs](https://tools.ietf.org/html/rfc7807)
 - [Error Codes Reference](./error-codes-reference.md)
-- [ACGME Compliance Rules](../architecture/acgme-compliance.md)
+- [ACGME Compliance Rules](../user-guide/compliance.md)
 - [API Documentation](./api-reference.md)
 
 ---

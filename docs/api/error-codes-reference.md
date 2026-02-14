@@ -565,7 +565,7 @@ All error responses follow the [RFC 7807 Problem Details](https://tools.ietf.org
 
 - [Error Handling Guide](./error-handling-guide.md) - Developer guide for implementing error handling
 - [API Reference](./api-reference.md) - Complete API documentation
-- [ACGME Compliance](../architecture/acgme-compliance.md) - ACGME compliance rules
+- [ACGME Compliance](../user-guide/compliance.md) - ACGME compliance rules
 
 ---
 

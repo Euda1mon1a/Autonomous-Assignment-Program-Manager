@@ -582,7 +582,7 @@ blocks = (
 
 - [Advanced Scheduling](advanced-scheduling.md) - Game theory, AIS, tensegrity algorithms
 - [Cross-Disciplinary Resilience](cross-disciplinary-resilience.md) - Resilience framework integration
-- [ACGME Compliance](../user-guide/acgme-compliance.md) - Regulatory requirements
+- [ACGME Compliance](../user-guide/compliance.md) - Regulatory requirements
 - [API Reference](../api/scheduling.md) - API endpoints for scheduling
 
 ---
