@@ -7,7 +7,7 @@ and optimization recommendations. Restricted to admin users only.
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.auth import require_role
@@ -66,7 +66,9 @@ class IndexUsageStatsResponse(BaseModel):
 class TableStatisticsResponse(BaseModel):
     """Table statistics."""
 
-    schema: str
+    model_config = ConfigDict(populate_by_name=True)
+
+    schema_name: str = Field(..., alias="schema")
     table: str
     total_size: str
     table_size: str
@@ -176,7 +178,7 @@ async def get_database_health(
         Database health information including pool stats and recommendations
     """
     try:
-        from sqlalchemy import select, text
+        from sqlalchemy import text
 
         # Get connection pool stats
         pool = db.get_bind().pool
@@ -261,7 +263,7 @@ async def get_database_health(
         raise HTTPException(
             status_code=500,
             detail="An error occurred retrieving database health",
-        )
+        ) from e
 
 
 @router.get(
@@ -314,7 +316,7 @@ async def get_index_recommendations(
         raise HTTPException(
             status_code=500,
             detail="An error occurred analyzing index recommendations",
-        )
+        ) from e
 
 
 @router.get(
@@ -369,7 +371,7 @@ async def get_unused_indexes(
         raise HTTPException(
             status_code=500,
             detail="An error occurred finding unused indexes",
-        )
+        ) from e
 
 
 @router.get(
@@ -415,7 +417,7 @@ async def get_index_usage_stats(
         raise HTTPException(
             status_code=500,
             detail="An error occurred retrieving index usage statistics",
-        )
+        ) from e
 
 
 @router.get(
@@ -452,7 +454,7 @@ async def get_table_statistics(
             )
 
         return TableStatisticsResponse(
-            schema=stats["schema"],
+            schema_name=stats["schema"],
             table=stats["table"],
             total_size=stats["total_size"],
             table_size=stats["table_size"],
@@ -484,7 +486,7 @@ async def get_table_statistics(
         raise HTTPException(
             status_code=500,
             detail="An error occurred retrieving table statistics",
-        )
+        ) from e
 
 
 @router.get(
@@ -533,7 +535,7 @@ async def get_query_statistics(
         raise HTTPException(
             status_code=500,
             detail="An error occurred retrieving query statistics",
-        )
+        ) from e
 
 
 @router.post(
@@ -618,4 +620,4 @@ async def vacuum_table(
         raise HTTPException(
             status_code=500,
             detail="An error occurred running VACUUM",
-        )
+        ) from e

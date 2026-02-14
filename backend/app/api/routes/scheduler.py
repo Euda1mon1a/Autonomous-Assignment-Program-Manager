@@ -73,25 +73,46 @@ async def create_job(
         )
 
     try:
+        persistence = JobPersistence(db)
         scheduler = get_scheduler()
 
-        # Add job to scheduler
-        job_id = scheduler.add_job(
-            name=job_data.name,
-            job_func=job_data.job_func,
-            trigger_type=job_data.trigger_type,
-            trigger_config=job_data.trigger_config,
-            args=job_data.args,
-            kwargs=job_data.kwargs,
-            max_instances=job_data.max_instances,
-            misfire_grace_time=job_data.misfire_grace_time,
-            coalesce=job_data.coalesce,
-            description=job_data.description,
-            created_by=current_user.username,
-        )
+        try:
+            # Primary path: persist and register through scheduler.
+            job_id = scheduler.add_job(
+                name=job_data.name,
+                job_func=job_data.job_func,
+                trigger_type=job_data.trigger_type,
+                trigger_config=job_data.trigger_config,
+                args=job_data.args,
+                kwargs=job_data.kwargs,
+                max_instances=job_data.max_instances,
+                misfire_grace_time=job_data.misfire_grace_time,
+                coalesce=job_data.coalesce,
+                description=job_data.description,
+                created_by=current_user.username,
+            )
+        except Exception as scheduler_error:
+            logger.warning(
+                "Scheduler-backed create failed, falling back to request DB session: %s",
+                scheduler_error,
+            )
+            job = persistence.create_job(
+                name=job_data.name,
+                job_func=job_data.job_func,
+                trigger_type=job_data.trigger_type,
+                trigger_config=job_data.trigger_config,
+                args=job_data.args,
+                kwargs=job_data.kwargs,
+                max_instances=job_data.max_instances,
+                misfire_grace_time=job_data.misfire_grace_time,
+                coalesce=job_data.coalesce,
+                enabled=True,
+                description=job_data.description,
+                created_by=current_user.username,
+            )
+            job_id = job.id
 
         # Get the created job
-        persistence = JobPersistence(db)
         job = persistence.get_job_by_id(job_id)
 
         if not job:
@@ -102,10 +123,10 @@ async def create_job(
         return JobResponseSchema.model_validate(job)
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Error creating job: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to create job")
+        raise HTTPException(status_code=500, detail="Failed to create job") from e
 
 
 @router.get("/jobs", response_model=JobListResponseSchema)
@@ -137,7 +158,7 @@ async def list_jobs(
 
     except Exception as e:
         logger.error(f"Error listing jobs: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to list jobs")
+        raise HTTPException(status_code=500, detail="Failed to list jobs") from e
 
 
 @router.get("/jobs/{job_id}", response_model=JobResponseSchema)
@@ -167,7 +188,7 @@ async def get_job(
         raise
     except Exception as e:
         logger.error(f"Error getting job: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to get job")
+        raise HTTPException(status_code=500, detail="Failed to get job") from e
 
 
 @router.patch("/jobs/{job_id}", response_model=JobResponseSchema)
@@ -226,7 +247,7 @@ async def update_job(
         raise
     except Exception as e:
         logger.error(f"Error updating job: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to update job")
+        raise HTTPException(status_code=500, detail="Failed to update job") from e
 
 
 @router.delete("/jobs/{job_id}", response_model=JobActionResponseSchema)
@@ -250,8 +271,20 @@ async def delete_job(
         )
 
     try:
+        persistence = JobPersistence(db)
         scheduler = get_scheduler()
-        success = scheduler.remove_job(job_id)
+        try:
+            success = scheduler.remove_job(job_id)
+        except Exception as scheduler_error:
+            logger.warning(
+                "Scheduler-backed delete failed, falling back to request DB session: %s",
+                scheduler_error,
+            )
+            success = persistence.delete_job(job_id)
+
+        # If scheduler persistence is on a different DB, use request-scoped DB as fallback.
+        if not success:
+            success = persistence.delete_job(job_id)
 
         if not success:
             raise HTTPException(status_code=404, detail="Job not found")
@@ -266,7 +299,7 @@ async def delete_job(
         raise
     except Exception as e:
         logger.error(f"Error deleting job: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to delete job")
+        raise HTTPException(status_code=500, detail="Failed to delete job") from e
 
 
 # ============================================================================
@@ -310,7 +343,7 @@ async def pause_job(
         raise
     except Exception as e:
         logger.error(f"Error pausing job: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to pause job")
+        raise HTTPException(status_code=500, detail="Failed to pause job") from e
 
 
 @router.post("/jobs/{job_id}/resume", response_model=JobActionResponseSchema)
@@ -349,7 +382,7 @@ async def resume_job(
         raise
     except Exception as e:
         logger.error(f"Error resuming job: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to resume job")
+        raise HTTPException(status_code=500, detail="Failed to resume job") from e
 
 
 # ============================================================================
@@ -407,7 +440,9 @@ async def get_job_executions(
         raise
     except Exception as e:
         logger.error(f"Error getting job executions: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to get job executions")
+        raise HTTPException(
+            status_code=500, detail="Failed to get job executions"
+        ) from e
 
 
 @router.get("/executions", response_model=JobExecutionListSchema)
@@ -446,7 +481,7 @@ async def get_all_executions(
 
     except Exception as e:
         logger.error(f"Error getting executions: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to get executions")
+        raise HTTPException(status_code=500, detail="Failed to get executions") from e
 
 
 # ============================================================================
@@ -484,7 +519,9 @@ async def get_job_statistics(
         raise
     except Exception as e:
         logger.error(f"Error getting job statistics: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to get job statistics")
+        raise HTTPException(
+            status_code=500, detail="Failed to get job statistics"
+        ) from e
 
 
 # ============================================================================
@@ -519,7 +556,7 @@ async def sync_scheduler(
 
     except Exception as e:
         logger.error(f"Error syncing scheduler: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to sync scheduler")
+        raise HTTPException(status_code=500, detail="Failed to sync scheduler") from e
 
 
 @router.get("/status")
@@ -547,4 +584,6 @@ async def get_scheduler_status(
 
     except Exception as e:
         logger.error(f"Error getting scheduler status: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to get scheduler status")
+        raise HTTPException(
+            status_code=500, detail="Failed to get scheduler status"
+        ) from e

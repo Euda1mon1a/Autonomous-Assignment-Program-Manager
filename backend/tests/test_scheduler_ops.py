@@ -228,9 +228,6 @@ class TestApproveEndpoint:
         assert data["task_ids"] == ["task-1", "task-2"]
         assert "expires_at" in data
 
-        # Return token for use in other tests
-        return data["token"]
-
     def test_approve_with_invalid_token(self, client: TestClient, auth_headers: dict):
         """Test approval with invalid token."""
         response = client.post(
@@ -357,34 +354,3 @@ class TestApproveEndpoint:
             },
         )
         assert response.status_code == 401
-
-
-# Fixtures for testing
-@pytest.fixture
-def auth_headers(client: TestClient) -> dict:
-    """Get authentication headers for testing.
-
-    This fixture should be implemented based on your auth setup.
-    For now, it's a placeholder.
-    """
-    # In real tests, you would:
-    # 1. Create a test user
-    # 2. Login to get JWT token
-    # 3. Return headers with Authorization: Bearer <token>
-
-    # Placeholder - update based on your auth implementation
-    return {
-        "Authorization": "Bearer test_token_here",
-        "Content-Type": "application/json",
-    }
-
-
-@pytest.fixture
-def client(db_session) -> TestClient:
-    """Create test client.
-
-    This fixture should be implemented based on your test setup.
-    """
-    from app.main import app
-
-    return TestClient(app)

@@ -14,11 +14,20 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import PlainTextResponse, Response
 
+from app.core.config import get_settings
 from app.core.metrics import get_metrics
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["metrics"])
+
+try:
+    from prometheus_client import REGISTRY, generate_latest
+except ImportError:
+    REGISTRY = None
+
+    def generate_latest(_registry: Any) -> bytes:
+        raise ImportError("prometheus_client not installed")
 
 
 @router.get("", response_model=dict[str, Any])
@@ -299,20 +308,16 @@ async def export_metrics(request: Request) -> Response:
         ...
     """
     try:
-        from prometheus_client import REGISTRY, generate_latest
-
-        # Generate metrics in Prometheus text format
         metrics_output = generate_latest(REGISTRY)
-
         return Response(
             content=metrics_output,
             media_type="text/plain; version=0.0.4; charset=utf-8",
         )
-    except ImportError:
+    except ImportError as e:
         raise HTTPException(
             status_code=503,
             detail="Metrics export unavailable - prometheus_client not installed",
-        )
+        ) from e
 
 
 @router.get(
@@ -396,8 +401,6 @@ async def reset_metrics() -> dict[str, Any]:
     Raises:
         HTTPException: If not in debug mode
     """
-    from app.core.config import get_settings
-
     settings = get_settings()
 
     if not settings.DEBUG:

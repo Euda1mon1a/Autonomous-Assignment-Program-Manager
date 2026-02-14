@@ -61,14 +61,14 @@ async def get_academic_block_matrix(
         logger.error(f"Invalid block matrix request: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid request parameters",
-        )
+            detail=str(e),
+        ) from e
     except Exception as e:
         logger.error(f"Error generating block matrix: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred generating the block matrix",
-        )
+        ) from e
 
 
 @router.get("/matrix/blocks", response_model=BlockListResponse)
@@ -102,11 +102,11 @@ async def list_academic_blocks(
         logger.error(f"Invalid academic blocks list request: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid request parameters",
-        )
+            detail=str(e),
+        ) from e
     except Exception as e:
         logger.error(f"Error listing academic blocks: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred listing academic blocks",
-        )
+        ) from e

@@ -2,14 +2,14 @@
 
 ## Files Created
 
-### 1. /home/user/Autonomous-Assignment-Program-Manager/load-tests/utils/auth.js
+### 1. `load-tests/utils/auth.js`
 Authentication utilities module providing:
 - Login helpers (form-data and JSON)
 - Token management functions
 - Request validation helpers
 - JWT token utilities
 
-### 2. /home/user/Autonomous-Assignment-Program-Manager/load-tests/scenarios/rate-limit-attack.js
+### 2. `load-tests/scenarios/rate-limit-attack.js`
 Rate limiting attack simulation with 4 scenarios:
 - **Brute Force Login**: Tests login rate limit (5/min)
 - **API Flooding**: Tests API rate limit (30 req/s)
@@ -19,7 +19,7 @@ Rate limiting attack simulation with 4 scenarios:
 **Duration**: ~100 seconds
 **Custom Metrics**: rate_limit_triggers, blocked_requests, requests_until_limit, etc.
 
-### 3. /home/user/Autonomous-Assignment-Program-Manager/load-tests/scenarios/auth-security.js
+### 3. `load-tests/scenarios/auth-security.js`
 Authentication security tests with 5 scenarios:
 - **Token Validation Load**: 100 concurrent users with valid tokens
 - **Invalid Token Rejection**: Tests various invalid token formats
@@ -30,7 +30,7 @@ Authentication security tests with 5 scenarios:
 **Duration**: ~11 minutes
 **Custom Metrics**: token_validation_time, invalid_token_rejections, etc.
 
-### 4. /home/user/Autonomous-Assignment-Program-Manager/load-tests/README.md
+### 4. `load-tests/README.md`
 Comprehensive documentation including:
 - Installation instructions
 - Usage examples
@@ -39,7 +39,7 @@ Comprehensive documentation including:
 - Troubleshooting tips
 - CI/CD integration examples
 
-### 5. /home/user/Autonomous-Assignment-Program-Manager/load-tests/run-load-tests.sh
+### 5. `load-tests/run-load-tests.sh`
 Test runner script with options:
 - `--rate-limit-only`: Run only rate limit tests
 - `--auth-only`: Run only auth security tests
@@ -47,7 +47,7 @@ Test runner script with options:
 - `--results-dir DIR`: Custom results directory
 - `--skip-wait`: Skip cooldown between tests
 
-### 6. /home/user/Autonomous-Assignment-Program-Manager/load-tests/preflight-check.sh
+### 6. `load-tests/preflight-check.sh`
 Pre-flight validation script that checks:
 - k6 installation
 - Docker daemon status
@@ -63,7 +63,7 @@ Pre-flight validation script that checks:
 
 1. **Run pre-flight check:**
    ```bash
-   cd /home/user/Autonomous-Assignment-Program-Manager/load-tests
+   cd load-tests
    ./preflight-check.sh
    ```
 

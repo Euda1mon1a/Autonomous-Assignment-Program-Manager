@@ -7,7 +7,6 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import select
 
 from app.core.security import get_current_active_user
 from app.db.session import get_db
@@ -83,8 +82,8 @@ async def get_heatmap_data(
         logger.error(f"Error generating heatmap data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="An error occurred generating heatmap data",
-        )
+            detail="Failed to generate heatmap data",
+        ) from e
 
 
 @router.post("/heatmap/data", response_model=UnifiedCoverageResponse)
@@ -132,8 +131,8 @@ async def post_heatmap_data(
         logger.error(f"Error generating heatmap data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="An error occurred generating heatmap data",
-        )
+            detail="Failed to generate heatmap data",
+        ) from e
 
 
 @router.get("/heatmap/render", response_class=HTMLResponse)
@@ -191,8 +190,8 @@ async def render_heatmap(
         logger.error(f"Error rendering heatmap: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="An error occurred rendering the heatmap",
-        )
+            detail="Failed to render heatmap",
+        ) from e
 
 
 @router.post("/heatmap/render", response_class=HTMLResponse)
@@ -240,8 +239,8 @@ async def post_render_heatmap(
         logger.error(f"Error rendering heatmap: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="An error occurred rendering the heatmap",
-        )
+            detail="Failed to render heatmap",
+        ) from e
 
 
 @router.get("/heatmap/export")
@@ -305,13 +304,13 @@ async def export_heatmap(
         )
     except ValueError as e:
         logger.error(f"Invalid heatmap export parameters: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail="Invalid request parameters")
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Error exporting heatmap: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="An error occurred exporting the heatmap",
-        )
+            detail="Failed to export heatmap",
+        ) from e
 
     # Determine media type
     media_types = {
@@ -383,13 +382,13 @@ async def post_export_heatmap(
         )
     except ValueError as e:
         logger.error(f"Invalid heatmap export parameters: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail="Invalid request parameters")
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Error exporting heatmap: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="An error occurred exporting the heatmap",
-        )
+            detail="Failed to export heatmap",
+        ) from e
 
     # Determine media type
     media_types = {
@@ -455,8 +454,8 @@ async def get_person_coverage_data(
         logger.error(f"Error generating person coverage data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="An error occurred generating person coverage data",
-        )
+            detail="Failed to generate person coverage data",
+        ) from e
 
 
 @router.post("/person-coverage/data", response_model=PersonCoverageResponse)
@@ -496,8 +495,8 @@ async def post_person_coverage_data(
         logger.error(f"Error generating person coverage data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="An error occurred generating person coverage data",
-        )
+            detail="Failed to generate person coverage data",
+        ) from e
 
 
 @router.get("/weekly-fmit/data", response_model=WeeklyFMITResponse)
@@ -539,8 +538,8 @@ async def get_weekly_fmit_data(
         logger.error(f"Error generating weekly FMIT data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="An error occurred generating weekly FMIT data",
-        )
+            detail="Failed to generate weekly FMIT data",
+        ) from e
 
 
 @router.post("/weekly-fmit/data", response_model=WeeklyFMITResponse)
@@ -578,5 +577,5 @@ async def post_weekly_fmit_data(
         logger.error(f"Error generating weekly FMIT data: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="An error occurred generating weekly FMIT data",
-        )
+            detail="Failed to generate weekly FMIT data",
+        ) from e

@@ -9,7 +9,7 @@ from ipaddress import ip_address, ip_network
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -23,6 +23,19 @@ from app.core.slowapi_limiter import limiter, rate_limit_exceeded_handler
 from app.middleware.audit import AuditContextMiddleware
 from app.middleware.phi_middleware import PHIMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
+
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+except ImportError:
+    Instrumentator = None
+
+try:
+    from app.resilience.metrics import get_metrics
+except Exception:
+
+    def get_metrics():
+        raise RuntimeError("Resilience metrics unavailable")
+
 
 # Populate os.environ from macOS Keychain before Pydantic reads settings
 initialize_secrets_from_keychain()
@@ -184,9 +197,7 @@ async def lifespan(app: FastAPI):
         )
 
     # Initialize Prometheus instrumentation
-    try:
-        from prometheus_fastapi_instrumentator import Instrumentator
-
+    if Instrumentator is not None:
         instrumentator = Instrumentator(
             should_group_status_codes=True,
             should_ignore_untemplated=True,
@@ -198,7 +209,7 @@ async def lifespan(app: FastAPI):
         )
         instrumentator.instrument(app).expose(app, endpoint="/metrics")
         logger.info("Prometheus instrumentation enabled at /metrics")
-    except ImportError:
+    else:
         logger.warning("prometheus-fastapi-instrumentator not available")
 
     # Initialize resilience metrics
@@ -478,8 +489,6 @@ async def resilience_health():
     - Active fallbacks
     """
     try:
-        from app.resilience.metrics import get_metrics
-
         metrics = get_metrics()
         return {
             "status": "operational",
@@ -499,6 +508,27 @@ async def resilience_health():
             "status": "degraded",
             "error": str(e),
         }
+
+
+if Instrumentator is None:
+
+    @app.get("/metrics", include_in_schema=False)
+    async def metrics_fallback() -> Response:
+        """
+        Fallback metrics endpoint when prometheus-fastapi-instrumentator is unavailable.
+        """
+        from app.api.routes.metrics import REGISTRY, generate_latest
+
+        try:
+            return Response(
+                content=generate_latest(REGISTRY),
+                media_type="text/plain; version=0.0.4; charset=utf-8",
+            )
+        except Exception:
+            return Response(
+                content="# metrics unavailable\n",
+                media_type="text/plain; charset=utf-8",
+            )
 
 
 @app.get("/health/cache")
