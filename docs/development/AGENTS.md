@@ -53,12 +53,13 @@ project_doc_max_bytes = 65536
 
 ### Guardrail File Hierarchy
 
-| File | Purpose | Read by Claude | Read by Codex |
-|------|---------|----------------|---------------|
-| `CLAUDE.md` | Full project rules, security, API contracts | Always | Via fallback config |
-| `AGENTS.md` (root) | Condensed hard boundaries | If referenced | Always at startup |
-| `.codex/AGENTS.md` | Full Codex rules + anti-patterns | If referenced | Always (directory walk) |
-| `docs/development/AGENTS.md` | This file: monitoring patterns, shared context | If referenced | If referenced |
+| File | Purpose | Claude Code | Codex CLI | Gemini CLI | Kimi Code |
+|------|---------|-------------|-----------|------------|-----------|
+| `CLAUDE.md` | Full project rules | Always | Via fallback | If referenced | If referenced |
+| `AGENTS.md` (root) | Condensed boundaries | If referenced | Always | If referenced | If referenced |
+| `GEMINI.md` (root) | Gemini startup guardrails | If referenced | If referenced | Always | If referenced |
+| `.codex/AGENTS.md` | Full Codex rules | If referenced | Directory walk | No | No |
+| `docs/development/AGENTS.md` | This file | If referenced | If referenced | If referenced | If referenced |
 
 ### Why This Matters (Feb 2026 Lesson)
 

@@ -68,14 +68,82 @@ In addition to Claude models, the project uses OpenAI Codex for automated backgr
 
 **CLI usage:** `codex --model gpt-5.3-codex-spark` or `/model` mid-session. Default remains `gpt-5.3-codex` for automations.
 
-### Cross-System Model Comparison
+---
 
-| Tier | Claude | Codex | Role |
-|------|--------|-------|------|
-| Heavy | Opus 4.6 | 5.3-Codex | Complex reasoning, orchestration, multi-file |
-| Medium | Sonnet 4.5 | — | Tactical code gen, reviews |
-| Light | Haiku 4.5 | — | Simple execution, quick lookups |
-| Speed | — | 5.3-Codex-Spark | Real-time iteration, interactive pairing |
+## Kimi K2.5 (Moonshot AI)
+
+Open-source MoE model (1T total params, 32B active) with a unique Agent Swarm capability.
+
+| Model | Model ID | Speed | Context | SWE-Bench | Cost (per M tokens) |
+|-------|----------|-------|---------|-----------|---------------------|
+| **K2.5** | `kimi-k2.5` | Variable | ~128K | 76.8% | $0.60 / $2.50 in/out |
+
+**CLI Tool:** Kimi Code — terminal agent with VSCode/Cursor/Zed integration.
+
+**Four modes:**
+- **Instant** — fast responses (3-8s)
+- **Thinking** — chain-of-thought reasoning
+- **Agent** — 200-300 sequential tool calls without drift
+- **Agent Swarm** — up to 100 parallel sub-agents, 1,500 tool calls, 4.5x speedup
+
+**Unique capability:** Vision-grounded coding — generates code from UI mockups and video walkthroughs. Native multimodal (15T visual+text pretraining).
+
+**Best for:** Massive parallelism at low cost (Agent Swarm), vision-to-code from Figma/mockups, budget-friendly exploration tasks.
+
+**Caution:** Chinese company — data sovereignty consideration for military medical data. No established instruction file convention. Not battle-tested in this project's CI/CD workflows.
+
+---
+
+## Gemini CLI (Google)
+
+Google's open-source terminal agent with the largest context window available (1M tokens). MCP-compatible.
+
+| Model | Model ID | Speed | Context | SWE-Bench | Access |
+|-------|----------|-------|---------|-----------|--------|
+| **Gemini 3 Pro** | `gemini-3-pro` | Medium | **1M** | <78% | AI Ultra subscription |
+| **Gemini 3 Flash** | `gemini-3-flash` | Fast (3x Pro) | **1M** | **78%** | Free tier or AI Ultra |
+
+**Install:** `brew install gemini-cli` or `npm install -g @google/gemini-cli`
+
+**Instruction file:** `GEMINI.md` (repo root) — analogous to `CLAUDE.md` and `AGENTS.md`.
+
+**Key features:**
+- 1M token context window — largest free context available
+- Built-in Google Search grounding for research
+- MCP support for custom tools (can connect to residency-scheduler MCP)
+- Conversation checkpointing (save/resume sessions)
+- Non-interactive mode with JSON output for scripting
+- Free tier: 60 req/min, 1,000 req/day with Google login
+
+**Gemini 3 Flash vs Pro:** Flash is 3x faster at 1/4 the cost and scores *higher* on SWE-bench (78% vs Pro). Use Pro for complex reasoning; Flash for everything else.
+
+**Best for:** Whole-codebase analysis (1M context), research with Google Search grounding, high-frequency CLI work (Flash), budget-conscious daily use.
+
+---
+
+## Full Roster — Cross-System Model Comparison
+
+| System | Model | Speed | Context | SWE-Bench | Cost | Best For |
+|--------|-------|-------|---------|-----------|------|----------|
+| Claude Code | Opus 4.6 | Medium | 200K (1M beta) | — | $$$ | Orchestration, architecture, complex reasoning |
+| Claude Code | Sonnet 4.5 | Fast | 200K | — | $$ | Code gen, reviews, tactical work |
+| Claude Code | Haiku 4.5 | Fastest | 200K | — | $ | Simple execution, lookups |
+| Codex CLI | 5.3-Codex | Standard | 192K | — | Pro sub | Nightly automations, multi-file tasks |
+| Codex CLI | 5.3-Spark | 1000+ tok/s | 128K | — | Pro sub | Interactive pairing, quick fixes |
+| Kimi Code | K2.5 | Variable | ~128K | 76.8% | $0.60/$2.50 | Agent swarm, vision-to-code |
+| Gemini CLI | 3 Pro | Medium | **1M** | <78% | Ultra sub | Whole-codebase analysis, research |
+| Gemini CLI | 3 Flash | Fast | **1M** | **78%** | Free/Ultra | High-frequency CLI, rapid iteration |
+
+### Instruction File Discovery
+
+Each CLI reads a different startup file. All must contain project guardrails.
+
+| System | Startup File | Fallback Config |
+|--------|-------------|-----------------|
+| Claude Code | `CLAUDE.md` | `.claude/` project settings |
+| Codex CLI | `AGENTS.md` | `project_doc_fallback_filenames` in `.codex/config.toml` |
+| Gemini CLI | `GEMINI.md` | — |
+| Kimi Code | TBD (not yet standardized) | — |
 
 ---
 
