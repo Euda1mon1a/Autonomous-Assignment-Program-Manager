@@ -27,6 +27,7 @@ from app.schemas.visualization import (
     HeatmapResponse,
     TimeRangeType,
 )
+from app.models.calendar_subscription import CalendarSubscription
 from app.services.calendar_service import CalendarService
 from app.services.heatmap_service import HeatmapService
 
@@ -478,7 +479,7 @@ class CachedCalendarService:
         created_by_user_id: UUID | None = None,
         label: str | None = None,
         expires_days: int | None = None,
-    ):
+    ) -> CalendarSubscription:
         """Create a calendar subscription (not cached - modifies state)."""
         return CalendarService.create_subscription(
             db=db,

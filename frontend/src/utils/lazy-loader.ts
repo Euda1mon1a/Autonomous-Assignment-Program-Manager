@@ -62,8 +62,7 @@ export function preloadComponent<P = Record<string, unknown>>(
 ): void {
   // Trigger the lazy loading by creating an element
   // The cast is safe because we're not rendering, just triggering the load
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  React.createElement(lazyComponent as React.ComponentType<any>);
+  React.createElement(lazyComponent as React.ComponentType<unknown>);
   // Component will be cached by React
 }
 

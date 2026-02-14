@@ -130,7 +130,7 @@ class BlockAssignmentExpansionService:
     3. Return list of Assignment objects (not committed)
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self._absence_cache: dict[UUID, list[Absence]] = {}
         self._block_cache: dict[tuple[date, str], Block] = {}
