@@ -503,6 +503,10 @@ class Settings(BaseSettings):
         env_file = ".env"
         case_sensitive = True
         extra = "ignore"  # Ignore extra env vars not defined in Settings
+        # Treat empty-string env vars as unset so .env/defaults take precedence.
+        # Fixes: Codex shell snapshots export DATABASE_URL='' which overrides
+        # the real .env value and crashes settings validation at import time.
+        env_ignore_empty = True
 
 
 @lru_cache
