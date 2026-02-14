@@ -17,8 +17,8 @@
  * - Prevents session hijacking attempts
  *
  * Usage:
- *   k6 run load-tests/scenarios/auth-security.js
- *   K6_BASE_URL=https://api.example.com k6 run load-tests/scenarios/auth-security.js
+ *   k6 run scenarios/auth-security.js
+ *   K6_BASE_URL=https://api.example.com k6 run scenarios/auth-security.js
  */
 
 import http from 'k6/http';

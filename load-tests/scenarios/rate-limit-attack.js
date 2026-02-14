@@ -13,8 +13,8 @@
  * - Schedule Generation: 1 request per 10 seconds per IP
  *
  * Usage:
- *   k6 run load-tests/scenarios/rate-limit-attack.js
- *   K6_BASE_URL=https://api.example.com k6 run load-tests/scenarios/rate-limit-attack.js
+ *   k6 run scenarios/rate-limit-attack.js
+ *   K6_BASE_URL=https://api.example.com k6 run scenarios/rate-limit-attack.js
  */
 
 import http from 'k6/http';

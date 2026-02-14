@@ -91,7 +91,7 @@ docker-compose up -d backend db redis
 cd load-tests
 
 # Run a smoke test (basic functionality)
-k6 run scenarios/smoke-test.js
+k6 run k6/scenarios/smoke-test.js
 
 # Or use npm scripts
 npm run test:smoke
@@ -223,18 +223,18 @@ npm run test:soak
 cd load-tests
 
 # Individual scenarios
-k6 run scenarios/smoke-test.js
-k6 run scenarios/load-test.js
-k6 run scenarios/stress-test.js
+k6 run k6/scenarios/smoke-test.js
+k6 run k6/scenarios/load-test.js
+k6 run k6/scenarios/stress-test.js
 
 # With custom VUs and duration
-k6 run --vus 50 --duration 5m scenarios/load-test.js
+k6 run --vus 50 --duration 5m k6/scenarios/load-test.js
 
 # With environment variables
-API_BASE_URL=http://localhost:8000 k6 run scenarios/load-test.js
+API_BASE_URL=http://localhost:8000 k6 run k6/scenarios/load-test.js
 
 # Save results to file
-k6 run --out json=results/test-results.json scenarios/load-test.js
+k6 run --out json=results/test-results.json k6/scenarios/load-test.js
 ```
 
 ### NPM Scripts
@@ -279,7 +279,7 @@ npm run test:docker:load
 npm run test:docker:stress
 
 # Custom test
-docker-compose -f docker-compose.k6.yml --profile load-testing run --rm k6 run /load-tests/scenarios/your-test.js
+docker-compose -f docker-compose.k6.yml --profile load-testing run --rm k6 run /load-tests/k6/scenarios/your-test.js
 ```
 
 ### With Metrics Collection
@@ -291,7 +291,7 @@ npm run metrics:up
 # Run tests with metrics
 docker-compose -f docker-compose.k6.yml --profile load-testing-metrics run --rm k6 run \
   --out influxdb=http://influxdb:8086/k6 \
-  /load-tests/scenarios/load-test.js
+  /load-tests/k6/scenarios/load-test.js
 
 # View Grafana dashboard
 # Open http://localhost:3001
@@ -396,17 +396,17 @@ export function setup() {
 // Main test - runs for each VU iteration
 export default function (data) {
   const { session } = data;
-  
+
   // Generate test data
   const person = generatePerson('resident');
-  
+
   // Make requests
   const createRes = session.post(
     'http://localhost:8000/api/people',
     person,
     { name: 'create_person' }
   );
-  
+
   // Validate response
   check(createRes, {
     'create person status is 201': (r) => r.status === 201,
@@ -418,7 +418,7 @@ export default function (data) {
       }
     },
   });
-  
+
   // Think time (simulate user delay)
   sleep(1);
 }
@@ -433,9 +433,9 @@ export function teardown(data) {
 ### Using Utilities
 
 ```javascript
-import { 
-  createSession, 
-  getRandomTestUser 
+import {
+  createSession,
+  getRandomTestUser
 } from '../utils/auth.js';
 
 import {
@@ -500,7 +500,7 @@ Store metrics in InfluxDB for historical analysis:
 npm run metrics:up
 
 # Run test with InfluxDB output
-k6 run --out influxdb=http://localhost:8086/k6 scenarios/load-test.js
+k6 run --out influxdb=http://localhost:8086/k6 k6/scenarios/load-test.js
 
 # Access InfluxDB UI
 # http://localhost:8086
@@ -528,7 +528,7 @@ npm run metrics:up
 Generate HTML reports:
 
 ```bash
-k6 run --out json=results/test.json scenarios/load-test.js
+k6 run --out json=results/test.json k6/scenarios/load-test.js
 k6 export --output html results/test.json > results/report.html
 ```
 
@@ -603,7 +603,7 @@ Generate realistic test data that matches production patterns:
 
 ```javascript
 // Good: Realistic distribution
-const person = Math.random() > 0.7 
+const person = Math.random() > 0.7
   ? generatePerson('resident')
   : generatePerson('faculty');
 
@@ -621,7 +621,7 @@ import { sleep } from 'k6';
 export default function() {
   // Make request
   session.get('/api/people');
-  
+
   // Simulate user reading time (1-3 seconds)
   sleep(Math.random() * 2 + 1);
 }
@@ -688,18 +688,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Start services
         run: docker-compose up -d
-      
+
       - name: Wait for backend
         run: ./scripts/wait-for-it.sh localhost:8000 -t 60
-      
+
       - name: Run smoke test
         run: |
           cd load-tests
           npm run test:docker:smoke
-      
+
       - name: Upload results
         uses: actions/upload-artifact@v3
         with:

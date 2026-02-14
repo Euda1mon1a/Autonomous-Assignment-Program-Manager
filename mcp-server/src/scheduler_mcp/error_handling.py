@@ -12,6 +12,7 @@ This module provides:
 
 import asyncio
 import functools
+import inspect
 import logging
 import random
 import time
@@ -593,10 +594,9 @@ class CircuitBreaker:
 
         # Execute function
         try:
-            if asyncio.iscoroutinefunction(func):
-                result = await func(*args, **kwargs)
-            else:
-                result = func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            if inspect.isawaitable(result):
+                result = await result
 
             # Record success
             await self._on_success()

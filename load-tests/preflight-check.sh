@@ -133,8 +133,8 @@ if [ $CHECKS_FAILED -eq 0 ]; then
     echo "  ./run-load-tests.sh"
     echo ""
     echo "Or run individual tests:"
-    echo "  k6 run load-tests/scenarios/rate-limit-attack.js"
-    echo "  k6 run load-tests/scenarios/auth-security.js"
+    echo "  k6 run scenarios/rate-limit-attack.js"
+    echo "  k6 run scenarios/auth-security.js"
     echo "================================================================================"
     exit 0
 else
