@@ -299,12 +299,12 @@ class PersonService:
         created_ids = []
 
         # Check for duplicate emails within the batch
-        emails_in_batch = [
-            p.get("email", "").strip().lower() for p in people_data if p.get("email")
-        ]
-        seen_emails = set()
-        for idx, email in enumerate(emails_in_batch):
-            if email and email in seen_emails:
+        seen_emails: set[str] = set()
+        for idx, person in enumerate(people_data):
+            email = (person.get("email") or "").strip().lower()
+            if not email:
+                continue
+            if email in seen_emails:
                 results.append(
                     {
                         "index": idx,
@@ -313,10 +313,9 @@ class PersonService:
                         "error": f"Duplicate email in batch: {email}",
                     }
                 )
-            if email:
-                seen_emails.add(email)
+            seen_emails.add(email)
 
-                # Phase 1: Validate all people
+            # Phase 1: Validate all people
         for idx, person_data in enumerate(people_data):
             try:
                 # Validate resident requirements

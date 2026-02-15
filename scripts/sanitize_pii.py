@@ -130,7 +130,7 @@ class PIISanitizer:
 
             # Sanitize date fields (shift by offset)
             if key_lower.endswith("_date") or key_lower in {"date", "dob", "birth_date"}:
-                result[key] = self._sanitize_date(value)
+                result[key] = self._sanitize_date(value, field_name=key)
                 continue
 
             # Recurse into nested structures
@@ -203,7 +203,7 @@ class PIISanitizer:
         self.email_map[email] = synthetic
         return synthetic
 
-    def _sanitize_date(self, date_value: Any) -> Any:
+    def _sanitize_date(self, date_value: Any, field_name: str = "unknown") -> Any:
         """Shift date by random offset (preserves relative timing)."""
         if not date_value:
             return date_value
@@ -220,8 +220,12 @@ class PIISanitizer:
                         continue
             elif isinstance(date_value, (date, datetime)):
                 return date_value + timedelta(days=self.date_offset)
-        except Exception:
-            pass
+        except Exception as e:
+            print(
+                f"WARNING: Date sanitization failed for '{field_name}': "
+                f"{type(e).__name__} — value returned UNSANITIZED",
+                file=sys.stderr,
+            )
 
         return date_value
 
@@ -267,7 +271,7 @@ def reverse_sanitize(mapping_path: Path, sanitized_data: dict) -> dict:
         key_lower = key.lower()
         return key_lower.endswith("_date") or key_lower in {"date", "dob", "birth_date"}
 
-    def reverse_date(value: Any) -> Any:
+    def reverse_date(value: Any, field_name: str = "unknown") -> Any:
         if not value:
             return value
 
@@ -282,8 +286,12 @@ def reverse_sanitize(mapping_path: Path, sanitized_data: dict) -> dict:
                         continue
             elif isinstance(value, (date, datetime)):
                 return value + timedelta(days=date_offset)
-        except Exception:
-            pass
+        except Exception as e:
+            print(
+                f"WARNING: Date de-sanitization failed for '{field_name}': "
+                f"{type(e).__name__} — value returned as-is",
+                file=sys.stderr,
+            )
 
         return value
 
@@ -292,7 +300,7 @@ def reverse_sanitize(mapping_path: Path, sanitized_data: dict) -> dict:
             result = {}
             for k, v in data.items():
                 if is_date_key(k):
-                    result[k] = reverse_date(v)
+                    result[k] = reverse_date(v, field_name=k)
                 else:
                     result[k] = reverse_recurse(v, k)
             return result
