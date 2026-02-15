@@ -293,8 +293,8 @@ ANTHROPIC_API_KEY=<api-key>
 
 - [MCP Agent Implementation Summary](/mcp-server/AGENT_IMPLEMENTATION_SUMMARY.md)
 - [Resilience MCP Integration](/mcp-server/RESILIENCE_MCP_INTEGRATION.md)
-- [Architecture Overview](/docs/architecture/overview.md)
-- [Frontend Architecture](/docs/architecture/frontend.md)
+- [Architecture Overview](../architecture/overview.md)
+- [Frontend Architecture](../architecture/frontend.md)
 
 ## External Resources
 

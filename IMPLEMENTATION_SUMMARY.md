@@ -410,10 +410,10 @@ services:
 
 ## References
 
-- [Local LLM Docker Integration Plan](/docs/planning/LOCAL_LLM_DOCKER_INTEGRATION_PLAN.md)
-- [LLM Router Service](/backend/app/services/llm_router.py)
-- [Scheduling Assistant Prompts](/backend/app/prompts/scheduling_assistant.py)
-- [Autonomous Loop README](/backend/app/autonomous/examples/README.md)
+- [Local LLM Docker Integration Plan](docs/planning/LOCAL_LLM_DOCKER_INTEGRATION_PLAN.md)
+- [LLM Router Service](backend/app/services/llm_router.py)
+- [Scheduling Assistant Prompts](backend/app/prompts/scheduling_assistant.py)
+- [Autonomous Loop README](backend/app/autonomous/examples/README.md)
 
 ---
 

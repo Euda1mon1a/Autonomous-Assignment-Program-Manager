@@ -850,7 +850,7 @@ estimated_effort, dependencies, implementation_notes, edge_cases
 async def parse_complex_feature(message: str) -> Dict:
     """Parse complex feature request with Claude."""
     response = await anthropic.messages.create(
-        model="claude-opus-4-5-20251101",
+        model="claude-opus-4-6",
         max_tokens=2000,
         messages=[{
             "role": "user",

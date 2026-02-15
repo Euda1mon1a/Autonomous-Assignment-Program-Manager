@@ -246,8 +246,8 @@ advisor = LLMAdvisor(
 
 - 📖 Read full docs: [examples/README.md](examples/README.md)
 - 🔬 Run examples: `python -m app.autonomous.examples.advisor_example`
-- 📊 Review implementation: [IMPLEMENTATION_SUMMARY.md](/IMPLEMENTATION_SUMMARY.md)
-- 📋 See planning doc: [LOCAL_LLM_DOCKER_INTEGRATION_PLAN.md](/docs/planning/LOCAL_LLM_DOCKER_INTEGRATION_PLAN.md)
+- 📊 Review implementation: [IMPLEMENTATION_SUMMARY.md](../../../IMPLEMENTATION_SUMMARY.md)
+- 📋 See planning doc: [LOCAL_LLM_DOCKER_INTEGRATION_PLAN.md](../../../docs/planning/LOCAL_LLM_DOCKER_INTEGRATION_PLAN.md)
 
 ---
 

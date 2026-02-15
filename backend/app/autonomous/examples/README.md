@@ -233,5 +233,5 @@ With GPU (RTX 3060):
 ## Next Steps
 
 - Read the [Autonomous Loop Documentation](../README.md)
-- See [LLM Router Documentation](/backend/app/services/llm_router.py)
-- Review [Local LLM Integration Plan](/docs/planning/LOCAL_LLM_DOCKER_INTEGRATION_PLAN.md)
+- See [LLM Router Documentation](../../services/llm_router.py)
+- Review [Local LLM Integration Plan](../../../../docs/planning/LOCAL_LLM_DOCKER_INTEGRATION_PLAN.md)

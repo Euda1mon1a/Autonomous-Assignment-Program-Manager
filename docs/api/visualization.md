@@ -109,7 +109,7 @@ Generate coverage heatmap showing staffing levels per rotation.
 
 ## 3D Voxel Visualization Endpoints
 
-These endpoints provide novel 3D representations of schedule data. See [3D Voxel Visualization Architecture](/docs/architecture/3d-voxel-visualization.md) for conceptual details.
+These endpoints provide novel 3D representations of schedule data. See [3D Voxel Visualization Architecture](../architecture/3d-voxel-visualization.md) for conceptual details.
 
 ### GET `/voxel-grid`
 

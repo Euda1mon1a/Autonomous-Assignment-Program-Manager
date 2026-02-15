@@ -277,9 +277,9 @@ pytest -m "performance and not slow" -v
 
 ### Documentation
 
-- **[Load Testing Guide](/docs/operations/LOAD_TESTING.md)** - Comprehensive guide
-- **[Nginx Setup](/nginx/LOAD_TESTING_SETUP.md)** - Nginx configuration
-- **[k6 README](/load-tests/README.md)** - k6 scenarios documentation
+- **[Load Testing Guide](../operations/LOAD_TESTING.md)** - Comprehensive guide
+- **[Nginx Setup](../../nginx/LOAD_TESTING_SETUP.md)** - Nginx configuration
+- **[k6 README](../../load-tests/README.md)** - k6 scenarios documentation
 
 ---
 

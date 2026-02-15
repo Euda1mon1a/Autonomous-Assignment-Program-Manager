@@ -475,7 +475,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_MODEL: claude-opus-4-5  # Use latest model
+          CLAUDE_MODEL: claude-opus-4-6  # Use latest model
           CLAUDE_MAX_TOKENS: 8192
           CLAUDE_TEMPERATURE: 0.7
         run: |

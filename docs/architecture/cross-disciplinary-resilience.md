@@ -2371,7 +2371,7 @@ Maps schedule parameters to catastrophe theory manifolds (fold, cusp, swallowtai
 
 ### Full Documentation
 
-See **[Exotic Frontier Concepts Reference](/docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md)** for complete implementation details, API reference, and usage examples.
+See **[Exotic Frontier Concepts Reference](EXOTIC_FRONTIER_CONCEPTS.md)** for complete implementation details, API reference, and usage examples.
 
 ---
 

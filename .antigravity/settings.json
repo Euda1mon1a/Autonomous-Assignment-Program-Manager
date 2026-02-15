@@ -32,10 +32,10 @@
   },
 
   "managerView": {
-    "enabled": false,
-    "status": "FUTURE_B",
+    "enabled": true,
+    "status": "ACTIVE",
     "configFile": "./FUTURE_B_MANAGER_VIEW.md",
-    "note": "Parallel agent orchestration - not yet activated"
+    "note": "Parallel subagent orchestration - activated 2026-02-14"
   },
 
   "autoTriggers": {
