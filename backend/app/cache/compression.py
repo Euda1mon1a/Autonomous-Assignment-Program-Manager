@@ -8,7 +8,12 @@ import json
 import logging
 import zlib
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.cache.cache_manager import CacheManager
+
+CompressionStats = dict[str, float | int]
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +133,7 @@ class CacheCompression:
         self,
         original_size: int,
         compressed_size: int,
-    ) -> dict:
+    ) -> CompressionStats:
         """Calculate compression statistics.
 
         Args:
@@ -156,7 +161,7 @@ class CompressedCacheWrapper:
 
     def __init__(
         self,
-        cache,
+        cache: "CacheManager",
         compressor: CacheCompression | None = None,
     ) -> None:
         """Initialize compressed cache wrapper.
@@ -240,7 +245,7 @@ class CompressedCacheWrapper:
             logger.error(f"Decompression error for key {key}: {e}")
             return None
 
-    async def get_compression_stats(self) -> dict:
+    async def get_compression_stats(self) -> CompressionStats:
         """Get compression statistics.
 
         Returns:

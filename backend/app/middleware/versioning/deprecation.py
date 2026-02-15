@@ -315,10 +315,13 @@ class DeprecationManager:
 
             # Block if past sunset date
         if deprecation.is_past_sunset():
+            sunset_date = deprecation.sunset_date
+            if sunset_date is None:
+                return None
             error = {
                 "detail": (
                     f"This endpoint has been retired as of "
-                    f"{deprecation.sunset_date.strftime('%Y-%m-%d')}."
+                    f"{sunset_date.strftime('%Y-%m-%d')}."
                 ),
                 "endpoint": path,
                 "version": deprecation.version,

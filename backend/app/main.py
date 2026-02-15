@@ -110,9 +110,11 @@ async def lifespan(app: FastAPI):
     _validate_security_config()
 
     # Initialize default admin user if database is empty (for local development only)
-    # SECURITY: Only create default admin in DEBUG mode to prevent production footgun
+    # SECURITY: Only create default admin in DEBUG mode; uses random password
     if settings.DEBUG:
         try:
+            import secrets
+
             from app.db.session import SessionLocal
             from app.models.user import User
             from app.core.security import get_password_hash
@@ -121,29 +123,26 @@ async def lifespan(app: FastAPI):
             try:
                 user_count = db.query(User).count()
                 if user_count == 0:
-                    logger.info(
-                        "Database is empty. Creating default admin user for initial setup."
-                    )
+                    bootstrap_password = secrets.token_urlsafe(16)
+                    logger.info("Database is empty. Creating bootstrap admin user.")
                     admin_user = User(
                         username="admin",
                         email="admin@local.dev",
-                        hashed_password=get_password_hash("admin123"),
+                        hashed_password=get_password_hash(bootstrap_password),
                         role="admin",
                         is_active=True,
                     )
                     db.add(admin_user)
                     db.commit()
                     logger.info(
-                        "Default admin user created. Username: admin, Password: admin123"
-                    )
-                    logger.warning(
-                        "SECURITY: Default admin user was created with default credentials. "
-                        "Please change the password immediately!"
+                        "Bootstrap admin created. Username: admin, "
+                        "Password: %s (use /initialize-admin endpoint instead)",
+                        bootstrap_password,
                     )
             finally:
                 db.close()
         except Exception as e:
-            logger.warning(f"Failed to auto-initialize admin user: {e}")
+            logger.warning("Failed to auto-initialize admin user")
     else:
         logger.info(
             "Skipping default admin creation (DEBUG=False). "

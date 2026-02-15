@@ -9,7 +9,7 @@ Transforms data between formats:
 
 import re
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Callable
 
 
 def transform_to_title_case(text: str) -> str:
@@ -222,9 +222,9 @@ def transform_to_percentage(value: float, decimal_places: int = 1) -> str:
 
 
 def transform_dict_keys(
-    data: dict,
-    transform_func: callable = transform_to_snake_case,
-) -> dict:
+    data: dict[str, Any],
+    transform_func: Callable[[str], str] = transform_to_snake_case,
+) -> dict[str, Any]:
     """
     Transform all dictionary keys using transform function.
 

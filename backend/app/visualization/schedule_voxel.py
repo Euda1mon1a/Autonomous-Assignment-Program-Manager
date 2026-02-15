@@ -412,7 +412,11 @@ class ScheduleVoxelTransformer:
 
         # Set date range
         if blocks:
-            dates = [self._parse_date(b.get("date")) for b in blocks if b.get("date")]
+            dates: list[date] = []
+            for block in blocks:
+                block_date = self._parse_date(block.get("date"))
+                if block_date is not None:
+                    dates.append(block_date)
             if dates:
                 grid.start_date = min(dates)
                 grid.end_date = max(dates)

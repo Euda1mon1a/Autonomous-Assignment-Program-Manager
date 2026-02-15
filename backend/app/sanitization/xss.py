@@ -11,6 +11,7 @@ This module provides comprehensive XSS protection through:
 
 import re
 import unicodedata
+from typing import Literal
 from urllib.parse import unquote, urlparse
 
 
@@ -201,7 +202,9 @@ def sanitize_input(
     return input_string.strip()
 
 
-def normalize_unicode(text: str, form: str = "NFKC") -> str:
+def normalize_unicode(
+    text: str, form: Literal["NFC", "NFD", "NFKC", "NFKD"] = "NFKC"
+) -> str:
     """
     Normalize Unicode text to prevent Unicode-based attacks.
 

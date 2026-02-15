@@ -561,6 +561,7 @@ def test_landscape_export():
         num_sweeps=200,
         track_landscape=True,
         landscape_sample_rate=20,
+        seed=123,
     )
 
     solution = solver.solve(formulation)
@@ -608,6 +609,7 @@ def test_scalability():
         num_reads=5,
         num_sweeps=500,
         track_landscape=False,
+        seed=123,
     )
 
     solution = solver.solve(formulation)
