@@ -371,28 +371,26 @@ async def initialize_admin(
     """
     Initialize database with default admin user if empty.
 
-    Creates a default admin user with credentials:
-    - username: admin
-    - password: admin123
-
-    This endpoint is idempotent - it only creates the user if the database
-    is completely empty (no users exist).
-
-    Security: This endpoint should only be called during initial setup.
-    It automatically becomes a no-op after the first user is created.
+    Generates a random one-time password and returns it in the response.
+    Only available when DEBUG=True. Automatically becomes a no-op after
+    the first user is created.
 
     Returns:
-        - 201: Admin user created
-        - 200: Database already initialized (user already exists)
+        - 200: Admin user created (includes generated password)
+        - 200: Database already initialized
+        - 403: Endpoint disabled (DEBUG=False)
         - 500: Error during initialization
-
-    Use Cases:
-        - Docker initialization scripts
-        - CI/CD setup pipelines
-        - Development environment setup
-        - RAG authentication bootstrap
     """
+    import secrets
+
     from sqlalchemy import select
+
+    settings = get_settings()
+    if not settings.DEBUG:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin bootstrap is disabled in production mode",
+        )
 
     try:
         # Check if any users exist
@@ -400,20 +398,21 @@ async def initialize_admin(
         existing_users = user_count.scalars().all()
 
         if len(existing_users) > 0:
-            # Database already initialized
             return {
                 "status": "already_initialized",
                 "message": "Database already contains users",
                 "user_count": len(existing_users),
             }
 
-        # Create default admin user
+        # Generate random bootstrap password
         from app.core.security import get_password_hash
+
+        bootstrap_password = secrets.token_urlsafe(16)
 
         admin_user = User(
             username="admin",
             email="admin@local.dev",
-            hashed_password=get_password_hash("admin123"),
+            hashed_password=get_password_hash(bootstrap_password),
             role="admin",
             is_active=True,
         )
@@ -422,11 +421,14 @@ async def initialize_admin(
         db.commit()
         db.refresh(admin_user)
 
+        logger.info("Bootstrap admin user created (change password immediately)")
+
         return {
             "status": "created",
-            "message": "Default admin user created successfully",
+            "message": "Admin user created with generated password",
             "username": "admin",
-            "note": "IMPORTANT: Change the default password in production!",
+            "password": bootstrap_password,
+            "note": "Save this password now — it will not be shown again",
         }
 
     except Exception as e:
@@ -434,5 +436,5 @@ async def initialize_admin(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to initialize admin user: {str(e)}",
+            detail="Failed to initialize admin user",
         )

@@ -7,9 +7,14 @@ import sys
 
 BASE_URL = os.getenv("SEED_BASE_URL", "http://localhost:8000")
 
-# Read credentials from environment (allows override without editing code)
+# Credentials MUST be provided via environment variables
 admin_username = os.getenv("SEED_ADMIN_USERNAME", "admin")
-admin_password = os.getenv("SEED_ADMIN_PASSWORD", "admin123")
+admin_password = os.getenv("SEED_ADMIN_PASSWORD")
+
+if not admin_password:
+    print("ERROR: SEED_ADMIN_PASSWORD environment variable is required")
+    print("Usage: SEED_ADMIN_PASSWORD=<password> python scripts/seed_people.py")
+    sys.exit(1)
 
 # Login to get token
 login_resp = requests.post(
@@ -17,11 +22,11 @@ login_resp = requests.post(
     json={"username": admin_username, "password": admin_password}
 )
 if login_resp.status_code != 200:
-    print(f"Login failed: {login_resp.text}")
+    print(f"Login failed: {login_resp.status_code}")
     sys.exit(1)
-    
+
 token = login_resp.json()["access_token"]
-print(f"Logged in successfully, token: {token[:20]}...")
+print("Logged in successfully")
 headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
 

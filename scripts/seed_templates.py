@@ -249,12 +249,20 @@ ROTATIONS = [
 
 def login():
     """Login and get auth token."""
+    import os
+
+    password = os.getenv("SEED_ADMIN_PASSWORD")
+    if not password:
+        print("ERROR: SEED_ADMIN_PASSWORD environment variable is required")
+        print("Usage: SEED_ADMIN_PASSWORD=<password> python scripts/seed_templates.py")
+        sys.exit(1)
+
     resp = requests.post(
         f"{BASE_URL}/api/v1/auth/login/json",
-        json={"username": "admin", "password": "AdminPassword123!"},
+        json={"username": os.getenv("SEED_ADMIN_USERNAME", "admin"), "password": password},
     )
     if resp.status_code != 200:
-        print(f"Login failed: {resp.text}")
+        print(f"Login failed: {resp.status_code}")
         sys.exit(1)
     return resp.json()["access_token"]
 
