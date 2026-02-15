@@ -331,8 +331,8 @@ def record_request_metrics(
     endpoint: str,
     status: int,
     latency: float,
-    request_size: int,
-    response_size: int,
+    request_size_bytes: int,
+    response_size_bytes: int,
 ) -> None:
     """
     Record HTTP request metrics.
@@ -342,15 +342,15 @@ def record_request_metrics(
         endpoint: API endpoint
         status: HTTP status code
         latency: Request latency in seconds
-        request_size: Request size in bytes
-        response_size: Response size in bytes
+        request_size_bytes: Request size in bytes
+        response_size_bytes: Response size in bytes
     """
     request_count.labels(method=method, endpoint=endpoint, status=status).inc()
     request_latency.labels(method=method, endpoint=endpoint).observe(latency)
     request_latency_summary.labels(method=method, endpoint=endpoint).observe(latency)
-    request_size.labels(method=method, endpoint=endpoint).observe(request_size)
+    request_size.labels(method=method, endpoint=endpoint).observe(request_size_bytes)
     response_size.labels(method=method, endpoint=endpoint, status=status).observe(
-        response_size
+        response_size_bytes
     )
 
 

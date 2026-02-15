@@ -15,7 +15,7 @@ from collections.abc import Callable
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 from uuid import uuid4
 
 import psutil
@@ -123,6 +123,7 @@ class CPUProfiler:
             stats = pstats.Stats(profiler)
             end_time = datetime.utcnow()
 
+            call_count = int(getattr(stats, "total_calls", 0))
             result = ProfileResult(
                 profile_id=profile_id,
                 function_name=function_name,
@@ -132,7 +133,7 @@ class CPUProfiler:
                 cpu_percent=(cpu_start + cpu_end) / 2,
                 memory_mb=process.memory_info().rss / 1024 / 1024,
                 memory_peak_mb=process.memory_info().rss / 1024 / 1024,
-                call_count=stats.total_calls,
+                call_count=call_count,
                 stats=stats,
             )
             self.results.append(result)
@@ -152,8 +153,11 @@ class CPUProfiler:
 
         stream = io.StringIO()
         stats = self.results[-1].stats
+        if stats is None:
+            return "No profiling data available"
         stats.sort_stats(sort_by)
-        stats.print_stats(stream=stream)
+        stats.stream = stream
+        stats.print_stats()
         return stream.getvalue()
 
     def clear(self) -> None:
@@ -378,9 +382,11 @@ def profile_sync(
                 result = func(*args, **kwargs)
 
                 # Store profiler in function metadata
-            if not hasattr(wrapper, "_profilers"):
-                wrapper._profilers = []
-            wrapper._profilers.append(profiler)
+            profilers = getattr(wrapper, "_profilers", None)
+            if profilers is None:
+                profilers = []
+                wrapper._profilers = profilers
+            cast(list[ProfilerContext], profilers).append(profiler)
 
             return result
 
@@ -423,9 +429,11 @@ def profile_async(
                 result = await func(*args, **kwargs)
 
                 # Store profiler in function metadata
-            if not hasattr(wrapper, "_profilers"):
-                wrapper._profilers = []
-            wrapper._profilers.append(profiler)
+            profilers = getattr(wrapper, "_profilers", None)
+            if profilers is None:
+                profilers = []
+                wrapper._profilers = profilers
+            cast(list[ProfilerContext], profilers).append(profiler)
 
             return result
 

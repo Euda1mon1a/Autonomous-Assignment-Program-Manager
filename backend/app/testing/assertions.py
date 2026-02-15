@@ -26,8 +26,8 @@ class AssertionError(Exception):
 def assert_api_response(
     response: MockResponse,
     status_code: int = 200,
-    body_contains: dict[str, Any] = None,
-    headers_contain: dict[str, str] = None,
+    body_contains: dict[str, Any] | None = None,
+    headers_contain: dict[str, str] | None = None,
 ) -> None:
     """
     Assert API response matches expectations.
@@ -373,7 +373,7 @@ def assert_response_time(
 def assert_matches_pattern(
     value: str,
     pattern: str | Pattern,
-    message: str = None,
+    message: str | None = None,
 ) -> None:
     """
     Assert string matches regex pattern.
@@ -407,7 +407,7 @@ def assert_matches_pattern(
 
 def assert_valid_uuid(
     value: str,
-    message: str = None,
+    message: str | None = None,
 ) -> None:
     """
     Assert string is a valid UUID.
@@ -435,7 +435,7 @@ def assert_valid_uuid(
 def assert_valid_date(
     value: str,
     date_format: str = "%Y-%m-%d",
-    message: str = None,
+    message: str | None = None,
 ) -> None:
     """
     Assert string is a valid date.
@@ -464,8 +464,8 @@ def assert_valid_date(
 
 def assert_paginated_response(
     response: dict[str, Any],
-    expected_items: int = None,
-    expected_total: int = None,
+    expected_items: int | None = None,
+    expected_total: int | None = None,
     item_key: str = "items",
 ) -> None:
     """
