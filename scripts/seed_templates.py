@@ -249,12 +249,33 @@ ROTATIONS = [
 
 def login():
     """Login and get auth token."""
+    import os
+
+    username = os.getenv("SEED_ADMIN_USERNAME", "admin")
+    password = os.getenv("SEED_ADMIN_PASSWORD")
+
+    if not password:
+        # Try bootstrapping admin via initialize-admin (only works in DEBUG mode)
+        print("No SEED_ADMIN_PASSWORD set — attempting bootstrap via /initialize-admin...")
+        bootstrap_resp = requests.post(f"{BASE_URL}/api/v1/auth/initialize-admin")
+        if bootstrap_resp.status_code == 200:
+            data = bootstrap_resp.json()
+            if data.get("status") == "created":
+                password = data["password"]
+                print(f"Bootstrap admin created (save password: {password})")
+            elif data.get("status") == "already_initialized":
+                print("ERROR: DB already has users. Set SEED_ADMIN_PASSWORD to log in.")
+                sys.exit(1)
+        else:
+            print(f"ERROR: Bootstrap failed ({bootstrap_resp.status_code}). Set SEED_ADMIN_PASSWORD.")
+            sys.exit(1)
+
     resp = requests.post(
         f"{BASE_URL}/api/v1/auth/login/json",
-        json={"username": "admin", "password": "AdminPassword123!"},
+        json={"username": username, "password": password},
     )
     if resp.status_code != 200:
-        print(f"Login failed: {resp.text}")
+        print(f"Login failed: {resp.status_code}")
         sys.exit(1)
     return resp.json()["access_token"]
 

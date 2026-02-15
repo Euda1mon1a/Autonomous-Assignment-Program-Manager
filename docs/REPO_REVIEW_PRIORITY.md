@@ -5,7 +5,7 @@ Scope: fast scan of backend, mcp-server, frontend, configs, and tests. Emphasis 
 ## P0 Critical
 - GraphQL API is mounted without auth or authorization. Queries are fully unauthenticated and mutations only check for a user object, so any authenticated user can create/update/delete core records without role checks. `backend/app/main.py:428` `backend/app/graphql/schema.py:23` `backend/app/graphql/resolvers/queries.py:35` `backend/app/graphql/resolvers/mutations.py:27`
 - GraphQL subscriptions allow anonymous access and ignore user context for filtering. Any subscriber can receive schedule/swap/conflict updates for any user when filters are omitted or spoofed. `backend/app/graphql/subscriptions.py:331` `backend/app/graphql/subscriptions.py:505`
-- Default admin user is auto-created on empty DB with static credentials `admin` / `admin123` and no DEBUG gating. This is a production foot-gun if a fresh DB is exposed. `backend/app/main.py:108`
+- ~~Default admin user is auto-created on empty DB with static credentials `admin` / `admin123` and no DEBUG gating.~~ **FIXED (PR #1134):** `/initialize-admin` now gated behind `DEBUG=True`, uses `secrets.token_urlsafe(16)` instead of fixed password.
 - MCP HTTP auth bypass: APIKeyAuthMiddleware exempts `/` while the MCP app is also mounted at `/`. This creates an unauthenticated entry point even when `MCP_API_KEY` is set. `mcp-server/src/scheduler_mcp/server.py:5340`
 - MCP HTTP auth fails open when `MCP_API_KEY` is unset, leaving tool execution unauthenticated. `mcp-server/src/scheduler_mcp/server.py:5354`
 - Constraint management endpoints (enable/disable/preset) are unauthenticated, allowing anyone to weaken or disable scheduling constraints. `backend/app/api/routes/constraints.py:88`

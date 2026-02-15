@@ -108,7 +108,7 @@ python scripts/seed_inpatient_rotations.py --block 10 --clear-first
 |----------|---------|-------------|
 | `SEED_BASE_URL` | `http://localhost:8000` | Backend API URL |
 | `SEED_ADMIN_USERNAME` | `admin` | Auth username |
-| `SEED_ADMIN_PASSWORD` | `admin123` | Auth password |
+| `SEED_ADMIN_PASSWORD` | *(auto-bootstrap)* | Auth password (if unset, bootstraps via `/initialize-admin` in DEBUG mode) |
 
 ---
 
@@ -243,9 +243,12 @@ GROUP BY p.name, rt.name, rt.rotation_type;"
 
 ```bash
 # Get auth token
+# Bootstrap admin if fresh DB (DEBUG mode only), or use existing credentials
+ADMIN_PW="${SEED_ADMIN_PASSWORD:-$(curl -s http://localhost:8000/api/v1/auth/initialize-admin \
+  -X POST | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('password',''))")}"
 TOKEN=$(curl -s http://localhost:8000/api/v1/auth/login/json \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+  -d "{\"username\": \"admin\", \"password\": \"$ADMIN_PW\"}" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
 
 # Generate schedule (preserves inpatient, optimizes outpatient)
 curl -X POST http://localhost:8000/api/v1/schedule/generate \

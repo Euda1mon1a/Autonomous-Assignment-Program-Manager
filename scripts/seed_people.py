@@ -7,9 +7,25 @@ import sys
 
 BASE_URL = os.getenv("SEED_BASE_URL", "http://localhost:8000")
 
-# Read credentials from environment (allows override without editing code)
+# Credentials from env, or bootstrap via initialize-admin (DEBUG mode only)
 admin_username = os.getenv("SEED_ADMIN_USERNAME", "admin")
-admin_password = os.getenv("SEED_ADMIN_PASSWORD", "admin123")
+admin_password = os.getenv("SEED_ADMIN_PASSWORD")
+
+if not admin_password:
+    # Try bootstrapping admin via initialize-admin (only works in DEBUG mode)
+    print("No SEED_ADMIN_PASSWORD set — attempting bootstrap via /initialize-admin...")
+    bootstrap_resp = requests.post(f"{BASE_URL}/api/v1/auth/initialize-admin")
+    if bootstrap_resp.status_code == 200:
+        data = bootstrap_resp.json()
+        if data.get("status") == "created":
+            admin_password = data["password"]
+            print(f"Bootstrap admin created (save password: {admin_password})")
+        elif data.get("status") == "already_initialized":
+            print("ERROR: DB already has users. Set SEED_ADMIN_PASSWORD to log in.")
+            sys.exit(1)
+    else:
+        print(f"ERROR: Bootstrap failed ({bootstrap_resp.status_code}). Set SEED_ADMIN_PASSWORD.")
+        sys.exit(1)
 
 # Login to get token
 login_resp = requests.post(
@@ -17,11 +33,11 @@ login_resp = requests.post(
     json={"username": admin_username, "password": admin_password}
 )
 if login_resp.status_code != 200:
-    print(f"Login failed: {login_resp.text}")
+    print(f"Login failed: {login_resp.status_code}")
     sys.exit(1)
-    
+
 token = login_resp.json()["access_token"]
-print(f"Logged in successfully, token: {token[:20]}...")
+print("Logged in successfully")
 headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
 
