@@ -7,14 +7,25 @@ import sys
 
 BASE_URL = os.getenv("SEED_BASE_URL", "http://localhost:8000")
 
-# Credentials MUST be provided via environment variables
+# Credentials from env, or bootstrap via initialize-admin (DEBUG mode only)
 admin_username = os.getenv("SEED_ADMIN_USERNAME", "admin")
 admin_password = os.getenv("SEED_ADMIN_PASSWORD")
 
 if not admin_password:
-    print("ERROR: SEED_ADMIN_PASSWORD environment variable is required")
-    print("Usage: SEED_ADMIN_PASSWORD=<password> python scripts/seed_people.py")
-    sys.exit(1)
+    # Try bootstrapping admin via initialize-admin (only works in DEBUG mode)
+    print("No SEED_ADMIN_PASSWORD set — attempting bootstrap via /initialize-admin...")
+    bootstrap_resp = requests.post(f"{BASE_URL}/api/v1/auth/initialize-admin")
+    if bootstrap_resp.status_code == 200:
+        data = bootstrap_resp.json()
+        if data.get("status") == "created":
+            admin_password = data["password"]
+            print(f"Bootstrap admin created (save password: {admin_password})")
+        elif data.get("status") == "already_initialized":
+            print("ERROR: DB already has users. Set SEED_ADMIN_PASSWORD to log in.")
+            sys.exit(1)
+    else:
+        print(f"ERROR: Bootstrap failed ({bootstrap_resp.status_code}). Set SEED_ADMIN_PASSWORD.")
+        sys.exit(1)
 
 # Login to get token
 login_resp = requests.post(
