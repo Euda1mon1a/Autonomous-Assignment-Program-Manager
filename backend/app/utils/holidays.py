@@ -18,15 +18,17 @@ Reference: https://www.opm.gov/policy-data-oversight/pay-leave/federal-holidays/
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import NamedTuple
+from typing import NamedTuple, TypeAlias
+
+Date: TypeAlias = date
 
 
 class Holiday(NamedTuple):
     """Represents a federal holiday with observed and actual dates."""
 
-    date: date  # Observed date (when work schedules honor it)
+    date: Date  # Observed date (when work schedules honor it)
     name: str
-    actual_date: date | None = None  # Actual calendar date (if different from observed)
+    actual_date: Date | None = None  # Actual calendar date (if different from observed)
 
 
 def _nth_weekday_of_month(year: int, month: int, weekday: int, n: int) -> date:

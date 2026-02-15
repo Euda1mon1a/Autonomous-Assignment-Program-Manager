@@ -8,6 +8,7 @@ Provides decorators to:
 
 from collections.abc import Callable
 from functools import wraps
+from types import TracebackType
 from typing import Any
 
 from fastapi import HTTPException, status
@@ -15,13 +16,15 @@ from fastapi import HTTPException, status
 from app.features.flags import FeatureFlagService
 from app.models.user import User
 
+DecoratorFactory = Callable[[Callable[..., Any]], Callable[..., Any]]
+
 
 def require_feature_flag(
     flag_key: str,
     enabled_value: bool = True,
     status_code: int = status.HTTP_404_NOT_FOUND,
     detail: str | None = None,
-):
+) -> DecoratorFactory:
     """
     Decorator to require a feature flag for a route or function.
 
@@ -44,7 +47,7 @@ def require_feature_flag(
         Decorator function
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
             # Extract user and db from kwargs (FastAPI dependency injection)
@@ -82,7 +85,7 @@ def require_feature_flag(
     return decorator
 
 
-def feature_flag_gate(flag_key: str, default_value: Any = None):
+def feature_flag_gate(flag_key: str, default_value: Any = None) -> DecoratorFactory:
     """
     Decorator to conditionally execute a function based on feature flag.
 
@@ -102,7 +105,7 @@ def feature_flag_gate(flag_key: str, default_value: Any = None):
         Decorator function
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
             # Try to get db and user from kwargs
@@ -137,7 +140,9 @@ def feature_flag_gate(flag_key: str, default_value: Any = None):
     return decorator
 
 
-def ab_test_variant(flag_key: str, variants: dict[str, Callable]):
+def ab_test_variant(
+    flag_key: str, variants: dict[str, Callable[..., Any]]
+) -> DecoratorFactory:
     """
     Decorator for A/B testing different function implementations.
 
@@ -174,7 +179,7 @@ def ab_test_variant(flag_key: str, variants: dict[str, Callable]):
         Decorator function
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
             db = kwargs.get("db")
@@ -259,7 +264,12 @@ class FeatureFlagContext:
 
         return self.enabled
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
         """Exit context."""
         return False  # Don't suppress exceptions
 
