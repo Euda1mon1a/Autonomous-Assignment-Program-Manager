@@ -653,14 +653,15 @@ See [Analytics](analytics.md) for full details.
 | GET | `/resilience/health` | Bearer | System resilience health |
 | POST | `/resilience/crisis/activate` | Admin | Activate crisis mode |
 | POST | `/resilience/crisis/deactivate` | Admin | Deactivate crisis mode |
-| GET | `/resilience/fallback` | Bearer | List fallback schedules |
-| POST | `/resilience/fallback/activate` | Admin | Switch to fallback |
-| POST | `/resilience/fallback/deactivate` | Admin | Return to main schedule |
+| GET | `/resilience/fallbacks` | Bearer | List fallback schedules |
+| POST | `/resilience/fallbacks/activate` | Admin | Switch to fallback |
+| POST | `/resilience/fallbacks/deactivate` | Admin | Return to main schedule |
+| GET | `/resilience/load-shedding` | Bearer | Load shedding status |
 | POST | `/resilience/load-shedding` | Admin | Control load shedding |
 | GET | `/resilience/vulnerability` | Bearer | N-1/N-2 vulnerability analysis |
-| GET | `/resilience/homeostasis` | Bearer | Feedback loop analysis |
-| GET | `/resilience/events/history` | Bearer | Historical resilience events |
-| GET | `/resilience/health-checks/history` | Bearer | Health check history |
+| GET | `/resilience/tier2/homeostasis` | Bearer | Feedback loop analysis |
+| GET | `/resilience/history/events` | Bearer | Historical resilience events |
+| GET | `/resilience/history/health` | Bearer | Health check history |
 
 ### Defense Levels
 

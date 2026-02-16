@@ -424,7 +424,7 @@ GET /fmit/alerts/summary
 - [Health API](HEALTH_API.md) - Overall system health monitoring
 
 **Architecture Decision Records:**
-- [ADR-006: Swap System with Auto-Matching](../.claude/dontreadme/synthesis/DECISIONS.md#adr-006-swap-system-with-auto-matching) - Swap system design
+- [ADR-006: Swap System with Auto-Matching](../architecture/decisions/ADR-006-swap-system-auto-matching.md) - Swap system design
 - [ADR-004: Resilience Framework](../architecture/decisions/ADR-004-resilience-framework.md) - Cross-disciplinary resilience concepts
 
 **Architecture Documentation:**

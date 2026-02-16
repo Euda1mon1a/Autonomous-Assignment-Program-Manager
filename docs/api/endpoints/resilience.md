@@ -486,7 +486,7 @@ curl "http://localhost:8000/api/v1/resilience/vulnerability?start_date=2024-07-0
 
 ## Get Health Check History
 
-<span class="endpoint-badge get">GET</span> `/api/v1/resilience/health/history`
+<span class="endpoint-badge get">GET</span> `/api/v1/resilience/history/health`
 
 Retrieve historical health check records.
 
@@ -521,7 +521,7 @@ Retrieve historical health check records.
 ### Example
 
 ```bash
-curl "http://localhost:8000/api/v1/resilience/health/history?start_date=2024-06-01&end_date=2024-07-01&limit=50" \
+curl "http://localhost:8000/api/v1/resilience/history/health?start_date=2024-06-01&end_date=2024-07-01&limit=50" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -529,7 +529,7 @@ curl "http://localhost:8000/api/v1/resilience/health/history?start_date=2024-06-
 
 ## Get Event History
 
-<span class="endpoint-badge get">GET</span> `/api/v1/resilience/events`
+<span class="endpoint-badge get">GET</span> `/api/v1/resilience/history/events`
 
 Retrieve resilience event history (crisis activations, fallback activations, etc.).
 
@@ -570,7 +570,7 @@ Retrieve resilience event history (crisis activations, fallback activations, etc
 ### Example
 
 ```bash
-curl "http://localhost:8000/api/v1/resilience/events?event_type=crisis&severity=high&limit=20" \
+curl "http://localhost:8000/api/v1/resilience/history/events?event_type=crisis&severity=high&limit=20" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 

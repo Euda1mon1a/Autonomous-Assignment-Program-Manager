@@ -484,45 +484,44 @@ Historical session logs, implementation summaries, and reports are preserved in 
 
 ### Authentication
 ```
-POST /api/auth/register     # Create new user
-POST /api/auth/login        # OAuth2 password flow
-POST /api/auth/login/json   # JSON-based login
-GET  /api/auth/me           # Current user info
+POST /api/v1/auth/register     # Create new user
+POST /api/v1/auth/login        # OAuth2 password flow
+POST /api/v1/auth/login/json   # JSON-based login
+GET  /api/v1/auth/me           # Current user info
 ```
 
 ### People
 ```
-GET    /api/people              # List all (with filters)
-GET    /api/people/residents    # List residents
-GET    /api/people/faculty      # List faculty
-POST   /api/people              # Create person
-PUT    /api/people/{id}         # Update person
-DELETE /api/people/{id}         # Delete person
+GET    /api/v1/people              # List all (with filters)
+GET    /api/v1/people/residents    # List residents
+GET    /api/v1/people/faculty      # List faculty
+POST   /api/v1/people              # Create person
+PUT    /api/v1/people/{id}         # Update person
+DELETE /api/v1/people/{id}         # Delete person
 ```
 
 ### Schedule
 ```
-POST /api/schedule/generate           # Generate schedule
-GET  /api/schedule/validate           # Validate compliance
-POST /api/schedule/emergency-coverage # Handle emergencies
+POST /api/v1/schedule/generate           # Generate schedule
+GET  /api/v1/schedule/validate           # Validate compliance
+POST /api/v1/schedule/emergency-coverage # Handle emergencies
 ```
 
 ### Absences
 ```
-GET    /api/absences      # List absences
-POST   /api/absences      # Create absence
-PUT    /api/absences/{id} # Update absence
-DELETE /api/absences/{id} # Delete absence
+GET    /api/v1/absences      # List absences
+POST   /api/v1/absences      # Create absence
+PUT    /api/v1/absences/{id} # Update absence
+DELETE /api/v1/absences/{id} # Delete absence
 ```
 
 ### Resilience & Monitoring
 ```
-GET  /health/resilience              # Resilience system status
-GET  /metrics                        # Prometheus metrics endpoint
-POST /api/resilience/health-check    # Trigger manual health check
-GET  /api/resilience/contingency     # Run N-1/N-2 analysis
-POST /api/resilience/crisis          # Activate crisis response
-GET  /api/resilience/fallbacks       # List available fallback schedules
+GET  /health/resilience                                # Resilience system status
+GET  /metrics                                          # Prometheus metrics endpoint
+GET  /api/v1/resilience/health?include_contingency=true # Run N-1/N-2 analysis
+POST /api/v1/resilience/crisis/activate                # Activate crisis response
+GET  /api/v1/resilience/fallbacks                      # List available fallback schedules
 ```
 
 See [API Reference](docs/api/index.md) for complete documentation.

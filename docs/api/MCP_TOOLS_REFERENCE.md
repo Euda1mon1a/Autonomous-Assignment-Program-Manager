@@ -1071,6 +1071,6 @@ Measured on 100 residents, 52 weeks of data:
 
 **Related Documentation**:
 - [Cross-Disciplinary Resilience Framework](../architecture/cross-disciplinary-resilience.md)
-- [MCP Server Architecture](../architecture/mcp-server.md)
-- [Backend API Reference](./backend-api.md)
+- [MCP Server Architecture](../architecture/MCP_ORCHESTRATION_PATTERNS.md)
+- [Backend API Reference](./index.md)
 - [AI Agent User Guide](../guides/AI_AGENT_USER_GUIDE.md)

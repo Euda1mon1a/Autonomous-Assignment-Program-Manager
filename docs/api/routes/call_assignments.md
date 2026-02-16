@@ -834,7 +834,7 @@ curl -X GET "http://localhost:8000/api/v1/call-assignments/reports/equity?start_
 - [People API](people.md) - Faculty member management
 - [Schedule API](schedule.md) - Schedule generation (creates call assignments)
 - [Assignments API](assignments.md) - General assignment management
-- [Call Distribution](../../architecture/call-distribution.md) - Call equity algorithms
+- [Call Distribution](../../architecture/CALL_GENERATION_ARCHITECTURE.md) - Call equity algorithms
 
 ---
 

@@ -654,4 +654,4 @@ curl -X PUT 'http://localhost:8000/api/people/{resident_id}' \
 
 - [Scheduling API](SCHEDULE_API.md)
 - [Assignment API](ASSIGNMENTS_API.md)
-- [Credential Management Guide](../user-guide/credentials.md)
+- [Credential Management Guide](../admin-manual/credentials.md)

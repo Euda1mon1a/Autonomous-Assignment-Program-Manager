@@ -614,6 +614,6 @@ DEBUG=false  # Must be false in production
 
 ## Related Documentation
 
-- [Authentication Security Best Practices](../security/AUTHENTICATION_SECURITY.md)
-- [Rate Limiting Configuration](../admin-manual/rate-limiting.md)
-- [JWT Token Management](../development/JWT_MANAGEMENT.md)
+- [Authentication Security Best Practices](../security/SECURITY_PATTERN_AUDIT.md)
+- [Rate Limiting Configuration](../admin-manual/configuration.md)
+- [JWT Token Management](../development/AUDIENCE_AUTH_USAGE.md)

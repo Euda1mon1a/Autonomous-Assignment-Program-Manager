@@ -508,7 +508,7 @@ curl -X GET 'http://localhost:8000/api/swaps/history?faculty_id=550e8400-e29b-41
 - [People API](PEOPLE_API.md) - Faculty and resident management
 
 **Architecture Decision Records:**
-- [ADR-006: Swap System with Auto-Matching](../.claude/dontreadme/synthesis/DECISIONS.md#adr-006-swap-system-with-auto-matching) - Swap system design rationale
+- [ADR-006: Swap System with Auto-Matching](../architecture/decisions/ADR-006-swap-system-auto-matching.md) - Swap system design rationale
 
 **Implementation Code:**
 - `backend/app/api/routes/swaps.py` - Swap API routes
@@ -517,4 +517,4 @@ curl -X GET 'http://localhost:8000/api/swaps/history?faculty_id=550e8400-e29b-41
 
 **User Guides:**
 - [Swap Management Guide](../user-guide/swaps.md) - User-facing swap documentation
-- [FMIT Rotation Import Guide](../user-guide/fmit-import.md) - Excel import workflow
+- [FMIT Rotation Import Guide](../user-guide/imports.md) - Excel import workflow

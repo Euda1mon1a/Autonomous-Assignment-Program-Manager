@@ -19,43 +19,43 @@ When the application is running, access the interactive API documentation:
 ### Authentication & Users
 | Method | Endpoint | Description | Guide |
 |--------|----------|-------------|-------|
-| POST | `/api/auth/login` | Login (form data) | [AUTH_API.md](AUTH_API.md) |
-| POST | `/api/auth/login/json` | Login (JSON) | [AUTH_API.md](AUTH_API.md) |
-| POST | `/api/auth/logout` | Logout | [AUTH_API.md](AUTH_API.md) |
-| POST | `/api/auth/refresh` | Refresh token | [AUTH_API.md](AUTH_API.md) |
-| GET | `/api/auth/me` | Get current user | [AUTH_API.md](AUTH_API.md) |
-| POST | `/api/auth/register` | Register user | [AUTH_API.md](AUTH_API.md) |
+| POST | `/api/v1/auth/login` | Login (form data) | [AUTH_API.md](AUTH_API.md) |
+| POST | `/api/v1/auth/login/json` | Login (JSON) | [AUTH_API.md](AUTH_API.md) |
+| POST | `/api/v1/auth/logout` | Logout | [AUTH_API.md](AUTH_API.md) |
+| POST | `/api/v1/auth/refresh` | Refresh token | [AUTH_API.md](AUTH_API.md) |
+| GET | `/api/v1/auth/me` | Get current user | [AUTH_API.md](AUTH_API.md) |
+| POST | `/api/v1/auth/register` | Register user | [AUTH_API.md](AUTH_API.md) |
 
 ### People Management
 | Method | Endpoint | Description | Guide |
 |--------|----------|-------------|-------|
-| GET | `/api/people` | List people | [PEOPLE_API.md](PEOPLE_API.md) |
-| GET | `/api/people/residents` | List residents | [PEOPLE_API.md](PEOPLE_API.md) |
-| GET | `/api/people/faculty` | List faculty | [PEOPLE_API.md](PEOPLE_API.md) |
-| GET | `/api/people/{id}` | Get person details | [PEOPLE_API.md](PEOPLE_API.md) |
-| POST | `/api/people` | Create person | [PEOPLE_API.md](PEOPLE_API.md) |
-| PUT | `/api/people/{id}` | Update person | [PEOPLE_API.md](PEOPLE_API.md) |
-| DELETE | `/api/people/{id}` | Delete person | [PEOPLE_API.md](PEOPLE_API.md) |
+| GET | `/api/v1/people` | List people | [PEOPLE_API.md](PEOPLE_API.md) |
+| GET | `/api/v1/people/residents` | List residents | [PEOPLE_API.md](PEOPLE_API.md) |
+| GET | `/api/v1/people/faculty` | List faculty | [PEOPLE_API.md](PEOPLE_API.md) |
+| GET | `/api/v1/people/{id}` | Get person details | [PEOPLE_API.md](PEOPLE_API.md) |
+| POST | `/api/v1/people` | Create person | [PEOPLE_API.md](PEOPLE_API.md) |
+| PUT | `/api/v1/people/{id}` | Update person | [PEOPLE_API.md](PEOPLE_API.md) |
+| DELETE | `/api/v1/people/{id}` | Delete person | [PEOPLE_API.md](PEOPLE_API.md) |
 
 ### Assignments
 | Method | Endpoint | Description | Guide |
 |--------|----------|-------------|-------|
-| GET | `/api/assignments` | List assignments | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
-| GET | `/api/assignments/{id}` | Get assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
-| POST | `/api/assignments` | Create assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
-| PUT | `/api/assignments/{id}` | Update assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
-| DELETE | `/api/assignments/{id}` | Delete assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
-| DELETE | `/api/assignments?start_date=X` | Bulk delete | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| GET | `/api/v1/assignments` | List assignments | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| GET | `/api/v1/assignments/{id}` | Get assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| POST | `/api/v1/assignments` | Create assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| PUT | `/api/v1/assignments/{id}` | Update assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| DELETE | `/api/v1/assignments/{id}` | Delete assignment | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
+| DELETE | `/api/v1/assignments?start_date=X` | Bulk delete | [ASSIGNMENTS_API.md](ASSIGNMENTS_API.md) |
 
 ### Schedule Generation & Management
 | Method | Endpoint | Description | Guide |
 |--------|----------|-------------|-------|
-| POST | `/api/schedule/generate` | Generate schedule | [SCHEDULE_API.md](SCHEDULE_API.md) |
-| GET | `/api/schedule/validate` | Validate ACGME compliance | [SCHEDULE_API.md](SCHEDULE_API.md) |
-| GET | `/api/schedule/{start}/{end}` | Get schedule for date range | [SCHEDULE_API.md](SCHEDULE_API.md) |
-| POST | `/api/schedule/emergency-coverage` | Handle emergency absence | [SCHEDULE_API.md](SCHEDULE_API.md) |
-| POST | `/api/schedule/import/analyze` | Analyze Excel schedules | [SCHEDULE_API.md](SCHEDULE_API.md) |
-| POST | `/api/schedule/import/block` | Parse specific block | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| POST | `/api/v1/schedule/generate` | Generate schedule | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| GET | `/api/v1/schedule/validate` | Validate ACGME compliance | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| GET | `/api/v1/schedule/{start}/{end}` | Get schedule for date range | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| POST | `/api/v1/schedule/emergency-coverage` | Handle emergency absence | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| POST | `/api/v1/schedule/import/analyze` | Analyze Excel schedules | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| POST | `/api/v1/schedule/import/block` | Parse specific block | [SCHEDULE_API.md](SCHEDULE_API.md) |
 
 ### Half-Day Import (Block Template2)
 | Method | Endpoint | Description | Guide |
@@ -67,29 +67,29 @@ When the application is running, access the interactive API documentation:
 ### Swaps & Coverage
 | Method | Endpoint | Description | Guide |
 |--------|----------|-------------|-------|
-| POST | `/api/swaps/execute` | Execute swap | [SWAPS_API.md](SWAPS_API.md) |
-| POST | `/api/swaps/validate` | Validate swap | [SWAPS_API.md](SWAPS_API.md) |
-| GET | `/api/swaps/history` | Get swap history | [SWAPS_API.md](SWAPS_API.md) |
-| POST | `/api/schedule/swaps/find` | Find swap candidates (FMIT) | [SCHEDULE_API.md](SCHEDULE_API.md) |
-| POST | `/api/schedule/swaps/candidates` | Find swap candidates (JSON) | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| POST | `/api/v1/swaps/execute` | Execute swap | [SWAPS_API.md](SWAPS_API.md) |
+| POST | `/api/v1/swaps/validate` | Validate swap | [SWAPS_API.md](SWAPS_API.md) |
+| GET | `/api/v1/swaps/history` | Get swap history | [SWAPS_API.md](SWAPS_API.md) |
+| POST | `/api/v1/schedule/swaps/find` | Find swap candidates (FMIT) | [SCHEDULE_API.md](SCHEDULE_API.md) |
+| POST | `/api/v1/schedule/swaps/candidates` | Find swap candidates (JSON) | [SCHEDULE_API.md](SCHEDULE_API.md) |
 
 ### Resilience & Health
 | Method | Endpoint | Description | Guide |
 |--------|----------|-------------|-------|
-| GET | `/api/resilience/health` | Get system health | [RESILIENCE_API.md](RESILIENCE_API.md) |
-| GET | `/api/resilience/health/history` | Get health history | [RESILIENCE_API.md](RESILIENCE_API.md) |
-| POST | `/api/resilience/crisis/activate` | Activate crisis mode | [RESILIENCE_API.md](RESILIENCE_API.md) |
-| POST | `/api/resilience/crisis/deactivate` | Deactivate crisis mode | [RESILIENCE_API.md](RESILIENCE_API.md) |
-| GET | `/api/resilience/vulnerabilities` | Identify vulnerabilities | [RESILIENCE_API.md](RESILIENCE_API.md) |
-| GET | `/health` | Basic health check | [HEALTH_API.md](HEALTH_API.md) |
-| GET | `/health/ready` | Readiness probe | [HEALTH_API.md](HEALTH_API.md) |
-| GET | `/health/live` | Liveness probe | [HEALTH_API.md](HEALTH_API.md) |
+| GET | `/api/v1/resilience/health` | Get system health | [RESILIENCE_API.md](RESILIENCE_API.md) |
+| GET | `/api/v1/resilience/history/health` | Get health history | [RESILIENCE_API.md](RESILIENCE_API.md) |
+| POST | `/api/v1/resilience/crisis/activate` | Activate crisis mode | [RESILIENCE_API.md](RESILIENCE_API.md) |
+| POST | `/api/v1/resilience/crisis/deactivate` | Deactivate crisis mode | [RESILIENCE_API.md](RESILIENCE_API.md) |
+| GET | `/api/v1/resilience/vulnerability` | Identify vulnerabilities | [RESILIENCE_API.md](RESILIENCE_API.md) |
+| GET | `/api/v1/health` | Basic health check | [HEALTH_API.md](HEALTH_API.md) |
+| GET | `/api/v1/health/ready` | Readiness probe | [HEALTH_API.md](HEALTH_API.md) |
+| GET | `/api/v1/health/live` | Liveness probe | [HEALTH_API.md](HEALTH_API.md) |
 
 ### Call Assignments
 | Method | Endpoint | Description | Guide |
 |--------|----------|-------------|-------|
-| POST | `/api/call/generate` | Generate call schedule | [CALL_ASSIGNMENTS_API.md](CALL_ASSIGNMENTS_API.md) |
-| GET | `/api/call/{start}/{end}` | Get call assignments | [CALL_ASSIGNMENTS_API.md](CALL_ASSIGNMENTS_API.md) |
+| POST | `/api/v1/call/generate` | Generate call schedule | [CALL_ASSIGNMENTS_API.md](CALL_ASSIGNMENTS_API.md) |
+| GET | `/api/v1/call/{start}/{end}` | Get call assignments | [CALL_ASSIGNMENTS_API.md](CALL_ASSIGNMENTS_API.md) |
 
 ---
 
@@ -158,7 +158,7 @@ When the application is running, access the interactive API documentation:
 First, obtain authentication tokens:
 
 ```bash
-curl -X POST http://localhost:8000/api/auth/login/json \
+curl -X POST http://localhost:8000/api/v1/auth/login/json \
   -H "Content-Type: application/json" \
   -d '{
     "username": "user@example.com",
@@ -178,14 +178,14 @@ Response includes `access_token` and `refresh_token`:
 ### 2. Use Token for Authenticated Requests
 
 ```bash
-curl -X GET http://localhost:8000/api/auth/me \
+curl -X GET http://localhost:8000/api/v1/auth/me \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ### 3. Refresh Token When Expired
 
 ```bash
-curl -X POST http://localhost:8000/api/auth/refresh \
+curl -X POST http://localhost:8000/api/v1/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refresh_token": "<REFRESH_TOKEN>"}'
 ```
@@ -336,17 +336,17 @@ Faculty shift exchanges and FMIT rotation swaps.
 System health monitoring, crisis management, and load shedding.
 
 **Key Endpoints:**
-- `GET /resilience/health` - Get system health status
-- `GET /resilience/health/history` - Get health history
-- `POST /resilience/crisis/activate` - Activate crisis mode
-- `POST /resilience/crisis/deactivate` - Deactivate crisis mode
-- `POST /resilience/fallback/activate` - Activate fallback schedule
-- `POST /resilience/fallback/deactivate` - Deactivate fallback
-- `GET /resilience/fallback/list` - List fallback schedules
-- `GET /resilience/events/history` - Get event history
-- `GET /resilience/vulnerabilities` - Identify system weaknesses
-- `POST /resilience/load-shedding/activate` - Activate load shedding
-- `POST /resilience/load-shedding/deactivate` - Deactivate load shedding
+- `GET /api/v1/resilience/health` - Get system health status
+- `GET /api/v1/resilience/history/health` - Get health history
+- `POST /api/v1/resilience/crisis/activate` - Activate crisis mode
+- `POST /api/v1/resilience/crisis/deactivate` - Deactivate crisis mode
+- `GET /api/v1/resilience/fallbacks` - List fallback schedules
+- `POST /api/v1/resilience/fallbacks/activate` - Activate fallback schedule
+- `POST /api/v1/resilience/fallbacks/deactivate` - Deactivate fallback
+- `GET /api/v1/resilience/history/events` - Get event history
+- `GET /api/v1/resilience/vulnerability` - Identify system weaknesses
+- `GET /api/v1/resilience/load-shedding` - Get load shedding status
+- `POST /api/v1/resilience/load-shedding` - Update load shedding status
 
 **Defense Levels:**
 1. GREEN (< 60% utilization) - Optimal
@@ -417,7 +417,7 @@ Import this collection into Postman for interactive API testing:
 
 ```bash
 # 1. Generate schedule
-RESPONSE=$(curl -X POST http://localhost:8000/api/schedule/generate \
+RESPONSE=$(curl -X POST http://localhost:8000/api/v1/schedule/generate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d '{
@@ -430,11 +430,11 @@ RUN_ID=$(echo $RESPONSE | jq -r '.run_id')
 echo "Schedule Run ID: $RUN_ID"
 
 # 2. Validate schedule
-curl -X GET "http://localhost:8000/api/schedule/validate?start_date=2025-01-01&end_date=2025-01-31" \
+curl -X GET "http://localhost:8000/api/v1/schedule/validate?start_date=2025-01-01&end_date=2025-01-31" \
   -H "Authorization: Bearer $ACCESS_TOKEN" | jq '.'
 
 # 3. View schedule
-curl -X GET "http://localhost:8000/api/schedule/2025-01-01/2025-01-31" \
+curl -X GET "http://localhost:8000/api/v1/schedule/2025-01-01/2025-01-31" \
   -H "Authorization: Bearer $ACCESS_TOKEN" | jq '.schedule'
 ```
 
@@ -447,7 +447,7 @@ START="2025-02-01"
 END="2025-02-07"
 
 # 2. Request emergency coverage
-curl -X POST http://localhost:8000/api/schedule/emergency-coverage \
+curl -X POST http://localhost:8000/api/v1/schedule/emergency-coverage \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d "{
@@ -459,7 +459,7 @@ curl -X POST http://localhost:8000/api/schedule/emergency-coverage \
   }" | jq '.details.replacement_suggestions'
 
 # 3. If manual review needed, activate crisis mode
-curl -X POST http://localhost:8000/api/resilience/crisis/activate \
+curl -X POST http://localhost:8000/api/v1/resilience/crisis/activate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d '{
@@ -472,7 +472,7 @@ curl -X POST http://localhost:8000/api/resilience/crisis/activate \
 
 ```bash
 # 1. Find swap candidates
-curl -X POST http://localhost:8000/api/schedule/swaps/candidates \
+curl -X POST http://localhost:8000/api/v1/schedule/swaps/candidates \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d '{
@@ -482,7 +482,7 @@ curl -X POST http://localhost:8000/api/schedule/swaps/candidates \
   }' | jq '.candidates[0]'
 
 # 2. Validate swap
-curl -X POST http://localhost:8000/api/swaps/validate \
+curl -X POST http://localhost:8000/api/v1/swaps/validate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d '{
@@ -495,7 +495,7 @@ curl -X POST http://localhost:8000/api/swaps/validate \
   }' | jq '.valid'
 
 # 3. Execute swap if valid
-curl -X POST http://localhost:8000/api/swaps/execute \
+curl -X POST http://localhost:8000/api/v1/swaps/execute \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -d '{...}'
@@ -545,7 +545,7 @@ X-RateLimit-Reset: 1704067200
 
 ```javascript
 // 1. Login and store tokens
-const loginResponse = await fetch('/api/auth/login/json', {
+const loginResponse = await fetch('/api/v1/auth/login/json', {
   method: 'POST',
   credentials: 'include',  // Include httpOnly cookie
   headers: { 'Content-Type': 'application/json' },
@@ -556,13 +556,13 @@ const data = await loginResponse.json();
 localStorage.setItem('refresh_token', data.refresh_token);
 
 // 2. Make authenticated requests
-const apiResponse = await fetch('/api/auth/me', {
+const apiResponse = await fetch('/api/v1/auth/me', {
   credentials: 'include'  // Include httpOnly cookie
 });
 
 // 3. Refresh token on 401
 if (apiResponse.status === 401) {
-  const refreshResponse = await fetch('/api/auth/refresh', {
+  const refreshResponse = await fetch('/api/v1/auth/refresh', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -582,7 +582,7 @@ if (apiResponse.status === 401) {
 #!/bin/bash
 
 # Get tokens
-LOGIN_RESPONSE=$(curl -s -X POST http://localhost:8000/api/auth/login/json \
+LOGIN_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/auth/login/json \
   -H "Content-Type: application/json" \
   -d '{"username":"user@example.com","password":"pass"}')
 
@@ -590,11 +590,11 @@ ACCESS_TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.access_token')
 REFRESH_TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.refresh_token')
 
 # Make authenticated request
-curl -X GET http://localhost:8000/api/auth/me \
+curl -X GET http://localhost:8000/api/v1/auth/me \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 
 # Refresh token
-REFRESH_RESPONSE=$(curl -s -X POST http://localhost:8000/api/auth/refresh \
+REFRESH_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/auth/refresh \
   -H "Content-Type: application/json" \
   -d "{\"refresh_token\":\"$REFRESH_TOKEN\"}")
 
