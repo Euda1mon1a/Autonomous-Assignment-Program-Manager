@@ -1,5 +1,7 @@
 # Architecture Overview
 
+> **Last Updated:** 2026-02-15 | **Canonical Reference:** See also `CLAUDE.md` "Architecture Patterns" section
+
 This document describes the layered architecture of the Residency Scheduler application.
 
 ## Backend Architecture (FastAPI + SQLAlchemy)
@@ -157,33 +159,80 @@ Beyond the standard layers, the codebase has domain modules:
 
 | Module | Purpose |
 |--------|---------|
-| `app/scheduling/` | OR-Tools constraint solver for schedule optimization |
-| `app/analytics/` | Reporting engines (coverage, fairness, workload) |
+| `app/scheduling/` | CP-SAT constraint solver, schedule generation, periodicity analysis |
+| `app/scheduling/validators/` | ACGME compliance validation (80-hour, 1-in-7, supervision) |
+| `app/analytics/` | Reporting engines (coverage, fairness, workload, chart generation) |
+| `app/resilience/` | Defense-in-depth: circuit breakers, SPC monitoring, epidemiology models, thermodynamic stability |
 | `app/notifications/` | Alert delivery system (email, in-app) |
 | `app/maintenance/` | Backup, restore, and data retention |
-| `app/validators/` | ACGME compliance rule validation |
-| `app/resilience/` | Circuit breakers, rate limiting, retry logic |
+| `app/sanitization/` | Input sanitization (HTML, SQL, XSS) and PII scrubbing |
+| `app/security/` | Rate limiting, secret rotation, rate limit bypass detection |
+| `app/auth/` | OAuth2/PKCE, token refresh, JWT management |
+| `app/autonomous/` | AI advisor integration for scheduling recommendations |
+| `app/tasks/` | Celery background tasks (schedule generation, notifications) |
 
 ### Infrastructure
 
 | Directory | Purpose |
 |-----------|---------|
-| `app/core/` | Configuration, settings, shared dependencies |
+| `app/core/` | Configuration, security, observability, shared dependencies |
 | `app/db/` | Database session factory, connection pooling |
 | `app/cli/` | Command-line tools for admin tasks |
+| `app/middleware/` | Request ID tracking, API versioning, auth middleware |
 | `alembic/` | Database migrations |
+
+### Background Processing
+
+Celery workers handle long-running tasks:
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Backend   │────>│    Redis     │────>│   Celery    │
+│  (enqueue)  │     │  (broker)    │     │  (worker)   │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                               │
+                                        ┌──────┴──────┐
+                                        │ Celery Beat │
+                                        │ (periodic)  │
+                                        └─────────────┘
+```
+
+Queues: `default`, `resilience`, `notifications`
+
+### MCP Server (AI Tool Integration)
+
+The MCP (Model Context Protocol) server exposes 97+ tools for AI-assisted scheduling:
+
+```
+mcp-server/src/scheduler_mcp/
+├── server.py              ← FastMCP server entry point
+├── tools/                 ← Core tools (schedule, compliance, swap, analytics)
+│   ├── schedule/          ← CRUD operations
+│   ├── compliance/        ← ACGME checks
+│   ├── swap/              ← Swap management
+│   └── analytics/         ← Coverage metrics
+├── armory/                ← Exotic tools (physics, biology, operations research)
+├── resources.py           ← MCP resource endpoints
+└── middleware/            ← Auth, logging
+```
+
+Transport: Streamable HTTP on port 8081. Used by Claude Code, Codex CLI, and Gemini CLI.
 
 ---
 
-## Frontend Architecture (Next.js + React)
+## Frontend Architecture (Next.js 14 + React 18)
 
 ```
 frontend/src/
-├── app/              ← Next.js App Router (pages)
+├── app/              ← Next.js App Router (pages, layouts)
 ├── components/       ← Reusable UI components
-├── hooks/            ← Custom React hooks
-├── lib/              ← Utilities, API client
-├── types/            ← TypeScript type definitions
+├── features/         ← Feature modules (audit, conflicts, heatmap, swap, templates)
+├── hooks/            ← Custom React hooks (data fetching, state)
+├── contexts/         ← React contexts (auth, theme)
+├── lib/              ← Utilities, API client (axios with snake_case ↔ camelCase)
+├── types/            ← TypeScript types (auto-generated from OpenAPI + utilities)
+├── constants/        ← App-wide constants
+├── utils/            ← Helper functions
 └── mocks/            ← MSW handlers for testing
 ```
 
@@ -199,24 +248,26 @@ User Interaction
        │
        ▼
 ┌──────────────┐
-│    Hooks     │  ← useSchedule(), usePeople() - data fetching
+│    Hooks     │  ← useSchedule(), usePeople() - TanStack Query v5
 └──────────────┘
        │
        ▼
 ┌──────────────┐
-│  API Client  │  ← lib/api.ts - axios wrapper
+│  API Client  │  ← lib/api.ts - axios with automatic case conversion
 └──────────────┘
-       │
+       │                (snake_case ↔ camelCase, see CLAUDE.md)
        ▼
    Backend API
 ```
 
 ### Key Patterns
 
-- **React Query** for server state management and caching
+- **TanStack Query v5** for server state management and caching
 - **Tailwind CSS** for styling
 - **MSW** for API mocking in tests
-- **TypeScript** throughout for type safety
+- **TypeScript strict mode** throughout (no `any`)
+- **Auto-generated types** from OpenAPI spec (`npm run generate:types`)
+- **Feature modules** in `src/features/` for domain-specific UI (audit, swap marketplace, heatmap)
 
 ---
 
@@ -260,23 +311,35 @@ A complete example: Creating a new absence record.
 
 ## Database Schema
 
+**Database:** PostgreSQL 15 with pgvector extension (for RAG semantic search).
+
 Core entities and relationships:
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   Person    │────<│ Assignment  │>────│    Block    │
 └─────────────┘     └─────────────┘     └─────────────┘
-       │                                       │
-       │            ┌─────────────┐            │
-       └───────────<│   Absence   │            │
-                    └─────────────┘            │
-                                               │
-┌─────────────┐     ┌─────────────┐            │
-│ScheduleRun  │────<│ CallAssign. │>───────────┘
+       │                   │
+       │                   ▼
+       │            ┌──────────────┐
+       │            │  Rotation    │
+       │            │  Template    │
+       │            └──────────────┘
+       │
+       │            ┌─────────────┐
+       ├───────────<│   Absence   │
+       │            └─────────────┘
+       │
+       │            ┌─────────────┐
+       └───────────<│ SwapRecord  │
+                    └─────────────┘
+
+┌─────────────┐     ┌─────────────┐
+│ScheduleRun  │────<│ CallAssign. │
 └─────────────┘     └─────────────┘
 ```
 
-See `app/models/` for complete schema definitions.
+See `app/models/` for complete schema definitions and `backend/schema.sql` for current snapshot.
 
 ---
 
