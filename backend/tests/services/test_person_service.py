@@ -641,6 +641,25 @@ class TestPersonService:
         assert result["succeeded"] == 0
         assert result["created_ids"] == []
 
+    def test_batch_create_duplicate_email_reports_original_index(self, db):
+        """Duplicate detection should report the original index in input."""
+        service = PersonService(db)
+        people_data = [
+            {"name": "Dr. No Email", "type": "faculty"},
+            {"name": "Dr. Alpha", "type": "faculty", "email": "dupe@hospital.org"},
+            {"name": "Dr. Beta", "type": "faculty", "email": "dupe@hospital.org"},
+        ]
+        result = service.batch_create(people_data)
+
+        duplicate_errors = [
+            r
+            for r in result["results"]
+            if r["error"] and "Duplicate email in batch" in r["error"]
+        ]
+
+        assert len(duplicate_errors) == 1
+        assert duplicate_errors[0]["index"] == 2
+
     def test_batch_create_duplicate_email_in_db(self, db, sample_resident):
         """Test batch create rejects emails that already exist in the database."""
         service = PersonService(db)
