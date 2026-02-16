@@ -1,6 +1,6 @@
 # Security Vulnerability Status
 
-**Last Updated:** 2025-12-21 (10 security fixes in parallel batch)
+**Last Updated:** 2026-02-15 (admin123 elimination, CVE patches, n8n disabled)
 **Original Assessment:** 2025-12-17
 
 This document tracks security vulnerabilities identified in the codebase and their remediation status.
@@ -15,6 +15,29 @@ This document tracks security vulnerabilities identified in the codebase and the
 | HIGH | 8 | 8 | 0 |
 | MEDIUM | 15 | 11 | 4 |
 | LOW | 5 | 0 | 5 |
+
+---
+
+## Recent Security Changes (2026-01 through 2026-02)
+
+### Hardcoded Credential Elimination (PRs #1134, #1136, #1138)
+- **Status:** FIXED
+- **Details:** Removed hardcoded `admin123` from:
+  - `main.py` startup admin bootstrap (now uses `secrets.token_urlsafe(16)`)
+  - 7 seed scripts (all use auto-generated passwords)
+  - `.env.example`, `Procfile.local`, `docker-compose.local.yml` (empty defaults)
+  - Frontend `LoginForm.tsx` (no longer displays default credentials)
+  - `mcp-server/.env.example` (empty default with auto-bootstrap comment)
+- **Impact:** No hardcoded passwords remain in active (non-test) code
+
+### CVE Patches Applied
+- **Redis 7.4.2** (CVE-2025-49844 defense) — updated in `docker-compose.local.yml`
+- **pgvector/pgvector:pg15** (CVE-2025-12817/12818 patched) — database image updated
+- **n8n disabled** (CVE-2026-21858 Ni8mare) — service commented out in `docker-compose.local.yml` pending patched version
+
+### PII Sanitizer Hardened (PR #1137)
+- **Status:** FIXED
+- **Details:** `sanitize_pii.py` had silent `except Exception: pass` in date sanitization. Sensitive dates could pass through unsanitized with no warning. Now warns to stderr on failure.
 
 ---
 
