@@ -1,6 +1,6 @@
 # Residency Scheduler
 
-> **Last Updated:** 2026-02-14
+> **Last Updated:** 2026-02-15
 
 <p align="center">
   <strong>A comprehensive medical residency scheduling system with ACGME compliance validation and AI-assisted development infrastructure</strong>
@@ -165,15 +165,15 @@ See [Exotic Frontier Concepts](docs/architecture/EXOTIC_FRONTIER_CONCEPTS.md) fo
 
 ### Personal AI Infrastructure (PAI)
 
-The project includes a comprehensive AI agent framework based on Kai Patterns:
+The project includes a comprehensive AI-assisted development framework:
 
-- **34 Specialized Skills** across 8 tiers - Core scheduling, compliance validation, resilience scoring, swap execution, development, and testing skills
-- **4 Operational Modes** - SAFE_AUDIT (read-only), SUPERVISED_EXECUTION (with approval), EXPERIMENTAL_PLANNING (sandbox), EMERGENCY_OVERRIDE (crisis response)
-- **Multi-Agent Orchestration** - ORCHESTRATOR coordinates up to 5 parallel agents with task decomposition and conflict resolution
+- **34 Specialized Skills** - Core scheduling, compliance validation, resilience scoring, swap execution, development, and testing skills
+- **27 Slash Commands** - Quick-access workflows for schedule generation, debugging, testing, and operations
+- **Agent Teams (Experimental)** - Native multi-agent coordination with shared task lists and peer-to-peer messaging
+- **Auftragstaktik Delegation** - Mission-type orders: higher levels provide intent, lower levels decide how
 - **Constitutions & Constraints** - Foundational rules enforcing ACGME compliance, security, and operational safety
-- **Telemetry & Observability** - AI infrastructure metrics tracking skill usage, safety validations, and agent effectiveness
 
-See [Personal AI Infrastructure](docs/PERSONAL_INFRASTRUCTURE.md) for complete documentation.
+See [CLAUDE.md](CLAUDE.md) for AI development guidelines and agent configuration.
 
 ### Slash Commands (27 Available)
 
@@ -216,11 +216,11 @@ See [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) for complete documen
 ### Frontend
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Next.js | 14.0.4 | React framework with App Router |
+| Next.js | 14.2.35 | React framework with App Router |
 | React | 18.2.0 | UI component library |
 | TypeScript | 5.0+ | Type-safe JavaScript |
-| TailwindCSS | 3.3.0 | Utility-first CSS framework |
-| TanStack Query | 5.17.0 | Data fetching and caching |
+| TailwindCSS | 3.4.1 | Utility-first CSS framework |
+| TanStack Query | 5.90.14 | Data fetching and caching |
 | Axios | 1.6.3 | HTTP client |
 | date-fns | 3.1.0 | Date manipulation |
 | Lucide React | 0.303.0 | Icon library |
@@ -229,7 +229,7 @@ See [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) for complete documen
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | Python | 3.11+ | Core language |
-| FastAPI | 0.124.4 | High-performance web framework |
+| FastAPI | 0.128.0 | High-performance web framework |
 | SQLAlchemy | 2.0.45 | ORM with async support |
 | Pydantic | 2.12.5 | Data validation |
 | Alembic | 1.17.2 | Database migrations |
@@ -244,7 +244,7 @@ See [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) for complete documen
 ### MCP Server (AI Integration)
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| FastMCP | 0.2.0+ | Model Context Protocol framework |
+| FastMCP | 2.14.2 | Model Context Protocol framework |
 | httpx | 0.25.0+ | Async HTTP client for API calls |
 
 ### Infrastructure
@@ -284,8 +284,8 @@ locally; otherwise warnings are expected.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/residency-scheduler.git
-cd residency-scheduler
+git clone https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager.git
+cd Autonomous-Assignment-Program-Manager
 
 # Copy environment file
 cp .env.example .env
@@ -362,63 +362,51 @@ See [Operations Guide](docs/operations/) for configuration reference.
 ## Project Structure
 
 ```
-residency-scheduler/
-├── backend/
+Autonomous-Assignment-Program-Manager/
+├── backend/                     # FastAPI application
 │   ├── app/
-│   │   ├── api/                 # API layer (routes, dependencies)
+│   │   ├── api/routes/          # API endpoints (87 route files)
 │   │   ├── core/                # Configuration, security, Celery
 │   │   ├── db/                  # Database session management
 │   │   ├── models/              # SQLAlchemy ORM models
 │   │   ├── repositories/        # Data access layer
 │   │   ├── schemas/             # Pydantic validation schemas
 │   │   ├── services/            # Business logic layer
-│   │   ├── scheduling/          # Scheduling engine & validator
-│   │   │   ├── solver_control.py    # Kill-switch & progress monitoring
-│   │   │   ├── profiler.py          # Performance instrumentation
-│   │   │   └── constraints/         # Constraint system
-│   │   ├── resilience/          # Resilience framework
-│   │   │   ├── utilization.py   # 80% threshold monitoring
-│   │   │   ├── defense_in_depth.py  # 5-level safety system
-│   │   │   ├── contingency.py   # N-1/N-2 analysis (NetworkX)
-│   │   │   ├── static_stability.py  # Fallback schedules
-│   │   │   ├── sacrifice_hierarchy.py  # Load shedding
-│   │   │   ├── metrics.py       # Prometheus metrics
-│   │   │   ├── tasks.py         # Celery background tasks
-│   │   │   └── service.py       # Resilience service
-│   │   └── notifications/       # Alert delivery
+│   │   ├── scheduling/          # Scheduling engine & constraints
+│   │   └── resilience/          # Resilience framework (5-level defense)
 │   ├── alembic/                 # Database migrations
-│   ├── tests/                   # Backend test suite
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/
+│   └── tests/                   # Backend test suite (11,861+ tests)
+├── frontend/                    # Next.js application
 │   ├── src/
-│   │   ├── app/                 # Next.js App Router pages
-│   │   ├── components/          # Reusable React components
+│   │   ├── app/                 # App Router pages (20+ routes)
+│   │   ├── components/          # React components
+│   │   ├── hooks/               # Custom React hooks
 │   │   ├── contexts/            # React Context providers
-│   │   ├── lib/                 # API client & custom hooks
-│   │   └── types/               # TypeScript type definitions
-│   ├── __tests__/               # Jest unit tests
-│   ├── e2e/                     # Playwright E2E tests
-│   ├── Dockerfile
-│   └── package.json
+│   │   ├── lib/                 # API client & utilities
+│   │   └── types/               # TypeScript definitions (auto-generated)
+│   ├── __tests__/               # Jest unit tests (403 component tests)
+│   └── e2e/                     # Playwright E2E tests
 ├── mcp-server/                  # MCP Server (AI Integration)
 │   └── src/scheduler_mcp/       # 97+ scheduling tools
-├── .claude/                     # AI Infrastructure (PAI)
-│   ├── commands/                # 27 slash commands
-│   ├── skills/                  # 34 agent skills
-│   ├── Agents/                  # Agent personas (ORCHESTRATOR, etc.)
-│   ├── PromptTemplates/         # Reusable workflow templates
-│   └── Methodologies/           # Decision frameworks
 ├── docs/                        # Project documentation
-│   ├── architecture/            # System design
-│   │   └── bridges/             # Cross-disciplinary integrations
-│   ├── specs/                   # Service specifications
+│   ├── architecture/            # System design & ADRs
+│   ├── api/                     # REST API reference
+│   ├── guides/                  # Developer & operational guides
+│   ├── planning/                # Roadmap, priorities, strategic decisions
+│   ├── development/             # Contributing, setup, code style
+│   ├── operations/              # Monitoring, security, deployment
 │   ├── research/                # Advanced research topics
-│   └── schedules/               # Sanitized test data
-├── scripts/                     # CLI tools & utilities
+│   └── archived/                # Historical reports & sessions
+├── scripts/                     # 101 CLI tools & utilities
+├── monitoring/                  # Prometheus & Grafana configs
+├── nginx/                       # Reverse proxy configuration
+├── config/                      # Application configuration
+├── archived/                    # Prototype experiments (agent-adk, cli, tools)
+├── .claude/                     # AI development infrastructure
+│   ├── commands/                # 27 slash commands
+│   └── skills/                  # 34 agent skills
 ├── docker-compose.yml           # Production configuration
-├── docker-compose.local.yml       # Development configuration
-├── docker-compose.prod.yml      # Security-hardened production
+├── docker-compose.local.yml     # Development configuration
 └── README.md
 ```
 
@@ -488,7 +476,7 @@ residency-scheduler/
 ### Planning & Status
 | Document | Description |
 |----------|-------------|
-| [Master Priority List](docs/MASTER_PRIORITY_LIST.md) | Authoritative prioritized work backlog |
+| [Master Priority List](docs/planning/MASTER_PRIORITY_LIST.md) | Authoritative prioritized work backlog |
 | [Roadmap](docs/planning/ROADMAP.md) | Feature roadmap and milestones |
 | [Strategic Decisions](docs/planning/STRATEGIC_DECISIONS.md) | Key project decisions |
 | [Human TODO](HUMAN_TODO.md) | Tasks requiring human action |

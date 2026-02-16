@@ -1,6 +1,6 @@
 # Contributing to Residency Scheduler
 
-> **Last Updated:** 2025-12-16
+> **Last Updated:** 2026-02-15
 
 Thank you for your interest in contributing to Residency Scheduler! This document provides guidelines and instructions for contributing to the project.
 
@@ -159,10 +159,10 @@ def calculate_hours(
 ```
 
 **Tools**:
-- `black` for code formatting
-- `isort` for import sorting
-- `flake8` for linting
-- `mypy` for type checking
+- `ruff check . --fix` for linting
+- `ruff format .` for code formatting
+
+> **Note**: The project uses [Ruff](https://docs.astral.sh/ruff/) for both linting and formatting, replacing the older black/isort/flake8 toolchain.
 
 ### TypeScript/JavaScript (Frontend)
 
@@ -198,6 +198,29 @@ export function UserCard({ user, onSelect, isActive = false }: UserCardProps) {
 - Extract common patterns to component classes
 - Follow mobile-first responsive design
 - Use CSS variables for theming
+
+### Pre-Commit Hooks
+
+This project uses pre-commit hooks that run automatically on every commit. They enforce:
+
+- PII/OPSEC/PERSEC scanning (military medical data protection)
+- Ruff linting and formatting
+- TypeScript type checking and ESLint
+- Migration naming validation
+- Secret detection (gitleaks)
+- Naming convention enforcement (snake_case query params, snake_case enum values)
+
+After cloning, install hooks with `pre-commit install`. If a hook fails, fix the issue and commit again. See [CLAUDE.md](CLAUDE.md) for detailed hook documentation.
+
+### Naming Conventions
+
+**Backend** uses `snake_case`, **frontend** uses `camelCase`. An axios interceptor auto-converts between them:
+
+- TypeScript interfaces: use `camelCase` keys (e.g., `pgyLevel`, not `pgy_level`)
+- URL query parameters: use `snake_case` (e.g., `?block_id=123`, not `?blockId=123`)
+- Enum values: use `snake_case` in both frontend and backend (e.g., `'one_to_one'`, not `'oneToOne'`)
+
+See the "API Type Naming Convention" section in [CLAUDE.md](CLAUDE.md) for full details.
 
 ### Commit Messages
 

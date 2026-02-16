@@ -21,10 +21,10 @@
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | Python | 3.11+ | Core language |
-| FastAPI | 0.109.0 | Web framework |
-| SQLAlchemy | 2.0.25 | ORM (async) |
-| Pydantic | 2.5.3 | Validation |
-| Alembic | 1.13.1 | Migrations |
+| FastAPI | 0.128.0 | Web framework |
+| SQLAlchemy | 2.0.45 | ORM (async) |
+| Pydantic | 2.12.5 | Validation |
+| Alembic | 1.17.2 | Migrations |
 | PostgreSQL | 15 | Database |
 | Redis | Latest | Cache/broker |
 | Celery | 5.x | Background tasks |
@@ -33,11 +33,11 @@
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Next.js | 14.0.4 | App Router |
+| Next.js | 14.2.35 | App Router |
 | React | 18.2.0 | UI |
 | TypeScript | 5.0+ | Type safety |
-| TailwindCSS | 3.3.0 | Styling |
-| TanStack Query | 5.17.0 | Data fetching |
+| TailwindCSS | 3.4.1 | Styling |
+| TanStack Query | 5.90.14 | Data fetching |
 
 ### Infrastructure
 
