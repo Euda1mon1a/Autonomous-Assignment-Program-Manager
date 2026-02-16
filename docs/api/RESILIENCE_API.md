@@ -525,9 +525,8 @@ curl -X POST http://localhost:8000/api/v1/resilience/load-shedding \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d '{
-    "level": "moderate",
-    "target_utilization": 0.75,
-    "reason": "Utilization above 85%"
+    "level": "YELLOW",
+    "reason": "Utilization above 85% — suspending optional education"
   }'
 ```
 
