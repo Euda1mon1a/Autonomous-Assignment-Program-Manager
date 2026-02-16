@@ -1,6 +1,6 @@
 /**
  * Example Admin Dashboard with Claude Code Chat Integration
- * 
+ *
  * This demonstrates how to integrate the ClaudeCodeChat component
  * into your admin panel with real-world scheduling tasks.
  */

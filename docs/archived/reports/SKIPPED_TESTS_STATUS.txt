@@ -30,7 +30,7 @@ BY CATEGORY - DISTRIBUTION
    ├─ test_fmit_scheduler_service.py........... 14 tests
    ├─ test_call_assignment_service.py......... 16 tests
    └─ test_schedule_routes.py................. 12 tests
-   
+
    Status: Services IMPLEMENTED, tests waiting for fixtures
    Effort: 8-10 hours
    Risk: HIGH - No regression coverage for 3 core services
@@ -41,14 +41,14 @@ BY CATEGORY - DISTRIBUTION
    ├─ PyQUBO + dwave (quantum).............. 2 tests
    ├─ NetworkX (graph analysis)............ 1 test
    └─ Action: Keep skipped - make conditional in CI
-   
+
    Status: Optional advanced features
    Risk: LOW
 
 3. KNOWN ISSUES - TEST ISOLATION (CRITICAL FIX)
    └─ Test: 1 (1% of all skips)
    ├─ test_resilience_load.py::test_concurrent_contingency_analyses
-   
+
    Status: BLOCKED on SQLAlchemy object lifecycle fix
    Effort: 3-5 hours
    Risk: CRITICAL - Can't load test critical N-1 contingency logic
@@ -56,7 +56,7 @@ BY CATEGORY - DISTRIBUTION
 4. NOT YET IMPLEMENTED (DEFER)
    └─ Tests: 8 (8% of all skips)
    ├─ test_kalman_workload_bridge.py......... 8 tests
-   
+
    Status: Feature incomplete - Kalman filter stub raises NotImplementedError
    Effort: 4-6 hours (when ready)
    Risk: MEDIUM
@@ -64,7 +64,7 @@ BY CATEGORY - DISTRIBUTION
 5. VECTOR DATABASE (KEEP SKIPPED - ENVIRONMENT)
    └─ Tests: 9 (9% of all skips)
    ├─ test_rag_service.py................... 9 tests
-   
+
    Status: Requires PostgreSQL with pgvector extension
    Effort: N/A (environmental requirement)
    Risk: LOW - Chunking tests DO work with SQLite
@@ -72,7 +72,7 @@ BY CATEGORY - DISTRIBUTION
 6. MISC FIXTURES (IMPLEMENT + UNSKIP)
    └─ Tests: 2 (2% of all skips)
    ├─ test_anti_churn.py.................... 2 tests
-   
+
    Status: Need mock Assignment objects with dates
    Effort: 1-2 hours
    Risk: MEDIUM
@@ -80,7 +80,7 @@ BY CATEGORY - DISTRIBUTION
 7. MCP SERVER OPTIONAL (KEEP SKIPPED)
    └─ Test: 1 (1% of all skips)
    ├─ test_orchestration_e2e.py............ 1 test
-   
+
    Status: Optional integration - requires docker-compose up mcp-server
    Effort: N/A (optional)
    Risk: LOW
@@ -94,7 +94,7 @@ IMMEDIATE (Next Sprint - 12 hours)
        └─ 3-5 hours diagnosis + fix
        └─ BLOCKS load testing of critical resilience features
        └─ Status: Waiting on test isolation pattern fix
-       
+
   [P2] Unskip DEBT-016 placeholders (3 files, 42 tests)
        ├─ test_fmit_scheduler_service.py (14 tests) - 2-3 hours
        ├─ test_call_assignment_service.py (16 tests) - 2-3 hours
@@ -106,7 +106,7 @@ MEDIUM TERM (2-3 weeks)
   [P3] Implement anti-churn pattern detection fixtures
        └─ 1-2 hours
        └─ test_anti_churn.py (2 tests)
-       
+
   [P4] Implement Kalman filter when feature is ready
        └─ 4-6 hours (advanced signal processing)
        └─ test_kalman_workload_bridge.py (8 tests)
@@ -129,14 +129,14 @@ File: tests/services/test_fmit_scheduler_service.py
   Blocker: Fixture setup
   Effort: 2-3 hours
   Priority: P2
-  
+
 File: tests/services/test_call_assignment_service.py
   Skip Count: 16 / 15 total tests (107% - more skips than tests!)
   Service Status: ✓ Implemented (app/services/call_assignment_service.py)
   Blocker: Fixture setup
   Effort: 2-3 hours
   Priority: P2
-  
+
 File: tests/test_schedule_routes.py
   Skip Count: 13 / 12 total tests (108%)
   Route Status: ✓ Implemented (app/api/routes/schedule.py)
@@ -153,7 +153,7 @@ COVERAGE GAPS (HIGH RISK):
   - No unit tests for CallAssignmentService (implemented, untested)
   - No integration tests for /api/schedule routes (core API, untested)
   - Can't load test N-1/N-2 contingency logic (blocked by isolation issue)
-  
+
 Mitigation: Unskip 42 DEBT-016 tests + fix 1 isolation issue = 43 tests unblocked
 
 KNOWN WORKING (OK):
@@ -192,12 +192,12 @@ DELIVERABLES GENERATED
    └─ Comprehensive analysis with unskip procedures
    └─ Root cause by category
    └─ Implementation guidance per file
-   
+
 2. SKIPPED_TESTS_QUICK_REFERENCE.md
    └─ One-page reference for quick lookup
    └─ Unskip checklists
    └─ CI configuration
-   
+
 3. SKIPPED_TESTS_INVENTORY.csv
    └─ Spreadsheet format for tracking
    └─ By test, with priority and effort estimates

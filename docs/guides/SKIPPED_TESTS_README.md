@@ -189,7 +189,7 @@ KEEP SKIPPED (Conditional):
 P1: Fix test isolation in test_resilience_load.py (1 test)
     └─ 3-5 hours
     └─ BLOCKS critical resilience testing
-    
+
 P2: Unskip DEBT-016 placeholders (42 tests, 3 files)
     ├─ test_fmit_scheduler_service.py (2-3h)
     ├─ test_call_assignment_service.py (2-3h)
@@ -201,7 +201,7 @@ P2: Unskip DEBT-016 placeholders (42 tests, 3 files)
 ```
 P3: Anti-churn fixtures (2 tests)
     └─ 1-2 hours
-    
+
 P4: Monitor Kalman filter implementation
     └─ 4-6 hours when feature is ready
 ```
@@ -264,7 +264,7 @@ See examples in `SKIPPED_TESTS_MANIFEST.md` "Unskip Procedure"
 
 **Common Issue:** SQLAlchemy objects detached from session in concurrent tests
 
-**Solution:** 
+**Solution:**
 1. Create isolated db sessions per async task
 2. Use `AsyncSession` with proper context management
 3. Ensure fixture scope is `function` (not `module`)
