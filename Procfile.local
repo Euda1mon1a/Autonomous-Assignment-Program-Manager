@@ -10,4 +10,4 @@ backend: cd backend && PYTHONPATH=. .venv/bin/uvicorn app.main:app --host 127.0.
 worker: cd backend && PYTHONPATH=. CELERY_WORKER_CONCURRENCY=${CELERY_WORKER_CONCURRENCY:-6} .venv/bin/celery -A app.core.celery_app worker --loglevel=info --concurrency=${CELERY_WORKER_CONCURRENCY:-6} -Q default,resilience,notifications,metrics,exports,security,maintenance
 beat: cd backend && PYTHONPATH=. .venv/bin/celery -A app.core.celery_app beat --loglevel=info
 frontend: cd frontend && npm run dev -- --port 3000
-mcp: cd mcp-server && PYTHONPATH=src API_BASE_URL=${API_BASE_URL:-http://localhost:8000} API_USERNAME=${API_USERNAME:-admin} API_PASSWORD=${API_PASSWORD:-admin123} .venv/bin/python -m scheduler_mcp.server --host 127.0.0.1 --port 8080 --transport http
+mcp: cd mcp-server && PYTHONPATH=src API_BASE_URL=${API_BASE_URL:-http://localhost:8000} API_USERNAME=${API_USERNAME:-admin} API_PASSWORD=${API_PASSWORD:-} .venv/bin/python -m scheduler_mcp.server --host 127.0.0.1 --port 8080 --transport http

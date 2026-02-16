@@ -11,6 +11,7 @@ Provides:
 """
 
 import json
+import secrets
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Optional, List, Dict, Any
@@ -99,12 +100,18 @@ class DevelopmentSeed(SeedData):
 
     def _create_users(self) -> list[User]:
         """Create development users."""
+        admin_pw = secrets.token_urlsafe(16)
+        coord_pw = secrets.token_urlsafe(16)
+        fac_pw = secrets.token_urlsafe(16)
+        print(
+            f"  Generated passwords — admin: {admin_pw}, coordinator: {coord_pw}, faculty: {fac_pw}"
+        )
         users = [
             User(
                 id=str(uuid4()),
                 username="admin",
                 email="admin@example.com",
-                hashed_password=get_password_hash("admin123"),
+                hashed_password=get_password_hash(admin_pw),
                 full_name="Administrator",
                 is_active=True,
                 role="ADMIN",
@@ -113,7 +120,7 @@ class DevelopmentSeed(SeedData):
                 id=str(uuid4()),
                 username="coordinator",
                 email="coordinator@example.com",
-                hashed_password=get_password_hash("coord123"),
+                hashed_password=get_password_hash(coord_pw),
                 full_name="Scheduling Coordinator",
                 is_active=True,
                 role="COORDINATOR",
@@ -122,7 +129,7 @@ class DevelopmentSeed(SeedData):
                 id=str(uuid4()),
                 username="faculty",
                 email="faculty@example.com",
-                hashed_password=get_password_hash("fac123"),
+                hashed_password=get_password_hash(fac_pw),
                 full_name="Faculty Member",
                 is_active=True,
                 role="FACULTY",
@@ -267,11 +274,13 @@ class TestFixtureSeed(SeedData):
 
     def _create_test_users(self) -> list[User]:
         """Create test users."""
+        test_pw = secrets.token_urlsafe(16)
+        print(f"  Generated test user password: {test_pw}")
         user = User(
             id="test-user-1",
             username="testuser",
             email="test@example.com",
-            hashed_password=get_password_hash("test123"),
+            hashed_password=get_password_hash(test_pw),
             is_active=True,
             role="COORDINATOR",
         )

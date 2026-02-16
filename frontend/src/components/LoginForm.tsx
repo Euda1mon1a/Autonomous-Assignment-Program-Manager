@@ -174,10 +174,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
         <h3 className="text-sm font-medium text-blue-800 mb-3">Local Dev Credentials</h3>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between items-center">
-            <span className="font-mono text-blue-700">admin</span>
-            <span className="font-mono text-blue-600 text-xs">admin123</span>
-          </div>
+          <p className="text-blue-700">
+            Username: <span className="font-mono">admin</span>
+          </p>
+          <p className="text-blue-600 text-xs">
+            Password auto-generated on first run. Check server startup logs.
+          </p>
         </div>
         <p className="mt-3 text-xs text-blue-600">
           API: {typeof window !== 'undefined' ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api' : 'loading...'}

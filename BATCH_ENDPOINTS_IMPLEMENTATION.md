@@ -1,7 +1,7 @@
 # Faculty Bulk Endpoints Implementation
 
-**Status:** Partially Complete
-**Date:** 2026-01-04
+**Status:** Complete (service layer integrated, stub deleted PR #1137)
+**Date:** 2026-01-04 | **Updated:** 2026-02-15
 **Mission:** Create batch operation endpoints for people (faculty/residents) management
 
 ## What Was Completed
@@ -22,33 +22,18 @@ All schemas include:
 - dry_run support for validation
 - Proper field validation via Pydantic
 
-### 2. Reference Implementation (/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/services/person_service_batch.py) ✅
+### 2. Service Layer Integration ✅
 
-Created standalone reference file with complete batch methods:
-
-- `batch_create()` - Atomic batch creation with duplicate email detection
-- `batch_update()` - Atomic batch updates
-- `batch_delete()` - Atomic batch deletions
+Batch methods (`batch_create`, `batch_update`, `batch_delete`) were integrated directly into `PersonService` in `backend/app/services/person_service.py`. The standalone reference file `person_service_batch.py` was deleted in PR #1137 (orphaned stub).
 
 All methods follow the pattern:
 1. Phase 1: Validate all items (fail fast if any invalid)
 2. Phase 2: Execute operations (only if dry_run=False)
 3. Return detailed results with per-item success/error tracking
 
-## What Needs to Be Done
+## What Remains
 
-### 1. Add Batch Methods to PersonService
-
-Copy the three methods from `person_service_batch.py` into `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/backend/app/services/person_service.py` after the `delete_person()` method.
-
-Add this section marker:
-```python
-# =========================================================================
-# Batch Operations
-# =========================================================================
-```
-
-Then copy `batch_create()`, `batch_update()`, and `batch_delete()` methods.
+Controller and route wiring (steps 2-4 below) have not been implemented yet.
 
 ### 2. Add Batch Methods to PersonController
 
@@ -328,8 +313,8 @@ DELETE /api/people/batch
 ## Files Modified
 
 1. `/backend/app/schemas/person.py` - Added batch schemas (COMPLETE)
-2. `/backend/app/services/person_service_batch.py` - Reference implementation (COMPLETE)
-3. `/backend/app/services/person_service.py` - Needs batch methods added
+2. `/backend/app/services/person_service.py` - Batch methods integrated (COMPLETE, PR #1137)
+3. ~~`/backend/app/services/person_service_batch.py`~~ - Deleted (orphaned stub, PR #1137)
 4. `/backend/app/controllers/person_controller.py` - Needs batch methods added
 5. `/backend/app/api/routes/people.py` - Needs batch endpoints added
 

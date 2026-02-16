@@ -7,6 +7,7 @@ for each faculty based on their primary duty requirements.
 Run with: python scripts/seed_faculty_weekly_templates.py
 """
 import json
+import os
 import sys
 from pathlib import Path
 from uuid import UUID
@@ -95,15 +96,33 @@ def get_db_activities(headers):
 
 def login():
     """Login and get auth token."""
-    # Try common passwords
-    passwords = ["AdminPassword123!", "admin", "Admin123!"]
-    for pwd in passwords:
-        resp = requests.post(
-            f"{BASE_URL}/api/v1/auth/login/json",
-            json={"username": "admin", "password": pwd},
-        )
-        if resp.status_code == 200:
-            return resp.json()["access_token"]
+    username = os.getenv("SEED_ADMIN_USERNAME", "admin")
+    password = os.getenv("SEED_ADMIN_PASSWORD")
+
+    if not password:
+        print("No SEED_ADMIN_PASSWORD set — attempting bootstrap via /initialize-admin...")
+        bootstrap_resp = requests.post(f"{BASE_URL}/api/v1/auth/initialize-admin")
+        if bootstrap_resp.status_code == 200:
+            data = bootstrap_resp.json()
+            if data.get("status") == "created":
+                password = data["password"]
+                print(f"Bootstrap admin created (save password: {password})")
+            elif data.get("status") == "already_initialized":
+                print("ERROR: DB already has users. Set SEED_ADMIN_PASSWORD to log in.")
+                sys.exit(1)
+        else:
+            print(
+                f"ERROR: Bootstrap failed ({bootstrap_resp.status_code}). "
+                "Set SEED_ADMIN_PASSWORD."
+            )
+            sys.exit(1)
+
+    resp = requests.post(
+        f"{BASE_URL}/api/v1/auth/login/json",
+        json={"username": username, "password": password},
+    )
+    if resp.status_code == 200:
+        return resp.json()["access_token"]
     print("Login failed - check admin password")
     return None
 
