@@ -292,7 +292,10 @@ cd Autonomous-Assignment-Program-Manager
 # Copy environment file
 cp .env.example .env
 
-# One-command native stack boot (postgres + redis + backend + frontend + celery + MCP)
+# First time? Bootstrap installs dependencies + starts services
+make native-bootstrap
+
+# Subsequent launches (services already installed)
 make native-start
 # or: ./scripts/start-native.sh
 
@@ -303,7 +306,7 @@ make native-start-mlx
 # Frontend:  http://localhost:3000
 # API:       http://localhost:8000
 # API Docs:  http://localhost:8000/docs (Swagger UI)
-# MCP:       http://localhost:8080
+# MCP:       http://localhost:8081
 ```
 
 ### Local LLM Inference
