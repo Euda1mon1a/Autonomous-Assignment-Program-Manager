@@ -41,7 +41,7 @@
 
 ### Infrastructure
 
-Docker + Docker Compose, MCP Server (97+ AI tools), Prometheus, Grafana
+Native macOS (Apple Silicon/MLX primary), Docker Compose (compatibility), MCP Server (97+ AI tools), Prometheus, Grafana
 
 ### AI Models (Claude 4.5/4.6 — February 2026)
 
