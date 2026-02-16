@@ -501,5 +501,5 @@ def seal_approval_chains():
 ## Related Documentation
 
 - [Tamper-Evident Audit Security Model](../security/TAMPER_EVIDENT_AUDIT.md)
-- [Audit API Reference](./audit.md)
+- [Audit API Reference](./ENDPOINT_CATALOG.md#audit--compliance)
 - [ACGME Compliance](../constraints/CONSTRAINT_CATALOG.md)

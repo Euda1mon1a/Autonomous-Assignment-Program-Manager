@@ -517,9 +517,9 @@ Where:
 
 ## Related Endpoints
 
-- [Thermodynamics API](./THERMODYNAMICS_API.md) - Entropy, phase transitions, free energy
-- [Immune System API](./IMMUNE_API.md) - Anomaly detection, antibody selection
-- [Time Crystal API](./TIME_CRYSTAL_API.md) - Rigidity, subharmonics, checkpoints
+- [Thermodynamics Tools](./MCP_TOOL_GUIDE.md#11-thermodynamics-tools-5-tools) - Entropy, phase transitions, free energy
+- [Immune System Tools](./MCP_TOOL_GUIDE.md#10-artificial-immune-system-4-tools) - Anomaly detection, antibody selection
+- [Time Crystal Tools](./MCP_TOOL_GUIDE.md#9-time-crystal-scheduling-7-tools) - Rigidity, subharmonics, checkpoints
 - [Resilience API](./RESILIENCE_API.md) - Core resilience metrics
 
 ## Support

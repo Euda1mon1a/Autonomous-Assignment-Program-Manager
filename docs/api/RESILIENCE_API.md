@@ -1,6 +1,6 @@
 # Resilience API Reference
 
-**Endpoint Prefix:** `/api/resilience`
+**Endpoint Prefix:** `/api/v1/resilience`
 
 ## Overview
 
@@ -35,7 +35,7 @@ Get current system health status.
 
 **Request:**
 ```bash
-curl -X GET 'http://localhost:8000/api/resilience/health?persist=true&include_contingency=false' \
+curl -X GET 'http://localhost:8000/api/v1/resilience/health?persist=true&include_contingency=false' \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
@@ -96,13 +96,13 @@ curl -X GET 'http://localhost:8000/api/resilience/health?persist=true&include_co
 
 ---
 
-### GET /health/history
+### GET /history/health
 
 Get historical health check data.
 
 **Request:**
 ```bash
-curl -X GET 'http://localhost:8000/api/resilience/health/history?start_date=2025-12-01&end_date=2025-12-31&page=1&page_size=50' \
+curl -X GET 'http://localhost:8000/api/v1/resilience/history/health?start_date=2025-12-01&end_date=2025-12-31&page=1&page_size=50' \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
@@ -142,7 +142,7 @@ Activate crisis mode for emergency response.
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8000/api/resilience/crisis/activate \
+curl -X POST http://localhost:8000/api/v1/resilience/crisis/activate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d '{
@@ -192,7 +192,7 @@ Deactivate crisis mode and restore normal operations.
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8000/api/resilience/crisis/deactivate \
+curl -X POST http://localhost:8000/api/v1/resilience/crisis/deactivate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d '{
@@ -223,13 +223,13 @@ curl -X POST http://localhost:8000/api/resilience/crisis/deactivate \
 
 ---
 
-### POST /fallback/activate
+### POST /fallbacks/activate
 
 Manually activate a pre-computed fallback schedule.
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8000/api/resilience/fallback/activate \
+curl -X POST http://localhost:8000/api/v1/resilience/fallbacks/activate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d '{
@@ -260,13 +260,13 @@ curl -X POST http://localhost:8000/api/resilience/fallback/activate \
 
 ---
 
-### POST /fallback/deactivate
+### POST /fallbacks/deactivate
 
 Deactivate a fallback schedule and return to normal.
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8000/api/resilience/fallback/deactivate \
+curl -X POST http://localhost:8000/api/v1/resilience/fallbacks/deactivate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d '{
@@ -289,13 +289,13 @@ curl -X POST http://localhost:8000/api/resilience/fallback/deactivate \
 
 ---
 
-### GET /fallback/list
+### GET /fallbacks
 
 List pre-computed fallback schedules.
 
 **Request:**
 ```bash
-curl -X GET 'http://localhost:8000/api/resilience/fallback/list?status=ready' \
+curl -X GET 'http://localhost:8000/api/v1/resilience/fallbacks?status=ready' \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
@@ -324,13 +324,13 @@ curl -X GET 'http://localhost:8000/api/resilience/fallback/list?status=ready' \
 
 ---
 
-### GET /events/history
+### GET /history/events
 
 Get resilience event history.
 
 **Request:**
 ```bash
-curl -X GET 'http://localhost:8000/api/resilience/events/history?start_date=2025-12-01&event_type=crisis&page=1' \
+curl -X GET 'http://localhost:8000/api/v1/resilience/history/events?start_date=2025-12-01&event_type=crisis&page=1' \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
@@ -368,13 +368,13 @@ curl -X GET 'http://localhost:8000/api/resilience/events/history?start_date=2025
 
 ---
 
-### GET /vulnerabilities
+### GET /vulnerability
 
 Identify system vulnerabilities.
 
 **Request:**
 ```bash
-curl -X GET 'http://localhost:8000/api/resilience/vulnerabilities?include_remediation=true' \
+curl -X GET 'http://localhost:8000/api/v1/resilience/vulnerability?include_remediation=true' \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
@@ -407,18 +407,40 @@ curl -X GET 'http://localhost:8000/api/resilience/vulnerabilities?include_remedi
 
 ---
 
-### POST /load-shedding/activate
+### GET /load-shedding
 
-Activate load shedding to reduce utilization.
+Get current load shedding status.
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8000/api/resilience/load-shedding/activate \
+curl -X GET http://localhost:8000/api/v1/resilience/load-shedding \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+**Response (200):**
+```json
+{
+  "level": "NORMAL",
+  "activities_suspended": [],
+  "activities_protected": ["ICU", "ER"],
+  "capacity_available": 0.85,
+  "capacity_demand": 0.62
+}
+```
+
+---
+
+### POST /load-shedding
+
+Set load shedding level (admin only).
+
+**Request:**
+```bash
+curl -X POST http://localhost:8000/api/v1/resilience/load-shedding \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d '{
-    "level": "moderate",
-    "target_utilization": 0.70,
+    "level": "YELLOW",
     "reason": "High capacity utilization"
   }'
 ```
@@ -426,55 +448,19 @@ curl -X POST http://localhost:8000/api/resilience/load-shedding/activate \
 **Request Body:**
 ```json
 {
-  "level": "light | moderate | heavy (required)",
-  "target_utilization": "number between 0.5 and 0.9 (optional)",
+  "level": "NORMAL | YELLOW | ORANGE | RED | BLACK | CRITICAL (required)",
   "reason": "string (required)"
 }
 ```
 
-**Load Shedding Levels:**
-
-- **light**: Reduce 5-10% of non-critical assignments
-- **moderate**: Reduce 10-20% of non-critical assignments
-- **heavy**: Reduce 20-30% of non-critical assignments
-
 **Response (200):**
 ```json
 {
-  "success": true,
-  "load_shedding_level": "moderate",
-  "activated_at": "2025-12-31T16:30:00Z",
-  "target_utilization": 0.70,
-  "current_utilization": 0.82,
-  "assignments_to_shed": 42,
-  "message": "Load shedding activated"
-}
-```
-
----
-
-### POST /load-shedding/deactivate
-
-Deactivate load shedding and restore normal scheduling.
-
-**Request:**
-```bash
-curl -X POST http://localhost:8000/api/resilience/load-shedding/deactivate \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <ACCESS_TOKEN>" \
-  -d '{
-    "reason": "Capacity returned to normal"
-  }'
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "load_shedding_level": "none",
-  "deactivated_at": "2025-12-31T18:30:00Z",
-  "assignments_restored": 42,
-  "message": "Load shedding deactivated"
+  "level": "YELLOW",
+  "activities_suspended": ["Elective Clinic"],
+  "activities_protected": ["ICU", "ER"],
+  "capacity_available": 0.75,
+  "capacity_demand": 0.82
 }
 ```
 
@@ -486,11 +472,11 @@ curl -X POST http://localhost:8000/api/resilience/load-shedding/deactivate \
 
 ```bash
 # 1. Check current health
-curl -X GET http://localhost:8000/api/resilience/health \
+curl -X GET http://localhost:8000/api/v1/resilience/health \
   -H "Authorization: Bearer <ACCESS_TOKEN>" | jq '.defense_level'
 
 # 2. Activate crisis mode
-curl -X POST http://localhost:8000/api/resilience/crisis/activate \
+curl -X POST http://localhost:8000/api/v1/resilience/crisis/activate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d '{
@@ -499,11 +485,11 @@ curl -X POST http://localhost:8000/api/resilience/crisis/activate \
   }'
 
 # 3. Monitor health
-curl -X GET http://localhost:8000/api/resilience/health \
+curl -X GET http://localhost:8000/api/v1/resilience/health \
   -H "Authorization: Bearer <ACCESS_TOKEN>" | jq '.crisis_mode'
 
 # 4. Deactivate when resolved
-curl -X POST http://localhost:8000/api/resilience/crisis/deactivate \
+curl -X POST http://localhost:8000/api/v1/resilience/crisis/deactivate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d '{"reason": "Absences resolved"}'
@@ -513,11 +499,11 @@ curl -X POST http://localhost:8000/api/resilience/crisis/deactivate \
 
 ```bash
 # List available fallbacks
-curl -X GET 'http://localhost:8000/api/resilience/fallback/list?status=ready' \
+curl -X GET 'http://localhost:8000/api/v1/resilience/fallbacks?status=ready' \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 
 # Activate fallback if needed
-curl -X POST http://localhost:8000/api/resilience/fallback/activate \
+curl -X POST http://localhost:8000/api/v1/resilience/fallbacks/activate \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d '{
@@ -530,18 +516,17 @@ curl -X POST http://localhost:8000/api/resilience/fallback/activate \
 
 ```bash
 # Check health status
-curl -X GET http://localhost:8000/api/resilience/health \
+curl -X GET http://localhost:8000/api/v1/resilience/health \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   | jq '.utilization.utilization_rate'
 
 # If > 85%, activate load shedding
-curl -X POST http://localhost:8000/api/resilience/load-shedding/activate \
+curl -X POST http://localhost:8000/api/v1/resilience/load-shedding \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d '{
-    "level": "moderate",
-    "target_utilization": 0.75,
-    "reason": "Utilization above 85%"
+    "level": "YELLOW",
+    "reason": "Utilization above 85% — suspending optional education"
   }'
 ```
 
@@ -610,5 +595,5 @@ curl -X POST http://localhost:8000/api/resilience/load-shedding/activate \
 - `backend/app/resilience/load_shedding.py` - Load shedding implementation
 
 **Admin Guides:**
-- [Crisis Response Procedures](../admin-manual/crisis-response.md) - Administrative procedures
-- [Fallback Schedule Planning](../planning/fallback-schedules.md) - Planning guide
+- [Crisis Response Procedures](../intelligence/RESILIENCE_QUICK_REFERENCE.md) - Administrative procedures
+- [Fallback Schedule Planning](../architecture/RESILIENCE_IMPLEMENTATION_CHECKLIST.md) - Planning guide

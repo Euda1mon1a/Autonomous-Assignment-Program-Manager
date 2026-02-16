@@ -2,7 +2,7 @@
 
 Leave-eligible rotation matching API for academic block scheduling.
 
-> **Base Path:** `/api/block-scheduler`
+> **Base Path:** `/api/v1/block-scheduler`
 > **Authentication:** Bearer token required
 > **Added:** 2025-12-30
 
@@ -29,7 +29,7 @@ The Block Scheduler API enables automated assignment of residents to rotations b
 
 ## Dashboard
 
-<span class="endpoint-badge get">GET</span> `/api/block-scheduler/dashboard`
+<span class="endpoint-badge get">GET</span> `/api/v1/block-scheduler/dashboard`
 
 Get dashboard view for the block scheduler UI.
 
@@ -87,7 +87,7 @@ Get dashboard view for the block scheduler UI.
 
 ## Schedule Block
 
-<span class="endpoint-badge post">POST</span> `/api/block-scheduler/schedule`
+<span class="endpoint-badge post">POST</span> `/api/v1/block-scheduler/schedule`
 
 Schedule residents for a block using leave-eligible matching algorithm.
 
@@ -181,7 +181,7 @@ Schedule residents for a block using leave-eligible matching algorithm.
 
 ## Get Assignment
 
-<span class="endpoint-badge get">GET</span> `/api/block-scheduler/assignments/{assignment_id}`
+<span class="endpoint-badge get">GET</span> `/api/v1/block-scheduler/assignments/{assignment_id}`
 
 Get a single block assignment by ID.
 
@@ -219,7 +219,7 @@ Get a single block assignment by ID.
 
 ## Create Manual Assignment
 
-<span class="endpoint-badge post">POST</span> `/api/block-scheduler/assignments`
+<span class="endpoint-badge post">POST</span> `/api/v1/block-scheduler/assignments`
 
 Create a manual block assignment (overrides auto-scheduling).
 
@@ -250,7 +250,7 @@ Returns the created assignment (same as Get Assignment response).
 
 ## Update Assignment
 
-<span class="endpoint-badge put">PUT</span> `/api/block-scheduler/assignments/{assignment_id}`
+<span class="endpoint-badge put">PUT</span> `/api/v1/block-scheduler/assignments/{assignment_id}`
 
 Update an existing block assignment.
 
@@ -269,7 +269,7 @@ All fields are optional. Changing `rotation_template_id` automatically sets `ass
 
 ## Delete Assignment
 
-<span class="endpoint-badge delete">DELETE</span> `/api/block-scheduler/assignments/{assignment_id}`
+<span class="endpoint-badge delete">DELETE</span> `/api/v1/block-scheduler/assignments/{assignment_id}`
 
 Delete a block assignment.
 
@@ -328,7 +328,7 @@ Block 13: May 27 - Jun 23
 ### Preview Block Schedule
 
 ```bash
-curl -X POST http://localhost:8000/api/block-scheduler/schedule \
+curl -X POST http://localhost:8000/api/v1/block-scheduler/schedule \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -341,7 +341,7 @@ curl -X POST http://localhost:8000/api/block-scheduler/schedule \
 ### Execute Block Schedule
 
 ```bash
-curl -X POST http://localhost:8000/api/block-scheduler/schedule \
+curl -X POST http://localhost:8000/api/v1/block-scheduler/schedule \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -354,6 +354,6 @@ curl -X POST http://localhost:8000/api/block-scheduler/schedule \
 ### Get Dashboard
 
 ```bash
-curl "http://localhost:8000/api/block-scheduler/dashboard?block_number=5&academic_year=2025" \
+curl "http://localhost:8000/api/v1/block-scheduler/dashboard?block_number=5&academic_year=2025" \
   -H "Authorization: Bearer <token>"
 ```

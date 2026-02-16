@@ -762,5 +762,5 @@ curl -X GET 'http://localhost:8000/api/schedule/validate?start_date=2025-01-01&e
 - `backend/app/scheduling/solvers/` - Multi-solver architecture
 
 **User Guides:**
-- [Import Guide - FMIT Schedules](../user-guide/fmit-import.md) - Excel import workflow
-- [Excel Format Requirements](../user-guide/excel-format.md) - File format specifications
+- [Import Guide - FMIT Schedules](../user-guide/imports.md) - Excel import workflow
+- [Excel Format Requirements](../user-guide/imports.md) - File format specifications

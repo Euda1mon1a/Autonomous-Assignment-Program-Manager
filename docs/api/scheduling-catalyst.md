@@ -12,7 +12,7 @@ The scheduling catalyst API applies chemistry concepts to scheduling:
 - **Catalysts**: Personnel or mechanisms that lower barriers
 - **Pathways**: Optimal routes from current to target schedule state
 
-**Base URL:** `/api/scheduling-catalyst`
+**Base URL:** `/api/v1/scheduling-catalyst`
 
 ---
 
@@ -20,7 +20,7 @@ The scheduling catalyst API applies chemistry concepts to scheduling:
 
 ### Detect Barriers
 
-<span class="endpoint-badge post">POST</span> `/api/scheduling-catalyst/barriers/detect`
+<span class="endpoint-badge post">POST</span> `/api/v1/scheduling-catalyst/barriers/detect`
 
 Detect all barriers for a proposed schedule change.
 
@@ -92,7 +92,7 @@ Detect all barriers for a proposed schedule change.
 
 ### Optimize Pathway
 
-<span class="endpoint-badge post">POST</span> `/api/scheduling-catalyst/pathways/optimize`
+<span class="endpoint-badge post">POST</span> `/api/v1/scheduling-catalyst/pathways/optimize`
 
 Find the optimal transition pathway for a schedule change.
 
@@ -145,7 +145,7 @@ Find the optimal transition pathway for a schedule change.
 
 ### Analyze Swap Barriers
 
-<span class="endpoint-badge post">POST</span> `/api/scheduling-catalyst/swaps/analyze`
+<span class="endpoint-badge post">POST</span> `/api/v1/scheduling-catalyst/swaps/analyze`
 
 Specialized analysis for swap operations.
 
@@ -191,7 +191,7 @@ Specialized analysis for swap operations.
 
 ### Get Catalyst Capacity
 
-<span class="endpoint-badge get">GET</span> `/api/scheduling-catalyst/capacity`
+<span class="endpoint-badge get">GET</span> `/api/v1/scheduling-catalyst/capacity`
 
 Get current system catalyst capacity.
 
@@ -228,7 +228,7 @@ Get current system catalyst capacity.
 
 ### Batch Optimize
 
-<span class="endpoint-badge post">POST</span> `/api/scheduling-catalyst/batch/optimize`
+<span class="endpoint-badge post">POST</span> `/api/v1/scheduling-catalyst/batch/optimize`
 
 Optimize multiple schedule changes as a batch.
 

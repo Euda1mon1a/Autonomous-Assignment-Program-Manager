@@ -170,7 +170,7 @@ Content-Type: application/json
 ### Rate Limiting
 
 - **Limit**: 10 requests per minute per user
-- **Headers**: See [Rate Limiting](../rate-limiting.md)
+- **Headers**: See [Rate Limiting](../index.md#rate-limiting)
 
 ### Example Requests
 

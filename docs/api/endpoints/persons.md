@@ -750,5 +750,5 @@ if response.status_code == 200:
 ## See Also
 
 - [Assignments API](assignments.md) - Assign people to schedules
-- [Credentials API](../credentials.md) - Manage procedure credentials
+- [Credentials Guide](../../admin-manual/credentials.md) - Manage procedure credentials
 - [Authentication](../authentication.md) - Token management

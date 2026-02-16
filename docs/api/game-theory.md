@@ -568,4 +568,4 @@ When configured, the system can send webhook notifications for:
 - Evolution simulation completion
 - Validation results
 
-See [Webhooks Configuration](../admin-manual/webhooks.md) for setup instructions.
+See [Admin Manual](../admin-manual/README.md) for setup instructions.
