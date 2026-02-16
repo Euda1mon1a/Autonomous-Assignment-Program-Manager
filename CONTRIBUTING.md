@@ -210,7 +210,7 @@ This project uses pre-commit hooks that run automatically on every commit. They 
 - Secret detection (gitleaks)
 - Naming convention enforcement (snake_case query params, snake_case enum values)
 
-Hooks install automatically. If a hook fails, fix the issue and commit again. See [CLAUDE.md](CLAUDE.md) for detailed hook documentation.
+After cloning, install hooks with `pre-commit install`. If a hook fails, fix the issue and commit again. See [CLAUDE.md](CLAUDE.md) for detailed hook documentation.
 
 ### Naming Conventions
 
