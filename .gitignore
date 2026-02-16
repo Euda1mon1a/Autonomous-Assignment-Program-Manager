@@ -152,7 +152,8 @@ celerybeat.pid
 
 # Note: package-lock.json is committed for deterministic builds
 
-# Local seed scripts that may reference real data paths
+# Local seed scripts (may print credentials or reference real data paths)
+*.local.py
 scripts/seed_people_local.py
 docs/data/*.csv
 scripts/airtable_sync.py
