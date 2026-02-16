@@ -305,11 +305,11 @@ services:
       # API Integration - connects to FastAPI backend
       API_BASE_URL: http://backend:8000
 
-      # Credentials - uses hardcoded local dev credentials
-      # These match the default admin user created during db seed
+      # Credentials - auto-generated via /initialize-admin in DEBUG mode
+      # Check backend startup logs for the generated password
       # NOTE: Use username "admin", NOT email "admin@example.com"
       API_USERNAME: admin
-      API_PASSWORD: admin123
+      API_PASSWORD: ${API_PASSWORD:-}
 
       # ARMORY - Enable ALL exotic MCP tools (50+ tools across 5 domains)
       # With Claude Code v2.1.7 lazy loading, context tax is eliminated

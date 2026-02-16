@@ -64,7 +64,7 @@ For GUI-related work (troubleshooting, visual bugs, UI testing, frontend edits),
 ## Test Data Available
 
 For GUI testing:
-- **Login:** `admin` / `admin123`
+- **Login:** `admin` / [auto-generated — check server startup logs]
 - **URL:** `http://localhost:3000`
 - **People:** 45 (30 residents, 15 faculty)
 - **Blocks:** 14 (0-13)

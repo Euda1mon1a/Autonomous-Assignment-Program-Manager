@@ -17,6 +17,7 @@ Academic Year: July 1 - June 30 (730 blocks: 365 days x AM/PM)
 
 import argparse
 import random
+import secrets
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -53,8 +54,8 @@ random.seed(42)
 class AntigravitySeed:
     """Complete Academic Year seed for GUI testing."""
 
-    # Default password for all test users
-    DEFAULT_PASSWORD = "admin123"
+    # Auto-generated password for test users (logged at seed summary)
+    DEFAULT_PASSWORD = secrets.token_urlsafe(16)
 
     # User definitions: (username, email, role, full_name)
     USER_DEFINITIONS = [
@@ -1119,7 +1120,11 @@ class AntigravitySeed:
         print("=" * 60)
         print()
         print("Test Credentials:")
-        print(f"  Password for all users: {self.DEFAULT_PASSWORD}")
+        cred_file = Path(__file__).resolve().parents[2] / ".seed-credentials"
+        with open(cred_file, "a") as f:
+            for username, _, role, _ in self.USER_DEFINITIONS:
+                f.write(f"[antigravity] {username}({role})={self.DEFAULT_PASSWORD}\n")
+        print(f"  Credentials written to {cred_file}")
         print()
         print("User Accounts:")
         for username, email, role, _ in self.USER_DEFINITIONS:

@@ -165,7 +165,7 @@ def get_auth_token() -> str:
             data = bootstrap_resp.json()
             if data.get("status") == "created":
                 password = data["password"]
-                print(f"Bootstrap admin created (save password: {password})")
+                print("Bootstrap admin created (password stored in-memory only)")
             elif data.get("status") == "already_initialized":
                 print("ERROR: DB already has users. Set SEED_ADMIN_PASSWORD to log in.")
                 sys.exit(1)
