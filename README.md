@@ -247,15 +247,16 @@ See [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) for complete documen
 | FastMCP | 2.14.2 | Model Context Protocol framework |
 | httpx | 0.25.0+ | Async HTTP client for API calls |
 
-### Infrastructure
+### Infrastructure (Native macOS / Apple Silicon)
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| PostgreSQL | 15 | Primary database |
-| Docker | Latest | Containerization (with security hardening) |
-| Docker Compose | Latest | Multi-container orchestration |
-| Nginx | Latest | Reverse proxy with TLS 1.2+ |
+| macOS / Apple Silicon | M-series | Primary deployment target |
+| MLX | Latest | Native Apple Silicon LLM inference (default provider) |
+| PostgreSQL | 15+ | Primary database (Homebrew) |
+| Redis | Latest | Cache, message broker, rate limiting |
 | Prometheus | Latest | Metrics collection |
 | Grafana | Latest | Dashboard visualization |
+| Docker | Latest | Available for compatibility (not primary) |
 
 ### Testing
 | Technology | Purpose |
@@ -277,10 +278,11 @@ locally; otherwise warnings are expected.
 
 ### Prerequisites
 
-- Docker and Docker Compose
+- macOS with Apple Silicon (M-series) — primary target
+- Homebrew (`brew install postgresql redis python node`)
 - Git
 
-### Running with Docker (Recommended)
+### Native macOS (Recommended)
 
 ```bash
 # Clone the repository
@@ -290,69 +292,54 @@ cd Autonomous-Assignment-Program-Manager
 # Copy environment file
 cp .env.example .env
 
-# One-command full local stack boot (backend + frontend + postgres + redis + celery + MCP)
-./scripts/start-local.sh
-# or: make local-start
+# First time? Bootstrap installs dependencies + starts services
+make native-bootstrap
+
+# Subsequent launches (services already installed)
+make native-start
+# or: ./scripts/start-native.sh
+
+# With MLX local inference (Apple Silicon)
+make native-start-mlx
 
 # Access the application
 # Frontend:  http://localhost:3000
 # API:       http://localhost:8000
 # API Docs:  http://localhost:8000/docs (Swagger UI)
-# ReDoc:     http://localhost:8000/redoc
 # MCP:       http://localhost:8081
 ```
 
-To rebuild images during startup:
+### Local LLM Inference
 
-```bash
-./scripts/start-local.sh --build
-# or: make local-start-build
+The LLM router defaults to MLX for Apple Silicon native inference, with automatic fallback:
+
+```
+MLX (port 8082) → Ollama (11434) → Anthropic API (cloud)
 ```
 
-To stop the local stack:
+Configure in `.env`: `LLM_DEFAULT_PROVIDER=mlx` (default). Set `LLM_AIRGAP_MODE=true` for offline-only operation.
+
+### Docker (Alternative)
+
+Docker Compose configs are maintained for compatibility:
 
 ```bash
-make local-stop
+./scripts/start-local.sh        # Docker stack
+make local-start                # Same via Makefile
 ```
 
-### Local Development
+### Manual Setup
 
-See [Getting Started](docs/getting-started/installation.md) for detailed installation and configuration instructions.
+See [Getting Started](docs/getting-started/installation.md) for detailed instructions.
 
-#### Backend Quick Start
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-alembic upgrade head
+# Backend
+cd backend && python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt && alembic upgrade head
 uvicorn app.main:app --reload
-```
 
-#### Frontend Quick Start
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-#### Background Tasks (Celery)
-For resilience monitoring and automated tasks:
-
-```bash
-# Start Redis (required)
-redis-server
-
-# Start Celery worker and beat scheduler
-cd backend
-../scripts/start-celery.sh both
-
-# Or start them separately
-../scripts/start-celery.sh worker  # Background task worker
-../scripts/start-celery.sh beat    # Periodic task scheduler
-
-# Verify Celery is running
-python verify_celery.py
+# Frontend
+cd frontend && npm install && npm run dev
 ```
 
 See [Operations Guide](docs/operations/) for configuration reference.
