@@ -14,7 +14,7 @@ Welcome to the Residency Scheduler documentation. This comprehensive guide will 
 | **System Administrators** | [START_HERE_ADMIN.md](START_HERE_ADMIN.md) | System maintenance |
 | **Developers** | [START_HERE_DEVELOPER.md](START_HERE_DEVELOPER.md) | Contributing code |
 
-**Master Reference**: [MASTER_GUIDE.md](MASTER_GUIDE.md) - Comprehensive consolidated guide
+**Master Reference**: [MASTER_GUIDE.md](planning/MASTER_GUIDE.md) - Comprehensive consolidated guide
 
 ---
 
@@ -245,16 +245,19 @@ Additional documentation files at the repository root:
 |----------|-------------|-------------------|
 | [HUMAN_TODO.md](../HUMAN_TODO.md) | Tasks requiring human action | Keep at root |
 
-### :material-file-multiple: Docs Root-Level Files
-Important files at the docs/ root:
+### :material-file-multiple: Key Files by Subdirectory
 
-| Document | Description |
-|----------|-------------|
-| [ARCHITECTURAL_DISCONNECTS.md](archived/superseded/ARCHITECTURAL_DISCONNECTS.md) | Known architectural inconsistencies |
-| [EMAIL_NOTIFICATION_INFRASTRUCTURE.md](EMAIL_NOTIFICATION_INFRASTRUCTURE.md) | Email notification system design |
-| [MCP_IDE_INTEGRATION.md](MCP_IDE_INTEGRATION.md) | Model Context Protocol IDE integration |
-| [MASTER_PRIORITY_LIST.md](MASTER_PRIORITY_LIST.md) | Current development priorities |
-| [PULSE_CHECKLIST.md](PULSE_CHECKLIST.md) | System health pulse checklist |
+Files reorganized in February 2026 (PR #1141):
+
+| Subdirectory | Contents |
+|-------------|----------|
+| `guides/` | 15 developer & operational guides (backend standards, frontend checklists, testing plans) |
+| `planning/` | Roadmap, master priority list, strategic decisions, pulse checklist |
+| `development/` | Contributing, setup, code style, CI/CD, skill workflows, MCP IDE integration |
+| `features/` | Email notification infrastructure |
+| `domain/` | TAMC scheduling context, Army FM physician report |
+| `legal/` | Third-party licenses |
+| `archived/` | Historical reports, session logs, superseded docs |
 
 ---
 
@@ -360,7 +363,7 @@ Additional community-maintained documentation: [Project Wiki](https://github.com
 
 **Made with care for those who care for others**
 
-Version: 1.0.0 | Last Updated: 2025-12-31 (Documentation restructure)
+Last Updated: 2026-02-15 (Post-cleanup reorganization)
 
 </div>
 
