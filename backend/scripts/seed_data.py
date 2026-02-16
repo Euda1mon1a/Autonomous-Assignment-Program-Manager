@@ -103,9 +103,8 @@ class DevelopmentSeed(SeedData):
         admin_pw = secrets.token_urlsafe(16)
         coord_pw = secrets.token_urlsafe(16)
         fac_pw = secrets.token_urlsafe(16)
-        print(
-            f"  Generated passwords — admin: {admin_pw}, coordinator: {coord_pw}, faculty: {fac_pw}"
-        )
+        print("  Generated seed user passwords (not logged for security)")
+        # Passwords are used in-memory only — never print credentials to stdout
         users = [
             User(
                 id=str(uuid4()),
@@ -275,7 +274,7 @@ class TestFixtureSeed(SeedData):
     def _create_test_users(self) -> list[User]:
         """Create test users."""
         test_pw = secrets.token_urlsafe(16)
-        print(f"  Generated test user password: {test_pw}")
+        # Password used in-memory only — never print credentials to stdout
         user = User(
             id="test-user-1",
             username="testuser",
