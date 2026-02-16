@@ -1,0 +1,5 @@
+{
+  "name": "Voxel Scheduler 3D",
+  "description": "A 3D visualization of a medical residency schedule using voxels to represent time, personnel, and activity type.",
+  "requestFramePermissions": []
+}
