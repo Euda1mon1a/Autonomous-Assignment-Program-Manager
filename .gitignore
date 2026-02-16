@@ -154,6 +154,7 @@ celerybeat.pid
 
 # Local seed scripts (may print credentials or reference real data paths)
 *.local.py
+.seed-credentials
 scripts/seed_people_local.py
 docs/data/*.csv
 scripts/airtable_sync.py

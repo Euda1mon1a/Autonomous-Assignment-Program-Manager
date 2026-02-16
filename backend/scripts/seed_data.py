@@ -103,8 +103,13 @@ class DevelopmentSeed(SeedData):
         admin_pw = secrets.token_urlsafe(16)
         coord_pw = secrets.token_urlsafe(16)
         fac_pw = secrets.token_urlsafe(16)
-        print("  Generated seed user passwords (not logged for security)")
-        # Passwords are used in-memory only — never print credentials to stdout
+        # Write credentials to gitignored file (never print to stdout)
+        cred_file = Path(__file__).resolve().parents[2] / ".seed-credentials"
+        with open(cred_file, "a") as f:
+            f.write(
+                f"[dev-seed] admin={admin_pw} coordinator={coord_pw} faculty={fac_pw}\n"
+            )
+        print(f"  Seed credentials written to {cred_file}")
         users = [
             User(
                 id=str(uuid4()),
@@ -274,7 +279,10 @@ class TestFixtureSeed(SeedData):
     def _create_test_users(self) -> list[User]:
         """Create test users."""
         test_pw = secrets.token_urlsafe(16)
-        # Password used in-memory only — never print credentials to stdout
+        # Write credentials to gitignored file (never print to stdout)
+        cred_file = Path(__file__).resolve().parents[2] / ".seed-credentials"
+        with open(cred_file, "a") as f:
+            f.write(f"[test-seed] testuser={test_pw}\n")
         user = User(
             id="test-user-1",
             username="testuser",

@@ -1120,7 +1120,11 @@ class AntigravitySeed:
         print("=" * 60)
         print()
         print("Test Credentials:")
-        print("  Passwords generated in-memory (not logged for security)")
+        cred_file = Path(__file__).resolve().parents[2] / ".seed-credentials"
+        with open(cred_file, "a") as f:
+            for username, _, role, _ in self.USER_DEFINITIONS:
+                f.write(f"[antigravity] {username}({role})={self.DEFAULT_PASSWORD}\n")
+        print(f"  Credentials written to {cred_file}")
         print()
         print("User Accounts:")
         for username, email, role, _ in self.USER_DEFINITIONS:
