@@ -1065,7 +1065,7 @@ class DecisionRequest(BaseModel):
     category: DecisionCategory
     complexity: DecisionComplexity
     description: str = Field(..., min_length=5, max_length=500)
-    options: list[str] = Field(..., min_items=2)
+    options: list[str] = Field(..., min_length=2)
     recommended_option: str | None = None
     safe_default: str | None = None
     is_urgent: bool = False
@@ -1314,7 +1314,7 @@ class CriticalSlowingDownRequest(BaseModel):
     utilization_history: list[float] = Field(
         ...,
         description="Daily utilization values (0.0 to 1.0) for analysis",
-        min_items=30,
+        min_length=30,
     )
     coverage_history: list[float] | None = Field(
         default=None,
