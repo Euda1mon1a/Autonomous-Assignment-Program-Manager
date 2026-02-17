@@ -114,10 +114,19 @@ docs/data/*_pii_mapping*.json
 # Block quality reports (contain real names/schedules - OPSEC/PERSEC)
 docs/reports/BLOCK_*_QUALITY_REPORT_*.md
 docs/reports/BLOCKS_*_SUMMARY_*.md
+docs/archived/reports/BLOCK_*_QUALITY_REPORT_*.md
+docs/archived/reports/BLOCKS_*_SUMMARY_*.md
 
 # Session postmortems and schema drift reports (contain PII)
 docs/reports/block10-postmortem-*.md
 docs/reports/cpsat-call-preload-and-schema-drift-*.md
+docs/archived/reports/block10-postmortem-*.md
+docs/archived/reports/cpsat-call-preload-and-schema-drift-*.md
+
+# Other PII-containing local docs
+docs/archived/reports/GUI_WIRING_GAPS.md
+docs/archived/reports/SKIPPED_TESTS_INVENTORY.csv
+docs/domain/TAMC_SCHEDULING_CONTEXT.md
 
 # Local config files (contain real names/mappings)
 config/*.local.json
