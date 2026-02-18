@@ -11,9 +11,10 @@ Stores detected version in request.state for downstream use.
 
 import logging
 import re
+from collections.abc import Awaitable, Callable
 from contextvars import ContextVar
 from enum import Enum
-from typing import Optional
+from typing import Optional, ParamSpec, TypeVar
 
 from starlette.datastructures import Headers
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -21,6 +22,9 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 logger = logging.getLogger(__name__)
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 # Context variable for current API version (thread-safe)
 _current_api_version: ContextVar[Optional["APIVersion"]] = ContextVar(
@@ -295,7 +299,9 @@ def get_api_version() -> APIVersion:
     return version or DEFAULT_VERSION
 
 
-def require_version(min_version: APIVersion):
+def require_version(
+    min_version: APIVersion,
+) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     """
     Decorator to require minimum API version for an endpoint.
 
@@ -311,8 +317,8 @@ def require_version(min_version: APIVersion):
             pass
     """
 
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
+    def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             current = get_api_version()
             if current < min_version:
                 from fastapi import HTTPException

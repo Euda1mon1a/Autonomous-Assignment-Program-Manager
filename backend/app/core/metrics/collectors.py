@@ -7,7 +7,7 @@ that need periodic collection or complex calculation.
 
 import logging
 import os
-from typing import Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -485,7 +485,9 @@ class ApplicationMetricsCollector(Collector):
             logger.error(f"Error collecting application metrics: {e}", exc_info=True)
 
 
-def register_custom_collectors(registry=None, engine=None, db_session_factory=None):
+def register_custom_collectors(
+    registry: Any = None, engine: Any = None, db_session_factory: Any = None
+) -> list[Collector]:
     """
     Register all custom collectors with Prometheus registry.
 

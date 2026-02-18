@@ -206,6 +206,10 @@ def example_few_shot() -> None:
 
     # Get a specific example
     example = pm.get_few_shot_example("swap_request")
+    if example is None:
+        print("\nFEW-SHOT EXAMPLE: Swap Request")
+        print("No example found for swap_request.\n")
+        return
 
     print("\nFEW-SHOT EXAMPLE: Swap Request")
     print(f"Query: {example['query']}")

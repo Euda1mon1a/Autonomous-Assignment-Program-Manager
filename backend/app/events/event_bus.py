@@ -16,7 +16,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Callable, Coroutine
 from datetime import datetime
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 EventHandler = Callable[[BaseEvent], Coroutine[Any, Any, None]]
+TEventHandler = TypeVar("TEventHandler", bound=EventHandler)
 
 
 class EventSubscription(BaseModel):
@@ -385,7 +386,9 @@ def get_event_bus() -> EventBus:
     # =============================================================================
 
 
-def event_handler(event_type: str | EventType):
+def event_handler(
+    event_type: str | EventType,
+) -> Callable[[TEventHandler], TEventHandler]:
     """
     Decorator to register an event handler.
 
@@ -395,7 +398,7 @@ def event_handler(event_type: str | EventType):
             print(f"Schedule created: {event.schedule_id}")
     """
 
-    def decorator(func: EventHandler):
+    def decorator(func: TEventHandler) -> TEventHandler:
         bus = get_event_bus()
         bus.subscribe(event_type, func, subscriber_id=func.__name__)
         return func

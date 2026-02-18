@@ -445,7 +445,9 @@ async def _invalidate_cache(
 # Utility decorators for specific patterns
 
 
-def cached_property_async(ttl: int = 300, namespace: str = "default"):
+def cached_property_async(
+    ttl: int = 300, namespace: str = "default"
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Decorator for caching async property-like methods.
 
@@ -467,7 +469,7 @@ def cached_property_async(ttl: int = 300, namespace: str = "default"):
 
 def read_through(
     namespace: str, ttl: int = 300, tags: list[str] | Callable | None = None
-):
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Decorator for read-through caching pattern.
 
@@ -489,7 +491,9 @@ def read_through(
     return cached(namespace=namespace, ttl=ttl, tags=tags, use_l1=True, use_l2=True)
 
 
-def write_through(namespace: str, key_builder: Callable[..., str | list[str]]):
+def write_through(
+    namespace: str, key_builder: Callable[..., str | list[str]]
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Decorator for write-through caching pattern.
 

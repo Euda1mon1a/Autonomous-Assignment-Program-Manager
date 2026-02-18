@@ -70,4 +70,7 @@ class TemplateManager:
 
     def list_templates(self) -> dict[str, str]:
         """List available templates."""
-        return {name: template["title"] for name, template in self.TEMPLATES.items()}
+        return {
+            name: str(template.get("title", ""))
+            for name, template in self.TEMPLATES.items()
+        }

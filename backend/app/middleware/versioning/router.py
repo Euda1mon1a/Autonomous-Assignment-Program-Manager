@@ -6,7 +6,8 @@ to be defined for specific API versions with automatic deprecation handling.
 """
 
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
+from typing import Any, ParamSpec, TypeVar
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
@@ -16,6 +17,9 @@ from app.middleware.versioning.deprecation import get_deprecation_manager
 from app.middleware.versioning.middleware import APIVersion, get_api_version
 
 logger = logging.getLogger(__name__)
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 class VersionedRoute(APIRoute):
@@ -312,7 +316,9 @@ def create_version_router(
     )
 
 
-def version_dispatch(handlers: dict[APIVersion, Callable]):
+def version_dispatch(
+    handlers: dict[APIVersion, Callable[P, Awaitable[R]]],
+) -> Callable[P, Awaitable[R]]:
     """
     Dispatch to different handlers based on API version.
 
@@ -337,7 +343,7 @@ def version_dispatch(handlers: dict[APIVersion, Callable]):
             })(request)
     """
 
-    async def dispatcher(*args, **kwargs):
+    async def dispatcher(*args: P.args, **kwargs: P.kwargs) -> R:
         current_version = get_api_version()
 
         # Find exact match first

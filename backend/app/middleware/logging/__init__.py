@@ -90,6 +90,8 @@ Usage:
     ```
 """
 
+from typing import Any
+
 from app.middleware.logging.filters import (
     SensitiveDataFilter,
     default_filter,
@@ -153,9 +155,9 @@ __all__ = [
 
 def get_recent_logs(
     limit: int = 100,
-    filters: dict = None,
-    storage_backend=None,
-):
+    filters: dict[str, Any] | None = None,
+    storage_backend: LogStorage | None = None,
+) -> list[dict[str, Any]]:
     """
     Get recent log entries from storage.
 
@@ -181,7 +183,7 @@ def get_recent_logs(
     return storage_backend.retrieve(limit=limit, filters=filters)
 
 
-def get_response_metrics():
+def get_response_metrics() -> dict[str, Any]:
     """
     Get current response metrics.
 

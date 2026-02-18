@@ -11,7 +11,7 @@ Provides automated background tasks for:
 import asyncio
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Coroutine, TypeVar
 
 from celery import shared_task
 from sqlalchemy.orm import Session
@@ -21,6 +21,8 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+T = TypeVar("T")
 
 # Document type mapping (filename -> doc_type)
 DOC_TYPE_MAP = {
@@ -56,7 +58,7 @@ def get_db_session() -> Session:
     return SessionLocal()
 
 
-def _run_async(coro):
+def _run_async(coro: Coroutine[Any, Any, T]) -> T:
     """Run an async coroutine from a synchronous Celery task."""
     try:
         loop = asyncio.get_running_loop()

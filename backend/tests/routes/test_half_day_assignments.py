@@ -51,6 +51,7 @@ def test_list_half_day_assignments_by_date_range(client: TestClient, db):
     assert data["total"] == 1
     assert data["assignments"][0]["person_name"] == "Dr. Resident"
     assert data["assignments"][0]["activity_code"] == "CLN"
+    assert data["assignments"][0]["is_gap"] is False
 
 
 @pytest.mark.unit

@@ -26,7 +26,7 @@ Usage:
 
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from enum import Enum
 from functools import wraps
@@ -1181,6 +1181,7 @@ class AccessControlMatrix:
         # Global Instance and Helpers
         # ============================================================================
 
+
 # ============================================================================
 # Permission Cache (Redis-backed)
 # ============================================================================
@@ -1580,7 +1581,9 @@ def require_permission(
     return decorator
 
 
-def require_role(roles: list[str] | str, allow_admin: bool = True):
+def require_role(
+    roles: list[str] | str, allow_admin: bool = True
+) -> Callable[..., Awaitable[User]]:
     """
     Create a FastAPI dependency that checks user roles.
 

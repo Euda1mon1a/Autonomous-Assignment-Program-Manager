@@ -515,7 +515,7 @@ def get_settings() -> Settings:
     return Settings()
 
 
-def get_resilience_config():
+def get_resilience_config() -> "ResilienceConfig":
     """Get ResilienceConfig from settings."""
     from app.resilience.defense_in_depth import DefenseLevel
     from app.resilience.service import ResilienceConfig
@@ -534,7 +534,7 @@ def get_resilience_config():
     )
 
 
-def get_shadow_config():
+def get_shadow_config() -> "ShadowConfig":
     """Get ShadowConfig from settings."""
     from app.shadow.traffic import DiffSeverity, ShadowConfig
 
