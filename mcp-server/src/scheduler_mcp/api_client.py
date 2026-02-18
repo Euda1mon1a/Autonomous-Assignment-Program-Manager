@@ -393,20 +393,11 @@ class SchedulerAPIClient:
                 deleted = delete_response.json().get("deleted", 0)
                 logger.info(f"Cleared {deleted} existing assignments")
 
-            # Also clear solver/template half-day assignments
-            hda_response = await self._request_with_retry(
-                "DELETE",
-                f"{self.config.api_prefix}/half-day-assignments",
-                headers=headers,
-                params={
-                    "start_date": start_date,
-                    "end_date": end_date,
-                    "sources": "solver,template",
-                },
-            )
-            if hda_response.status_code == 200:
-                hda_deleted = hda_response.json().get("deleted", 0)
-                logger.info(f"Cleared {hda_deleted} half-day assignments")
+            # NOTE: Half-day assignments are NOT pre-cleared here.
+            # The scheduling engine clears them internally (step 5.5)
+            # only after a successful solve, preventing data loss on
+            # solver failure. Use clear_half_day_assignments() directly
+            # when you need explicit pre-clearing outside generation.
 
         # Generate new schedule
         logger.info(f"Generating schedule from {start_date} to {end_date} using {algorithm}")
