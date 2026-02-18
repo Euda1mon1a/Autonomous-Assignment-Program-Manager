@@ -1647,25 +1647,37 @@ class ScheduleDraftService:
         added_count = 0
         existing_ids = existing_ids or set()
 
+        from app.models.block import Block
+
         for assignment in assignments:
             # Skip preserved assignments (FMIT, absences, etc.)
             if assignment.id and assignment.id in existing_ids:
                 continue
 
-                # Determine change type - new assignment = ADD
+            # Resolve block (may not be eager-loaded on new assignments)
+            block = (
+                assignment.block
+                if assignment.block is not None
+                else self.db.get(Block, assignment.block_id)
+            )
+            if not block:
+                logger.warning(
+                    f"Skipping assignment {assignment.id}: "
+                    f"block_id={assignment.block_id} not found"
+                )
+                continue
+
+            # Determine change type - new assignment = ADD
             change_type = DraftAssignmentChangeType.ADD
 
             # Check if there's an existing live assignment at this slot
-            # Assignment doesn't have date/time_of_day directly - access via block relationship
-            from app.models.block import Block
-
             existing_assignment = (
                 self.db.query(Assignment)
                 .join(Block, Assignment.block_id == Block.id)
                 .filter(
                     Assignment.person_id == assignment.person_id,
-                    Block.date == assignment.block.date,
-                    Block.time_of_day == assignment.block.time_of_day,
+                    Block.date == block.date,
+                    Block.time_of_day == block.time_of_day,
                 )
                 .first()
             )
@@ -1677,15 +1689,13 @@ class ScheduleDraftService:
             else:
                 existing_assignment_id = None
 
-                # Create draft assignment
-                # Access date/time_of_day via block relationship
+            # Create draft assignment
             draft_assignment = ScheduleDraftAssignment(
                 id=uuid4(),
                 draft_id=draft_id,
                 person_id=assignment.person_id,
-                assignment_date=assignment.block.date,
-                time_of_day=assignment.block.time_of_day
-                or "ALL",  # Normalize None to ALL
+                assignment_date=block.date,
+                time_of_day=block.time_of_day or "ALL",
                 activity_code=getattr(assignment, "activity_code", None),
                 rotation_id=assignment.rotation_template_id,
                 change_type=change_type,
@@ -1695,7 +1705,7 @@ class ScheduleDraftService:
             self.db.add(draft_assignment)
             added_count += 1
 
-            # Update change summary in draft
+        # Update change summary in draft
         draft = (
             self.db.query(ScheduleDraft).filter(ScheduleDraft.id == draft_id).first()
         )
@@ -2006,6 +2016,8 @@ class ScheduleDraftService:
 
         See add_solver_assignments_to_draft() for full documentation.
         """
+        from app.models.block import Block
+
         added_count = 0
         existing_ids = existing_ids or set()
 
@@ -2014,20 +2026,30 @@ class ScheduleDraftService:
             if assignment.id and assignment.id in existing_ids:
                 continue
 
-                # Determine change type - new assignment = ADD
+            # Resolve block (may not be eager-loaded on new assignments)
+            block = (
+                assignment.block
+                if assignment.block is not None
+                else self.db.get(Block, assignment.block_id)
+            )
+            if not block:
+                logger.warning(
+                    f"Skipping assignment {assignment.id}: "
+                    f"block_id={assignment.block_id} not found"
+                )
+                continue
+
+            # Determine change type - new assignment = ADD
             change_type = DraftAssignmentChangeType.ADD
 
             # Check if there's an existing live assignment at this slot
-            # Assignment doesn't have date/time_of_day directly - access via block relationship
-            from app.models.block import Block
-
             existing_assignment = (
                 self.db.query(Assignment)
                 .join(Block, Assignment.block_id == Block.id)
                 .filter(
                     Assignment.person_id == assignment.person_id,
-                    Block.date == assignment.block.date,
-                    Block.time_of_day == assignment.block.time_of_day,
+                    Block.date == block.date,
+                    Block.time_of_day == block.time_of_day,
                 )
                 .first()
             )
@@ -2039,14 +2061,13 @@ class ScheduleDraftService:
             else:
                 existing_assignment_id = None
 
-                # Create draft assignment
-                # Access date/time_of_day via block relationship
+            # Create draft assignment
             draft_assignment = ScheduleDraftAssignment(
                 id=uuid4(),
                 draft_id=draft_id,
                 person_id=assignment.person_id,
-                assignment_date=assignment.block.date,
-                time_of_day=assignment.block.time_of_day or "ALL",
+                assignment_date=block.date,
+                time_of_day=block.time_of_day or "ALL",
                 activity_code=getattr(assignment, "activity_code", None),
                 rotation_id=assignment.rotation_template_id,
                 change_type=change_type,
@@ -2056,7 +2077,7 @@ class ScheduleDraftService:
             self.db.add(draft_assignment)
             added_count += 1
 
-            # Update change summary in draft
+        # Update change summary in draft
         draft = (
             self.db.query(ScheduleDraft).filter(ScheduleDraft.id == draft_id).first()
         )
