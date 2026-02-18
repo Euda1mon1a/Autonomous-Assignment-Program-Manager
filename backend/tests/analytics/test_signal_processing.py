@@ -27,6 +27,12 @@ from app.analytics.signal_processing import (
 )
 
 
+# Keep stochastic fixtures deterministic to avoid flaky assertions.
+@pytest.fixture(autouse=True)
+def _seed_numpy() -> None:
+    np.random.seed(42)
+
+
 # =============================================================================
 # Fixtures
 # =============================================================================

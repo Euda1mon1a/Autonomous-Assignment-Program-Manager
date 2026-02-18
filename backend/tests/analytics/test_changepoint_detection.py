@@ -16,6 +16,11 @@ from app.analytics.signal_processing import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _seed_numpy() -> None:
+    np.random.seed(42)
+
+
 class TestCUSUMDetection:
     """Tests for CUSUM change point detection."""
 

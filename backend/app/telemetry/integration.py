@@ -136,7 +136,7 @@ def shutdown_telemetry() -> None:
         # Example usage patterns
 
 
-def example_fastapi_integration():
+def example_fastapi_integration() -> None:
     """
     Example of integrating telemetry into a FastAPI application.
 
@@ -163,7 +163,7 @@ def example_fastapi_integration():
         return {"user_id": user_id}
 
 
-def example_manual_tracing():
+def example_manual_tracing() -> None:
     """
     Example of using manual tracing decorators.
 

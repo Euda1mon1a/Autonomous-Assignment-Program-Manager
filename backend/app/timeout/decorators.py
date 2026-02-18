@@ -8,8 +8,9 @@ Provides:
 
 import asyncio
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from functools import wraps
+from typing import Any, ParamSpec, TypeVar
 
 from sqlalchemy.orm import Session
 
@@ -21,8 +22,13 @@ from app.timeout.handler import (
 
 logger = logging.getLogger(__name__)
 
+P = ParamSpec("P")
+R = TypeVar("R")
 
-def with_timeout(timeout: float, error_message: str | None = None):
+
+def with_timeout(
+    timeout: float, error_message: str | None = None
+) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     """
     Decorator to apply timeout to an async endpoint or function.
 
@@ -46,9 +52,9 @@ def with_timeout(timeout: float, error_message: str | None = None):
         Decorator function
     """
 
-    def decorator(func: Callable):
+    def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             # Check if there's already a timeout from middleware
             existing_timeout = get_timeout_remaining()
             if existing_timeout is not None:
@@ -75,7 +81,7 @@ def with_timeout(timeout: float, error_message: str | None = None):
     return decorator
 
 
-def db_timeout(timeout: float):
+def db_timeout(timeout: float) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Decorator to apply timeout to database operations.
 
@@ -100,7 +106,7 @@ def db_timeout(timeout: float):
         you may need to adjust the implementation.
     """
 
-    def decorator(func: Callable):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             # Find the Session argument
@@ -212,7 +218,7 @@ def db_timeout(timeout: float):
     return decorator
 
 
-def timeout_remaining(func: Callable):
+def timeout_remaining(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
     """
     Decorator to check remaining timeout before executing function.
 
@@ -233,7 +239,7 @@ def timeout_remaining(func: Callable):
     """
 
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         remaining = get_timeout_remaining()
         if remaining is not None and remaining <= 0:
             raise TimeoutError(

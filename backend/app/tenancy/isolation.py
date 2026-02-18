@@ -57,7 +57,7 @@ import logging
 import re
 import secrets
 from datetime import datetime
-from typing import Any
+from typing import Any, TypeVar
 from uuid import UUID
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -71,6 +71,8 @@ from app.tenancy.context import (
 from app.tenancy.models import Tenant, TenantAuditLog
 
 logger = logging.getLogger(__name__)
+
+TModel = TypeVar("TModel", bound=type[Any])
 
 
 class IsolationStrategy:
@@ -446,7 +448,7 @@ async def drop_tenant_schema(
         raise RuntimeError(f"Failed to drop tenant schema: {e}")
 
 
-def add_tenant_id_to_model(model_class):
+def add_tenant_id_to_model(model_class: TModel) -> TModel:
     """
     Decorator to add tenant_id column to a model.
 

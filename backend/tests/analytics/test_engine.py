@@ -178,6 +178,7 @@ class TestForecastEngine:
         engine = ForecastEngine()
 
         # Create sample time series
+        np.random.seed(42)
         series = pd.Series(np.random.randn(10).cumsum())
 
         forecasts = engine.forecast({"metric1": series}, periods=4)

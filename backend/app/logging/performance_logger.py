@@ -11,13 +11,17 @@ Tracks:
 """
 
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, ParamSpec, TypeVar
 
 from loguru import logger
 
 from app.core.logging.context import bind_context_to_logger
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 @dataclass
@@ -128,7 +132,7 @@ class PerformanceLogger:
                 **metric.to_dict(),
             )
 
-    def time_operation(self, operation: str, **metadata):
+    def time_operation(self, operation: str, **metadata) -> "PerformanceTimer":
         """
         Context manager for timing an operation.
 
@@ -341,7 +345,9 @@ class PerformanceTimer:
         return False  # Don't suppress exceptions
 
 
-def time_function(operation: str | None = None, **metadata):
+def time_function(
+    operation: str | None = None, **metadata
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Decorator for timing function execution.
 
@@ -356,12 +362,12 @@ def time_function(operation: str | None = None, **metadata):
             pass
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         nonlocal operation
         if operation is None:
             operation = func.__name__
 
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             perf_logger = get_performance_logger()
             with perf_logger.time_operation(operation, **metadata):
                 return func(*args, **kwargs)
@@ -371,7 +377,9 @@ def time_function(operation: str | None = None, **metadata):
     return decorator
 
 
-async def time_async_function(operation: str | None = None, **metadata):
+def time_async_function(
+    operation: str | None = None, **metadata
+) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     """
     Decorator for timing async function execution.
 
@@ -386,12 +394,12 @@ async def time_async_function(operation: str | None = None, **metadata):
             pass
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         nonlocal operation
         if operation is None:
             operation = func.__name__
 
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             perf_logger = get_performance_logger()
             with perf_logger.time_operation(operation, **metadata):
                 return await func(*args, **kwargs)
@@ -458,6 +466,6 @@ def log_cache_access(
     get_performance_logger().log_cache_access(cache_key, hit, duration_ms, **metadata)
 
 
-def time_operation(operation: str, **metadata):
+def time_operation(operation: str, **metadata) -> "PerformanceTimer":
     """Time an operation (convenience function)."""
     return get_performance_logger().time_operation(operation, **metadata)

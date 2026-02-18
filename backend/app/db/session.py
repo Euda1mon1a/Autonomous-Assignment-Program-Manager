@@ -109,7 +109,7 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 @contextmanager
-def task_session_scope():
+def task_session_scope() -> Generator[Session, None, None]:
     """
     Provide a transactional scope for Celery tasks.
 
@@ -138,7 +138,7 @@ def task_session_scope():
 
 
 @asynccontextmanager
-async def async_task_session_scope():
+async def async_task_session_scope() -> AsyncGenerator[Session, None]:
     """Async version of task_session_scope for async tasks."""
     session = SessionLocal()
     try:

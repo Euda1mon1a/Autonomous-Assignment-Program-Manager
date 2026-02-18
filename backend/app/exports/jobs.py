@@ -9,6 +9,7 @@ Background tasks for:
 
 import logging
 from datetime import datetime, timedelta
+from typing import Any
 
 from celery import shared_task
 from sqlalchemy import select
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(name="app.exports.jobs.run_scheduled_exports", bind=True)
-def run_scheduled_exports(self):
+def run_scheduled_exports(self) -> dict[str, Any]:
     """
     Run all export jobs that are due for execution.
 
@@ -80,7 +81,9 @@ def run_scheduled_exports(self):
 
 
 @shared_task(name="app.exports.jobs.execute_export_job", bind=True)
-def execute_export_job(self, job_id: str, triggered_by: str = "manual"):
+def execute_export_job(
+    self, job_id: str, triggered_by: str = "manual"
+) -> dict[str, Any]:
     """
     Execute a specific export job.
 
@@ -123,7 +126,7 @@ def execute_export_job(self, job_id: str, triggered_by: str = "manual"):
 
 
 @shared_task(name="app.exports.jobs.cleanup_old_executions", bind=True)
-def cleanup_old_executions(self, retention_days: int = 90):
+def cleanup_old_executions(self, retention_days: int = 90) -> dict[str, Any]:
     """
     Cleanup old export job executions.
 
@@ -170,7 +173,7 @@ def cleanup_old_executions(self, retention_days: int = 90):
 
 
 @shared_task(name="app.exports.jobs.export_health_check", bind=True)
-def export_health_check(self):
+def export_health_check(self) -> dict[str, Any]:
     """
     Check health of export job system.
 
@@ -252,7 +255,7 @@ def export_health_check(self):
 
 
 @shared_task(name="app.exports.jobs.update_next_run_times", bind=True)
-def update_next_run_times(self):
+def update_next_run_times(self) -> dict[str, Any]:
     """
     Update next_run_at for all scheduled jobs.
 
