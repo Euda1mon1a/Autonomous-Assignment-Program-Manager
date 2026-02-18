@@ -59,6 +59,9 @@ class ActivityActionType(str, enum.Enum):
     SWAP_REJECTED = "SWAP_REJECTED"
     SWAP_CANCELLED = "SWAP_CANCELLED"
 
+    # Break-glass actions
+    BREAK_GLASS_APPROVED = "BREAK_GLASS_APPROVED"
+
     # Configuration actions
     SETTINGS_UPDATED = "SETTINGS_UPDATED"
     FEATURE_FLAG_TOGGLED = "FEATURE_FLAG_TOGGLED"

@@ -3,6 +3,8 @@
  */
 import { del, get, post } from "@/lib/api";
 import type {
+  BreakGlassApprovalRequest,
+  BreakGlassApprovalResponse,
   DraftPreviewResponse,
   PublishRequest,
   PublishResponse,
@@ -40,6 +42,16 @@ export async function previewScheduleDraft(
   draftId: string
 ): Promise<DraftPreviewResponse> {
   return get<DraftPreviewResponse>(`${BASE_URL}/${draftId}/preview`);
+}
+
+export async function approveBreakGlass(
+  draftId: string,
+  payload: BreakGlassApprovalRequest
+): Promise<BreakGlassApprovalResponse> {
+  return post<BreakGlassApprovalResponse>(
+    `${BASE_URL}/${draftId}/approve-break-glass`,
+    payload
+  );
 }
 
 export async function publishScheduleDraft(

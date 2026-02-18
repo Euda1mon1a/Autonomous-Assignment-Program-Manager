@@ -3,6 +3,7 @@
  */
 import {
   acknowledgeDraftFlag,
+  approveBreakGlass,
   bulkAcknowledgeDraftFlags,
   discardScheduleDraft,
   getScheduleDraft,
@@ -13,6 +14,7 @@ import {
 } from "@/api/schedule-drafts";
 import type { ApiError } from "@/lib/api";
 import type {
+  BreakGlassApprovalResponse,
   DraftPreviewResponse,
   PublishRequest,
   PublishResponse,
@@ -62,6 +64,26 @@ export function useScheduleDraftPreview(draftId: string | null) {
       : scheduleDraftKeys.all,
     queryFn: () => previewScheduleDraft(draftId as string),
     enabled: !!draftId,
+  });
+}
+
+export function useApproveBreakGlass() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    BreakGlassApprovalResponse,
+    ApiError,
+    { draftId: string; reason: string }
+  >({
+    mutationFn: ({ draftId, reason }) =>
+      approveBreakGlass(draftId, { reason }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: scheduleDraftKeys.detail(data.draftId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: scheduleDraftKeys.preview(data.draftId),
+      });
+    },
   });
 }
 

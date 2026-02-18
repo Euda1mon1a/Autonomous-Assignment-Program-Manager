@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/contexts/ToastContext";
 import {
   useAcknowledgeFlag,
+  useApproveBreakGlass,
   useBulkAcknowledgeFlags,
   useDiscardDraft,
   usePublishDraft,
@@ -32,6 +33,8 @@ import {
   Pen,
   Plus,
   Send,
+  Shield,
+  ShieldCheck,
   Trash2,
   XCircle,
 } from "lucide-react";
@@ -217,19 +220,42 @@ export default function ScheduleDraftReviewPage() {
   const discardMutation = useDiscardDraft();
   const ackFlagMutation = useAcknowledgeFlag();
   const bulkAckMutation = useBulkAcknowledgeFlags();
+  const approveBreakGlassMutation = useApproveBreakGlass();
+
+  const handleApproveBreakGlass = () => {
+    if (!breakGlassReason.trim() || breakGlassReason.trim().length < 10) {
+      toast.error("Break-glass reason must be at least 10 characters");
+      return;
+    }
+
+    approveBreakGlassMutation.mutate(
+      { draftId: id, reason: breakGlassReason.trim() },
+      {
+        onSuccess: () => {
+          toast.success("Break-glass approval granted");
+          setBreakGlassReason("");
+        },
+        onError: (error) => {
+          toast.error(
+            `Approval failed: ${error instanceof Error ? error.message : "Unknown error"}`
+          );
+        },
+      }
+    );
+  };
 
   const handlePublish = () => {
     const hasUnackedFlags =
       draft && draft.flagsTotal > 0 && draft.flagsAcknowledged < draft.flagsTotal;
-    const hasOverride =
-      !!overrideComment.trim() || !!breakGlassReason.trim();
 
-    if (needsBreakGlass && !breakGlassReason.trim()) {
-      toast.error("Break-glass reason is required for locked-window drafts");
+    if (needsBreakGlass) {
+      toast.error(
+        "Break-glass approval is required before publishing. Use the approval button below."
+      );
       return;
     }
 
-    if (hasUnackedFlags && !hasOverride) {
+    if (hasUnackedFlags && !overrideComment.trim()) {
       toast.error(
         "Please acknowledge all flags or provide an override comment"
       );
@@ -241,7 +267,6 @@ export default function ScheduleDraftReviewPage() {
         draftId: id,
         payload: {
           overrideComment: overrideComment.trim() || undefined,
-          breakGlassReason: breakGlassReason.trim() || undefined,
           validateAcgme: true,
         },
       },
@@ -413,7 +438,12 @@ export default function ScheduleDraftReviewPage() {
               <Button
                 onClick={handlePublish}
                 className="w-full bg-green-600 hover:bg-green-500 text-white"
-                disabled={publishMutation.isPending}
+                disabled={publishMutation.isPending || needsBreakGlass}
+                title={
+                  needsBreakGlass
+                    ? "Break-glass approval required before publish"
+                    : undefined
+                }
               >
                 <Send className="w-4 h-4 mr-2" />
                 {publishMutation.isPending ? "Publishing..." : "Publish to Live"}
@@ -431,21 +461,61 @@ export default function ScheduleDraftReviewPage() {
             </div>
           </div>
 
-          {/* Break-Glass Reason (lock window) */}
-          {needsBreakGlass && (
-            <div className="bg-red-900/10 border border-red-900/50 rounded-xl p-4 space-y-3">
-              <p className="text-sm text-red-300">
-                <AlertOctagon className="w-4 h-4 inline mr-1" />
-                {lockWindowFlag?.message ||
-                  "This draft touches the lock window. Break-glass approval is required to publish."}
-              </p>
-              <textarea
-                value={breakGlassReason}
-                onChange={(e) => setBreakGlassReason(e.target.value)}
-                placeholder="Break-glass reason (required for lock-window publishes)"
-                className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-sm text-slate-300 placeholder:text-slate-500"
-                rows={3}
-              />
+          {/* Break-Glass Approval (lock window) */}
+          {lockWindowFlag && (
+            <div
+              className={`border rounded-xl p-4 space-y-3 ${
+                draft.approvedAt
+                  ? "bg-green-900/10 border-green-900/50"
+                  : "bg-red-900/10 border-red-900/50"
+              }`}
+            >
+              {draft.approvedAt ? (
+                <>
+                  <p className="text-sm text-green-300 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4" />
+                    Break-glass approved
+                  </p>
+                  <div className="text-xs text-slate-400 space-y-1">
+                    <p>Reason: {draft.approvalReason}</p>
+                    <p>
+                      Approved:{" "}
+                      {format(new Date(draft.approvedAt), "MMM d, yyyy HH:mm")}
+                    </p>
+                    {draft.lockDateAtApproval && (
+                      <p>Lock date at approval: {draft.lockDateAtApproval}</p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-red-300">
+                    <AlertOctagon className="w-4 h-4 inline mr-1" />
+                    {lockWindowFlag.message ||
+                      "This draft touches the lock window. Break-glass approval is required before publish."}
+                  </p>
+                  <textarea
+                    value={breakGlassReason}
+                    onChange={(e) => setBreakGlassReason(e.target.value)}
+                    placeholder="Break-glass reason (min 10 characters)"
+                    className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-sm text-slate-300 placeholder:text-slate-500"
+                    rows={3}
+                  />
+                  <Button
+                    onClick={handleApproveBreakGlass}
+                    disabled={
+                      approveBreakGlassMutation.isPending ||
+                      breakGlassReason.trim().length < 10
+                    }
+                    className="w-full bg-amber-600 hover:bg-amber-500 text-white"
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    {approveBreakGlassMutation.isPending
+                      ? "Approving..."
+                      : "Approve Break-Glass"}
+                  </Button>
+                </>
+              )}
             </div>
           )}
 

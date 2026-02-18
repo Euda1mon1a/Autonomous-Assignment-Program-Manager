@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 from uuid import uuid4
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -60,25 +60,26 @@ def test_create_draft_requires_scheduler_role(client: TestClient, db: Session) -
 
 
 @patch("app.api.routes.schedule_drafts.ScheduleDraftService")
-def test_publish_passes_break_glass_reason(
+def test_publish_passes_validate_acgme(
     mock_service: MagicMock,
     client: TestClient,
     auth_headers: dict,
 ) -> None:
     draft_id = uuid4()
-    mock_service.return_value.publish_draft.return_value = PublishResult(
-        success=True,
-        draft_id=draft_id,
-        status=ScheduleDraftStatus.PUBLISHED,
-        published_count=1,
-        error_count=0,
-        message="ok",
+    mock_service.return_value.publish_draft = AsyncMock(
+        return_value=PublishResult(
+            success=True,
+            draft_id=draft_id,
+            status=ScheduleDraftStatus.PUBLISHED,
+            published_count=1,
+            error_count=0,
+            message="ok",
+        )
     )
 
     response = client.post(
         f"/api/v1/schedules/drafts/{draft_id}/publish",
         json={
-            "break_glass_reason": "Emergency coverage",
             "validate_acgme": False,
         },
         headers=auth_headers,
@@ -87,7 +88,6 @@ def test_publish_passes_break_glass_reason(
     assert response.status_code == 200
     mock_service.return_value.publish_draft.assert_called_once()
     _, kwargs = mock_service.return_value.publish_draft.call_args
-    assert kwargs["break_glass_reason"] == "Emergency coverage"
     assert kwargs["validate_acgme"] is False
 
 
@@ -377,12 +377,24 @@ def test_publish_override_comment_too_long_returns_422(
 
 
 @pytest.mark.unit
-def test_publish_break_glass_reason_too_long_returns_422(
+def test_approve_break_glass_reason_too_long_returns_422(
     client: TestClient, auth_headers
 ):
     response = client.post(
-        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/publish",
-        json={"break_glass_reason": "x" * 501},
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/approve-break-glass",
+        json={"reason": "x" * 501},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_approve_break_glass_reason_too_short_returns_422(
+    client: TestClient, auth_headers
+):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/approve-break-glass",
+        json={"reason": "short"},
         headers=auth_headers,
     )
     assert response.status_code == 422
