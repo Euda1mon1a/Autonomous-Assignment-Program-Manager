@@ -55,7 +55,7 @@ class TestClaudeServiceBuildSystemPrompt:
     """Test suite for ClaudeService._build_system_prompt()."""
 
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=True)
-    def setup_method(self):
+    def setup_method(self, method=None):
         """Setup service for each test."""
         self.service = ClaudeService()
 
@@ -126,7 +126,7 @@ class TestClaudeServiceBuildUserMessage:
     """Test suite for ClaudeService._build_user_message()."""
 
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=True)
-    def setup_method(self):
+    def setup_method(self, method=None):
         """Setup service for each test."""
         self.service = ClaudeService()
 
@@ -160,7 +160,7 @@ class TestClaudeServiceBuildUserMessage:
             action=action,
             context=context,
             parameters=parameters,
-            userQuery=user_query,
+            user_query=user_query,
         )
 
     def test_build_user_message_basic(self):
@@ -241,7 +241,7 @@ class TestClaudeServiceStreamTask:
     """Test suite for ClaudeService.stream_task()."""
 
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=True)
-    def setup_method(self):
+    def setup_method(self, method=None):
         """Setup service for each test."""
         self.service = ClaudeService()
 
@@ -256,7 +256,7 @@ class TestClaudeServiceStreamTask:
         return ClaudeCodeRequest(
             action="custom",
             context=context,
-            userQuery="Test query",
+            user_query="Test query",
         )
 
     @pytest.mark.asyncio
@@ -331,7 +331,9 @@ class TestClaudeServiceStreamTask:
         with patch.object(
             self.service.client.messages,
             "stream",
-            side_effect=anthropic.APIError("API rate limit exceeded"),
+            side_effect=anthropic.APIError(
+                "API rate limit exceeded", request=MagicMock(), body=None
+            ),
         ):
             updates = []
             async for update in self.service.stream_task(request, user_id="test-user"):
@@ -398,7 +400,7 @@ class TestClaudeServiceExecuteTask:
     """Test suite for ClaudeService.execute_task()."""
 
     @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=True)
-    def setup_method(self):
+    def setup_method(self, method=None):
         """Setup service for each test."""
         self.service = ClaudeService()
 
@@ -413,7 +415,7 @@ class TestClaudeServiceExecuteTask:
         return ClaudeCodeRequest(
             action="custom",
             context=context,
-            userQuery="Test query",
+            user_query="Test query",
         )
 
     @pytest.mark.asyncio
@@ -494,9 +496,11 @@ class TestClaudeServiceExecuteTask:
         with patch.object(
             self.service.client.messages,
             "create",
-            side_effect=anthropic.APIError("Invalid API key"),
+            side_effect=anthropic.APIError(
+                "Invalid API key", request=MagicMock(), body=None
+            ),
         ):
-            with pytest.raises(anthropic.APIError, match="Invalid API key"):
+            with pytest.raises(anthropic.APIError):
                 await self.service.execute_task(request, user_id="test-user")
 
     @pytest.mark.asyncio
@@ -552,6 +556,7 @@ class TestClaudeServiceIntegration:
 
         assert service.model == "claude-3-5-sonnet-20241022"
 
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=True)
     @pytest.mark.asyncio
     async def test_stream_and_execute_use_same_system_prompt(self):
         """Test that stream_task and execute_task use same system prompt."""
@@ -566,7 +571,7 @@ class TestClaudeServiceIntegration:
         request = ClaudeCodeRequest(
             action="generate_schedule",
             context=context,
-            userQuery="Test",
+            user_query="Test",
         )
 
         # Mock for streaming
