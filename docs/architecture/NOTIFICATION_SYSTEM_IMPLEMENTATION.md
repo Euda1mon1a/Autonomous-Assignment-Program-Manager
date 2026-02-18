@@ -10,7 +10,7 @@ Implemented a comprehensive, production-ready notification system for the medica
 
 - **Core Notification Engine** (22 components)
 - **Email Channel** (20 components)
-- **Multi-channel delivery** (in-app, email, SMS, webhooks)
+- **Multi-channel delivery** (in-app, email, SMS, webhooks — note: webhook tables have no migrations yet, see `docs/development/SCHEMA_DRIFT_TRACKING.md`)
 - **Military medical context awareness**
 - **ACGME compliance integration**
 - **Enterprise-grade reliability**

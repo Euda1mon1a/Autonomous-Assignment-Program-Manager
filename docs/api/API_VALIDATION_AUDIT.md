@@ -82,7 +82,7 @@ This document provides a comprehensive audit of all API endpoints in the Residen
 - `/calendar`, `/conflicts`, `/conflict-resolution`
 - `/leave`, `/portal`, `/fmit`, `/fmit-timeline`
 - `/call-assignments`, `/daily-manifest`
-- `/batch`, `/queue`, `/jobs`, `/webhooks`, `/ws`
+- `/batch`, `/queue`, `/jobs`, `/webhooks` (schema drift: no migrations), `/ws`
 - `/search`, `/reports`, `/visualization`, `/unified-heatmap`
 - `/settings`, `/features`, `/experiments`, `/changelog`
 - `/rate-limit`, `/quota`, `/db-admin`
