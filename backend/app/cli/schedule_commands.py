@@ -13,7 +13,10 @@ from app.db.session import SessionLocal
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
-from app.scheduling.engine import ScheduleGenerator
+
+# NOTE: ScheduleGenerator was removed; generate command needs rewrite to use
+# SchedulingEngine or generate_via_graph. Import kept for validate/export/clear.
+from app.scheduling.engine import SchedulingEngine
 
 logger = get_logger(__name__)
 
@@ -91,42 +94,46 @@ def generate(
         if dry_run:
             click.echo("DRY RUN - No changes will be saved")
 
-        # Initialize generator
-        generator = ScheduleGenerator(db)
+        # Initialize engine
+        engine = SchedulingEngine(db, start_date, end_date)
 
-        # Generate schedule
+        # Generate schedule (respects USE_LANGGRAPH_PIPELINE flag)
+        from app.core.config import get_settings
+
+        settings = get_settings()
         with click.progressbar(length=100, label="Generating schedule") as bar:
-            result = generator.generate(
-                start_date=start_date,
-                end_date=end_date,
-                algorithm=algorithm,
-                timeout=timeout,
-            )
+            if settings.USE_LANGGRAPH_PIPELINE:
+                from app.scheduling.graph import generate_via_graph
+
+                result = generate_via_graph(
+                    engine,
+                    algorithm=algorithm,
+                    timeout_seconds=timeout,
+                    create_draft=dry_run,
+                )
+            else:
+                result = engine.generate(
+                    algorithm=algorithm,
+                    timeout_seconds=timeout,
+                    create_draft=dry_run,
+                )
             bar.update(100)
 
         # Display results
         click.echo("\n" + "=" * 60)
         click.echo("Schedule Generation Complete")
         click.echo("=" * 60)
-        click.echo(f"Assignments created: {len(result.assignments)}")
-        click.echo(f"Violations: {result.violation_count}")
-        click.echo(f"Score: {result.score:.4f}")
-        click.echo(f"Generation time: {result.generation_time:.2f}s")
+        click.echo(f"Status: {result.get('status', 'unknown')}")
+        click.echo(f"Message: {result.get('message', '')}")
+        click.echo(f"Assignments: {result.get('assignments_created', 'N/A')}")
 
-        if result.violations:
-            click.echo("\nViolations:")
-            for violation in result.violations[:10]:
+        violations = result.get("violations", [])
+        if violations:
+            click.echo(f"\nViolations ({len(violations)}):")
+            for violation in violations[:10]:
                 click.echo(f"  - {violation}")
-            if len(result.violations) > 10:
-                click.echo(f"  ... and {len(result.violations) - 10} more")
-
-        # Save to database
-        if not dry_run:
-            click.echo("\nSaving assignments to database...")
-            for assignment in result.assignments:
-                db.add(assignment)
-            db.commit()
-            click.echo("✓ Saved successfully")
+            if len(violations) > 10:
+                click.echo(f"  ... and {len(violations) - 10} more")
 
         # Export to file
         if output:

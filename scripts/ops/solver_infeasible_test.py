@@ -111,13 +111,24 @@ def main() -> int:
             block_dates.end_date,
             constraint_manager=manager,
         )
-        result = engine.generate(
-            algorithm="cp_sat",
-            timeout_seconds=args.timeout,
-            block_number=args.block,
-            academic_year=args.academic_year,
-            create_draft=True,
+        gen_kwargs = {
+            "algorithm": "cp_sat",
+            "timeout_seconds": args.timeout,
+            "block_number": args.block,
+            "academic_year": args.academic_year,
+            "create_draft": True,
+        }
+        use_graph = os.environ.get("USE_LANGGRAPH_PIPELINE", "").lower() in (
+            "1",
+            "true",
+            "yes",
         )
+        if use_graph:
+            from app.scheduling.graph import generate_via_graph
+
+            result = generate_via_graph(engine, **gen_kwargs)
+        else:
+            result = engine.generate(**gen_kwargs)
 
         print(f"STATUS: {result.get('status')}")
         print(f"MESSAGE: {result.get('message')}")

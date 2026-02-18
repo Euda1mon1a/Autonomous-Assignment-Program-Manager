@@ -129,7 +129,10 @@ available for development and research but are not exposed in prod dropdowns.
 
 ## Reference Entry Points
 
-- **Generation:** `backend/app/scheduling/engine.py` (CP‑SAT enforced)
+- **Generation (monolithic):** `backend/app/scheduling/engine.py` → `generate()` (CP‑SAT enforced)
+- **Generation (graph):** `backend/app/scheduling/graph.py` → `generate_via_graph()` (LangGraph StateGraph, same output)
+- **Graph nodes:** `backend/app/scheduling/graph_nodes.py` (12 nodes wrapping engine phases)
+- **Graph state:** `backend/app/scheduling/graph_state.py` (TypedDicts for state + config)
 - **Activity solver:** `backend/app/scheduling/activity_solver.py`
 - **JSON export:** `backend/app/services/half_day_json_exporter.py`
 - **JSON → XLSX:** `backend/app/services/json_to_xlsx_converter.py`

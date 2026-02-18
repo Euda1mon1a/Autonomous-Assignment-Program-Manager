@@ -349,30 +349,32 @@ async def generate_schedule(
             db, schedule_request.start_date, schedule_request.end_date
         )
 
-        # Generate schedule with selected algorithm (timed for metrics)
+        # Build generation kwargs (shared between both paths)
+        gen_kwargs = {
+            "pgy_levels": schedule_request.pgy_levels,
+            "rotation_template_ids": schedule_request.rotation_template_ids,
+            "algorithm": algorithm,
+            "timeout_seconds": schedule_request.timeout_seconds,
+            "expand_block_assignments": schedule_request.expand_block_assignments,
+            "block_number": schedule_request.block_number,
+            "academic_year": schedule_request.academic_year,
+        }
+
+        # Choose pipeline: LangGraph (feature-flagged) or monolithic engine
+        use_graph = get_settings().USE_LANGGRAPH_PIPELINE
+        if use_graph:
+            from app.scheduling.graph import generate_via_graph
+
+            _run = lambda: generate_via_graph(engine, **gen_kwargs)  # noqa: E731
+        else:
+            _run = lambda: engine.generate(**gen_kwargs)  # noqa: E731
+
+        # Generate schedule (timed for metrics if available)
         if obs_metrics:
             with obs_metrics.time_schedule_generation(algorithm):
-                result = engine.generate(
-                    pgy_levels=schedule_request.pgy_levels,
-                    rotation_template_ids=schedule_request.rotation_template_ids,
-                    algorithm=algorithm,
-                    timeout_seconds=schedule_request.timeout_seconds,
-                    # Block assignment expansion (Session 095)
-                    expand_block_assignments=schedule_request.expand_block_assignments,
-                    block_number=schedule_request.block_number,
-                    academic_year=schedule_request.academic_year,
-                )
+                result = _run()
         else:
-            result = engine.generate(
-                pgy_levels=schedule_request.pgy_levels,
-                rotation_template_ids=schedule_request.rotation_template_ids,
-                algorithm=algorithm,
-                timeout_seconds=schedule_request.timeout_seconds,
-                # Block assignment expansion (Session 095)
-                expand_block_assignments=schedule_request.expand_block_assignments,
-                block_number=schedule_request.block_number,
-                academic_year=schedule_request.academic_year,
-            )
+            result = _run()
 
         # Build solver statistics if available
         solver_stats = None

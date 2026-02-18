@@ -75,22 +75,34 @@ def _clear_block(session, start_date, end_date) -> dict[str, int]:
         ).all()
     ]
 
-    hda_deleted = session.query(HalfDayAssignment).filter(
-        HalfDayAssignment.date >= start_date,
-        HalfDayAssignment.date <= end_date,
-    ).delete(synchronize_session=False)
+    hda_deleted = (
+        session.query(HalfDayAssignment)
+        .filter(
+            HalfDayAssignment.date >= start_date,
+            HalfDayAssignment.date <= end_date,
+        )
+        .delete(synchronize_session=False)
+    )
 
-    call_deleted = session.query(CallAssignment).filter(
-        CallAssignment.date >= start_date,
-        CallAssignment.date <= end_date,
-    ).delete(synchronize_session=False)
+    call_deleted = (
+        session.query(CallAssignment)
+        .filter(
+            CallAssignment.date >= start_date,
+            CallAssignment.date <= end_date,
+        )
+        .delete(synchronize_session=False)
+    )
 
     pcat_do_next_deleted = 0
     if pcat_do_ids:
-        pcat_do_next_deleted = session.query(HalfDayAssignment).filter(
-            HalfDayAssignment.date == next_day,
-            HalfDayAssignment.activity_id.in_(pcat_do_ids),
-        ).delete(synchronize_session=False)
+        pcat_do_next_deleted = (
+            session.query(HalfDayAssignment)
+            .filter(
+                HalfDayAssignment.date == next_day,
+                HalfDayAssignment.activity_id.in_(pcat_do_ids),
+            )
+            .delete(synchronize_session=False)
+        )
 
     session.commit()
     return {
@@ -105,7 +117,9 @@ def _summary_counts(session, start_date, end_date) -> dict[str, int]:
 
     totals = {
         "half_day_assignments": session.query(HalfDayAssignment)
-        .filter(HalfDayAssignment.date >= start_date, HalfDayAssignment.date <= end_date)
+        .filter(
+            HalfDayAssignment.date >= start_date, HalfDayAssignment.date <= end_date
+        )
         .count(),
         "call_assignments": session.query(CallAssignment)
         .filter(CallAssignment.date >= start_date, CallAssignment.date <= end_date)
@@ -190,18 +204,29 @@ def main() -> int:
 
         if not args.audit_only:
             engine = SchedulingEngine(session, start_date, end_date)
-            result = engine.generate(
-                algorithm="cp_sat",
-                timeout_seconds=args.timeout,
-                expand_block_assignments=True,
-                block_number=block_number,
-                academic_year=academic_year,
-                create_draft=args.draft,
-                validate_pcat_do=not args.skip_pcat_do_validate,
-                preserve_fmit=True,
-                preserve_resident_inpatient=True,
-                preserve_absence=True,
+            gen_kwargs = {
+                "algorithm": "cp_sat",
+                "timeout_seconds": args.timeout,
+                "expand_block_assignments": True,
+                "block_number": block_number,
+                "academic_year": academic_year,
+                "create_draft": args.draft,
+                "validate_pcat_do": not args.skip_pcat_do_validate,
+                "preserve_fmit": True,
+                "preserve_resident_inpatient": True,
+                "preserve_absence": True,
+            }
+            use_graph = os.environ.get("USE_LANGGRAPH_PIPELINE", "").lower() in (
+                "1",
+                "true",
+                "yes",
             )
+            if use_graph:
+                from app.scheduling.graph import generate_via_graph
+
+                result = generate_via_graph(engine, **gen_kwargs)
+            else:
+                result = engine.generate(**gen_kwargs)
             print(f"STATUS: {result.get('status')}")
             print(f"MESSAGE: {result.get('message')}")
             print(f"TOTAL_ASSIGNED: {result.get('total_assigned')}")

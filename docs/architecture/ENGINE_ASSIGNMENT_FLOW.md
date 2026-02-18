@@ -264,8 +264,35 @@ List of Assignment objects passed to the solver as constraints.
 
 ---
 
+## LangGraph Pipeline (Phase 1)
+
+As of ADR-2026-02-17, the same preserve-then-solve flow is also available as a **LangGraph StateGraph** via `generate_via_graph()`. The graph decomposes `generate()` into 12 independently testable nodes with conditional failure routing:
+
+```
+init → load_data → check_residents ─?→ build_context → pre_validate
+  ─?→ solve ─?→ persist_and_call ─?→ activity_solver → backfill
+  → persist_draft_or_live → validate → finalize → END
+```
+
+Where `─?→` = conditional edge that routes to END on failure.
+
+**Key files:**
+- `backend/app/scheduling/graph.py` — Graph definition + `generate_via_graph()` entry point
+- `backend/app/scheduling/graph_nodes.py` — 12 node functions wrapping engine phases
+- `backend/app/scheduling/graph_state.py` — `ScheduleGraphState` + `ScheduleGraphConfig` TypedDicts
+
+**Invocation:** `engine.generate_via_graph()` — identical signature and output to `engine.generate()`.
+
+**Design notes:**
+- Engine instance lives in LangGraph's `configurable` dict (not state) to avoid SQLAlchemy serialization
+- `persist_and_call_node` merges two phases to preserve the `no_autoflush` context manager boundary
+- Import-guarded: falls back to `generate()` if langgraph is not installed
+
+---
+
 ## Related Documentation
 
 - [Rotation Types](ROTATION_TYPES.md) - Classification of rotation types
 - [FMIT Constraints](FMIT_CONSTRAINTS.md) - FMIT-specific constraint rules
 - [Session: Immutable Assignments](../sessions/SESSION_2025-12-26_IMMUTABLE_ASSIGNMENTS.md) - Development history
+- [LangChain Evaluation ADR](../decisions/ADR-2026-02-17-langchain-evaluation.md) - Adoption decision

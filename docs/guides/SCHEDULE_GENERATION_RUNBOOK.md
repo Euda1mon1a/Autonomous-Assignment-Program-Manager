@@ -676,8 +676,19 @@ curl -X POST http://localhost:8000/api/v1/scheduler/runs/{run_id}/abort \
 
 ---
 
+## Alternative: LangGraph Pipeline
+
+The same generation flow is available via `engine.generate_via_graph()`, which uses a LangGraph StateGraph with 12 nodes and conditional failure routing. Same inputs, same outputs — but each phase is independently traceable and testable.
+
+- **Entry point:** `backend/app/scheduling/graph.py` → `generate_via_graph()`
+- **Fallback:** If langgraph is not installed, automatically delegates to `generate()`
+- **ADR:** [ADR-2026-02-17](../decisions/ADR-2026-02-17-langchain-evaluation.md)
+
+---
+
 ## Related Documentation
 
 - [Solver Algorithm](../architecture/SOLVER_ALGORITHM.md) - How the scheduling engine works
+- [Engine Assignment Flow](../architecture/ENGINE_ASSIGNMENT_FLOW.md) - Preserve-then-solve pattern + graph topology
 - [ACGME Compliance](../../CLAUDE.md#acgme-compliance-rules) - Compliance requirements
 - [Safe Schedule Generation Skill](../../.claude/skills/safe-schedule-generation/SKILL.md) - AI-assisted generation with backup

@@ -200,6 +200,11 @@ class Settings(BaseSettings):
     RESILIENCE_ALERT_RECIPIENTS: list[str] = []  # Email addresses for alerts
     RESILIENCE_SLACK_CHANNEL: str = ""  # Slack channel for alerts (optional)
 
+    # LangGraph Pipeline (ADR-2026-02-17)
+    # When True, schedule generation uses the LangGraph StateGraph pipeline
+    # instead of the monolithic SchedulingEngine.generate() method.
+    USE_LANGGRAPH_PIPELINE: bool = False
+
     # OpenTelemetry / Distributed Tracing Configuration
     # Default: disabled for development to avoid performance impact
     # Enable in production for distributed tracing across services
