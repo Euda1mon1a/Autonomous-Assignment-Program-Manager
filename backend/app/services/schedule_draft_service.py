@@ -111,6 +111,20 @@ class PublishResult:
 
 
 @dataclass
+class BreakGlassApprovalResult:
+    """Result of a break-glass approval."""
+
+    success: bool
+    draft_id: UUID
+    approved_at: datetime | None = None
+    approved_by_id: UUID | None = None
+    approval_reason: str | None = None
+    lock_date_at_approval: date | None = None
+    message: str = ""
+    error_code: str | None = None
+
+
+@dataclass
 class RollbackResult:
     """Result of rolling back a draft."""
 
@@ -785,16 +799,130 @@ class ScheduleDraftService:
             flags=flags,
         )
 
+    async def approve_break_glass(
+        self,
+        draft_id: UUID,
+        approved_by_id: UUID,
+        reason: str,
+    ) -> BreakGlassApprovalResult:
+        """
+        Approve a break-glass request for a draft that touches the lock window.
+
+        Must be called before publish when a draft has assignments inside
+        the lock window. Requires Coordinator or Admin role (enforced at
+        the route layer).
+
+        Args:
+            draft_id: UUID of the draft to approve.
+            approved_by_id: UUID of the approving user.
+            reason: Justification for the break-glass approval.
+
+        Returns:
+            BreakGlassApprovalResult with approval details.
+        """
+        draft = (
+            self.db.query(ScheduleDraft).filter(ScheduleDraft.id == draft_id).first()
+        )
+
+        if not draft:
+            return BreakGlassApprovalResult(
+                success=False,
+                draft_id=draft_id,
+                message="Draft not found",
+                error_code="DRAFT_NOT_FOUND",
+            )
+
+        if draft.status != ScheduleDraftStatus.DRAFT:
+            return BreakGlassApprovalResult(
+                success=False,
+                draft_id=draft_id,
+                message=f"Cannot approve break-glass for draft with status: {draft.status.value}",
+                error_code="INVALID_STATUS",
+            )
+
+        # Refresh lock window flag to get current state
+        has_locked = self._refresh_lock_window_flag(draft_id, commit=False)
+        if not has_locked:
+            return BreakGlassApprovalResult(
+                success=False,
+                draft_id=draft_id,
+                message="Draft does not touch the lock window; no approval needed.",
+                error_code="NO_LOCK_WINDOW_VIOLATION",
+            )
+
+        now = datetime.utcnow()
+        lock_date = self._get_lock_window_service().get_lock_date()
+
+        draft.approved_at = now
+        draft.approved_by_id = approved_by_id
+        draft.approval_reason = reason
+        draft.lock_date_at_approval = lock_date
+
+        # Auto-acknowledge the LOCK_WINDOW_VIOLATION flag so that
+        # publish_draft() doesn't block on FLAGS_UNACKNOWLEDGED.
+        lock_flag = (
+            self.db.query(ScheduleDraftFlag)
+            .filter(
+                ScheduleDraftFlag.draft_id == draft_id,
+                ScheduleDraftFlag.flag_type == DraftFlagType.LOCK_WINDOW_VIOLATION,
+                ScheduleDraftFlag.acknowledged_at.is_(None),
+            )
+            .first()
+        )
+        if lock_flag:
+            lock_flag.acknowledged_at = now
+            lock_flag.acknowledged_by_id = approved_by_id
+            lock_flag.resolution_note = f"Break-glass approved: {reason}"
+            # Update draft flag counts
+            draft.flags_acknowledged = (draft.flags_acknowledged or 0) + 1
+
+        # Activity log
+        from app.models.activity_log import ActivityActionType, ActivityLog
+
+        activity_entry = ActivityLog.create_entry(
+            action_type=ActivityActionType.BREAK_GLASS_APPROVED,
+            user_id=approved_by_id,
+            target_entity="ScheduleDraft",
+            target_id=str(draft_id),
+            details={
+                "reason": reason,
+                "lock_date": lock_date.isoformat() if lock_date else None,
+            },
+        )
+        self.db.add(activity_entry)
+
+        self.db.commit()
+
+        logger.info(
+            "Break-glass approved for draft %s by user %s (lock_date=%s)",
+            draft_id,
+            approved_by_id,
+            lock_date,
+        )
+
+        return BreakGlassApprovalResult(
+            success=True,
+            draft_id=draft_id,
+            approved_at=now,
+            approved_by_id=approved_by_id,
+            approval_reason=reason,
+            lock_date_at_approval=lock_date,
+            message="Break-glass approval granted",
+        )
+
     async def publish_draft(
         self,
         draft_id: UUID,
         published_by_id: UUID,
         override_comment: str | None = None,
-        break_glass_reason: str | None = None,
         validate_acgme: bool = True,
     ) -> PublishResult:
         """
         Publish a draft to live assignments.
+
+        Break-glass approval must be obtained separately via
+        approve_break_glass() before calling this method when the draft
+        touches the lock window.
 
         Args:
             draft_id: UUID of the draft to publish.
@@ -859,21 +987,18 @@ class ScheduleDraftService:
                             draft_id,
                             published_by_id,
                         )
-                    elif not break_glass_reason:
+                    else:
                         return PublishResult(
                             success=False,
                             draft_id=draft_id,
                             status=draft.status,
-                            message="Draft touches lock window. Break-glass approval required.",
+                            message=(
+                                "Draft touches lock window. "
+                                "Break-glass approval required before publish. "
+                                "Use POST .../approve-break-glass to approve first."
+                            ),
                             error_code="LOCK_WINDOW_BLOCKED",
                         )
-                    lock_date = self._get_lock_window_service().get_lock_date()
-                    draft.approved_at = now
-                    draft.approved_by_id = published_by_id
-                    draft.approval_reason = break_glass_reason
-                    draft.lock_date_at_approval = lock_date
-                    if not override_comment:
-                        override_comment = break_glass_reason
 
                 # Refresh credential flags before publish gate
                 self._refresh_credential_flags(draft_id, commit=False)

@@ -225,10 +225,22 @@ export interface ScheduleDraftCreate {
   notes?: string;
 }
 
+export interface BreakGlassApprovalRequest {
+  reason: string;
+}
+
+export interface BreakGlassApprovalResponse {
+  draftId: string;
+  approvedAt: string;
+  approvedById: string;
+  approvalReason: string;
+  lockDateAtApproval?: string;
+  message: string;
+}
+
 export interface PublishRequest {
   overrideComment?: string;
   validateAcgme?: boolean;
-  breakGlassReason?: string;
 }
 
 export interface PublishError {

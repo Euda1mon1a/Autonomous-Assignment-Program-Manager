@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
 from sqlalchemy.orm import selectinload
 
+from app.models.settings import ApplicationSettings
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.person import Person
 from app.models.assignment import Assignment
@@ -278,6 +279,11 @@ class SwapEngine:
                     metadata=validation_result.metadata,
                 )
 
+                # Check lock window
+            lock_window_result = await self._check_lock_window(swap)
+            if lock_window_result is not None:
+                return lock_window_result
+
             if dry_run:
                 return SwapEngineResult(
                     success=True,
@@ -483,6 +489,48 @@ class SwapEngine:
             )
         )
         return result.scalar_one_or_none()
+
+    async def _check_lock_window(self, swap: SwapRecord) -> SwapEngineResult | None:
+        """Check if swap touches the lock window.
+
+        Returns a SwapEngineResult if the swap is blocked, or None if it can proceed.
+        """
+        result = await self.db.execute(select(ApplicationSettings).limit(1))
+        settings = result.scalar_one_or_none()
+        if settings is None or settings.schedule_lock_date is None:
+            return None
+
+        lock_date = settings.schedule_lock_date
+        source_locked = swap.source_week <= lock_date
+        target_locked = swap.target_week is not None and swap.target_week <= lock_date
+
+        if source_locked or target_locked:
+            logger.warning(
+                "Swap %s blocked by lock window (lock_date=%s, source=%s, target=%s)",
+                swap.id,
+                lock_date,
+                swap.source_week,
+                swap.target_week,
+            )
+            return SwapEngineResult(
+                success=False,
+                swap_id=swap.id,
+                message=(
+                    f"Swap touches locked schedule window "
+                    f"(lock_date={lock_date.isoformat()}). "
+                    f"Break-glass approval required before executing."
+                ),
+                error_code="LOCK_WINDOW_BLOCKED",
+                metadata={
+                    "lock_date": lock_date.isoformat(),
+                    "source_week": swap.source_week.isoformat(),
+                    "target_week": swap.target_week.isoformat()
+                    if swap.target_week
+                    else None,
+                },
+            )
+
+        return None
 
     async def _find_auto_matches(self, swap_id: UUID) -> dict[str, Any]:
         """Find automatic matches for a swap request."""

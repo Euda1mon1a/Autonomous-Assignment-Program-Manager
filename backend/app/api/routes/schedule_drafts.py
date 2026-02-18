@@ -9,6 +9,7 @@ schedule drafts:
 - GET /schedules/drafts/{id}/preview - Preview changes vs live
 - POST /schedules/drafts/{id}/assignments - Add assignment to draft
 - POST /schedules/drafts/{id}/flags/{flag_id}/acknowledge - Acknowledge flag
+- POST /schedules/drafts/{id}/approve-break-glass - Approve lock window break-glass
 - POST /schedules/drafts/{id}/publish - Publish draft to live
 - POST /schedules/drafts/{id}/rollback - Rollback published draft
 - DELETE /schedules/drafts/{id} - Discard draft
@@ -32,6 +33,8 @@ from app.models.schedule_draft import (
 )
 from app.models.user import User
 from app.schemas.schedule_draft import (
+    BreakGlassApprovalRequest,
+    BreakGlassApprovalResponse,
     DraftAssignmentCreate,
     DraftAssignmentResponse,
     DraftFlagAcknowledge,
@@ -463,6 +466,55 @@ async def bulk_acknowledge_flags(
 
 
 @router.post(
+    "/{draft_id}/approve-break-glass",
+    response_model=BreakGlassApprovalResponse,
+    summary="Approve break-glass for lock window",
+    description=(
+        "Approve a break-glass request when a draft touches the lock window. "
+        "Must be called before publish. Requires Coordinator or Admin role."
+    ),
+)
+async def approve_break_glass(
+    draft_id: UUID,
+    request: BreakGlassApprovalRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_scheduler_user),
+):
+    """
+    Approve a break-glass request for a draft that touches the lock window.
+
+    Only Coordinators and Admins can approve break-glass requests.
+    The approval must be granted before the draft can be published.
+    """
+    service = ScheduleDraftService(db)
+    result = await service.approve_break_glass(
+        draft_id=draft_id,
+        approved_by_id=current_user.id,
+        reason=request.reason,
+    )
+
+    if not result.success and result.error_code:
+        if result.error_code == "DRAFT_NOT_FOUND":
+            raise HTTPException(status_code=404, detail="Draft not found")
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": result.message,
+                "error_code": result.error_code,
+            },
+        )
+
+    return BreakGlassApprovalResponse(
+        draft_id=result.draft_id,
+        approved_at=result.approved_at,
+        approved_by_id=result.approved_by_id,
+        approval_reason=result.approval_reason,
+        lock_date_at_approval=result.lock_date_at_approval,
+        message=result.message,
+    )
+
+
+@router.post(
     "/{draft_id}/publish",
     response_model=PublishResponse,
     summary="Publish draft",
@@ -489,7 +541,6 @@ async def publish_draft(
         draft_id=draft_id,
         published_by_id=current_user.id,
         override_comment=request.override_comment,
-        break_glass_reason=request.break_glass_reason,
         validate_acgme=request.validate_acgme,
     )
 

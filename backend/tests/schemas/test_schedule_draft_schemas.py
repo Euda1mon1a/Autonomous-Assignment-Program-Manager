@@ -7,6 +7,8 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas.schedule_draft import (
+    BreakGlassApprovalRequest,
+    BreakGlassApprovalResponse,
     ScheduleDraftStatus,
     DraftSourceType,
     DraftAssignmentChangeType,
@@ -332,6 +334,39 @@ class TestDraftPreviewResponse:
         assert r.flags == []
 
 
+# ── BreakGlassApprovalRequest ──────────────────────────────────────────
+
+
+class TestBreakGlassApprovalRequest:
+    def test_valid_reason(self):
+        r = BreakGlassApprovalRequest(reason="Emergency coverage gap requires change")
+        assert r.reason == "Emergency coverage gap requires change"
+
+    def test_reason_too_short(self):
+        with pytest.raises(ValidationError):
+            BreakGlassApprovalRequest(reason="short")
+
+    def test_reason_too_long(self):
+        with pytest.raises(ValidationError):
+            BreakGlassApprovalRequest(reason="x" * 501)
+
+    def test_reason_required(self):
+        with pytest.raises(ValidationError):
+            BreakGlassApprovalRequest()
+
+
+class TestBreakGlassApprovalResponse:
+    def test_defaults(self):
+        r = BreakGlassApprovalResponse(
+            draft_id=uuid4(),
+            approved_at=datetime.utcnow(),
+            approved_by_id=uuid4(),
+            approval_reason="Test reason for approval",
+        )
+        assert r.lock_date_at_approval is None
+        assert r.message == "Break-glass approval granted"
+
+
 # ── PublishRequest ─────────────────────────────────────────────────────
 
 
@@ -339,7 +374,6 @@ class TestPublishRequest:
     def test_defaults(self):
         r = PublishRequest()
         assert r.override_comment is None
-        assert r.break_glass_reason is None
         assert r.validate_acgme is True
 
     # --- override_comment max_length=500 ---
@@ -347,12 +381,6 @@ class TestPublishRequest:
     def test_override_comment_too_long(self):
         with pytest.raises(ValidationError):
             PublishRequest(override_comment="x" * 501)
-
-    # --- break_glass_reason max_length=500 ---
-
-    def test_break_glass_reason_too_long(self):
-        with pytest.raises(ValidationError):
-            PublishRequest(break_glass_reason="x" * 501)
 
 
 # ── PublishResponse ────────────────────────────────────────────────────

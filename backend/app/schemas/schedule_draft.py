@@ -324,22 +324,49 @@ class DraftPreviewResponse(BaseModel):
 
 
 # =============================================================================
+# Break-Glass Approval Schemas
+# =============================================================================
+
+
+class BreakGlassApprovalRequest(BaseModel):
+    """Request schema for break-glass approval of a lock window violation."""
+
+    reason: str = Field(
+        ...,
+        min_length=10,
+        max_length=500,
+        description="Reason for break-glass approval (minimum 10 characters)",
+    )
+
+
+class BreakGlassApprovalResponse(BaseModel):
+    """Response schema for break-glass approval."""
+
+    draft_id: UUID
+    approved_at: datetime
+    approved_by_id: UUID
+    approval_reason: str
+    lock_date_at_approval: date | None = None
+    message: str = "Break-glass approval granted"
+
+
+# =============================================================================
 # Publish Schemas
 # =============================================================================
 
 
 class PublishRequest(BaseModel):
-    """Request schema for publishing a draft."""
+    """Request schema for publishing a draft.
+
+    Break-glass approval must be obtained separately via the
+    POST .../approve-break-glass endpoint before publish when the
+    draft touches the lock window.
+    """
 
     override_comment: str | None = Field(
         None,
         max_length=500,
         description="Required for Tier 1 if unacknowledged flags exist",
-    )
-    break_glass_reason: str | None = Field(
-        None,
-        max_length=500,
-        description="Required when publishing drafts that touch the lock window",
     )
     validate_acgme: bool = Field(
         True, description="If True, validate ACGME compliance after publish"
