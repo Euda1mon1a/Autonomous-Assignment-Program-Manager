@@ -49,59 +49,31 @@ from app.models.weekly_pattern import WeeklyPattern
 from app.models.resident_call_preload import ResidentCallPreload
 from app.utils.academic_blocks import get_block_dates, get_block_number_for_date
 
+# Shared preload logic — extracted to eliminate duplication with sync service
+from app.services.preload import (
+    CLINIC_PATTERN_CODES as _CLINIC_PATTERN_CODES,
+    INTERN_CONTINUITY_EXEMPT_ROTATIONS as _INTERN_CONTINUITY_EXEMPT_ROTATIONS,
+    KAP_ROTATIONS as _KAP_ROTATIONS,
+    LEC_EXEMPT_ROTATIONS as _LEC_EXEMPT_ROTATIONS,
+    NIGHT_FLOAT_ROTATIONS as _NIGHT_FLOAT_ROTATIONS,
+    OFFSITE_ROTATIONS as _OFFSITE_ROTATIONS,
+    ROTATION_ALIASES as _ROTATION_ALIASES,
+    ROTATION_TO_ACTIVITY as _ROTATION_TO_ACTIVITY,
+    SATURDAY_OFF_ROTATIONS as _SATURDAY_OFF_ROTATIONS,
+    canonical_rotation_code as _canonical_rotation_code_fn,
+    get_hilo_codes as _get_hilo_codes_fn,
+    get_kap_codes as _get_kap_codes_fn,
+    get_ldnf_codes as _get_ldnf_codes_fn,
+    get_nf_codes as _get_nf_codes_fn,
+    get_rotation_preload_codes as _get_rotation_preload_codes_fn,
+    is_intern_continuity_exempt as _is_intern_continuity_exempt_fn,
+    is_last_wednesday as _is_last_wednesday_fn,
+    is_lec_exempt as _is_lec_exempt_fn,
+    pattern_day_of_week as _pattern_day_of_week_fn,
+    pattern_week_number as _pattern_week_number_fn,
+)
+
 logger = get_logger(__name__)
-
-# Rotation normalization and protected slot rules
-_ROTATION_ALIASES = {
-    "PNF": "PEDNF",
-    "PEDS NF": "PEDNF",
-    "PEDS NIGHT FLOAT": "PEDNF",
-    "PEDIATRICS NIGHT FLOAT": "PEDNF",
-    "L&D NIGHT FLOAT": "LDNF",
-    "L AND D NIGHT FLOAT": "LDNF",
-    "KAPI": "KAP",
-    "KAPI-LD": "KAP",
-    "KAPI_LD": "KAP",
-    "KAPIOLANI": "KAP",
-    "KAPIOLANI L AND D": "KAP",
-    "OKINAWA": "OKI",
-}
-
-_NIGHT_FLOAT_ROTATIONS = {"NF", "PEDNF", "LDNF"}
-_LEC_EXEMPT_ROTATIONS = {"NF", "PEDNF", "LDNF", "TDY", "HILO", "OKI"}
-_INTERN_CONTINUITY_EXEMPT_ROTATIONS = {
-    "NF",
-    "PEDNF",
-    "LDNF",
-    "TDY",
-    "HILO",
-    "OKI",
-    "KAP",
-}
-_OFFSITE_ROTATIONS = {"TDY", "HILO", "OKI"}
-_KAP_ROTATIONS = {"KAP"}
-_CLINIC_PATTERN_CODES = {"C", "C-I", "C-N", "FM_CLINIC"}
-# Temporary Saturday-off rules for external/inpatient rotations (P6-2).
-# Refine later with rotation-specific rules.
-_SATURDAY_OFF_ROTATIONS = {
-    "IM",
-    "IMW",
-    "PEDW",
-    "PEDNF",
-    "ICU",
-    "CCU",
-    "NICU",
-    "NIC",
-    "NBN",
-    "LAD",
-    "LND",
-    "LD",
-    "L&D",
-    "KAP",
-    "HILO",
-    "OKI",
-    "TDY",
-}
 
 
 class PreloadService:
@@ -592,16 +564,7 @@ class PreloadService:
 
     def _canonical_rotation_code(self, raw_code: str | None) -> str:
         """Normalize a rotation code for matching."""
-        code = (raw_code or "").strip().upper()
-        if not code:
-            return ""
-        if code.startswith("HILO"):
-            return "HILO"
-        if code.startswith("OKI"):
-            return "OKI"
-        if code.startswith("KAPI"):
-            return "KAP"
-        return _ROTATION_ALIASES.get(code, code)
+        return _canonical_rotation_code_fn(raw_code)
 
     def _get_rotation_preload_codes(
         self,
@@ -614,50 +577,15 @@ class PreloadService:
         has_time_off_patterns: bool = False,
     ) -> tuple[str | None, str | None]:
         """Return AM/PM activity codes that should be preloaded for this slot."""
-        if not rotation_code:
-            return (None, None)
-
-        if self._is_last_wednesday(current_date, block_end):
-            return ("LEC", "ADV")
-
-        if (
-            current_date.weekday() == 5
-            and rotation_code in _SATURDAY_OFF_ROTATIONS
-            and not has_time_off_patterns
-        ):
-            return ("W", "W")
-
-        if rotation_code in _OFFSITE_ROTATIONS:
-            if rotation_code in {"HILO", "OKI"}:
-                return self._get_hilo_codes(current_date, block_start)
-            return ("TDY", "TDY")
-
-        if rotation_code in _KAP_ROTATIONS:
-            return self._get_kap_codes(current_date)
-
-        if rotation_code == "LDNF":
-            return self._get_ldnf_codes(current_date)
-
-        if rotation_code in ("NF", "PEDNF"):
-            return self._get_nf_codes(rotation_code, current_date)
-
-            # Wednesday protected patterns (intern continuity only for outpatient rotations)
-        if current_date.weekday() == 2:  # Wednesday
-            am_code = None
-            if (
-                is_outpatient
-                and pgy_level == 1
-                and not self._is_intern_continuity_exempt(rotation_code)
-            ):
-                am_code = "C"
-
-            pm_code = None
-            if not self._is_lec_exempt(rotation_code):
-                pm_code = "LEC"
-
-            return (am_code, pm_code)
-
-        return (None, None)
+        return _get_rotation_preload_codes_fn(
+            rotation_code,
+            current_date,
+            block_start,
+            block_end,
+            pgy_level,
+            is_outpatient,
+            has_time_off_patterns,
+        )
 
     async def _apply_inpatient_clinic_patterns(
         self,
@@ -721,11 +649,11 @@ class PreloadService:
         return count
 
     def _pattern_week_number(self, current_date: date, block_start: date) -> int:
-        return ((current_date - block_start).days // 7) + 1
+        return _pattern_week_number_fn(current_date, block_start)
 
     def _pattern_day_of_week(self, current_date: date) -> int:
         """Convert Python weekday (Mon=0..Sun=6) to weekly_pattern (Sun=0..Sat=6)."""
-        return (current_date.weekday() + 1) % 7
+        return _pattern_day_of_week_fn(current_date)
 
     def _template_has_time_off_patterns(
         self, template: RotationTemplate | None
@@ -872,55 +800,29 @@ class PreloadService:
 
     def _is_last_wednesday(self, current_date: date, block_end: date) -> bool:
         """Return True if the date is the last Wednesday of the block."""
-        if current_date.weekday() != 2:
-            return False
-        return current_date + timedelta(days=7) > block_end
+        return _is_last_wednesday_fn(current_date, block_end)
 
     def _is_lec_exempt(self, rotation_code: str) -> bool:
-        return rotation_code in _LEC_EXEMPT_ROTATIONS
+        return _is_lec_exempt_fn(rotation_code)
 
     def _is_intern_continuity_exempt(self, rotation_code: str) -> bool:
-        return rotation_code in _INTERN_CONTINUITY_EXEMPT_ROTATIONS
+        return _is_intern_continuity_exempt_fn(rotation_code)
 
     def _get_kap_codes(self, current_date: date) -> tuple[str, str]:
         """Kapiolani L&D pattern."""
-        dow = current_date.weekday()
-        if dow == 0:  # Monday
-            return ("KAP", "OFF")
-        if dow == 1:  # Tuesday
-            return ("OFF", "OFF")
-        if dow == 2:  # Wednesday
-            return ("C", "LEC")
-        return ("KAP", "KAP")
+        return _get_kap_codes_fn(current_date)
 
     def _get_ldnf_codes(self, current_date: date) -> tuple[str, str]:
         """L&D Night Float pattern with Friday clinic."""
-        dow = current_date.weekday()
-        if dow == 4:  # Friday
-            return ("C", "OFF")
-        if dow >= 5:  # Weekend
-            return ("W", "W")
-        return ("OFF", "LDNF")
+        return _get_ldnf_codes_fn(current_date)
 
     def _get_nf_codes(self, rotation_code: str, current_date: date) -> tuple[str, str]:
         """Night Float pattern (NF/PedNF)."""
-        dow = current_date.weekday()
-        if rotation_code == "PEDNF":
-            if dow == 5:  # Saturday off
-                return ("W", "W")
-            return ("OFF", "PedNF")
-        if dow >= 5:
-            return ("W", "W")
-        return ("OFF", "NF")
+        return _get_nf_codes_fn(rotation_code, current_date)
 
     def _get_hilo_codes(self, current_date: date, block_start: date) -> tuple[str, str]:
         """Hilo/Okinawa TDY pattern with pre/post clinic days."""
-        day_index = (current_date - block_start).days
-        if day_index in (0, 1):  # Thu/Fri before leaving
-            return ("C", "C")
-        if day_index == 19:  # Return Tuesday (4th Tuesday)
-            return ("C", "C")
-        return ("TDY", "TDY")
+        return _get_hilo_codes_fn(current_date, block_start)
 
     async def _load_fmit_call(self, start_date: date, end_date: date) -> int:
         """
@@ -1216,14 +1118,6 @@ class PreloadService:
         # Protected time is typically assigned manually or from templates
         return 0
 
-        # Mapping from rotation types to activity codes
-        # Some rotation types don't match activity codes (e.g., HILO → TDY)
-
-    ROTATION_TO_ACTIVITY = {
-        "HILO": "TDY",  # Hilo off-island rotation → Temporary Duty
-        "FMC": "fm_clinic",  # FM Clinic rotation → fm_clinic activity
-    }
-
     def _get_rotation_codes(
         self,
         rotation_type: str,
@@ -1318,7 +1212,7 @@ class PreloadService:
         }
 
         # Fall back to rotation type as activity code (works for most)
-        default = self.ROTATION_TO_ACTIVITY.get(code_upper, rotation_type)
+        default = _ROTATION_TO_ACTIVITY.get(code_upper, rotation_type)
         return codes.get(code_upper, (default, default))
 
     async def _get_activity_id(

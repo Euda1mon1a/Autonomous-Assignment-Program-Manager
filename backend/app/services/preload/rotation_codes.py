@@ -1,0 +1,228 @@
+"""Rotation code determination — pure functions for AM/PM activity code selection.
+
+These functions determine what activity codes should be preloaded for a given
+rotation type + date combination. They are used by both the sync and async
+preload services.
+"""
+
+from __future__ import annotations
+
+from datetime import date
+
+from .constants import (
+    INTERN_CONTINUITY_EXEMPT_ROTATIONS,
+    KAP_ROTATIONS,
+    LEC_EXEMPT_ROTATIONS,
+    OFFSITE_ROTATIONS,
+    ROTATION_TO_ACTIVITY,
+    SATURDAY_OFF_ROTATIONS,
+)
+from .date_helpers import is_last_wednesday
+
+
+# ---------------------------------------------------------------------------
+# Classification helpers
+# ---------------------------------------------------------------------------
+
+
+def is_lec_exempt(rotation_code: str) -> bool:
+    return rotation_code in LEC_EXEMPT_ROTATIONS
+
+
+def is_intern_continuity_exempt(rotation_code: str) -> bool:
+    return rotation_code in INTERN_CONTINUITY_EXEMPT_ROTATIONS
+
+
+# ---------------------------------------------------------------------------
+# Day-specific rotation code patterns
+# ---------------------------------------------------------------------------
+
+
+def get_kap_codes(current_date: date) -> tuple[str, str]:
+    """Kapiolani L&D pattern."""
+    dow = current_date.weekday()
+    if dow == 0:  # Monday
+        return ("KAP", "OFF")
+    if dow == 1:  # Tuesday
+        return ("OFF", "OFF")
+    if dow == 2:  # Wednesday
+        return ("C", "LEC")
+    return ("KAP", "KAP")
+
+
+def get_ldnf_codes(current_date: date) -> tuple[str, str]:
+    """L&D Night Float pattern with Friday clinic."""
+    dow = current_date.weekday()
+    if dow == 4:  # Friday
+        return ("C", "OFF")
+    if dow >= 5:  # Weekend
+        return ("W", "W")
+    return ("OFF", "LDNF")
+
+
+def get_nf_codes(rotation_code: str, current_date: date) -> tuple[str, str]:
+    """Night Float pattern (NF/PedNF)."""
+    dow = current_date.weekday()
+    if rotation_code == "PEDNF":
+        if dow == 5:  # Saturday off only
+            return ("W", "W")
+        return ("OFF", "PedNF")
+    if dow >= 5:
+        return ("W", "W")
+    return ("OFF", "NF")
+
+
+def get_hilo_codes(current_date: date, block_start: date) -> tuple[str, str]:
+    """Hilo/Okinawa TDY pattern with pre/post clinic days."""
+    day_index = (current_date - block_start).days
+    if day_index in (0, 1):  # Thu/Fri before leaving
+        return ("C", "C")
+    if day_index == 19:  # Return Tuesday (4th Tuesday)
+        return ("C", "C")
+    return ("TDY", "TDY")
+
+
+# ---------------------------------------------------------------------------
+# Main rotation code functions (used by different preload phases)
+# ---------------------------------------------------------------------------
+
+
+def get_rotation_codes(
+    rotation_type: object,
+    current_date: date,
+    *,
+    person: object = None,
+    has_time_off_patterns: bool = False,
+) -> tuple[str, str]:
+    """Get AM/PM activity codes for inpatient rotations based on day of week.
+
+    Used by ``_load_inpatient_preloads`` to determine what gets preloaded
+    for each day of an inpatient rotation.
+
+    Args:
+        rotation_type: InpatientRotationType enum or string rotation code.
+        current_date: The date being processed.
+        person: Person model (for PGY-level Saturday rules).
+        has_time_off_patterns: Whether GUI time-off patterns exist.
+    """
+    if rotation_type is None:
+        return ("FMIT", "FMIT")
+
+    dow = current_date.weekday()
+
+    code_raw = rotation_type.value if hasattr(rotation_type, "value") else rotation_type
+    code_upper = (code_raw or "").strip().upper()
+
+    person_type = getattr(person, "type", None)
+    pgy_level = (
+        getattr(person, "pgy_level", None) if person_type == "resident" else None
+    )
+
+    # Resident-only Saturday/Sunday off rules (temporary P6-2 defaults).
+    # GUI patterns override these defaults when has_time_off_patterns=True.
+    if person_type == "resident" and not has_time_off_patterns:
+        if code_upper == "FMIT":
+            if dow == 5 and pgy_level in (1, 2):
+                return ("W", "W")
+            if dow == 6 and pgy_level == 3:
+                return ("W", "W")
+        if dow == 5 and code_upper in SATURDAY_OFF_ROTATIONS:
+            return ("W", "W")
+
+    if code_upper == "KAP":
+        if dow == 0:
+            return ("KAP", "OFF")
+        elif dow == 1:
+            return ("OFF", "OFF")
+        elif dow == 2:
+            return ("C", "LEC")
+        else:
+            return ("KAP", "KAP")
+
+    if code_upper == "LDNF":
+        if dow == 4:
+            return ("C", "OFF")
+        elif dow >= 5:
+            if not has_time_off_patterns:
+                return ("W", "W")
+            return ("OFF", "LDNF")
+        else:
+            return ("OFF", "LDNF")
+
+    if code_upper == "NF":
+        if dow >= 5:
+            if not has_time_off_patterns:
+                return ("W", "W")
+            return ("OFF", "NF")
+        else:
+            return ("OFF", "NF")
+
+    if code_upper == "PEDNF":
+        if dow == 5:
+            if not has_time_off_patterns:
+                return ("W", "W")
+            return ("OFF", "PedNF")
+        return ("OFF", "PedNF")
+
+    mapped = ROTATION_TO_ACTIVITY.get(code_upper, code_raw)
+    return (mapped, mapped)
+
+
+def get_rotation_preload_codes(
+    rotation_code: str,
+    current_date: date,
+    block_start: date,
+    block_end: date,
+    pgy_level: int,
+    is_outpatient: bool,
+    has_time_off_patterns: bool = False,
+) -> tuple[str | None, str | None]:
+    """Return AM/PM activity codes for rotation-protected preloads.
+
+    Used by ``_load_rotation_protected_preloads`` to determine what gets
+    preloaded for each date of a block assignment.
+    """
+    if not rotation_code:
+        return (None, None)
+
+    if is_last_wednesday(current_date, block_end):
+        return ("LEC", "ADV")
+
+    if (
+        current_date.weekday() == 5
+        and rotation_code in SATURDAY_OFF_ROTATIONS
+        and not has_time_off_patterns
+    ):
+        return ("W", "W")
+
+    if rotation_code in OFFSITE_ROTATIONS:
+        if rotation_code in {"HILO", "OKI"}:
+            return get_hilo_codes(current_date, block_start)
+        return ("TDY", "TDY")
+
+    if rotation_code in KAP_ROTATIONS:
+        return get_kap_codes(current_date)
+
+    if rotation_code == "LDNF":
+        return get_ldnf_codes(current_date)
+
+    if rotation_code in ("NF", "PEDNF"):
+        return get_nf_codes(rotation_code, current_date)
+
+    # Wednesday protected patterns (intern continuity only for outpatient rotations)
+    if current_date.weekday() == 2:  # Wednesday
+        am_code = None
+        if (
+            is_outpatient
+            and pgy_level == 1
+            and not is_intern_continuity_exempt(rotation_code)
+        ):
+            am_code = "C"
+
+        pm_code = None
+        if not is_lec_exempt(rotation_code):
+            pm_code = "LEC"
+
+        return (am_code, pm_code)
+
+    return (None, None)
