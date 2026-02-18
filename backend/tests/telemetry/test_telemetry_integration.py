@@ -11,9 +11,13 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="module")
 def _otel_provider():
-    """Configure a real TracerProvider so spans produce valid contexts."""
+    """Configure a real TracerProvider so spans produce valid contexts.
+
+    Module-scoped because OTel only allows setting the global provider once;
+    per-test shutdown would leave later tests with a dead provider.
+    """
     provider = TracerProvider()
     trace.set_tracer_provider(provider)
     yield
