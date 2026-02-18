@@ -1,6 +1,6 @@
 """Half-day assignments API routes.
 
-Provides endpoints for reading expanded half-day schedule data.
+Provides endpoints for reading and managing half-day schedule data.
 This is the frontend-facing API for daily schedule views.
 """
 
@@ -8,10 +8,14 @@ from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.core.security import get_scheduler_user
 from app.db.session import get_async_db
+from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+from app.models.user import User
 from app.schemas.half_day_assignment import (
     HalfDayAssignmentListResponse,
     HalfDayAssignmentRead,
@@ -118,3 +122,64 @@ async def list_half_day_assignments(
         start_date=start_date,
         end_date=end_date,
     )
+
+
+@router.delete("")
+async def clear_half_day_assignments(
+    start_date: date = Query(..., description="Start date (inclusive)"),
+    end_date: date = Query(..., description="End date (inclusive)"),
+    sources: str = Query(
+        "solver,template",
+        description="Comma-separated sources to clear (solver,template). Preload and manual are always preserved.",
+    ),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_scheduler_user),
+):
+    """
+    Clear half-day assignments for a date range by source.
+
+    Only solver and template sources can be cleared. Preload and manual
+    assignments are always preserved to protect human overrides and
+    pre-loaded obligations (FMIT, call, absences).
+
+    Requires scheduler role (admin or coordinator).
+    """
+    if start_date > end_date:
+        raise HTTPException(
+            status_code=400,
+            detail="start_date must be <= end_date",
+        )
+
+    # Parse and validate sources — only solver/template allowed
+    allowed = {AssignmentSource.SOLVER.value, AssignmentSource.TEMPLATE.value}
+    requested = {s.strip() for s in sources.split(",")}
+    invalid = requested - allowed
+    if invalid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot clear protected sources: {', '.join(sorted(invalid))}. Only solver and template may be cleared.",
+        )
+
+    source_values = list(requested & allowed)
+    if not source_values:
+        return {"deleted": 0}
+
+    stmt = sa_delete(HalfDayAssignment).where(
+        HalfDayAssignment.date >= start_date,
+        HalfDayAssignment.date <= end_date,
+        HalfDayAssignment.source.in_(source_values),
+    )
+    result = await db.execute(stmt)
+    await db.commit()
+
+    deleted_count = result.rowcount
+    logger.info(
+        "Cleared %s half-day assignments (%s) for %s to %s by user %s",
+        deleted_count,
+        source_values,
+        start_date,
+        end_date,
+        current_user.id,
+    )
+
+    return {"deleted": deleted_count, "sources": source_values}

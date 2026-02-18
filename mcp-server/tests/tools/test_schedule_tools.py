@@ -6,6 +6,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock
 
 from scheduler_mcp.tools.schedule import (
+    ClearHalfDayAssignmentsTool,
     CreateAssignmentTool,
     DeleteAssignmentTool,
     ExportScheduleTool,
@@ -216,3 +217,66 @@ class TestValidateScheduleTool:
         assert result["is_valid"] is False
         assert result["total_issues"] == 1
         assert result["critical_count"] == 1
+
+
+class TestClearHalfDayAssignmentsTool:
+    """Tests for ClearHalfDayAssignmentsTool."""
+
+    @pytest.mark.asyncio
+    async def test_clear_success(self, mock_api_client):
+        """Test successful clearing of half-day assignments."""
+        mock_api_client.clear_half_day_assignments = AsyncMock(
+            return_value={"deleted": 42, "sources": ["solver", "template"]}
+        )
+
+        tool = ClearHalfDayAssignmentsTool(api_client=mock_api_client)
+        result = await tool(
+            start_date="2026-01-01",
+            end_date="2026-01-31",
+        )
+
+        assert result["success"] is True
+        assert result["deleted_count"] == 42
+        assert "solver" in result["sources"]
+        assert "template" in result["sources"]
+
+    @pytest.mark.asyncio
+    async def test_clear_invalid_dates(self, mock_api_client):
+        """Test validation with end before start."""
+        tool = ClearHalfDayAssignmentsTool(api_client=mock_api_client)
+
+        with pytest.raises(Exception):
+            await tool(
+                start_date="2026-02-01",
+                end_date="2026-01-01",
+            )
+
+    @pytest.mark.asyncio
+    async def test_clear_rejects_protected_sources(self, mock_api_client):
+        """Test that preload/manual sources are rejected."""
+        from scheduler_mcp.tools.base import ToolError
+
+        tool = ClearHalfDayAssignmentsTool(api_client=mock_api_client)
+
+        with pytest.raises(ToolError, match="protected sources"):
+            await tool(
+                start_date="2026-01-01",
+                end_date="2026-01-31",
+                sources="preload",
+            )
+
+    @pytest.mark.asyncio
+    async def test_clear_connection_error(self, mock_api_client):
+        """Test handling of connection errors."""
+        mock_api_client.clear_half_day_assignments = AsyncMock(
+            side_effect=ConnectionError("Backend down")
+        )
+
+        tool = ClearHalfDayAssignmentsTool(api_client=mock_api_client)
+        result = await tool(
+            start_date="2026-01-01",
+            end_date="2026-01-31",
+        )
+
+        assert result["success"] is False
+        assert "unavailable" in result["message"].lower()
