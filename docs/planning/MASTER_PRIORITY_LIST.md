@@ -556,34 +556,10 @@ Database Inspector now supports multiple data types but Activities view has upst
 
 ~~**Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.~~ ✅ Created (PR #839)
 
-### 24. Preload Service Code Duplication (NEW - Session 142)
-**Added:** 2026-01-25
-**Source:** Codex CP-SAT Review (`docs/reviews/CODEX_CPSAT_REVIEW_20260125.md`)
+### 24. ~~Preload Service Code Duplication~~ RESOLVED
+**Added:** 2026-01-25 | **Resolved:** 2026-02-18 (PR #1154)
 
-`preload_service.py` (async) and `sync_preload_service.py` (sync) have ~300 LOC of identical rotation pattern logic:
-
-| Duplicated Code | LOC | Purpose |
-|-----------------|-----|---------|
-| `_ROTATION_ALIASES` | 15 | Alias normalization |
-| `_NIGHT_FLOAT_ROTATIONS`, etc. | 10 | Exempt rotation sets |
-| `_get_hilo_codes()` | 8 | Hilo TDY pattern |
-| `_get_kap_codes()` | 10 | Kapiolani pattern |
-| `_get_nf_codes()` | 8 | Night float pattern |
-| `_resolve_rotation_code_for_date()` | 40 | Mid-block transitions |
-| `_get_rotation_preload_codes()` | 50 | Pattern dispatcher |
-
-**Also includes magic numbers:**
-```python
-if day_index in (0, 1):   # Thu/Fri before Hilo TDY
-if day_index == 19:       # Return Tuesday
-```
-
-**Fix:**
-1. Extract to `backend/app/services/rotation_pattern_utils.py`
-2. Replace magic numbers with named constants
-3. Both services import shared logic
-
-**Effort:** 2-3 hours
+Extracted shared logic into `backend/app/services/preload/` package (6 modules, 565 LOC). Sync service reduced from 1,516 to 1,016 LOC. Async service delegates pure methods to shared functions. Zero test regressions.
 
 **UPDATE (2026-02-06):** Codex implemented faculty clinic floor constraints in activity solver (commit `000fa24d`, branch `codex/excel-export-functional-20260206`):
 - Faculty clinic min/max caps now enforced with **hard floor (>=1)** + **soft penalty** for min shortfall

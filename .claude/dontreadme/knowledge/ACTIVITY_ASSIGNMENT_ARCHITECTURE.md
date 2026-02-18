@@ -24,8 +24,9 @@ Frontend (displays activities via /api/half-day-assignments)
 | File | Purpose |
 |------|---------|
 | `backend/app/scheduling/engine.py` | Orchestrates the flow |
-| `backend/app/services/sync_preload_service.py` | Loads locked assignments (sync version) |
-| `backend/app/services/preload_service.py` | Async version (for API use) |
+| `backend/app/services/sync_preload_service.py` | Loads locked assignments (sync, production) |
+| `backend/app/services/preload_service.py` | Async version (test use) |
+| `backend/app/services/preload/` | Shared package: constants, rotation codes, caches, date helpers |
 | `backend/app/scheduling/activity_solver.py` | CP-SAT solver for activity assignment |
 | `backend/app/services/block_assignment_expansion_service.py` | Expands block → daily slots |
 

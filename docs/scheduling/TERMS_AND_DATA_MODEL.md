@@ -109,7 +109,7 @@ AcademicYear
 
 Sources:
 - `backend/app/scheduling/engine.py` (`_get_rotation_templates`)
-- `backend/app/services/sync_preload_service.py`
+- `backend/app/services/sync_preload_service.py` (shared logic in `backend/app/services/preload/`)
 
 ## UI terminology guidance
 
