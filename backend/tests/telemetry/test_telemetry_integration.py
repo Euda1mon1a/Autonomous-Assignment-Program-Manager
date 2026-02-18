@@ -11,21 +11,27 @@ from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 
 
+@pytest.fixture(autouse=True, scope="module")
+def _otel_provider():
+    """Configure a real TracerProvider so spans produce valid contexts.
+
+    Module-scoped because OTel only allows setting the global provider once;
+    per-test shutdown would leave later tests with a dead provider.
+    """
+    provider = TracerProvider()
+    trace.set_tracer_provider(provider)
+    yield
+    provider.shutdown()
+
+
 class TestOpenTelemetryIntegration:
     """Test suite for OpenTelemetry integration."""
 
     def test_tracer_provider_configuration(self):
         """Test TracerProvider is properly configured."""
-        # Arrange
-        with patch("opentelemetry.sdk.trace.TracerProvider") as mock_provider:
-            mock_instance = MagicMock()
-            mock_provider.return_value = mock_instance
-
-            # Act
-            provider = TracerProvider()
-
-            # Assert
-            assert provider is not None
+        provider = trace.get_tracer_provider()
+        assert provider is not None
+        assert isinstance(provider, TracerProvider)
 
     def test_trace_creation(self):
         """Test creating traces with span names."""
