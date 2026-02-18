@@ -23,7 +23,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
@@ -372,7 +372,12 @@ class CanaryRelease:
     # Event log
     events: list[dict[str, Any]] = field(default_factory=list)
 
-    def log_event(self, event_type: str, message: str, metadata: dict = None) -> None:
+    def log_event(
+        self,
+        event_type: str,
+        message: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
         """
         Log an event in the release timeline.
 
@@ -851,10 +856,11 @@ class CanaryReleaseManager:
         should_rollback, reason = self.check_rollback_conditions(release_id)
 
         if should_rollback:
-            self.rollback(release_id, reason, "Automatic rollback triggered")
+            rollback_reason = cast(RollbackReason, reason)
+            self.rollback(release_id, rollback_reason, "Automatic rollback triggered")
             return {
                 "action": "rollback",
-                "reason": reason.value,
+                "reason": rollback_reason.value,
                 "state": release.state.value,
             }
 

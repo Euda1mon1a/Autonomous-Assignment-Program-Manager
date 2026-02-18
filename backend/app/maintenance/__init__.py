@@ -258,7 +258,7 @@ def create_schedule_snapshot(
     return metadata["backup_id"]
 
 
-def list_all_backups(db: Session, backup_dir: str = "backups") -> list:
+def list_all_backups(db: Session, backup_dir: str = "backups") -> list[dict[str, Any]]:
     """
     Convenience function to list all available backups.
 
