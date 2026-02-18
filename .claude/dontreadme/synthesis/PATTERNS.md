@@ -46,6 +46,29 @@ Route → Controller → Service → Repository → Model
 
 **Skill:** `constraint-preflight`
 
+### LangGraph State Machine (Scheduling Pipeline)
+
+**Pattern:** Decompose monolithic engine methods into LangGraph StateGraph nodes
+
+**Why:** Enables per-node tracing, conditional failure routing, and independent testability without changing runtime behavior.
+
+**Implementation:**
+```python
+# Each node has the same signature
+def node_name(state: ScheduleGraphState, config: RunnableConfig) -> dict:
+    engine = config["configurable"]["engine"]  # Engine in config, not state
+    # ... do work ...
+    return {"field": value, "failed": False}  # Partial state merge
+```
+
+**Key Rules:**
+- Engine instance in `configurable` (not state) — SQLAlchemy sessions can't serialize
+- Nodes return partial dicts — LangGraph merges them into accumulated state
+- Don't split phases that share a context manager (e.g., `no_autoflush` → merged `persist_and_call_node`)
+- Use `total=False` on TypedDicts so nodes only declare fields they produce
+
+**Reference:** `backend/app/scheduling/graph.py`, ADR-2026-02-17
+
 ### Resilience Framework Integration
 
 **Pattern:** All schedule operations integrate resilience checks

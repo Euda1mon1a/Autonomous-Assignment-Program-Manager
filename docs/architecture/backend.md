@@ -30,7 +30,7 @@ backend/app/
 ├── repositories/     # Data access layer
 ├── models/           # SQLAlchemy models
 ├── schemas/          # Pydantic schemas
-├── scheduling/       # Scheduling engine
+├── scheduling/       # Scheduling engine + LangGraph pipeline (graph.py, graph_nodes.py, graph_state.py)
 ├── resilience/       # Resilience framework
 ├── validators/       # ACGME validators
 └── tasks/            # Celery tasks

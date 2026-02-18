@@ -350,6 +350,35 @@ For detailed architectural decision records with implementation examples and cod
 
 ---
 
+### ADR-012: LangGraph for Scheduling Pipeline Orchestration
+
+**Date:** 2026-02-17
+
+**Context:**
+- `SchedulingEngine.generate()` is ~750 lines with 12+ sequential phases
+- Need per-node tracing, testability, and failure routing
+- LangChain/LangGraph evaluated for Python-native orchestration
+- Current orchestration lives in non-Python artifacts (YAML skills, markdown prompts)
+
+**Decision:**
+- Adopt LangGraph StateGraph for scheduling pipeline (Phase 1)
+- Incremental adoption: graph runs alongside existing `generate()`, not replacing it
+- No LLM dependencies — all nodes are deterministic
+- Import-guarded fallback if langgraph not installed
+
+**Consequences:**
+- 12 independently testable node functions (17 new tests)
+- Conditional failure routing (fail fast → END)
+- Foundation for LangSmith/Langfuse observability (Phase 3)
+- Foundation for Python-native agent orchestration (Phase 4)
+- +2 dependencies: `langgraph>=0.3.0`, `langchain-core>=0.3.0`
+
+**Status:** Adopted
+
+**Formal ADR:** [docs/decisions/ADR-2026-02-17-langchain-evaluation.md](../../../docs/decisions/ADR-2026-02-17-langchain-evaluation.md)
+
+---
+
 ## Rejected Decisions
 
 ### REJ-001: GraphQL Instead of REST
