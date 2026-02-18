@@ -7,9 +7,9 @@
 
 ## Overview
 
-Seven model files define 12 database tables that have **no corresponding Alembic migrations**. The tables do not exist in the database and any code path that queries them would fail at runtime. This is intentional — the models were written as part of feature scaffolding but the features are not yet active.
+Seven model files define 12 database tables that have **no corresponding Alembic migrations**. The tables do not exist in the database and any code path that queries them will fail at runtime.
 
-**Impact:** None at runtime (no code paths currently query these tables). Risk is documentation that presents these features as available when they are not.
+**Impact:** Some routes ARE wired to these models (webhooks via `webhooks/service.py`, calendar subscriptions via `calendar_service.py`, exports via `routes/exports.py`). Requests to these endpoints will fail with database errors until migrations are created. These routes are not actively used in production but are reachable.
 
 ---
 
@@ -36,7 +36,7 @@ Seven model files define 12 database tables that have **no corresponding Alembic
 
 **Option chosen: Document and defer.**
 
-1. **No runtime impact** — no active code queries these tables
+1. **Low runtime risk** — routes exist but are not actively used in production; requests to webhook/calendar/export endpoints will fail until migrations are created
 2. **Models serve as design documentation** — they capture the intended schema for when features are built
 3. **Premature migration creates maintenance burden** — empty tables require index maintenance, backup overhead, and migration ordering complexity
 4. **Features need full implementation** — creating tables without routes/services/tests creates a false sense of completeness
