@@ -31,6 +31,7 @@ from .registry import ToolRegistry, get_registry
 
 # Schedule tools
 from .schedule import (
+    ClearHalfDayAssignmentsTool,
     CreateAssignmentTool,
     DeleteAssignmentTool,
     ExportScheduleTool,
@@ -175,6 +176,7 @@ __all__ = [
     "CreateAssignmentTool",
     "UpdateAssignmentTool",
     "DeleteAssignmentTool",
+    "ClearHalfDayAssignmentsTool",
     "GenerateScheduleTool",
     "ValidateScheduleTool",
     "OptimizeScheduleTool",

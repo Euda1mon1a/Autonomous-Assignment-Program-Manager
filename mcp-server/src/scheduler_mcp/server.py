@@ -770,6 +770,35 @@ async def analyze_swap_candidates_tool(
     return await analyze_swap_candidates(request)
 
 
+@mcp.tool()
+async def clear_half_day_assignments_tool(
+    start_date: str,
+    end_date: str,
+    sources: str = "solver,template",
+) -> dict[str, Any]:
+    """
+    Clear solver/template half-day assignments for a date range.
+
+    Preserves preload (FMIT, call, absences) and manual overrides.
+    Use before schedule generation to ensure a clean slate for the solver.
+
+    Args:
+        start_date: Start date in YYYY-MM-DD format
+        end_date: End date in YYYY-MM-DD format
+        sources: Comma-separated sources to clear (default: "solver,template")
+
+    Returns:
+        Dict with deleted count and sources cleared
+    """
+    client = await get_api_client()
+    result = await client.clear_half_day_assignments(
+        start_date=start_date,
+        end_date=end_date,
+        sources=sources,
+    )
+    return result
+
+
 # Async Task Management Tools
 
 
