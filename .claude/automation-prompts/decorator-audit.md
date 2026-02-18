@@ -23,7 +23,7 @@ Add `ParamSpec`/`TypeVar` typing where missing. Use the pattern from PR #1149.
 Find decorator factories incorrectly marked as `async def`:
 
 ```bash
-grep -rn "async def.*operation.*metadata\|async def.*timeout\|async def.*decorator" backend/app/ | grep -v "wrapper\|inner"
+grep -rn "async def.*operation.*metadata\|async def.*timeout\|async def.*decorator" backend/app/<directory>/ | grep -v "wrapper\|inner"
 ```
 
 A decorator FACTORY should be `def`, not `async def`. The inner WRAPPER can be `async def`.
