@@ -110,9 +110,14 @@ Google's open-source terminal agent with the largest context window available (1
 **Key features:**
 - 1M token context window — largest free context available
 - Built-in Google Search grounding for research
-- MCP support for custom tools (can connect to residency-scheduler MCP)
-- Conversation checkpointing (save/resume sessions)
-- Non-interactive mode with JSON output for scripting
+- MCP support for custom tools (`gemini mcp` subcommand)
+- Session management: `--resume latest`, `--list-sessions`, `--delete-session`
+- Extensions and skills: `gemini extensions`, `gemini skills`, `gemini hooks`
+- Approval modes: `--approval-mode default|auto_edit|yolo|plan` (or `-y` for YOLO)
+- Sandbox mode (`-s`/`--sandbox`) for isolated execution
+- Non-interactive mode: `-p "prompt"` with `--output-format json|stream-json|text`
+- Multi-directory workspaces via `--include-directories`
+- Screen reader accessibility mode (`--screen-reader`)
 - Free tier: 60 req/min, 1,000 req/day with Google login
 
 **Gemini 3 Flash vs Pro:** Flash is 3x faster at 1/4 the cost and scores *higher* on SWE-bench (78% vs Pro). Use Pro for complex reasoning; Flash for everything else.
@@ -142,7 +147,7 @@ Each CLI reads a different startup file. All must contain project guardrails.
 |--------|-------------|-----------------|
 | Claude Code | `CLAUDE.md` | `.claude/` project settings |
 | Codex CLI | `AGENTS.md` | `project_doc_fallback_filenames` in `.codex/config.toml` |
-| Gemini CLI | `GEMINI.md` | — |
+| Gemini CLI | `GEMINI.md` | Extensions, skills via `gemini extensions`/`gemini skills` |
 | Kimi Code | TBD (not yet standardized) | — |
 
 ---
