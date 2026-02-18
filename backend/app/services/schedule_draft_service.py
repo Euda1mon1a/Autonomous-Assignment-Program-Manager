@@ -858,6 +858,24 @@ class ScheduleDraftService:
         draft.approval_reason = reason
         draft.lock_date_at_approval = lock_date
 
+        # Auto-acknowledge the LOCK_WINDOW_VIOLATION flag so that
+        # publish_draft() doesn't block on FLAGS_UNACKNOWLEDGED.
+        lock_flag = (
+            self.db.query(ScheduleDraftFlag)
+            .filter(
+                ScheduleDraftFlag.draft_id == draft_id,
+                ScheduleDraftFlag.flag_type == DraftFlagType.LOCK_WINDOW_VIOLATION,
+                ScheduleDraftFlag.acknowledged_at.is_(None),
+            )
+            .first()
+        )
+        if lock_flag:
+            lock_flag.acknowledged_at = now
+            lock_flag.acknowledged_by_id = approved_by_id
+            lock_flag.resolution_note = f"Break-glass approved: {reason}"
+            # Update draft flag counts
+            draft.flags_acknowledged = (draft.flags_acknowledged or 0) + 1
+
         # Activity log
         from app.models.activity_log import ActivityActionType, ActivityLog
 

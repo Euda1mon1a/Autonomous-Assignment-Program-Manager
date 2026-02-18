@@ -419,3 +419,41 @@ async def test_approve_break_glass_creates_activity_log(db):
     assert entry is not None
     assert entry.user_id == user.id
     assert entry.target_id == str(draft.id)
+
+
+@pytest.mark.asyncio
+async def test_approve_break_glass_auto_acknowledges_lock_flag(db):
+    """Break-glass approval should auto-acknowledge the LOCK_WINDOW_VIOLATION flag."""
+    from app.models.schedule_draft import DraftFlagType, ScheduleDraftFlag
+
+    draft, user, _ = _create_locked_draft(db)
+    service = ScheduleDraftService(db)
+
+    # Refresh lock window flag to create the LOCK_WINDOW_VIOLATION flag
+    service._refresh_lock_window_flag(draft.id, commit=True)
+
+    # Verify flag exists and is unacknowledged
+    flag = (
+        db.query(ScheduleDraftFlag)
+        .filter(
+            ScheduleDraftFlag.draft_id == draft.id,
+            ScheduleDraftFlag.flag_type == DraftFlagType.LOCK_WINDOW_VIOLATION,
+        )
+        .first()
+    )
+    assert flag is not None
+    assert flag.acknowledged_at is None
+
+    # Approve break-glass
+    result = await service.approve_break_glass(
+        draft_id=draft.id,
+        approved_by_id=user.id,
+        reason="Emergency coverage gap requires schedule change",
+    )
+    assert result.success is True
+
+    # Verify flag is now acknowledged
+    db.refresh(flag)
+    assert flag.acknowledged_at is not None
+    assert flag.acknowledged_by_id == user.id
+    assert "Break-glass approved" in flag.resolution_note
