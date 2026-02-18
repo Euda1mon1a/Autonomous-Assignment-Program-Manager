@@ -243,7 +243,7 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 - Resilience health checks (every 15 min)
 - Contingency analysis (daily)
 - Metrics computation (daily)
-- Export jobs (every 5 min)
+- Export jobs (every 5 min) — schema drift: `export_jobs` table has no migration yet
 - Security rotation (daily)
 
 **Critical Issue:** Docker worker only listens to 3/6 queues

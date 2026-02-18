@@ -327,7 +327,7 @@ Endpoints for managing overnight and weekend faculty call assignments. Solver-ge
 | POST | `/leave/` | Scheduler | Create leave record |
 | PUT | `/leave/{leave_id}` | Scheduler | Update leave record |
 | DELETE | `/leave/{leave_id}` | Scheduler | Delete leave record |
-| POST | `/leave/webhook` | HMAC | External leave system webhook |
+| POST | `/leave/webhook` | HMAC | External leave system webhook (schema drift: webhook tables have no migrations — see `docs/development/SCHEMA_DRIFT_TRACKING.md`) |
 | POST | `/leave/bulk-import` | Admin | Bulk import leave records |
 
 ### Absence Types
@@ -917,7 +917,7 @@ Endpoints for fetching enumeration values used in frontend dropdowns.
 | Bearer Token | `Authorization: Bearer <token>` | API clients |
 | httpOnly Cookie | Automatic | Browser clients |
 | Refresh Token | POST body | Token renewal |
-| HMAC Signature | `X-Webhook-Signature` | Webhooks |
+| HMAC Signature | `X-Webhook-Signature` | Webhooks (schema drift: no migrations yet) |
 
 ### Rate Limits
 

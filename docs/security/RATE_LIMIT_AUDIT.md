@@ -322,6 +322,8 @@ skip_paths = ["/health", "/metrics", "/docs", "/openapi.json", "/redoc"]
 
 ### Webhook Endpoints
 
+> **Schema Drift:** Webhook database tables have no Alembic migrations. These endpoints exist in code but will fail at runtime until migrations are created. See `docs/development/SCHEMA_DRIFT_TRACKING.md`.
+
 | Endpoint | Method | Rate Limit | Status |
 |----------|--------|-----------|--------|
 | `/api/webhooks` | POST | ❌ None | ⚠️ Minor |

@@ -188,7 +188,7 @@ cipher = Cipher(
 | Setting | Default | Purpose |
 |---------|---------|---------|
 | `SECRET_KEY` | Auto-generated (64 bytes) | JWT signing |
-| `WEBHOOK_SECRET` | Auto-generated (64 bytes) | Webhook validation |
+| `WEBHOOK_SECRET` | Auto-generated (64 bytes) | Webhook validation (schema drift: webhook tables have no migrations yet — see `docs/development/SCHEMA_DRIFT_TRACKING.md`) |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | 15 | Token expiry |
 | `REFRESH_TOKEN_ROTATE` | True | Token theft mitigation |
 

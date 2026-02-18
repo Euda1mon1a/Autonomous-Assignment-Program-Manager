@@ -562,6 +562,8 @@ Get aggregate statistics across all tournaments and simulations.
 
 ## Webhooks
 
+> **Schema Drift:** Webhook database tables (`webhooks`, `webhook_deliveries`, `webhook_dead_letters`) have no Alembic migrations. Webhook delivery is not functional until migrations are created. See `docs/development/SCHEMA_DRIFT_TRACKING.md`.
+
 When configured, the system can send webhook notifications for:
 
 - Tournament completion

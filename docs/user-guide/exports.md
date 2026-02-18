@@ -4,7 +4,6 @@ Export schedules and data from Residency Scheduler.
 
 ---
 
-<<<<<<< HEAD
 ## Import/Export Page
 
 For a unified import/export experience:
@@ -17,8 +16,6 @@ For a unified import/export experience:
 
 ---
 
-=======
->>>>>>> origin/docs/session-14-summary
 ## Excel Export
 
 Export schedules to Excel:
@@ -47,6 +44,8 @@ Download your schedule as an ICS file for one-time import:
 ---
 
 ## WebCal Subscription (Live Updates)
+
+> **Schema Drift:** The `calendar_subscriptions` table has no Alembic migration. WebCal subscriptions are not functional until the migration is created. ICS file export above works without this table. See `docs/development/SCHEMA_DRIFT_TRACKING.md`.
 
 Subscribe to a live-updating calendar feed:
 

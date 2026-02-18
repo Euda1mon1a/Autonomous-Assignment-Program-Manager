@@ -192,6 +192,8 @@ Downloads an ICS file containing all assignments for the specified rotation.
 
 ## Webcal Subscription Endpoints
 
+> **Schema Drift:** The `calendar_subscriptions` table has no Alembic migration. These subscription endpoints have route and model code but will fail at runtime until the migration is created. ICS export endpoints above work without this table. See `docs/development/SCHEMA_DRIFT_TRACKING.md`.
+
 ### Create Calendar Subscription
 
 **Purpose:** Generate a secure token for calendar feed subscriptions with automatic updates.

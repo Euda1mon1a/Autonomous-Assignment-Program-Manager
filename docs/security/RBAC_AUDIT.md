@@ -641,6 +641,9 @@ async def saml_acs(request: Request):
 - `GET /api/v1/resilience/*` - Resilience metrics
 
 #### Webhooks (Authenticated Users)
+
+> **Schema Drift:** Webhook routes exist but the database tables (`webhooks`, `webhook_deliveries`, `webhook_dead_letters`) have no Alembic migrations. These endpoints will fail at runtime until migrations are created. See `docs/development/SCHEMA_DRIFT_TRACKING.md`.
+
 - `POST /api/v1/webhooks` - Create webhook
 - `GET /api/v1/webhooks` - List webhooks
 - `PUT /api/v1/webhooks/{id}` - Update webhook
