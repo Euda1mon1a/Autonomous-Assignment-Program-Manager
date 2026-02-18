@@ -17,11 +17,14 @@ import asyncio
 import functools
 import logging
 from collections.abc import Callable
-from typing import Any
+from typing import Any, ParamSpec, TypeVar
 
 from app.core.cache.redis_cache import get_cache
 
 logger = logging.getLogger(__name__)
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def cached(
@@ -32,7 +35,7 @@ def cached(
     use_l1: bool = True,
     use_l2: bool = True,
     key_builder: Callable[..., str] | None = None,
-):
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Decorator to cache function results.
 
@@ -66,7 +69,7 @@ def cached(
             return await db.fetch_user(user_id)
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         cache = get_cache(namespace)
         func_name = key_prefix or func.__name__
 
@@ -125,7 +128,7 @@ def cache_invalidate(
     tags: list[str] | Callable[..., list[str]] | None = None,
     patterns: list[str] | Callable[..., list[str]] | None = None,
     clear_all: bool = False,
-):
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Decorator to invalidate cache when function executes.
 
@@ -158,7 +161,7 @@ def cache_invalidate(
             await db.delete_user(user_id)
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         cache = get_cache(namespace)
         is_async = asyncio.iscoroutinefunction(func)
 
@@ -190,7 +193,7 @@ def cache_warm(
     namespace: str = "default",
     entries_func: Callable[..., dict[str, Any]] | None = None,
     ttl: int = 3600,
-):
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Decorator to warm cache on function execution.
 
@@ -225,7 +228,7 @@ def cache_warm(
             }
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         cache = get_cache(namespace)
         is_async = asyncio.iscoroutinefunction(func)
 
@@ -268,7 +271,7 @@ def invalidate_on_write(
     namespace: str = "default",
     key_builder: Callable[..., str | list[str]] | None = None,
     invalidate_before: bool = True,
-):
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Decorator for write-through cache invalidation.
 
@@ -303,7 +306,7 @@ def invalidate_on_write(
             await db.update_user(user_id, data)
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         cache = get_cache(namespace)
         is_async = asyncio.iscoroutinefunction(func)
 

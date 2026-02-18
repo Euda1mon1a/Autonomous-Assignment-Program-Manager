@@ -6,6 +6,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { TestProviders } from '@/test-utils';
 import {
   scheduleDraftKeys,
+  useApproveBreakGlass,
   usePublishScheduleDraft,
   useScheduleDrafts,
 } from '@/hooks/useScheduleDrafts';
@@ -93,6 +94,52 @@ describe('usePublishScheduleDraft', () => {
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: scheduleDraftKeys.lists(),
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: scheduleDraftKeys.preview('draft-1'),
+    });
+  });
+});
+
+describe('useApproveBreakGlass', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('invalidates detail and preview queries', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, gcTime: 0, staleTime: 0 },
+        mutations: { retry: false },
+      },
+    });
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    mockedApi.approveBreakGlass.mockResolvedValueOnce({
+      draftId: 'draft-1',
+      approvedAt: '2026-02-17T21:05:00Z',
+      approvedById: 'user-1',
+      approvalReason: 'Lock window exception for urgent change',
+      lockDateAtApproval: '2026-02-15',
+      message: 'approved',
+    });
+
+    const { result } = renderHook(() => useApproveBreakGlass(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        draftId: 'draft-1',
+        reason: 'Lock window exception for urgent change',
+      });
+    });
+
+    expect(mockedApi.approveBreakGlass).toHaveBeenCalledWith('draft-1', {
+      reason: 'Lock window exception for urgent change',
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: scheduleDraftKeys.detail('draft-1'),
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: scheduleDraftKeys.preview('draft-1'),

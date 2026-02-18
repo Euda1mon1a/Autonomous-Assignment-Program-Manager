@@ -17,3 +17,16 @@ def test_stage_import_invalid_extension_returns_error_detail(
     assert detail["error_code"] == "INVALID_EXTENSION"
     assert "error" in detail
     assert "success" not in detail
+
+
+def test_list_batches_invalid_status_returns_string_detail(
+    client: TestClient, auth_headers
+):
+    response = client.get(
+        "/api/v1/import/batches",
+        headers=auth_headers,
+        params={"status": "not-a-status"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid status: not-a-status"
