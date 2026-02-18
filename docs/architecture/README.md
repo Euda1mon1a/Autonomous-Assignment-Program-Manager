@@ -114,7 +114,7 @@ Complete technical architecture documentation for the Residency Scheduler system
 | [Docker Security Best Practices](DOCKER_SECURITY_BEST_PRACTICES.md) | Container security |
 | [Notification System](NOTIFICATION_SYSTEM_IMPLEMENTATION.md) | Alert delivery system |
 | [Offline Operations](OFFLINE_OPERATIONS.md) | Offline-first capabilities |
-| [Database Index Report](DATABASE_INDEX_REPORT.md) | Database performance optimization |
+| [Database Index Report](../archived/reports/DATABASE_INDEX_REPORT.md) | Database performance optimization |
 
 ### Visualization & Analytics
 
