@@ -19,6 +19,7 @@ Or via the engine method::
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from langgraph.graph import END, StateGraph
@@ -166,6 +167,7 @@ def generate_via_graph(engine: Any, **params: Any) -> dict[str, Any]:
         }
     }
 
+    final_state = None
     try:
         final_state = scheduling_graph.invoke({}, config=config)
 
@@ -177,4 +179,17 @@ def generate_via_graph(engine: Any, **params: Any) -> dict[str, Any]:
     except Exception as e:
         logger.error(f"Graph execution failed: {e}")
         engine.db.rollback()
+
+        # Update run record to "failed" (mirrors engine.generate() lines 872-879)
+        try:
+            if final_state and final_state.get("run"):
+                run = final_state["run"]
+                start_time = final_state.get("start_time", time.time())
+                engine.db.refresh(run)
+                engine._update_run_status(run, "failed", 0, 0, time.time() - start_time)
+                engine.db.commit()
+        except Exception:
+            logger.error("Failed to update run status after graph failure")
+            engine.db.rollback()
+
         raise

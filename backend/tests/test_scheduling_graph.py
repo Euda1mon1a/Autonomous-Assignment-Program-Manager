@@ -7,6 +7,7 @@ plus graph compilation and topology integration tests.
 from __future__ import annotations
 
 import time
+from datetime import date
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
@@ -328,6 +329,46 @@ class TestGraphCompilation:
         from app.scheduling.graph import scheduling_graph
 
         assert scheduling_graph is not None
+
+
+class TestGenerateViaGraphCrashRecovery:
+    """Test that generate_via_graph updates run status on unhandled exceptions."""
+
+    def test_updates_run_status_on_node_exception(self):
+        from app.scheduling.graph import generate_via_graph
+
+        engine = _make_engine_mock()
+        # Use real dates so get_block_number_for_date doesn't choke on MagicMock
+        engine.start_date = date(2025, 8, 4)
+        engine.end_date = date(2025, 8, 29)
+        mock_run = MagicMock()
+        mock_run.id = uuid4()
+        engine._create_initial_run.return_value = mock_run
+        engine._check_pre_generation_resilience.return_value = None
+
+        # Make load_data_node throw via the first engine call it makes
+        engine._ensure_blocks_exist.side_effect = RuntimeError("DB connection lost")
+
+        with pytest.raises(RuntimeError, match="DB connection lost"):
+            generate_via_graph(engine, algorithm="cp_sat")
+
+        # Verify DB was rolled back
+        engine.db.rollback.assert_called()
+
+    def test_handles_missing_run_in_state_gracefully(self):
+        """If the graph fails before init_node produces a run, don't crash."""
+        from app.scheduling.graph import generate_via_graph
+
+        engine = _make_engine_mock()
+        # init_node itself throws before creating a run
+        engine._create_initial_run.side_effect = RuntimeError("Init failed")
+
+        with pytest.raises(RuntimeError, match="Init failed"):
+            generate_via_graph(engine, algorithm="cp_sat")
+
+        # Should still rollback, but NOT try to update run status
+        engine.db.rollback.assert_called()
+        engine._update_run_status.assert_not_called()
 
 
 class TestRouteAfterFailureCheck:
