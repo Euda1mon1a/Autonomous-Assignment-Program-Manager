@@ -105,9 +105,9 @@ class UserSegment:
     def matches(
         self,
         user_id: UUID,
-        user_role: str = None,
-        organization_id: UUID = None,
-        user_hash: int = None,
+        user_role: str | None = None,
+        organization_id: UUID | None = None,
+        user_hash: int | None = None,
     ) -> bool:
         """
         Check if a user matches this segment criteria.
@@ -1134,8 +1134,8 @@ class CanaryReleaseManager:
         self,
         release_id: UUID,
         user_id: UUID,
-        user_role: str = None,
-        organization_id: UUID = None,
+        user_role: str | None = None,
+        organization_id: UUID | None = None,
     ) -> str:
         """
         Determine if a request should go to canary or baseline.

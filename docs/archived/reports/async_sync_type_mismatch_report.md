@@ -1,0 +1,677 @@
+# Async/Sync Type Mismatch Report
+
+Scope: backend/app/api/routes/**/*.py (excluding scheduling/validators/resilience/tests paths by guardrail; no code changes applied)
+
+## Async endpoints typed with Session (not AsyncSession)
+- backend/app/api/routes/academic_blocks.py:25 `async def get_academic_block_matrix` uses `Session`
+- backend/app/api/routes/academic_blocks.py:75 `async def list_academic_blocks` uses `Session`
+- backend/app/api/routes/admin_users.py:102 `async def _log_activity` uses `Session`
+- backend/app/api/routes/admin_users.py:161 `async def list_users` uses `Session`
+- backend/app/api/routes/admin_users.py:234 `async def create_user` uses `Session`
+- backend/app/api/routes/admin_users.py:341 `async def update_user` uses `Session`
+- backend/app/api/routes/admin_users.py:444 `async def delete_user` uses `Session`
+- backend/app/api/routes/admin_users.py:490 `async def lock_user_account` uses `Session`
+- backend/app/api/routes/admin_users.py:599 `async def resend_invite` uses `Session`
+- backend/app/api/routes/admin_users.py:685 `async def get_activity_log` uses `Session`
+- backend/app/api/routes/admin_users.py:794 `async def bulk_user_action` uses `Session`
+- backend/app/api/routes/approval_chain.py:53 `async def verify_chain` uses `Session`
+- backend/app/api/routes/approval_chain.py:82 `async def verify_chain_post` uses `Session`
+- backend/app/api/routes/approval_chain.py:119 `async def get_chain_stats` uses `Session`
+- backend/app/api/routes/approval_chain.py:162 `async def create_approval_record` uses `Session`
+- backend/app/api/routes/approval_chain.py:219 `async def list_approval_records` uses `Session`
+- backend/app/api/routes/approval_chain.py:316 `async def get_approval_record` uses `Session`
+- backend/app/api/routes/approval_chain.py:366 `async def create_daily_seal` uses `Session`
+- backend/app/api/routes/audience_tokens.py:299 `async def revoke_token` uses `Session`
+- backend/app/api/routes/audience_tokens.py:469 `async def abort_job_example` uses `Session`
+- backend/app/api/routes/audit.py:830 `async def mark_audit_reviewed` uses `Session`
+- backend/app/api/routes/backup.py:128 `async def create_snapshot` uses `Session`
+- backend/app/api/routes/backup.py:344 `async def restore_snapshot` uses `Session`
+- backend/app/api/routes/backup.py:786 `async def restore_from_backup` uses `Session`
+- backend/app/api/routes/batch.py:34 `async def batch_create_assignments` uses `Session`
+- backend/app/api/routes/batch.py:102 `async def batch_update_assignments` uses `Session`
+- backend/app/api/routes/batch.py:164 `async def batch_delete_assignments` uses `Session`
+- backend/app/api/routes/batch.py:223 `async def get_batch_status` uses `Session`
+- backend/app/api/routes/claude_chat.py:873 `async def delete_session` uses `Session`
+- backend/app/api/routes/daily_manifest.py:98 `async def get_daily_manifest` uses `Session`
+- backend/app/api/routes/daily_manifest.py:223 `async def get_daily_manifest_v2` uses `Session`
+- backend/app/api/routes/db_admin.py:166 `async def get_database_health` uses `Session`
+- backend/app/api/routes/db_admin.py:272 `async def get_index_recommendations` uses `Session`
+- backend/app/api/routes/db_admin.py:325 `async def get_unused_indexes` uses `Session`
+- backend/app/api/routes/db_admin.py:380 `async def get_index_usage_stats` uses `Session`
+- backend/app/api/routes/db_admin.py:426 `async def get_table_statistics` uses `Session`
+- backend/app/api/routes/db_admin.py:495 `async def get_query_statistics` uses `Session`
+- backend/app/api/routes/db_admin.py:544 `async def vacuum_table` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:660 `async def analyze_schedule_entropy` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:719 `async def detect_phase_transition` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:798 `async def calculate_free_energy_endpoint` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:854 `async def analyze_energy_landscape_endpoint` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:916 `async def assess_immune_response` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:995 `async def get_memory_cells` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:1027 `async def analyze_antibodies` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:1098 `async def calculate_rigidity` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:1169 `async def detect_subharmonics` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:1224 `async def get_stroboscopic_checkpoints` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:1537 `async def analyze_metastability` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:1621 `async def predict_reorganization_risk` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:1658 `async def generate_spin_glass_replicas` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:1717 `async def predict_catastrophe` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:1842 `async def get_unified_critical_index` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:2015 `async def calculate_recovery_distance` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:2175 `async def assess_creep_fatigue` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:2375 `async def analyze_transcription_factors` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:2499 `async def calculate_hopfield_energy` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:2559 `async def find_hopfield_attractors` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:2616 `async def measure_hopfield_basin_depth` uses `Session`
+- backend/app/api/routes/exotic_resilience.py:2669 `async def detect_hopfield_spurious_attractors` uses `Session`
+- backend/app/api/routes/experiments.py:80 `async def create_experiment` uses `Session`
+- backend/app/api/routes/experiments.py:117 `async def list_experiments` uses `Session`
+- backend/app/api/routes/experiments.py:155 `async def get_experiment_stats` uses `Session`
+- backend/app/api/routes/experiments.py:209 `async def get_experiment` uses `Session`
+- backend/app/api/routes/experiments.py:234 `async def update_experiment` uses `Session`
+- backend/app/api/routes/experiments.py:268 `async def delete_experiment` uses `Session`
+- backend/app/api/routes/experiments.py:299 `async def start_experiment` uses `Session`
+- backend/app/api/routes/experiments.py:326 `async def pause_experiment` uses `Session`
+- backend/app/api/routes/experiments.py:351 `async def conclude_experiment` uses `Session`
+- backend/app/api/routes/experiments.py:381 `async def assign_user` uses `Session`
+- backend/app/api/routes/experiments.py:419 `async def get_user_assignment` uses `Session`
+- backend/app/api/routes/experiments.py:455 `async def track_metric` uses `Session`
+- backend/app/api/routes/experiments.py:497 `async def get_variant_metrics` uses `Session`
+- backend/app/api/routes/experiments.py:524 `async def get_experiment_results` uses `Session`
+- backend/app/api/routes/experiments.py:570 `async def get_lifecycle_events` uses `Session`
+- backend/app/api/routes/exports.py:56 `async def create_export_job` uses `Session`
+- backend/app/api/routes/exports.py:80 `async def list_export_jobs` uses `Session`
+- backend/app/api/routes/exports.py:114 `async def get_export_job` uses `Session`
+- backend/app/api/routes/exports.py:134 `async def update_export_job` uses `Session`
+- backend/app/api/routes/exports.py:164 `async def delete_export_job` uses `Session`
+- backend/app/api/routes/exports.py:190 `async def run_export_job` uses `Session`
+- backend/app/api/routes/exports.py:238 `async def list_job_executions` uses `Session`
+- backend/app/api/routes/exports.py:296 `async def get_execution` uses `Session`
+- backend/app/api/routes/exports.py:432 `async def get_export_stats` uses `Session`
+- backend/app/api/routes/fatigue_risk.py:70 `async def get_samn_perelli_levels` uses `Session`
+- backend/app/api/routes/fatigue_risk.py:150 `async def get_resident_fatigue_profile` uses `Session`
+- backend/app/api/routes/fatigue_risk.py:182 `async def get_alertness_prediction` uses `Session`
+- backend/app/api/routes/fatigue_risk.py:228 `async def assess_schedule_fatigue_risk` uses `Session`
+- backend/app/api/routes/fatigue_risk.py:259 `async def get_current_hazard` uses `Session`
+- backend/app/api/routes/fatigue_risk.py:296 `async def scan_all_residents_for_hazards` uses `Session`
+- backend/app/api/routes/fatigue_risk.py:344 `async def get_sleep_debt_state` uses `Session`
+- backend/app/api/routes/fatigue_risk.py:387 `async def predict_sleep_debt_trajectory` uses `Session`
+- backend/app/api/routes/fatigue_risk.py:423 `async def get_team_fatigue_heatmap` uses `Session`
+- backend/app/api/routes/fatigue_risk.py:513 `async def validate_acgme_with_fatigue` uses `Session`
+- backend/app/api/routes/features.py:38 `async def create_feature_flag` uses `Session`
+- backend/app/api/routes/features.py:72 `async def list_feature_flags` uses `Session`
+- backend/app/api/routes/features.py:106 `async def get_feature_flag_stats` uses `Session`
+- backend/app/api/routes/features.py:134 `async def get_feature_flag` uses `Session`
+- backend/app/api/routes/features.py:157 `async def update_feature_flag` uses `Session`
+- backend/app/api/routes/features.py:189 `async def delete_feature_flag` uses `Session`
+- backend/app/api/routes/features.py:248 `async def evaluate_feature_flags_bulk` uses `Session`
+- backend/app/api/routes/features.py:288 `async def enable_feature_flag` uses `Session`
+- backend/app/api/routes/features.py:315 `async def disable_feature_flag` uses `Session`
+- backend/app/api/routes/features.py:341 `async def _get_flags_by_environment` uses `Session`
+- backend/app/api/routes/fmit_assignments.py:62 `async def get_fmit_template` uses `Session`
+- backend/app/api/routes/fmit_assignments.py:112 `async def check_faculty_conflicts` uses `Session`
+- backend/app/api/routes/fmit_assignments.py:232 `async def create_fmit_assignment` uses `Session`
+- backend/app/api/routes/fmit_assignments.py:355 `async def update_fmit_assignment` uses `Session`
+- backend/app/api/routes/fmit_assignments.py:483 `async def delete_fmit_assignment` uses `Session`
+- backend/app/api/routes/fmit_assignments.py:557 `async def bulk_create_fmit_assignments` uses `Session`
+- backend/app/api/routes/fmit_assignments.py:741 `async def get_year_grid` uses `Session`
+- backend/app/api/routes/fmit_assignments.py:893 `async def check_conflicts` uses `Session`
+- backend/app/api/routes/fmit_health.py:526 `async def get_fmit_health` uses `Session`
+- backend/app/api/routes/fmit_health.py:629 `async def get_fmit_detailed_status` uses `Session`
+- backend/app/api/routes/fmit_health.py:782 `async def get_fmit_metrics` uses `Session`
+- backend/app/api/routes/fmit_health.py:974 `async def get_coverage_report` uses `Session`
+- backend/app/api/routes/fmit_health.py:1116 `async def get_coverage_gaps` uses `Session`
+- backend/app/api/routes/fmit_health.py:1177 `async def get_coverage_suggestions` uses `Session`
+- backend/app/api/routes/fmit_health.py:1295 `async def get_coverage_forecast` uses `Session`
+- backend/app/api/routes/fmit_health.py:1439 `async def get_alert_summary` uses `Session`
+- backend/app/api/routes/fmit_timeline.py:318 `async def get_academic_year_timeline` uses `Session`
+- backend/app/api/routes/fmit_timeline.py:351 `async def get_faculty_timeline` uses `Session`
+- backend/app/api/routes/fmit_timeline.py:428 `async def get_weekly_view` uses `Session`
+- backend/app/api/routes/fmit_timeline.py:556 `async def get_gantt_data` uses `Session`
+- backend/app/api/routes/game_theory.py:58 `async def list_strategies` uses `Session`
+- backend/app/api/routes/game_theory.py:102 `async def create_strategy` uses `Session`
+- backend/app/api/routes/game_theory.py:156 `async def get_strategy` uses `Session`
+- backend/app/api/routes/game_theory.py:192 `async def update_strategy` uses `Session`
+- backend/app/api/routes/game_theory.py:232 `async def create_default_strategies` uses `Session`
+- backend/app/api/routes/game_theory.py:258 `async def list_tournaments` uses `Session`
+- backend/app/api/routes/game_theory.py:294 `async def create_tournament` uses `Session`
+- backend/app/api/routes/game_theory.py:360 `async def get_tournament` uses `Session`
+- backend/app/api/routes/game_theory.py:395 `async def get_tournament_results` uses `Session`
+- backend/app/api/routes/game_theory.py:447 `async def run_tournament_sync` uses `Session`
+- backend/app/api/routes/game_theory.py:506 `async def create_evolution` uses `Session`
+- backend/app/api/routes/game_theory.py:569 `async def get_evolution` uses `Session`
+- backend/app/api/routes/game_theory.py:605 `async def get_evolution_results` uses `Session`
+- backend/app/api/routes/game_theory.py:651 `async def validate_strategy` uses `Session`
+- backend/app/api/routes/game_theory.py:695 `async def analyze_config` uses `Session`
+- backend/app/api/routes/game_theory.py:725 `async def get_game_theory_summary` uses `Session`
+- backend/app/api/routes/impersonation.py:67 `async def start_impersonation` uses `Session`
+- backend/app/api/routes/impersonation.py:149 `async def end_impersonation` uses `Session`
+- backend/app/api/routes/impersonation.py:205 `async def get_impersonation_status` uses `Session`
+- backend/app/api/routes/me_dashboard.py:44 `async def _get_person_for_user` uses `Session`
+- backend/app/api/routes/ml.py:49 `async def get_model_health` uses `Session`
+- backend/app/api/routes/ml.py:108 `async def train_models` uses `Session`
+- backend/app/api/routes/ml.py:245 `async def train_models_async` uses `Session`
+- backend/app/api/routes/ml.py:281 `async def score_schedule` uses `Session`
+- backend/app/api/routes/ml.py:402 `async def predict_conflict` uses `Session`
+- backend/app/api/routes/ml.py:480 `async def predict_preference` uses `Session`
+- backend/app/api/routes/ml.py:544 `async def analyze_workload` uses `Session`
+- backend/app/api/routes/oauth2.py:34 `async def authorize` uses `Session`
+- backend/app/api/routes/oauth2.py:66 `async def token` uses `Session`
+- backend/app/api/routes/oauth2.py:96 `async def token_introspection` uses `Session`
+- backend/app/api/routes/oauth2.py:141 `async def create_client` uses `Session`
+- backend/app/api/routes/people.py:38 `async def list_people` uses `Session`
+- backend/app/api/routes/people.py:75 `async def list_residents` uses `Session`
+- backend/app/api/routes/people.py:108 `async def list_faculty` uses `Session`
+- backend/app/api/routes/people.py:141 `async def get_person` uses `Session`
+- backend/app/api/routes/people.py:177 `async def create_person` uses `Session`
+- backend/app/api/routes/people.py:208 `async def update_person` uses `Session`
+- backend/app/api/routes/people.py:236 `async def delete_person` uses `Session`
+- backend/app/api/routes/people.py:268 `async def get_person_credential_summary` uses `Session`
+- backend/app/api/routes/people.py:295 `async def batch_create_people` uses `Session`
+- backend/app/api/routes/people.py:339 `async def batch_update_people` uses `Session`
+- backend/app/api/routes/people.py:388 `async def batch_delete_people` uses `Session`
+- backend/app/api/routes/portal.py:154 `async def get_my_schedule` uses `Session`
+- backend/app/api/routes/portal.py:284 `async def get_my_swaps` uses `Session`
+- backend/app/api/routes/portal.py:398 `async def create_swap_request` uses `Session`
+- backend/app/api/routes/portal.py:585 `async def respond_to_swap` uses `Session`
+- backend/app/api/routes/portal.py:707 `async def get_my_preferences` uses `Session`
+- backend/app/api/routes/portal.py:828 `async def update_my_preferences` uses `Session`
+- backend/app/api/routes/portal.py:988 `async def get_my_dashboard` uses `Session`
+- backend/app/api/routes/portal.py:1236 `async def get_swap_marketplace` uses `Session`
+- backend/app/api/routes/procedures.py:26 `async def list_procedures` uses `Session`
+- backend/app/api/routes/procedures.py:53 `async def get_categories` uses `Session`
+- backend/app/api/routes/procedures.py:80 `async def create_procedure` uses `Session`
+- backend/app/api/routes/procedures.py:114 `async def deactivate_procedure` uses `Session`
+- backend/app/api/routes/profiling.py:156 `async def start_profiling_session` uses `Session`
+- backend/app/api/routes/profiling.py:211 `async def stop_profiling_session` uses `Session`
+- backend/app/api/routes/proxy_coverage.py:57 `async def get_proxy_coverage` uses `Session`
+- backend/app/api/routes/qubo_templates.py:146 `async def optimize_template_selection` uses `Session`
+- backend/app/api/routes/qubo_templates.py:536 `async def explore_energy_landscape` uses `Session`
+- backend/app/api/routes/qubo_templates.py:594 `async def explore_pareto_frontier` uses `Session`
+- backend/app/api/routes/qubo_templates.py:655 `async def run_benchmark` uses `Session`
+- backend/app/api/routes/rag.py:36 `async def retrieve_documents` uses `Session`
+- backend/app/api/routes/rag.py:89 `async def get_rag_health` uses `Session`
+- backend/app/api/routes/rag.py:128 `async def ingest_document` uses `Session`
+- backend/app/api/routes/rag.py:176 `async def build_context` uses `Session`
+- backend/app/api/routes/rag.py:222 `async def delete_documents_by_type` uses `Session`
+- backend/app/api/routes/rag.py:256 `async def get_rag_stats` uses `Session`
+- backend/app/api/routes/reports.py:34 `async def generate_schedule_report` uses `Session`
+- backend/app/api/routes/reports.py:98 `async def generate_compliance_report` uses `Session`
+- backend/app/api/routes/reports.py:164 `async def generate_analytics_report` uses `Session`
+- backend/app/api/routes/reports.py:230 `async def generate_faculty_summary_report` uses `Session`
+- backend/app/api/routes/reports.py:302 `async def get_block_quality_report` uses `Session`
+- backend/app/api/routes/reports.py:346 `async def get_multi_block_quality_report` uses `Session`
+- backend/app/api/routes/resilience.py:150 `async def persist_health_check` uses `Session`
+- backend/app/api/routes/resilience.py:211 `async def get_system_health` uses `Session`
+- backend/app/api/routes/resilience.py:354 `async def activate_crisis_response` uses `Session`
+- backend/app/api/routes/resilience.py:396 `async def deactivate_crisis_response` uses `Session`
+- backend/app/api/routes/resilience.py:430 `async def list_fallbacks` uses `Session`
+- backend/app/api/routes/resilience.py:480 `async def activate_fallback` uses `Session`
+- backend/app/api/routes/resilience.py:558 `async def deactivate_fallback` uses `Session`
+- backend/app/api/routes/resilience.py:619 `async def get_load_shedding_status` uses `Session`
+- backend/app/api/routes/resilience.py:640 `async def set_load_shedding_level` uses `Session`
+- backend/app/api/routes/resilience.py:716 `async def get_vulnerability_report` uses `Session`
+- backend/app/api/routes/resilience.py:824 `async def get_comprehensive_report` uses `Session`
+- backend/app/api/routes/resilience.py:918 `async def get_health_check_history` uses `Session`
+- backend/app/api/routes/resilience.py:967 `async def get_event_history` uses `Session`
+- backend/app/api/routes/resilience.py:1044 `async def get_mtf_compliance` uses `Session`
+- backend/app/api/routes/resilience.py:1230 `async def get_homeostasis_status` uses `Session`
+- backend/app/api/routes/resilience.py:1317 `async def check_homeostasis` uses `Session`
+- backend/app/api/routes/resilience.py:1390 `async def list_zones` uses `Session`
+- backend/app/api/routes/resilience.py:1429 `async def get_blast_radius_report` uses `Session`
+- backend/app/api/routes/resilience.py:1489 `async def create_zone` uses `Session`
+- backend/app/api/routes/resilience.py:1545 `async def assign_faculty_to_zone` uses `Session`
+- backend/app/api/routes/resilience.py:1568 `async def record_zone_incident` uses `Session`
+- backend/app/api/routes/resilience.py:1614 `async def set_containment_level` uses `Session`
+- backend/app/api/routes/resilience.py:1656 `async def get_equilibrium_report` uses `Session`
+- backend/app/api/routes/resilience.py:1728 `async def apply_stress` uses `Session`
+- backend/app/api/routes/resilience.py:1790 `async def resolve_stress` uses `Session`
+- backend/app/api/routes/resilience.py:1806 `async def initiate_compensation` uses `Session`
+- backend/app/api/routes/resilience.py:1871 `async def predict_stress_response` uses `Session`
+- backend/app/api/routes/resilience.py:1930 `async def calculate_equilibrium_shift` uses `Session`
+- backend/app/api/routes/resilience.py:1976 `async def get_tier2_status` uses `Session`
+- backend/app/api/routes/resilience.py:2025 `async def start_cognitive_session` uses `Session`
+- backend/app/api/routes/resilience.py:2051 `async def end_cognitive_session` uses `Session`
+- backend/app/api/routes/resilience.py:2067 `async def get_cognitive_session_status` uses `Session`
+- backend/app/api/routes/resilience.py:2097 `async def create_decision` uses `Session`
+- backend/app/api/routes/resilience.py:2167 `async def resolve_decision` uses `Session`
+- backend/app/api/routes/resilience.py:2193 `async def get_decision_queue` uses `Session`
+- backend/app/api/routes/resilience.py:2222 `async def get_prioritized_decisions` uses `Session`
+- backend/app/api/routes/resilience.py:2247 `async def analyze_schedule_cognitive_load` uses `Session`
+- backend/app/api/routes/resilience.py:2268 `async def record_preference` uses `Session`
+- backend/app/api/routes/resilience.py:2316 `async def record_behavioral_signal` uses `Session`
+- backend/app/api/routes/resilience.py:2360 `async def get_collective_preference` uses `Session`
+- backend/app/api/routes/resilience.py:2393 `async def get_faculty_preferences` uses `Session`
+- backend/app/api/routes/resilience.py:2434 `async def get_swap_network` uses `Session`
+- backend/app/api/routes/resilience.py:2458 `async def suggest_assignments` uses `Session`
+- backend/app/api/routes/resilience.py:2482 `async def get_stigmergy_status` uses `Session`
+- backend/app/api/routes/resilience.py:2505 `async def detect_preference_patterns` uses `Session`
+- backend/app/api/routes/resilience.py:2519 `async def evaporate_trails` uses `Session`
+- backend/app/api/routes/resilience.py:2537 `async def analyze_hubs` uses `Session`
+- backend/app/api/routes/resilience.py:2632 `async def get_top_hubs` uses `Session`
+- backend/app/api/routes/resilience.py:2656 `async def get_hub_profile` uses `Session`
+- backend/app/api/routes/resilience.py:2687 `async def get_cross_training_recommendations` uses `Session`
+- backend/app/api/routes/resilience.py:2719 `async def create_hub_protection_plan` uses `Session`
+- backend/app/api/routes/resilience.py:2762 `async def get_hub_distribution_report` uses `Session`
+- backend/app/api/routes/resilience.py:2790 `async def get_hub_status` uses `Session`
+- backend/app/api/routes/resilience.py:2806 `async def get_tier3_status` uses `Session`
+- backend/app/api/routes/resilience.py:2826 `async def calculate_defense_level` uses `Session`
+- backend/app/api/routes/resilience.py:2908 `async def check_utilization_threshold` uses `Session`
+- backend/app/api/routes/resilience.py:3004 `async def calculate_burnout_rt` uses `Session`
+- backend/app/api/routes/resilience.py:3084 `async def get_circuit_breakers_status` uses `Session`
+- backend/app/api/routes/resilience.py:3172 `async def get_circuit_breakers_health` uses `Session`
+- backend/app/api/routes/rotation_templates.py:72 `async def list_rotation_templates` uses `Session`
+- backend/app/api/routes/rotation_templates.py:114 `async def create_rotation_template` uses `Session`
+- backend/app/api/routes/rotation_templates.py:193 `async def batch_update_rotation_templates` uses `Session`
+- backend/app/api/routes/rotation_templates.py:272 `async def batch_create_rotation_templates` uses `Session`
+- backend/app/api/routes/rotation_templates.py:340 `async def check_batch_conflicts` uses `Session`
+- backend/app/api/routes/rotation_templates.py:372 `async def export_rotation_templates` uses `Session`
+- backend/app/api/routes/rotation_templates.py:414 `async def batch_archive_rotation_templates` uses `Session`
+- backend/app/api/routes/rotation_templates.py:479 `async def batch_restore_rotation_templates` uses `Session`
+- backend/app/api/routes/rotation_templates.py:532 `async def batch_update_patterns` uses `Session`
+- backend/app/api/routes/rotation_templates.py:626 `async def batch_apply_preferences` uses `Session`
+- backend/app/api/routes/rotation_templates.py:702 `async def get_rotation_template` uses `Session`
+- backend/app/api/routes/rotation_templates.py:752 `async def restore_rotation_template` uses `Session`
+- backend/app/api/routes/rotation_templates.py:787 `async def get_rotation_template_history` uses `Session`
+- backend/app/api/routes/rotation_templates.py:859 `async def update_rotation_template` uses `Session`
+- backend/app/api/routes/rotation_templates.py:882 `async def delete_rotation_template` uses `Session`
+- backend/app/api/routes/rotation_templates.py:934 `async def replace_weekly_patterns` uses `Session`
+- backend/app/api/routes/rotation_templates.py:980 `async def get_halfday_requirements` uses `Session`
+- backend/app/api/routes/rotation_templates.py:1015 `async def upsert_halfday_requirements` uses `Session`
+- backend/app/api/routes/rotation_templates.py:1068 `async def get_rotation_preferences` uses `Session`
+- backend/app/api/routes/rotation_templates.py:1102 `async def replace_rotation_preferences` uses `Session`
+- backend/app/api/routes/rotation_templates.py:1154 `async def get_activity_requirements` uses `Session`
+- backend/app/api/routes/rotation_templates.py:1190 `async def replace_activity_requirements` uses `Session`
+- backend/app/api/routes/rotation_templates.py:1242 `async def add_activity_requirement` uses `Session`
+- backend/app/api/routes/rotation_templates.py:1281 `async def delete_activity_requirement` uses `Session`
+- backend/app/api/routes/schedule.py:186 `async def generate_schedule` uses `Session`
+- backend/app/api/routes/schedule.py:477 `async def validate_schedule` uses `Session`
+- backend/app/api/routes/schedule.py:507 `async def handle_emergency_coverage` uses `Session`
+- backend/app/api/routes/schedule.py:550 `async def analyze_imported_schedules` uses `Session`
+- backend/app/api/routes/schedule.py:658 `async def analyze_single_file` uses `Session`
+- backend/app/api/routes/schedule.py:783 `async def parse_block_schedule_endpoint` uses `Session`
+- backend/app/api/routes/schedule.py:924 `async def find_swap_candidates` uses `Session`
+- backend/app/api/routes/schedule.py:1312 `async def generate_faculty_outpatient` uses `Session`
+- backend/app/api/routes/schedule.py:1345 `async def list_schedule_runs` uses `Session`
+- backend/app/api/routes/schedule.py:1381 `async def get_schedule_run` uses `Session`
+- backend/app/api/routes/schedule.py:1466 `async def list_rollback_points` uses `Session`
+- backend/app/api/routes/schedule.py:1507 `async def validate_configuration` uses `Session`
+- backend/app/api/routes/schedule.py:1545 `async def get_schedule_metric_trend` uses `Session`
+- backend/app/api/routes/schedule.py:1598 `async def queue_experiment_batch` uses `Session`
+- backend/app/api/routes/schedule.py:1645 `async def cancel_experiment_run` uses `Session`
+- backend/app/api/routes/schedule_drafts.py:65 `async def create_draft` uses `Session`
+- backend/app/api/routes/schedule_drafts.py:112 `async def list_drafts` uses `Session`
+- backend/app/api/routes/schedule_drafts.py:207 `async def get_draft` uses `Session`
+- backend/app/api/routes/schedule_drafts.py:277 `async def preview_draft` uses `Session`
+- backend/app/api/routes/schedule_drafts.py:349 `async def add_assignment` uses `Session`
+- backend/app/api/routes/schedule_drafts.py:392 `async def acknowledge_flag` uses `Session`
+- backend/app/api/routes/schedule_drafts.py:431 `async def bulk_acknowledge_flags` uses `Session`
+- backend/app/api/routes/schedule_drafts.py:471 `async def publish_draft` uses `Session`
+- backend/app/api/routes/schedule_drafts.py:541 `async def rollback_draft` uses `Session`
+- backend/app/api/routes/schedule_drafts.py:588 `async def discard_draft` uses `Session`
+- backend/app/api/routes/scheduler.py:48 `async def create_job` uses `Session`
+- backend/app/api/routes/scheduler.py:112 `async def list_jobs` uses `Session`
+- backend/app/api/routes/scheduler.py:144 `async def get_job` uses `Session`
+- backend/app/api/routes/scheduler.py:174 `async def update_job` uses `Session`
+- backend/app/api/routes/scheduler.py:233 `async def delete_job` uses `Session`
+- backend/app/api/routes/scheduler.py:361 `async def get_job_executions` uses `Session`
+- backend/app/api/routes/scheduler.py:414 `async def get_all_executions` uses `Session`
+- backend/app/api/routes/scheduler.py:458 `async def get_job_statistics` uses `Session`
+- backend/app/api/routes/scheduler_ops.py:566 `async def get_situation_report` uses `Session`
+- backend/app/api/routes/scheduler_ops.py:642 `async def initiate_fix_it_mode` uses `Session`
+- backend/app/api/routes/scheduler_ops.py:796 `async def approve_task` uses `Session`
+- backend/app/api/routes/scheduler_ops.py:930 `async def generate_approval_token` uses `Session`
+- backend/app/api/routes/scheduler_ops.py:991 `async def abort_solver_run` uses `Session`
+- backend/app/api/routes/scheduler_ops.py:1080 `async def get_solver_progress` uses `Session`
+- backend/app/api/routes/scheduler_ops.py:1125 `async def get_active_solvers` uses `Session`
+- backend/app/api/routes/scheduling_catalyst.py:136 `async def detect_barriers` uses `Session`
+- backend/app/api/routes/scheduling_catalyst.py:183 `async def optimize_pathway` uses `Session`
+- backend/app/api/routes/scheduling_catalyst.py:218 `async def analyze_swap_barriers` uses `Session`
+- backend/app/api/routes/scheduling_catalyst.py:288 `async def get_catalyst_capacity` uses `Session`
+- backend/app/api/routes/scheduling_catalyst.py:346 `async def optimize_batch` uses `Session`
+- backend/app/api/routes/search.py:37 `async def search` uses `Session`
+- backend/app/api/routes/search.py:83 `async def quick_search` uses `Session`
+- backend/app/api/routes/search.py:118 `async def search_people` uses `Session`
+- backend/app/api/routes/search.py:160 `async def search_rotations` uses `Session`
+- backend/app/api/routes/search.py:198 `async def search_procedures` uses `Session`
+- backend/app/api/routes/search.py:235 `async def global_search` uses `Session`
+- backend/app/api/routes/search.py:274 `async def get_suggestions` uses `Session`
+- backend/app/api/routes/search.py:306 `async def get_suggestions_get` uses `Session`
+- backend/app/api/routes/settings.py:36 `async def get_or_create_settings` uses `Session`
+- backend/app/api/routes/settings.py:96 `async def patch_settings` uses `Session`
+- backend/app/api/routes/settings.py:137 `async def reset_settings` uses `Session`
+- backend/app/api/routes/sso.py:101 `async def get_or_create_user` uses `Session`
+- backend/app/api/routes/sso.py:294 `async def saml_acs` uses `Session`
+- backend/app/api/routes/sso.py:420 `async def oauth2_callback` uses `Session`
+- backend/app/api/routes/swap.py:80 `async def request_swap` uses `Session`
+- backend/app/api/routes/swap.py:157 `async def approve_swap` uses `Session`
+- backend/app/api/routes/swap.py:226 `async def execute_swap_by_id` uses `Session`
+- backend/app/api/routes/swap.py:277 `async def execute_swap` uses `Session`
+- backend/app/api/routes/swap.py:392 `async def validate_swap` uses `Session`
+- backend/app/api/routes/swap.py:420 `async def get_swap_history` uses `Session`
+- backend/app/api/routes/swap.py:517 `async def get_swap` uses `Session`
+- backend/app/api/routes/swap.py:571 `async def rollback_swap` uses `Session`
+- backend/app/api/routes/unified_heatmap.py:32 `async def get_heatmap_data` uses `Session`
+- backend/app/api/routes/unified_heatmap.py:91 `async def post_heatmap_data` uses `Session`
+- backend/app/api/routes/unified_heatmap.py:140 `async def render_heatmap` uses `Session`
+- backend/app/api/routes/unified_heatmap.py:199 `async def post_render_heatmap` uses `Session`
+- backend/app/api/routes/unified_heatmap.py:248 `async def export_heatmap` uses `Session`
+- backend/app/api/routes/unified_heatmap.py:336 `async def post_export_heatmap` uses `Session`
+- backend/app/api/routes/unified_heatmap.py:416 `async def get_person_coverage_data` uses `Session`
+- backend/app/api/routes/unified_heatmap.py:463 `async def post_person_coverage_data` uses `Session`
+- backend/app/api/routes/unified_heatmap.py:504 `async def get_weekly_fmit_data` uses `Session`
+- backend/app/api/routes/unified_heatmap.py:547 `async def post_weekly_fmit_data` uses `Session`
+- backend/app/api/routes/visualization.py:32 `async def get_unified_heatmap` uses `Session`
+- backend/app/api/routes/visualization.py:88 `async def get_unified_heatmap_with_time_range` uses `Session`
+- backend/app/api/routes/visualization.py:148 `async def get_heatmap_image` uses `Session`
+- backend/app/api/routes/visualization.py:242 `async def get_coverage_heatmap` uses `Session`
+- backend/app/api/routes/visualization.py:273 `async def get_workload_heatmap` uses `Session`
+- backend/app/api/routes/visualization.py:315 `async def export_heatmap` uses `Session`
+- backend/app/api/routes/visualization.py:417 `async def get_3d_voxel_grid` uses `Session`
+- backend/app/api/routes/visualization.py:603 `async def get_3d_conflicts` uses `Session`
+- backend/app/api/routes/visualization.py:654 `async def get_3d_coverage_gaps` uses `Session`
+- backend/app/api/routes/webhooks.py:51 `async def create_webhook` uses `Session`
+- backend/app/api/routes/webhooks.py:91 `async def list_webhooks` uses `Session`
+- backend/app/api/routes/webhooks.py:122 `async def get_webhook` uses `Session`
+- backend/app/api/routes/webhooks.py:176 `async def delete_webhook` uses `Session`
+- backend/app/api/routes/webhooks.py:223 `async def resume_webhook` uses `Session`
+- backend/app/api/routes/webhooks.py:250 `async def trigger_event` uses `Session`
+- backend/app/api/routes/webhooks.py:283 `async def list_deliveries` uses `Session`
+- backend/app/api/routes/webhooks.py:323 `async def get_delivery` uses `Session`
+- backend/app/api/routes/webhooks.py:375 `async def list_dead_letters` uses `Session`
+- backend/app/api/routes/webhooks.py:413 `async def resolve_dead_letter` uses `Session`
+- backend/app/api/routes/ws.py:19 `async def get_websocket_user` uses `Session`
+- backend/app/api/routes/ws.py:75 `async def websocket_endpoint` uses `Session`
+
+## db.query usage inside async functions
+- backend/app/api/routes/analytics.py:114 `async def get_current_metrics` -> `db.query(ScheduleRun)`
+- backend/app/api/routes/analytics.py:215 `async def get_metrics_history` -> `db.query(ScheduleRun)`
+- backend/app/api/routes/analytics.py:344 `async def get_fairness_trend` -> `db.query(ScheduleRun)`
+- backend/app/api/routes/analytics.py:638 `async def what_if_analysis` -> `db.query(ScheduleRun)`
+- backend/app/api/routes/analytics.py:672 `async def what_if_analysis` -> `db.query(Assignment)`
+- backend/app/api/routes/analytics.py:806 `async def export_for_research` -> `db.query(Block)`
+- backend/app/api/routes/analytics.py:815 `async def export_for_research` -> `db.query(Assignment)`
+- backend/app/api/routes/analytics.py:832 `async def export_for_research` -> `db.query(Person).filter(Person.id.in_(resident_ids)).limit(100).all()`
+- backend/app/api/routes/analytics.py:910 `async def export_for_research` -> `db.query(ScheduleRun)`
+- backend/app/api/routes/approval_chain.py:255 `async def list_approval_records` -> `db.query(ApprovalRecord)`
+- backend/app/api/routes/approval_chain.py:267 `async def list_approval_records` -> `total_query = db.query(func.count(ApprovalRecord.id)).filter(`
+- backend/app/api/routes/approval_chain.py:324 `async def get_approval_record` -> `record = db.query(ApprovalRecord).filter(ApprovalRecord.id == record_id).first()`
+- backend/app/api/routes/claude_chat.py:351 `async def execute_tool` -> `db.query(Block)`
+- backend/app/api/routes/claude_chat.py:356 `async def execute_tool` -> `db.query(Assignment)`
+- backend/app/api/routes/daily_manifest.py:129 `async def get_daily_manifest` -> `db.query(Assignment)`
+- backend/app/api/routes/daily_manifest.py:240 `async def get_daily_manifest_v2` -> `db.query(Assignment)`
+- backend/app/api/routes/daily_manifest.py:255 `async def get_daily_manifest_v2` -> `db.query(CallAssignment)`
+- backend/app/api/routes/daily_manifest.py:263 `async def get_daily_manifest_v2` -> `db.query(CallOverride)`
+- backend/app/api/routes/daily_manifest.py:291 `async def get_daily_manifest_v2` -> `db.query(Absence)`
+- backend/app/api/routes/export.py:71 `async def export_people` -> `people = db.query(Person).order_by(Person.name).all()`
+- backend/app/api/routes/export.py:108 `async def export_absences` -> `query = db.query(Absence).options(joinedload(Absence.person))`
+- backend/app/api/routes/export.py:163 `async def export_schedule` -> `db.query(Assignment)`
+- backend/app/api/routes/fmit_health.py:551 `async def get_fmit_health` -> `db.query(SwapRecord)`
+- backend/app/api/routes/fmit_health.py:564 `async def get_fmit_health` -> `db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.PENDING).count()`
+- backend/app/api/routes/fmit_health.py:568 `async def get_fmit_health` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:600 `async def get_fmit_health` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:644 `async def get_fmit_detailed_status` -> `db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.PENDING).count()`
+- backend/app/api/routes/fmit_health.py:647 `async def get_fmit_detailed_status` -> `db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.APPROVED).count()`
+- backend/app/api/routes/fmit_health.py:650 `async def get_fmit_detailed_status` -> `db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.EXECUTED).count()`
+- backend/app/api/routes/fmit_health.py:653 `async def get_fmit_detailed_status` -> `db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.REJECTED).count()`
+- backend/app/api/routes/fmit_health.py:656 `async def get_fmit_detailed_status` -> `db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.CANCELLED).count()`
+- backend/app/api/routes/fmit_health.py:659 `async def get_fmit_detailed_status` -> `db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.ROLLED_BACK).count()`
+- backend/app/api/routes/fmit_health.py:664 `async def get_fmit_detailed_status` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:673 `async def get_fmit_detailed_status` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:678 `async def get_fmit_detailed_status` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:683 `async def get_fmit_detailed_status` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:690 `async def get_fmit_detailed_status` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:702 `async def get_fmit_detailed_status` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:714 `async def get_fmit_detailed_status` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:728 `async def get_fmit_detailed_status` -> `db.query(SwapRecord).order_by(SwapRecord.requested_at.desc()).limit(10).all()`
+- backend/app/api/routes/fmit_health.py:744 `async def get_fmit_detailed_status` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:815 `async def get_fmit_metrics` -> `db.query(SwapRecord)`
+- backend/app/api/routes/fmit_health.py:826 `async def get_fmit_metrics` -> `db.query(SwapRecord).filter(SwapRecord.status == SwapStatus.PENDING).count()`
+- backend/app/api/routes/fmit_health.py:834 `async def get_fmit_metrics` -> `db.query(SwapRecord)`
+- backend/app/api/routes/fmit_health.py:848 `async def get_fmit_metrics` -> `db.query(SwapRecord)`
+- backend/app/api/routes/fmit_health.py:865 `async def get_fmit_metrics` -> `db.query(SwapRecord)`
+- backend/app/api/routes/fmit_health.py:888 `async def get_fmit_metrics` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:899 `async def get_fmit_metrics` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:905 `async def get_fmit_metrics` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:921 `async def get_fmit_metrics` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:935 `async def get_fmit_metrics` -> `db.query(SwapRecord)`
+- backend/app/api/routes/fmit_health.py:947 `async def get_fmit_metrics` -> `db.query(SwapRecord)`
+- backend/app/api/routes/fmit_health.py:1036 `async def get_coverage_report` -> `db.query(Block)`
+- backend/app/api/routes/fmit_health.py:1058 `async def get_coverage_report` -> `db.query(Assignment)`
+- backend/app/api/routes/fmit_health.py:1237 `async def get_coverage_suggestions` -> `db.query(Person)`
+- backend/app/api/routes/fmit_health.py:1363 `async def get_coverage_forecast` -> `db.query(Block)`
+- backend/app/api/routes/fmit_health.py:1381 `async def get_coverage_forecast` -> `db.query(SwapRecord)`
+- backend/app/api/routes/fmit_health.py:1456 `async def get_alert_summary` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:1469 `async def get_alert_summary` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:1482 `async def get_alert_summary` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:1500 `async def get_alert_summary` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:1516 `async def get_alert_summary` -> `count = db.query(ConflictAlert).filter(ConflictAlert.status == status).count()`
+- backend/app/api/routes/fmit_health.py:1521 `async def get_alert_summary` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_health.py:1538 `async def get_alert_summary` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/fmit_timeline.py:451 `async def get_weekly_view` -> `db.query(Assignment)`
+- backend/app/api/routes/fmit_timeline.py:495 `async def get_weekly_view` -> `db.query(Block)`
+- backend/app/api/routes/fmit_timeline.py:510 `async def get_weekly_view` -> `db.query(Assignment)`
+- backend/app/api/routes/fmit_timeline.py:517 `async def get_weekly_view` -> `db.query(Assignment)`
+- backend/app/api/routes/fmit_timeline.py:593 `async def get_gantt_data` -> `db.query(Person)`
+- backend/app/api/routes/leave.py:137 `async def list_leave` -> `query = db.query(Absence)`
+- backend/app/api/routes/leave.py:195 `async def get_leave_calendar` -> `db.query(Absence)`
+- backend/app/api/routes/leave.py:329 `async def request_leave` -> `db.query(Absence)`
+- backend/app/api/routes/leave.py:537 `async def bulk_import_leave` -> `db.query(Absence)`
+- backend/app/api/routes/me_dashboard.py:109 `async def _get_person_for_user` -> `db.query(Assignment)`
+- backend/app/api/routes/me_dashboard.py:152 `async def _get_person_for_user` -> `db.query(SwapRecord)`
+- backend/app/api/routes/me_dashboard.py:194 `async def _get_person_for_user` -> `db.query(Absence)`
+- backend/app/api/routes/portal.py:198 `async def get_my_schedule` -> `db.query(Assignment)`
+- backend/app/api/routes/portal.py:217 `async def get_my_schedule` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:236 `async def get_my_schedule` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/portal.py:267 `async def get_my_schedule` -> `db.query(FacultyPreference)`
+- backend/app/api/routes/portal.py:322 `async def get_my_swaps` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:336 `async def get_my_swaps` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:351 `async def get_my_swaps` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:470 `async def create_swap_request` -> `db.query(Assignment)`
+- backend/app/api/routes/portal.py:494 `async def create_swap_request` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:547 `async def create_swap_request` -> `db.query(FacultyPreference)`
+- backend/app/api/routes/portal.py:633 `async def respond_to_swap` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:747 `async def get_my_preferences` -> `db.query(FacultyPreference)`
+- backend/app/api/routes/portal.py:869 `async def update_my_preferences` -> `db.query(FacultyPreference)`
+- backend/app/api/routes/portal.py:1037 `async def get_my_dashboard` -> `db.query(Assignment)`
+- backend/app/api/routes/portal.py:1074 `async def get_my_dashboard` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/portal.py:1092 `async def get_my_dashboard` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:1117 `async def get_my_dashboard` -> `db.query(FacultyPreference)`
+- backend/app/api/routes/portal.py:1125 `async def get_my_dashboard` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:1135 `async def get_my_dashboard` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/portal.py:1146 `async def get_my_dashboard` -> `db.query(ConflictAlert)`
+- backend/app/api/routes/portal.py:1187 `async def get_my_dashboard` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:1289 `async def get_swap_marketplace` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:1304 `async def get_swap_marketplace` -> `db.query(SwapRecord)`
+- backend/app/api/routes/portal.py:1322 `async def get_swap_marketplace` -> `db.query(Assignment)`
+- backend/app/api/routes/portal.py:1389 `async def get_swap_marketplace` -> `db.query(Person)`
+- backend/app/api/routes/portal.py:1422 `async def get_swap_marketplace` -> `db.query(Person)`
+- backend/app/api/routes/proxy_coverage.py:93 `async def get_proxy_coverage` -> `db.query(SwapRecord)`
+- backend/app/api/routes/proxy_coverage.py:204 `async def get_proxy_coverage` -> `db.query(Assignment)`
+- backend/app/api/routes/proxy_coverage.py:268 `async def get_proxy_coverage` -> `db.query(CallAssignment)`
+- backend/app/api/routes/proxy_coverage.py:281 `async def get_proxy_coverage` -> `db.query(CallAssignment)`
+- backend/app/api/routes/proxy_coverage.py:313 `async def get_proxy_coverage` -> `db.query(Absence)`
+- backend/app/api/routes/resilience.py:261 `async def get_system_health` -> `db.query(Person).filter(Person.type == "faculty").order_by(Person.id)`
+- backend/app/api/routes/resilience.py:268 `async def get_system_health` -> `db.query(Block)`
+- backend/app/api/routes/resilience.py:277 `async def get_system_health` -> `db.query(Assignment)`
+- backend/app/api/routes/resilience.py:588 `async def deactivate_fallback` -> `db.query(FallbackActivation)`
+- backend/app/api/routes/resilience.py:863 `async def get_comprehensive_report` -> `db.query(Person).filter(Person.type == "faculty").order_by(Person.id)`
+- backend/app/api/routes/resilience.py:870 `async def get_comprehensive_report` -> `db.query(Block)`
+- backend/app/api/routes/resilience.py:879 `async def get_comprehensive_report` -> `db.query(Assignment)`
+- backend/app/api/routes/resilience.py:929 `async def get_health_check_history` -> `query = db.query(ResilienceHealthCheck)`
+- backend/app/api/routes/resilience.py:978 `async def get_event_history` -> `query = db.query(ResilienceEvent)`
+- backend/app/api/routes/resilience.py:1086 `async def get_mtf_compliance` -> `db.query(Assignment)`
+- backend/app/api/routes/resilience.py:2571 `async def analyze_hubs` -> `db.query(Person).filter(Person.type == "faculty").order_by(Person.id)`
+- backend/app/api/routes/resilience.py:2578 `async def analyze_hubs` -> `db.query(Assignment)`
+- backend/app/api/routes/schedule.py:320 `async def generate_schedule` -> `db.query(ScheduleRun)`
+- backend/app/api/routes/schedule.py:1422 `async def get_schedule_run` -> `db.query(Assignment)`
+- backend/app/api/routes/schedule_drafts.py:144 `async def list_drafts` -> `total_query = db.query(ScheduleDraft)`
+- backend/app/api/routes/schedule_drafts.py:213 `async def get_draft` -> `draft = db.query(ScheduleDraft).filter(ScheduleDraft.id == draft_id).first()`
+- backend/app/api/routes/scheduler.py:393 `async def get_job_executions` -> `db.query(func.count(JobExecution.id))`
+- backend/app/api/routes/scheduler.py:438 `async def get_all_executions` -> `total = db.query(func.count(JobExecution.id)).scalar() or 0`
+- backend/app/api/routes/swap.py:120 `async def request_swap` -> `db.query(SwapRecord)`
+- backend/app/api/routes/swap.py:172 `async def approve_swap` -> `swap = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()`
+- backend/app/api/routes/swap.py:250 `async def execute_swap_by_id` -> `swap = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()`
+
+## db.commit/db.execute without await inside async functions
+- backend/app/api/routes/admin_users.py:213 `async def list_users` -> `total = (db.execute(count_query)).scalar() or 0`
+- backend/app/api/routes/admin_users.py:221 `async def list_users` -> `result = db.execute(query)`
+- backend/app/api/routes/admin_users.py:251 `async def create_user` -> `db.execute(select(User).where(User.email == user_data.email))`
+- backend/app/api/routes/admin_users.py:266 `async def create_user` -> `db.execute(select(User).where(User.username == username))`
+- backend/app/api/routes/admin_users.py:305 `async def create_user` -> `db.commit()`
+- backend/app/api/routes/admin_users.py:359 `async def update_user` -> `user = (db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()`
+- backend/app/api/routes/admin_users.py:392 `async def update_user` -> `db.execute(`
+- backend/app/api/routes/admin_users.py:437 `async def update_user` -> `db.commit()`
+- backend/app/api/routes/admin_users.py:460 `async def delete_user` -> `user = (db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()`
+- backend/app/api/routes/admin_users.py:486 `async def delete_user` -> `db.commit()`
+- backend/app/api/routes/admin_users.py:508 `async def lock_user_account` -> `user = (db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()`
+- backend/app/api/routes/admin_users.py:546 `async def lock_user_account` -> `db.commit()`
+- backend/app/api/routes/admin_users.py:581 `async def lock_user_account` -> `db.commit()`
+- backend/app/api/routes/admin_users.py:615 `async def resend_invite` -> `user = (db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()`
+- backend/app/api/routes/admin_users.py:649 `async def resend_invite` -> `db.commit()`
+- backend/app/api/routes/admin_users.py:732 `async def get_activity_log` -> `total = (db.execute(count_query)).scalar() or 0`
+- backend/app/api/routes/admin_users.py:740 `async def get_activity_log` -> `result = db.execute(query)`
+- backend/app/api/routes/admin_users.py:750 `async def get_activity_log` -> `db.execute(select(User).where(User.id == log.user_id))`
+- backend/app/api/routes/admin_users.py:760 `async def get_activity_log` -> `db.execute(select(User).where(User.id == uuid.UUID(log.target_id)))`
+- backend/app/api/routes/admin_users.py:821 `async def bulk_user_action` -> `user = (db.execute(select(User).where(User.id == uid))).scalar_one_or_none()`
+- backend/app/api/routes/admin_users.py:866 `async def bulk_user_action` -> `db.commit()`
+- backend/app/api/routes/analytics.py:492 `async def compare_versions` -> `db.execute(select(ScheduleRun).where(ScheduleRun.id == version_a))`
+- backend/app/api/routes/analytics.py:495 `async def compare_versions` -> `db.execute(select(ScheduleRun).where(ScheduleRun.id == version_b))`
+- backend/app/api/routes/analytics.py:665 `async def what_if_analysis` -> `db.execute(select(Person).where(Person.id == change.person_id))`
+- backend/app/api/routes/approval_chain.py:188 `async def create_approval_record` -> `db.commit()`
+- backend/app/api/routes/approval_chain.py:380 `async def create_daily_seal` -> `db.commit()`
+- backend/app/api/routes/auth.py:399 `async def list_users` -> `user_count = db.execute(select(User))`
+- backend/app/api/routes/auth.py:422 `async def list_users` -> `db.commit()`
+- backend/app/api/routes/backup.py:157 `async def create_snapshot` -> `count_result = db.execute(`
+- backend/app/api/routes/backup.py:419 `async def restore_snapshot` -> `db.execute(text(f"TRUNCATE TABLE {table_name} CASCADE"))  # nosec B608`
+- backend/app/api/routes/backup.py:420 `async def restore_snapshot` -> `db.commit()`
+- backend/app/api/routes/backup.py:455 `async def restore_snapshot` -> `row_count = db.execute(`
+- backend/app/api/routes/claude_chat.py:346 `async def execute_tool` -> `(db.execute(select(Person).where(Person.type == "faculty")))`
+- backend/app/api/routes/claude_chat.py:452 `async def execute_tool` -> `db.execute("SELECT 1")`
+- backend/app/api/routes/conflict_resolution.py:137 `async def list_conflicts` -> `total_result = db.execute(count_query)`
+- backend/app/api/routes/conflict_resolution.py:163 `async def list_conflicts` -> `result = db.execute(query)`
+- backend/app/api/routes/db_admin.py:203 `async def get_database_health` -> `db_size_mb = db.execute(db_size_query).scalar()`
+- backend/app/api/routes/db_admin.py:211 `async def get_database_health` -> `active_connections = db.execute(active_conn_query).scalar()`
+- backend/app/api/routes/db_admin.py:220 `async def get_database_health` -> `total_tables = db.execute(table_count_query).scalar()`
+- backend/app/api/routes/db_admin.py:228 `async def get_database_health` -> `total_indexes = db.execute(index_count_query).scalar()`
+- backend/app/api/routes/db_admin.py:584 `async def vacuum_table` -> `exists = db.execute(check_query, {"table_name": table_name}).scalar()`
+- backend/app/api/routes/db_admin.py:593 `async def vacuum_table` -> `db.commit()`
+- backend/app/api/routes/db_admin.py:603 `async def vacuum_table` -> `connection.execute(vacuum_query)`
+- backend/app/api/routes/exotic_resilience.py:686 `async def analyze_schedule_entropy` -> `result = db.execute(query)`
+- backend/app/api/routes/exotic_resilience.py:743 `async def detect_phase_transition` -> `result = db.execute(query)`
+- backend/app/api/routes/exotic_resilience.py:822 `async def calculate_free_energy_endpoint` -> `result = db.execute(query)`
+- backend/app/api/routes/exotic_resilience.py:877 `async def analyze_energy_landscape_endpoint` -> `result = db.execute(query)`
+- backend/app/api/routes/exotic_resilience.py:939 `async def assess_immune_response` -> `result = db.execute(query)`
+- backend/app/api/routes/exotic_resilience.py:1123 `async def calculate_rigidity` -> `result = db.execute(query)`
+- backend/app/api/routes/exotic_resilience.py:1130 `async def calculate_rigidity` -> `result = db.execute(query)`
+- backend/app/api/routes/exotic_resilience.py:1190 `async def detect_subharmonics` -> `result = db.execute(query)`
+- backend/app/api/routes/exotic_resilience.py:1857 `async def get_unified_critical_index` -> `faculty_result = db.execute(faculty_query)`
+- backend/app/api/routes/exotic_resilience.py:1880 `async def get_unified_critical_index` -> `assignment_result = db.execute(assignment_query)`
+- backend/app/api/routes/exotic_resilience.py:2034 `async def calculate_recovery_distance` -> `assignment_result = db.execute(assignment_query)`
+- backend/app/api/routes/exotic_resilience.py:2039 `async def calculate_recovery_distance` -> `block_result = db.execute(block_query)`
+- backend/app/api/routes/exotic_resilience.py:2044 `async def calculate_recovery_distance` -> `people_result = db.execute(people_query)`
+- backend/app/api/routes/exotic_resilience.py:2196 `async def assess_creep_fatigue` -> `faculty_result = db.execute(faculty_query)`
+- backend/app/api/routes/exotic_resilience.py:2220 `async def assess_creep_fatigue` -> `assignment_result = db.execute(assignment_query)`
+- backend/app/api/routes/exotic_resilience.py:2531 `async def calculate_hopfield_energy` -> `result = db.execute(count_query)`
+- backend/app/api/routes/exports.py:271 `async def list_job_executions` -> `total_result = db.execute(count_query)`
+- backend/app/api/routes/exports.py:277 `async def list_job_executions` -> `result = db.execute(query)`
+- backend/app/api/routes/exports.py:306 `async def get_execution` -> `result = db.execute(`
+- backend/app/api/routes/exports.py:443 `async def get_export_stats` -> `total_jobs_result = db.execute(select(func.count()).select_from(ExportJob))`
+- backend/app/api/routes/exports.py:447 `async def get_export_stats` -> `active_jobs_result = db.execute(`
+- backend/app/api/routes/exports.py:455 `async def get_export_stats` -> `scheduled_jobs_result = db.execute(`
+- backend/app/api/routes/exports.py:463 `async def get_export_stats` -> `total_executions_result = db.execute(`
+- backend/app/api/routes/exports.py:469 `async def get_export_stats` -> `successful_result = db.execute(`
+- backend/app/api/routes/exports.py:477 `async def get_export_stats` -> `failed_result = db.execute(`
+- backend/app/api/routes/exports.py:485 `async def get_export_stats` -> `avg_runtime_result = db.execute(`
+- backend/app/api/routes/exports.py:493 `async def get_export_stats` -> `total_rows_result = db.execute(`
+- backend/app/api/routes/exports.py:500 `async def get_export_stats` -> `total_bytes_result = db.execute(`
+- backend/app/api/routes/features.py:353 `async def _get_flags_by_environment` -> `all_flags_result = db.execute(select(FeatureFlag))`
+- backend/app/api/routes/fmit_assignments.py:64 `async def get_fmit_template` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:86 `async def get_fmit_template` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:123 `async def check_faculty_conflicts` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:149 `async def check_faculty_conflicts` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:178 `async def check_faculty_conflicts` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:246 `async def create_fmit_assignment` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:299 `async def create_fmit_assignment` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:321 `async def create_fmit_assignment` -> `db.commit()`
+- backend/app/api/routes/fmit_assignments.py:378 `async def update_fmit_assignment` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:401 `async def update_fmit_assignment` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:436 `async def update_fmit_assignment` -> `db.commit()`
+- backend/app/api/routes/fmit_assignments.py:503 `async def delete_fmit_assignment` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:531 `async def delete_fmit_assignment` -> `db.commit()`
+- backend/app/api/routes/fmit_assignments.py:587 `async def bulk_create_fmit_assignments` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:676 `async def bulk_create_fmit_assignments` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:710 `async def bulk_create_fmit_assignments` -> `db.commit()`
+- backend/app/api/routes/fmit_assignments.py:771 `async def get_year_grid` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:832 `async def get_year_grid` -> `result = db.execute(select(Person).where(Person.type == "faculty"))`
+- backend/app/api/routes/fmit_assignments.py:912 `async def check_conflicts` -> `result = db.execute(`
+- backend/app/api/routes/fmit_assignments.py:942 `async def check_conflicts` -> `result = db.execute(`
+- backend/app/api/routes/fmit_timeline.py:379 `async def get_faculty_timeline` -> `db.execute(select(Person).where(Person.id == faculty_id))`
+- backend/app/api/routes/leave.py:265 `async def create_leave` -> `db.execute(select(Person).where(Person.id == request.faculty_id))`
+- backend/app/api/routes/leave.py:283 `async def create_leave` -> `db.commit()`
+- backend/app/api/routes/leave.py:320 `async def request_leave` -> `db.execute(select(Person).where(Person.id == request.faculty_id))`
+- backend/app/api/routes/leave.py:354 `async def request_leave` -> `db.commit()`
+- backend/app/api/routes/leave.py:383 `async def approve_leave` -> `db.execute(select(Absence).where(Absence.id == leave_id))`
+- backend/app/api/routes/leave.py:403 `async def approve_leave` -> `db.commit()`
+- backend/app/api/routes/leave.py:411 `async def approve_leave` -> `db.commit()`
+- backend/app/api/routes/leave.py:429 `async def update_leave` -> `db.execute(select(Absence).where(Absence.id == leave_id))`
+- backend/app/api/routes/leave.py:448 `async def update_leave` -> `db.commit()`
+- backend/app/api/routes/leave.py:477 `async def delete_leave` -> `db.execute(select(Absence).where(Absence.id == leave_id))`
+- backend/app/api/routes/leave.py:486 `async def delete_leave` -> `db.commit()`
+- backend/app/api/routes/leave.py:563 `async def bulk_import_leave` -> `db.commit()`
+- backend/app/api/routes/me_dashboard.py:59 `async def _get_person_for_user` -> `db.execute(select(Person).where(Person.email == current_user.email))`
+- backend/app/api/routes/portal.py:191 `async def get_my_schedule` -> `db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))`
+- backend/app/api/routes/portal.py:455 `async def create_swap_request` -> `db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))`
+- backend/app/api/routes/portal.py:536 `async def create_swap_request` -> `db.commit()`
+- backend/app/api/routes/portal.py:679 `async def respond_to_swap` -> `db.commit()`
+- backend/app/api/routes/portal.py:696 `async def respond_to_swap` -> `db.commit()`
+- backend/app/api/routes/portal.py:928 `async def update_my_preferences` -> `db.commit()`
+- backend/app/api/routes/portal.py:1025 `async def get_my_dashboard` -> `db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))`
+- backend/app/api/routes/portal.py:1316 `async def get_swap_marketplace` -> `db.execute(select(RotationTemplate).where(RotationTemplate.name == "FMIT"))`
+- backend/app/api/routes/resilience.py:176 `async def persist_health_check` -> `db.commit()`
+- backend/app/api/routes/resilience.py:205 `async def persist_health_check` -> `db.commit()`
+- backend/app/api/routes/resilience.py:545 `async def activate_fallback` -> `db.commit()`
+- backend/app/api/routes/resilience.py:610 `async def deactivate_fallback` -> `db.commit()`
+- backend/app/api/routes/resilience.py:697 `async def set_load_shedding_level` -> `db.commit()`
+- backend/app/api/routes/resilience.py:783 `async def get_vulnerability_report` -> `db.commit()`
+- backend/app/api/routes/resilience.py:1074 `async def get_mtf_compliance` -> `(db.execute(select(Person).where(Person.type == "faculty"))).scalars().all()`
+- backend/app/api/routes/resilience.py:1078 `async def get_mtf_compliance` -> `db.execute(`
+- backend/app/api/routes/rotation_templates.py:105 `async def list_rotation_templates` -> `result = db.execute(query)`
+- backend/app/api/routes/rotation_templates.py:122 `async def create_rotation_template` -> `db.commit()`
+- backend/app/api/routes/rotation_templates.py:709 `async def get_rotation_template` -> `db.execute(select(RotationTemplate).where(RotationTemplate.id == template_id))`
+- backend/app/api/routes/rotation_templates.py:867 `async def update_rotation_template` -> `db.execute(select(RotationTemplate).where(RotationTemplate.id == template_id))`
+- backend/app/api/routes/rotation_templates.py:876 `async def update_rotation_template` -> `db.commit()`
+- backend/app/api/routes/rotation_templates.py:889 `async def delete_rotation_template` -> `db.execute(select(RotationTemplate).where(RotationTemplate.id == template_id))`
+- backend/app/api/routes/rotation_templates.py:895 `async def delete_rotation_template` -> `db.commit()`
+- backend/app/api/routes/rotation_templates.py:1229 `async def replace_activity_requirements` -> `db.commit()`
+- backend/app/api/routes/rotation_templates.py:1269 `async def add_activity_requirement` -> `db.commit()`
+- backend/app/api/routes/rotation_templates.py:1309 `async def delete_activity_requirement` -> `db.commit()`
+- backend/app/api/routes/schedule.py:343 `async def generate_schedule` -> `db.commit()`
+- backend/app/api/routes/schedule.py:414 `async def generate_schedule` -> `db.commit()`
+- backend/app/api/routes/schedule.py:430 `async def generate_schedule` -> `db.commit()`
+- backend/app/api/routes/schedule.py:449 `async def generate_schedule` -> `db.commit()`
+- backend/app/api/routes/schedule.py:469 `async def generate_schedule` -> `db.commit()`
+- backend/app/api/routes/schedule.py:1365 `async def list_schedule_runs` -> `total = db.execute(count_query).scalar() or 0`
+- backend/app/api/routes/schedule.py:1370 `async def list_schedule_runs` -> `results = db.execute(query).scalars().all()`
+- backend/app/api/routes/schedule.py:1389 `async def get_schedule_run` -> `result = db.execute(`
+- backend/app/api/routes/schedule.py:1582 `async def get_schedule_metric_trend` -> `results = db.execute(query).scalars().all()`
+- backend/app/api/routes/schedule.py:1635 `async def queue_experiment_batch` -> `db.commit()`
+- backend/app/api/routes/schedule.py:1658 `async def cancel_experiment_run` -> `result = db.execute(`
+- backend/app/api/routes/schedule.py:1673 `async def cancel_experiment_run` -> `db.commit()`
+- backend/app/api/routes/settings.py:38 `async def get_or_create_settings` -> `result = db.execute(select(ApplicationSettings))`
+- backend/app/api/routes/settings.py:44 `async def get_or_create_settings` -> `db.commit()`
+- backend/app/api/routes/settings.py:79 `async def get_or_create_settings` -> `db.commit()`
+- backend/app/api/routes/settings.py:124 `async def patch_settings` -> `db.commit()`
+- backend/app/api/routes/settings.py:150 `async def reset_settings` -> `db.commit()`
+- backend/app/api/routes/sso.py:132 `async def get_or_create_user` -> `user = (db.execute(select(User).where(User.email == email))).scalar_one_or_none()`
+- backend/app/api/routes/sso.py:139 `async def get_or_create_user` -> `db.commit()`
+- backend/app/api/routes/sso.py:151 `async def get_or_create_user` -> `db.execute(select(User).where(User.username == username))`
+- backend/app/api/routes/sso.py:186 `async def get_or_create_user` -> `db.commit()`
+- backend/app/api/routes/swap.py:145 `async def request_swap` -> `db.commit()`
+- backend/app/api/routes/swap.py:203 `async def approve_swap` -> `db.commit()`
+- backend/app/api/routes/swap.py:216 `async def approve_swap` -> `db.commit()`
+- backend/app/api/routes/swap.py:472 `async def get_swap_history` -> `total_result = db.execute(count_query)`
+- backend/app/api/routes/swap.py:477 `async def get_swap_history` -> `result = db.execute(query)`
+- backend/app/api/routes/swap.py:541 `async def get_swap` -> `result = db.execute(query)`
+- backend/app/api/routes/visualization.py:482 `async def get_3d_voxel_grid` -> `blocks_result = db.execute(blocks_query)`
+- backend/app/api/routes/visualization.py:507 `async def get_3d_voxel_grid` -> `persons_result = db.execute(persons_query)`
+- backend/app/api/routes/visualization.py:539 `async def get_3d_voxel_grid` -> `assignments_result = db.execute(assignments_query)`

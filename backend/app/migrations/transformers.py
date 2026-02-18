@@ -354,7 +354,7 @@ class DataTransformer:
         Returns:
             Dict with audit fields
         """
-        updates = {"updated_at": datetime.utcnow()}
+        updates: dict[str, Any] = {"updated_at": datetime.utcnow()}
 
         if hasattr(record, "updated_by"):
             updates["updated_by"] = str(user)

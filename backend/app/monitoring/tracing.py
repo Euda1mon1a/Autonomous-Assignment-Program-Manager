@@ -399,7 +399,7 @@ class PerformanceTracer:
             success: Whether execution succeeded
             error: Error message if failed
         """
-        attributes = {
+        attributes: dict[str, object] = {
             "scheduler.execution_time_ms": execution_time_ms,
             "scheduler.block_count": block_count,
             "scheduler.success": success,
