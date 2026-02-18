@@ -31,4 +31,12 @@
 
 5. Verify after changes:
    python3 scripts/ops/codex_worktree_env_exec.py -- python -m mypy <directory> --ignore-missing-imports
+
+6. Lint suppression comments:
+   - NEVER remove `# noqa`, `# type: ignore`, `// eslint-disable`, or `@ts-expect-error` comments
+   - These exist because the developer hit a real type system limitation
+   - If you think you've fixed the underlying issue, verify with the type checker FIRST:
+     Backend: python -m mypy <file> --ignore-missing-imports
+     Frontend: npx tsc --noEmit 2>&1 | grep <filename>
+   - Only remove the suppression comment if the type checker passes WITHOUT it
 ```

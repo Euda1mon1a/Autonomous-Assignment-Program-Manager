@@ -63,3 +63,4 @@ If there is any conflict, follow the strictest rule.
 - Normalization Layer: adding backend `_normalize_*()` response converters for snake/camel case.
 - Improved Error Messages: exposing internals with `str(e)` in API responses.
 - Defensive Fallback: converting hard failures into silent alternate write paths.
+- Lint Comment Removal: deleting `eslint-disable`, `noqa`, or `type: ignore` comments without verifying the underlying type issue is actually resolved.

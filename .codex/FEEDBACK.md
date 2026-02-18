@@ -15,3 +15,10 @@
 - Test coverage — Claude writes tests from TODO items; Codex scans for gaps. Complementary but check for overlap.
 
 **Suggestion**: If 3+ consecutive runs of an automation find nothing to do, consider reducing its frequency or disabling it.
+
+## self-augment — 2026-02-17
+
+**Outcome**: completed
+**Context**: PR #1149 review revealed both high-value patterns (decorator typing, async factory bug fix, test determinism) and one regression (removed intentional eslint-disable in useDebounce.ts). This self-augment run incorporates both lessons.
+**Insight**: Type annotation work on decorator factories is Codex's strongest contribution pattern — preserves function signatures, catches real bugs (async def on factories), and doesn't touch business logic. Lint suppression removal is the highest-risk pattern — looks like cleanup but can reintroduce type errors.
+**Suggestion**: Consider adding a `decorator-factory-audit` automation at 01:32 focused specifically on finding untyped decorator factories and `async def` factory bugs. This is high-signal, low-risk work that Codex excels at.
