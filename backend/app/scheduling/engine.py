@@ -4028,3 +4028,66 @@ class SchedulingEngine:
             )
 
         return warnings
+
+    def generate_via_graph(
+        self,
+        pgy_levels: list[int] | None = None,
+        rotation_template_ids: list[UUID] | None = None,
+        algorithm: str = "greedy",
+        timeout_seconds: float = 60.0,
+        check_resilience: bool = True,
+        preserve_fmit: bool = True,
+        preserve_resident_inpatient: bool = True,
+        preserve_absence: bool = True,
+        expand_block_assignments: bool = True,
+        block_number: int | None = None,
+        academic_year: int | None = None,
+        create_draft: bool = False,
+        created_by_id: UUID | None = None,
+        validate_pcat_do: bool = True,
+    ) -> dict:
+        """Generate schedule using the LangGraph pipeline.
+
+        This method has the IDENTICAL signature and return value as generate().
+        It delegates to the StateGraph, enabling per-node tracing via
+        LangSmith, conditional failure routing, and independent node testing.
+
+        Falls back to generate() if langgraph is not installed.
+        """
+        try:
+            from app.scheduling.graph import generate_via_graph
+        except ImportError:
+            logger.warning("langgraph not installed, falling back to generate()")
+            return self.generate(
+                pgy_levels=pgy_levels,
+                rotation_template_ids=rotation_template_ids,
+                algorithm=algorithm,
+                timeout_seconds=timeout_seconds,
+                check_resilience=check_resilience,
+                preserve_fmit=preserve_fmit,
+                preserve_resident_inpatient=preserve_resident_inpatient,
+                preserve_absence=preserve_absence,
+                expand_block_assignments=expand_block_assignments,
+                block_number=block_number,
+                academic_year=academic_year,
+                create_draft=create_draft,
+                created_by_id=created_by_id,
+                validate_pcat_do=validate_pcat_do,
+            )
+
+        return generate_via_graph(
+            self,
+            pgy_levels=pgy_levels,
+            rotation_template_ids=rotation_template_ids,
+            algorithm=algorithm,
+            timeout_seconds=timeout_seconds,
+            check_resilience=check_resilience,
+            preserve_fmit=preserve_fmit,
+            preserve_resident_inpatient=preserve_resident_inpatient,
+            preserve_absence=preserve_absence,
+            block_number=block_number,
+            academic_year=academic_year,
+            create_draft=create_draft,
+            created_by_id=created_by_id,
+            validate_pcat_do=validate_pcat_do,
+        )

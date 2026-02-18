@@ -1,7 +1,8 @@
 # ADR: LangChain Framework Evaluation
 
 **Date:** 2026-02-17
-**Status:** DEFERRED
+**Updated:** 2026-02-18
+**Status:** ACCEPTED (incremental, AAPM only)
 **Context:** Evaluated whether LangChain should be incorporated into the project or personal assistant stack.
 
 ---
@@ -14,57 +15,91 @@ LangChain is an open-source LLM orchestration framework (Python/JS) providing ch
 
 ## Decision
 
-**Do not incorporate now.** Revisit for AAPM scheduling agent when building production multi-agent workflows.
+**Adopt incrementally for AAPM scheduling agent.** Skip for personal assistant stack.
+
+The existing codebase maps more closely to LangChain/LangGraph patterns than initially assessed. The primary value is moving agent orchestration from non-Python artifacts (YAML skills, markdown system prompts, experimental agent teams) into testable, portable `.py` files.
 
 ---
 
-## Risk/Benefit Analysis
+## Charitable Risk/Benefit Analysis
+
+### What Already Maps 1:1
+
+The codebase is structurally closer to LangChain than the original evaluation gave credit for:
+
+| Current Pattern | LangChain Equivalent | Migration Effort |
+|----------------|---------------------|-----------------|
+| `mcp-server/tools/base.py` BaseTool (name, description, execute) | `langchain_core.tools.BaseTool` | Near-identical. Thin adapter. |
+| `SchedulingEngine.generate()` phases 0-7 | LangGraph StateGraph nodes | Each phase becomes a node. State = SchedulingContext. |
+| `ConstraintManager` + `ACGMEValidator` | LangGraph conditional edges | Validation failures route back to solver node. |
+| MCP tool categories (schedule, compliance, swap, resilience) | LangChain ToolKits | Already organized this way. |
+| RAG via MCP (67+ docs) | LangChain retrievers | Could keep MCP RAG or migrate. |
+| `.claude/skills/` YAML definitions | LangGraph agent nodes | Python functions instead of YAML. |
 
 ### Benefits
 
 | Benefit | Relevance to AAPM | Relevance to PA Stack |
 |---------|-------------------|----------------------|
-| **Model-agnostic interfaces** — swap LLM providers with minimal code | Medium (already use FastAPI + httpx) | Low (already switching 4 models) |
-| **Structured agent loops** — ReAct, plan-and-execute, tool-calling patterns | High (scheduling solver could use multi-step reasoning) | Low (text-router already does this) |
-| **LangGraph** — multi-agent orchestration with state machines | High (research agent + solver + validator pipeline) | Low (not needed for iMessage) |
-| **LangSmith** — observability, tracing, evaluation framework | High (production system needs proper eval) | Low (CSV logging sufficient for personal use) |
-| **RAG abstractions** — vector store integrations, retrieval chains | Medium (already have RAG via MCP, 67+ docs) | Low (Gemini embeddings working) |
+| **Python-native orchestration** — testable, lintable, portable agent logic | **Critical** (current orchestration in YAML/markdown) | N/A |
+| **Model-agnostic interfaces** — swap LLM providers with minimal code | **High** (running 5+ model families; Codex-CLAUDE.md incident) | Low |
+| **Structured agent loops** — ReAct, plan-and-execute, tool-calling patterns | High (scheduling solver multi-step reasoning) | Low |
+| **LangGraph** — state machine orchestration with checkpointing | **High** (solver timeout recovery, phase resumption) | Low |
+| **LangSmith/Langfuse** — observability, tracing, evaluation | High (40+ resilience modules need unified tracing) | Low |
+| **RAG abstractions** — vector store integrations, retrieval chains | Medium (already have RAG via MCP, 67+ docs) | Low |
 | **Community ecosystem** — 700+ integrations, extensive docs | Medium | Low |
 
 ### Risks
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| **Latency overhead** — LangChain agent loops add 2-5s per step vs custom code | High for PA (need <0.6s), Low for AAPM (batch OK) | Only use for AAPM, not PA stack |
-| **Dependency bloat** — langchain-core, langchain-community, langchain-openai, etc. | Medium | Pin versions, isolate in AAPM venv |
-| **Abstraction opacity** — logic scattered across chains, callbacks, agent executors | Medium | Mitigate with LangSmith tracing |
-| **Version churn** — LangChain has frequent breaking changes (v0.1→0.2→0.3 in 2024-2025) | Medium | Pin to stable release, test on upgrade |
-| **MLX incompatibility** — tool-calling formats optimized for OpenAI/Anthropic cloud, not local models | High for PA, N/A for AAPM | AAPM uses cloud models anyway |
-| **Vendor lock-in to LangSmith** — observability tied to their platform | Low | Can use open-source alternatives (Langfuse) |
-| **Over-engineering** — adds abstraction for things already working | High for PA, Medium for AAPM | Only adopt where custom code insufficient |
+| Risk | Severity | Why It's Manageable |
+|------|----------|-------------------|
+| **Latency overhead** — 2-5s per agent step | Low for AAPM | Scheduling is batch work (`timeout_seconds=60`). Irrelevant. |
+| **Dependency bloat** — langchain-core, langgraph, etc. | Medium | Use only `langchain-core` + `langgraph`. Skip `langchain-community`. |
+| **Abstraction opacity** — logic in chains/callbacks | Medium | LangSmith/Langfuse tracing. Current MCP chains are *already* opaque. |
+| **Version churn** — breaking changes v0.1-0.3 | Medium | v0.3 era is stable. LangGraph architecturally separate. Pin versions. |
+| **MLX incompatibility** — cloud-optimized tool calling | N/A for AAPM | AAPM uses cloud models. Only affects PA stack (excluded). |
+| **Vendor lock-in to LangSmith** | Low | Langfuse (open-source) as alternative. |
+| **Refactoring cost** | Medium | 1:1 mappings enable incremental migration. No big-bang. |
+| **Over-engineering** | Low | 97+ MCP tools + 40+ resilience modules + 5 model families + 2 autonomous systems already exist. LangGraph *simplifies*. |
 
 ### Cost/Benefit Summary
 
 | Use Case | Net Assessment |
 |----------|---------------|
-| **Personal assistant (OpenClaw/text-router)** | **Skip.** Custom stack is faster, simpler, and purpose-built. LangChain adds latency and complexity for no gain. |
-| **AAPM scheduling agent** | **Consider when building.** Multi-step constraint solving + RAG + tool calling + evaluation is LangChain's sweet spot. LangGraph for multi-agent coordination. LangSmith for production observability. |
+| **Personal assistant (OpenClaw/text-router)** | **Skip.** Custom stack is faster, simpler, and purpose-built. |
+| **AAPM scheduling agent** | **Adopt incrementally.** Python-native orchestration, state machine scheduling, multi-model portability, and unified observability justify the dependency cost. |
 
 ---
 
-## When to Revisit
+## Adoption Path (Incremental)
 
-Adopt LangChain for AAPM when ANY of these conditions are met:
-1. Building a multi-step scheduling agent that needs RAG + tools + structured output
-2. Need standardized evaluation framework for schedule quality (LangSmith)
-3. Building multi-agent pipeline (research → solve → validate → explain)
-4. Current MCP tool orchestration becomes insufficient for complex workflows
+### Phase 1: LangGraph for Scheduling Pipeline
+- Convert `SchedulingEngine.generate()` phases into a LangGraph StateGraph
+- Keep all existing solver/validator/constraint code unchanged
+- Add state checkpointing for solver recovery
+- **Files:** New `backend/app/scheduling/graph.py`, thin adapter in engine.py
+
+### Phase 2: MCP Tool Adapter Layer
+- Thin adapter to expose MCP tools as LangChain tools
+- Both interfaces coexist — no breaking change to existing MCP consumers
+- **Files:** New `mcp-server/src/scheduler_mcp/langchain_adapter.py`
+
+### Phase 3: LangSmith/Langfuse Integration
+- Add tracing to scheduling pipeline and resilience checks
+- Schedule quality evaluation datasets
+- **Files:** Config in `backend/app/core/config.py`, tracing decorator
+
+### Phase 4: Agent Orchestration in Python
+- Migrate key `.claude/skills/` patterns to LangGraph agent nodes
+- YAML skills continue to work for Claude Code; Python graphs work for everything
+- **Files:** New `backend/app/agents/` directory
+
+---
 
 ## Alternatives Considered
 
 | Alternative | Assessment |
 |-------------|------------|
-| **Raw OpenAI/Anthropic SDKs** | Current approach for AAPM. Works but doesn't scale to multi-agent. |
+| **Raw OpenAI/Anthropic SDKs** | Current approach. Works but doesn't scale to multi-agent or multi-model. |
 | **CrewAI** | Simpler multi-agent framework. Less mature than LangGraph. |
 | **AutoGen (Microsoft)** | Good for code generation agents. Overkill for scheduling. |
 | **Custom (current PA stack)** | Best for personal assistant. Not worth replacing. |
@@ -76,3 +111,4 @@ Adopt LangChain for AAPM when ANY of these conditions are met:
 - LangGraph: https://langchain-ai.github.io/langgraph/
 - LangSmith: https://smith.langchain.com
 - Terminal Bench Deep Agents (GPT-5.2-Codex + LangChain harness)
+- Codex-CLAUDE.md 20-bug incident (Feb 2026) — motivation for model-agnostic orchestration
