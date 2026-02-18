@@ -47,6 +47,12 @@ Before making any change, classify it:
 | Fix `datetime.utcnow()` → `datetime.now(UTC)` | SAFE | But fix BOTH sides of comparisons |
 | Remove unused imports | CHECK | Verify nothing references them first |
 | Add type annotations | CHECK | Use `TYPE_CHECKING` for import-only types |
+| Add `ParamSpec`/`TypeVar` to decorator factories | SAFE | Preserves function signatures through decoration |
+| Add return type annotations to functions | SAFE | Annotation-only, no behavioral change |
+| Fix `async def` on non-async decorator factories | SAFE | `async def` on a factory that returns a decorator is always a bug |
+| Remove lint suppression comments (`eslint-disable`, `noqa`, `type: ignore`) | **CHECK** | Verify the underlying type issue is actually resolved first. These comments exist because the developer hit a real limitation. |
+| Change `any` to `unknown` in TypeScript generics | **CHECK** | May break callers due to contravariance under `strictFunctionTypes`. Test with `npx tsc --noEmit` before committing. |
+| Add `.get()` with default to dict access on known-shape dicts | CHECK | Masks `KeyError` bugs with silent empty strings. Only do this on dicts with unknown/dynamic keys. |
 | Remove Pydantic field constraints | **FORBIDDEN** | See Hard Boundaries |
 | Add normalization/conversion functions | **FORBIDDEN** | The axios interceptor handles snake_case ↔ camelCase conversion. Backend should NEVER do this. |
 | Change Pydantic Field defaults | **FORBIDDEN** | Without explicit human instruction |
@@ -158,7 +164,7 @@ If a `claude/*` branch touches files you want to modify:
 
 - **Backend**: FastAPI, SQLAlchemy 2.0, PostgreSQL, Celery/Redis
 - **Frontend**: Next.js 14, React 18, TailwindCSS
-- **MCP Server**: 34+ AI tools for scheduling, validation, resilience
+- **MCP Server**: 97+ AI tools for scheduling, validation, resilience
 
 ---
 
@@ -188,6 +194,12 @@ These files require explicit human approval before ANY changes:
 **Environment:**
 - `.env` — Never commit
 - `docker-compose.yml` — Careful testing needed
+
+## Schema Drift Awareness
+
+Some model files define database tables that have NO Alembic migrations. These tables do not exist in the database. Do not write code that queries them, and do not present them as functional in documentation.
+
+See `docs/development/SCHEMA_DRIFT_TRACKING.md` for the full list (12 tables across 7 model files: webhooks, calendar_subscriptions, export_jobs, oauth2, schema_versions, state_machine).
 
 ---
 
@@ -308,6 +320,35 @@ Registering the same router at multiple URL prefixes for "backward compatibility
 
 ### "Defensive Fallback" Anti-Pattern
 Wrapping operations in try/except with a silent fallback path. Example: if `scheduler.add_job()` fails, falling back to `persistence.create_job()` creates a job record that will never execute — the client gets a success response but the job is dead.
+
+### "Lint Comment Removal" Anti-Pattern
+Removing `// eslint-disable`, `# noqa`, `# type: ignore`, or `@ts-expect-error` comments without verifying the underlying issue is resolved. These comments exist because the developer hit a real type system limitation (e.g., TypeScript contravariance, SQLAlchemy column operators, dynamic metaprogramming). Removing them silently reintroduces the type error the comment was suppressing. **Before removing any suppression comment, verify with the language's type checker that the code compiles cleanly without it.**
+
+## Proven High-Value Patterns
+
+These patterns from recent Codex output were genuinely useful and should be repeated:
+
+### Decorator Factory Typing
+Adding `ParamSpec`/`TypeVar` return types to decorator factories. This preserves the decorated function's signature through the wrapper, enabling proper IDE autocompletion and type checking. Example from PR #1149:
+
+```python
+P = ParamSpec("P")
+R = TypeVar("R")
+
+def with_timeout(
+    timeout: float, error_message: str | None = None
+) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
+    def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+        @wraps(func)
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            ...
+```
+
+### Test Determinism
+Adding `np.random.seed(42)` as autouse fixtures in tests that use random data. Prevents flaky failures without changing production code.
+
+### Async Decorator Factory Bug Detection
+Identifying `async def` on decorator factories (which makes them return coroutines instead of decorators). The factory itself should be a plain `def`; only the inner wrapper should be `async def`.
 
 ---
 

@@ -31,4 +31,10 @@
 
 5. Env preflight for backend commands:
    python3 scripts/ops/codex_worktree_env_exec.py -- <backend command>
+
+6. Preserve intentional workarounds:
+   - If a file contains `# HACK:`, `# WORKAROUND:`, or lint suppression comments,
+     these are intentional. Do NOT remove them as part of a "cleanup."
+   - If you believe the workaround is no longer needed, verify by removing it
+     and running the relevant checker. If it fails, put it back.
 ```
