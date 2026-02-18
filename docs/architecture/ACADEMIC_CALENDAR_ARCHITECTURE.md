@@ -360,7 +360,7 @@ Fix the model, and edge cases collapse into data.
 
 ## Related Documents
 
-- [Block 10 Postmortem](../development/POSTMORTEM_BLOCK10_SESSION.md)
+- [Block 10 Postmortem](../archived/sessions/POSTMORTEM_BLOCK10_SESSION.md)
 - [Schedule Verification Template](../development/SCHEDULE_VERIFICATION_TEMPLATE.md)
 - [Solver Algorithm](SOLVER_ALGORITHM.md)
 

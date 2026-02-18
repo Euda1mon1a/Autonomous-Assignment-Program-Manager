@@ -145,8 +145,8 @@ When the application is running, access the interactive API documentation:
 | Document | Description |
 |----------|-------------|
 | [API_VALIDATION_AUDIT.md](API_VALIDATION_AUDIT.md) | API validation audit results |
-| [API_SYNC_REPORT.md](API_SYNC_REPORT.md) | API documentation sync status |
-| [SESSION_39_VALIDATION_SUMMARY.md](SESSION_39_VALIDATION_SUMMARY.md) | Session 39 validation summary |
+| [API_SYNC_REPORT.md](../archived/reports/API_SYNC_REPORT.md) | API documentation sync status |
+| [SESSION_39_VALIDATION_SUMMARY.md](../archived/sessions/SESSION_39_VALIDATION_SUMMARY.md) | Session 39 validation summary |
 | [API_COLLECTION_CLEANUP_MANIFEST.md](API_COLLECTION_CLEANUP_MANIFEST.md) | Collection cleanup manifest |
 
 ---

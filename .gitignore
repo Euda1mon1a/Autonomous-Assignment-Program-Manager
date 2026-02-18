@@ -126,6 +126,12 @@ docs/archived/reports/cpsat-call-preload-and-schema-drift-*.md
 # Other PII-containing local docs
 docs/archived/reports/GUI_WIRING_GAPS.md
 docs/archived/reports/SKIPPED_TESTS_INVENTORY.csv
+
+# Archived analysis reports, automation output, and schedule data (PII/OPSEC)
+docs/archived/reports/analysis/
+docs/archived/automation/
+docs/archived/data/
+
 docs/domain/TAMC_SCHEDULING_CONTEXT.md
 
 # Local config files (contain real names/mappings)

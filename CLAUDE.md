@@ -479,7 +479,7 @@ Target specific directories, not the entire repo:
 **5. Test Only Merged Code**
 Never generate tests for un-merged feature branches. Only test code that exists on `main`.
 
-> **Reference:** `docs/development/OPUS_MINI_BRANCH_TRIAGE_REPORT.md` for full failure pattern taxonomy
+> **Reference:** `docs/archived/reports/OPUS_MINI_BRANCH_TRIAGE_REPORT.md` for full failure pattern taxonomy
 
 ### Core Policy
 
