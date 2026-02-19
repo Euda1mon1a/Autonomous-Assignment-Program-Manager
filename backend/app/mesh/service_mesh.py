@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -632,14 +632,14 @@ class ServiceRegistration:
     version: str
     endpoints: list[ServiceEndpoint]
     metadata: dict[str, str] = field(default_factory=dict)
-    registered_at: datetime = field(default_factory=datetime.utcnow)
-    last_heartbeat: datetime = field(default_factory=datetime.utcnow)
+    registered_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    last_heartbeat: datetime = field(default_factory=lambda: datetime.now(UTC))
     health_status: HealthStatus = HealthStatus.UNKNOWN
     tags: list[str] = field(default_factory=list)
 
     def heartbeat(self) -> None:
         """Update last heartbeat timestamp."""
-        self.last_heartbeat = datetime.utcnow()
+        self.last_heartbeat = datetime.now(UTC)
 
     def is_healthy(self, timeout_seconds: int = 60) -> bool:
         """
@@ -654,7 +654,7 @@ class ServiceRegistration:
         if self.health_status == HealthStatus.UNHEALTHY:
             return False
 
-        elapsed = (datetime.utcnow() - self.last_heartbeat).total_seconds()
+        elapsed = (datetime.now(UTC) - self.last_heartbeat).total_seconds()
         return elapsed < timeout_seconds
 
     def get_healthy_endpoints(self) -> list[ServiceEndpoint]:
@@ -670,7 +670,7 @@ class TrafficSplit:
     name: str
     service_name: str
     weights: list[TrafficWeight]
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     expires_at: datetime | None = None
 
     def __post_init__(self) -> None:
@@ -683,7 +683,7 @@ class TrafficSplit:
         """Check if traffic split is still active."""
         if self.expires_at is None:
             return True
-        return datetime.utcnow() < self.expires_at
+        return datetime.now(UTC) < self.expires_at
 
     def get_destination_for_request(self, headers: dict[str, str]) -> str | None:
         """
@@ -1040,7 +1040,7 @@ class ServiceHealthReporter:
             status: Health status
         """
         self.health_status = status
-        self.last_check = datetime.utcnow()
+        self.last_check = datetime.now(UTC)
 
     def add_health_check(self, name: str, healthy: bool) -> None:
         """
@@ -1069,7 +1069,7 @@ class ServiceHealthReporter:
         else:
             self.health_status = HealthStatus.UNHEALTHY
 
-        self.last_check = datetime.utcnow()
+        self.last_check = datetime.now(UTC)
 
     def get_health_report(self) -> dict[str, Any]:
         """

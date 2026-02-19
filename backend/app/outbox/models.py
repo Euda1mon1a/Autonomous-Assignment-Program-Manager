@@ -16,7 +16,7 @@ References:
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     CheckConstraint,
@@ -103,9 +103,14 @@ class OutboxMessage(Base):
     processing_started_at = Column(DateTime, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     __table_args__ = (
@@ -183,7 +188,13 @@ class OutboxMessage(Base):
             return False
         if not self.next_retry_at:
             return True
-        return datetime.utcnow() >= self.next_retry_at
+        # Guard against naive datetimes loaded from DB (stored as UTC without tzinfo)
+        retry_at = (
+            self.next_retry_at
+            if self.next_retry_at.tzinfo
+            else self.next_retry_at.replace(tzinfo=UTC)
+        )
+        return datetime.now(UTC) >= retry_at
 
 
 class OutboxArchive(Base):
@@ -212,7 +223,9 @@ class OutboxArchive(Base):
     published_at = Column(DateTime, nullable=False, index=True)
 
     # Archive timestamp
-    archived_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    archived_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     __table_args__ = (
         # Index for retention cleanup

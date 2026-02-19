@@ -80,7 +80,7 @@ These metrics can be exported to various monitoring systems:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import and_, func, select
@@ -200,7 +200,7 @@ class OutboxMetricsCollector:
         Returns:
             float: Average age in seconds (0 if no pending messages)
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         result = self.db.execute(
             select(
@@ -218,7 +218,7 @@ class OutboxMetricsCollector:
         Returns:
             float: Max age in seconds (0 if no pending messages)
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         result = self.db.execute(
             select(
@@ -314,7 +314,7 @@ class OutboxMetricsCollector:
         Returns:
             int: Number of stuck messages
         """
-        cutoff = datetime.utcnow() - timedelta(minutes=timeout_minutes)
+        cutoff = datetime.now(UTC) - timedelta(minutes=timeout_minutes)
 
         result = self.db.execute(
             select(func.count(OutboxMessage.id)).where(
@@ -336,7 +336,7 @@ class OutboxMetricsCollector:
         Returns:
             int: Number of messages published in period
         """
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
 
         result = self.db.execute(
             select(func.count(OutboxMessage.id)).where(
@@ -373,7 +373,7 @@ class OutboxMetricsCollector:
         Returns:
             dict: Event type -> count mapping
         """
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
 
         result = self.db.execute(
             select(
@@ -399,7 +399,7 @@ class OutboxMetricsCollector:
         Returns:
             dict: Aggregate type -> count mapping
         """
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
 
         result = self.db.execute(
             select(
