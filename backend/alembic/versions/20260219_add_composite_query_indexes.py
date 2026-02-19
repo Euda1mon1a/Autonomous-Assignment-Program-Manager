@@ -9,13 +9,14 @@ the full WHERE clause in a single B-tree scan.
 
 Tables and query patterns addressed:
 
-  swap_records           – source_week / target_week date lookups (find_by_week),
+  swap_records           – target_week date lookup (find_by_week; source_week
+                           already indexed by 20241217 migration),
                            (target_faculty_id, status) for pending-swap inbox
   notifications          – (recipient_id, is_read, created_at) covering index
                            for the user notification inbox query
   import_batches         – (status, created_at) for paginated batch listing
   import_staged_assignments – (batch_id, row_number) for ordered batch preview
-  import_staged_absences – batch_id FK for cascade lookups
+  import_staged_absences – (batch_id already indexed by 20260105 migration)
   procedure_credentials  – (person_id, status, expiration_date) for active creds,
                            (procedure_id, status, expiration_date) for qualified
                            faculty, (status, expiration_date) for expiry alerts
@@ -44,16 +45,8 @@ def upgrade() -> None:
     """Add composite indexes on most-queried columns."""
 
     # ── swap_records ───────────────────────────────────────────────────
-    # Date lookups in find_by_week: OR(source_week = ?, target_week = ?)
-    # Separate indexes let Postgres BitmapOr-scan both legs efficiently.
-    # Ref: swap_repository.py:208-217
-    op.create_index(
-        "idx_swap_records_source_week",
-        "swap_records",
-        ["source_week"],
-        unique=False,
-        if_not_exists=True,
-    )
+    # Note: source_week already indexed as ix_swap_records_source_week
+    # (20241217_add_fmit_phase2_tables.py:93). Only target_week is new.
     op.create_index(
         "idx_swap_records_target_week",
         "swap_records",
@@ -110,14 +103,8 @@ def upgrade() -> None:
     )
 
     # ── import_staged_absences ─────────────────────────────────────────
-    # FK lookup: all staged absences within a batch (CASCADE path)
-    op.create_index(
-        "idx_import_staged_absences_batch_id",
-        "import_staged_absences",
-        ["batch_id"],
-        unique=False,
-        if_not_exists=True,
-    )
+    # Note: batch_id already indexed as ix_import_staged_absences_batch_id
+    # (20260105_add_import_staged_absences.py:112). No new index needed.
 
     # ── procedure_credentials ──────────────────────────────────────────
     # Active credentials for a person: filter(person_id, status, expiration_date)
@@ -201,11 +188,6 @@ def downgrade() -> None:
         if_exists=True,
     )
     op.drop_index(
-        "idx_import_staged_absences_batch_id",
-        table_name="import_staged_absences",
-        if_exists=True,
-    )
-    op.drop_index(
         "idx_import_staged_asgn_batch_row",
         table_name="import_staged_assignments",
         if_exists=True,
@@ -227,11 +209,6 @@ def downgrade() -> None:
     )
     op.drop_index(
         "idx_swap_records_target_week",
-        table_name="swap_records",
-        if_exists=True,
-    )
-    op.drop_index(
-        "idx_swap_records_source_week",
         table_name="swap_records",
         if_exists=True,
     )
