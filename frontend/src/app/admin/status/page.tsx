@@ -292,10 +292,13 @@ export default function AdminStatusPage() {
 
   const overallStatus: StatusLevel = useMemo(() => {
     if (!backendReachable) return 'unhealthy';
-    if (data?.status === 'healthy') return 'healthy';
-    if (data?.status === 'unhealthy') return 'unhealthy';
-    return 'degraded';
-  }, [data, backendReachable]);
+    // Derive from per-service health so degraded dependencies surface correctly
+    const hasUnhealthy = services.some((s) => s.status === 'unhealthy');
+    if (hasUnhealthy) return 'unhealthy';
+    const hasDegraded = services.some((s) => s.status === 'degraded');
+    if (hasDegraded) return 'degraded';
+    return 'healthy';
+  }, [backendReachable, services]);
 
   const healthyCount = services.filter((s) => s.status === 'healthy').length;
   const totalCount = services.length;
