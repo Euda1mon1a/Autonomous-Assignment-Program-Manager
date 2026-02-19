@@ -5,7 +5,7 @@ All business logic is in the service layer.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
@@ -183,7 +183,7 @@ async def logout(
 
             if jti and exp:
                 # Convert exp to datetime
-                expires_at = datetime.utcfromtimestamp(exp)
+                expires_at = datetime.fromtimestamp(exp, tz=UTC)
 
                 # Add to blacklist
                 blacklist_token(

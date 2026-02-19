@@ -14,7 +14,7 @@ Security Features:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from jose import JWTError, jwt
@@ -218,7 +218,7 @@ class ImpersonationService:
                 return True  # Already ended, consider it a success
 
             # Blacklist the token
-            expires_at = datetime.utcfromtimestamp(exp)
+            expires_at = datetime.fromtimestamp(exp, tz=UTC)
             blacklist_token(
                 db=self.db,
                 jti=jti,
@@ -290,7 +290,7 @@ class ImpersonationService:
                     .first()
                 )
 
-            expires_at = datetime.utcfromtimestamp(exp) if exp else None
+            expires_at = datetime.fromtimestamp(exp, tz=UTC) if exp else None
 
             return ImpersonationStatus(
                 is_impersonating=True,
