@@ -628,6 +628,8 @@ class RequestSignatureValidator:
         try:
             # Parse timestamp
             request_time = datetime.fromisoformat(request_data.timestamp)
+            if request_time.tzinfo is None:
+                request_time = request_time.replace(tzinfo=UTC)
 
             # Check timestamp tolerance (prevent replay attacks)
             time_diff = abs((datetime.now(UTC) - request_time).total_seconds())
@@ -695,6 +697,8 @@ class RequestSignatureValidator:
         """Log signature verification attempt."""
         signature_hash = hashlib.sha256(request_data.signature.encode()).hexdigest()
         request_time = datetime.fromisoformat(request_data.timestamp)
+        if request_time.tzinfo is None:
+            request_time = request_time.replace(tzinfo=UTC)
 
         log_entry = RequestSignature(
             signature_hash=signature_hash,

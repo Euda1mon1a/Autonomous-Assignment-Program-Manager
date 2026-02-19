@@ -390,7 +390,9 @@ class SAMLProvider:
         # Check NotBefore
         not_before = conditions.get("NotBefore")
         if not_before:
-            not_before_dt = datetime.strptime(not_before, "%Y-%m-%dT%H:%M:%SZ")
+            not_before_dt = datetime.strptime(not_before, "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=UTC
+            )
             if now < not_before_dt:
                 raise ValueError("Assertion not yet valid (NotBefore)")
 
@@ -399,7 +401,7 @@ class SAMLProvider:
         if not_on_or_after:
             not_on_or_after_dt = datetime.strptime(
                 not_on_or_after, "%Y-%m-%dT%H:%M:%SZ"
-            )
+            ).replace(tzinfo=UTC)
             if now >= not_on_or_after_dt:
                 raise ValueError("Assertion expired (NotOnOrAfter)")
 
