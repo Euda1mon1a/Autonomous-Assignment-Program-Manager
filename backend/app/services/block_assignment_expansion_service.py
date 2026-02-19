@@ -1161,7 +1161,7 @@ class BlockAssignmentExpansionService:
 
         # First, generate defaults for ALL weekday slots based on activity_type
         # The rotation's main activity applies unless overridden
-        default_activity = rotation.activity_type or "clinic"
+        default_activity = rotation.rotation_type or "clinic"
 
         # Determine which days to include
         if rotation.includes_weekend_work:

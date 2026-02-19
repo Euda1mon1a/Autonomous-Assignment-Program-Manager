@@ -41,6 +41,10 @@
 | 2026-02-18 21:00 | Pre-handjam: check Block 13 staleness | B13 has 16 block_assignments, Excel cols blank (not scheduled yet) | No |
 | 2026-02-18 21:01 | Pre-handjam: create preflight script | 7-check reusable validator, B12 passes 7/7, B13 passes 5/7 | No |
 | 2026-02-18 21:01 | Pre-handjam: wire preflight into import | import_block12.py now runs preflight before parse_excel | No |
+| 2026-02-18 21:36 | DB checkpoint pre_hda_expansion | 2.9MB dump saved | No |
+| 2026-02-18 21:37 | HDA expansion: BlockAssignmentExpansionService | 882 HDAs created (607 with activity, 277 NULL pending handjam) | YES — #8 |
+| 2026-02-18 21:37 | Fix: rotation_type attribute bug | expansion service referenced nonexistent `activity_type` column | YES — #9 |
+| 2026-02-18 21:38 | DB checkpoint post_hda_expansion | 2.9MB dump saved | No |
 
 ---
 
