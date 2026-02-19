@@ -1661,11 +1661,11 @@ class ScheduleDraftService:
                 else self.db.get(Block, assignment.block_id)
             )
             if not block:
-                logger.warning(
-                    f"Skipping assignment {assignment.id}: "
-                    f"block_id={assignment.block_id} not found"
+                raise ValueError(
+                    f"Assignment {assignment.id} references "
+                    f"block_id={assignment.block_id} which does not exist. "
+                    f"Draft staging aborted to prevent partial drafts."
                 )
-                continue
 
             # Determine change type - new assignment = ADD
             change_type = DraftAssignmentChangeType.ADD
@@ -2033,11 +2033,11 @@ class ScheduleDraftService:
                 else self.db.get(Block, assignment.block_id)
             )
             if not block:
-                logger.warning(
-                    f"Skipping assignment {assignment.id}: "
-                    f"block_id={assignment.block_id} not found"
+                raise ValueError(
+                    f"Assignment {assignment.id} references "
+                    f"block_id={assignment.block_id} which does not exist. "
+                    f"Draft staging aborted to prevent partial drafts."
                 )
-                continue
 
             # Determine change type - new assignment = ADD
             change_type = DraftAssignmentChangeType.ADD

@@ -117,4 +117,16 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table("schedule_drafts_version")
+    # Guard: only drop if this migration actually created the table.
+    # If upgrade() was a no-op (table pre-existed), don't destroy data.
+    conn = op.get_bind()
+    result = conn.execute(
+        sa.text(
+            "SELECT EXISTS ("
+            "  SELECT 1 FROM information_schema.tables "
+            "  WHERE table_name = 'schedule_drafts_version'"
+            ")"
+        )
+    )
+    if result.scalar():
+        op.drop_table("schedule_drafts_version")
