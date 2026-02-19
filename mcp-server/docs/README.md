@@ -18,11 +18,11 @@ This directory contains documentation for the Residency Scheduler MCP (Model Con
 
 ## Implementation Summaries
 
-See the implementation summaries:
-- [Implementation Summary](../../IMPLEMENTATION_SUMMARY.md) - Async task tools
-- [Agent Implementation Summary](../../.claude/dontreadme/technical/AGENT_IMPLEMENTATION_SUMMARY.md) - Agent server
-- [Deployment Tools Summary](../../.claude/dontreadme/technical/DEPLOYMENT_TOOLS_SUMMARY.md) - Deployment helpers
-- [Error Handling Summary](../../.claude/dontreadme/technical/ERROR_HANDLING_SUMMARY.md) - Error handling patterns
+See the parent directory for implementation summaries:
+- [Implementation Summary](../IMPLEMENTATION_SUMMARY.md) - Async task tools
+- [Agent Implementation Summary](../AGENT_IMPLEMENTATION_SUMMARY.md) - Agent server
+- [Deployment Tools Summary](../DEPLOYMENT_TOOLS_SUMMARY.md) - Deployment helpers
+- [Error Handling Summary](../ERROR_HANDLING_SUMMARY.md) - Error handling patterns
 
 ## Quick Start
 

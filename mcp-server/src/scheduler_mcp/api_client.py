@@ -124,16 +124,13 @@ class SchedulerAPIClient:
                 # Don't retry on success or client errors (4xx except 408, 429)
                 if response.status_code < 400:
                     return response
-                if (
-                    400 <= response.status_code < 500
-                    and response.status_code not in RETRYABLE_STATUS_CODES
-                ):
+                if 400 <= response.status_code < 500 and response.status_code not in RETRYABLE_STATUS_CODES:
                     response.raise_for_status()
                     return response
 
                 # Retry on server errors and specific client errors
                 if attempt < max_retries and response.status_code in RETRYABLE_STATUS_CODES:
-                    delay = DEFAULT_RETRY_DELAY * (2**attempt)
+                    delay = DEFAULT_RETRY_DELAY * (2 ** attempt)
                     logger.warning(
                         f"Request failed with status {response.status_code}, "
                         f"retrying in {delay}s (attempt {attempt + 1}/{max_retries})"
@@ -147,7 +144,7 @@ class SchedulerAPIClient:
             except httpx.RequestError as e:
                 last_exception = e
                 if attempt < max_retries:
-                    delay = DEFAULT_RETRY_DELAY * (2**attempt)
+                    delay = DEFAULT_RETRY_DELAY * (2 ** attempt)
                     logger.warning(
                         f"Request failed with error: {e}, "
                         f"retrying in {delay}s (attempt {attempt + 1}/{max_retries})"
@@ -205,9 +202,12 @@ class SchedulerAPIClient:
         to validating the schedule's date range when the endpoint is missing.
         """
         headers = await self._ensure_authenticated()
-        use_validate_endpoint = os.environ.get(
-            "MCP_USE_SCHEDULES_VALIDATE_ENDPOINT", ""
-        ).strip().lower() in {"1", "true", "yes"}
+        use_validate_endpoint = (
+            os.environ.get("MCP_USE_SCHEDULES_VALIDATE_ENDPOINT", "")
+            .strip()
+            .lower()
+            in {"1", "true", "yes"}
+        )
         if use_validate_endpoint:
             try:
                 response = await self._request_with_retry(
@@ -231,7 +231,9 @@ class SchedulerAPIClient:
         start_date = run.get("start_date") or run.get("startDate")
         end_date = run.get("end_date") or run.get("endDate")
         if not start_date or not end_date:
-            raise RuntimeError(f"Schedule run {schedule_id} missing start/end dates")
+            raise RuntimeError(
+                f"Schedule run {schedule_id} missing start/end dates"
+            )
 
         fallback = await self.validate_schedule(start_date=start_date, end_date=end_date)
         violations = fallback.get("violations", [])
@@ -393,12 +395,6 @@ class SchedulerAPIClient:
                 deleted = delete_response.json().get("deleted", 0)
                 logger.info(f"Cleared {deleted} existing assignments")
 
-            # NOTE: Half-day assignments are NOT pre-cleared here.
-            # The scheduling engine clears them internally (step 5.5)
-            # only after a successful solve, preventing data loss on
-            # solver failure. Use clear_half_day_assignments() directly
-            # when you need explicit pre-clearing outside generation.
-
         # Generate new schedule
         logger.info(f"Generating schedule from {start_date} to {end_date} using {algorithm}")
         response = await self._request_with_retry(
@@ -412,36 +408,6 @@ class SchedulerAPIClient:
                 "timeout_seconds": timeout_seconds,
             },
             timeout=max(timeout_seconds + 30, self.config.timeout),
-        )
-        response.raise_for_status()
-        return response.json()
-
-    async def clear_half_day_assignments(
-        self,
-        start_date: str,
-        end_date: str,
-        sources: str = "solver,template",
-    ) -> dict[str, Any]:
-        """Clear half-day assignments for a date range by source.
-
-        Args:
-            start_date: Start date in YYYY-MM-DD format
-            end_date: End date in YYYY-MM-DD format
-            sources: Comma-separated sources to clear (default: "solver,template")
-
-        Returns:
-            Dict with 'deleted' count and 'sources' list
-        """
-        headers = await self._ensure_authenticated()
-        response = await self._request_with_retry(
-            "DELETE",
-            f"{self.config.api_prefix}/half-day-assignments",
-            headers=headers,
-            params={
-                "start_date": start_date,
-                "end_date": end_date,
-                "sources": sources,
-            },
         )
         response.raise_for_status()
         return response.json()

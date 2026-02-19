@@ -69,6 +69,11 @@ DOMAIN_TOOLS: Dict[str, List[str]] = {
         "calculate_erlang_metrics_tool",
         # Game Theory
         "calculate_shapley_workload_tool",
+        # Value-at-Risk
+        "calculate_coverage_var_tool",
+        "calculate_workload_var_tool",
+        "simulate_disruption_scenarios_tool",
+        "calculate_conditional_var_tool",
         # Signal Processing
         "detect_schedule_changepoints_tool",
         "detect_critical_slowing_down_tool",

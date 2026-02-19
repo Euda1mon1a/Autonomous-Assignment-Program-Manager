@@ -770,35 +770,6 @@ async def analyze_swap_candidates_tool(
     return await analyze_swap_candidates(request)
 
 
-@mcp.tool()
-async def clear_half_day_assignments_tool(
-    start_date: str,
-    end_date: str,
-    sources: str = "solver,template",
-) -> dict[str, Any]:
-    """
-    Clear solver/template half-day assignments for a date range.
-
-    Preserves preload (FMIT, call, absences) and manual overrides.
-    Use before schedule generation to ensure a clean slate for the solver.
-
-    Args:
-        start_date: Start date in YYYY-MM-DD format
-        end_date: End date in YYYY-MM-DD format
-        sources: Comma-separated sources to clear (default: "solver,template")
-
-    Returns:
-        Dict with deleted count and sources cleared
-    """
-    client = await get_api_client()
-    result = await client.clear_half_day_assignments(
-        start_date=start_date,
-        end_date=end_date,
-        sources=sources,
-    )
-    return result
-
-
 # Async Task Management Tools
 
 
@@ -1958,32 +1929,315 @@ async def calculate_shapley_workload_tool(
     except Exception as api_error:
         logger.warning(f"Backend API call failed, using fallback: {api_error}")
 
-    # Fallback to placeholder data
+    # Fallback to placeholder with realistic mock data
+    # Instead of uniform distribution, simulate varying contributions
+    import random as _rng
+
+    _rng.seed(hash(tuple(faculty_ids)) % 2**31)  # Deterministic per faculty set
+
+    n = len(faculty_ids)
+    # Generate Dirichlet-like distribution (random proportions summing to 1)
+    raw_weights = [_rng.gammavariate(2.0, 1.0) for _ in range(n)]
+    total_weight = sum(raw_weights)
+    shapley_proportions = [w / total_weight for w in raw_weights]
+
+    # Simulate realistic workload parameters
+    total_hours = n * 160.0  # ~160 hours per faculty per quarter
+    placeholder_results = {}
+    current_workloads = []
+
+    for i, fid in enumerate(faculty_ids):
+        fair_target = shapley_proportions[i] * total_hours
+        # Current workload deviates from fair target by ±15%
+        deviation = _rng.gauss(0, fair_target * 0.15)
+        current_workload = max(0.0, fair_target + deviation)
+        current_workloads.append(current_workload)
+        equity_gap = current_workload - fair_target
+
+        placeholder_results[fid] = {
+            "shapley_value": round(shapley_proportions[i], 4),
+            "marginal_contribution": round(shapley_proportions[i] * n * 10, 1),
+            "fair_workload_target": round(fair_target, 1),
+            "current_workload": round(current_workload, 1),
+            "equity_gap": round(equity_gap, 1),
+        }
+
+    equity_gaps = [v["equity_gap"] for v in placeholder_results.values()]
+    import statistics as _stats
+
+    gap_std = _stats.stdev(equity_gaps) if len(equity_gaps) > 1 else 0.0
 
     return {
         "status": "success",
-        "message": "Shapley value calculation completed",
-        "faculty_count": len(faculty_ids),
+        "message": "Shapley value calculation completed (placeholder)",
+        "faculty_count": n,
         "date_range": {"start": start_date, "end": end_date},
         "num_samples": num_samples,
-        "results": {
-            fid: {
-                "shapley_value": round(1.0 / len(faculty_ids), 3),
-                "marginal_contribution": 0.0,
-                "fair_workload_target": 0.0,
-                "current_workload": 0.0,
-                "equity_gap": 0.0,
-            }
-            for fid in faculty_ids
-        },
+        "results": placeholder_results,
         "summary": {
-            "total_workload": 0.0,
-            "equity_gap_std_dev": 0.0,
-            "overworked_count": 0,
-            "underworked_count": 0,
+            "total_workload": round(sum(current_workloads), 1),
+            "equity_gap_std_dev": round(gap_std, 2),
+            "overworked_count": sum(1 for g in equity_gaps if g > 0),
+            "underworked_count": sum(1 for g in equity_gaps if g < 0),
         },
-        "note": "Fallback data - backend API unavailable",
+        "metadata": {
+            "source": "placeholder",
+            "note": "Simulated Shapley values using Dirichlet-like distribution. "
+            "Backend API unavailable - connect backend for real calculations.",
+        },
     }
+
+
+# =============================================================================
+# Value-at-Risk (VaR) Tools for Schedule Vulnerability Analysis
+# =============================================================================
+
+
+@armory_tool("calculate_coverage_var_tool")
+async def calculate_coverage_var_tool(
+    start_date: str,
+    end_date: str,
+    confidence_levels: list[float] | None = None,
+    rotation_types: list[str] | None = None,
+    historical_days: int = 90,
+) -> dict:
+    """
+    Calculate Value-at-Risk for schedule coverage metrics.
+
+    Answers: "With X% confidence, coverage won't drop below Y%"
+
+    Uses historical data to determine probabilistic bounds on coverage
+    degradation. Based on financial VaR methodology adapted for scheduling.
+
+    Args:
+        start_date: Start date for analysis (YYYY-MM-DD)
+        end_date: End date for analysis (YYYY-MM-DD)
+        confidence_levels: VaR confidence levels (default: [0.90, 0.95, 0.99])
+        rotation_types: Specific rotation types to analyze (None = all)
+        historical_days: Days of historical data to use (30-365, default 90)
+
+    Returns:
+        Dictionary with VaR metrics, severity, and recommendations:
+        - var_metrics: List of VaR at each confidence level
+        - baseline_coverage: Normal coverage rate
+        - worst_case_coverage: Lowest historical coverage
+        - severity: Risk severity (low/moderate/high/critical/extreme)
+        - recommendations: Actionable risk mitigation steps
+
+    Example:
+        result = await calculate_coverage_var_tool(
+            start_date="2025-01-01",
+            end_date="2025-03-31",
+            confidence_levels=[0.90, 0.95, 0.99]
+        )
+        # "With 95% confidence, coverage won't drop more than 12.3%"
+    """
+    from .var_risk_tools import CoverageVaRRequest, calculate_coverage_var
+
+    if confidence_levels is None:
+        confidence_levels = [0.90, 0.95, 0.99]
+
+    request = CoverageVaRRequest(
+        start_date=start_date,
+        end_date=end_date,
+        confidence_levels=confidence_levels,
+        rotation_types=rotation_types,
+        historical_days=historical_days,
+    )
+
+    response = await calculate_coverage_var(request)
+    return response.model_dump()
+
+
+@armory_tool("calculate_workload_var_tool")
+async def calculate_workload_var_tool(
+    start_date: str,
+    end_date: str,
+    confidence_levels: list[float] | None = None,
+    metric: str = "gini_coefficient",
+) -> dict:
+    """
+    Calculate Value-at-Risk for workload distribution inequality.
+
+    Quantifies risk of unfair workload distribution using VaR methodology.
+    Supports multiple inequality metrics.
+
+    Args:
+        start_date: Start date for analysis (YYYY-MM-DD)
+        end_date: End date for analysis (YYYY-MM-DD)
+        confidence_levels: VaR confidence levels (default: [0.90, 0.95, 0.99])
+        metric: Workload metric to analyze:
+            - "gini_coefficient": Workload inequality (0=equal, 1=max inequality)
+            - "max_hours": Maximum individual hours worked
+            - "variance": Variance in hours distribution
+
+    Returns:
+        Dictionary with workload VaR metrics:
+        - var_metrics: VaR at each confidence level
+        - baseline_value: Normal metric value
+        - worst_case_value: Worst historical value
+        - severity: Risk severity classification
+        - recommendations: Workload balancing suggestions
+
+    Example:
+        result = await calculate_workload_var_tool(
+            start_date="2025-01-01",
+            end_date="2025-03-31",
+            metric="gini_coefficient"
+        )
+        # "With 95% confidence, Gini won't exceed 0.28"
+    """
+    from .var_risk_tools import WorkloadVaRRequest, calculate_workload_var
+
+    if confidence_levels is None:
+        confidence_levels = [0.90, 0.95, 0.99]
+
+    request = WorkloadVaRRequest(
+        start_date=start_date,
+        end_date=end_date,
+        confidence_levels=confidence_levels,
+        metric=metric,
+    )
+
+    response = await calculate_workload_var(request)
+    return response.model_dump()
+
+
+@armory_tool("simulate_disruption_scenarios_tool")
+async def simulate_disruption_scenarios_tool(
+    start_date: str,
+    end_date: str,
+    num_simulations: int = 1000,
+    disruption_types: list[str] | None = None,
+    disruption_probability: float = 0.05,
+    seed: int | None = None,
+) -> dict:
+    """
+    Run Monte Carlo simulation of schedule disruption scenarios.
+
+    Simulates random disruptions (absences, deployments, mass casualties)
+    to quantify impact on coverage, workload, and ACGME compliance.
+
+    Args:
+        start_date: Start date for simulation (YYYY-MM-DD)
+        end_date: End date for simulation (YYYY-MM-DD)
+        num_simulations: Number of Monte Carlo scenarios (100-10000, default 1000)
+        disruption_types: Types of disruptions to simulate. Options:
+            - "random_absence": Individual unplanned absences
+            - "mass_casualty": Mass casualty event requiring surge staffing
+            - "deployment": Military deployment removing staff
+            - "illness_cluster": Multiple simultaneous illnesses
+            - "equipment_failure": Equipment failure affecting rotations
+            - "weather_event": Weather disrupting operations
+            Default: ["random_absence"]
+        disruption_probability: Probability per person per day (0.0-1.0, default 0.05)
+        seed: Random seed for reproducibility (optional)
+
+    Returns:
+        Dictionary with simulation results:
+        - var_95_coverage_drop: 95% VaR for coverage degradation
+        - var_99_coverage_drop: 99% VaR for coverage degradation
+        - mean_coverage_drop: Average coverage impact
+        - worst_case_scenario: Details of worst simulated scenario
+        - sample_scenarios: First 10 scenarios for inspection
+        - severity: Overall risk severity
+
+    Example:
+        result = await simulate_disruption_scenarios_tool(
+            start_date="2025-01-01",
+            end_date="2025-01-31",
+            num_simulations=1000,
+            disruption_types=["random_absence", "illness_cluster"],
+            seed=42
+        )
+        # 95% VaR: 15% coverage drop, worst case: 40% drop
+    """
+    from .var_risk_tools import (
+        DisruptionSimulationRequest,
+        DisruptionType,
+        simulate_disruption_scenarios,
+    )
+
+    if disruption_types is None:
+        disruption_types = ["random_absence"]
+
+    # Validate and convert disruption types
+    try:
+        parsed_types = [DisruptionType(dt) for dt in disruption_types]
+    except ValueError as e:
+        return {
+            "error": f"Invalid disruption type: {e}. Valid types: {[t.value for t in DisruptionType]}",
+            "status": "failed",
+        }
+
+    request = DisruptionSimulationRequest(
+        start_date=start_date,
+        end_date=end_date,
+        num_simulations=num_simulations,
+        disruption_types=parsed_types,
+        disruption_probability=disruption_probability,
+        seed=seed,
+    )
+
+    response = await simulate_disruption_scenarios(request)
+    return response.model_dump()
+
+
+@armory_tool("calculate_conditional_var_tool")
+async def calculate_conditional_var_tool(
+    start_date: str,
+    end_date: str,
+    confidence_level: float = 0.95,
+    loss_metric: str = "coverage_drop",
+) -> dict:
+    """
+    Calculate Conditional VaR (Expected Shortfall / CVaR).
+
+    CVaR measures the average loss in worst-case scenarios beyond the VaR
+    threshold. Provides deeper insight into tail risk than standard VaR.
+
+    Example: If 95% VaR = 10% coverage drop, CVaR answers "in the worst
+    5% of scenarios, what is the AVERAGE coverage drop?"
+
+    Args:
+        start_date: Start date for analysis (YYYY-MM-DD)
+        end_date: End date for analysis (YYYY-MM-DD)
+        confidence_level: Confidence level for CVaR (0.5-0.999, default 0.95)
+        loss_metric: Loss metric to analyze:
+            - "coverage_drop": Decrease in schedule coverage
+            - "workload_spike": Increase in individual workload
+            - "acgme_violations": Number of ACGME compliance violations
+
+    Returns:
+        Dictionary with tail risk metrics:
+        - var_value: VaR threshold at confidence level
+        - cvar_value: CVaR (expected shortfall) - always >= var_value
+        - interpretation: Human-readable explanation
+        - tail_scenarios_count: Number of scenarios in tail
+        - tail_mean: Mean loss in tail scenarios
+        - tail_std: Standard deviation of tail losses
+        - severity: Risk severity classification
+
+    Example:
+        result = await calculate_conditional_var_tool(
+            start_date="2025-01-01",
+            end_date="2025-03-31",
+            confidence_level=0.95,
+            loss_metric="coverage_drop"
+        )
+        # "In the worst 5% of scenarios, average coverage drop is 18.2%"
+    """
+    from .var_risk_tools import ConditionalVaRRequest, calculate_conditional_var
+
+    request = ConditionalVaRRequest(
+        start_date=start_date,
+        end_date=end_date,
+        confidence_level=confidence_level,
+        loss_metric=loss_metric,
+    )
+
+    response = await calculate_conditional_var(request)
+    return response.model_dump()
 
 
 @armory_tool("detect_critical_slowing_down_tool")
