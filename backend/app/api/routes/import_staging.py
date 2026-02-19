@@ -12,7 +12,7 @@ import batches:
 - DELETE /import/batches/{id} - Reject/delete batch
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -137,7 +137,7 @@ async def stage_import(
         )
 
     # Parse dates
-    from datetime import date as date_type
+    from datetime import UTC, date as date_type
 
     start_date = None
     end_date = None
@@ -483,8 +483,8 @@ async def apply_batch(
         applied_count=result.applied_count,
         skipped_count=result.skipped_count,
         error_count=result.error_count,
-        started_at=datetime.utcnow(),
-        completed_at=datetime.utcnow(),
+        started_at=datetime.now(UTC),
+        completed_at=datetime.now(UTC),
         errors=result.errors or [],
         acgme_warnings=result.acgme_warnings or [],
         rollback_available=result.rollback_available,
@@ -537,7 +537,7 @@ async def rollback_batch(
         status=result.status,
         rolled_back_count=result.rolled_back_count,
         failed_count=result.failed_count,
-        rolled_back_at=datetime.utcnow(),
+        rolled_back_at=datetime.now(UTC),
         rolled_back_by_id=current_user.id,
         errors=result.errors or [],
     )

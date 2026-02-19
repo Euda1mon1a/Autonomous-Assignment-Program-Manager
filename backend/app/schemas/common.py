@@ -8,7 +8,7 @@ Provides reusable schema components:
 - Metadata schemas
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Generic, TypeVar, Optional
 from uuid import UUID
 
@@ -37,7 +37,7 @@ class ErrorResponse(BaseModel):
         None, description="Detailed error information"
     )
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Error timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Error timestamp"
     )
 
 
@@ -48,7 +48,7 @@ class SuccessResponse(BaseModel, Generic[T]):
     data: T = Field(..., description="Response data")
     message: str | None = Field(None, description="Optional success message")
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Response timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Response timestamp"
     )
 
 
@@ -80,7 +80,7 @@ class IdResponse(BaseModel):
 
     id: UUID = Field(..., description="Created resource ID")
     created_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Creation timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Creation timestamp"
     )
 
 
@@ -156,7 +156,7 @@ class HealthCheckResponse(BaseModel):
     status: str = Field(..., description="Health status")
     version: str | None = Field(None, description="API version")
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Health check timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Health check timestamp"
     )
     dependencies: dict[str, str] | None = Field(
         None, description="Status of dependencies (database, redis, etc.)"

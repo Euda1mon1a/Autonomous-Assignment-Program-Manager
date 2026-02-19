@@ -12,7 +12,7 @@ Provides comprehensive health monitoring endpoints:
 """
 
 import asyncio
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import lru_cache
 import logging
 import os
@@ -206,7 +206,7 @@ async def deep_health() -> dict[str, Any]:
 
     return {
         "status": "healthy" if all_connected else "unhealthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "service": "residency-scheduler",
         "version": _read_backend_version(),
         "checks": {
@@ -339,7 +339,7 @@ async def clear_health_history() -> dict[str, Any]:
 
     return {
         "message": "Health check history cleared",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 

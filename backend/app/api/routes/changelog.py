@@ -10,7 +10,7 @@ Provides endpoints for:
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -127,7 +127,7 @@ async def save_version(request: VersionSaveRequest) -> VersionSaveResponse:
         return VersionSaveResponse(
             version=version,
             message=f"Version {version} saved successfully",
-            saved_at=datetime.utcnow().isoformat(),
+            saved_at=datetime.now(UTC).isoformat(),
         )
 
     except (ValueError, KeyError, AttributeError) as e:
@@ -201,7 +201,7 @@ async def generate_changelog(request: ChangelogRequest) -> ChangelogResponse:
         format=request.output_format,
         old_version=request.old_version,
         new_version=request.new_version,
-        generated_at=datetime.utcnow().isoformat(),
+        generated_at=datetime.now(UTC).isoformat(),
     )
 
 
@@ -263,7 +263,7 @@ async def generate_changelog_from_schemas(
             format=request.output_format,
             old_version=old_version,
             new_version=new_version,
-            generated_at=datetime.utcnow().isoformat(),
+            generated_at=datetime.now(UTC).isoformat(),
         )
 
     except Exception as e:
@@ -350,7 +350,7 @@ async def get_api_diff(request: ChangelogRequest) -> APIDiffResponse:
         old_version=diff.old_version,
         new_version=diff.new_version,
         suggested_version=diff.suggest_version_bump(diff.old_version),
-        generated_at=datetime.utcnow().isoformat(),
+        generated_at=datetime.now(UTC).isoformat(),
         summary=summary,
         changes=changes,
     )
@@ -414,7 +414,7 @@ async def generate_migration_guide(
         old_version=request.old_version,
         new_version=request.new_version,
         breaking_changes_count=len(diff.breaking_changes),
-        generated_at=datetime.utcnow().isoformat(),
+        generated_at=datetime.now(UTC).isoformat(),
     )
 
 

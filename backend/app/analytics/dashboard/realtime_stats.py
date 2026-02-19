@@ -1,6 +1,6 @@
 """Realtime Stats - Real-time statistics provider."""
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any, Dict
 import logging
 
@@ -30,7 +30,7 @@ class RealtimeStats:
             "today": today_stats,
             "active": active_counts,
             "recent_activity": recent_activity,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     async def _get_today_stats(self) -> dict[str, Any]:

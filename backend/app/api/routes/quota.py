@@ -10,7 +10,7 @@ Provides endpoints for:
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 import redis
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -232,7 +232,7 @@ async def get_quota_report(
             total_usage=total_usage,
             total_limit=total_limit,
             usage_percentage=round(usage_percentage, 2),
-            generated_at=datetime.utcnow().isoformat(),
+            generated_at=datetime.now(UTC).isoformat(),
         )
     except Exception as e:
         logger.error(f"Failed to generate report for user {current_user.id}: {e}")
@@ -397,10 +397,10 @@ async def set_custom_quota(
         # Calculate expiration time
         expires_at = None
         if request.ttl_seconds:
-            from datetime import timedelta
+            from datetime import UTC, timedelta
 
             expires_at = (
-                datetime.utcnow() + timedelta(seconds=request.ttl_seconds)
+                datetime.now(UTC) + timedelta(seconds=request.ttl_seconds)
             ).isoformat()
 
         logger.info(

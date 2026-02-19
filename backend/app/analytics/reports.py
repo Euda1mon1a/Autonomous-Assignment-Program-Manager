@@ -1,7 +1,7 @@
 """Report generation for schedule analytics."""
 
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import and_
@@ -144,7 +144,7 @@ class ReportGenerator:
                 "daily_coverage": self._get_daily_coverage_chart(blocks, assignments),
             },
             "recommendations": recommendations,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
     def generate_resident_report(
@@ -247,7 +247,7 @@ class ReportGenerator:
                 ]
             },
             "recommendations": recommendations,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
     def generate_compliance_report(
@@ -369,7 +369,7 @@ class ReportGenerator:
                 ]
             },
             "recommendations": recommendations,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
     def generate_workload_report(
@@ -477,7 +477,7 @@ class ReportGenerator:
                 ),
             },
             "recommendations": recommendations,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
     def _get_daily_coverage_chart(

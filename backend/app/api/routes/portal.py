@@ -32,7 +32,7 @@ Related Schemas:
 
 import logging
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -226,7 +226,7 @@ async def get_my_schedule(
         pending_swap_weeks = {swap.source_week for swap in pending_swaps}
 
         # Convert to FMITWeekInfo
-        today = datetime.utcnow().date()
+        today = datetime.now(UTC).date()
         for week_start, _week_assignments in sorted(week_map.items()):
             week_end = week_start + timedelta(days=6)
             has_pending_swap = week_start in pending_swap_weeks
@@ -346,7 +346,7 @@ async def get_my_swaps(
     )
 
     # Recent completed swaps: executed, approved, or rejected in the last 30 days
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(UTC) - timedelta(days=30)
     recent_swaps = (
         db.query(SwapRecord)
         .options(
@@ -527,7 +527,7 @@ async def create_swap_request(
         target_week=None,  # Will be filled in when accepted
         swap_type=swap_type,
         status=SwapStatus.PENDING,
-        requested_at=datetime.utcnow(),
+        requested_at=datetime.now(UTC),
         requested_by_id=current_user.id,
         reason=request.reason,
     )
@@ -670,7 +670,7 @@ async def respond_to_swap(
             swap.target_week = None
 
         swap.status = SwapStatus.APPROVED
-        swap.approved_at = datetime.utcnow()
+        swap.approved_at = datetime.now(UTC)
         swap.approved_by_id = current_user.id
 
         if request.notes:
@@ -687,7 +687,7 @@ async def respond_to_swap(
     else:
         # Reject the swap
         swap.status = SwapStatus.REJECTED
-        swap.approved_at = datetime.utcnow()  # Track when rejected
+        swap.approved_at = datetime.now(UTC)  # Track when rejected
         swap.approved_by_id = current_user.id
 
         if request.notes:
@@ -765,7 +765,7 @@ async def get_my_preferences(
             notify_conflict_alerts=True,
             notify_reminder_days=7,
             notes=None,
-            updated_at=datetime.utcnow(),
+            updated_at=datetime.now(UTC),
         )
 
     # Convert JSON date strings to date objects
@@ -923,7 +923,7 @@ async def update_my_preferences(
         preferences.notes = request.notes
 
     # Update timestamp
-    preferences.updated_at = datetime.utcnow()
+    preferences.updated_at = datetime.now(UTC)
 
     db.commit()
     db.refresh(preferences)
@@ -1018,7 +1018,7 @@ async def get_my_dashboard(
         - Lists incoming swaps requiring response (PENDING status)
     """
     faculty = _get_faculty_for_user(db, current_user)
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
 
     # Get FMIT template
     fmit_template = (
@@ -1141,7 +1141,7 @@ async def get_my_dashboard(
     )
 
     # Get recent conflict alerts (last 30 days, NEW or ACKNOWLEDGED)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(UTC) - timedelta(days=30)
     recent_alerts_query = (
         db.query(ConflictAlert)
         .filter(
@@ -1449,7 +1449,7 @@ def _get_week_start(any_date: datetime | date) -> date:
         This ensures consistent week boundaries across all swap and scheduling
         operations.
     """
-    from datetime import timedelta
+    from datetime import UTC, timedelta
 
     # Ensure we have a date object
     if isinstance(any_date, datetime):

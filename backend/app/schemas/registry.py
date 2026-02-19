@@ -46,7 +46,7 @@ Usage:
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -639,7 +639,7 @@ class SchemaRegistry:
             raise ValueError(f"Schema {name} version {version} is archived")
 
         schema.status = SchemaStatus.DEPRECATED.value
-        schema.deprecated_at = datetime.utcnow()
+        schema.deprecated_at = datetime.now(UTC)
         schema.removed_at = removal_date
 
         # Create change event
@@ -694,7 +694,7 @@ class SchemaRegistry:
             raise ValueError(f"Schema {name} version {version} not found")
 
         schema.status = SchemaStatus.ARCHIVED.value
-        schema.archived_at = datetime.utcnow()
+        schema.archived_at = datetime.now(UTC)
 
         # Create change event
         change_event = SchemaChangeEvent(
@@ -960,7 +960,7 @@ class SchemaRegistry:
         try:
             # Mark notification as sent
             change_event.notification_sent = True
-            change_event.notified_at = datetime.utcnow()
+            change_event.notified_at = datetime.now(UTC)
 
             logger.info(
                 f"Schema change notification: {change_event.schema_name} "

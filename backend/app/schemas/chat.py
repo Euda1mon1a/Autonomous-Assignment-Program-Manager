@@ -1,7 +1,7 @@
 """Schema definitions for Claude Code chat integration."""
 
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import UTC, datetime
 from pydantic import BaseModel, Field
 
 
@@ -35,7 +35,7 @@ class ChatArtifact(BaseModel):
     )
     title: str
     data: dict[str, Any]
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class ChatMessage(BaseModel):
@@ -44,7 +44,7 @@ class ChatMessage(BaseModel):
     id: str
     role: str = Field(..., description="user, assistant, or system")
     content: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     is_streaming: bool = False
     error: str | None = None
     code_blocks: list[CodeBlock] | None = None
@@ -129,8 +129,8 @@ class ChatSession(BaseModel):
     id: str
     title: str
     messages: list[ChatMessage] = []
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     program_id: str
     admin_id: str
 

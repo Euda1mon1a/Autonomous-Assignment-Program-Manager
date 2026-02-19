@@ -13,7 +13,7 @@ import json
 import logging
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from itertools import islice
 from typing import TYPE_CHECKING, Any
 
@@ -496,7 +496,7 @@ def _calculate_coverage_metrics(db: Session) -> CoverageMetrics:
     """Calculate schedule coverage metrics."""
     try:
         # Get blocks and assignments for next 30 days
-        start_date = datetime.utcnow().date()
+        start_date = datetime.now(UTC).date()
         end_date = start_date + timedelta(days=30)
 
         total_blocks = (
@@ -611,7 +611,7 @@ async def get_situation_report(
 
         # Build response
         response = SitrepResponse(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             task_metrics=task_metrics,
             health_status=health_status,
             defense_level=defense_level,
@@ -619,7 +619,7 @@ async def get_situation_report(
             coverage_metrics=coverage_metrics,
             immediate_actions=immediate_actions,
             watch_items=watch_items,
-            last_update=datetime.utcnow(),
+            last_update=datetime.now(UTC),
             crisis_mode=crisis_mode,
         )
 
@@ -713,7 +713,7 @@ async def initiate_fix_it_mode(
             _fix_it_executions[execution_id] = {
                 "mode": request.mode.value,
                 "initiated_by": request.initiated_by,
-                "initiated_at": datetime.utcnow(),
+                "initiated_at": datetime.now(UTC),
                 "tasks_fixed": tasks_fixed,
                 "tasks_retried": tasks_retried,
                 "tasks_failed": tasks_failed,
@@ -745,7 +745,7 @@ async def initiate_fix_it_mode(
         if not request.dry_run and tasks_retried > 0:
             # Estimate 30 seconds per task
             estimated_seconds = tasks_retried * 30
-            estimated_completion = datetime.utcnow() + timedelta(
+            estimated_completion = datetime.now(UTC) + timedelta(
                 seconds=estimated_seconds
             )
 
@@ -771,8 +771,8 @@ async def initiate_fix_it_mode(
             affected_tasks=affected_tasks,
             estimated_completion=estimated_completion,
             initiated_by=request.initiated_by,
-            initiated_at=datetime.utcnow(),
-            completed_at=datetime.utcnow() if not request.dry_run else None,
+            initiated_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC) if not request.dry_run else None,
             message=message,
             warnings=warnings,
         )
@@ -833,7 +833,7 @@ async def approve_task(
                 denied_tasks=0,
                 task_details=[],
                 approved_by=request.approved_by,
-                approved_at=datetime.utcnow(),
+                approved_at=datetime.now(UTC),
                 message="Invalid or expired approval token.",
                 warnings=[
                     "Token not found in system. It may have expired or already been used."
@@ -876,13 +876,13 @@ async def approve_task(
                 task_type=token_data.get("task_type", "schedule_change"),
                 previous_status=TaskStatus.PENDING,
                 new_status=new_status,
-                approved_at=datetime.utcnow(),
+                approved_at=datetime.now(UTC),
             )
             task_details.append(task_info)
 
         # Mark token as used
         _approval_tokens[request.token]["used"] = True
-        _approval_tokens[request.token]["used_at"] = datetime.utcnow()
+        _approval_tokens[request.token]["used_at"] = datetime.now(UTC)
         _approval_tokens[request.token]["used_by"] = request.approved_by
 
         # Build response message
@@ -904,7 +904,7 @@ async def approve_task(
             denied_tasks=denied_count,
             task_details=task_details,
             approved_by=request.approved_by,
-            approved_at=datetime.utcnow(),
+            approved_at=datetime.now(UTC),
             message=message,
             warnings=[],
         )
@@ -957,8 +957,8 @@ async def generate_approval_token(
             "task_ids": task_ids,
             "task_type": task_type,
             "created_by": current_user.username,
-            "created_at": datetime.utcnow(),
-            "expires_at": datetime.utcnow() + timedelta(hours=expires_in_hours),
+            "created_at": datetime.now(UTC),
+            "expires_at": datetime.now(UTC) + timedelta(hours=expires_in_hours),
             "used": False,
         }
 

@@ -14,7 +14,7 @@ Provides endpoints for monitoring and managing Celery background tasks:
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -116,7 +116,7 @@ async def get_jobs_dashboard_overview(
             workerUtilizationPercentage=utilization.get(
                 "average_utilization_percentage", 0.0
             ),
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
     except (ValueError, KeyError, AttributeError) as e:
@@ -690,7 +690,7 @@ async def get_task_history(
             offset=offset,
             tasks=tasks,
             filters=history.get("filters"),
-            timestamp=history.get("timestamp", datetime.utcnow().isoformat()),
+            timestamp=history.get("timestamp", datetime.now(UTC).isoformat()),
         )
 
     except Exception as e:
@@ -814,7 +814,7 @@ async def get_scheduled_tasks_summary(
         return ScheduledTasksSummary(
             totalScheduledTasks=summary.get("total_scheduled_tasks", 0),
             scheduledTasks=tasks,
-            timestamp=summary.get("timestamp", datetime.utcnow().isoformat()),
+            timestamp=summary.get("timestamp", datetime.now(UTC).isoformat()),
         )
 
     except Exception as e:
@@ -911,7 +911,7 @@ async def purge_queue(
         return QueuePurgeResponse(
             queueName=request.queue_name,
             tasksPurged=count,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
     except HTTPException:

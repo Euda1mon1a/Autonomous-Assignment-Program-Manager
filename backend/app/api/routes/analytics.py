@@ -8,7 +8,7 @@ import logging
 import statistics
 import uuid
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, and_
@@ -132,7 +132,7 @@ async def get_current_metrics(
         return ScheduleVersionMetrics(
             versionId=f"run-{latest_run.id}",
             scheduleRunId=latest_run.id,
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(UTC).isoformat() + "Z",
             period={
                 "start_date": latest_run.start_date.isoformat(),
                 "end_date": latest_run.end_date.isoformat(),
@@ -336,8 +336,8 @@ async def get_fairness_trend(
     """
     try:
         # Calculate date range
-        end_date = datetime.utcnow().date()
-        start_date = (datetime.utcnow() - timedelta(days=months * 30)).date()
+        end_date = datetime.now(UTC).date()
+        start_date = (datetime.now(UTC) - timedelta(days=months * 30)).date()
 
         # Get schedule runs in the period
         runs = (
@@ -593,7 +593,7 @@ async def compare_versions(
         return VersionComparison(
             versionA=version_a,
             versionB=version_b,
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(UTC).isoformat() + "Z",
             metrics=metric_comparisons,
             overallImprovement=overall_improvement,
             improvementScore=round(improvement_score, 2),
@@ -751,7 +751,7 @@ async def what_if_analysis(
             recommendation = "Changes appear safe to apply"
 
         return WhatIfResult(
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(UTC).isoformat() + "Z",
             changesAnalyzed=len(proposed_changes),
             metricImpacts=metric_impacts,
             newViolations=new_violations,
@@ -964,7 +964,7 @@ async def export_for_research(
 
         return ResearchDataExport(
             exportId=str(uuid.uuid4()),
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(UTC).isoformat() + "Z",
             anonymized=anonymize,
             startDate=start_date.date().isoformat(),
             endDate=end_date.date().isoformat(),

@@ -11,7 +11,7 @@ Provides endpoints for:
 import hashlib
 import hmac
 import logging
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from fastapi import (
@@ -88,7 +88,7 @@ async def verify_webhook_signature(
         # Validate timestamp to prevent replay attacks
     try:
         webhook_time = datetime.fromtimestamp(int(x_webhook_timestamp))
-        current_time = datetime.utcnow()
+        current_time = datetime.now(UTC)
         time_difference = abs((current_time - webhook_time).total_seconds())
 
         if time_difference > settings.WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS:
@@ -395,7 +395,7 @@ async def approve_leave(
         )
 
     absence.review_notes = request.notes
-    absence.reviewed_at = datetime.utcnow()
+    absence.reviewed_at = datetime.now(UTC)
     absence.reviewed_by_id = current_user.id
 
     if request.approved:

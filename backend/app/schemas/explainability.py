@@ -8,7 +8,7 @@ Provides transparency into scheduling decisions:
 - Confidence in the decision
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from uuid import UUID
 
@@ -115,7 +115,7 @@ class DecisionExplanation(BaseModel):
     # Audit trail
     algorithm: str = ""
     solver_version: str = "1.0.0"
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     random_seed: int | None = None
 
     model_config = ConfigDict(from_attributes=True)

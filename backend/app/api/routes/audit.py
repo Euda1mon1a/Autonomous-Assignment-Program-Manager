@@ -8,7 +8,7 @@ import csv
 import io
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -98,7 +98,7 @@ def _generate_mock_audit_entries(
     all_entries = [
         AuditLogEntry(
             id="audit-001",
-            timestamp=(datetime.utcnow() - timedelta(hours=2)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(hours=2)).isoformat(),
             entity_type="assignment",
             entity_id="assign-123",
             entity_name="Night Shift - ICU",
@@ -126,7 +126,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-002",
-            timestamp=(datetime.utcnow() - timedelta(hours=5)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(hours=5)).isoformat(),
             entity_type="assignment",
             entity_id="assign-124",
             entity_name="Day Shift - ER",
@@ -149,7 +149,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-003",
-            timestamp=(datetime.utcnow() - timedelta(hours=8)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(hours=8)).isoformat(),
             entity_type="person",
             entity_id="person-789",
             entity_name="Dr. Alex Thompson",
@@ -175,7 +175,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-004",
-            timestamp=(datetime.utcnow() - timedelta(hours=12)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(hours=12)).isoformat(),
             entity_type="schedule_run",
             entity_id="sched-001",
             entity_name="January 2025 Schedule",
@@ -192,7 +192,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-005",
-            timestamp=(datetime.utcnow() - timedelta(hours=15)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(hours=15)).isoformat(),
             entity_type="absence",
             entity_id="absence-456",
             entity_name="Vacation - Dr. Smith",
@@ -211,7 +211,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-006",
-            timestamp=(datetime.utcnow() - timedelta(days=1, hours=2)).isoformat()
+            timestamp=(datetime.now(UTC) - timedelta(days=1, hours=2)).isoformat()
             + "Z",
             entity_type="rotation_template",
             entity_id="template-001",
@@ -231,7 +231,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-007",
-            timestamp=(datetime.utcnow() - timedelta(days=1, hours=5)).isoformat()
+            timestamp=(datetime.now(UTC) - timedelta(days=1, hours=5)).isoformat()
             + "Z",
             entity_type="assignment",
             entity_id="assign-125",
@@ -253,7 +253,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-008",
-            timestamp=(datetime.utcnow() - timedelta(days=2)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(days=2)).isoformat(),
             entity_type="system",
             entity_id="sys-001",
             entity_name="Audit System",
@@ -266,7 +266,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-009",
-            timestamp=(datetime.utcnow() - timedelta(days=2, hours=8)).isoformat()
+            timestamp=(datetime.now(UTC) - timedelta(days=2, hours=8)).isoformat()
             + "Z",
             entity_type="block",
             entity_id="block-999",
@@ -279,7 +279,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-010",
-            timestamp=(datetime.utcnow() - timedelta(days=3)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(days=3)).isoformat(),
             entity_type="assignment",
             entity_id="assign-200",
             entity_name="Call Shift - Pediatrics",
@@ -510,7 +510,7 @@ async def get_audit_statistics(
             )
 
             # Determine date range
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             actual_start = start_date or (now - timedelta(days=30)).isoformat()
             actual_end = end_date or now.isoformat()
 
@@ -572,7 +572,7 @@ async def get_audit_statistics(
         actual_start = min(timestamps).isoformat()
         actual_end = max(timestamps).isoformat()
     else:
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         actual_start = (now - timedelta(days=30)).isoformat()
         actual_end = now.isoformat()
 

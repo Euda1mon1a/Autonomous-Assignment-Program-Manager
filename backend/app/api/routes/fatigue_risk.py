@@ -12,7 +12,7 @@ Provides endpoints for:
 All endpoints follow aviation FRMS principles adapted for medical residency.
 """
 
-from datetime import datetime, date
+from datetime import UTC, date, datetime
 from typing import Any, Optional
 from uuid import UUID
 
@@ -198,11 +198,11 @@ async def get_alertness_prediction(
     try:
         profile = await service.get_resident_profile(
             resident_id=resident_id,
-            target_time=target_time or datetime.utcnow(),
+            target_time=target_time or datetime.now(UTC),
         )
         return {
             "resident_id": str(resident_id),
-            "prediction_time": (target_time or datetime.utcnow()).isoformat(),
+            "prediction_time": (target_time or datetime.now(UTC)).isoformat(),
             "alertness_score": profile.current_alertness,
             "alertness_percent": int(profile.current_alertness * 100),
             "samn_perelli": {
@@ -314,7 +314,7 @@ async def scan_all_residents_for_hazards(
         level_counts[level] = level_counts.get(level, 0) + 1
 
     return {
-        "scanned_at": datetime.utcnow(),
+        "scanned_at": datetime.now(UTC),
         "total_residents": len(profiles),
         "hazards_found": len(
             [p for p in profiles if p.hazard_level != HazardLevel.GREEN]

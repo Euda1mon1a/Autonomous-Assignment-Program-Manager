@@ -9,7 +9,7 @@ Consolidates all coverage relationships across the scheduling system:
 """
 
 from collections import Counter, defaultdict
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Query
@@ -430,5 +430,5 @@ async def get_proxy_coverage(
         upcoming_coverage=upcoming_coverage,
         by_coverer=by_coverer,
         stats=stats,
-        generated_at=datetime.utcnow(),
+        generated_at=datetime.now(UTC),
     )

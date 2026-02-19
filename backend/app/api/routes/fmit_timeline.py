@@ -10,7 +10,7 @@ All endpoints include workload balance metrics and fairness indicators.
 """
 
 import statistics
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -343,7 +343,7 @@ async def get_academic_year_timeline(
         aggregate_metrics=aggregate_metrics,
         start_date=start_date,
         end_date=end_date,
-        generated_at=datetime.utcnow(),
+        generated_at=datetime.now(UTC),
     )
 
 
@@ -420,7 +420,7 @@ async def get_faculty_timeline(
         aggregate_metrics=aggregate_metrics,
         start_date=start_date,
         end_date=end_date,
-        generated_at=datetime.utcnow(),
+        generated_at=datetime.now(UTC),
     )
 
 
@@ -548,7 +548,7 @@ async def get_weekly_view(
     return WeeklyViewResponse(
         week_data=week_data,
         adjacent_weeks=adjacent_weeks,
-        generated_at=datetime.utcnow(),
+        generated_at=datetime.now(UTC),
     )
 
 
@@ -675,5 +675,5 @@ async def get_gantt_data(
         all_tasks=all_tasks,
         date_range={"start": start_date.isoformat(), "end": end_date.isoformat()},
         metadata=metadata,
-        generated_at=datetime.utcnow(),
+        generated_at=datetime.now(UTC),
     )

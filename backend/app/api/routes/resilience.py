@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
@@ -191,7 +191,7 @@ def persist_event(
 ):
     """Persist resilience event to database."""
     event = ResilienceEvent(
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
         event_type=event_type,
         severity=severity,
         reason=reason,
@@ -594,7 +594,7 @@ async def deactivate_fallback(
     )
 
     if activation:
-        activation.deactivated_at = datetime.utcnow()
+        activation.deactivated_at = datetime.now(UTC)
         activation.deactivated_by = str(current_user.id)
         activation.deactivation_reason = request.reason
 
@@ -1058,7 +1058,7 @@ async def get_mtf_compliance(
     - Capability S-ratings (S1-S4)
     - Circuit breaker status (tripped/locked operations)
     """
-    from datetime import timedelta
+    from datetime import UTC, timedelta
 
     from app.models.assignment import Assignment
     from app.models.block import Block
@@ -2607,7 +2607,7 @@ async def analyze_hubs(
     results = service.analyze_hubs(faculty, assignments, services)
 
     return {
-        "analyzed_at": datetime.utcnow().isoformat(),
+        "analyzed_at": datetime.now(UTC).isoformat(),
         "total_faculty": len(faculty),
         "total_hubs": len([r for r in results if r.is_hub]),
         "hubs": [
@@ -3150,7 +3150,7 @@ async def get_circuit_breakers_status(
             breakers=breakers,
             overall_health=overall_health,
             recommendations=recommendations,
-            checked_at=datetime.utcnow(),
+            checked_at=datetime.now(UTC),
         )
     except Exception as e:
         logger.error(f"Error getting circuit breaker status: {e}")
@@ -3164,7 +3164,7 @@ async def get_circuit_breakers_status(
             breakers=[],
             overall_health="unknown",
             recommendations=["Circuit breaker registry not initialized"],
-            checked_at=datetime.utcnow(),
+            checked_at=datetime.now(UTC),
         )
 
 
@@ -3265,7 +3265,7 @@ async def get_circuit_breakers_health(
             trend_analysis="stable",  # Would need historical data for real trend
             severity=severity,
             recommendations=recommendations,
-            analyzed_at=datetime.utcnow(),
+            analyzed_at=datetime.now(UTC),
         )
     except Exception as e:
         logger.error(f"Error getting circuit breaker health: {e}")
@@ -3285,5 +3285,5 @@ async def get_circuit_breakers_health(
             trend_analysis="unknown",
             severity=BreakerSeverity.HEALTHY,
             recommendations=["Circuit breaker registry not initialized"],
-            analyzed_at=datetime.utcnow(),
+            analyzed_at=datetime.now(UTC),
         )

@@ -1,6 +1,6 @@
 """Admin dashboard aggregate endpoints."""
 
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
@@ -84,7 +84,7 @@ def get_admin_dashboard_summary(db: Session = Depends(get_db)) -> AdminDashboard
         conflict_counts[key] = count
 
     return AdminDashboardSummary(
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
         users=AdminUserCounts(total=users_total, active=users_active),
         people=AdminPeopleCounts(
             total=people_total, residents=residents_total, faculty=faculty_total
@@ -114,7 +114,7 @@ def get_admin_dashboard_summary(db: Session = Depends(get_db)) -> AdminDashboard
 )
 def get_break_glass_usage(db: Session = Depends(get_db)) -> AdminBreakGlassUsage:
     """Return break-glass usage for the last 7 days."""
-    window_end = datetime.utcnow()
+    window_end = datetime.now(UTC)
     window_start = window_end - timedelta(days=7)
 
     filters = [

@@ -1,6 +1,6 @@
 """Schema definitions for LLM Router service."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
@@ -42,7 +42,7 @@ class LLMResponse(BaseModel):
         default_factory=dict, description="Additional provider-specific metadata"
     )
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Response timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Response timestamp"
     )
 
 
@@ -101,7 +101,8 @@ class ProviderHealth(BaseModel):
     provider: str = Field(..., description="Provider name")
     is_available: bool = Field(..., description="Whether provider is available")
     last_check: datetime = Field(
-        default_factory=datetime.utcnow, description="Last health check timestamp"
+        default_factory=lambda: datetime.now(UTC),
+        description="Last health check timestamp",
     )
     failure_count: int = Field(0, description="Consecutive failures")
     avg_latency_ms: float | None = Field(
@@ -139,7 +140,8 @@ class LLMRouterStats(BaseModel):
     avg_latency_ms: float = Field(0.0, description="Average latency in milliseconds")
     error_count: int = Field(0, description="Total errors encountered")
     uptime_start: datetime = Field(
-        default_factory=datetime.utcnow, description="Statistics collection start time"
+        default_factory=lambda: datetime.now(UTC),
+        description="Statistics collection start time",
     )
 
 

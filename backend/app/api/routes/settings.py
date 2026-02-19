@@ -1,7 +1,7 @@
 """Settings API routes with database persistence."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -75,7 +75,7 @@ async def update_settings(
     for field, value in settings_in.model_dump().items():
         setattr(settings, field, value)
 
-    settings.updated_at = datetime.utcnow()
+    settings.updated_at = datetime.now(UTC)
     db.commit()
     db.refresh(settings)
 
@@ -120,7 +120,7 @@ async def patch_settings(
     for field, value in update_data.items():
         setattr(settings, field, value)
 
-    settings.updated_at = datetime.utcnow()
+    settings.updated_at = datetime.now(UTC)
     db.commit()
     db.refresh(settings)
 
@@ -146,7 +146,7 @@ async def reset_settings(
     for field, value in DEFAULT_SETTINGS.items():
         setattr(settings, field, value)
 
-    settings.updated_at = datetime.utcnow()
+    settings.updated_at = datetime.now(UTC)
     db.commit()
 
     if previous_lock_date != settings.schedule_lock_date:

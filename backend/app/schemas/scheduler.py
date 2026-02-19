@@ -1,6 +1,6 @@
 """Pydantic schemas for job scheduler."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -317,7 +317,7 @@ class SyncResultSchema(BaseModel):
     added: int
     removed: int
     updated: int
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class JobActionResponseSchema(BaseModel):

@@ -6,7 +6,7 @@ Provides schemas for:
 - Task approval operations
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -90,7 +90,7 @@ class SitrepResponse(BaseModel):
     """Situation report response."""
 
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Report timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Report timestamp"
     )
 
     # Task metrics
@@ -120,7 +120,7 @@ class SitrepResponse(BaseModel):
 
     # System metadata
     last_update: datetime = Field(
-        default_factory=datetime.utcnow, description="Last system update"
+        default_factory=lambda: datetime.now(UTC), description="Last system update"
     )
     crisis_mode: bool = Field(
         default=False, description="Whether system is in crisis mode"
@@ -193,7 +193,7 @@ class FixItResponse(BaseModel):
 
     # Metadata
     initiated_by: str
-    initiated_at: datetime = Field(default_factory=datetime.utcnow)
+    initiated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None
 
     # Messages
@@ -260,7 +260,7 @@ class ApprovalResponse(BaseModel):
 
     # Metadata
     approved_by: str
-    approved_at: datetime = Field(default_factory=datetime.utcnow)
+    approved_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Messages
     message: str = Field(..., description="Human-readable result message")
@@ -293,7 +293,7 @@ class SolverAbortResponse(BaseModel):
     run_id: str = Field(..., description="Schedule run ID")
     reason: str = Field(..., description="Abort reason")
     requested_by: str = Field(..., description="User who requested abort")
-    requested_at: datetime = Field(default_factory=datetime.utcnow)
+    requested_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     message: str = Field(..., description="Human-readable status message")
 
 
@@ -318,7 +318,7 @@ class ActiveSolversResponse(BaseModel):
         default_factory=list, description="Currently running solver jobs"
     )
     count: int = Field(..., ge=0, description="Number of active runs")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # Error Response Schema
@@ -330,4 +330,4 @@ class SchedulerOpsError(BaseModel):
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Human-readable error message")
     details: dict | None = Field(None, description="Additional error details")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))

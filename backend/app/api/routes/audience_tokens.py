@@ -344,7 +344,7 @@ async def revoke_token(
     try:
         # Security: Verify token belongs to current user (or user is admin)
         token_owner_id: str | None = None
-        expires_at = datetime.utcnow()  # Default expiration for cleanup
+        expires_at = datetime.now(UTC)  # Default expiration for cleanup
 
         # Method 1: If token is provided, decode it to get owner and expiration
         if request.token:

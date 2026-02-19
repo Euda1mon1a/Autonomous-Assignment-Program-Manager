@@ -14,7 +14,7 @@ Created: 2025-12-30 (Session 024 - Marathon Execution)
 
 import logging
 import math
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -709,7 +709,7 @@ async def analyze_schedule_entropy(
         entropy_production_rate=metrics.entropy_production_rate,
         interpretation=interpretation,
         recommendations=recommendations,
-        computed_at=datetime.utcnow().isoformat(),
+        computed_at=datetime.now(UTC).isoformat(),
         source="backend",
     )
 
@@ -844,7 +844,7 @@ async def calculate_free_energy_endpoint(
         configuration_entropy=metrics.configuration_entropy,
         interpretation=interpretation,
         recommendations=recommendations,
-        computed_at=datetime.utcnow().isoformat(),
+        computed_at=datetime.now(UTC).isoformat(),
         source="backend",
     )
 
@@ -901,7 +901,7 @@ async def analyze_energy_landscape_endpoint(
         num_local_minima=landscape_result["features"].num_local_minima,
         interpretation=interpretation,
         recommendations=recommendations,
-        computed_at=datetime.utcnow().isoformat(),
+        computed_at=datetime.now(UTC).isoformat(),
         source="backend",
     )
 
@@ -2185,7 +2185,7 @@ async def assess_creep_fatigue(
     """
     logger.info(f"Assessing creep fatigue: {request}")
 
-    from datetime import timedelta
+    from datetime import UTC, timedelta
 
     # Fetch faculty
     faculty_query = select(Person).where(Person.type == "faculty")
@@ -2511,7 +2511,7 @@ async def calculate_hopfield_energy(
     """
     logger.info(f"Calculating Hopfield energy: {request}")
 
-    from datetime import date as date_type
+    from datetime import UTC, date as date_type
 
     start = date_type.fromisoformat(request.start_date)
     end = date_type.fromisoformat(request.end_date)
@@ -2570,7 +2570,7 @@ async def find_hopfield_attractors(
     """
     logger.info(f"Finding Hopfield attractors: {request}")
 
-    from datetime import date as date_type
+    from datetime import UTC, date as date_type
 
     start = date_type.fromisoformat(request.start_date)
     end = date_type.fromisoformat(request.end_date)
@@ -2626,7 +2626,7 @@ async def measure_hopfield_basin_depth(
     """
     logger.info(f"Measuring Hopfield basin depth: {request}")
 
-    from datetime import date as date_type
+    from datetime import UTC, date as date_type
 
     start = date_type.fromisoformat(request.start_date)
     end = date_type.fromisoformat(request.end_date)
@@ -2681,7 +2681,7 @@ async def detect_hopfield_spurious_attractors(
     """
     logger.info(f"Detecting Hopfield spurious attractors: {request}")
 
-    from datetime import date as date_type
+    from datetime import UTC, date as date_type
 
     start = date_type.fromisoformat(request.start_date)
     end = date_type.fromisoformat(request.end_date)

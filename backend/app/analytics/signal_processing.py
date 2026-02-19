@@ -69,7 +69,7 @@ import logging
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
 from typing import TypedDict
 from uuid import UUID
@@ -1857,11 +1857,11 @@ class WorkloadSignalProcessor:
                 "changepoint",
             ]
 
-        analysis_id = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        analysis_id = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
 
         result: SignalAnalysisResult = {
             "analysis_id": analysis_id,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "input_summary": {
                 "length": len(ts.values),
                 "duration_days": ts.duration_days,
@@ -2140,7 +2140,7 @@ class WorkloadSignalProcessor:
         return {
             "version": "1.0",
             "export_type": "holographic_signal_analysis",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "time_domain": time_domain,
             "frequency_domain": frequency_domain,
             "wavelet_domain": wavelet_domain,

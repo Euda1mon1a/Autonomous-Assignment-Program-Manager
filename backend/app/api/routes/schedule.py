@@ -215,7 +215,7 @@ async def generate_schedule(
     - pulp: PuLP linear programming, fast for large problems
     - hybrid: Combines CP-SAT and PuLP for best results
     """
-    from datetime import datetime, timedelta
+    from datetime import UTC, datetime, timedelta
 
     from app.models.schedule_run import ScheduleRun
 
@@ -315,7 +315,7 @@ async def generate_schedule(
 
     # Issue #1: Double-submit / Re-entrancy protection
     # Check for in-progress generations for overlapping date ranges
-    recent_cutoff = datetime.utcnow() - timedelta(minutes=5)
+    recent_cutoff = datetime.now(UTC) - timedelta(minutes=5)
     in_progress_run = (
         db.query(ScheduleRun)
         .filter(
@@ -489,7 +489,7 @@ async def validate_schedule(
     - 1-in-7 days off
     - Supervision ratios (1:2 for PGY-1, 1:4 for PGY-2/3)
     """
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     try:
         start = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -1104,7 +1104,7 @@ async def find_swap_candidates_json(
     Returns:
         SwapCandidateJsonResponse with ranked candidates
     """
-    from datetime import datetime
+    from datetime import UTC, datetime
     from uuid import UUID
 
     from app.models.assignment import Assignment
@@ -1184,7 +1184,7 @@ async def find_swap_candidates_json(
                 .join(Block, Assignment.block_id == Block.id)
                 .where(
                     Assignment.person_id == person_uuid,
-                    Block.date >= datetime.utcnow().date(),
+                    Block.date >= datetime.now(UTC).date(),
                 )
                 .order_by(Block.date)
                 .limit(5)
@@ -1222,7 +1222,7 @@ async def find_swap_candidates_json(
             .where(
                 Assignment.person_id != person_uuid,
                 Person.type == requester.type,  # Same type (faculty/resident)
-                Block.date >= datetime.utcnow().date(),
+                Block.date >= datetime.now(UTC).date(),
             )
             .order_by(Block.date)
             .limit(100)  # Get a pool of candidates
@@ -1404,7 +1404,7 @@ async def get_schedule(start_date: str, end_date: str, db: Session = Depends(get
 
     Returns all assignments with person and rotation template details.
     """
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     from sqlalchemy.orm import joinedload
 
@@ -1494,11 +1494,11 @@ async def get_sync_metadata(
     current_user: User = Depends(get_current_active_user),
 ) -> SyncMetadata:
     """Get metadata about external system synchronization."""
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     # Stub implementation for now
     return SyncMetadata(
-        last_sync_time=datetime.utcnow(),
+        last_sync_time=datetime.now(UTC),
         sync_status="synced",
         source_system="FMIT_CORE",
         records_affected=0,
@@ -1533,7 +1533,7 @@ async def get_schedule_metrics_summary(
     current_user: User = Depends(get_current_active_user),
 ) -> dict:
     """Get metrics summary for schedule runs."""
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     return {
         "status": "success",
@@ -1609,7 +1609,7 @@ async def queue_experiment_batch(
     as ExperimentRun objects.
     """
     import uuid
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     from app.models.schedule_run import ScheduleRun
 
@@ -1629,7 +1629,7 @@ async def queue_experiment_batch(
                     "name", f"Experiment {datetime.now().strftime('%H:%M')}"
                 ),
             },
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         db.add(run)
         created_runs.append(run)
