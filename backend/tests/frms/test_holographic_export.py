@@ -689,6 +689,26 @@ class TestExportSpatialMap:
         assert 0 in xs
         assert 1 in xs
 
+    def test_blocks_sorted_when_dates_mix_date_and_datetime(self):
+        pid = str(uuid4())
+        b1 = str(uuid4())
+        b2 = str(uuid4())
+        persons = [{"id": pid, "name": "A", "pgy_level": 1}]
+        blocks = [
+            {"id": b2, "date": datetime(2026, 1, 2, 8, 0)},
+            {"id": b1, "date": date(2026, 1, 1)},
+        ]
+        assignments = [
+            {"person_id": pid, "block_id": b1, "rotation_type": "c"},
+            {"person_id": pid, "block_id": b2, "rotation_type": "c"},
+        ]
+
+        result = self.exporter.export_spatial_map(assignments, persons, blocks)
+        voxel_by_block = {v["block_id"]: v for v in result.voxels}
+
+        assert voxel_by_block[b1]["position"]["x"] == 0
+        assert voxel_by_block[b2]["position"]["x"] == 1
+
     def test_persons_sorted_by_pgy_level(self):
         p1 = str(uuid4())
         p2 = str(uuid4())
