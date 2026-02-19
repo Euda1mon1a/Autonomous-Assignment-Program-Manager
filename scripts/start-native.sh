@@ -308,6 +308,7 @@ fi
 start_service "celery-worker" "$PROJECT_ROOT/backend" \
     celery -A app.core.celery_app worker \
     --loglevel=info \
+    --pool=solo \
     -Q default,resilience,notifications \
     --concurrency=4 \
     --time-limit=600 \

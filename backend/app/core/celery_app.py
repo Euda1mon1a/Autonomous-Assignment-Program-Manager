@@ -15,6 +15,7 @@ Configuration:
 """
 
 import os
+import platform
 
 from celery import Celery
 from celery.schedules import crontab
@@ -61,6 +62,12 @@ celery_app.conf.update(
     # Result settings
     result_expires=3600,  # Results expire after 1 hour
     # Worker settings
+    # macOS fork() + asyncio.run() = SIGSEGV. Solo pool avoids fork entirely.
+    # On Linux (Docker/prod), prefork is safe and provides concurrency.
+    worker_pool=os.getenv(
+        "CELERY_WORKER_POOL",
+        "solo" if platform.system() == "Darwin" else "prefork",
+    ),
     worker_prefetch_multiplier=1,
     worker_concurrency=4,
     # Beat schedule for periodic tasks
