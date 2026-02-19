@@ -426,15 +426,16 @@ class HolographicExporter:
         """
         now = datetime.now()
 
-        # Sort blocks by date
-        sorted_blocks = sorted(
-            blocks,
-            key=lambda b: (
-                b.get("date")
-                if isinstance(b.get("date"), (date, datetime))
-                else date.fromisoformat(str(b.get("date", "2000-01-01")))
-            ),
-        )
+        # Normalize block dates to datetime so mixed date/datetime inputs sort safely.
+        def block_sort_key(block: dict) -> datetime:
+            raw = block.get("date")
+            if isinstance(raw, datetime):
+                return raw
+            if isinstance(raw, date):
+                return datetime.combine(raw, datetime.min.time())
+            return datetime.fromisoformat(str(raw or "2000-01-01"))
+
+        sorted_blocks = sorted(blocks, key=block_sort_key)
 
         # Sort persons by PGY level
         sorted_persons = sorted(

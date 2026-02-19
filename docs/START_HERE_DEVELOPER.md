@@ -198,7 +198,7 @@ alembic upgrade head
 
 1. Create in `frontend/src/components/` or `frontend/src/features/`
 2. Use TypeScript strict mode
-3. Follow [component standards](../FRONTEND_COMPONENT_STANDARDS.md)
+3. Follow [component standards](guides/FRONTEND_COMPONENT_STANDARDS.md)
 4. Add tests in `frontend/tests/`
 
 ### Add MCP Tool

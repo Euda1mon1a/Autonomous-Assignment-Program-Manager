@@ -10,7 +10,7 @@ The project includes a comprehensive Personal AI Infrastructure (PAI) with 34 sk
 
 ### Quick Start
 
-- **[Personal AI Infrastructure (PAI)](../PERSONAL_INFRASTRUCTURE.md)** - Complete AI agent framework documentation
+- **[Personal AI Infrastructure (PAI)](../archived/reports/PERSONAL_INFRASTRUCTURE.md)** - Complete AI agent framework documentation
 - **[AI Agent User Guide](../guides/AI_AGENT_USER_GUIDE.md)** - Skills, MCP tools, and Claude Code setup
 - **[Agent Skills Reference](./AGENT_SKILLS.md)** - Complete catalog of 34 available skills
 - **[AI Rules of Engagement](./AI_RULES_OF_ENGAGEMENT.md)** - Core rules for AI agents
@@ -18,7 +18,7 @@ The project includes a comprehensive Personal AI Infrastructure (PAI) with 34 sk
 ### MCP & Integration
 
 - **[MCP Admin Guide](../admin-manual/mcp-admin-guide.md)** - MCP server administration
-- **[MCP IDE Integration](../MCP_IDE_INTEGRATION.md)** - VSCode and Zed setup for MCP tools
+- **[MCP IDE Integration](./MCP_IDE_INTEGRATION.md)** - VSCode and Zed setup for MCP tools
 - **[Agent Instructions](./AGENTS.md)** - AI background monitoring guidelines
 
 ### Slash Commands (27 Available)
@@ -72,4 +72,3 @@ The project includes a comprehensive Personal AI Infrastructure (PAI) with 34 sk
 - [Cross-Disciplinary Bridges](../architecture/bridges/) - Integration specifications
 - [Service Specifications](../specs/) - Implementation-ready service designs
 - [Research Directory](../research/) - Advanced research topics
-
