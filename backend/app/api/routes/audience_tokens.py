@@ -23,7 +23,7 @@ Role-Based Access Control:
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import jwt, JWTError
@@ -375,7 +375,7 @@ async def revoke_token(
                 # Get actual expiration from token if available
                 exp = payload.get("exp")
                 if exp:
-                    expires_at = datetime.utcfromtimestamp(exp)
+                    expires_at = datetime.fromtimestamp(exp, tz=UTC)
 
             except JWTError as e:
                 logger.warning(

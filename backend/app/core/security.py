@@ -181,7 +181,7 @@ def verify_refresh_token(
                 obs_metrics.record_auth_failure("blacklisted_refresh")
             return None, None, None
 
-        expires_at = datetime.utcfromtimestamp(exp) if exp else None
+        expires_at = datetime.fromtimestamp(exp, tz=UTC) if exp else None
         token_data = TokenData(user_id=user_id, username=username, jti=jti)
 
         # Blacklist the token after successful verification if requested
