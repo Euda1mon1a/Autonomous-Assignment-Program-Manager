@@ -266,6 +266,17 @@ class SchedulingEngine:
                     "education assignments (FMO/GME/Lectures)"
                 )
 
+            logger.info(
+                f"Preservation summary: "
+                f"fmit={len(fmit_assignments)}, "
+                f"inpatient={len(resident_inpatient_assignments)}, "
+                f"absence={len(absence_assignments)}, "
+                f"offsite={len(offsite_assignments)}, "
+                f"recovery={len(recovery_assignments)}, "
+                f"education={len(education_assignments)}, "
+                f"total_preserve_ids={len(preserve_ids)}"
+            )
+
             # =================================================================
             # CORRECTED ORDER OF OPERATIONS (per TAMC skill)
             # =================================================================

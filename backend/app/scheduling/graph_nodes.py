@@ -141,6 +141,17 @@ def load_data_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
             "education assignments (FMO/GME/Lectures)"
         )
 
+    logger.info(
+        f"Preservation summary: "
+        f"fmit={len(fmit_assignments)}, "
+        f"inpatient={len(resident_inpatient_assignments)}, "
+        f"absence={len(absence_assignments)}, "
+        f"offsite={len(offsite_assignments)}, "
+        f"recovery={len(recovery_assignments)}, "
+        f"education={len(education_assignments)}, "
+        f"total_preserve_ids={len(preserve_ids)}"
+    )
+
     # Step 1.5g: Infer block/year if not provided
     block_number = _get_param(config, "block_number")
     academic_year = _get_param(config, "academic_year")
@@ -169,6 +180,12 @@ def load_data_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
         _get_param(config, "rotation_template_ids")
     )
     faculty = engine._get_faculty()
+
+    logger.info(
+        f"Data load summary: "
+        f"residents={len(residents)}, templates={len(templates)}, "
+        f"faculty={len(faculty)}"
+    )
 
     # Step 3.5: Load non-call preloads
     preload_count = 0
