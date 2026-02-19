@@ -1125,6 +1125,15 @@ Block 11 went through 7 rounds. Key lesson: Codex false positives happen (e.g., 
 - [ ] GUI renders the block schedule correctly
 - [ ] PR passes Codex review (all P1/P2 addressed)
 
+### Gotchas Discovered During Block 12
+
+> **Block:** 12 (May 7 – Jun 3, 2026), AY 2025
+> **Reference:** [BLOCK12_SCHEDULE_LOAD.md](../scheduling/BLOCK12_SCHEDULE_LOAD.md)
+
+| Gotcha | Impact | Fix |
+|--------|--------|-----|
+| Celery `asyncio.run()` in forked worker → SIGSEGV on macOS | 705 crashes/day, worker restart loop | Set `--pool=solo` on macOS (celery_app.py auto-detects platform) |
+
 ---
 
 ## Quick Checklist Before PR

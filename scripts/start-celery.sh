@@ -19,6 +19,13 @@ LOG_LEVEL="${CELERY_LOG_LEVEL:-info}"
 WORKER_CONCURRENCY="${CELERY_WORKER_CONCURRENCY:-6}"
 WORKER_QUEUES="${CELERY_QUEUES:-default,resilience,notifications}"
 WORKER_MAX_TASKS="${CELERY_MAX_TASKS_PER_CHILD:-1000}"
+# Default pool: solo on macOS (prevents SIGSEGV), prefork on Linux
+if [ "$(uname)" = "Darwin" ]; then
+    _DEFAULT_POOL="solo"
+else
+    _DEFAULT_POOL="prefork"
+fi
+WORKER_POOL="${CELERY_WORKER_POOL:-$_DEFAULT_POOL}"
 BEAT_PIDFILE="${CELERY_BEAT_PIDFILE:-/tmp/celerybeat.pid}"
 WORKER_PIDFILE="${CELERY_WORKER_PIDFILE:-/tmp/celeryworker.pid}"
 
@@ -107,6 +114,7 @@ start_worker() {
     # Try --detach first (requires log directory), fallback to background process
     celery -A "$CELERY_APP" worker \
         --loglevel="$LOG_LEVEL" \
+        --pool="$WORKER_POOL" \
         -Q "$WORKER_QUEUES" \
         --concurrency="$WORKER_CONCURRENCY" \
         --max-tasks-per-child="$WORKER_MAX_TASKS" \
@@ -117,6 +125,7 @@ start_worker() {
         --detach 2>/dev/null || \
     celery -A "$CELERY_APP" worker \
         --loglevel="$LOG_LEVEL" \
+        --pool="$WORKER_POOL" \
         -Q "$WORKER_QUEUES" \
         --concurrency="$WORKER_CONCURRENCY" \
         --max-tasks-per-child="$WORKER_MAX_TASKS" \
