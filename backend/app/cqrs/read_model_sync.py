@@ -243,7 +243,7 @@ import asyncio
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -334,9 +334,12 @@ class SyncMetrics:
             event_timestamp: Timestamp of the event being processed
         """
         if event_timestamp:
-            self.current_sync_lag_seconds = (
-                datetime.utcnow() - event_timestamp
-            ).total_seconds()
+            ts = (
+                event_timestamp
+                if event_timestamp.tzinfo
+                else event_timestamp.replace(tzinfo=UTC)
+            )
+            self.current_sync_lag_seconds = (datetime.now(UTC) - ts).total_seconds()
 
             # Update status based on lag
             if self.current_sync_lag_seconds >= SYNC_LAG_CRITICAL_SECONDS:
@@ -355,7 +358,7 @@ class SyncMetrics:
         """
         self.total_events_processed += 1
         self.events_processed_success += 1
-        self.last_sync_timestamp = datetime.utcnow()
+        self.last_sync_timestamp = datetime.now(UTC)
 
         # Update average processing time (exponential moving average)
         alpha = 0.1  # Smoothing factor
@@ -374,7 +377,7 @@ class SyncMetrics:
         self.events_processed_failed += 1
         self.error_count += 1
         self.last_error = error_message
-        self.last_error_timestamp = datetime.utcnow()
+        self.last_error_timestamp = datetime.now(UTC)
         self.status = SyncStatus.FAILED
 
 
@@ -400,7 +403,7 @@ class SyncConflict(BaseModel):
     conflict_type: str
     write_value: Any
     read_value: Any
-    detected_at: datetime = field(default_factory=datetime.utcnow)
+    detected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     resolution_strategy: ConflictResolutionStrategy = (
         ConflictResolutionStrategy.LAST_WRITE_WINS
     )
@@ -423,7 +426,7 @@ class BatchProcessingStats:
     events_processed: int = 0
     events_failed: int = 0
     processing_time_ms: float = 0.0
-    started_at: datetime = field(default_factory=datetime.utcnow)
+    started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None
 
     # =============================================================================
@@ -705,7 +708,7 @@ class ReadModelSyncService:
                 return
 
             batch_stats = BatchProcessingStats(batch_size=len(self._event_batch))
-            start_time = datetime.utcnow()
+            start_time = datetime.now(UTC)
 
             logger.info(
                 f"Processing event batch: {batch_stats.batch_size} events",
@@ -739,7 +742,7 @@ class ReadModelSyncService:
             self._event_batch.clear()
 
             # Update stats
-            batch_stats.completed_at = datetime.utcnow()
+            batch_stats.completed_at = datetime.now(UTC)
             batch_stats.processing_time_ms = (
                 batch_stats.completed_at - start_time
             ).total_seconds() * 1000
@@ -846,7 +849,7 @@ class ReadModelSyncService:
         projector = self._projectors[projector_name]
         metrics = self._metrics[projector_name]
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         try:
             # Update lag before processing
@@ -860,7 +863,7 @@ class ReadModelSyncService:
             await self.db_read.commit()
 
             # Update metrics
-            processing_time_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            processing_time_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             metrics.record_success(processing_time_ms)
             metrics.last_synced_event_id = event.metadata.event_id
 
@@ -1102,7 +1105,7 @@ class ReadModelSyncService:
 
             # Mark as resolved
         conflict.resolved = True
-        conflict.resolved_at = datetime.utcnow()
+        conflict.resolved_at = datetime.now(UTC)
         conflict.resolved_by = resolved_by
 
     async def _apply_write_value(self, conflict: SyncConflict) -> None:
@@ -1134,14 +1137,14 @@ class ReadModelSyncService:
             checkpoint = self._checkpoints[projector_name]
             checkpoint.last_processed_sequence = sequence
             checkpoint.last_processed_event_id = event_id
-            checkpoint.checkpoint_timestamp = datetime.utcnow()
+            checkpoint.checkpoint_timestamp = datetime.now(UTC)
             checkpoint.total_events_processed += 1
         else:
             self._checkpoints[projector_name] = SyncCheckpoint(
                 read_model_name=projector_name,
                 last_processed_sequence=sequence,
                 last_processed_event_id=event_id,
-                checkpoint_timestamp=datetime.utcnow(),
+                checkpoint_timestamp=datetime.now(UTC),
                 total_events_processed=1,
             )
 
@@ -1354,7 +1357,7 @@ class ReadModelSyncService:
         """
         health = {
             "healthy": True,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "issues": [],
         }
 

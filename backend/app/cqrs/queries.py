@@ -231,7 +231,7 @@ import logging
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Generic, TypeVar
 from uuid import UUID, uuid4
 
@@ -269,7 +269,7 @@ class Query(ABC):
     """
 
     query_id: UUID = field(default_factory=uuid4)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     user_id: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -553,9 +553,9 @@ class QueryBus:
 
         try:
             # Execute query
-            start_time = datetime.utcnow()
+            start_time = datetime.now(UTC)
             result = await handler.handle(query)
-            elapsed = (datetime.utcnow() - start_time).total_seconds()
+            elapsed = (datetime.now(UTC) - start_time).total_seconds()
 
             result.metadata["query_time_seconds"] = elapsed
             result.metadata["cache_hit"] = False
@@ -602,7 +602,7 @@ class QueryBus:
         if cache_key in self._cache:
             cached_result, cached_at = self._cache[cache_key]
             # Simple TTL check (could be made configurable)
-            age = (datetime.utcnow() - cached_at).total_seconds()
+            age = (datetime.now(UTC) - cached_at).total_seconds()
             if age < 300:  # 5 minutes TTL
                 return cached_result
             else:
@@ -619,7 +619,7 @@ class QueryBus:
             result: The result to cache
         """
         cache_key = self._make_cache_key(query)
-        self._cache[cache_key] = (result, datetime.utcnow())
+        self._cache[cache_key] = (result, datetime.now(UTC))
 
     def _make_cache_key(self, query: Query) -> str:
         """

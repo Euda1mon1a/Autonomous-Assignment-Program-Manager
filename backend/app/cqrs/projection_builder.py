@@ -225,7 +225,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -313,8 +313,10 @@ class ProjectionMetadata(Base):
     average_processing_time_ms = Column(Integer)
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
     enabled = Column(Boolean, default=True)
     config = Column(JSONType(), default=dict)
 
@@ -346,7 +348,7 @@ class ProjectionCheckpoint(Base):
     checkpoint_data = Column(JSONType())
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     created_by = Column(String(255))
 
     __table_args__ = (
@@ -370,7 +372,7 @@ class ProjectionBuildLog(Base):
 
     # Build information
     build_mode = Column(String(50), nullable=False)
-    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     completed_at = Column(DateTime)
     duration_seconds = Column(Integer)
 
@@ -693,11 +695,11 @@ class ProjectionBuilder:
             if mode == BuildMode.FULL
             else ProjectionStatus.ACTIVE
         )
-        metadata.last_build_started = datetime.utcnow()
+        metadata.last_build_started = datetime.now(UTC)
         metadata.build_mode = mode.value
         self.db.commit()
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         events_processed = 0
         error = None
 
@@ -732,12 +734,12 @@ class ProjectionBuilder:
             metadata.error_count = 0
             metadata.last_error = None
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
-            metadata.last_build_completed = datetime.utcnow()
+            duration = (datetime.now(UTC) - start_time).total_seconds()
+            metadata.last_build_completed = datetime.now(UTC)
             metadata.last_build_duration_seconds = int(duration)
 
             # Update build log
-            build_log.completed_at = datetime.utcnow()
+            build_log.completed_at = datetime.now(UTC)
             build_log.duration_seconds = int(duration)
             build_log.events_processed = events_processed
             build_log.to_sequence = to_sequence or (from_sequence + events_processed)
@@ -770,10 +772,10 @@ class ProjectionBuilder:
             metadata.status = ProjectionStatus.ERROR
             metadata.error_count += 1
             metadata.last_error = error
-            metadata.last_error_timestamp = datetime.utcnow()
+            metadata.last_error_timestamp = datetime.now(UTC)
 
             # Update build log
-            build_log.completed_at = datetime.utcnow()
+            build_log.completed_at = datetime.now(UTC)
             build_log.success = False
             build_log.error_message = error
             build_log.events_processed = events_processed
@@ -784,7 +786,7 @@ class ProjectionBuilder:
                 success=False,
                 projection_name=projection_name,
                 events_processed=events_processed,
-                duration_seconds=(datetime.utcnow() - start_time).total_seconds(),
+                duration_seconds=(datetime.now(UTC) - start_time).total_seconds(),
                 error=error,
             )
 
@@ -864,7 +866,7 @@ class ProjectionBuilder:
             projection_name=projection.projection_name,
             projection_version=projection.version,
             checkpoint_sequence=metadata.last_event_sequence,
-            checkpoint_timestamp=datetime.utcnow(),
+            checkpoint_timestamp=datetime.now(UTC),
             event_count=events_processed,
             checkpoint_data=checkpoint_data,
         )
@@ -1168,9 +1170,12 @@ class ProjectionBuilder:
         max_lag_seconds = 0
         for metadata in all_metadata:
             if metadata.last_event_timestamp:
-                lag = (
-                    datetime.utcnow() - metadata.last_event_timestamp
-                ).total_seconds()
+                ts = (
+                    metadata.last_event_timestamp
+                    if metadata.last_event_timestamp.tzinfo
+                    else metadata.last_event_timestamp.replace(tzinfo=UTC)
+                )
+                lag = (datetime.now(UTC) - ts).total_seconds()
                 max_lag_seconds = max(max_lag_seconds, lag)
 
         return {
