@@ -87,6 +87,27 @@ export interface HealthDashboardResponse {
   alerts: HealthDashboardAlert[]
 }
 
+export interface HealthDeepCheck {
+  connected: boolean
+  status: string
+  responseTimeMs: number
+  timestamp: string
+  error: string | null
+  warning: string | null
+  details: Record<string, unknown> | null
+}
+
+export interface HealthDeepResponse {
+  status: 'healthy' | 'unhealthy'
+  timestamp: string
+  service: string
+  version: string
+  checks: {
+    database: HealthDeepCheck
+    redis: HealthDeepCheck
+  }
+}
+
 // ============================================================================
 // Query Keys
 // ============================================================================
@@ -97,6 +118,7 @@ export const healthQueryKeys = {
   ready: () => [...healthQueryKeys.all, 'ready'] as const,
   detailed: () => [...healthQueryKeys.all, 'detailed'] as const,
   dashboard: () => [...healthQueryKeys.all, 'dashboard'] as const,
+  deep: () => [...healthQueryKeys.all, 'deep'] as const,
   service: (name: string) => [...healthQueryKeys.all, 'service', name] as const,
 }
 
@@ -227,6 +249,26 @@ export function useHealthDashboard(options?: { enabled?: boolean; refetchInterva
       return response
     },
     staleTime: 15_000,
+    refetchInterval: options?.refetchInterval ?? 30_000,
+    retry: 1,
+    enabled: options?.enabled ?? true,
+  })
+}
+
+/**
+ * Deep health check for critical infrastructure (database + Redis).
+ *
+ * Fetches the `/health/deep` endpoint which performs direct connectivity
+ * checks for database and Redis, and includes backend version metadata.
+ */
+export function useHealthDeep(options?: { enabled?: boolean; refetchInterval?: number }) {
+  return useQuery({
+    queryKey: healthQueryKeys.deep(),
+    queryFn: async (): Promise<HealthDeepResponse> => {
+      const response = await get<HealthDeepResponse>('/health/deep')
+      return response
+    },
+    staleTime: 10_000,
     refetchInterval: options?.refetchInterval ?? 30_000,
     retry: 1,
     enabled: options?.enabled ?? true,
