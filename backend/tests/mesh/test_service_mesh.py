@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -438,7 +438,7 @@ class TestServiceRegistration:
 
     def test_is_healthy_stale(self):
         sr = self._make()
-        sr.last_heartbeat = datetime.utcnow() - timedelta(seconds=120)
+        sr.last_heartbeat = datetime.now(UTC) - timedelta(seconds=120)
         assert sr.is_healthy(timeout_seconds=60) is False
 
     def test_is_healthy_explicit_unhealthy(self):
@@ -501,7 +501,7 @@ class TestTrafficSplit:
             name="t",
             service_name="s",
             weights=self._weights(("v1", 100)),
-            expires_at=datetime.utcnow() + timedelta(hours=1),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
         )
         assert ts.is_active() is True
 
@@ -511,7 +511,7 @@ class TestTrafficSplit:
             name="t",
             service_name="s",
             weights=self._weights(("v1", 100)),
-            expires_at=datetime.utcnow() - timedelta(hours=1),
+            expires_at=datetime.now(UTC) - timedelta(hours=1),
         )
         assert ts.is_active() is False
 
@@ -740,14 +740,14 @@ class TestServiceDiscovery:
         sd = ServiceDiscovery(heartbeat_timeout_seconds=1)
         self._run(sd.register_service("svc", "v1", [self._ep()]))
         # Make it stale
-        sd.services["svc:v1"].last_heartbeat = datetime.utcnow() - timedelta(seconds=10)
+        sd.services["svc:v1"].last_heartbeat = datetime.now(UTC) - timedelta(seconds=10)
         results = self._run(sd.discover_service("svc"))
         assert len(results) == 0
 
     def test_cleanup_stale(self):
         sd = ServiceDiscovery(heartbeat_timeout_seconds=1)
         self._run(sd.register_service("svc", "v1", [self._ep()]))
-        sd.services["svc:v1"].last_heartbeat = datetime.utcnow() - timedelta(seconds=10)
+        sd.services["svc:v1"].last_heartbeat = datetime.now(UTC) - timedelta(seconds=10)
         removed = self._run(sd.cleanup_stale_services())
         assert removed == 1
         assert len(sd.get_all_services()) == 0

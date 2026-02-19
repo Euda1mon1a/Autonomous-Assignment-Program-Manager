@@ -155,7 +155,7 @@ class StagingPublisher:
             # Create backups
             backup_result = self._create_backups(draft_assignments)
 
-            if not backup_result.success:  # noqa: resilience-ok (error handling, not SPOF)
+            if not backup_result.success:  # resilience-ok (error handling, not SPOF)
                 return StagingResult(
                     success=False,
                     draft_id=draft_id,

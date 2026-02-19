@@ -99,7 +99,7 @@ Archiving old messages (typically in daily Celery task)::
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -448,7 +448,7 @@ class OutboxRelay:
         Returns:
             list[OutboxMessage]: Messages ready for publishing
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Query for pending and retryable failed messages
         query = (
@@ -483,7 +483,7 @@ class OutboxRelay:
             message: Outbox message to mark
         """
         message.status = OutboxStatus.PROCESSING.value
-        message.processing_started_at = datetime.utcnow()
+        message.processing_started_at = datetime.now(UTC)
 
     def _mark_published(self, message: OutboxMessage) -> None:
         """
@@ -493,7 +493,7 @@ class OutboxRelay:
             message: Outbox message to mark
         """
         message.status = OutboxStatus.PUBLISHED.value
-        message.published_at = datetime.utcnow()
+        message.published_at = datetime.now(UTC)
         message.error_message = None
 
     def _mark_failed(self, message: OutboxMessage, error_message: str) -> None:
@@ -507,12 +507,12 @@ class OutboxRelay:
         message.status = OutboxStatus.FAILED.value
         message.retry_count += 1
         message.error_message = error_message
-        message.last_error_at = datetime.utcnow()
+        message.last_error_at = datetime.now(UTC)
 
         # Calculate next retry time using exponential backoff
         if message.can_retry:
             delay_seconds = self._calculate_retry_delay(message.retry_count)
-            message.next_retry_at = datetime.utcnow() + timedelta(seconds=delay_seconds)
+            message.next_retry_at = datetime.now(UTC) + timedelta(seconds=delay_seconds)
             logger.warning(
                 f"Message {message.id} failed (attempt {message.retry_count}), "
                 f"will retry in {delay_seconds}s"
@@ -601,7 +601,7 @@ class OutboxRelay:
         Returns:
             int: Number of messages timed out
         """
-        cutoff = datetime.utcnow() - timedelta(minutes=self.processing_timeout_minutes)
+        cutoff = datetime.now(UTC) - timedelta(minutes=self.processing_timeout_minutes)
 
         # Find stuck messages
         query = select(OutboxMessage).where(
@@ -733,7 +733,7 @@ class OutboxCleaner:
         Returns:
             int: Number of messages archived
         """
-        cutoff = datetime.utcnow() - timedelta(hours=self.archive_after_hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=self.archive_after_hours)
 
         # Find published messages to archive
         query = (
@@ -785,7 +785,7 @@ class OutboxCleaner:
         Returns:
             int: Number of archived messages deleted
         """
-        cutoff = datetime.utcnow() - timedelta(days=self.retention_days)
+        cutoff = datetime.now(UTC) - timedelta(days=self.retention_days)
 
         # Delete old archive records
         deleted = (
@@ -823,7 +823,7 @@ class OutboxCleaner:
         Returns:
             int: Number of failed messages deleted
         """
-        cutoff = datetime.utcnow() - timedelta(days=max_age_days)
+        cutoff = datetime.now(UTC) - timedelta(days=max_age_days)
 
         # Delete old failed messages
         deleted = (
