@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { format, eachDayOfInterval, isWeekend } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -8,6 +8,7 @@ import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
 import { useAssignmentsForRange } from '@/hooks/useAssignmentsForRange'
 import { useHalfDayAssignments } from '@/hooks/useHalfDayAssignments'
+import { useGridKeyboardNavigation } from '@/hooks/useGridKeyboardNavigation'
 import type { Person, RotationTemplate, Block } from '@/types/api'
 import {
   ABBREVIATION_LENGTH,
@@ -292,6 +293,67 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     return groups
   }, [peopleData, personFilter])
 
+  // Get person's assignment for a specific date and time
+  const getAssignment = (
+    personId: string,
+    dateStr: string,
+    timeOfDay: 'AM' | 'PM'
+  ): ProcessedAssignment | undefined => {
+    return assignmentLookup.get(personId)?.get(dateStr)?.get(timeOfDay)
+  }
+
+  // Check if a date is today
+  const todayStr = format(new Date(), 'yyyy-MM-dd')
+
+  // Calculate grid dimensions for keyboard navigation
+  const totalRows = personGroups.reduce((sum, group) => sum + group.people.length, 0)
+  const totalCols = days.length * 2 // AM + PM per day
+
+  // Build a flat list of person IDs matching row indices
+  const personRowOrder = useMemo(() => {
+    const order: string[] = []
+    personGroups.forEach((group) => {
+      group.people.forEach((person) => {
+        order.push(person.id)
+      })
+    })
+    return order
+  }, [personGroups])
+
+  // Keyboard navigation callback
+  const onCellActivate = useCallback(
+    (position: { row: number; col: number }) => {
+      const personId = personRowOrder[position.row]
+      if (!personId) return
+      const dayIndex = Math.floor(position.col / 2)
+      const timeOfDay = position.col % 2 === 0 ? 'AM' : 'PM'
+      const day = days[dayIndex]
+      if (!day) return
+      const dateStr = format(day, 'yyyy-MM-dd')
+      // Cell activation is available for future features (e.g., editing assignments)
+      // For now, the hook provides focus management and ARIA attributes
+      void { personId, dateStr, timeOfDay }
+    },
+    [personRowOrder, days]
+  )
+
+  const { gridProps, getCellProps } = useGridKeyboardNavigation({
+    rowCount: totalRows,
+    colCount: totalCols,
+    onCellActivate,
+  })
+
+  // Calculate the starting row index for each group
+  const groupRowOffsets = useMemo(() => {
+    const offsets: number[] = []
+    let offset = 0
+    personGroups.forEach((group) => {
+      offsets.push(offset)
+      offset += group.people.length
+    })
+    return offsets
+  }, [personGroups])
+
   // Loading state (half-day data is optional - don't block on it)
   const isLoading = blocksLoading || assignmentsLoading || peopleLoading || templatesLoading
   if (isLoading) {
@@ -329,18 +391,6 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     )
   }
 
-  // Get person's assignment for a specific date and time
-  const getAssignment = (
-    personId: string,
-    dateStr: string,
-    timeOfDay: 'AM' | 'PM'
-  ): ProcessedAssignment | undefined => {
-    return assignmentLookup.get(personId)?.get(dateStr)?.get(timeOfDay)
-  }
-
-  // Check if a date is today
-  const todayStr = format(new Date(), 'yyyy-MM-dd')
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -348,7 +398,7 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
       transition={{ duration: FADE_IN_DURATION, ease: 'easeOut' }}
       className={`glass-panel overflow-auto max-h-[${SCHEDULE_GRID_MAX_HEIGHT}]`}
     >
-      <table className="min-w-full divide-y divide-gray-200/50 schedule-grid-table" role="grid" aria-label="Schedule grid showing assignments by person and date">
+      <table className="min-w-full divide-y divide-gray-200/50 schedule-grid-table" {...gridProps} aria-label="Schedule grid showing assignments by person and date">
         <ScheduleHeader days={days} />
 
         <tbody className="bg-white/50 divide-y divide-gray-200/50">
@@ -361,6 +411,8 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
               todayStr={todayStr}
               getAssignment={getAssignment}
               showSeparator={groupIndex > 0}
+              rowOffset={groupRowOffsets[groupIndex]}
+              getCellProps={getCellProps}
             />
           ))}
         </tbody>
@@ -383,6 +435,16 @@ interface PersonGroupRowsProps {
     timeOfDay: 'AM' | 'PM'
   ) => ProcessedAssignment | undefined
   showSeparator: boolean
+  rowOffset: number
+  getCellProps: (row: number, col: number) => {
+    tabIndex: number
+    'data-row': number
+    'data-col': number
+    onFocus: () => void
+    onClick: () => void
+    role: 'gridcell'
+    'aria-selected': boolean
+  }
 }
 
 function PersonGroupRows({
@@ -392,6 +454,8 @@ function PersonGroupRows({
   todayStr,
   getAssignment,
   showSeparator,
+  rowOffset,
+  getCellProps,
 }: PersonGroupRowsProps) {
   return (
     <>
@@ -406,13 +470,15 @@ function PersonGroupRows({
       )}
 
       {/* Person rows */}
-      {group.people.map((person) => (
+      {group.people.map((person, personIndex) => (
         <PersonRow
           key={person.id}
           person={person}
           days={days}
           todayStr={todayStr}
           getAssignment={getAssignment}
+          rowIndex={rowOffset + personIndex}
+          getCellProps={getCellProps}
         />
       ))}
     </>
@@ -431,9 +497,19 @@ interface PersonRowProps {
     dateStr: string,
     timeOfDay: 'AM' | 'PM'
   ) => ProcessedAssignment | undefined
+  rowIndex: number
+  getCellProps: (row: number, col: number) => {
+    tabIndex: number
+    'data-row': number
+    'data-col': number
+    onFocus: () => void
+    onClick: () => void
+    role: 'gridcell'
+    'aria-selected': boolean
+  }
 }
 
-function PersonRow({ person, days, todayStr, getAssignment }: PersonRowProps) {
+function PersonRow({ person, days, todayStr, getAssignment, rowIndex, getCellProps }: PersonRowProps) {
   // Memoize person badge
   const personBadge = useMemo(() => {
     if (person.type === 'faculty') {
@@ -463,7 +539,7 @@ function PersonRow({ person, days, todayStr, getAssignment }: PersonRowProps) {
       </th>
 
       {/* Day cells - AM and PM for each day */}
-      {days.map((day) => {
+      {days.map((day, dayIndex) => {
         const dateStr = format(day, 'yyyy-MM-dd')
         const weekend = isWeekend(day)
         const isToday = dateStr === todayStr
@@ -476,6 +552,9 @@ function PersonRow({ person, days, todayStr, getAssignment }: PersonRowProps) {
             isWeekend={weekend}
             isToday={isToday}
             getAssignment={getAssignment}
+            rowIndex={rowIndex}
+            colOffset={dayIndex * 2}
+            getCellProps={getCellProps}
           />
         )
       })}
@@ -496,6 +575,17 @@ interface DayCellsProps {
     dateStr: string,
     timeOfDay: 'AM' | 'PM'
   ) => ProcessedAssignment | undefined
+  rowIndex: number
+  colOffset: number
+  getCellProps: (row: number, col: number) => {
+    tabIndex: number
+    'data-row': number
+    'data-col': number
+    onFocus: () => void
+    onClick: () => void
+    role: 'gridcell'
+    'aria-selected': boolean
+  }
 }
 
 function DayCells({
@@ -504,6 +594,9 @@ function DayCells({
   isWeekend,
   isToday,
   getAssignment,
+  rowIndex,
+  colOffset,
+  getCellProps,
 }: DayCellsProps) {
   const amAssignment = getAssignment(personId, dateStr, 'AM')
   const pmAssignment = getAssignment(personId, dateStr, 'PM')
@@ -515,12 +608,14 @@ function DayCells({
         isWeekend={isWeekend}
         isToday={isToday}
         timeOfDay="AM"
+        gridCellProps={getCellProps(rowIndex, colOffset)}
       />
       <ScheduleCell
         assignment={pmAssignment}
         isWeekend={isWeekend}
         isToday={isToday}
         timeOfDay="PM"
+        gridCellProps={getCellProps(rowIndex, colOffset + 1)}
       />
     </>
   )

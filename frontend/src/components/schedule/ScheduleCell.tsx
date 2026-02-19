@@ -54,11 +54,22 @@ interface CellAssignment {
   notes?: string
 }
 
+interface GridCellProps {
+  tabIndex: number
+  'data-row': number
+  'data-col': number
+  onFocus: () => void
+  onClick: () => void
+  role: 'gridcell'
+  'aria-selected': boolean
+}
+
 interface ScheduleCellProps {
   assignment?: CellAssignment
   isWeekend: boolean
   isToday: boolean
   timeOfDay: 'AM' | 'PM'
+  gridCellProps?: GridCellProps
 }
 
 const tailwindToHex: Record<string, string> = {
@@ -90,6 +101,7 @@ export function ScheduleCell({
   isWeekend,
   isToday,
   timeOfDay,
+  gridCellProps,
 }: ScheduleCellProps) {
   const tooltipId = useId()
 
@@ -140,7 +152,7 @@ export function ScheduleCell({
   // Empty cell
   if (!assignment) {
     return (
-      <td className={baseStyles} role="gridcell" aria-label={`${timeOfDay}: No assignment`}>
+      <td className={`${baseStyles} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset`} role="gridcell" aria-label={`${timeOfDay}: No assignment`} {...gridCellProps}>
         <div className="text-gray-300 text-xs">-</div>
       </td>
     )
@@ -162,7 +174,7 @@ export function ScheduleCell({
   const cellLabel = `${timeOfDay}: ${assignment.templateName || assignment.abbreviation}, ${assignment.activityType}`
 
   return (
-    <td className={baseStyles} role="gridcell" aria-label={cellLabel}>
+    <td className={`${baseStyles} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset`} aria-label={cellLabel} {...gridCellProps}>
       <div
         className={`
           inline-block px-1.5 py-0.5 rounded text-xs font-medium border
