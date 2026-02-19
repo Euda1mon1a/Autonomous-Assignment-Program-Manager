@@ -32,7 +32,7 @@ Usage:
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -509,9 +509,9 @@ class StagingPublisher:
                 else None,
                 overridden_at=overridden_at,
                 # Preserve original timestamps
-                created_at=created_at or datetime.utcnow(),
+                created_at=created_at or datetime.now(UTC),
                 updated_at=self._parse_datetime_from_backup(data.get("updated_at"))
-                or datetime.utcnow(),
+                or datetime.now(UTC),
             )
 
             self.db.add(new_assignment)
@@ -596,11 +596,11 @@ class StagingPublisher:
                         else None,
                         overridden_at=overridden_at,
                         # Preserve original timestamps
-                        created_at=created_at or datetime.utcnow(),
+                        created_at=created_at or datetime.now(UTC),
                         updated_at=self._parse_datetime_from_backup(
                             data.get("updated_at")
                         )
-                        or datetime.utcnow(),
+                        or datetime.now(UTC),
                     )
                     self.db.add(new_assignment)
                     logger.debug(
@@ -608,7 +608,7 @@ class StagingPublisher:
                     )
 
         # Mark backup as restored
-        backup.restored_at = datetime.utcnow()
+        backup.restored_at = datetime.now(UTC)
         backup.restored_by_id = restored_by_id
 
         return True

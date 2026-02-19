@@ -21,7 +21,7 @@ for flexible, maintainable scheduling.
 import json
 import os
 import time
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
@@ -3640,7 +3640,7 @@ class SchedulingEngine:
         )
 
         snapshot = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
             "stage": stage,
             "solver_status": solver_status,
             "run_id": str(run_id) if run_id else None,
@@ -3686,7 +3686,7 @@ class SchedulingEngine:
         ).expanduser()
         try:
             output_dir.mkdir(parents=True, exist_ok=True)
-            stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
             safe_run_id = str(run_id) if run_id else "unknown"
             path = output_dir / f"schedule_failure_{safe_run_id}_{stamp}.json"
             path.write_text(json.dumps(snapshot, indent=2, default=str))

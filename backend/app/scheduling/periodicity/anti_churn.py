@@ -42,7 +42,7 @@ References:
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -101,7 +101,7 @@ class ScheduleSnapshot:
 
         return cls(
             assignments=assignment_tuples,
-            timestamp=timestamp or datetime.utcnow(),
+            timestamp=timestamp or datetime.now(UTC),
             metadata=metadata or {},
         )
 
@@ -125,7 +125,7 @@ class ScheduleSnapshot:
         """
         return cls(
             assignments=frozenset(assignment_tuples),
-            timestamp=timestamp or datetime.utcnow(),
+            timestamp=timestamp or datetime.now(UTC),
             metadata=metadata or {},
         )
 

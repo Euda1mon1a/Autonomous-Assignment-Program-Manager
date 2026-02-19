@@ -23,7 +23,7 @@ Usage:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -115,7 +115,7 @@ class DiffResult:
     metrics: dict[str, Any] = field(default_factory=dict)
     affected_persons: set[UUID] = field(default_factory=set)
     high_churn_persons: dict[UUID, float] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def is_acceptable(self) -> bool:
         """Return True if changes can proceed (PASS or WARN)."""

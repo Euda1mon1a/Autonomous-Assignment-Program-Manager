@@ -23,7 +23,7 @@ Reference:
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 from uuid import UUID
 
@@ -65,7 +65,7 @@ class DemandForecast:
     predicted_complexity: float  # Expected schedule complexity (0.0-1.0)
     confidence: float  # Forecast confidence (0.0-1.0)
     forecast_horizon_days: int = 28
-    generated_at: datetime = field(default_factory=datetime.utcnow)
+    generated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_vector(self, template_order: list[UUID]) -> np.ndarray:
@@ -184,7 +184,7 @@ class ScheduleOutcome:
     actual_coverage: dict[UUID, float]  # template_id -> actual coverage
     actual_complexity: float
     quality_metrics: dict[str, float] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     schedule_id: str | None = None
 
 
@@ -206,7 +206,7 @@ class SurpriseMetric:
     prediction_error: float
     complexity_error: float
     total_surprise: float
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 class GenerativeModel:

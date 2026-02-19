@@ -5,7 +5,7 @@ These examples demonstrate how to integrate anti-churn objectives
 into the scheduling workflow.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from app.models.assignment import Assignment
@@ -274,7 +274,7 @@ def example_solver_integration(solver_result, current_assignments) -> dict:
     # Convert current assignments to snapshot
     current_snapshot = ScheduleSnapshot.from_assignments(
         current_assignments,
-        metadata={"source": "database", "timestamp": datetime.utcnow()},
+        metadata={"source": "database", "timestamp": datetime.now(UTC)},
     )
 
     # Convert solver result to snapshot
