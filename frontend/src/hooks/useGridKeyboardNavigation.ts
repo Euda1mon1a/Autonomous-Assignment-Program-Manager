@@ -10,7 +10,7 @@
  * @see https://www.w3.org/WAI/ARIA/apg/patterns/grid/
  */
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export interface GridPosition {
   row: number
@@ -63,6 +63,21 @@ export function useGridKeyboardNavigation({
 }: UseGridKeyboardNavigationOptions): UseGridKeyboardNavigationReturn {
   const [focusedCell, setFocusedCell] = useState<GridPosition | null>(null)
   const gridRef = useRef<HTMLElement | null>(null)
+
+  // Clamp or clear focused cell when grid dimensions shrink (e.g., person filter)
+  useEffect(() => {
+    if (!focusedCell) return
+    if (rowCount === 0 || colCount === 0) {
+      setFocusedCell(null)
+      return
+    }
+    if (focusedCell.row >= rowCount || focusedCell.col >= colCount) {
+      setFocusedCell({
+        row: Math.min(focusedCell.row, rowCount - 1),
+        col: Math.min(focusedCell.col, colCount - 1),
+      })
+    }
+  }, [rowCount, colCount]) // eslint-disable-line react-hooks/exhaustive-deps -- focusedCell intentionally excluded to avoid infinite loop
 
   const focusCell = useCallback(
     (row: number, col: number) => {
