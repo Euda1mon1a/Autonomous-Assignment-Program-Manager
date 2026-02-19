@@ -130,7 +130,7 @@ class ScheduleState(BaseModel):
 
     class Config:
         frozen = True  # Immutable after creation
-        json_encoders = {datetime: lambda v: v.isoformat() + "Z"}
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
     def __init__(self, **data) -> None:
         """Initialize state and calculate hash."""

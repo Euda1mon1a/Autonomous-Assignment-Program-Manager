@@ -3640,7 +3640,7 @@ class SchedulingEngine:
         )
 
         snapshot = {
-            "timestamp": datetime.now(UTC).isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat(),
             "stage": stage,
             "solver_status": solver_status,
             "run_id": str(run_id) if run_id else None,

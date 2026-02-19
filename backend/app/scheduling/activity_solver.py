@@ -2733,7 +2733,7 @@ class CPSATActivitySolver:
         try:
             output_dir.mkdir(parents=True, exist_ok=True)
             snapshot = dict(snapshot)
-            snapshot["timestamp"] = datetime.now(UTC).isoformat() + "Z"
+            snapshot["timestamp"] = datetime.now(UTC).isoformat()
             stage = snapshot.get("stage", "unknown")
             block_number = snapshot.get("block_number", "unknown")
             academic_year = snapshot.get("academic_year", "unknown")
