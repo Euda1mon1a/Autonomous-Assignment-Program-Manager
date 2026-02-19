@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -225,7 +225,7 @@ class SessionManager:
         device_info = self._extract_device_info(request)
 
         # Calculate expiration
-        expires_at = datetime.utcnow() + timedelta(minutes=timeout)
+        expires_at = datetime.now(UTC) + timedelta(minutes=timeout)
 
         # Create session data
         session = SessionData(
@@ -233,8 +233,8 @@ class SessionManager:
             user_id=user_id_str,
             username=username,
             jti=jti,
-            created_at=datetime.utcnow(),
-            last_activity=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            last_activity=datetime.now(UTC),
             expires_at=expires_at,
             status=SessionStatus.ACTIVE,
             device_info=device_info,
@@ -312,7 +312,7 @@ class SessionManager:
 
             # Check activity timeout
         if self.activity_timeout_minutes > 0:
-            inactive_duration = datetime.utcnow() - session.last_activity
+            inactive_duration = datetime.now(UTC) - session.last_activity
             if inactive_duration > timedelta(minutes=self.activity_timeout_minutes):
                 await self.expire_session(session_id)
                 logger.info(
@@ -358,9 +358,9 @@ class SessionManager:
 
             # Extend expiration
         extend = extend_minutes or self.default_timeout_minutes
-        new_expiration = datetime.utcnow() + timedelta(minutes=extend)
+        new_expiration = datetime.now(UTC) + timedelta(minutes=extend)
         session.expires_at = new_expiration
-        session.last_activity = datetime.utcnow()
+        session.last_activity = datetime.now(UTC)
 
         # Update storage with new TTL
         ttl_seconds = extend * 60
@@ -641,7 +641,7 @@ class SessionManager:
             session_id=session_id,
             user_id=user_id,
             activity_type=activity_type,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             ip_address=ip_address,
             user_agent=user_agent,
             metadata=metadata or {},

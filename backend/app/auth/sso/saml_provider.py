@@ -14,7 +14,7 @@ from __future__ import annotations
 import base64
 import uuid
 import zlib
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlencode
 from defusedxml import ElementTree as ET
@@ -54,7 +54,7 @@ class SAMLProvider:
             Tuple of (request_id, redirect_url)
         """
         request_id = f"_saml_{uuid.uuid4()}"
-        issue_instant = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        issue_instant = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         # Build AuthnRequest XML
         authn_request = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -155,7 +155,7 @@ class SAMLProvider:
             Tuple of (request_id, redirect_url)
         """
         request_id = f"_saml_logout_{uuid.uuid4()}"
-        issue_instant = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        issue_instant = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         session_index_xml = ""
         if session_index:
@@ -385,12 +385,14 @@ class SAMLProvider:
         if conditions is None:
             return  # Conditions are optional
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Check NotBefore
         not_before = conditions.get("NotBefore")
         if not_before:
-            not_before_dt = datetime.strptime(not_before, "%Y-%m-%dT%H:%M:%SZ")
+            not_before_dt = datetime.strptime(not_before, "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=UTC
+            )
             if now < not_before_dt:
                 raise ValueError("Assertion not yet valid (NotBefore)")
 
@@ -399,7 +401,7 @@ class SAMLProvider:
         if not_on_or_after:
             not_on_or_after_dt = datetime.strptime(
                 not_on_or_after, "%Y-%m-%dT%H:%M:%SZ"
-            )
+            ).replace(tzinfo=UTC)
             if now >= not_on_or_after_dt:
                 raise ValueError("Assertion expired (NotOnOrAfter)")
 

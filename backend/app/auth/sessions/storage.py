@@ -11,7 +11,7 @@ All storage backends implement the SessionStorage protocol.
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Protocol
 
 import redis.asyncio as redis
@@ -191,7 +191,7 @@ class RedisSessionStorage:
             # Calculate TTL
             if ttl_seconds is None and session.expires_at:
                 ttl_seconds = int(
-                    (session.expires_at - datetime.utcnow()).total_seconds()
+                    (session.expires_at - datetime.now(UTC)).total_seconds()
                 )
             ttl_seconds = ttl_seconds or 86400  # Default 24 hours
 
@@ -286,7 +286,7 @@ class RedisSessionStorage:
                 # Calculate TTL
             if ttl_seconds is None and session.expires_at:
                 ttl_seconds = int(
-                    (session.expires_at - datetime.utcnow()).total_seconds()
+                    (session.expires_at - datetime.now(UTC)).total_seconds()
                 )
 
                 # Serialize session data

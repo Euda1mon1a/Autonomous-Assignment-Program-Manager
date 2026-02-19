@@ -37,7 +37,7 @@ import hashlib
 import logging
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -118,7 +118,7 @@ class RefreshTokenData(BaseModel):
     username: str = Field(..., description="Username for display")
 
     # Token lifecycle
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     expires_at: datetime
     last_used_at: datetime | None = None
     status: RefreshTokenStatus = RefreshTokenStatus.ACTIVE
@@ -167,7 +167,7 @@ class RefreshTokenData(BaseModel):
         if self.status != RefreshTokenStatus.ACTIVE:
             return True
 
-        current = current_time or datetime.utcnow()
+        current = current_time or datetime.now(UTC)
         return current >= self.expires_at
 
     def can_refresh(self, device_fingerprint: str | None = None) -> tuple[bool, str]:
@@ -392,7 +392,7 @@ class RefreshTokenService:
         token_string = self._generate_token_string()
 
         # Calculate expiration
-        expires_at = datetime.utcnow() + timedelta(days=request.expires_in_days)
+        expires_at = datetime.now(UTC) + timedelta(days=request.expires_in_days)
 
         # Generate device fingerprint hash
         device_fp_hash = None
@@ -514,7 +514,7 @@ class RefreshTokenService:
             return None, None, reason
 
             # Update token usage
-        token_data.last_used_at = datetime.utcnow()
+        token_data.last_used_at = datetime.now(UTC)
         token_data.refresh_count += 1
 
         # Determine if rotation is needed
@@ -527,7 +527,7 @@ class RefreshTokenService:
             total_lifetime = (
                 token_data.expires_at - token_data.created_at
             ).total_seconds()
-            current_age = (datetime.utcnow() - token_data.created_at).total_seconds()
+            current_age = (datetime.now(UTC) - token_data.created_at).total_seconds()
             age_percentage = current_age / total_lifetime if total_lifetime > 0 else 1.0
 
             if age_percentage >= self.rotation_threshold:
@@ -744,7 +744,7 @@ class RefreshTokenService:
         Returns:
             Number of tokens cleaned up
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         expired_tokens = []
 
         for token_string, token_data in self._token_storage.items():
@@ -768,7 +768,7 @@ class RefreshTokenService:
         Returns:
             RefreshTokenMetrics with statistics
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         yesterday = now - timedelta(hours=24)
 
         active_tokens = []

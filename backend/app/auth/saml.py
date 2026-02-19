@@ -17,7 +17,7 @@ coordinating between SAML protocol handling, user provisioning, and session mana
 
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -263,13 +263,13 @@ class SAMLSession:
         self.idp_id = idp_id
         self.name_id = name_id
         self.session_index = session_index
-        self.created_at = created_at or datetime.utcnow()
-        self.expires_at = expires_at or (datetime.utcnow() + timedelta(hours=8))
+        self.created_at = created_at or datetime.now(UTC)
+        self.expires_at = expires_at or (datetime.now(UTC) + timedelta(hours=8))
         self.attributes = attributes or {}
 
     def is_expired(self) -> bool:
         """Check if session is expired."""
-        return datetime.utcnow() >= self.expires_at
+        return datetime.now(UTC) >= self.expires_at
 
     def to_dict(self) -> dict:
         """Convert session to dictionary."""
@@ -322,7 +322,7 @@ class SAMLSessionManager:
             Created SAMLSession
         """
         session_id = str(uuid.uuid4())
-        expires_at = datetime.utcnow() + timedelta(hours=session_duration_hours)
+        expires_at = datetime.now(UTC) + timedelta(hours=session_duration_hours)
 
         session = SAMLSession(
             session_id=session_id,
@@ -798,7 +798,7 @@ class SAMLAuthenticationService:
             user_id: User ID
         """
         await db.execute(
-            update(User).where(User.id == user_id).values(last_login=datetime.utcnow())
+            update(User).where(User.id == user_id).values(last_login=datetime.now(UTC))
         )
         await db.commit()
 

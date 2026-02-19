@@ -12,7 +12,7 @@ Provides OAuth2 and OIDC authentication flow including:
 import base64
 import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlencode
 
@@ -174,7 +174,7 @@ class OAuth2Provider:
             raise ValueError(f"ID token validation failed: {e}")
 
             # Additional validation
-        now = datetime.utcnow().timestamp()
+        now = datetime.now(UTC).timestamp()
 
         # Check expiration
         exp = claims.get("exp")
@@ -358,14 +358,14 @@ class OAuth2Provider:
         if (
             self._jwks_cache
             and self._jwks_cache_time
-            and datetime.utcnow() - self._jwks_cache_time < self._jwks_cache_ttl
+            and datetime.now(UTC) - self._jwks_cache_time < self._jwks_cache_ttl
         ):
             jwks = self._jwks_cache
         else:
             # Fetch JWKS
             jwks = await self._fetch_jwks()
             self._jwks_cache = jwks
-            self._jwks_cache_time = datetime.utcnow()
+            self._jwks_cache_time = datetime.now(UTC)
 
             # Find matching key
         keys = jwks.get("keys", [])
