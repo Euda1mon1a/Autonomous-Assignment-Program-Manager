@@ -156,7 +156,7 @@ See Also
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Generic, TypeVar
 from uuid import UUID, uuid4
 
@@ -193,7 +193,7 @@ class Command(ABC):
     """
 
     command_id: UUID = field(default_factory=uuid4)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     user_id: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -221,7 +221,7 @@ class DomainEvent:
     """
 
     event_id: UUID = field(default_factory=uuid4)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     aggregate_id: UUID | None = None
     event_type: str = field(init=False)
     data: dict[str, Any] = field(default_factory=dict)
@@ -667,7 +667,7 @@ class ExampleCreateCommand(Command):
         object.__setattr__(self, "email", email)
         # Initialize base Command fields
         object.__setattr__(self, "command_id", uuid4())
-        object.__setattr__(self, "timestamp", datetime.utcnow())
+        object.__setattr__(self, "timestamp", datetime.now(UTC))
         object.__setattr__(self, "user_id", user_id)
         object.__setattr__(self, "metadata", metadata or {})
 
