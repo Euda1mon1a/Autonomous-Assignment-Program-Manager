@@ -5,7 +5,7 @@ The budget-aware cron manager uses these tables for persistent storage of
 usage history and budget limits, while Redis handles real-time tracking.
 
 Revision ID: 20260219_ai_budget_tables
-Revises: 20260218_drafts_ver_tbl
+Revises: 20260219_composite_query_idx
 Create Date: 2026-02-19
 """
 
@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "20260219_ai_budget_tables"
-down_revision = "20260218_drafts_ver_tbl"
+down_revision = "20260219_composite_query_idx"
 branch_labels = None
 depends_on = None
 
