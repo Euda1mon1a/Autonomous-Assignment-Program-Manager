@@ -203,7 +203,7 @@ class Settings(BaseSettings):
     # LangGraph Pipeline (ADR-2026-02-17)
     # When True, schedule generation uses the LangGraph StateGraph pipeline
     # instead of the monolithic SchedulingEngine.generate() method.
-    USE_LANGGRAPH_PIPELINE: bool = False
+    USE_LANGGRAPH_PIPELINE: bool = True
 
     # OpenTelemetry / Distributed Tracing Configuration
     # Default: disabled for development to avoid performance impact
