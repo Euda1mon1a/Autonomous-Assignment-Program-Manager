@@ -334,9 +334,12 @@ class SyncMetrics:
             event_timestamp: Timestamp of the event being processed
         """
         if event_timestamp:
-            self.current_sync_lag_seconds = (
-                datetime.now(UTC) - event_timestamp
-            ).total_seconds()
+            ts = (
+                event_timestamp
+                if event_timestamp.tzinfo
+                else event_timestamp.replace(tzinfo=UTC)
+            )
+            self.current_sync_lag_seconds = (datetime.now(UTC) - ts).total_seconds()
 
             # Update status based on lag
             if self.current_sync_lag_seconds >= SYNC_LAG_CRITICAL_SECONDS:

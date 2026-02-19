@@ -1170,9 +1170,12 @@ class ProjectionBuilder:
         max_lag_seconds = 0
         for metadata in all_metadata:
             if metadata.last_event_timestamp:
-                lag = (
-                    datetime.now(UTC) - metadata.last_event_timestamp
-                ).total_seconds()
+                ts = (
+                    metadata.last_event_timestamp
+                    if metadata.last_event_timestamp.tzinfo
+                    else metadata.last_event_timestamp.replace(tzinfo=UTC)
+                )
+                lag = (datetime.now(UTC) - ts).total_seconds()
                 max_lag_seconds = max(max_lag_seconds, lag)
 
         return {
