@@ -19,7 +19,13 @@ LOG_LEVEL="${CELERY_LOG_LEVEL:-info}"
 WORKER_CONCURRENCY="${CELERY_WORKER_CONCURRENCY:-6}"
 WORKER_QUEUES="${CELERY_QUEUES:-default,resilience,notifications}"
 WORKER_MAX_TASKS="${CELERY_MAX_TASKS_PER_CHILD:-1000}"
-WORKER_POOL="${CELERY_WORKER_POOL:-solo}"
+# Default pool: solo on macOS (prevents SIGSEGV), prefork on Linux
+if [ "$(uname)" = "Darwin" ]; then
+    _DEFAULT_POOL="solo"
+else
+    _DEFAULT_POOL="prefork"
+fi
+WORKER_POOL="${CELERY_WORKER_POOL:-$_DEFAULT_POOL}"
 BEAT_PIDFILE="${CELERY_BEAT_PIDFILE:-/tmp/celerybeat.pid}"
 WORKER_PIDFILE="${CELERY_WORKER_PIDFILE:-/tmp/celeryworker.pid}"
 
