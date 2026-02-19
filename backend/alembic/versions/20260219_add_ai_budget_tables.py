@@ -39,7 +39,7 @@ def upgrade() -> None:
         sa.Column("total_tokens", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("cost_usd", sa.Float(), nullable=False, server_default="0.0"),
         sa.Column("job_id", sa.String(255), nullable=True),
-        sa.Column("status", sa.String(50), nullable=False, server_default="'success'"),
+        sa.Column("status", sa.String(50), nullable=False, server_default="success"),
         sa.Column("metadata_json", sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ai_usage_log")),
     )

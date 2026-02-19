@@ -234,7 +234,6 @@ def budget_monthly_rollup(self) -> dict:
     logger.info("Generating monthly budget rollup")
 
     manager = BudgetCronManager()
-    status = manager.get_budget_status()
 
     now = datetime.now(UTC)
     # Report covers the previous month
@@ -242,10 +241,11 @@ def budget_monthly_rollup(self) -> dict:
     last_of_previous = first_of_current - timedelta(days=1)
     report_month = last_of_previous.strftime("%Y-%m")
 
-    monthly = status.get("monthly", {})
-    monthly_spend = monthly.get("spend_usd", 0)
-    monthly_limit = monthly.get("budget_usd", 0)
-    utilization = monthly.get("utilization_pct", 0)
+    # Read previous month's spend directly from Redis (not current month)
+    prev_month_key = BudgetCronManager._monthly_key(report_month)
+    monthly_spend = float(manager.redis.get(prev_month_key) or 0)
+    monthly_limit = manager.monthly_budget
+    utilization = (monthly_spend / monthly_limit * 100) if monthly_limit > 0 else 0.0
     daily_average = 0.0  # Would require day-by-day tracking
     peak_day = {}
     total_tasks = 0

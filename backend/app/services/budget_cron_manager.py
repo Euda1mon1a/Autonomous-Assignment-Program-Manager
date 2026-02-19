@@ -85,6 +85,30 @@ class BudgetCronManager:
             else DEFAULT_PRIORITY_TASKS
         )
 
+        # Load persisted config overrides from Redis (set via PUT /budget/config)
+        self._load_persisted_config()
+
+    def _load_persisted_config(self) -> None:
+        """Override static settings with Redis-persisted config if available."""
+        try:
+            config_json = self.redis.get("ai_budget:config")
+            if config_json:
+                import json
+
+                config = json.loads(config_json)
+                if "daily_limit_usd" in config:
+                    self.daily_budget = float(config["daily_limit_usd"])
+                if "monthly_limit_usd" in config:
+                    self.monthly_budget = float(config["monthly_limit_usd"])
+                if "warning_threshold_pct" in config:
+                    self.warning_threshold = float(config["warning_threshold_pct"])
+                if "critical_threshold_pct" in config:
+                    self.critical_threshold = float(config["critical_threshold_pct"])
+                if "hard_stop" in config:
+                    self.hard_stop = bool(config["hard_stop"])
+        except Exception:
+            pass  # Fallback to static settings if Redis read fails
+
     # ------------------------------------------------------------------
     # Redis key helpers
     # ------------------------------------------------------------------
