@@ -10,7 +10,7 @@ V2 redesign focuses on nursing/front desk:
 """
 
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -215,7 +215,7 @@ async def get_daily_manifest(
         date=date_param,
         time_of_day=time_of_day,
         locations=locations,
-        generated_at=datetime.utcnow(),
+        generated_at=datetime.now(UTC),
     )
 
 
@@ -472,5 +472,5 @@ async def get_daily_manifest_v2(
         situational_awareness=situational_awareness,
         attending=attending,
         clinic_coverage=clinic_coverage,
-        generated_at=datetime.utcnow(),
+        generated_at=datetime.now(UTC),
     )

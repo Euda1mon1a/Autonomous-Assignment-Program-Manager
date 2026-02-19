@@ -9,7 +9,7 @@ subsystem, including:
 - Alert summaries by severity
 """
 
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
@@ -534,7 +534,7 @@ async def get_fmit_health(
     - Key metrics (swaps, alerts, coverage)
     - Issues and recommendations
     """
-    timestamp = datetime.utcnow()
+    timestamp = datetime.now(UTC)
 
     # Calculate current month range
     today = date.today()
@@ -637,7 +637,7 @@ async def get_fmit_detailed_status(
     - Alert counts by status and severity
     - Recent activity
     """
-    timestamp = datetime.utcnow()
+    timestamp = datetime.now(UTC)
 
     # Swap counts by status
     pending_swaps = (
@@ -795,7 +795,7 @@ async def get_fmit_metrics(
     - Alert resolution rate
     - Swap type breakdown
     """
-    timestamp = datetime.utcnow()
+    timestamp = datetime.now(UTC)
 
     # Calculate current month range
     today = date.today()
@@ -1132,7 +1132,7 @@ async def get_coverage_gaps(
     - Affected areas and departments
     - Gap statistics by time period
     """
-    timestamp = datetime.utcnow()
+    timestamp = datetime.now(UTC)
 
     # Default date range
     if start_date is None:
@@ -1193,7 +1193,7 @@ async def get_coverage_suggestions(
     - Alternative dates if primary date has conflicts
     - Reasoning for each suggestion
     """
-    timestamp = datetime.utcnow()
+    timestamp = datetime.now(UTC)
 
     # Default date range
     if start_date is None:
@@ -1305,7 +1305,7 @@ async def get_coverage_forecast(
     - Trend analysis (improving, stable, declining)
     - Risk factors for each forecast period
     """
-    timestamp = datetime.utcnow()
+    timestamp = datetime.now(UTC)
     today = date.today()
 
     # Limit weeks ahead to reasonable range
@@ -1449,7 +1449,7 @@ async def get_alert_summary(
     - Oldest unresolved alert timestamp
     - Average resolution time
     """
-    timestamp = datetime.utcnow()
+    timestamp = datetime.now(UTC)
 
     # Counts by severity (active only)
     critical_count = (
@@ -1533,7 +1533,7 @@ async def get_alert_summary(
     )
 
     # Average resolution time (for resolved alerts in last 30 days)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(UTC) - timedelta(days=30)
     resolved_alerts = (
         db.query(ConflictAlert)
         .filter(

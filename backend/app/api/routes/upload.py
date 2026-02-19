@@ -5,7 +5,7 @@ Provides endpoints for file uploads with validation, processing, and storage.
 
 import logging
 import tempfile
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -209,7 +209,7 @@ async def get_file_url(
 
         expires_at = None
         if isinstance(upload_service.storage_backend, S3StorageBackend):
-            expires_at = (datetime.utcnow() + timedelta(seconds=expires_in)).isoformat()
+            expires_at = (datetime.now(UTC) + timedelta(seconds=expires_in)).isoformat()
 
         return FileUrlResponse(file_id=file_id, url=url, expires_at=expires_at)
 

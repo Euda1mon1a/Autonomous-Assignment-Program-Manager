@@ -15,7 +15,7 @@ schedule drafts:
 - DELETE /schedules/drafts/{id} - Discard draft
 """
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -325,7 +325,7 @@ async def preview_draft(
                     message=f["message"],
                     affected_date=f.get("date"),
                     acknowledged_at=f.get("acknowledged_at"),
-                    created_at=f.get("created_at", datetime.utcnow()),
+                    created_at=f.get("created_at", datetime.now(UTC)),
                 )
             )
 
@@ -623,7 +623,7 @@ async def rollback_draft(
         status=result.status,
         rolled_back_count=result.rolled_back_count,
         failed_count=result.failed_count,
-        rolled_back_at=datetime.utcnow(),
+        rolled_back_at=datetime.now(UTC),
         rolled_back_by_id=current_user.id,
         errors=result.errors or [],
         message=result.message,

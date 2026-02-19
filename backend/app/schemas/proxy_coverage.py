@@ -7,7 +7,7 @@ Shows "who is covering for whom" across the scheduling system including:
 - Absence coverage
 """
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
 from uuid import UUID
 
@@ -119,7 +119,7 @@ class ProxyCoverageResponse(BaseModel):
     )
     stats: CoverageStats = Field(default_factory=CoverageStats)
     generated_at: datetime = Field(
-        default_factory=datetime.utcnow, description="When data was generated"
+        default_factory=lambda: datetime.now(UTC), description="When data was generated"
     )
 
 

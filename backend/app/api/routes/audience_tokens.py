@@ -23,7 +23,7 @@ Role-Based Access Control:
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import jwt, JWTError
@@ -344,7 +344,7 @@ async def revoke_token(
     try:
         # Security: Verify token belongs to current user (or user is admin)
         token_owner_id: str | None = None
-        expires_at = datetime.utcnow()  # Default expiration for cleanup
+        expires_at = datetime.now(UTC)  # Default expiration for cleanup
 
         # Method 1: If token is provided, decode it to get owner and expiration
         if request.token:

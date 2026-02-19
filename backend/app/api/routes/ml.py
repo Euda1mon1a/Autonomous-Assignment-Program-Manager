@@ -10,7 +10,7 @@ Endpoints for ML model management and predictions:
 """
 
 import logging
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -227,7 +227,7 @@ async def train_models(
         trained_count = sum(1 for r in results.values() if r.status == "trained")
 
         return TrainModelsResponse(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             lookback_days=lookback,
             models_trained=trained_count,
             results=results,

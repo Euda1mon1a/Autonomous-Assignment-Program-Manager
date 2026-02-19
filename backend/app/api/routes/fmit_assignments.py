@@ -11,7 +11,7 @@ Provides write endpoints for FMIT scheduling:
 All endpoints require authentication and use async SQLAlchemy patterns.
 """
 
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -341,7 +341,7 @@ async def create_fmit_assignment(
         block_count=len(assignment_ids),
         status=AssignmentStatus.CONFIRMED,
         notes=request.notes,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
         created_by=created_by,
     )
 
@@ -880,7 +880,7 @@ async def get_year_grid(
         unassigned_weeks=total_weeks - assigned_weeks,
         coverage_percentage=coverage_pct,
         fairness_index=fairness,
-        generated_at=datetime.utcnow(),
+        generated_at=datetime.now(UTC),
     )
 
 

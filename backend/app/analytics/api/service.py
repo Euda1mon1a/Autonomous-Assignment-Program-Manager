@@ -28,7 +28,7 @@ Usage:
 import logging
 import statistics
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, TypedDict
 
 import redis.asyncio as redis
@@ -243,7 +243,7 @@ class APIAnalyticsService:
         """
         try:
             redis_client = await self._get_redis()
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(UTC)
             timestamp_str = timestamp.isoformat()
             hour_key = timestamp.strftime("%Y-%m-%d-%H")
             day_key = timestamp.strftime("%Y-%m-%d")
@@ -368,7 +368,7 @@ class APIAnalyticsService:
             redis_client = await self._get_redis()
 
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(UTC)
             if not start_date:
                 start_date = end_date - timedelta(days=7)
 
@@ -466,7 +466,7 @@ class APIAnalyticsService:
                             count / ((end_date - start_date).total_seconds() / 60), 2
                         ),
                         last_accessed=data.get(
-                            "last_accessed", datetime.utcnow().isoformat()
+                            "last_accessed", datetime.now(UTC).isoformat()
                         ),
                     )
                 )
@@ -502,7 +502,7 @@ class APIAnalyticsService:
             redis_client = await self._get_redis()
 
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(UTC)
             if not start_date:
                 start_date = end_date - timedelta(days=7)
 
@@ -585,8 +585,8 @@ class APIAnalyticsService:
                         ),
                         most_used_endpoint=most_used,
                         last_active=data["last_active"]
-                        or datetime.utcnow().isoformat(),
-                        first_seen=data["first_seen"] or datetime.utcnow().isoformat(),
+                        or datetime.now(UTC).isoformat(),
+                        first_seen=data["first_seen"] or datetime.now(UTC).isoformat(),
                     )
                 )
 
@@ -617,7 +617,7 @@ class APIAnalyticsService:
             redis_client = await self._get_redis()
 
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(UTC)
             if not start_date:
                 start_date = end_date - timedelta(days=7)
 
@@ -722,7 +722,7 @@ class APIAnalyticsService:
             redis_client = await self._get_redis()
 
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(UTC)
             if not start_date:
                 start_date = end_date - timedelta(days=7)
 
@@ -825,7 +825,7 @@ class APIAnalyticsService:
             redis_client = await self._get_redis()
 
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(UTC)
             if not start_date:
                 start_date = end_date - timedelta(days=7)
 
@@ -915,7 +915,7 @@ class APIAnalyticsService:
             redis_client = await self._get_redis()
 
             if not end_date:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(UTC)
             if not start_date:
                 start_date = end_date - timedelta(days=7)
 

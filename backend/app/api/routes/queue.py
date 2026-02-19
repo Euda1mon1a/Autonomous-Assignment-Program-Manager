@@ -11,7 +11,7 @@ Provides endpoints for managing the async task queue system:
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -182,7 +182,7 @@ async def submit_task(
         if eta:
             estimated_execution = eta.isoformat()
         elif request.countdown:
-            estimated_execution = datetime.utcnow().timestamp() + request.countdown
+            estimated_execution = datetime.now(UTC).timestamp() + request.countdown
             estimated_execution = datetime.fromtimestamp(
                 estimated_execution
             ).isoformat()
@@ -556,7 +556,7 @@ async def purge_queue(
         return QueuePurgeResponse(
             queue_name=request.queue_name,
             tasks_purged=count,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
     except HTTPException:
@@ -779,7 +779,7 @@ async def schedule_task(
         if eta:
             scheduled_for = eta.isoformat()
         elif request.countdown:
-            scheduled_for = datetime.utcnow().timestamp() + request.countdown
+            scheduled_for = datetime.now(UTC).timestamp() + request.countdown
             scheduled_for = datetime.fromtimestamp(scheduled_for).isoformat()
         else:
             scheduled_for = "immediate"

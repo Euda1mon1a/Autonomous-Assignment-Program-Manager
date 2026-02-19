@@ -35,7 +35,7 @@ import asyncio
 import json
 import logging
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import (
@@ -103,7 +103,7 @@ def get_or_create_session(user_id: str, session_id: str | None = None) -> ChatSe
     """Get existing session or create new one."""
     if session_id and session_id in _sessions:
         session = _sessions[session_id]
-        session.last_activity = datetime.utcnow()
+        session.last_activity = datetime.now(UTC)
         return session
 
         # Create new session
@@ -112,8 +112,8 @@ def get_or_create_session(user_id: str, session_id: str | None = None) -> ChatSe
         session_id=new_id,
         user_id=user_id,
         messages=[],
-        created_at=datetime.utcnow(),
-        last_activity=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        last_activity=datetime.now(UTC),
     )
     _sessions[new_id] = session
     return session
@@ -231,7 +231,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
     """
     try:
         if tool_name == "validate_schedule":
-            from datetime import date as date_type
+            from datetime import UTC, date as date_type
 
             from app.services.constraint_service import (
                 ConstraintService,
@@ -317,8 +317,8 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
                 return {"error": f"Invalid person_id format: {e}"}
 
         elif tool_name == "run_contingency_analysis":
-            from datetime import date as date_type
-            from datetime import timedelta
+            from datetime import UTC, date as date_type
+            from datetime import UTC, timedelta
 
             from sqlalchemy import select
 
@@ -393,8 +393,8 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
             }
 
         elif tool_name == "detect_conflicts":
-            from datetime import date as date_type
-            from datetime import timedelta
+            from datetime import UTC, date as date_type
+            from datetime import UTC, timedelta
 
             from app.scheduling.conflicts.analyzer import ConflictAnalyzer
 
@@ -457,7 +457,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
 
             return {
                 "status": "healthy" if db_status == "connected" else "degraded",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "components": {
                     "database": db_status,
                     "api": "running",
@@ -628,7 +628,7 @@ Be concise but thorough. If there are issues, suggest solutions."""
             ChatMessage(
                 role="user",
                 content=user_message,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
             )
         )
 
@@ -637,7 +637,7 @@ Be concise but thorough. If there are issues, suggest solutions."""
                 ChatMessage(
                     role="assistant",
                     content=full_response + (" [interrupted]" if interrupted else ""),
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     tool_calls=tool_calls if tool_calls else None,
                 )
             )

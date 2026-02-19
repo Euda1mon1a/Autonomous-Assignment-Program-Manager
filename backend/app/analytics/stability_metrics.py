@@ -15,7 +15,7 @@ Key Metrics:
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -181,7 +181,7 @@ class StabilityMetricsComputer:
                 new_violations=0,
                 days_since_major_change=0,
                 total_assignments=0,
-                computed_at=datetime.utcnow(),
+                computed_at=datetime.now(UTC),
             )
 
             # Get previous version for comparison
@@ -218,7 +218,7 @@ class StabilityMetricsComputer:
             new_violations=new_violations,
             days_since_major_change=days_since_major,
             total_assignments=len(current_assignments),
-            computed_at=datetime.utcnow(),
+            computed_at=datetime.now(UTC),
             version_id=version_id,
         )
 

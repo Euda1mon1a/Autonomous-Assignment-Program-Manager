@@ -29,7 +29,7 @@ References:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import numpy as np
@@ -119,7 +119,7 @@ class PersistenceDiagram:
     h0_features: list[TopologicalFeature] = field(default_factory=list)
     h1_features: list[TopologicalFeature] = field(default_factory=list)
     h2_features: list[TopologicalFeature] = field(default_factory=list)
-    computed_at: datetime = field(default_factory=datetime.utcnow)
+    computed_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     max_dimension: int = 2
 
     @property
@@ -817,5 +817,5 @@ class PersistentScheduleAnalyzer:
                 for c in cycles
             ],
             "anomaly_score": round(anomaly_score, 3),
-            "computed_at": datetime.utcnow().isoformat(),
+            "computed_at": datetime.now(UTC).isoformat(),
         }

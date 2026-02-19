@@ -6,7 +6,7 @@ V2 redesign focuses on:
 - Remote locations (Hilo, Okinawa, Kapiolani) show who's away + surrogate
 """
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -54,7 +54,7 @@ class DailyManifestResponse(BaseModel):
     time_of_day: str | None = Field(None, description="AM or PM, or None for all day")
     locations: list[LocationManifest]
     generated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         description="When this manifest was generated",
     )
 
@@ -210,6 +210,6 @@ class DailyManifestResponseV2(BaseModel):
     )
 
     generated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         description="When this manifest was generated",
     )

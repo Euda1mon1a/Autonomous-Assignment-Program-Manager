@@ -8,7 +8,7 @@ Provides schemas for:
 - Data templates
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from uuid import UUID
 
@@ -120,10 +120,10 @@ class ImportResult(BaseModel):
     failed: int = Field(..., description="Failed rows")
     errors: list[ImportValidationError] = Field([], description="Import errors")
     started_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Import start time"
+        default_factory=lambda: datetime.now(UTC), description="Import start time"
     )
     completed_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Import completion time"
+        default_factory=lambda: datetime.now(UTC), description="Import completion time"
     )
 
 
@@ -136,7 +136,7 @@ class ExportResult(BaseModel):
     size_bytes: int = Field(..., description="File size in bytes")
     row_count: int = Field(..., description="Number of rows exported")
     generated_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Export generation time"
+        default_factory=lambda: datetime.now(UTC), description="Export generation time"
     )
 
 

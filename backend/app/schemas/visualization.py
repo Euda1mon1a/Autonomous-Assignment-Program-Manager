@@ -1,6 +1,7 @@
 """Visualization schemas for heatmap generation."""
 
 import datetime
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
@@ -66,7 +67,7 @@ class HeatmapResponse(BaseModel):
     data: HeatmapData = Field(..., description="Heatmap data")
     title: str = Field(..., description="Title for the heatmap")
     generated_at: datetime.datetime = Field(
-        default_factory=datetime.datetime.utcnow,
+        default_factory=lambda: datetime.datetime.now(UTC),
         description="Timestamp of generation",
     )
     metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
@@ -120,7 +121,9 @@ class CoverageHeatmapResponse(BaseModel):
         default_factory=list, description="List of coverage gaps"
     )
     title: str = Field(..., description="Title for the heatmap")
-    generated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    generated_at: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(UTC)
+    )
 
     model_config = ConfigDict(
         json_schema_extra={

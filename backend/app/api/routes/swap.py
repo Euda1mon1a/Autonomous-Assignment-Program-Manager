@@ -44,7 +44,7 @@ See Also:
     - app.schemas.swap: Request/response schema definitions
 """
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -197,7 +197,7 @@ async def approve_swap(
 
     if request.approved:
         swap.status = SwapStatus.APPROVED
-        swap.approved_at = datetime.utcnow()
+        swap.approved_at = datetime.now(UTC)
         swap.approved_by_id = current_user.id
         swap.notes = request.notes
         db.commit()

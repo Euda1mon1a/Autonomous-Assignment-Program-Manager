@@ -1,6 +1,6 @@
 """Unified heatmap schemas for combined residency and FMIT schedule visualization."""
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 from uuid import UUID
 
@@ -38,7 +38,7 @@ class UnifiedCoverageResponse(BaseModel):
     color_scale: str = Field(..., description="Plotly color scale name")
     metadata: dict[str, Any] = Field(..., description="Additional metadata")
     generated_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Timestamp of generation"
+        default_factory=lambda: datetime.now(UTC), description="Timestamp of generation"
     )
 
     model_config = ConfigDict(
@@ -95,7 +95,7 @@ class PersonCoverageResponse(BaseModel):
     color_scale: str = Field(..., description="Plotly color scale name")
     metadata: dict[str, Any] = Field(..., description="Additional metadata")
     generated_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Timestamp of generation"
+        default_factory=lambda: datetime.now(UTC), description="Timestamp of generation"
     )
 
     model_config = ConfigDict(
@@ -144,7 +144,7 @@ class WeeklyFMITResponse(BaseModel):
     color_scale: str = Field(..., description="Plotly color scale name")
     metadata: dict[str, Any] = Field(..., description="Additional metadata")
     generated_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Timestamp of generation"
+        default_factory=lambda: datetime.now(UTC), description="Timestamp of generation"
     )
 
     model_config = ConfigDict(

@@ -7,7 +7,7 @@ Supports:
 - Multi-format export (CSV, XLSX)
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Literal
 from uuid import UUID
@@ -187,8 +187,8 @@ class BlockAssignmentImportResult(BaseModel):
     )
 
     # Timing
-    started_at: datetime = Field(default_factory=datetime.utcnow)
-    completed_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    completed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # ============================================================================
@@ -288,7 +288,7 @@ class BlockAssignmentExportResult(BaseModel):
     data: str | None = Field(
         None, description="Base64-encoded file data (for small exports)"
     )
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # ============================================================================

@@ -11,7 +11,7 @@ Provides endpoints for admin-only user management operations including:
 import logging
 import math
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -278,8 +278,8 @@ async def create_user(
         hashed_password=get_password_hash(temp_password),
         role=user_data.role.value,
         is_active=True,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
     )
 
     # Set optional fields if they exist on the model
@@ -288,7 +288,7 @@ async def create_user(
     if hasattr(new_user, "last_name"):
         new_user.last_name = user_data.last_name
     if hasattr(new_user, "invite_sent_at") and user_data.send_invite:
-        new_user.invite_sent_at = datetime.utcnow()
+        new_user.invite_sent_at = datetime.now(UTC)
 
     db.add(new_user)
 
@@ -421,7 +421,7 @@ async def update_user(
             changes["last_name"] = {"old": old_value, "new": user_data.last_name}
             user.last_name = user_data.last_name
 
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(UTC)
 
     # Log activity if there were changes
     if changes:
@@ -532,7 +532,7 @@ async def lock_user_account(
             action = ActivityAction.USER_UNLOCKED
             message = "Account activated"
 
-        user.updated_at = datetime.utcnow()
+        user.updated_at = datetime.now(UTC)
 
         await _log_activity(
             db=db,
@@ -550,7 +550,7 @@ async def lock_user_account(
             userId=user.id,
             isLocked=not user.is_active,
             lockReason=lock_data.reason,
-            lockedAt=datetime.utcnow() if lock_data.locked else None,
+            lockedAt=datetime.now(UTC) if lock_data.locked else None,
             lockedBy=current_user.email if lock_data.locked else None,
             message=message,
         )
@@ -560,11 +560,11 @@ async def lock_user_account(
     if hasattr(user, "lock_reason"):
         user.lock_reason = lock_data.reason if lock_data.locked else None
     if hasattr(user, "locked_at"):
-        user.locked_at = datetime.utcnow() if lock_data.locked else None
+        user.locked_at = datetime.now(UTC) if lock_data.locked else None
     if hasattr(user, "locked_by"):
         user.locked_by = str(current_user.id) if lock_data.locked else None
 
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(UTC)
 
     action = (
         ActivityAction.USER_LOCKED if lock_data.locked else ActivityAction.USER_UNLOCKED
@@ -629,9 +629,9 @@ async def resend_invite(
 
         # Update invite sent timestamp
     if hasattr(user, "invite_sent_at"):
-        user.invite_sent_at = datetime.utcnow()
+        user.invite_sent_at = datetime.now(UTC)
 
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(UTC)
 
     # Generate new temporary password
     temp_password = uuid.uuid4().hex
@@ -676,7 +676,7 @@ async def resend_invite(
     return ResendInviteResponse(
         userId=user.id,
         email=user.email,
-        sentAt=datetime.utcnow(),
+        sentAt=datetime.now(UTC),
         message="Invitation resent successfully with new credentials",
     )
 
@@ -836,7 +836,7 @@ async def bulk_user_action(
                 db.delete(user)
 
             if bulk_data.action != BulkAction.DELETE:
-                user.updated_at = datetime.utcnow()
+                user.updated_at = datetime.now(UTC)
             success_ids.append(uid)
 
         except (ValueError, KeyError, AttributeError) as e:

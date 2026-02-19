@@ -8,7 +8,7 @@ Provides schemas for:
 - Batch operations
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -89,10 +89,11 @@ class BulkOperationResponse(BaseModel):
     failed: int = Field(..., description="Failed items")
     results: list[ItemResult] = Field(..., description="Per-item results")
     started_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Operation start time"
+        default_factory=lambda: datetime.now(UTC), description="Operation start time"
     )
     completed_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Operation completion time"
+        default_factory=lambda: datetime.now(UTC),
+        description="Operation completion time",
     )
 
 

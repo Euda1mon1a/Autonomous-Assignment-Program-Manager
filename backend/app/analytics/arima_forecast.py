@@ -33,7 +33,7 @@ Usage:
 import logging
 import warnings
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import UTC, date, timedelta
 from typing import TypedDict
 
 import numpy as np
@@ -358,7 +358,7 @@ class ARIMAForecaster:
         confidence = confidence_level or self.config.confidence_level
         alpha = 1 - confidence
 
-        from datetime import datetime
+        from datetime import UTC, datetime
 
         forecasts: list[ForecastPoint] = []
 
@@ -417,7 +417,7 @@ class ARIMAForecaster:
             },
             "diagnostics": diagnostics,
             "confidence_level": confidence,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
     def _forecast_fallback(self, periods: int, alpha: float) -> list[ForecastPoint]:

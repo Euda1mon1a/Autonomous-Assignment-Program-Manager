@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class ReportBuilder:
         """Build a structured report."""
         return {
             "title": title,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "metadata": metadata or {},
             "sections": sections,
         }

@@ -7,7 +7,7 @@ Includes user provisioning (JIT) and session creation.
 
 import logging
 import urllib.parse
-from datetime import timedelta
+from datetime import UTC, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -133,9 +133,9 @@ async def get_or_create_user(
 
     if user:
         # Update last login
-        from datetime import datetime
+        from datetime import UTC, datetime
 
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(UTC)
         db.commit()
         return user
 

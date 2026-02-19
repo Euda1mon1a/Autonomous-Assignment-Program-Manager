@@ -1,6 +1,6 @@
 """Pydantic schemas for enhanced swap auto-matching functionality."""
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -39,7 +39,7 @@ class SwapMatch(BaseModel):
     week_b: date = Field(description="Week from faculty B")
     match_type: MatchType = Field(description="Type of match")
     is_mutual: bool = Field(description="Whether both parties want each other's weeks")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -113,7 +113,7 @@ class AutoMatchResult(BaseModel):
     all_matches: list[RankedMatch] = Field(
         default_factory=list, description="All compatible matches"
     )
-    matched_at: datetime = Field(default_factory=datetime.utcnow)
+    matched_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     success: bool = Field(description="Whether matching was successful")
     message: str = Field(description="Status message")
 
@@ -139,7 +139,7 @@ class BatchAutoMatchResult(BaseModel):
     execution_time_seconds: float = Field(
         ge=0.0, description="Time taken to complete matching"
     )
-    processed_at: datetime = Field(default_factory=datetime.utcnow)
+    processed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -283,6 +283,6 @@ class MatchingAnalytics(BaseModel):
     common_blocking_reasons: list[str] = Field(
         default_factory=list, description="Most common reasons matches fail"
     )
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(from_attributes=True)

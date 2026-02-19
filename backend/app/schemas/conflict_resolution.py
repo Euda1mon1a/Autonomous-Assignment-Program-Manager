@@ -1,6 +1,6 @@
 """Schemas for conflict auto-resolution."""
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
 from uuid import UUID
 
@@ -173,7 +173,7 @@ class ConflictAnalysis(BaseModel):
     )
 
     # Metadata
-    analyzed_at: datetime = Field(default_factory=datetime.utcnow)
+    analyzed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class ImpactAssessment(BaseModel):
@@ -237,7 +237,7 @@ class ResolutionOption(BaseModel):
     requires_approval: bool = True
 
     # Metadata
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     estimated_duration: int = Field(default=0, description="Estimated minutes to apply")
     risk_level: str = Field(default="medium", description="low, medium, high")
 
@@ -266,7 +266,7 @@ class ResolutionResult(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
     # Timing
-    applied_at: datetime = Field(default_factory=datetime.utcnow)
+    applied_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     applied_by_id: UUID | None = None
     duration_seconds: float | None = None
 
@@ -331,7 +331,7 @@ class BatchResolutionReport(BaseModel):
     # Performance
     processing_time_seconds: float
     started_at: datetime
-    completed_at: datetime = Field(default_factory=datetime.utcnow)
+    completed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Summary
     success_rate: float = Field(ge=0.0, le=1.0)

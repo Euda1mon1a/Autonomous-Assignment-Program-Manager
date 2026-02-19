@@ -1,7 +1,7 @@
 """Core analytics engine for schedule analysis."""
 
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
@@ -126,7 +126,7 @@ class AnalyticsEngine:
                 "overrides_acknowledged": total_overrides,
                 "unacknowledged": total_violations - total_overrides,
             },
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
     def get_resident_workload_distribution(

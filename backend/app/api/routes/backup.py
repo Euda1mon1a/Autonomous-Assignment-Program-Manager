@@ -6,7 +6,7 @@ Creates point-in-time table snapshots before bulk operations for rollback.
 
 import logging
 import subprocess
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -111,7 +111,7 @@ def get_snapshot_dir() -> Path:
 
 def generate_snapshot_id(table: str) -> str:
     """Generate unique snapshot ID."""
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     return f"{table}_{timestamp}"
 
 
@@ -225,7 +225,7 @@ async def create_snapshot(
                 detail="Unsupported database URL format",
             )
 
-        created_at = datetime.utcnow()
+        created_at = datetime.now(UTC)
 
         # Log the snapshot for audit
         logger.info(
@@ -618,7 +618,7 @@ async def create_backup(
         Backup result with backup_id, size, and status
     """
     try:
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         backup_id = f"residency_scheduler_{timestamp}"
 
         # Run backup script
@@ -672,7 +672,7 @@ async def create_backup(
 
         return BackupResult(
             backup_id=latest_backup.stem.replace(".sql", ""),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             size_mb=round(size_mb, 2),
             strategy=request.strategy.value,
             status=BackupStatus.SUCCESS.value,
@@ -1005,7 +1005,7 @@ async def get_backup_status(
             latest_backup = backup_files[0]
             latest_backup_id = latest_backup.stem.replace(".sql", "")
             mtime = datetime.fromtimestamp(latest_backup.stat().st_mtime)
-            age = datetime.utcnow() - mtime
+            age = datetime.now(UTC) - mtime
             latest_backup_age_hours = age.total_seconds() / 3600
 
             # Warn if backup is older than 24 hours

@@ -1,6 +1,6 @@
 """Pydantic schemas for leave management API."""
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
 from uuid import UUID
 
@@ -57,7 +57,7 @@ class LeaveWebhookPayload(BaseModel):
     leave_type: LeaveType
     is_blocking: bool = True
     description: str | None = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @field_validator("start_date", "end_date")
     @classmethod

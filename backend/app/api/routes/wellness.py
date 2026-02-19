@@ -692,9 +692,9 @@ async def get_widget_data(
     surveys = await service.get_available_surveys(person.id)
 
     # Get recently earned achievements (last 30 days)
-    from datetime import datetime, timedelta
+    from datetime import UTC, datetime, timedelta
 
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(UTC) - timedelta(days=30)
     recent_achievements = [
         AchievementInfo(
             code=a["code"],
