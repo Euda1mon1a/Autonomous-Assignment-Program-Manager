@@ -13,7 +13,7 @@ Integrates with resilience framework for health monitoring.
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -142,7 +142,7 @@ class LocalizationMetricsTracker:
 
         # Create event
         event = LocalizationEvent(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             disruption_type=disruption.disruption_type,
             region=region,
             computation_time_ms=computation_time_ms,

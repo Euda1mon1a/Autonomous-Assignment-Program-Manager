@@ -56,7 +56,7 @@ See Also:
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
@@ -222,7 +222,7 @@ class ParallelSolver:
             >>> result = await solver.solve(problem, my_solver, strategies)
         """
         logger.info(f"Starting parallel solver with {self.num_solvers} instances")
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Create solver tasks
         tasks = []
@@ -254,7 +254,7 @@ class ParallelSolver:
                 success=False,
                 solution=None,
                 objective_value=float("inf"),
-                duration_seconds=(datetime.utcnow() - start_time).total_seconds(),
+                duration_seconds=(datetime.now(UTC) - start_time).total_seconds(),
                 iterations=0,
                 error="All solvers failed",
             )
@@ -301,7 +301,7 @@ class ParallelSolver:
             This is an internal method. Use solve() or solve_with_diversification()
             for the public API.
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         try:
             # Run solver with timeout
@@ -310,7 +310,7 @@ class ParallelSolver:
                 timeout=self.timeout_seconds,
             )
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(UTC) - start_time).total_seconds()
 
             # Extract objective value and iterations
             objective_value = solution.get("objective_value", float("inf"))
@@ -332,7 +332,7 @@ class ParallelSolver:
             )
 
         except TimeoutError:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(UTC) - start_time).total_seconds()
             logger.warning(f"Solver {solver_id} timeout after {duration:.2f}s")
 
             return SolverResult(
@@ -346,7 +346,7 @@ class ParallelSolver:
             )
 
         except Exception as e:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(UTC) - start_time).total_seconds()
             logger.error(f"Solver {solver_id} error: {e}", exc_info=True)
 
             return SolverResult(

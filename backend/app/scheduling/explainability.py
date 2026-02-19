@@ -10,7 +10,7 @@ Generates transparent explanations for scheduling decisions, enabling:
 
 import hashlib
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from app.models.block import Block
@@ -243,7 +243,7 @@ class ExplainabilityService:
             trade_off_summary=trade_off_summary,
             algorithm=self.algorithm,
             solver_version=self.SOLVER_VERSION,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             random_seed=self.random_seed,
         )
 

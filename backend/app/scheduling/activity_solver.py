@@ -26,7 +26,7 @@ import json
 import os
 import time
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -760,9 +760,9 @@ class CPSATActivitySolver:
                 # Fallback: if a template has no requirements, allow all assignables
         fallback_allowed = sorted(
             assignable_ids,
-            key=lambda act_id: activity_by_id.get(act_id).code
-            if act_id in activity_by_id
-            else "",
+            key=lambda act_id: (
+                activity_by_id.get(act_id).code if act_id in activity_by_id else ""
+            ),
         )
 
         # Faculty allowed activities (AT + clinic + admin types)
@@ -2733,11 +2733,11 @@ class CPSATActivitySolver:
         try:
             output_dir.mkdir(parents=True, exist_ok=True)
             snapshot = dict(snapshot)
-            snapshot["timestamp"] = datetime.utcnow().isoformat() + "Z"
+            snapshot["timestamp"] = datetime.now(UTC).isoformat()
             stage = snapshot.get("stage", "unknown")
             block_number = snapshot.get("block_number", "unknown")
             academic_year = snapshot.get("academic_year", "unknown")
-            stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
             path = (
                 output_dir
                 / f"activity_failure_{stage}_block{block_number}_ay{academic_year}_{stamp}.json"

@@ -42,7 +42,7 @@ import json
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -109,7 +109,7 @@ class ScheduleState(BaseModel):
 
     state_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     checkpoint_boundary: CheckpointBoundary
-    checkpoint_time: datetime = Field(default_factory=datetime.utcnow)
+    checkpoint_time: datetime = Field(default_factory=lambda: datetime.now(UTC))
     status: StateStatus = StateStatus.DRAFT
 
     # Schedule data
@@ -130,7 +130,7 @@ class ScheduleState(BaseModel):
 
     class Config:
         frozen = True  # Immutable after creation
-        json_encoders = {datetime: lambda v: v.isoformat() + "Z"}
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
     def __init__(self, **data) -> None:
         """Initialize state and calculate hash."""
@@ -183,7 +183,7 @@ class CheckpointEvent(BaseEvent):
     checkpoint_boundary: CheckpointBoundary = field(default=CheckpointBoundary.MANUAL)
     previous_state_id: str | None = None
     new_state_id: str = ""
-    checkpoint_time: datetime = field(default_factory=datetime.utcnow)
+    checkpoint_time: datetime = field(default_factory=lambda: datetime.now(UTC))
     triggered_by: str | None = None
     assignments_changed: int = 0
     acgme_compliant: bool = True
@@ -293,11 +293,11 @@ class StroboscopicScheduleManager:
                 checkpoint_boundary=CheckpointBoundary.MANUAL,
                 status=StateStatus.AUTHORITATIVE,
                 assignments=[],
-                metadata={"initialized_at": datetime.utcnow().isoformat()},
+                metadata={"initialized_at": datetime.now(UTC).isoformat()},
             )
 
         self._checkpoint_history.append(self._authoritative_state)
-        self._last_checkpoint_time = datetime.utcnow()
+        self._last_checkpoint_time = datetime.now(UTC)
 
         logger.info(
             f"Stroboscopic manager initialized for schedule {self.schedule_id} "
@@ -365,7 +365,7 @@ class StroboscopicScheduleManager:
             assignments=assignments,
             metadata={
                 **metadata,
-                "proposed_at": datetime.utcnow().isoformat(),
+                "proposed_at": datetime.now(UTC).isoformat(),
                 "based_on_state": self._authoritative_state.state_id,
             },
             created_by=created_by,
@@ -523,7 +523,7 @@ class StroboscopicScheduleManager:
             new_authoritative = ScheduleState(
                 **new_state_source.to_dict(),
                 checkpoint_boundary=boundary,
-                checkpoint_time=datetime.utcnow(),
+                checkpoint_time=datetime.now(UTC),
                 status=StateStatus.AUTHORITATIVE,
                 created_from_draft=(
                     new_state_source.state_id
@@ -541,7 +541,7 @@ class StroboscopicScheduleManager:
             self._authoritative_state = new_authoritative
             self._draft_state = None  # Clear draft
             self._checkpoint_count += 1
-            self._last_checkpoint_time = datetime.utcnow()
+            self._last_checkpoint_time = datetime.now(UTC)
 
             logger.info(
                 f"Checkpoint advanced for schedule {self.schedule_id}: "
@@ -619,7 +619,7 @@ class StroboscopicScheduleManager:
         time_since_last_checkpoint = None
         if self._last_checkpoint_time:
             time_since_last_checkpoint = (
-                datetime.utcnow() - self._last_checkpoint_time
+                datetime.now(UTC) - self._last_checkpoint_time
             ).total_seconds()
 
         return {
@@ -786,7 +786,7 @@ class CheckpointScheduler:
         if not self.enable_auto_checkpoints:
             return None
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Check for week boundary (Monday 00:00)
         if now.weekday() == 0:  # Monday
@@ -825,7 +825,7 @@ class CheckpointScheduler:
         )
 
         if success:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             if boundary == CheckpointBoundary.WEEK_START:
                 self._last_week_checkpoint = now
             elif boundary == CheckpointBoundary.ACGME_WINDOW:

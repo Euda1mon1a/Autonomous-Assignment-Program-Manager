@@ -26,7 +26,7 @@ Example:
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -288,7 +288,7 @@ class RotationEnergyTracker:
             {
                 "swap_id": str(swap.swap_id),
                 "extraction": swap.net_extraction,
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(UTC),
                 "cumulative": self.extracted_energy,
             }
         )

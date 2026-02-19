@@ -26,7 +26,7 @@ Usage:
 
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from redis import Redis
 
 from app.core.config import get_settings
@@ -89,7 +89,7 @@ class SolverControl:
                 {
                     "reason": reason,
                     "requested_by": requested_by,
-                    "requested_at": datetime.utcnow().isoformat(),
+                    "requested_at": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -181,7 +181,7 @@ class SolverControl:
                 "assignments_count": assignments_count,
                 "violations_count": violations_count,
                 "status": status,
-                "updated_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.now(UTC).isoformat(),
             }
 
             redis_client.hset(
@@ -253,7 +253,7 @@ class SolverControl:
                     "assignments_count": len(assignments),
                     "score": score,
                     "reason": reason,
-                    "saved_at": datetime.utcnow().isoformat(),
+                    "saved_at": datetime.now(UTC).isoformat(),
                     "is_partial": True,
                 }
             )
