@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-06 (quick wins batch: deps, skill, mock labels, type fixes, tests)
+> **Last Updated:** 2026-02-19 (Mini branch triage Wave 2, datetime migration, Codex fixes, stack health audit)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -173,19 +173,22 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 3. If needed, introduce **soft** preservation with high penalty or clear stale solver output before solve.
 
 ### 3.5. DB Schema Drift (NEW - Feb 2026)
-**Status:** Alembic reports head, but live DB is missing model tables
+**Status:** Alembic head sync **FAIL** per stack health audit (2026-02-19)
 
 **Symptoms:**
 - Missing tables in DB (models exist): `calendar_subscriptions`, `export_jobs`, `export_job_executions`, `oauth2_authorization_codes`, `pkce_clients`, `schema_change_events`, `schema_versions`, `state_machine_instances`, `state_machine_transitions`, `webhooks`, `webhook_deliveries`, `webhook_dead_letters`.
 - Extra tables in DB: Continuum version tables (`*_version`, `transaction`) and legacy tables (`schedule_versions`, `schedule_diffs`, `metric_snapshots`, `chaos_experiments`, `faculty_activity_permissions`).
+- **Feb 19 audit:** DB current revision = `20260205_add_credential_flag_type`, head = `20260218_drafts_ver_tbl`. Two new migrations merged since (composite query indexes + AI budget tables) which extend the chain further.
 
 **Action:**
-1. Confirm which missing tables are **intentional/optional** vs required.
-2. Add migrations for required tables.
-3. **Do not prune** tables unless they cause active issues.
+1. Run `alembic upgrade head` on live DB to sync all pending migrations.
+2. Confirm which missing tables are **intentional/optional** vs required.
+3. Add migrations for required tables.
+4. **Do not prune** tables unless they cause active issues.
 
 ### 4. Block 10 Schedule Generation - PARTIAL (Activity Solver OK)
 **Status:** CP-SAT ✅ | Activity Solver ✅ | Backend Export ⚠️ (partial) | Frontend Export ✅
+**Block 12 Prep:** Started — see `docs/scheduling/BLOCK12_SCHEDULE_LOAD.md` and preflight script (PR #1160)
 
 **Latest Run (2026-01-27):**
 - CP-SAT solver generated **589** rotation assignments + **20** call nights
@@ -304,23 +307,26 @@ Remaining faculty-specific gaps:
 5. Call assignment integrity across all blocks (weekends included)
 
 ### 7. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
-**Updated:** 2026-01-24 (Session 139)
+**Updated:** 2026-02-19 (stack health audit)
 
 Pre-commit hooks blocking commits due to pre-existing issues:
 
 | Hook | Issue | Scope | Progress |
 |------|-------|-------|----------|
-| **mypy** | 6,443 type errors | 742 files | 13.2% fixed (983 errors) |
+| **mypy** | 4,347 type errors | 742 files | 41.5% fixed (3,079 errors) |
 | **bandit** | 0 high severity, config in pyproject.toml | Merged (Sessions 154-155) | ✅ Complete |
 | **Modron March** | FairnessAuditResponse location | Type in wrong file | ✅ Fixed (PR #838) |
 
-**mypy Progress (Sessions 137-139):**
+**mypy Progress (Sessions 137-139 + Feb 2026):**
 | Session | Start | End | Fixed | % |
 |---------|-------|-----|-------|---|
 | 137 R1 | 7,426 | 6,880 | 546 | 7.3% |
 | 137 R2 | 6,880 | 6,440 | 440 | 6.4% |
 | 139 | 6,678 | 6,443 | 235 | 3.5% |
-| **Total** | 7,426 | 6,443 | **983** | **13.2%** |
+| Feb 2026 | 6,443 | 4,347 | 2,096 | 28.2% |
+| **Total** | 7,426 | 4,347 | **3,079** | **41.5%** |
+
+**Feb 19 audit note:** mypy baseline=4390, current=4347, delta=-43 (within tolerance). Cumulative reduction from 7,426 → 4,347 = 41.5% fixed.
 
 **Ref:** [`docs/scratchpad/session-139-mypy-parallel-fixes.md`](scratchpad/session-139-mypy-parallel-fixes.md)
 
@@ -360,6 +366,7 @@ See [COMPLETED section](#12-api-test-coverage-gap-high-12--resolved-2026-01-31)
 
 ### 14. Admin GUI Backend Gaps (NEW - Session 156)
 **Added:** 2026-02-01
+**Updated:** 2026-02-19 — Admin service status dashboard merged (PR #1174)
 **Source:** Backend/DB GUI readiness assessment
 
 Backend is **90% ready** (90 routes, 63 models, comprehensive CRUD). These gaps block full admin GUI:
@@ -457,6 +464,82 @@ local-first, with Docker/Render paths treated as optional compatibility only.
 1. Execute Phases 0-2 from the roadmap (bootstrap, runtime defaults, script consolidation).
 2. Run local smoke verification (auth, schedule validation, resilience, MCP).
 3. Complete docs handoff and keep Docker as fallback only.
+
+### 18. Stack Health RED — Alembic Head Sync (NEW - Feb 2026)
+**Added:** 2026-02-19
+**Source:** Stack health audit `2026-02-19_122157.md`
+
+**Status:** FAIL — DB revision is `20260205_add_credential_flag_type`, head is `20260218_drafts_ver_tbl`. Multiple migrations pending.
+
+**Current migration chain (post-merge):**
+```
+20260218_drafts_ver_tbl → 20260219_composite_query_idx → 20260219_ai_budget_tables
+```
+
+**Related audit findings:**
+| Check | Status |
+|-------|--------|
+| Alembic Head Sync | FAIL |
+| Migration State | WARN (pending migrations) |
+| Docker Containers | WARN (not running) |
+| API Health | WARN (unreachable) |
+| Sacred Backups | WARN (none found) |
+
+**Action:**
+1. Run `alembic upgrade head` on live DB — verify all tables created.
+2. Address Docker/API unavailability during audit (may be transient).
+3. Create at least one sacred backup per backup policy.
+4. Re-run stack audit to confirm GREEN or identify remaining blockers.
+
+### 19. Budget Cron Manager Wiring (NEW - Feb 2026)
+**Added:** 2026-02-19
+**Source:** Mini branch triage Wave 2 cherry-pick (PR #1177)
+
+**Status:** Code merged, not wired into production paths.
+
+Budget-aware cron manager tracks Opus API usage costs with Redis real-time tracking + PostgreSQL persistence. Code is complete but:
+- Budget routes **not registered** in `app/main.py`
+- Celery beat schedule **not configured** for periodic budget tasks (rollup, alerting)
+- Redis keys (`ai_budget:*`) exist but no periodic reader invokes them
+
+**Files:**
+- `backend/app/services/budget_cron_manager.py` — Core manager (merged + fixed: persisted config, rollup month)
+- `backend/app/tasks/budget_tasks.py` — Celery tasks
+- `backend/alembic/versions/20260219_add_ai_budget_tables.py` — Migration (merged + fixed: server_default)
+
+**Action:**
+1. Register budget router in `app/main.py` (if admin endpoints exist)
+2. Add Celery beat schedule entries for daily/monthly rollup tasks
+3. Verify Redis key structure matches manager expectations
+4. Test end-to-end: log usage → daily rollup → monthly report → threshold alerts
+
+### 20. "No CLI" Execution Phases (NEW - Feb 2026)
+**Added:** 2026-02-19
+**Source:** `docs/reports/REPO_STATE_PLAIN_ENGLISH_2026-02-19.md`
+
+Three-phase plan to eliminate CLI dependency for all operations:
+
+| Phase | Timeline | Target |
+|-------|----------|--------|
+| **1** | 2-4 weeks | Web-first for daily scheduling ops (imports, exports, swaps, compliance) |
+| **2** | 6-10 weeks | Admin operations mostly in UI (health, migrations, backups, job controls) |
+| **3** | 10-16 weeks | Never-CLI — terminal optional even for upgrades, recovery, and incidents |
+
+**Phase 1 blockers:**
+- Clear RED audit status (Item 18)
+- Remove fallback-only behavior for core admin health
+- Close key UX reliability gaps (error boundaries, loading state consistency)
+
+**Phase 2 blockers:**
+- Guided UI flows for migration status, backup management, recovery checks
+- Guardrails and confirmation workflows for risky actions
+
+**Phase 3 blockers:**
+- One-click upgrade and rollback paths
+- In-app incident runbooks and recovery tooling
+- Production-hardening and security closure for critical findings
+
+**Confidence:** Medium — RED health status adds uncertainty. Security and migration debt can introduce hidden work.
 
 ---
 
@@ -556,12 +639,10 @@ Database Inspector now supports multiple data types but Activities view has upst
 
 ~~**Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.~~ ✅ Created (PR #839)
 
-### 24. ~~Preload Service Code Duplication~~ RESOLVED
-**Added:** 2026-01-25 | **Resolved:** 2026-02-18 (PR #1154)
+### ~~24. Preload Service Code Duplication~~ — RESOLVED
+See [COMPLETED section](#24-preload-service-code-duplication-medium-24--resolved-2026-02-18)
 
-Extracted shared logic into `backend/app/services/preload/` package (6 modules, 565 LOC). Sync service reduced from 1,516 to 1,016 LOC. Async service delegates pure methods to shared functions. Zero test regressions.
-
-**UPDATE (2026-02-06):** Codex implemented faculty clinic floor constraints in activity solver (commit `000fa24d`, branch `codex/excel-export-functional-20260206`):
+**NOTE (2026-02-06):** Codex implemented faculty clinic floor constraints in activity solver (commit `000fa24d`, branch `codex/excel-export-functional-20260206`):
 - Faculty clinic min/max caps now enforced with **hard floor (>=1)** + **soft penalty** for min shortfall
 - Legacy fallback added: reads `clinic_min`/`clinic_max` from DB if weekly template missing
 - **P1 Follow-up:** Raw SQL in `_get_legacy_clinic_caps_for_person` should be migrated to ORM for maintainability
@@ -870,10 +951,10 @@ done
 | Priority | Open | Resolved |
 |----------|------|----------|
 | **CRITICAL** | 2 | 6 |
-| **HIGH** | 7 | 9 |
-| **MEDIUM** | 16 | 11 |
+| **HIGH** | 10 | 9 |
+| **MEDIUM** | 16 | 12 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **38** | **29** |
+| **TOTAL** | **41** | **30** |
 
 ### Top 5 Actions for Next Session
 
@@ -893,6 +974,30 @@ done
 | 31 | CP-SAT Integration Tests | 4-8h | MEDIUM |
 
 **Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+### Session 2026-02-19 Updates
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Merged | PRs #1161-#1170 | `datetime.utcnow()` → `datetime.now(UTC)` migration (10 PRs, all modules) |
+| ✅ Merged | PR #1171 | Codex wheat-and-chaff triage branch |
+| ✅ Merged | PRs #1172-#1178 | Mini branch triage Wave 2 cherry-picks (keyboard a11y, admin dashboard, loading states, composite indexes, budget cron, VaR/Shapley tests) |
+| ✅ Merged | PR #1179 | Mini branch triage report — Wave 2 results |
+| ✅ Fixed | PR #1173 | Codex P2: keyboard focus reset on grid dimension shrink |
+| ✅ Fixed | PR #1174 | Codex P2: admin dashboard banner ignores degraded dependencies |
+| ✅ Fixed | PR #1175 | Codex P2: duplicate `source_week` and `batch_id` indexes removed |
+| ✅ Fixed | PR #1177 | Codex P1: persisted config not loaded, rollup reads wrong month, migration server_default |
+| ✅ Fixed | PR #1178 | Codex P1 (false positive): stale review on force-pushed branch |
+| 🗑️ Deleted | 21 branches | Stale local `claude/2026-02-*` branches |
+| 🗑️ Pruned | 8 remote refs | Cherry-pick and docs remote refs |
+| 🗑️ Removed | `mini` remote | Unreachable Mac Mini remote |
+| ➕ Added | HIGH #18 | Stack Health RED — Alembic head sync FAIL |
+| ➕ Added | HIGH #19 | Budget cron manager wiring (code merged, not wired) |
+| ➕ Added | HIGH #20 | "No CLI" execution phases (3-phase timeline) |
+| 📝 Updated | HIGH #3.5 | DB schema drift now confirmed FAIL per stack audit |
+| 📝 Updated | HIGH #7 | mypy 7,426 → 4,347 (41.5% fixed) |
+| 📝 Updated | HIGH #14 | Admin status dashboard merged (PR #1174) |
+| 📝 Resolved | MEDIUM #24 | Preload service code duplication (PR #1154) |
 
 ### Session 2026-02-05 Updates
 
@@ -984,6 +1089,21 @@ done
 | ✅ Verified | Hooks Consolidation | All 15 scripts aligned, D&D parallel |
 
 ## COMPLETED / ARCHIVE
+
+### Mini Branch Triage (Waves 1+2) — COMPLETED (2026-02-19)
+**Wave 1:** 19 branches → 5 merged, 8 discarded, 6 modified (PR #1119)
+**Wave 2:** 21 branches → 7 cherry-pick PRs (#1172-#1178), 6 discarded
+**Total:** 40 branches across 2 waves, 12 PRs created
+**Report:** `docs/archived/reports/OPUS_MINI_BRANCH_TRIAGE_REPORT.md`
+
+### datetime.utcnow() Migration — COMPLETED (2026-02-19)
+**PRs:** #1161-#1170 (10 PRs covering all backend modules)
+**Scope:** All `datetime.utcnow()` → `datetime.now(UTC)`, `utcfromtimestamp()` → `fromtimestamp(tz=UTC)`
+**Modules:** core, services, scheduling, resilience, API routes, tasks, MCP server, tests
+
+### 24. Preload Service Code Duplication (MEDIUM #24) — RESOLVED (2026-02-18)
+**Added:** 2026-01-25
+**Resolved:** PR #1154 — Extracted shared logic into `backend/app/services/preload/` package (6 modules, 565 LOC). Sync service reduced from 1,516 to 1,016 LOC. Zero test regressions.
 
 ### 9. DoS Vulnerabilities - Unbounded Queries (HIGH #9) — RESOLVED (2026-01-31)
 **Added:** 2026-01-23

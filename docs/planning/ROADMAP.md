@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last Updated:** 2026-02-09
+> **Last Updated:** 2026-02-19
 
 This document outlines the planned features and improvements for the Residency Scheduler project, including detailed implementation notes, technical requirements, database schema changes, API modifications, and migration considerations for each milestone.
 
@@ -39,6 +39,36 @@ The current release includes:
 **Test Marathon (201 PRs, 11,861 tests):**
 - ✅ Comprehensive test coverage across backend services, resilience, scheduling
 - ✅ MCP tool tests, analytics tests, constraint tests
+
+### February 2026 Additions (v1.0.3) - Reliability & Operations
+
+> **Status**: Merged to main. datetime migration complete, Mini branch triage done, stack health audit established.
+
+**datetime.utcnow() Migration (PRs #1161-#1170):**
+- ✅ All `datetime.utcnow()` → `datetime.now(UTC)` across all backend modules
+- ✅ All `utcfromtimestamp()` → `fromtimestamp(tz=UTC)` conversions
+- ✅ 10 PRs covering core, services, scheduling, resilience, API routes, tasks, MCP server, tests
+
+**Mini Branch Triage (PRs #1172-#1178):**
+- ✅ Keyboard accessibility for schedule grid (roving tabIndex pattern)
+- ✅ Admin service status dashboard (Postgres, Redis, Backend, Frontend health)
+- ✅ Loading state improvements (skeleton screens, error boundaries)
+- ✅ Composite query performance indexes (6 tables)
+- ✅ Budget-aware cron manager (AI usage tracking + cost limits)
+- ✅ VaR/Shapley MCP tool tests (operations research domain)
+
+**Codex Feedback Fixes (3 P1s, 6 P2s addressed):**
+- ✅ Duplicate database indexes removed (composite indexes migration)
+- ✅ Budget cron: persisted config loading, monthly rollup month fix, migration server_default fix
+- ✅ Keyboard focus clamping on grid dimension shrink
+- ✅ Admin dashboard derives status from per-service health (not just backend response)
+
+**Operational Infrastructure:**
+- ✅ Stack health audit script (`scripts/ops/stack_audit.py`)
+- ✅ Block 12 pre-handjam readiness preflight script (PR #1160)
+- ✅ LangGraph scheduling pipeline Phase 1 (PR #1157) with A/B test pass (PR #1158)
+- ✅ Solo pool on macOS to prevent Celery SIGSEGV crash loop (PR #1159)
+- ✅ Preload service extraction (6 shared modules, 565 LOC — PR #1154)
 
 ### December 2025 Additions (v1.0.1) - Validated
 
