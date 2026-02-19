@@ -14,7 +14,7 @@ import logging
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -138,7 +138,7 @@ class HealthCheckResult:
     response_time_ms: float
     message: str = ""
     details: dict[str, Any] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""
@@ -212,7 +212,7 @@ class DeploymentRecord(Base):
     traffic_percent = Column(Float, default=0.0)
 
     # Timestamps
-    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     health_verified_at = Column(DateTime)
     traffic_switched_at = Column(DateTime)
     completed_at = Column(DateTime)
@@ -256,7 +256,7 @@ class DeploymentHealthCheck(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     deployment_id = Column(GUID(), nullable=False)
     check_type = Column(String(50), nullable=False)  # HealthCheckType
-    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+    timestamp = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # Result
     is_healthy = Column(Boolean, nullable=False)
@@ -279,7 +279,7 @@ class TrafficSwitchEvent(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     deployment_id = Column(GUID(), nullable=False)
-    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+    timestamp = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # Switch details
     from_slot = Column(String(20), nullable=False)
@@ -327,11 +327,11 @@ class HealthCheck:
         Returns:
             HealthCheckResult
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(f"{self.base_url}{endpoint}")
-                elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+                elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
                 is_healthy = response.status_code == 200
                 details = {}
@@ -351,7 +351,7 @@ class HealthCheck:
                     details=details,
                 )
         except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.HTTP_ENDPOINT,
                 is_healthy=False,
@@ -359,7 +359,7 @@ class HealthCheck:
                 message=f"Network error during health check: {str(e)}",
             )
         except httpx.HTTPError as e:
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.HTTP_ENDPOINT,
                 is_healthy=False,
@@ -374,13 +374,13 @@ class HealthCheck:
         Returns:
             HealthCheckResult
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         endpoint = f"{self.base_url}/health/database"
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(endpoint)
-                elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+                elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
                 is_healthy = response.status_code == 200
                 return HealthCheckResult(
@@ -392,7 +392,7 @@ class HealthCheck:
                     ),
                 )
         except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.DATABASE_CONNECTIVITY,
                 is_healthy=False,
@@ -400,7 +400,7 @@ class HealthCheck:
                 message=f"Network error during database check: {str(e)}",
             )
         except httpx.HTTPError as e:
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.DATABASE_CONNECTIVITY,
                 is_healthy=False,
@@ -415,13 +415,13 @@ class HealthCheck:
         Returns:
             HealthCheckResult
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         endpoint = f"{self.base_url}/health/redis"
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(endpoint)
-                elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+                elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
                 is_healthy = response.status_code == 200
                 return HealthCheckResult(
@@ -431,7 +431,7 @@ class HealthCheck:
                     message="Redis connected" if is_healthy else "Redis unreachable",
                 )
         except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.REDIS_CONNECTIVITY,
                 is_healthy=False,
@@ -439,7 +439,7 @@ class HealthCheck:
                 message=f"Network error during Redis check: {str(e)}",
             )
         except httpx.HTTPError as e:
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.REDIS_CONNECTIVITY,
                 is_healthy=False,
@@ -454,13 +454,13 @@ class HealthCheck:
         Returns:
             HealthCheckResult
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         endpoint = f"{self.base_url}/health/celery"
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(endpoint)
-                elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+                elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
                 is_healthy = response.status_code == 200
                 details = {}
@@ -484,7 +484,7 @@ class HealthCheck:
                     details=details,
                 )
         except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.CELERY_WORKERS,
                 is_healthy=False,
@@ -492,7 +492,7 @@ class HealthCheck:
                 message=f"Network error during Celery check: {str(e)}",
             )
         except httpx.HTTPError as e:
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.CELERY_WORKERS,
                 is_healthy=False,
@@ -509,7 +509,7 @@ class HealthCheck:
         Returns:
             HealthCheckResult
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         critical_endpoints = [
             "/api/v1/persons",
             "/api/v1/blocks",
@@ -553,7 +553,7 @@ class HealthCheck:
                             }
                         )
 
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             is_healthy = all(r["healthy"] for r in results)
 
             return HealthCheckResult(
@@ -564,7 +564,7 @@ class HealthCheck:
                 details={"endpoints": results},
             )
         except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as e:
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.CRITICAL_ENDPOINTS,
                 is_healthy=False,
@@ -572,7 +572,7 @@ class HealthCheck:
                 message=f"Network error checking critical endpoints: {str(e)}",
             )
         except httpx.HTTPError as e:
-            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return HealthCheckResult(
                 check_type=HealthCheckType.CRITICAL_ENDPOINTS,
                 is_healthy=False,
@@ -783,7 +783,7 @@ class BlueGreenDeploymentManager:
                 self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
             )
             if deployment:
-                deployment.last_health_check = datetime.utcnow()
+                deployment.last_health_check = datetime.now(UTC)
                 if all(r.is_healthy for r in health_results):
                     deployment.health_check_successes += 1
                 else:
@@ -806,8 +806,8 @@ class BlueGreenDeploymentManager:
             traffic_percent=self._traffic_distribution[slot],
             health_checks=health_results,
             active_sessions=0,  # Would be populated from actual metrics
-            started_at=datetime.utcnow(),
-            last_health_check=datetime.utcnow(),
+            started_at=datetime.now(UTC),
+            last_health_check=datetime.now(UTC),
         )
 
         logger.info(
@@ -871,7 +871,7 @@ class BlueGreenDeploymentManager:
                     self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
                 )
                 if deployment:
-                    deployment.traffic_switched_at = datetime.utcnow()
+                    deployment.traffic_switched_at = datetime.now(UTC)
                     deployment.traffic_percent = 100.0
                     deployment.state = DeploymentState.HEALTHY.value
                 self.db.commit()
@@ -1050,7 +1050,7 @@ class BlueGreenDeploymentManager:
         logger.info(f"Draining sessions from {slot.value} slot")
 
         self._slot_states[slot] = DeploymentState.DRAINING
-        started_at = datetime.utcnow()
+        started_at = datetime.now(UTC)
 
         # Query actual session count from Redis or database
         initial_sessions = await self._get_active_session_count(slot)
@@ -1069,7 +1069,7 @@ class BlueGreenDeploymentManager:
 
             drained_sessions = initial_sessions - remaining
             await asyncio.sleep(self.config.session_check_interval_seconds)
-            elapsed = (datetime.utcnow() - started_at).total_seconds()
+            elapsed = (datetime.now(UTC) - started_at).total_seconds()
 
         is_complete = remaining == 0 or self.config.allow_force_drain
 
@@ -1132,7 +1132,7 @@ class BlueGreenDeploymentManager:
                 # Count recently active users (active in last 15 minutes)
                 from datetime import timedelta
 
-                cutoff = datetime.utcnow() - timedelta(minutes=15)
+                cutoff = datetime.now(UTC) - timedelta(minutes=15)
 
                 result = self.db.execute(
                     select(func.count(User.id)).where(
@@ -1207,7 +1207,7 @@ class BlueGreenDeploymentManager:
 
                 # Update deployment record
             if self.db:
-                deployment.rolled_back_at = datetime.utcnow()
+                deployment.rolled_back_at = datetime.now(UTC)
                 deployment.rollback_reason = reason.value
                 deployment.error_message = message
                 deployment.is_successful = False
@@ -1259,7 +1259,7 @@ class BlueGreenDeploymentManager:
                 self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
             )
             if deployment:
-                deployment.completed_at = datetime.utcnow()
+                deployment.completed_at = datetime.now(UTC)
                 deployment.is_successful = is_successful
                 deployment.state = (
                     DeploymentState.HEALTHY.value
@@ -1479,7 +1479,7 @@ class BlueGreenDeploymentManager:
                             "title": subject,
                             "text": message,
                             "footer": "Residency Scheduler Deployment",
-                            "ts": int(datetime.utcnow().timestamp()),
+                            "ts": int(datetime.now(UTC).timestamp()),
                         }
                     ]
                 }

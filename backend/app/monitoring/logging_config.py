@@ -5,7 +5,7 @@ import logging
 import logging.handlers
 import os
 import re
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
@@ -178,7 +178,7 @@ class JSONFormatter(logging.Formatter):
             JSON formatted string
         """
         log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -504,7 +504,7 @@ class AuditLogger:
             "action": action,
             "user_id": user_id,
             "resource": resource,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         if details:
@@ -532,7 +532,7 @@ class AuditLogger:
             "user_id": user_id,
             "resource": resource,
             "status": status,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         if details:
@@ -558,7 +558,7 @@ class AuditLogger:
             "config_key": config_key,
             "old_value": str(SensitiveDataRedactor.redact(str(old_value))),
             "new_value": str(SensitiveDataRedactor.redact(str(new_value))),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         self.logger.info("CONFIG_CHANGE", extra={"context": log_data})
@@ -663,7 +663,7 @@ class SecurityLogger:
             "success": success,
             "ip_address": ip_address,
             "reason": reason,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         self.logger.log(level, "AUTH_ATTEMPT", extra={"context": log_data})
@@ -685,7 +685,7 @@ class SecurityLogger:
             "action": action,
             "resource": resource,
             "reason": reason,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         self.logger.warning("AUTHZ_FAILURE", extra={"context": log_data})
@@ -707,7 +707,7 @@ class SecurityLogger:
         log_data = {
             "activity_type": activity_type,
             "user_id": user_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         if details:

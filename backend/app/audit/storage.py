@@ -29,7 +29,7 @@ import hashlib
 import json
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -209,7 +209,7 @@ class LocalArchiveStorage(ArchiveStorageBackend):
         """
         try:
             # Extract date from archive_id or use current date
-            created_at = archive_data.get("created_at", datetime.utcnow())
+            created_at = archive_data.get("created_at", datetime.now(UTC))
             if isinstance(created_at, str):
                 created_at = datetime.fromisoformat(created_at.replace("Z", ""))
 
@@ -468,7 +468,7 @@ class S3ArchiveStorage(ArchiveStorageBackend):
         """
         try:
             # Extract date
-            created_at = archive_data.get("created_at", datetime.utcnow())
+            created_at = archive_data.get("created_at", datetime.now(UTC))
             if isinstance(created_at, str):
                 created_at = datetime.fromisoformat(created_at.replace("Z", ""))
 

@@ -6,7 +6,7 @@ This service handles:
 - Business validation rules
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -269,7 +269,7 @@ class ActivityService:
             return None
 
         activity.is_archived = True
-        activity.archived_at = datetime.utcnow()
+        activity.archived_at = datetime.now(UTC)
         await self._flush()
         await self._refresh(activity)
         return activity

@@ -1,6 +1,6 @@
 """Circuit breaker for channel failures."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 
@@ -96,7 +96,7 @@ class CircuitBreaker:
 
         if state["state"] == CircuitState.OPEN:
             # Check if recovery timeout elapsed
-            if datetime.utcnow() >= state["open_until"]:
+            if datetime.now(UTC) >= state["open_until"]:
                 self._half_open_circuit(channel)
                 logger.info("Circuit breaker half-open for channel: %s", channel)
                 return True
@@ -120,7 +120,7 @@ class CircuitBreaker:
         """Open circuit for a channel."""
         self._channels[channel]["state"] = CircuitState.OPEN
         self._channels[channel]["open_until"] = (
-            datetime.utcnow() + self.recovery_timeout
+            datetime.now(UTC) + self.recovery_timeout
         )
         self._channels[channel]["success_count"] = 0
 

@@ -28,7 +28,7 @@ References:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Optional
 from uuid import UUID
@@ -359,7 +359,7 @@ class HazardThresholdEngine:
         hazard = FatigueHazard(
             resident_id=resident_id,
             hazard_level=highest_level,
-            detected_at=datetime.utcnow(),
+            detected_at=datetime.now(UTC),
             triggers=triggers,
             alertness_score=alertness,
             sleep_debt=sleep_debt,
@@ -542,7 +542,7 @@ class HazardThresholdEngine:
         if current_level == HazardLevel.BLACK:
             return None  # Already at highest
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Estimate based on hours awake progression
         if hours_awake is not None:

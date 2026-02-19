@@ -6,7 +6,7 @@ Tracks usage on daily and monthly basis with automatic reset.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 import redis
 
@@ -43,7 +43,7 @@ class QuotaTracker:
         Returns:
             str: Redis key for daily quota
         """
-        date_str = datetime.utcnow().strftime("%Y-%m-%d")
+        date_str = datetime.now(UTC).strftime("%Y-%m-%d")
         return f"quota:daily:{resource_type}:{user_id}:{date_str}"
 
     def _get_monthly_key(self, user_id: str, resource_type: str = "api") -> str:
@@ -57,7 +57,7 @@ class QuotaTracker:
         Returns:
             str: Redis key for monthly quota
         """
-        month_str = datetime.utcnow().strftime("%Y-%m")
+        month_str = datetime.now(UTC).strftime("%Y-%m")
         return f"quota:monthly:{resource_type}:{user_id}:{month_str}"
 
     def _get_ttl_daily(self) -> int:
@@ -67,7 +67,7 @@ class QuotaTracker:
         Returns:
             int: Seconds until end of day + 1 hour buffer
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         end_of_day = now.replace(hour=23, minute=59, second=59, microsecond=0)
         ttl_seconds = int((end_of_day - now).total_seconds()) + 3600  # +1 hour buffer
         return ttl_seconds
@@ -79,7 +79,7 @@ class QuotaTracker:
         Returns:
             int: Seconds until end of month + 1 day buffer
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         # Get last day of current month
         if now.month == 12:
             next_month = now.replace(year=now.year + 1, month=1, day=1)
@@ -274,7 +274,7 @@ class QuotaTracker:
         Returns:
             tuple[datetime, datetime]: (daily_reset, monthly_reset)
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Daily reset: midnight UTC
         daily_reset = (now + timedelta(days=1)).replace(

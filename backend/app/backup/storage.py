@@ -27,7 +27,7 @@ import json
 import tempfile
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -281,7 +281,7 @@ class LocalStorage(BackupStorage):
                 "backup_id": backup_id,
                 "backup_type": backup_type,
                 "created_at": backup_data.get(
-                    "created_at", datetime.utcnow().isoformat()
+                    "created_at", datetime.now(UTC).isoformat()
                 ),
                 "size_bytes": len(compressed_data),
                 "checksum": checksum,
@@ -610,7 +610,7 @@ class S3Storage(BackupStorage):
                 "backup_id": backup_id,
                 "backup_type": backup_type,
                 "created_at": backup_data.get(
-                    "created_at", datetime.utcnow().isoformat()
+                    "created_at", datetime.now(UTC).isoformat()
                 ),
                 "size_bytes": len(compressed_data),
                 "checksum": checksum,

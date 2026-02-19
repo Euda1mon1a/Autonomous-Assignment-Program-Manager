@@ -41,7 +41,7 @@ import time
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -128,7 +128,9 @@ class MigrationRunRecord(Base):
     error_details = Column(JSONType)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
 
@@ -165,7 +167,7 @@ class MigrationExecutionRecord(Base):
     error_details = Column(JSONType)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
 
@@ -189,9 +191,9 @@ class MigrationLock(Base):
     )
 
     # Lock details
-    acquired_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    acquired_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     expires_at = Column(DateTime, nullable=False, index=True)
-    heartbeat_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    heartbeat_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # Lock metadata (named lock_metadata to avoid conflict with SQLAlchemy reserved 'metadata')
     lock_metadata = Column(JSONType)
@@ -201,11 +203,11 @@ class MigrationLock(Base):
 
     def is_expired(self) -> bool:
         """Check if lock has expired."""
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     def refresh_heartbeat(self) -> None:
         """Update heartbeat timestamp."""
-        self.heartbeat_at = datetime.utcnow()
+        self.heartbeat_at = datetime.now(UTC)
 
         # =============================================================================
         # Data Classes
@@ -404,11 +406,11 @@ class MigrationLockManager:
                 # Update existing lock
                 existing_lock.lock_holder = self.lock_holder_id
                 existing_lock.status = MigrationLockStatus.LOCKED.value
-                existing_lock.acquired_at = datetime.utcnow()
-                existing_lock.expires_at = datetime.utcnow() + timedelta(
+                existing_lock.acquired_at = datetime.now(UTC)
+                existing_lock.expires_at = datetime.now(UTC) + timedelta(
                     seconds=self.timeout_seconds
                 )
-                existing_lock.heartbeat_at = datetime.utcnow()
+                existing_lock.heartbeat_at = datetime.now(UTC)
                 existing_lock.lock_metadata = metadata
                 self.db.commit()
                 return existing_lock
@@ -417,7 +419,7 @@ class MigrationLockManager:
                 return None
 
                 # Create new lock
-        expires_at = datetime.utcnow() + timedelta(seconds=self.timeout_seconds)
+        expires_at = datetime.now(UTC) + timedelta(seconds=self.timeout_seconds)
         lock = MigrationLock(
             lock_name=lock_name,
             lock_holder=self.lock_holder_id,
@@ -490,7 +492,7 @@ class MigrationLockManager:
             expired_locks = (
                 self.db.query(MigrationLock)
                 .filter(
-                    MigrationLock.expires_at < datetime.utcnow(),
+                    MigrationLock.expires_at < datetime.now(UTC),
                     MigrationLock.status == MigrationLockStatus.LOCKED.value,
                 )
                 .all()
@@ -1025,7 +1027,7 @@ class MigrationRunner:
             # Calculate checksum before
             exec_record.checksum_before = self._calculate_db_checksum()
             exec_record.status = MigrationRunStatus.RUNNING.value
-            exec_record.started_at = datetime.utcnow()
+            exec_record.started_at = datetime.now(UTC)
             self.db.commit()
 
             # Execute upgrade function
@@ -1048,7 +1050,7 @@ class MigrationRunner:
 
                 # Update execution record
             exec_record.status = MigrationRunStatus.COMPLETED.value
-            exec_record.completed_at = datetime.utcnow()
+            exec_record.completed_at = datetime.now(UTC)
             exec_record.execution_time = int(
                 (exec_record.completed_at - exec_record.started_at).total_seconds()
             )
@@ -1067,7 +1069,7 @@ class MigrationRunner:
             self.db.rollback()
 
             exec_record.status = MigrationRunStatus.FAILED.value
-            exec_record.completed_at = datetime.utcnow()
+            exec_record.completed_at = datetime.now(UTC)
             exec_record.error_message = str(e)
             exec_record.error_details = {"error": str(e)}
             self.db.commit()
@@ -1139,7 +1141,7 @@ class MigrationRunner:
         else:
             run_record.status = MigrationRunStatus.FAILED.value
 
-        run_record.completed_at = datetime.utcnow()
+        run_record.completed_at = datetime.now(UTC)
         self.db.commit()
 
     def get_run_progress(self, run_id: UUID) -> dict[str, Any]:

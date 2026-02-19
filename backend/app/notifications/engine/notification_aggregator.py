@@ -1,7 +1,7 @@
 """Real-time notification aggregation."""
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -53,7 +53,7 @@ class NotificationAggregator:
         # Check if aggregation window active
         if key in self._last_aggregation:
             last_time = self._last_aggregation[key]
-            if datetime.utcnow() - last_time < self._window:
+            if datetime.now(UTC) - last_time < self._window:
                 # Add to pending
                 self._pending[key].append(data)
                 logger.debug("Added to aggregation: %s", key)
@@ -61,7 +61,7 @@ class NotificationAggregator:
 
                 # Start new aggregation window
         self._pending[key] = [data]
-        self._last_aggregation[key] = datetime.utcnow()
+        self._last_aggregation[key] = datetime.now(UTC)
 
         return False
 

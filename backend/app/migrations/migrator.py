@@ -33,7 +33,7 @@ Example:
 import logging
 import uuid
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -83,7 +83,9 @@ class MigrationRecord(Base):
     error_details = Column(Text)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
 
@@ -222,14 +224,14 @@ class DataMigrator:
         migration.status = status.value
 
         if status == MigrationStatus.RUNNING and not migration.started_at:
-            migration.started_at = datetime.utcnow()
+            migration.started_at = datetime.now(UTC)
 
         if status in (
             MigrationStatus.COMPLETED,
             MigrationStatus.FAILED,
             MigrationStatus.ROLLED_BACK,
         ):
-            migration.completed_at = datetime.utcnow()
+            migration.completed_at = datetime.now(UTC)
 
         if error_message:
             migration.error_message = error_message

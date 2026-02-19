@@ -19,7 +19,7 @@ Research Correlation:
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -244,7 +244,7 @@ class WellnessService:
         if research_consent is not None:
             account.research_consent = research_consent
             if research_consent:
-                account.consent_date = datetime.utcnow()
+                account.consent_date = datetime.now(UTC)
                 account.consent_version = "1.0"
 
         await self.db.flush()
@@ -278,7 +278,7 @@ class WellnessService:
             availability = await self._get_survey_availability(person_id, survey.id)
             is_available = availability is None or (
                 availability.next_available_at is None
-                or availability.next_available_at <= datetime.utcnow()
+                or availability.next_available_at <= datetime.now(UTC)
             )
 
             available.append(
@@ -337,7 +337,7 @@ class WellnessService:
             )
             self.db.add(availability)
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         availability.last_completed_at = now
 
         # Calculate next available time based on frequency
@@ -427,7 +427,7 @@ class WellnessService:
                 # Check availability
         availability = await self._get_survey_availability(person_id, survey_id)
         if availability and availability.next_available_at:
-            if availability.next_available_at > datetime.utcnow():
+            if availability.next_available_at > datetime.now(UTC):
                 return SurveySubmissionResult(
                     success=False,
                     response_id=None,
@@ -1068,7 +1068,7 @@ class WellnessService:
         active_this_week = active_week_result.scalar_one()
 
         # Responses this week
-        week_ago_dt = datetime.utcnow() - timedelta(days=7)
+        week_ago_dt = datetime.now(UTC) - timedelta(days=7)
         responses_week_result = await self.db.execute(
             select(func.count(SurveyResponse.id)).where(
                 SurveyResponse.submitted_at >= week_ago_dt

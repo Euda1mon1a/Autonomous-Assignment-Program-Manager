@@ -13,7 +13,7 @@ Provides:
 import asyncio
 import logging
 from collections import deque
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 
@@ -111,7 +111,7 @@ class HealthAggregator:
         """
         return {
             "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "service": "residency-scheduler",
         }
 
@@ -149,7 +149,7 @@ class HealthAggregator:
 
             return {
                 "status": status,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "database": db_healthy,
                 "redis": redis_healthy,
             }
@@ -158,7 +158,7 @@ class HealthAggregator:
             logger.error(f"Readiness check failed: {e}", exc_info=True)
             return {
                 "status": "unhealthy",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "error": str(e),
             }
 
@@ -169,7 +169,7 @@ class HealthAggregator:
         Returns:
             AggregatedHealthResult with detailed status for all services
         """
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
 
         # Run all health checks in parallel
         tasks = {
@@ -248,7 +248,7 @@ class HealthAggregator:
                 service=service_name,
                 status=status,
                 response_time_ms=result.get("response_time_ms", 0.0),
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 details=result,
                 error=result.get("error"),
                 warning=result.get("warning"),
@@ -260,7 +260,7 @@ class HealthAggregator:
                 service=service_name,
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=0.0,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 error=str(e),
             )
 

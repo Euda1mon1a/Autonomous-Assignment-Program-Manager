@@ -9,7 +9,7 @@ Provides automated background tasks for:
 """
 
 import asyncio
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from pathlib import Path
 from typing import Any, Coroutine, TypeVar
 
@@ -75,7 +75,7 @@ def train_ml_models(
     if not settings.ML_ENABLED and not force_retrain:
         logger.info("ML is disabled. Skipping training.")
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "status": "skipped",
             "reason": "ML_ENABLED is False",
         }
@@ -200,7 +200,7 @@ def train_ml_models(
         )
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "lookback_days": lookback,
             "models_trained": trained_count,
             "results": results,
@@ -242,7 +242,7 @@ def score_schedule(
     if not settings.ML_ENABLED:
         logger.info("ML is disabled. Returning default score.")
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "status": "skipped",
             "reason": "ML_ENABLED is False",
             "default_score": 0.75,
@@ -277,7 +277,7 @@ def score_schedule(
         suggestions = scorer.suggest_improvements(schedule_data)
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "score": result,
             "suggestions": suggestions,
             "task_status": "completed",
@@ -345,7 +345,7 @@ def check_model_health(self) -> dict[str, Any]:
     available_count = sum(1 for h in health.values() if h["available"])
 
     return {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "ml_enabled": settings.ML_ENABLED,
         "models_available": f"{available_count}/{len(health)}",
         "health": health,
@@ -374,7 +374,7 @@ def periodic_retrain(self) -> dict[str, Any]:
     """
     if not settings.ML_AUTO_TRAINING_ENABLED:
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "status": "skipped",
             "reason": "ML_AUTO_TRAINING_ENABLED is False",
         }
@@ -406,13 +406,13 @@ def periodic_retrain(self) -> dict[str, Any]:
         train_ml_models.delay(model_types=models_to_retrain)
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "models_scheduled": models_to_retrain,
             "task_status": "training_scheduled",
         }
     else:
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "models_scheduled": [],
             "task_status": "no_retrain_needed",
         }

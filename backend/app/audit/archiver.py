@@ -43,7 +43,7 @@ Usage:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -172,7 +172,7 @@ class AuditArchiver:
 
             # Calculate cutoff date
         if days is not None:
-            cutoff_date = datetime.utcnow() - timedelta(days=days)
+            cutoff_date = datetime.now(UTC) - timedelta(days=days)
         else:
             cutoff_date = policy.get_archive_cutoff_date()
 
@@ -525,7 +525,7 @@ class AuditArchiver:
 
         return {
             "archive_id": archive_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "record_count": len(logs),
             "date_range": date_range,
             "entity_type_counts": entity_type_counts,

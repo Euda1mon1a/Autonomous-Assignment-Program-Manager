@@ -1,6 +1,6 @@
 """WebSocket event types and schemas for real-time updates."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -49,7 +49,7 @@ class WebSocketEvent(WebSocketEventBase):
     """Generic WebSocket event with data payload."""
 
     event_type: EventType
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     data: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -57,7 +57,7 @@ class ScheduleUpdatedEvent(WebSocketEventBase):
     """Event for schedule updates."""
 
     event_type: EventType = EventType.SCHEDULE_UPDATED
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     schedule_id: UUID | None = None
     academic_year_id: UUID | None = None
     user_id: UUID | None = None
@@ -70,7 +70,7 @@ class AssignmentChangedEvent(WebSocketEventBase):
     """Event for assignment changes."""
 
     event_type: EventType = EventType.ASSIGNMENT_CHANGED
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     assignment_id: UUID
     person_id: UUID
     block_id: UUID
@@ -84,7 +84,7 @@ class SwapRequestedEvent(WebSocketEventBase):
     """Event for swap requests."""
 
     event_type: EventType = EventType.SWAP_REQUESTED
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     swap_id: UUID
     requester_id: UUID
     target_person_id: UUID | None = None
@@ -97,7 +97,7 @@ class SwapApprovedEvent(WebSocketEventBase):
     """Event for swap approvals."""
 
     event_type: EventType = EventType.SWAP_APPROVED
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     swap_id: UUID
     requester_id: UUID
     target_person_id: UUID | None = None
@@ -110,7 +110,7 @@ class ConflictDetectedEvent(WebSocketEventBase):
     """Event for conflict detection."""
 
     event_type: EventType = EventType.CONFLICT_DETECTED
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     conflict_id: UUID | None = None
     person_id: UUID
     conflict_type: str  # "double_booking", "acgme_violation", "absence_overlap"
@@ -123,7 +123,7 @@ class ResilienceAlertEvent(WebSocketEventBase):
     """Event for resilience system alerts."""
 
     event_type: EventType = EventType.RESILIENCE_ALERT
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     alert_type: (
         str  # "utilization_high", "n1_failure", "n2_failure", "defense_level_change"
     )
@@ -139,7 +139,7 @@ class ConnectionAckEvent(WebSocketEventBase):
     """Event acknowledging successful connection."""
 
     event_type: EventType = EventType.CONNECTION_ACK
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     user_id: UUID
     message: str = "Connection established"
 
@@ -148,14 +148,14 @@ class PingEvent(WebSocketEventBase):
     """Ping event for keepalive."""
 
     event_type: EventType = EventType.PING
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class PongEvent(WebSocketEventBase):
     """Pong event response to ping."""
 
     event_type: EventType = EventType.PONG
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # =============================================================================
@@ -199,7 +199,7 @@ class SolverSolutionEvent(WebSocketEventBase):
     """
 
     event_type: EventType = EventType.SOLVER_SOLUTION
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Task identification
     task_id: str
@@ -226,7 +226,7 @@ class SolverCompleteEvent(WebSocketEventBase):
     """
 
     event_type: EventType = EventType.SOLVER_COMPLETE
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Task identification
     task_id: str

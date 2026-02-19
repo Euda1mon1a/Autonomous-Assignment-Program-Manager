@@ -1,6 +1,6 @@
 """Scheduling logic for delayed notifications."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -21,7 +21,7 @@ class ScheduledNotificationItem(BaseModel):
     data: dict[str, Any]
     channels: list[str]
     scheduled_time: datetime
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     status: str = "pending"
 
 
@@ -84,7 +84,7 @@ class NotificationScheduler:
 
     async def get_due_notifications(self) -> list[ScheduledNotificationItem]:
         """Get notifications due for sending."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         due = [
             item

@@ -26,7 +26,7 @@ assigned COMPLIANCE level retention (1 year active + 6 years archived).
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 
@@ -98,7 +98,7 @@ class RetentionPolicy(BaseModel):
         if self.level == RetentionLevel.PERMANENT:
             return False
 
-        age_days = (datetime.utcnow() - log_date).days
+        age_days = (datetime.now(UTC) - log_date).days
         return age_days > self.active_retention_days
 
     def should_purge(self, archive_date: datetime) -> bool:
@@ -114,7 +114,7 @@ class RetentionPolicy(BaseModel):
         if self.level in (RetentionLevel.PERMANENT, RetentionLevel.LEGAL_HOLD):
             return False
 
-        age_days = (datetime.utcnow() - archive_date).days
+        age_days = (datetime.now(UTC) - archive_date).days
         return age_days > (self.archive_retention_years * 365)
 
     def get_archive_cutoff_date(self) -> datetime:
@@ -124,7 +124,7 @@ class RetentionPolicy(BaseModel):
         Returns:
             datetime: Logs older than this date should be archived
         """
-        return datetime.utcnow() - timedelta(days=self.active_retention_days)
+        return datetime.now(UTC) - timedelta(days=self.active_retention_days)
 
     def get_purge_cutoff_date(self) -> datetime:
         """
@@ -133,7 +133,7 @@ class RetentionPolicy(BaseModel):
         Returns:
             datetime: Archives older than this date can be purged
         """
-        return datetime.utcnow() - timedelta(days=self.archive_retention_years * 365)
+        return datetime.now(UTC) - timedelta(days=self.archive_retention_years * 365)
 
         # Predefined retention policies for common use cases
 

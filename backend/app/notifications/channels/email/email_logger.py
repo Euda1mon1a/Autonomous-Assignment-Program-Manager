@@ -1,6 +1,6 @@
 """Email activity logging."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -33,7 +33,7 @@ class EmailLogEntry(BaseModel):
     recipient: str
     event_type: EmailEventType
     subject: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

@@ -11,7 +11,7 @@ Key features:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
@@ -402,7 +402,7 @@ class GameTheoryService:
 
         # Update status
         tournament.status = SimulationStatus.RUNNING.value  # type: ignore[assignment]
-        tournament.started_at = datetime.utcnow()  # type: ignore[assignment]
+        tournament.started_at = datetime.now(UTC)  # type: ignore[assignment]
         self.db.commit()
 
         try:
@@ -484,7 +484,7 @@ class GameTheoryService:
 
             # Update tournament
             tournament.status = SimulationStatus.COMPLETED.value  # type: ignore[assignment]
-            tournament.completed_at = datetime.utcnow()  # type: ignore[assignment]
+            tournament.completed_at = datetime.now(UTC)  # type: ignore[assignment]
             tournament.total_matches = (  # type: ignore[assignment]
                 len(results.interactions)
                 if hasattr(results, "interactions")
@@ -582,7 +582,7 @@ class GameTheoryService:
 
         # Update status
         evolution.status = SimulationStatus.RUNNING.value
-        evolution.started_at = datetime.utcnow()
+        evolution.started_at = datetime.now(UTC)
         self.db.commit()
 
         try:
@@ -649,7 +649,7 @@ class GameTheoryService:
 
             # Update evolution record
             evolution.status = SimulationStatus.COMPLETED.value  # type: ignore[assignment]
-            evolution.completed_at = datetime.utcnow()  # type: ignore[assignment]
+            evolution.completed_at = datetime.now(UTC)  # type: ignore[assignment]
             evolution.generations_completed = generations  # type: ignore[assignment]
             evolution.winner_strategy_name = winner_name  # type: ignore[assignment]
             evolution.is_evolutionarily_stable = (  # type: ignore[assignment]

@@ -28,7 +28,7 @@ Usage:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -242,7 +242,7 @@ class ScheduleDraftService:
                 f"(through {lock_date.isoformat()}). Break-glass approval required."
             ),
             affected_date=lock_date,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         self.db.add(flag)
 
@@ -400,7 +400,7 @@ class ScheduleDraftService:
                 assignment_id=assignment.id,
                 person_id=assignment.person_id,
                 affected_date=assignment.assignment_date,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
             )
             self.db.add(flag)
             flags_added += 1
@@ -474,7 +474,7 @@ class ScheduleDraftService:
                 # Create new draft
             draft = ScheduleDraft(
                 id=uuid4(),
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 created_by_id=created_by_id,
                 target_block=block_number,
                 target_start_date=start_date,
@@ -641,7 +641,7 @@ class ScheduleDraftService:
                 assignment_id=assignment_id,
                 person_id=person_id,
                 affected_date=affected_date,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
             )
 
             self.db.add(flag)
@@ -694,7 +694,7 @@ class ScheduleDraftService:
                 # Already acknowledged
                 return True
 
-            flag.acknowledged_at = datetime.utcnow()
+            flag.acknowledged_at = datetime.now(UTC)
             flag.acknowledged_by_id = acknowledged_by_id
             flag.resolution_note = resolution_note
 
@@ -850,7 +850,7 @@ class ScheduleDraftService:
                 error_code="NO_LOCK_WINDOW_VIOLATION",
             )
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         lock_date = self._get_lock_window_service().get_lock_date()
 
         draft.approved_at = now
@@ -961,7 +961,7 @@ class ScheduleDraftService:
                         error_code="INVALID_STATUS",
                     )
 
-                now = datetime.utcnow()
+                now = datetime.now(UTC)
                 # Enforce staleness re-validation (must validate if draft is old)
                 if (
                     draft.created_at
@@ -1217,7 +1217,7 @@ class ScheduleDraftService:
                     existing.activity_id = activity_id
                     existing.counts_toward_fmc_capacity = capacity_flag
                     existing.source = AssignmentSource.MANUAL.value
-                    existing.updated_at = datetime.utcnow()
+                    existing.updated_at = datetime.now(UTC)
                     created_ids.append(existing.id)
                 else:
                     # No existing record - create new (shouldn't happen but handle gracefully)
@@ -1249,7 +1249,7 @@ class ScheduleDraftService:
                     existing.source = AssignmentSource.MANUAL.value
                     if prior_source != AssignmentSource.MANUAL.value:
                         existing.is_override = True
-                    existing.updated_at = datetime.utcnow()
+                    existing.updated_at = datetime.now(UTC)
                     created_ids.append(existing.id)
                 else:
                     # Create new half-day assignment
@@ -1318,8 +1318,8 @@ class ScheduleDraftService:
             counts_toward_fmc_capacity=counts_toward_fmc_capacity,
             source=AssignmentSource.MANUAL.value,  # Published drafts = manual
             is_override=False,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
     async def rollback_draft(
@@ -1377,7 +1377,7 @@ class ScheduleDraftService:
 
                 if (
                     draft.rollback_expires_at
-                    and datetime.utcnow() > draft.rollback_expires_at
+                    and datetime.now(UTC) > draft.rollback_expires_at
                 ):
                     draft.rollback_available = False
                     self.db.commit()
@@ -1489,7 +1489,7 @@ class ScheduleDraftService:
 
                     # Partial or complete success - mark as ROLLED_BACK
                 draft.status = ScheduleDraftStatus.ROLLED_BACK
-                draft.rolled_back_at = datetime.utcnow()
+                draft.rolled_back_at = datetime.now(UTC)
                 draft.rolled_back_by_id = rolled_back_by_id
                 draft.rollback_available = False
 
@@ -1788,7 +1788,7 @@ class ScheduleDraftService:
                 affected_date=violation.details.get("date")
                 if violation.details
                 else None,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
             )
 
             self.db.add(flag)
@@ -1855,7 +1855,7 @@ class ScheduleDraftService:
                 # Create new draft
             draft = ScheduleDraft(
                 id=uuid4(),
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 created_by_id=created_by_id,
                 target_block=block_number,
                 target_start_date=start_date,
@@ -2155,7 +2155,7 @@ class ScheduleDraftService:
                 affected_date=violation.details.get("date")
                 if violation.details
                 else None,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
             )
 
             self.db.add(flag)

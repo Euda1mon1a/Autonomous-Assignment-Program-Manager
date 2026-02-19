@@ -12,7 +12,7 @@ Generates comprehensive ACGME compliance reports including:
 
 import io
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -54,7 +54,7 @@ class ComplianceReportData:
         self.resident_summaries: list[dict[str, Any]] = []
         self.period_start: date | None = None
         self.period_end: date | None = None
-        self.generated_at: datetime = datetime.utcnow()
+        self.generated_at: datetime = datetime.now(UTC)
 
 
 class ComplianceReportGenerator:

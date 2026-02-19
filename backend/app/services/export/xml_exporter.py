@@ -9,7 +9,7 @@ import gzip
 import io
 import xml.etree.ElementTree as ET
 from collections.abc import AsyncIterator
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from typing import Any
 from defusedxml import minidom
 
@@ -70,7 +70,7 @@ class XMLExporter:
         root = ET.Element("export")
         metadata = ET.SubElement(root, "metadata")
         ET.SubElement(metadata, "export_type").text = "assignments"
-        ET.SubElement(metadata, "exported_at").text = datetime.utcnow().isoformat()
+        ET.SubElement(metadata, "exported_at").text = datetime.now(UTC).isoformat()
 
         if start_date:
             ET.SubElement(metadata, "start_date").text = start_date.isoformat()
@@ -166,7 +166,7 @@ class XMLExporter:
         root = ET.Element("export")
         metadata = ET.SubElement(root, "metadata")
         ET.SubElement(metadata, "export_type").text = "schedule"
-        ET.SubElement(metadata, "exported_at").text = datetime.utcnow().isoformat()
+        ET.SubElement(metadata, "exported_at").text = datetime.now(UTC).isoformat()
         ET.SubElement(metadata, "format").text = "nested" if nested else "flat"
 
         if start_date:
@@ -264,7 +264,7 @@ class XMLExporter:
         root = ET.Element("export")
         metadata = ET.SubElement(root, "metadata")
         ET.SubElement(metadata, "export_type").text = "people"
-        ET.SubElement(metadata, "exported_at").text = datetime.utcnow().isoformat()
+        ET.SubElement(metadata, "exported_at").text = datetime.now(UTC).isoformat()
 
         if person_type:
             ET.SubElement(metadata, "person_type").text = person_type
@@ -340,7 +340,7 @@ class XMLExporter:
         root = ET.Element("export")
         metadata = ET.SubElement(root, "metadata")
         ET.SubElement(metadata, "export_type").text = "blocks"
-        ET.SubElement(metadata, "exported_at").text = datetime.utcnow().isoformat()
+        ET.SubElement(metadata, "exported_at").text = datetime.now(UTC).isoformat()
 
         if start_date:
             ET.SubElement(metadata, "start_date").text = start_date.isoformat()
@@ -415,7 +415,7 @@ class XMLExporter:
         metadata = ET.SubElement(root, "metadata")
         ET.SubElement(metadata, "export_type").text = "analytics"
         ET.SubElement(metadata, "total_count").text = str(len(metrics_data))
-        ET.SubElement(metadata, "exported_at").text = datetime.utcnow().isoformat()
+        ET.SubElement(metadata, "exported_at").text = datetime.now(UTC).isoformat()
 
         # Create data container
         data_elem = ET.SubElement(root, "data")
@@ -572,7 +572,7 @@ class XMLExporter:
         filename = base_name
 
         if timestamp:
-            ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             filename = f"{base_name}_{ts}"
 
         if compress:

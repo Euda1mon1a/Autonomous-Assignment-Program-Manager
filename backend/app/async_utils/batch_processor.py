@@ -7,7 +7,7 @@ parallel execution and progress tracking.
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Callable, Optional, Sequence, TypeVar
 
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ class BatchProcessor:
         Returns:
             BatchResult with processing statistics
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         total_items = len(items)
         results: list[Any] = []
         errors: list[tuple[int, Exception]] = []
@@ -127,7 +127,7 @@ class BatchProcessor:
                 errors.extend(batch_errors)
 
                 # Calculate duration
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(UTC) - start_time).total_seconds()
 
         logger.info(
             f"Batch processing complete: {processed}/{total_items} items "
@@ -247,7 +247,7 @@ class StreamingBatchProcessor:
 
     async def _worker(self) -> None:
         """Worker loop to collect and process batches."""
-        last_flush = datetime.utcnow()
+        last_flush = datetime.now(UTC)
 
         while self._running:
             try:
@@ -262,7 +262,7 @@ class StreamingBatchProcessor:
                     pass
 
                     # Check if batch is full or flush interval reached
-                now = datetime.utcnow()
+                now = datetime.now(UTC)
                 batch_full = len(self.current_batch) >= self.batch_size
                 time_to_flush = (
                     now - last_flush

@@ -15,7 +15,7 @@ import logging
 import time
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import inspect, event, text
 from sqlalchemy.orm import Session, Query
@@ -49,7 +49,7 @@ class QueryMetrics:
             {
                 "query": query,
                 "duration_ms": duration,
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(UTC),
             }
         )
 

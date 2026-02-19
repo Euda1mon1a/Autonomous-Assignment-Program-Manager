@@ -1,6 +1,6 @@
 """Email personalization."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -69,7 +69,7 @@ class EmailPersonalizer:
         """
         # Determine time of day
         if not time_of_day:
-            hour = datetime.utcnow().hour
+            hour = datetime.now(UTC).hour
             if hour < 12:
                 time_of_day = "morning"
             elif hour < 18:

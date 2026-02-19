@@ -27,7 +27,7 @@ Example:
 import hashlib
 import logging
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 
@@ -252,7 +252,7 @@ class FacetAnalytics(BaseModel):
         default_factory=dict, description="Popular facet combinations"
     )
     last_updated: datetime = Field(
-        default_factory=datetime.utcnow, description="Last analytics update"
+        default_factory=lambda: datetime.now(UTC), description="Last analytics update"
     )
 
 
@@ -363,7 +363,7 @@ class FacetedSearchService:
         Returns:
             Faceted search response with results and facets
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         if entity_types is None:
             entity_types = ["person", "rotation", "procedure", "assignment", "swap"]
@@ -404,7 +404,7 @@ class FacetedSearchService:
         paginated_results = results[start_idx:end_idx]
 
         # Calculate execution time
-        execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
         response = FacetedSearchResponse(
             items=paginated_results,
@@ -1369,7 +1369,7 @@ class FacetedSearchService:
                 new_avg = (current_avg + reduction) / 2
                 analytics.avg_result_reduction = new_avg
 
-            analytics.last_updated = datetime.utcnow()
+            analytics.last_updated = datetime.now(UTC)
 
     def get_facet_analytics(self, facet_name: str | None = None) -> dict[str, Any]:
         """

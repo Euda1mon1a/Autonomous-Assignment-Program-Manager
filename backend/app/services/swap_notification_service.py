@@ -2,7 +2,7 @@
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from enum import Enum
 from uuid import UUID
 
@@ -40,7 +40,7 @@ class SwapNotification:
 
     def __post_init__(self) -> None:
         if self.created_at is None:
-            self.created_at = datetime.utcnow()
+            self.created_at = datetime.now(UTC)
 
 
 class SwapNotificationService:

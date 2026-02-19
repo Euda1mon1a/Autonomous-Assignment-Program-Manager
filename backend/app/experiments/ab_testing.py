@@ -56,7 +56,7 @@ import hashlib
 import logging
 import math
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 
@@ -236,10 +236,10 @@ class Experiment(BaseModel):
     end_date: datetime | None = Field(default=None, description="Experiment end date")
     created_by: str = Field(default="system", description="User who created experiment")
     created_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Creation timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Creation timestamp"
     )
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Last update timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Last update timestamp"
     )
 
     @field_validator("variants")
@@ -284,7 +284,7 @@ class VariantAssignment(BaseModel):
     user_id: str = Field(..., description="User identifier")
     variant_key: str = Field(..., description="Assigned variant")
     assigned_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Assignment timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Assignment timestamp"
     )
     is_override: bool = Field(
         default=False, description="Whether assignment was manually overridden"
@@ -310,7 +310,7 @@ class MetricData(BaseModel):
     )
     value: float = Field(..., description="Metric value")
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Metric timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Metric timestamp"
     )
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metric metadata"
@@ -381,7 +381,7 @@ class ExperimentLifecycle(BaseModel):
     new_status: ExperimentStatus = Field(..., description="Status after event")
     triggered_by: str = Field(default="system", description="User who triggered event")
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Event timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Event timestamp"
     )
     notes: str = Field(default="", description="Additional notes")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Event metadata")
@@ -628,8 +628,8 @@ class ExperimentService:
             raise ValidationError("Experiment must have at least 2 variants")
 
             # Store experiment
-        experiment.created_at = datetime.utcnow()
-        experiment.updated_at = datetime.utcnow()
+        experiment.created_at = datetime.now(UTC)
+        experiment.updated_at = datetime.now(UTC)
         await r.set(
             f"experiment:{experiment.key}",
             experiment.model_dump_json(),
@@ -702,7 +702,7 @@ class ExperimentService:
             if hasattr(experiment, field):
                 setattr(experiment, field, value)
 
-        experiment.updated_at = datetime.utcnow()
+        experiment.updated_at = datetime.now(UTC)
 
         # Save
         r = await self._get_redis()
@@ -739,8 +739,8 @@ class ExperimentService:
             )
 
         experiment.status = ExperimentStatus.RUNNING
-        experiment.start_date = datetime.utcnow()
-        experiment.updated_at = datetime.utcnow()
+        experiment.start_date = datetime.now(UTC)
+        experiment.updated_at = datetime.now(UTC)
 
         # Save
         r = await self._get_redis()
@@ -779,7 +779,7 @@ class ExperimentService:
         previous_status = experiment.status
 
         experiment.status = ExperimentStatus.PAUSED
-        experiment.updated_at = datetime.utcnow()
+        experiment.updated_at = datetime.now(UTC)
 
         # Save
         r = await self._get_redis()
@@ -822,8 +822,8 @@ class ExperimentService:
         previous_status = experiment.status
 
         experiment.status = ExperimentStatus.COMPLETED
-        experiment.end_date = datetime.utcnow()
-        experiment.updated_at = datetime.utcnow()
+        experiment.end_date = datetime.now(UTC)
+        experiment.updated_at = datetime.now(UTC)
 
         # Save
         r = await self._get_redis()
@@ -1250,7 +1250,7 @@ class ExperimentService:
             # Calculate duration
         duration_days = 0.0
         if experiment.start_date:
-            end = experiment.end_date or datetime.utcnow()
+            end = experiment.end_date or datetime.now(UTC)
             duration_days = (end - experiment.start_date).total_seconds() / 86400
 
             # Perform statistical analysis

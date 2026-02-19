@@ -11,7 +11,7 @@ Orchestrates the changelog generation process:
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from tempfile import gettempdir
 from typing import Any
@@ -62,7 +62,7 @@ class VersionHistory:
         data = {
             "version": version,
             "schema": schema,
-            "saved_at": datetime.utcnow().isoformat(),
+            "saved_at": datetime.now(UTC).isoformat(),
             "metadata": metadata or {},
         }
 

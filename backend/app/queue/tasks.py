@@ -7,7 +7,7 @@ tasks with advanced features like priority, dependencies, and progress tracking.
 
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import IntEnum
 from typing import Any
 
@@ -386,7 +386,7 @@ def example_long_running_task(self, duration: int = 10) -> dict[str, Any]:
     return {
         "status": "completed",
         "duration": duration,
-        "completed_at": datetime.utcnow().isoformat(),
+        "completed_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -404,5 +404,5 @@ def example_dependency_task(self, dependency_result: Any) -> dict[str, Any]:
     return {
         "status": "completed",
         "dependency_result": dependency_result,
-        "processed_at": datetime.utcnow().isoformat(),
+        "processed_at": datetime.now(UTC).isoformat(),
     }

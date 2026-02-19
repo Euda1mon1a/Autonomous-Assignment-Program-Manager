@@ -11,7 +11,7 @@ Provides statistics and metrics for Celery tasks including:
 
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from celery import Celery
@@ -70,14 +70,14 @@ class JobStatsService:
                 "average_runtime_seconds": 0.0,
                 "min_runtime_seconds": 0.0,
                 "max_runtime_seconds": 0.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error getting task statistics: {e}")
             return {
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def get_queue_statistics(self) -> dict[str, dict[str, Any]]:
@@ -166,14 +166,14 @@ class JobStatsService:
                 "average_retries_per_task": 0.0,
                 "retry_success_rate": 0.0,
                 "common_retry_reasons": [],
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error getting retry statistics: {e}")
             return {
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def get_performance_metrics(
@@ -215,14 +215,14 @@ class JobStatsService:
                 "min_runtime_seconds": 0.0,
                 "max_runtime_seconds": 0.0,
                 "std_dev_runtime_seconds": 0.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error getting performance metrics: {e}")
             return {
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def get_task_distribution(self, time_range_hours: int = 24) -> dict[str, int]:
@@ -292,14 +292,14 @@ class JobStatsService:
                     # {"hour": "2024-01-15T10:00:00", "count": 2}
                 ],
                 "affected_queues": [],
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error analyzing failures: {e}")
             return {
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def get_throughput_metrics(
@@ -334,14 +334,14 @@ class JobStatsService:
                 "peak_throughput_per_hour": 0.0,
                 "average_queue_time_seconds": 0.0,
                 "average_processing_time_seconds": 0.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error getting throughput metrics: {e}")
             return {
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def get_scheduled_tasks_summary(self) -> dict[str, Any]:
@@ -379,14 +379,14 @@ class JobStatsService:
             return {
                 "total_scheduled_tasks": len(scheduled_tasks),
                 "scheduled_tasks": scheduled_tasks,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error getting scheduled tasks summary: {e}")
             return {
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def get_worker_utilization(self) -> dict[str, Any]:
@@ -418,7 +418,7 @@ class JobStatsService:
                     "active_workers": 0,
                     "idle_workers": 0,
                     "average_utilization_percentage": 0.0,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
 
             # Count workers with active tasks
@@ -442,12 +442,12 @@ class JobStatsService:
                     if total_workers > 0
                     else 0.0
                 ),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error calculating worker utilization: {e}")
             return {
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }

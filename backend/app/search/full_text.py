@@ -28,7 +28,7 @@ Example:
 import logging
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from sqlalchemy import or_
@@ -87,7 +87,7 @@ class SearchAnalytics:
                 "entity_types": entity_types,
                 "result_count": result_count,
                 "execution_time_ms": execution_time_ms,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -623,7 +623,7 @@ class FullTextSearchService:
         Returns:
             Search response with results
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Tokenize query
         parsed = self.tokenizer.tokenize(search_request.query)
@@ -670,7 +670,7 @@ class FullTextSearchService:
         facets = self._calculate_facets(all_results)
 
         # Calculate execution time
-        execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
         # Log analytics
         self.analytics.log_search(

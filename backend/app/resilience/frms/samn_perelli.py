@@ -25,7 +25,7 @@ References:
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import IntEnum
 from typing import Optional
 from uuid import UUID
@@ -183,7 +183,7 @@ def assess_fatigue_level(
         resident_id=resident_id,
         level=sp_level,
         description=description,
-        assessed_at=datetime.utcnow(),
+        assessed_at=datetime.now(UTC),
         is_self_reported=is_self_reported,
         context=context,
         safe_for_duty=safe_for_duty,

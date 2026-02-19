@@ -1,7 +1,7 @@
 """Email-specific queue management."""
 
 from collections import deque
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -21,7 +21,7 @@ class QueuedEmail(BaseModel):
     body: str
     html_body: str | None = None
     priority: int = 0
-    queued_at: datetime = Field(default_factory=datetime.utcnow)
+    queued_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     retry_count: int = 0
 
 

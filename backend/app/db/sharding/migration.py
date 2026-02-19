@@ -10,7 +10,7 @@ This module provides utilities for:
 
 import logging
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, TypeVar
 
@@ -50,7 +50,7 @@ class MigrationPlan(BaseModel):
     status: MigrationStatus = Field(
         default=MigrationStatus.PENDING, description="Migration status"
     )
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     started_at: datetime | None = None
     completed_at: datetime | None = None
     records_migrated: int = Field(default=0, description="Number of records migrated")
@@ -124,7 +124,7 @@ class ShardMigration:
         Returns:
             MigrationResult with outcome details
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         plan.status = MigrationStatus.IN_PROGRESS
         plan.started_at = start_time
         self.active_migrations[plan.migration_id] = plan
@@ -145,7 +145,7 @@ class ShardMigration:
 
             # Mark as completed
             plan.status = MigrationStatus.COMPLETED
-            plan.completed_at = datetime.utcnow()
+            plan.completed_at = datetime.now(UTC)
 
             duration = (plan.completed_at - start_time).total_seconds()
             logger.info(
@@ -167,7 +167,7 @@ class ShardMigration:
             plan.error_message = str(e)
             logger.error(f"Migration {plan.migration_id} failed: {e}", exc_info=True)
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(UTC) - start_time).total_seconds()
             return MigrationResult(
                 migration_id=plan.migration_id,
                 status=plan.status,

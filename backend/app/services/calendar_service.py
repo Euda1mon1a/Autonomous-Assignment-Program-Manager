@@ -1,6 +1,6 @@
 """Calendar service for ICS export and subscription."""
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from uuid import UUID
 
 from icalendar import Calendar, Event, Timezone, TimezoneStandard
@@ -174,7 +174,7 @@ class CalendarService:
                 event.add("location", assignment.rotation_template.clinic_location)
 
             # Add last modified timestamp
-            event.add("dtstamp", datetime.utcnow())
+            event.add("dtstamp", datetime.now(UTC))
             event.add("last-modified", assignment.updated_at)
 
             cal.add_component(event)
@@ -287,7 +287,7 @@ class CalendarService:
                 event.add("location", assignment.rotation_template.clinic_location)
 
             # Add timestamps
-            event.add("dtstamp", datetime.utcnow())
+            event.add("dtstamp", datetime.now(UTC))
             event.add("last-modified", assignment.updated_at)
 
             cal.add_component(event)
@@ -422,7 +422,7 @@ class CalendarService:
                 event.add("location", assignment.rotation_template.clinic_location)
 
             # Add last modified timestamp
-            event.add("dtstamp", datetime.utcnow())
+            event.add("dtstamp", datetime.now(UTC))
             event.add("last-modified", assignment.updated_at)
 
             cal.add_component(event)

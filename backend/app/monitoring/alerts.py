@@ -2,7 +2,7 @@
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 from uuid import uuid4
@@ -80,7 +80,7 @@ class AlertDefinition:
         self.threshold = threshold
         self.window_minutes = window_minutes
         self.enabled = True
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(UTC)
 
     def evaluate(self, metrics: dict[str, Any]) -> bool:
         """
@@ -135,7 +135,7 @@ class Alert:
         """
         self.id = str(uuid4())
         self.definition = definition
-        self.triggered_at = triggered_at or datetime.utcnow()
+        self.triggered_at = triggered_at or datetime.now(UTC)
         self.status = AlertStatus.OPEN
         self.details = details or {}
         self.acknowledged_at: datetime | None = None
@@ -153,7 +153,7 @@ class Alert:
             user_id: ID of user acknowledging alert
         """
         self.status = AlertStatus.ACKNOWLEDGED
-        self.acknowledged_at = datetime.utcnow()
+        self.acknowledged_at = datetime.now(UTC)
         self.acknowledged_by = user_id
 
     def resolve(self, user_id: str) -> None:
@@ -164,7 +164,7 @@ class Alert:
             user_id: ID of user resolving alert
         """
         self.status = AlertStatus.RESOLVED
-        self.resolved_at = datetime.utcnow()
+        self.resolved_at = datetime.now(UTC)
         self.resolved_by = user_id
 
     def escalate(self) -> None:
@@ -421,7 +421,7 @@ class EscalationPolicy:
         for step in steps:
             if alert.escalation_level == step.get("level", 0):
                 minutes_elapsed = (
-                    datetime.utcnow() - alert.triggered_at
+                    datetime.now(UTC) - alert.triggered_at
                 ).total_seconds() / 60
 
                 if minutes_elapsed >= step.get("after_minutes", 0):
@@ -643,7 +643,7 @@ class AlertManager:
         Returns:
             List of alerts from history
         """
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
 
         history = [a for a in self.alert_history if a.triggered_at >= cutoff]
 

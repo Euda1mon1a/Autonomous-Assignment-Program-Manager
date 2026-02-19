@@ -10,7 +10,7 @@ leave_eligible=True rotations so they don't disrupt FMIT/inpatient coverage.
 """
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, UTC
 from uuid import UUID
 
 from sqlalchemy.orm import Session, joinedload
@@ -803,7 +803,7 @@ class BlockSchedulerService:
 
         acgme_compliance = {
             "overallStatus": "pass" if validation.valid else "fail",
-            "lastChecked": dt.utcnow().isoformat() + "Z",
+            "lastChecked": dt.now(UTC).isoformat() + "Z",
             "rules": [
                 {
                     "id": "80-hour",
@@ -1127,7 +1127,7 @@ class BlockSchedulerService:
             "startDate": start_date.isoformat(),
             "endDate": end_date.isoformat(),
             "daysInBlock": days_in_block,
-            "generatedAt": dt.utcnow().isoformat() + "Z",
+            "generatedAt": dt.now(UTC).isoformat() + "Z",
         }
 
         return {

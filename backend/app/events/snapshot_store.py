@@ -43,7 +43,7 @@ import hashlib
 import json
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -172,7 +172,7 @@ class SnapshotValidationResult(BaseModel):
     snapshot_id: str
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
-    validated_at: datetime = Field(default_factory=datetime.utcnow)
+    validated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     checksum_verified: bool = False
     schema_version_compatible: bool = False
 
@@ -291,7 +291,7 @@ class SnapshotStore:
             snapshot_data=snapshot_data,
             event_count=event_count,
             created_by=created_by,
-            snapshot_timestamp=datetime.utcnow(),
+            snapshot_timestamp=datetime.now(UTC),
         )
 
         self.db.add(snapshot)
@@ -795,7 +795,7 @@ class SnapshotStore:
             return True
 
             # Check time threshold
-        time_since_snapshot = datetime.utcnow() - latest_snapshot.snapshot_timestamp
+        time_since_snapshot = datetime.now(UTC) - latest_snapshot.snapshot_timestamp
         hours_since_snapshot = time_since_snapshot.total_seconds() / 3600
         if hours_since_snapshot >= self.config.snapshot_frequency_time_hours:
             logger.debug(
@@ -838,7 +838,7 @@ class SnapshotStore:
                 deleted_count += 1
 
                 # Time-based cleanup: Delete snapshots older than retention period
-        cutoff_date = datetime.utcnow() - timedelta(
+        cutoff_date = datetime.now(UTC) - timedelta(
             days=self.config.snapshot_retention_days
         )
         old_snapshots = (

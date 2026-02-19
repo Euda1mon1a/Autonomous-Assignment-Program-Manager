@@ -7,7 +7,7 @@ Provides decorators and utilities for defining scheduled jobs.
 import functools
 import logging
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -174,7 +174,7 @@ def heartbeat_job() -> dict[str, Any]:
     logger.info("Scheduler heartbeat")
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 
@@ -196,7 +196,7 @@ def cleanup_old_executions(retention_days: int = 90) -> dict[str, Any]:
     from app.db.session import SessionLocal
     from app.models.scheduled_job import JobExecution
 
-    cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+    cutoff_date = datetime.now(UTC) - timedelta(days=retention_days)
     deleted_count = 0
 
     db = SessionLocal()

@@ -7,7 +7,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import (
@@ -72,7 +72,7 @@ class OptimizedConnectionPool:
         self.checkout_times: list[float] = []
         self.checkout_count = 0
         self.overflow_count = 0
-        self.last_metrics_reset = datetime.utcnow()
+        self.last_metrics_reset = datetime.now(UTC)
 
         # Create engine with optimized pool
         self.engine = self._create_engine()
@@ -209,7 +209,7 @@ class OptimizedConnectionPool:
         self.checkout_times.clear()
         self.checkout_count = 0
         self.overflow_count = 0
-        self.last_metrics_reset = datetime.utcnow()
+        self.last_metrics_reset = datetime.now(UTC)
         logger.info("Connection pool metrics reset")
 
     async def dispose(self) -> None:

@@ -15,7 +15,7 @@ import asyncio
 import logging
 from collections import defaultdict
 from collections.abc import Callable, Coroutine
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, TypeVar
 
 from pydantic import BaseModel
@@ -116,7 +116,7 @@ class EventBus:
             subscriber_id=subscriber_id,
             event_type=event_type,
             handler=handler,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
 
         self._subscriptions[event_type].append(subscription)
@@ -272,7 +272,7 @@ class EventBus:
             event_data=event.to_dict(),
             error_message=str(last_error),
             retry_count=retry_count,
-            failed_at=datetime.utcnow(),
+            failed_at=datetime.now(UTC),
         )
         self._dead_letter_queue.append(dead_letter)
 

@@ -4,7 +4,7 @@ Coordinates file validation, processing, and storage.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, BinaryIO
 from uuid import UUID, uuid4
 
@@ -33,7 +33,7 @@ class UploadProgress:
         self.upload_id = upload_id
         self.total_size = total_size
         self.uploaded_size = 0
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(UTC)
         self.completed_at = None
         self.status = "in_progress"  # in_progress, completed, failed
 
@@ -51,12 +51,12 @@ class UploadProgress:
     def complete(self) -> None:
         """Mark upload as completed."""
         self.status = "completed"
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(UTC)
 
     def fail(self) -> None:
         """Mark upload as failed."""
         self.status = "failed"
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(UTC)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
@@ -164,7 +164,7 @@ class UploadService:
                 "size_bytes": validation_result["size_bytes"],
                 "checksum": validation_result["checksum"],
                 "uploaded_by": str(user_id) if user_id else None,
-                "uploaded_at": datetime.utcnow().isoformat(),
+                "uploaded_at": datetime.now(UTC).isoformat(),
                 "category": FileValidator.get_file_category(
                     validation_result["mime_type"]
                 ),

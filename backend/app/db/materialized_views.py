@@ -5,7 +5,7 @@ for frequently accessed, expensive queries.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Optional
 
 from sqlalchemy import text
@@ -53,8 +53,8 @@ class MaterializedViewManager:
 
         # Store metadata
         self.views[view_name] = {
-            "created_at": datetime.utcnow(),
-            "last_refresh": datetime.utcnow(),
+            "created_at": datetime.now(UTC),
+            "last_refresh": datetime.now(UTC),
             "refresh_interval": refresh_interval,
             "query": query,
         }
@@ -80,7 +80,7 @@ class MaterializedViewManager:
 
         # Update metadata
         if view_name in self.views:
-            self.views[view_name]["last_refresh"] = datetime.utcnow()
+            self.views[view_name]["last_refresh"] = datetime.now(UTC)
 
         logger.info(f"Refreshed materialized view: {view_name}")
 
@@ -156,7 +156,7 @@ class MaterializedViewManager:
         if last_refresh is None:
             return True
 
-        result: bool = datetime.utcnow() - last_refresh > refresh_interval
+        result: bool = datetime.now(UTC) - last_refresh > refresh_interval
         return result
 
     async def auto_refresh_all(self) -> list[str]:

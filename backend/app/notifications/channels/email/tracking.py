@@ -1,7 +1,7 @@
 """Email tracking (opens and clicks)."""
 
 import hashlib
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -22,7 +22,7 @@ class EmailTrackingEvent(BaseModel):
     user_agent: str | None = None
     ip_address: str | None = None
     link_url: str | None = None  # For click events
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class EmailTracker:

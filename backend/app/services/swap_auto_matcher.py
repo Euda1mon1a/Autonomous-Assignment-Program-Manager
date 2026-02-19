@@ -1,6 +1,6 @@
 """Enhanced auto-matching service for FMIT swap requests."""
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, or_
@@ -253,7 +253,7 @@ class SwapAutoMatcher:
         Returns:
             BatchAutoMatchResult with matching statistics and results
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Get all pending requests
         pending_requests = (
@@ -317,7 +317,7 @@ class SwapAutoMatcher:
                 no_matches.append(request.id)
                 continue
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(UTC)
         execution_time = (end_time - start_time).total_seconds()
 
         return BatchAutoMatchResult(
@@ -354,7 +354,7 @@ class SwapAutoMatcher:
             .join(Block, Assignment.block_id == Block.id)
             .filter(
                 Assignment.person_id == faculty_id,
-                Block.start_date >= datetime.utcnow().date(),
+                Block.start_date >= datetime.now(UTC).date(),
             )
             .all()
         )
@@ -388,7 +388,7 @@ class SwapAutoMatcher:
                         .join(Block, Assignment.block_id == Block.id)
                         .filter(
                             Assignment.person_id == partner_id,
-                            Block.start_date >= datetime.utcnow().date(),
+                            Block.start_date >= datetime.now(UTC).date(),
                         )
                         .all()
                     )
@@ -609,7 +609,7 @@ class SwapAutoMatcher:
                         ),
                     ),
                     SwapRecord.requested_at
-                    >= datetime.utcnow()
+                    >= datetime.now(UTC)
                     - timedelta(days=self.criteria.history_lookback_days),
                 )
                 .count()
@@ -639,7 +639,7 @@ class SwapAutoMatcher:
                         ),
                     ),
                     SwapRecord.requested_at
-                    >= datetime.utcnow()
+                    >= datetime.now(UTC)
                     - timedelta(days=self.criteria.history_lookback_days),
                 )
                 .count()
@@ -835,8 +835,8 @@ class SwapAutoMatcher:
             warnings.append(f"Dates are {days_apart} days apart - may not be ideal")
 
         # Check if weeks are very soon
-        days_until_a = (request_a.source_week - datetime.utcnow().date()).days
-        days_until_b = (request_b.source_week - datetime.utcnow().date()).days
+        days_until_a = (request_a.source_week - datetime.now(UTC).date()).days
+        days_until_b = (request_b.source_week - datetime.now(UTC).date()).days
 
         if days_until_a < 14 or days_until_b < 14:
             warnings.append("One or both weeks are coming up soon - act quickly")

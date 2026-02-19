@@ -1,6 +1,6 @@
 """Service for schedule overrides (post-release coverage layer)."""
 
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -134,7 +134,7 @@ class ScheduleOverrideService:
             return override
 
         override.is_active = False
-        override.deactivated_at = datetime.utcnow()
+        override.deactivated_at = datetime.now(UTC)
         override.deactivated_by_id = deactivated_by_id
         await self.session.flush()
         await self.session.refresh(override)

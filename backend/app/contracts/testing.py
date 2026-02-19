@@ -24,7 +24,7 @@ import logging
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -170,7 +170,8 @@ class Contract(BaseModel):
         default_factory=dict, description="Contract metadata"
     )
     created_at: datetime = Field(
-        default_factory=datetime.utcnow, description="Contract creation timestamp"
+        default_factory=lambda: datetime.now(UTC),
+        description="Contract creation timestamp",
     )
     format: ContractFormat = Field(
         default=ContractFormat.PACT_V3, description="Contract format version"
@@ -338,7 +339,7 @@ class ContractVerifier:
         Returns:
             ContractVerificationResult: Verification results
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         interaction_results: list[InteractionVerificationResult] = []
         errors: list[str] = []
 
@@ -372,7 +373,7 @@ class ContractVerifier:
         failed_count = len(interaction_results) - passed_count
         all_passed = passed_count == len(interaction_results)
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(UTC)
         verification_time = (end_time - start_time).total_seconds()
 
         return ContractVerificationResult(
@@ -775,7 +776,7 @@ class ContractPublisher:
                         success=False,
                         contract_version=contract.version,
                         broker_url=self.broker_url,
-                        published_at=datetime.utcnow(),
+                        published_at=datetime.now(UTC),
                         errors=errors,
                     )
 
@@ -789,7 +790,7 @@ class ContractPublisher:
                     success=True,
                     contract_version=contract.version,
                     broker_url=self.broker_url,
-                    published_at=datetime.utcnow(),
+                    published_at=datetime.now(UTC),
                     response_data=response_data,
                 )
 
@@ -802,7 +803,7 @@ class ContractPublisher:
             success=False,
             contract_version=contract.version,
             broker_url=self.broker_url,
-            published_at=datetime.utcnow(),
+            published_at=datetime.now(UTC),
             errors=errors,
         )
 

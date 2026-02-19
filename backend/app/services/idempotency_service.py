@@ -10,7 +10,7 @@ This service handles:
 
 import hashlib
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
@@ -66,7 +66,7 @@ class IdempotencyService:
             .filter(
                 IdempotencyRequest.idempotency_key == idempotency_key,
                 IdempotencyRequest.body_hash == body_hash,
-                IdempotencyRequest.expires_at > datetime.utcnow(),
+                IdempotencyRequest.expires_at > datetime.now(UTC),
             )
             .first()
         )
@@ -93,7 +93,7 @@ class IdempotencyService:
             .filter(
                 IdempotencyRequest.idempotency_key == idempotency_key,
                 IdempotencyRequest.body_hash != body_hash,
-                IdempotencyRequest.expires_at > datetime.utcnow(),
+                IdempotencyRequest.expires_at > datetime.now(UTC),
             )
             .first()
         )
@@ -116,7 +116,7 @@ class IdempotencyService:
         Raises:
             IntegrityError: If a duplicate key+hash combination exists
         """
-        expires_at = datetime.utcnow() + timedelta(hours=self.expiration_hours)
+        expires_at = datetime.now(UTC) + timedelta(hours=self.expiration_hours)
 
         request = IdempotencyRequest(
             idempotency_key=idempotency_key,
@@ -157,7 +157,7 @@ class IdempotencyService:
             response_status_code: HTTP status code of the response
         """
         request.status = IdempotencyStatus.COMPLETED.value  # type: ignore[assignment]
-        request.completed_at = datetime.utcnow()  # type: ignore[assignment]
+        request.completed_at = datetime.now(UTC)  # type: ignore[assignment]
         request.result_ref = result_ref  # type: ignore[assignment]
         request.response_body = response_body  # type: ignore[assignment]
         request.response_status_code = str(response_status_code)  # type: ignore[assignment]
@@ -179,7 +179,7 @@ class IdempotencyService:
             response_status_code: HTTP status code of the response
         """
         request.status = IdempotencyStatus.FAILED.value  # type: ignore[assignment]
-        request.completed_at = datetime.utcnow()  # type: ignore[assignment]
+        request.completed_at = datetime.now(UTC)  # type: ignore[assignment]
         request.error_message = error_message  # type: ignore[assignment]
         request.response_body = response_body  # type: ignore[assignment]
         request.response_status_code = str(response_status_code)  # type: ignore[assignment]
@@ -199,7 +199,7 @@ class IdempotencyService:
         """
         deleted = (
             self.db.query(IdempotencyRequest)
-            .filter(IdempotencyRequest.expires_at < datetime.utcnow())
+            .filter(IdempotencyRequest.expires_at < datetime.now(UTC))
             .limit(batch_size)
             .delete(synchronize_session="fetch")
         )
@@ -227,7 +227,7 @@ class IdempotencyService:
         Returns:
             Number of records marked as failed
         """
-        cutoff = datetime.utcnow() - timedelta(minutes=timeout_minutes)
+        cutoff = datetime.now(UTC) - timedelta(minutes=timeout_minutes)
 
         stale_requests = (
             self.db.query(IdempotencyRequest)
@@ -242,7 +242,7 @@ class IdempotencyService:
         count = 0
         for request in stale_requests:
             request.status = IdempotencyStatus.FAILED.value  # type: ignore[assignment]
-            request.completed_at = datetime.utcnow()  # type: ignore[assignment]
+            request.completed_at = datetime.now(UTC)  # type: ignore[assignment]
             request.error_message = f"Request timed out after {timeout_minutes} minutes"  # type: ignore[assignment]
             count += 1
 

@@ -45,7 +45,7 @@ See Also:
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, select
@@ -264,11 +264,11 @@ class SwapExecutor:
                     swap_type=swap_type_enum,
                     status=SwapStatus.EXECUTED,
                     reason=reason,
-                    executed_at=datetime.utcnow(),
+                    executed_at=datetime.now(UTC),
                     executed_by_id=executed_by_id,
                 )
                 if lock_check.within_lock_window:
-                    swap_record.approved_at = datetime.utcnow()
+                    swap_record.approved_at = datetime.now(UTC)
                     swap_record.approved_by_id = executed_by_id
                     swap_record.notes = reason.strip() if reason else None
                 self.db.add(swap_record)
@@ -367,7 +367,7 @@ class SwapExecutor:
                     )
 
                 swap_record.status = SwapStatus.EXECUTED
-                swap_record.executed_at = datetime.utcnow()
+                swap_record.executed_at = datetime.now(UTC)
                 swap_record.executed_by_id = executed_by_id
 
                 self.db.flush()
@@ -469,7 +469,7 @@ class SwapExecutor:
                     # Check if rollback is within the allowed time window
                 if not self._check_rollback_window(swap_record):
                     time_since = (
-                        datetime.utcnow() - swap_record.executed_at
+                        datetime.now(UTC) - swap_record.executed_at
                         if swap_record.executed_at
                         else None
                     )
@@ -503,7 +503,7 @@ class SwapExecutor:
 
                     # Update swap record status
                 swap_record.status = SwapStatus.ROLLED_BACK
-                swap_record.rolled_back_at = datetime.utcnow()
+                swap_record.rolled_back_at = datetime.now(UTC)
                 swap_record.rolled_back_by_id = rolled_back_by_id
                 swap_record.rollback_reason = reason
 
@@ -545,7 +545,7 @@ class SwapExecutor:
         if not swap_record.executed_at:
             return False
 
-        time_since_execution = datetime.utcnow() - swap_record.executed_at
+        time_since_execution = datetime.now(UTC) - swap_record.executed_at
         rollback_window = timedelta(hours=self.ROLLBACK_WINDOW_HOURS)
         return time_since_execution <= rollback_window
 
@@ -590,7 +590,7 @@ class SwapExecutor:
             return False
 
             # Check if within rollback window
-        time_since_execution = datetime.utcnow() - swap_record.executed_at
+        time_since_execution = datetime.now(UTC) - swap_record.executed_at
         rollback_window = timedelta(hours=self.ROLLBACK_WINDOW_HOURS)
 
         can_rb = time_since_execution <= rollback_window
@@ -714,7 +714,7 @@ class SwapExecutor:
             draft_id = uuid4()
             draft = ScheduleDraft(
                 id=draft_id,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 created_by_id=created_by_id,
                 target_start_date=source_week,
                 target_end_date=target_week_end or source_week_end,

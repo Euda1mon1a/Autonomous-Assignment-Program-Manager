@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -98,7 +98,7 @@ class BackupService:
             )
 
         backup_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
         logger.info(f"Starting {backup_type} backup with ID: {backup_id}")
 
         try:
@@ -200,7 +200,7 @@ class BackupService:
             )
 
         backup_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
         logger.info(
             f"Starting schedule snapshot with ID: {backup_id}, "
             f"date range: {start_date} to {end_date}"

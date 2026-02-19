@@ -26,7 +26,7 @@ Usage:
 
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -93,7 +93,7 @@ class BackupService:
             ValueError: If backup creation fails
         """
         backup_id = str(uuid.uuid4())
-        created_at = datetime.utcnow().isoformat() + "Z"
+        created_at = datetime.now(UTC).isoformat() + "Z"
 
         logger.info(f"Creating {strategy} backup: {backup_id}")
 
@@ -324,7 +324,7 @@ class BackupService:
             all_backups.sort(key=lambda x: x.get("created_at", ""), reverse=True)
 
             # Calculate cutoff date
-            cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+            cutoff_date = datetime.now(UTC) - timedelta(days=retention_days)
 
             deleted_count = 0
             kept_full_backups = set()

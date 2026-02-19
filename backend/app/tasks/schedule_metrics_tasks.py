@@ -10,7 +10,7 @@ Provides automated background tasks for:
 Tasks integrate with AnalyticsEngine and StabilityMetricsComputer.
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -85,7 +85,7 @@ def compute_schedule_metrics(
 
         # Combine results
         result = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "period": {
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -157,7 +157,7 @@ def compute_version_diff(
             error_msg = f"Schedule run not found: run1={bool(run1)}, run2={bool(run2)}"
             logger.error(error_msg)
             return {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "error": error_msg,
                 "task_status": "failed",
             }
@@ -180,7 +180,7 @@ def compute_version_diff(
         )
 
         result = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "comparison": comparison,
             "metric_changes": {
                 "fairness_delta": round(fairness_change, 3),
@@ -263,7 +263,7 @@ def snapshot_metrics(
         # Create snapshot record (stored as JSON in existing tables)
         # Note: In production, you might want a dedicated MetricsSnapshot table
         snapshot_data = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "period": {
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -289,8 +289,8 @@ def snapshot_metrics(
         )
 
         result = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "snapshot_id": f"snapshot_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "timestamp": datetime.now(UTC).isoformat(),
+            "snapshot_id": f"snapshot_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}",
             "snapshot_data": snapshot_data,
             "task_status": "completed",
         }
@@ -335,7 +335,7 @@ def cleanup_old_snapshots(
     try:
         from app.models.schedule_run import ScheduleRun
 
-        cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=retention_days)
 
         # Query old schedule runs
         old_runs = (
@@ -356,7 +356,7 @@ def cleanup_old_snapshots(
         db.commit()
 
         result = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "retention_days": retention_days,
             "cutoff_date": cutoff_date.isoformat(),
             "deleted_count": deleted_count,
@@ -444,7 +444,7 @@ def generate_fairness_trend_report(
 
         if not weekly_metrics:
             return {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "error": "No metrics data available",
                 "task_status": "failed",
             }
@@ -485,7 +485,7 @@ def generate_fairness_trend_report(
             )
 
         result = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "period": {
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),

@@ -18,7 +18,7 @@ Usage:
     )
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -283,7 +283,7 @@ def _build_audit_entry(
         timestamp = (
             issued_at.isoformat() + "Z"
             if issued_at
-            else datetime.utcnow().isoformat() + "Z"
+            else datetime.now(UTC).isoformat() + "Z"
         )
 
         return AuditLogEntry(
@@ -996,7 +996,7 @@ class AuditService:
         from app.repositories.audit_repository import AuditRepository
 
         repo = AuditRepository(db)
-        start_date = datetime.utcnow() - timedelta(hours=hours)
+        start_date = datetime.now(UTC) - timedelta(hours=hours)
 
         filters = {"start_date": start_date}
         if model_type:
@@ -1044,7 +1044,7 @@ class AuditService:
         from app.repositories.audit_repository import AuditRepository
 
         repo = AuditRepository(db)
-        start_date = since or (datetime.utcnow() - timedelta(days=30))
+        start_date = since or (datetime.now(UTC) - timedelta(days=30))
 
         filters = {
             "user_id": user_id,

@@ -2,7 +2,7 @@
 
 import asyncio
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -34,7 +34,7 @@ class NotificationBatch(BaseModel):
     recipient_ids: list[UUID] = Field(default_factory=list)
     payloads: list[NotificationPayload] = Field(default_factory=list)
     channels: list[str] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     scheduled_send: datetime | None = None
 
 
@@ -119,7 +119,7 @@ class BatchingEngine:
                     batch_key=batch_key,
                     notification_type=payload.notification_type,
                     channels=channels,
-                    scheduled_send=datetime.utcnow()
+                    scheduled_send=datetime.now(UTC)
                     + timedelta(minutes=window_minutes),
                 )
                 self._batches[batch_key] = batch
@@ -149,7 +149,7 @@ class BatchingEngine:
             List of batch dictionaries
         """
         async with self._lock:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             ready = []
 
             for batch_key, batch in list(self._batches.items()):

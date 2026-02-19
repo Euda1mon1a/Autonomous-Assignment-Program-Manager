@@ -21,7 +21,7 @@ Alert Levels:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -314,7 +314,7 @@ class FatigueMonitor:
 
             # Check for deduplication (don't repeat same alert within 1 hour)
         alert_key = f"{person_id}_{severity.value}"
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         if alert_key in self._recent_alert_keys:
             last_alert_time = self._recent_alert_keys[alert_key]

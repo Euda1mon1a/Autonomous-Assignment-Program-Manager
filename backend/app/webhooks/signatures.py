@@ -11,7 +11,7 @@ Signature format follows GitHub/Stripe webhook standards:
 import hashlib
 import hmac
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 
@@ -60,7 +60,7 @@ class WebhookSignatureGenerator:
             True
         """
         if timestamp is None:
-            timestamp = int(datetime.utcnow().timestamp())
+            timestamp = int(datetime.now(UTC).timestamp())
 
             # Create signing string: timestamp.payload_json
         payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
@@ -92,7 +92,7 @@ class WebhookSignatureGenerator:
             ValueError: If timestamp is outside tolerance window
         """
         # Check timestamp freshness (prevent replay attacks)
-        current_timestamp = int(datetime.utcnow().timestamp())
+        current_timestamp = int(datetime.now(UTC).timestamp())
         timestamp_diff = abs(current_timestamp - timestamp)
 
         if timestamp_diff > self.timestamp_tolerance_seconds:

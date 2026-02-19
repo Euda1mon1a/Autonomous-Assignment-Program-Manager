@@ -12,7 +12,7 @@ Provides:
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -44,7 +44,7 @@ class ServiceInstance:
     metadata: dict[str, Any] = field(default_factory=dict)
     weight: int = 1
     healthy: bool = True
-    registered_at: datetime = field(default_factory=datetime.utcnow)
+    registered_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     last_health_check: datetime | None = None
     consecutive_failures: int = 0
 
@@ -62,13 +62,13 @@ class ServiceInstance:
         """Mark instance as healthy."""
         self.healthy = True
         self.consecutive_failures = 0
-        self.last_health_check = datetime.utcnow()
+        self.last_health_check = datetime.now(UTC)
 
     def mark_unhealthy(self) -> None:
         """Mark instance as unhealthy."""
         self.healthy = False
         self.consecutive_failures += 1
-        self.last_health_check = datetime.utcnow()
+        self.last_health_check = datetime.now(UTC)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert instance to dictionary."""
@@ -345,7 +345,7 @@ class ServiceRegistry:
             Number of instances removed
         """
         async with self._lock:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             removed_count = 0
 
             for service_name, instances in list(self._instances.items()):

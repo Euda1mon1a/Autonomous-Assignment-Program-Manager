@@ -1,7 +1,7 @@
 """Retry handler for failed notifications."""
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
@@ -39,7 +39,7 @@ class RetryAttempt(BaseModel):
     attempt_count: int = 0
     max_attempts: int = 3
     next_retry: datetime
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     status: str = "pending"  # pending, retrying, failed, succeeded
 
 
@@ -118,7 +118,7 @@ class RetryHandler:
 
         async with self._lock:
             # Calculate next retry time
-            next_retry = datetime.utcnow() + timedelta(
+            next_retry = datetime.now(UTC) + timedelta(
                 minutes=self.RETRY_DELAYS.get(1, 1)
             )
 
@@ -152,7 +152,7 @@ class RetryHandler:
             Number of retries processed
         """
         processed = 0
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Get due retries
         due_retries = await self._get_due_retries(now)
@@ -228,7 +228,7 @@ class RetryHandler:
             else:
                 # Schedule next retry
                 delay_minutes = self.RETRY_DELAYS.get(retry.attempt_count + 1, 15)
-                retry.next_retry = datetime.utcnow() + timedelta(minutes=delay_minutes)
+                retry.next_retry = datetime.now(UTC) + timedelta(minutes=delay_minutes)
                 retry.status = "pending"
 
                 logger.info(
@@ -330,7 +330,7 @@ class RetryHandler:
                     # Reset and move back to retry queue
                     retry.attempt_count = 0
                     retry.status = "pending"
-                    retry.next_retry = datetime.utcnow() + timedelta(minutes=1)
+                    retry.next_retry = datetime.now(UTC) + timedelta(minutes=1)
 
                     self._dead_letter.remove(retry)
                     self._retries[retry.id] = retry

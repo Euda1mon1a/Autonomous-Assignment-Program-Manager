@@ -27,7 +27,7 @@ Usage:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -114,7 +114,7 @@ class AnonymizationAudit(Base):
     __tablename__ = "anonymization_audit"
 
     id = Column(GUID(), primary_key=True, default=uuid4)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     method = Column(String(50), nullable=False)
     record_count = Column(String(50))
     fields_anonymized = Column(Text)  # JSON string
@@ -416,7 +416,7 @@ class DataAnonymizer:
                 record_count=str(record_count),
                 fields_anonymized=json.dumps(fields),
                 reversible="true" if reversible else "false",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
             )
 
             self.db.add(audit)

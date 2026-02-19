@@ -1,6 +1,6 @@
 """User notification preference management."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -241,7 +241,7 @@ class PreferenceManager:
 
             # Get current hour in user's timezone
             # NOTE: For simplicity, using UTC. In production, use user's timezone
-        current_hour = datetime.utcnow().hour
+        current_hour = datetime.now(UTC).hour
 
         start = preferences.quiet_hours_start
         end = preferences.quiet_hours_end
@@ -312,7 +312,7 @@ class PreferenceManager:
             if digest_frequency is not None:
                 record.digest_frequency = digest_frequency
 
-            record.updated_at = datetime.utcnow()
+            record.updated_at = datetime.now(UTC)
         else:
             # Create new
             record = NotificationPreferenceRecord(

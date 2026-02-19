@@ -22,7 +22,7 @@ import asyncio
 import json
 import logging
 from collections.abc import AsyncGenerator
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -531,7 +531,7 @@ class Subscription:
                         affected_blocks_count=message.get("affected_blocks_count", 0),
                         message=message.get("message", ""),
                         timestamp=datetime.fromisoformat(
-                            message.get("timestamp", datetime.utcnow().isoformat())
+                            message.get("timestamp", datetime.now(UTC).isoformat())
                         ),
                     )
 
@@ -597,7 +597,7 @@ class Subscription:
                     ),
                     message=message.get("message", ""),
                     timestamp=datetime.fromisoformat(
-                        message.get("timestamp", datetime.utcnow().isoformat())
+                        message.get("timestamp", datetime.now(UTC).isoformat())
                     ),
                 )
 
@@ -663,7 +663,7 @@ class Subscription:
                         ],
                         message=message.get("message", ""),
                         timestamp=datetime.fromisoformat(
-                            message.get("timestamp", datetime.utcnow().isoformat())
+                            message.get("timestamp", datetime.now(UTC).isoformat())
                         ),
                         approved_by=None,
                     )
@@ -725,7 +725,7 @@ class Subscription:
                         ],
                         message=message.get("message", ""),
                         timestamp=datetime.fromisoformat(
-                            message.get("timestamp", datetime.utcnow().isoformat())
+                            message.get("timestamp", datetime.now(UTC).isoformat())
                         ),
                         approved_by=(
                             strawberry.ID(message.get("approved_by"))
@@ -793,7 +793,7 @@ class Subscription:
                         ],
                         message=message.get("message", ""),
                         timestamp=datetime.fromisoformat(
-                            message.get("timestamp", datetime.utcnow().isoformat())
+                            message.get("timestamp", datetime.now(UTC).isoformat())
                         ),
                     )
 
@@ -849,7 +849,7 @@ class Subscription:
                     message=message.get("message", ""),
                     recommendations=message.get("recommendations", []),
                     timestamp=datetime.fromisoformat(
-                        message.get("timestamp", datetime.utcnow().isoformat())
+                        message.get("timestamp", datetime.now(UTC).isoformat())
                     ),
                 )
 
@@ -892,7 +892,7 @@ class Subscription:
             {
                 "user_id": user_id,
                 "status": "online",
-                "last_seen": datetime.utcnow().isoformat(),
+                "last_seen": datetime.now(UTC).isoformat(),
                 "active_page": None,
             },
         )
@@ -903,7 +903,7 @@ class Subscription:
                     user_id=strawberry.ID(message.get("user_id", "")),
                     status=message.get("status", ""),
                     last_seen=datetime.fromisoformat(
-                        message.get("last_seen", datetime.utcnow().isoformat())
+                        message.get("last_seen", datetime.now(UTC).isoformat())
                     ),
                     active_page=message.get("active_page"),
                 )
@@ -915,7 +915,7 @@ class Subscription:
                 {
                     "user_id": user_id,
                     "status": "offline",
-                    "last_seen": datetime.utcnow().isoformat(),
+                    "last_seen": datetime.now(UTC).isoformat(),
                     "active_page": None,
                 },
             )
@@ -960,7 +960,7 @@ class Subscription:
 
         try:
             while True:
-                now = datetime.utcnow()
+                now = datetime.now(UTC)
                 yield HeartbeatResponse(  # type: ignore[call-arg]
                     timestamp=now,
                     server_time=now,
@@ -1008,7 +1008,7 @@ async def broadcast_schedule_update(
             "update_type": update_type,
             "affected_blocks_count": affected_blocks_count,
             "message": message,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
     )
 
@@ -1047,7 +1047,7 @@ async def broadcast_assignment_update(
             "change_type": change_type,
             "changed_by": str(changed_by) if changed_by else None,
             "message": message,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
     )
 
@@ -1082,7 +1082,7 @@ async def broadcast_swap_request(
             "status": "pending",
             "affected_assignments": [str(aid) for aid in (affected_assignments or [])],
             "message": message,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
     )
 
@@ -1120,7 +1120,7 @@ async def broadcast_swap_approval(
             "approved_by": str(approved_by) if approved_by else None,
             "affected_assignments": [str(aid) for aid in (affected_assignments or [])],
             "message": message,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
     )
 
@@ -1154,7 +1154,7 @@ async def broadcast_conflict_alert(
             "severity": severity,
             "affected_blocks": [str(bid) for bid in (affected_blocks or [])],
             "message": message,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
     )
 
@@ -1191,7 +1191,7 @@ async def broadcast_resilience_alert(
             "affected_persons": [str(pid) for pid in (affected_persons or [])],
             "message": message,
             "recommendations": recommendations or [],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
     )
 

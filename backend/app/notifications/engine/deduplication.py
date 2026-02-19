@@ -3,7 +3,7 @@
 import hashlib
 import json
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -91,7 +91,7 @@ class DeduplicationEngine:
         # Check if fingerprint exists and is within window
         if fingerprint in self._cache:
             last_sent = self._cache[fingerprint]
-            age_minutes = (datetime.utcnow() - last_sent).total_seconds() / 60
+            age_minutes = (datetime.now(UTC) - last_sent).total_seconds() / 60
 
             if age_minutes < window:
                 self._stats["duplicates_blocked"] += 1
@@ -120,7 +120,7 @@ class DeduplicationEngine:
             data: Notification data
         """
         fingerprint = self._generate_fingerprint(recipient_id, notification_type, data)
-        self._cache[fingerprint] = datetime.utcnow()
+        self._cache[fingerprint] = datetime.now(UTC)
 
         logger.debug("Notification fingerprint recorded: %s", fingerprint)
 
@@ -167,7 +167,7 @@ class DeduplicationEngine:
         Returns:
             Number of fingerprints cleared
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         max_age = timedelta(days=7)  # Keep fingerprints for 7 days max
 
         expired = [

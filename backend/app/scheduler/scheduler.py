@@ -7,7 +7,7 @@ Supports cron, interval, and one-time job scheduling.
 
 import logging
 import traceback
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -425,7 +425,7 @@ class JobScheduler:
                 execution = persistence.record_execution_start(
                     job_id=job_id,
                     job_name=job_name,
-                    scheduled_run_time=datetime.utcnow(),
+                    scheduled_run_time=datetime.now(UTC),
                 )
                 execution_id = execution.id
 

@@ -22,7 +22,7 @@ The replay service is useful for:
 import asyncio
 import logging
 from collections.abc import AsyncIterator, Callable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -257,7 +257,7 @@ class ReplayCheckpoint(BaseModel):
     sequence_number: int
     timestamp: datetime
     events_processed: int
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class ReplayProgress(BaseModel):
@@ -382,8 +382,8 @@ class EventReplayService:
             events_filtered=0,
             events_transformed=0,
             events_failed=0,
-            started_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
         self._active_replays[replay_id] = progress
@@ -414,7 +414,7 @@ class EventReplayService:
 
         try:
             progress.status = ReplayStatus.RUNNING
-            progress.updated_at = datetime.utcnow()
+            progress.updated_at = datetime.now(UTC)
 
             # Get total event count for progress calculation
             total_events = await self._count_events(config)
@@ -457,7 +457,7 @@ class EventReplayService:
                     progress.events_processed += 1
                     progress.current_sequence = event.metadata.event_id
                     progress.current_timestamp = event.metadata.timestamp
-                    progress.updated_at = datetime.utcnow()
+                    progress.updated_at = datetime.now(UTC)
 
                     # Create checkpoint if needed
                     if progress.events_processed % config.checkpoint_interval == 0:
@@ -475,8 +475,8 @@ class EventReplayService:
 
                 # Replay completed
             progress.status = ReplayStatus.COMPLETED
-            progress.completed_at = datetime.utcnow()
-            progress.updated_at = datetime.utcnow()
+            progress.completed_at = datetime.now(UTC)
+            progress.updated_at = datetime.now(UTC)
 
             logger.info(
                 f"Replay {replay_id} completed: "
@@ -492,7 +492,7 @@ class EventReplayService:
         except Exception as e:
             progress.status = ReplayStatus.FAILED
             progress.error_message = str(e)
-            progress.updated_at = datetime.utcnow()
+            progress.updated_at = datetime.now(UTC)
             logger.error(f"Replay {replay_id} failed: {e}", exc_info=True)
 
     async def _stream_events(self, config: ReplayConfig) -> AsyncIterator[BaseEvent]:
@@ -648,7 +648,7 @@ class EventReplayService:
         checkpoint = ReplayCheckpoint(
             replay_id=replay_id,
             sequence_number=progress.current_sequence or 0,
-            timestamp=progress.current_timestamp or datetime.utcnow(),
+            timestamp=progress.current_timestamp or datetime.now(UTC),
             events_processed=progress.events_processed,
         )
         progress.last_checkpoint = checkpoint
@@ -677,7 +677,7 @@ class EventReplayService:
 
         self._pause_flags[replay_id] = True
         progress.status = ReplayStatus.PAUSED
-        progress.updated_at = datetime.utcnow()
+        progress.updated_at = datetime.now(UTC)
 
         logger.info(f"Replay {replay_id} paused")
         return True
@@ -701,7 +701,7 @@ class EventReplayService:
 
         self._pause_flags[replay_id] = False
         progress.status = ReplayStatus.RUNNING
-        progress.updated_at = datetime.utcnow()
+        progress.updated_at = datetime.now(UTC)
 
         logger.info(f"Replay {replay_id} resumed")
         return True
@@ -760,7 +760,7 @@ class EventReplayService:
         if not progress:
             return ReplayVerificationResult(
                 replay_id=replay_id,
-                verified_at=datetime.utcnow(),
+                verified_at=datetime.now(UTC),
                 is_valid=False,
                 total_events_verified=0,
                 errors=["Replay not found"],
@@ -768,7 +768,7 @@ class EventReplayService:
 
         result = ReplayVerificationResult(
             replay_id=replay_id,
-            verified_at=datetime.utcnow(),
+            verified_at=datetime.now(UTC),
             is_valid=True,
             total_events_verified=progress.events_processed,
         )
@@ -878,7 +878,7 @@ class EventReplayService:
         Returns:
             Number of replays cleaned up
         """
-        cutoff = datetime.utcnow() - timedelta(hours=older_than_hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=older_than_hours)
         removed = 0
 
         for replay_id, progress in list(self._active_replays.items()):

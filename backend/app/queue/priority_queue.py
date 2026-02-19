@@ -23,7 +23,7 @@ import json
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import IntEnum
 from typing import Any
 from uuid import uuid4
@@ -166,7 +166,7 @@ class QueueMetrics:
     oldest_pending_job_age_seconds: float | None = None
     throughput_per_minute: float = 0.0
     success_rate: float = 0.0
-    last_updated: datetime = field(default_factory=datetime.utcnow)
+    last_updated: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
@@ -461,10 +461,10 @@ class PriorityQueueManager:
             task_name=task_name,
             priority=priority,
             state=JobState.SCHEDULED if (countdown or eta) else JobState.PENDING,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             scheduled_at=eta
             or (
-                datetime.utcnow() + timedelta(seconds=countdown) if countdown else None
+                datetime.now(UTC) + timedelta(seconds=countdown) if countdown else None
             ),
             args=args,
             kwargs=kwargs,
@@ -558,9 +558,9 @@ class PriorityQueueManager:
                 metadata.state = new_state
 
                 if new_state == JobState.RUNNING and not metadata.started_at:
-                    metadata.started_at = datetime.utcnow()
+                    metadata.started_at = datetime.now(UTC)
                 elif new_state in [JobState.COMPLETED, JobState.FAILED]:
-                    metadata.completed_at = datetime.utcnow()
+                    metadata.completed_at = datetime.now(UTC)
 
                     # Update progress if available
         if result.state == "PROGRESS" and result.info:
@@ -640,7 +640,7 @@ class PriorityQueueManager:
 
         # Update metadata
         metadata.state = JobState.CANCELLED
-        metadata.completed_at = datetime.utcnow()
+        metadata.completed_at = datetime.now(UTC)
         if reason:
             metadata.metadata["cancellation_reason"] = reason
 
@@ -743,7 +743,7 @@ class PriorityQueueManager:
             error_type=error_type or metadata.error_type or "Unknown",
             traceback=traceback or metadata.traceback or "",
             retry_count=metadata.retry_count,
-            failed_at=datetime.utcnow(),
+            failed_at=datetime.now(UTC),
             reason=reason,
             original_metadata=metadata.to_dict(),
         )
@@ -753,7 +753,7 @@ class PriorityQueueManager:
 
         # Update metadata
         metadata.state = JobState.DEAD_LETTER
-        metadata.completed_at = datetime.utcnow()
+        metadata.completed_at = datetime.now(UTC)
 
         # Clean up deduplication index
         if self.enable_deduplication and metadata.dedup_key:
@@ -864,7 +864,7 @@ class PriorityQueueManager:
                     # Count by state
                 if metadata.state == JobState.PENDING:
                     metrics.pending_count += 1
-                    age = (datetime.utcnow() - metadata.created_at).total_seconds()
+                    age = (datetime.now(UTC) - metadata.created_at).total_seconds()
                     if oldest_pending_age is None or age > oldest_pending_age:
                         oldest_pending_age = age
                 elif metadata.state == JobState.SCHEDULED:
@@ -912,7 +912,7 @@ class PriorityQueueManager:
 
                 # Calculate throughput (jobs per minute in last hour)
                 # This is a simplified calculation
-            one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+            one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
             recent_completions = sum(
                 1
                 for m in self._job_metadata.values()
@@ -931,7 +931,7 @@ class PriorityQueueManager:
             "total_jobs": len(self._job_metadata),
             "total_dead_letter": len(self._dead_letter_queue),
             "dedup_index_size": len(self._dedup_index),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         return overall
@@ -993,7 +993,7 @@ class PriorityQueueManager:
         Returns:
             int: Number of jobs cleaned up
         """
-        cutoff_time = datetime.utcnow() - timedelta(hours=retention_hours)
+        cutoff_time = datetime.now(UTC) - timedelta(hours=retention_hours)
         jobs_to_remove = []
 
         for job_id, metadata in self._job_metadata.items():
@@ -1032,7 +1032,7 @@ class PriorityQueueManager:
             int: Number of records cleaned up
         """
         retention_hours = retention_hours or self.dead_letter_retention_hours
-        cutoff_time = datetime.utcnow() - timedelta(hours=retention_hours)
+        cutoff_time = datetime.now(UTC) - timedelta(hours=retention_hours)
         records_to_remove = []
 
         for job_id, record in self._dead_letter_queue.items():
@@ -1124,5 +1124,5 @@ class PriorityQueueManager:
             "dead_letter_count": len(self._dead_letter_queue),
             "deduplication_enabled": self.enable_deduplication,
             "fair_scheduling_enabled": self.enable_fair_scheduling,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }

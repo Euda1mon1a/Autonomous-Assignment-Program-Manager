@@ -45,7 +45,7 @@ Environment Variables:
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from celery import shared_task
@@ -98,7 +98,7 @@ def create_full_backup(
         return {
             "status": "skipped",
             "message": "Backups are disabled in settings",
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     logger.info("Starting scheduled full backup")
@@ -133,7 +133,7 @@ def create_full_backup(
             "size_mb": backup_info.get("size_bytes", 0) / 1024 / 1024,
             "table_count": backup_info.get("table_count", 0),
             "total_rows": backup_info.get("total_rows", 0),
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -184,7 +184,7 @@ def create_incremental_backup(
         return {
             "status": "skipped",
             "message": "Backups are disabled in settings",
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     if not incremental_enabled:
@@ -192,7 +192,7 @@ def create_incremental_backup(
         return {
             "status": "skipped",
             "message": "Incremental backups are disabled in settings",
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     logger.info("Starting scheduled incremental backup")
@@ -238,7 +238,7 @@ def create_incremental_backup(
             "size_mb": backup_info.get("size_bytes", 0) / 1024 / 1024,
             "table_count": backup_info.get("table_count", 0),
             "total_changes": backup_info.get("total_rows", 0),
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except ValueError as e:
@@ -327,7 +327,7 @@ def cleanup_old_backups(
             "retention_days": retention_days,
             "keep_minimum": keep_minimum,
             "dry_run": dry_run,
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -410,7 +410,7 @@ def verify_all_backups(
             "verified_count": verified_count,
             "error_count": error_count,
             "errors": errors[:10],  # Limit to first 10 errors
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -451,7 +451,7 @@ def generate_backup_report(self) -> dict[str, Any]:
         # Add task metadata
         stats["task_id"] = self.request.id
         stats["status"] = "success"
-        stats["generated_at"] = datetime.utcnow().isoformat()
+        stats["generated_at"] = datetime.now(UTC).isoformat()
 
         logger.info(
             f"Backup report generated: {stats.get('total_count', 0)} backups, "
@@ -503,7 +503,7 @@ def verify_backup_chain(
 
         # Add task metadata
         result["task_id"] = self.request.id
-        result["verified_at"] = datetime.utcnow().isoformat()
+        result["verified_at"] = datetime.now(UTC).isoformat()
 
         logger.info(
             f"Backup chain verification complete: "

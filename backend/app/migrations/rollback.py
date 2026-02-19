@@ -24,7 +24,7 @@ Example:
 import json
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -71,7 +71,7 @@ class SnapshotRecord(Base):
 
     # Metadata
     strategy = Column(String(50), default=RollbackStrategy.SNAPSHOT.value)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     def __repr__(self):
         return (
@@ -99,7 +99,7 @@ class RollbackRecord(Base):
     error_message = Column(Text)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
 
@@ -280,7 +280,7 @@ class RollbackManager:
             snapshot_id=snapshot_id,
             status=RollbackStatus.IN_PROGRESS.value,
             strategy=snapshot.strategy,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
         )
         self.db.add(rollback_record)
         self.db.commit()
@@ -361,7 +361,7 @@ class RollbackManager:
             rollback_record.records_restored = records_restored
             rollback_record.records_failed = records_failed
             rollback_record.error_message = error_message
-            rollback_record.completed_at = datetime.utcnow()
+            rollback_record.completed_at = datetime.now(UTC)
             self.db.commit()
 
             logger.info(
@@ -383,7 +383,7 @@ class RollbackManager:
             # Update rollback record
             rollback_record.status = RollbackStatus.FAILED.value
             rollback_record.error_message = str(e)
-            rollback_record.completed_at = datetime.utcnow()
+            rollback_record.completed_at = datetime.now(UTC)
             self.db.commit()
 
             return RollbackResult(
@@ -447,7 +447,7 @@ class RollbackManager:
         """
         from datetime import timedelta
 
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
 
         try:
             deleted = (

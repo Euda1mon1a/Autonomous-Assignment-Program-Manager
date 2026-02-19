@@ -1,6 +1,6 @@
 """Email bounce handling."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -29,7 +29,7 @@ class BounceEvent(BaseModel):
     recipient: str
     bounce_type: BounceType
     reason: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     raw_data: dict[str, Any] | None = None
 
 

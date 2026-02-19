@@ -7,7 +7,7 @@ data, and learned patterns.
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -138,7 +138,7 @@ class PreferenceScorer:
         Returns:
             Dictionary of learned patterns
         """
-        start_date = datetime.utcnow() - timedelta(days=days)
+        start_date = datetime.now(UTC) - timedelta(days=days)
 
         # Get historical swaps
         result = await self.db.execute(

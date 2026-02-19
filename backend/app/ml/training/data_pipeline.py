@@ -6,7 +6,7 @@ feature matrices and labels for training ML models.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 import numpy as np
@@ -75,7 +75,7 @@ class TrainingDataPipeline:
 
         # Default to last year if not specified
         if end_date is None:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(UTC)
         if start_date is None:
             start_date = end_date - timedelta(days=365)
 
@@ -179,7 +179,7 @@ class TrainingDataPipeline:
 
         # Default to last year
         if end_date is None:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(UTC)
         if start_date is None:
             start_date = end_date - timedelta(days=365)
 
@@ -289,7 +289,7 @@ class TrainingDataPipeline:
 
         # Default to last year
         if end_date is None:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(UTC)
         if start_date is None:
             start_date = end_date - timedelta(days=365)
 

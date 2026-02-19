@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from app.profiling.analyzers import Bottleneck, PerformanceInsight
@@ -89,7 +89,7 @@ class PerformanceReporter:
         from uuid import uuid4
 
         report_id = str(uuid4())
-        created_at = datetime.utcnow()
+        created_at = datetime.now(UTC)
 
         # Build summary
         summary = self._build_summary(

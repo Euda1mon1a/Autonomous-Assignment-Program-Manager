@@ -9,7 +9,7 @@ Provides high-level service methods for:
 
 import logging
 import secrets
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -191,7 +191,7 @@ class WebhookService:
             if hasattr(webhook, key) and value is not None:
                 setattr(webhook, key, value)
 
-        webhook.updated_at = datetime.utcnow()
+        webhook.updated_at = datetime.now(UTC)
         await db.commit()
         await db.refresh(webhook)
 
@@ -476,7 +476,7 @@ class WebhookService:
 
             # Mark as resolved
         dead_letter.resolved = True
-        dead_letter.resolved_at = datetime.utcnow()
+        dead_letter.resolved_at = datetime.now(UTC)
         dead_letter.resolved_by = resolved_by
         dead_letter.resolution_notes = notes
 

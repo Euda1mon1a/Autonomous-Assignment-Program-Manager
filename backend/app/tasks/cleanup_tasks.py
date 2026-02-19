@@ -10,7 +10,7 @@ These tasks prevent unbounded table growth and ensure
 orphaned records don't block system operations.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from celery import shared_task
@@ -60,7 +60,7 @@ def cleanup_idempotency_requests(
         deleted = service.cleanup_expired(batch_size=batch_size)
 
         result = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "task": "cleanup_idempotency_requests",
             "deleted_count": deleted,
             "batch_size": batch_size,
@@ -102,7 +102,7 @@ def cleanup_token_blacklist(self) -> dict[str, Any]:
         deleted = TokenBlacklist.cleanup_expired(db)
 
         result = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "task": "cleanup_token_blacklist",
             "deleted_count": deleted,
             "status": "completed",
@@ -157,7 +157,7 @@ def timeout_stale_pending_requests(
         )
 
         result = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "task": "timeout_stale_pending_requests",
             "timed_out_count": timed_out,
             "timeout_minutes": timeout_minutes,

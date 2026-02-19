@@ -22,7 +22,7 @@ Usage:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -72,7 +72,7 @@ class BlastRadiusAnalysisResult:
     severity: str = "healthy"  # healthy, warning, degraded, critical
 
     # Timestamp
-    analyzed_at: datetime = field(default_factory=datetime.utcnow)
+    analyzed_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass
@@ -96,7 +96,7 @@ class ZoneHealthResult:
     active_incidents: int
     services_affected: list[str]
     recommendations: list[str]
-    checked_at: datetime = field(default_factory=datetime.utcnow)
+    checked_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass
@@ -231,7 +231,7 @@ class BlastRadiusService:
                 zone_details=zone_details,
                 recommendations=report.recommendations,
                 severity=severity,
-                analyzed_at=datetime.utcnow(),
+                analyzed_at=datetime.now(UTC),
             )
 
         except Exception as e:
@@ -281,7 +281,7 @@ class BlastRadiusService:
             active_incidents=report.active_incidents,
             services_affected=report.services_affected,
             recommendations=report.recommendations,
-            checked_at=datetime.utcnow(),
+            checked_at=datetime.now(UTC),
         )
 
     def get_all_zones(self) -> list[dict]:

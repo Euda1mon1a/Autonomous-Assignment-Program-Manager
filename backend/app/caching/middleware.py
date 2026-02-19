@@ -25,7 +25,7 @@ Example:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -260,7 +260,7 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
             # Add Last-Modified if enabled
         last_modified = None
         if self.enable_last_modified:
-            last_modified = datetime.utcnow()
+            last_modified = datetime.now(UTC)
             response.headers["Last-Modified"] = last_modified.strftime(
                 "%a, %d %b %Y %H:%M:%S GMT"
             )

@@ -29,7 +29,7 @@ Example:
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -136,7 +136,7 @@ class ValidationRecord(Base):
     issues_summary = Column(Text)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     def __repr__(self):
         return f"<ValidationRecord(migration={self.migration_id}, type={self.validation_type})>"

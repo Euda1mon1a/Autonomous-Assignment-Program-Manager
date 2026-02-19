@@ -6,7 +6,7 @@ as well as tracking job execution history.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -168,7 +168,7 @@ class JobPersistence:
             if hasattr(job, key):
                 setattr(job, key, value)
 
-        job.updated_at = datetime.utcnow()
+        job.updated_at = datetime.now(UTC)
 
         self.db.commit()
         self.db.refresh(job)
@@ -226,7 +226,7 @@ class JobPersistence:
         job = self.get_job_by_id(job_id)
         if job:
             job.run_count += 1
-            job.last_run_time = datetime.utcnow()
+            job.last_run_time = datetime.now(UTC)
             self.db.commit()
 
     def record_execution_start(
@@ -249,7 +249,7 @@ class JobPersistence:
         execution = JobExecution(
             job_id=job_id,
             job_name=job_name,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
             scheduled_run_time=scheduled_run_time,
             status="running",
         )
@@ -277,7 +277,7 @@ class JobPersistence:
         )
 
         if execution:
-            execution.finished_at = datetime.utcnow()
+            execution.finished_at = datetime.now(UTC)
             execution.status = "success"
             execution.result = result
 
@@ -306,7 +306,7 @@ class JobPersistence:
         )
 
         if execution:
-            execution.finished_at = datetime.utcnow()
+            execution.finished_at = datetime.now(UTC)
             execution.status = "failure"
             execution.error = error
             execution.traceback = traceback
@@ -334,8 +334,8 @@ class JobPersistence:
         execution = JobExecution(
             job_id=job_id,
             job_name=job_name,
-            started_at=datetime.utcnow(),
-            finished_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
+            finished_at=datetime.now(UTC),
             scheduled_run_time=scheduled_run_time,
             status="missed",
             runtime_seconds=0,

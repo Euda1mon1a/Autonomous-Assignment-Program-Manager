@@ -20,7 +20,7 @@ import hashlib
 import json
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Literal, cast
 
 from sqlalchemy import desc, func
@@ -150,7 +150,7 @@ class ApprovalChainService:
         head = self.get_or_create_chain(chain_id, actor_id)
 
         # Compute new record
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
         new_seq = head.sequence_num + 1
 
         prev_hash = cast(str | None, head.record_hash)
@@ -245,7 +245,7 @@ class ApprovalChainService:
                 total_records=0,
                 verified_count=0,
                 error_message="Chain not found",
-                verified_at=datetime.utcnow().isoformat(),
+                verified_at=datetime.now(UTC).isoformat(),
             )
 
         verified_count = 0
@@ -266,7 +266,7 @@ class ApprovalChainService:
                     error_message=(
                         f"Sequence gap: expected {expected_seq}, got {record_sequence}"
                     ),
-                    verified_at=datetime.utcnow().isoformat(),
+                    verified_at=datetime.now(UTC).isoformat(),
                 )
 
             # Check prev_hash link (skip for genesis)
@@ -282,7 +282,7 @@ class ApprovalChainService:
                         error_message=(
                             f"Chain broken at seq {record_sequence}: prev_hash mismatch"
                         ),
-                        verified_at=datetime.utcnow().isoformat(),
+                        verified_at=datetime.now(UTC).isoformat(),
                     )
 
             # Verify record hash
@@ -298,7 +298,7 @@ class ApprovalChainService:
                         f"Hash mismatch at seq {record_sequence}: "
                         f"record has been tampered with"
                     ),
-                    verified_at=datetime.utcnow().isoformat(),
+                    verified_at=datetime.now(UTC).isoformat(),
                 )
 
             verified_count += 1
@@ -316,7 +316,7 @@ class ApprovalChainService:
             verified_count=verified_count,
             head_hash=cast(str | None, head.record_hash),
             genesis_hash=cast(str | None, genesis.record_hash),
-            verified_at=datetime.utcnow().isoformat(),
+            verified_at=datetime.now(UTC).isoformat(),
         )
 
     def get_chain_stats(self, chain_id: str = DEFAULT_CHAIN_ID) -> ChainStats | None:
@@ -460,7 +460,7 @@ class ApprovalChainService:
         Returns:
             The seal ApprovalRecord
         """
-        seal_date = seal_date or datetime.utcnow()
+        seal_date = seal_date or datetime.now(UTC)
         start_of_day = seal_date.replace(hour=0, minute=0, second=0, microsecond=0)
         end_of_day = seal_date.replace(
             hour=23, minute=59, second=59, microsecond=999999

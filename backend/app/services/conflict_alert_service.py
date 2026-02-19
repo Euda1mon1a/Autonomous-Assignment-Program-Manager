@@ -1,7 +1,7 @@
 """Service for managing FMIT conflict alerts."""
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -71,7 +71,7 @@ class ResolutionOption:
 
     def __post_init__(self) -> None:
         if self.created_at is None:
-            self.created_at = datetime.utcnow()
+            self.created_at = datetime.now(UTC)
 
 
 @dataclass
@@ -262,7 +262,7 @@ class ConflictAlertService:
 
         if alert.status == ConflictAlertStatus.NEW:
             alert.status = ConflictAlertStatus.ACKNOWLEDGED
-            alert.acknowledged_at = datetime.utcnow()
+            alert.acknowledged_at = datetime.now(UTC)
             alert.acknowledged_by_id = user_id
             self.db.commit()
             self.db.refresh(alert)
@@ -292,7 +292,7 @@ class ConflictAlertService:
 
         if alert.status in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]:
             alert.status = ConflictAlertStatus.RESOLVED
-            alert.resolved_at = datetime.utcnow()
+            alert.resolved_at = datetime.now(UTC)
             alert.resolved_by_id = user_id
             if notes:
                 alert.resolution_notes = notes
@@ -324,7 +324,7 @@ class ConflictAlertService:
 
         if alert.status in [ConflictAlertStatus.NEW, ConflictAlertStatus.ACKNOWLEDGED]:
             alert.status = ConflictAlertStatus.IGNORED
-            alert.resolved_at = datetime.utcnow()
+            alert.resolved_at = datetime.now(UTC)
             alert.resolved_by_id = user_id
             alert.resolution_notes = f"Ignored: {reason}"
             self.db.commit()
@@ -401,7 +401,7 @@ class ConflictAlertService:
         count = 0
         for alert in alerts:
             alert.status = ConflictAlertStatus.RESOLVED
-            alert.resolved_at = datetime.utcnow()
+            alert.resolved_at = datetime.now(UTC)
             alert.resolution_notes = "Auto-resolved: Related leave record was deleted"
             count += 1
 
@@ -512,7 +512,7 @@ class ConflictAlertService:
             if success:
                 # Mark alert as resolved
                 alert.status = ConflictAlertStatus.RESOLVED
-                alert.resolved_at = datetime.utcnow()
+                alert.resolved_at = datetime.now(UTC)
                 alert.resolved_by_id = user_id
                 alert.resolution_notes = (
                     f"Auto-resolved via {option.strategy.value}: {msg}"

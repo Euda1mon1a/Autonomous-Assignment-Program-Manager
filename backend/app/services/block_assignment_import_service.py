@@ -14,7 +14,7 @@ import io
 import re
 import uuid
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from sqlalchemy import select
@@ -637,7 +637,7 @@ class BlockAssignmentImportService:
         Returns:
             Import result with counts and errors
         """
-        started_at = datetime.utcnow()
+        started_at = datetime.now(UTC)
 
         # Get cached preview data
         preview_data = self._preview_cache.get(request.preview_id)
@@ -652,7 +652,7 @@ class BlockAssignmentImportService:
                 failed_count=0,
                 error_messages=["Preview not found. Please re-upload."],
                 started_at=started_at,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(UTC),
             )
 
         imported_count = 0
@@ -708,7 +708,7 @@ class BlockAssignmentImportService:
                                 existing.secondary_rotation_template_id = None
                             existing.assignment_reason = "manual"
                             existing.created_by = "gui_import"
-                            existing.updated_at = datetime.utcnow()
+                            existing.updated_at = datetime.now(UTC)
                             updated_count += 1
                     except Exception as e:
                         logger.error(f"Row {row_num}: Update failed - {e}")
@@ -764,7 +764,7 @@ class BlockAssignmentImportService:
                 failed_count=len(preview_data),
                 error_messages=["Transaction failed. All changes rolled back."],
                 started_at=started_at,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(UTC),
             )
 
             # Clean up preview cache
@@ -781,7 +781,7 @@ class BlockAssignmentImportService:
             failed_rows=failed_rows,
             error_messages=error_messages,
             started_at=started_at,
-            completed_at=datetime.utcnow(),
+            completed_at=datetime.now(UTC),
         )
 
     async def create_quick_template(

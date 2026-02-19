@@ -19,7 +19,7 @@ For this implementation, we use a simplified approach with manual serialization.
 
 import logging
 from collections.abc import Iterator
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from uuid import UUID
 
 import grpc
@@ -112,7 +112,7 @@ class ScheduleServicer:
                 "schedule_id": "pending",
                 "status": "pending",
                 "message": f"Schedule generation queued for {start_date} to {end_date}",
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
             }
 
             return result

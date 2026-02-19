@@ -21,7 +21,7 @@ HALF_OPEN (Testing):
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -125,7 +125,7 @@ class StateMachine:
         self.metrics.successful_requests += 1
         self.metrics.consecutive_successes += 1
         self.metrics.consecutive_failures = 0
-        self.metrics.last_success_time = datetime.utcnow()
+        self.metrics.last_success_time = datetime.now(UTC)
 
         if self.current_state == CircuitState.HALF_OPEN:
             # In half-open, successes count toward recovery
@@ -145,7 +145,7 @@ class StateMachine:
         self.metrics.failed_requests += 1
         self.metrics.consecutive_failures += 1
         self.metrics.consecutive_successes = 0
-        self.metrics.last_failure_time = datetime.utcnow()
+        self.metrics.last_failure_time = datetime.now(UTC)
 
         if self.current_state == CircuitState.CLOSED:
             # In closed state, check if we should open
@@ -188,7 +188,7 @@ class StateMachine:
         """Check if enough time has passed to attempt reset."""
         if not self.opened_at:
             return False
-        return datetime.utcnow() >= self.opened_at + self.timeout
+        return datetime.now(UTC) >= self.opened_at + self.timeout
 
     def _transition_to_closed(self, reason: str) -> None:
         """Transition to CLOSED state."""
@@ -200,7 +200,7 @@ class StateMachine:
         transition = StateTransition(
             from_state=old_state,
             to_state=CircuitState.CLOSED,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             reason=reason,
             success_count=self.metrics.consecutive_successes,
         )
@@ -215,12 +215,12 @@ class StateMachine:
         """Transition to OPEN state."""
         old_state = self.current_state
         self.current_state = CircuitState.OPEN
-        self.opened_at = datetime.utcnow()
+        self.opened_at = datetime.now(UTC)
 
         transition = StateTransition(
             from_state=old_state,
             to_state=CircuitState.OPEN,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             reason=reason,
             failure_count=self.metrics.consecutive_failures,
         )
@@ -241,7 +241,7 @@ class StateMachine:
         transition = StateTransition(
             from_state=old_state,
             to_state=CircuitState.HALF_OPEN,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             reason=reason,
         )
         self.metrics.state_transitions.append(transition)

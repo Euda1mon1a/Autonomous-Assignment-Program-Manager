@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session
@@ -49,7 +49,7 @@ class BatchService:
             BatchResponse with operation status and results
         """
         operation_id = uuid4()
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Store initial status
         _batch_operations[operation_id] = {
@@ -100,7 +100,7 @@ class BatchService:
                     warnings=validation_result.acgme_warnings,
                     dry_run=True,
                     created_at=start_time,
-                    completed_at=datetime.utcnow(),
+                    completed_at=datetime.now(UTC),
                 )
 
                 # Process batch
@@ -122,7 +122,7 @@ class BatchService:
             else:
                 status = BatchOperationStatus.PARTIAL
 
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(UTC)
             processing_time_ms = (completed_at - start_time).total_seconds() * 1000
 
             # Update stored status
@@ -179,7 +179,7 @@ class BatchService:
             BatchResponse with operation status and results
         """
         operation_id = uuid4()
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Store initial status
         _batch_operations[operation_id] = {
@@ -230,7 +230,7 @@ class BatchService:
                     warnings=validation_result.acgme_warnings,
                     dry_run=True,
                     created_at=start_time,
-                    completed_at=datetime.utcnow(),
+                    completed_at=datetime.now(UTC),
                 )
 
                 # Process batch
@@ -251,7 +251,7 @@ class BatchService:
             else:
                 status = BatchOperationStatus.PARTIAL
 
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(UTC)
             processing_time_ms = (completed_at - start_time).total_seconds() * 1000
 
             # Update stored status
@@ -308,7 +308,7 @@ class BatchService:
             BatchResponse with operation status and results
         """
         operation_id = uuid4()
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Store initial status
         _batch_operations[operation_id] = {
@@ -356,7 +356,7 @@ class BatchService:
                     results=[],
                     dry_run=True,
                     created_at=start_time,
-                    completed_at=datetime.utcnow(),
+                    completed_at=datetime.now(UTC),
                 )
 
                 # Process batch
@@ -377,7 +377,7 @@ class BatchService:
             else:
                 status = BatchOperationStatus.PARTIAL
 
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(UTC)
             processing_time_ms = (completed_at - start_time).total_seconds() * 1000
 
             # Update stored status
@@ -441,7 +441,7 @@ class BatchService:
         # Estimate completion time for in-progress operations
         estimated_completion = None
         if operation["status"] == BatchOperationStatus.PROCESSING and completed > 0:
-            elapsed = (datetime.utcnow() - operation["created_at"]).total_seconds()
+            elapsed = (datetime.now(UTC) - operation["created_at"]).total_seconds()
             estimated_total_time = (elapsed / completed) * total
             estimated_completion = operation["created_at"] + timedelta(
                 seconds=estimated_total_time

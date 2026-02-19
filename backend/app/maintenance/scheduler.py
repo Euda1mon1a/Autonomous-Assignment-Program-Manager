@@ -2,7 +2,7 @@
 
 import json
 import logging
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, UTC
 from pathlib import Path
 from typing import Any
 
@@ -76,7 +76,7 @@ class BackupScheduler:
             "time": backup_time.isoformat(),
             "compress": compress,
             "enabled": enabled,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
         try:
@@ -145,7 +145,7 @@ class BackupScheduler:
             "time": backup_time.isoformat(),
             "compress": compress,
             "enabled": enabled,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
         try:
@@ -199,7 +199,7 @@ class BackupScheduler:
         policy = {
             "keep_days": days,
             "keep_count": count,
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
         }
 
         try:
@@ -220,14 +220,14 @@ class BackupScheduler:
         Returns:
             Dictionary with next backup info or None if no schedules
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         next_backups = []
 
         # Check daily backup
         if self.config.get("daily_backup", {}).get("enabled"):
             daily = self.config["daily_backup"]
             backup_time = time.fromisoformat(daily["time"])
-            next_daily = datetime.combine(now.date(), backup_time)
+            next_daily = datetime.combine(now.date(), backup_time, tzinfo=UTC)
 
             if next_daily <= now:
                 next_daily += timedelta(days=1)
@@ -252,7 +252,7 @@ class BackupScheduler:
                 days_ahead += 7
 
             next_weekly = datetime.combine(
-                now.date() + timedelta(days=days_ahead), backup_time
+                now.date() + timedelta(days=days_ahead), backup_time, tzinfo=UTC
             )
 
             # If it's today but time has passed, schedule for next week
@@ -284,7 +284,7 @@ class BackupScheduler:
             This method does not raise exceptions. All errors are captured
             in the returned results list with status='failed'.
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         results = []
         logger.info("Checking for pending backups")
 
@@ -579,7 +579,7 @@ class BackupScheduler:
 
         # Apply time-based retention
         if keep_days:
-            cutoff_date = datetime.utcnow() - timedelta(days=keep_days)
+            cutoff_date = datetime.now(UTC) - timedelta(days=keep_days)
             for backup in backups:
                 backup_date = datetime.fromisoformat(backup["timestamp"])
                 if backup_date < cutoff_date:

@@ -8,7 +8,7 @@ and service discovery integration.
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 
@@ -144,7 +144,7 @@ class CircuitBreaker:
     def record_failure(self) -> None:
         """Record failed request."""
         self.failure_count += 1
-        self.last_failure_time = datetime.utcnow()
+        self.last_failure_time = datetime.now(UTC)
 
         if self.state == CircuitState.CLOSED:
             # Check if we should open the circuit
@@ -175,7 +175,7 @@ class CircuitBreaker:
         if self.state == CircuitState.OPEN:
             # Check if timeout has elapsed
             if self.last_failure_time:
-                elapsed = datetime.utcnow() - self.last_failure_time
+                elapsed = datetime.now(UTC) - self.last_failure_time
                 if elapsed.total_seconds() >= self.timeout_seconds:
                     logger.info("Circuit breaker transitioning to HALF_OPEN state")
                     self.state = CircuitState.HALF_OPEN
@@ -208,7 +208,7 @@ class CacheEntry:
         Returns:
             bool: True if expired
         """
-        elapsed = datetime.utcnow() - self.timestamp
+        elapsed = datetime.now(UTC) - self.timestamp
         return elapsed.total_seconds() >= self.ttl_seconds
 
 
@@ -227,7 +227,7 @@ class RateLimiter:
         Returns:
             bool: True if request is allowed
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         cutoff = now - timedelta(seconds=self.window_seconds)
 
         # Remove old requests
@@ -252,7 +252,7 @@ class RateLimiter:
             return 0
 
         oldest = min(self.requests)
-        elapsed = (datetime.utcnow() - oldest).total_seconds()
+        elapsed = (datetime.now(UTC) - oldest).total_seconds()
         return max(0, int(self.window_seconds - elapsed))
 
 
@@ -366,7 +366,7 @@ class ServiceProxy:
                     cache_key = self._get_cache_key(request.method, path)
                     self.cache[cache_key] = CacheEntry(
                         data=response.content,
-                        timestamp=datetime.utcnow(),
+                        timestamp=datetime.now(UTC),
                         ttl_seconds=self.config.cache_ttl_seconds,
                     )
 

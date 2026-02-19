@@ -18,7 +18,7 @@ Invalidation events can be triggered by:
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 
@@ -71,7 +71,7 @@ class InvalidationEvent:
     tags: list[str] = field(default_factory=list)  # Cache tags to invalidate
     cascade: bool = False  # Whether to cascade to related resources
     metadata: dict[str, Any] = field(default_factory=dict)  # Additional context
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
         """Generate patterns if not provided."""
@@ -178,7 +178,7 @@ class CacheInvalidator:
 
         # Update metrics
         self._invalidation_count += 1
-        self._last_invalidation = datetime.utcnow()
+        self._last_invalidation = datetime.now(UTC)
 
         logger.info(f"Total invalidated: {total_invalidated} entries")
         return total_invalidated
@@ -260,7 +260,7 @@ class CacheInvalidator:
         logger.warning("Invalidating ALL cache entries")
         count = await self.http_cache.clear()
         self._invalidation_count += 1
-        self._last_invalidation = datetime.utcnow()
+        self._last_invalidation = datetime.now(UTC)
         return count
 
     def register_hook(

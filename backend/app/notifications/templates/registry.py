@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -47,7 +47,7 @@ class TemplateVersion:
     variables: list[str] = field(default_factory=list)
     locale: str = "en_US"
     is_active: bool = True
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     created_by: str | None = None
     tags: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -309,7 +309,7 @@ class TemplateRegistry:
             variables=updates.get("variables", current.variables.copy()),
             locale=updates.get("locale", current.locale),
             is_active=True,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             created_by=updates.get("created_by"),
             tags=updates.get("tags", current.tags.copy()),
             metadata=updates.get("metadata", current.metadata.copy()),

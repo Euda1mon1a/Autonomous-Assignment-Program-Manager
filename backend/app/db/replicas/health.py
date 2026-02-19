@@ -9,7 +9,7 @@ This module provides health monitoring for database replicas, including:
 import logging
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
@@ -103,7 +103,7 @@ class HealthChecker:
                 health = ReplicaHealth(
                     is_healthy=is_healthy,
                     lag_seconds=lag_seconds,
-                    last_check=datetime.utcnow(),
+                    last_check=datetime.now(UTC),
                     error_message=(
                         None
                         if is_healthy
@@ -135,7 +135,7 @@ class HealthChecker:
             health = ReplicaHealth(
                 is_healthy=is_healthy,
                 lag_seconds=None,
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(UTC),
                 error_message=str(e),
                 consecutive_failures=consecutive_failures,
             )
@@ -156,7 +156,7 @@ class HealthChecker:
             health = ReplicaHealth(
                 is_healthy=False,
                 lag_seconds=None,
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(UTC),
                 error_message=f"Unexpected error: {e}",
                 consecutive_failures=self.max_consecutive_failures,
             )
@@ -232,7 +232,7 @@ class HealthChecker:
         if not health or not health.last_check:
             return None
 
-        age = (datetime.utcnow() - health.last_check).total_seconds()
+        age = (datetime.now(UTC) - health.last_check).total_seconds()
 
         if age > max_age_seconds:
             return None

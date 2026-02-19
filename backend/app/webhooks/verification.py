@@ -17,7 +17,7 @@ import hmac
 import ipaddress
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -61,7 +61,7 @@ class VerificationResult:
         self.valid = valid
         self.failure_reason = failure_reason
         self.metadata = metadata or {}
-        self.verified_at = datetime.utcnow()
+        self.verified_at = datetime.now(UTC)
 
     def __bool__(self) -> bool:
         """Allow boolean evaluation of verification result."""
@@ -386,7 +386,7 @@ class WebhookVerificationService:
             VerificationResult indicating if timestamp is fresh
         """
         try:
-            current_time = int(datetime.utcnow().timestamp())
+            current_time = int(datetime.now(UTC).timestamp())
             time_diff = abs(current_time - timestamp)
 
             if time_diff > self.timestamp_tolerance:
@@ -657,13 +657,13 @@ class WebhookVerificationService:
         new_secret = secrets.token_urlsafe(32)
 
         metadata = {
-            "rotated_at": datetime.utcnow().isoformat(),
+            "rotated_at": datetime.now(UTC).isoformat(),
             "old_secret_hash": hashlib.sha256(old_secret.encode()).hexdigest()[:16],
             "verify_with_both": verify_with_both,
         }
 
         if verify_with_both:
-            valid_until = datetime.utcnow() + timedelta(hours=grace_period_hours)
+            valid_until = datetime.now(UTC) + timedelta(hours=grace_period_hours)
             metadata["old_secret_valid_until"] = valid_until.isoformat()
             metadata["grace_period_hours"] = grace_period_hours
 
@@ -695,7 +695,7 @@ class WebhookVerificationService:
             "user_agent": request.headers.get("User-Agent", "unknown"),
             "path": request.url.path,
             "method": request.method,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             **context,
             **result.metadata,
         }

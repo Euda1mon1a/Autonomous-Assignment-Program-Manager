@@ -6,7 +6,7 @@ Each tenant represents an isolated organization (e.g., hospital, residency progr
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 
 from sqlalchemy import (
@@ -147,9 +147,12 @@ class Tenant(Base):
     notes = Column(Text, nullable=True, doc="Internal notes about the tenant")
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
     activated_at = Column(DateTime, nullable=True, doc="When tenant became active")
     suspended_at = Column(DateTime, nullable=True, doc="When tenant was suspended")
@@ -272,9 +275,12 @@ class TenantUser(Base):
     )
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     # Relationships
@@ -343,7 +349,9 @@ class TenantAuditLog(Base):
     user_agent = Column(Text, nullable=True, doc="User agent string")
 
     # Timestamp
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     def __repr__(self):
         return f"<TenantAuditLog(action='{self.action}', tenant_id='{self.tenant_id}')>"

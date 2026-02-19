@@ -75,7 +75,7 @@ Task status and retry history can be monitored via:
     - Redis task result backend
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 
 import httpx
@@ -173,7 +173,7 @@ def send_email(
             raise RuntimeError(f"EmailService.send_email returned False for {to}")
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "to": to,
             "subject": subject,
             "status": "sent",
@@ -227,7 +227,7 @@ def send_webhook(
             response.raise_for_status()
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "url": url,
             "status": "sent",
             "status_code": response.status_code,
@@ -303,7 +303,7 @@ def detect_leave_conflicts(
                 )
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "absence_id": absence_id,
             "conflicts_found": len(conflicts),
             "alerts_created": len(alert_ids),

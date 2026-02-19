@@ -9,7 +9,7 @@ Manages Celery workers including:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from app.core.celery_app import celery_app
@@ -63,13 +63,13 @@ class WorkerManager:
             return {
                 "worker": worker_name,
                 "stats": stats.get(worker_name, {}),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         return {
             "workers": stats,
             "total_workers": len(stats),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_worker_health(self) -> dict[str, Any]:
@@ -88,7 +88,7 @@ class WorkerManager:
                 "workers": {},
                 "total_workers": 0,
                 "online_workers": 0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         workers = {}
@@ -105,7 +105,7 @@ class WorkerManager:
             "workers": workers,
             "total_workers": len(workers),
             "online_workers": online_count,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_worker_tasks(self, worker_name: str | None = None) -> dict[str, Any]:
@@ -123,7 +123,7 @@ class WorkerManager:
         scheduled = self.inspect.scheduled()
 
         result = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "workers": {},
         }
 
@@ -226,7 +226,7 @@ class WorkerManager:
                 "active_workers": 0,
                 "idle_workers": 0,
                 "utilization_percentage": 0.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         total_workers = len(stats)
@@ -245,7 +245,7 @@ class WorkerManager:
             "active_workers": active_workers,
             "idle_workers": idle_workers,
             "utilization_percentage": round(utilization, 2),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_worker_queues(self, worker_name: str | None = None) -> dict[str, Any]:
@@ -384,5 +384,5 @@ class WorkerManager:
             "tasks": self.get_worker_tasks(),
             "pool_info": self.get_worker_pool_info(),
             "queues": self.get_worker_queues(),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }

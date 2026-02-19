@@ -6,7 +6,7 @@ including connection validation, performance checks, and automatic recovery.
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
@@ -90,7 +90,7 @@ class PoolHealthChecker:
         Returns:
             HealthCheckResult: Health check results
         """
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
         errors = []
         warnings = []
         successful_pings = 0

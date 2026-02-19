@@ -12,7 +12,7 @@ import csv
 import io
 import json
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 
 from croniter import croniter
@@ -106,7 +106,7 @@ class ExportSchedulerService:
             else:
                 job.next_run_at = None
 
-        job.updated_at = datetime.utcnow()
+        job.updated_at = datetime.now(UTC)
         await self.db.commit()
         await self.db.refresh(job)
 
@@ -189,7 +189,7 @@ class ExportSchedulerService:
         Returns:
             list[ExportJob]: Jobs due for execution
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         result = await self.db.execute(
             select(ExportJob)
             .where(
@@ -229,7 +229,7 @@ class ExportSchedulerService:
         execution = ExportJobExecution(
             job_id=job.id,
             job_name=job.name,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
             scheduled_run_time=job.next_run_at,
             status=ExportJobStatus.RUNNING,
             triggered_by=triggered_by,
@@ -247,7 +247,7 @@ class ExportSchedulerService:
             )
 
             # Generate filename
-            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             extension = job.format.value
             filename = f"{job.name.replace(' ', '_')}_{timestamp}.{extension}"
 
@@ -275,12 +275,12 @@ class ExportSchedulerService:
                     "job_id": str(job.id),
                     "job_name": job.name,
                     "execution_id": str(execution.id),
-                    "generated_at": datetime.utcnow().isoformat(),
+                    "generated_at": datetime.now(UTC).isoformat(),
                 },
             )
 
             # Update execution record
-            execution.finished_at = datetime.utcnow()
+            execution.finished_at = datetime.now(UTC)
             execution.runtime_seconds = int(
                 (execution.finished_at - execution.started_at).total_seconds()
             )
@@ -316,7 +316,7 @@ class ExportSchedulerService:
 
         except Exception as e:
             # Update execution with error
-            execution.finished_at = datetime.utcnow()
+            execution.finished_at = datetime.now(UTC)
             execution.runtime_seconds = int(
                 (execution.finished_at - execution.started_at).total_seconds()
             )
@@ -692,9 +692,9 @@ class ExportSchedulerService:
             datetime: Next run time
         """
         try:
-            cron = croniter(cron_expression, datetime.utcnow())
+            cron = croniter(cron_expression, datetime.now(UTC))
             return cron.get_next(datetime)
         except Exception as e:
             logger.error(f"Invalid cron expression: {cron_expression}: {e}")
             # Default to 1 day from now
-            return datetime.utcnow() + timedelta(days=1)
+            return datetime.now(UTC) + timedelta(days=1)

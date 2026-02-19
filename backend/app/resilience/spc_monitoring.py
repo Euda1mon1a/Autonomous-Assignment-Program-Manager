@@ -25,7 +25,7 @@ Process Capability Indices:
 import logging
 import statistics
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class SPCAlert:
     severity: str
     message: str
     resident_id: UUID | None = None
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     data_points: list[float] = field(default_factory=list)
     control_limits: dict = field(default_factory=dict)
 

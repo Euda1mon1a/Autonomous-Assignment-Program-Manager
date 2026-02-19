@@ -1,7 +1,7 @@
 """Event logging for notification audit trails."""
 
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -50,7 +50,7 @@ class NotificationEvent(BaseModel):
     channel: str | None = None
     recipient_id: UUID
     metadata: dict[str, Any] = Field(default_factory=dict)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class NotificationEventLogger:
@@ -238,7 +238,7 @@ class NotificationEventLogger:
         Returns:
             Number of events cleared
         """
-        cutoff = datetime.utcnow().timestamp() - (days * 24 * 60 * 60)
+        cutoff = datetime.now(UTC).timestamp() - (days * 24 * 60 * 60)
 
         old_count = len(self._events)
         self._events = [e for e in self._events if e.timestamp.timestamp() >= cutoff]

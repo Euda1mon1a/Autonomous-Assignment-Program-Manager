@@ -7,7 +7,7 @@ validation, execution, and rollback across the system.
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -127,7 +127,7 @@ class SwapEngine:
                 swap_type=swap_type,
                 status=SwapStatus.PENDING,
                 reason=reason,
-                requested_at=datetime.utcnow(),
+                requested_at=datetime.now(UTC),
                 requested_by_id=requested_by_id,
             )
 
@@ -293,7 +293,7 @@ class SwapEngine:
                 )
 
                 # Execute the swap
-            execution_time = datetime.utcnow()
+            execution_time = datetime.now(UTC)
 
             # Update assignments
             await self._update_assignments(swap)
@@ -378,7 +378,7 @@ class SwapEngine:
 
             # Update swap status
             swap.status = SwapStatus.ROLLED_BACK
-            swap.rolled_back_at = datetime.utcnow()
+            swap.rolled_back_at = datetime.now(UTC)
             swap.rolled_back_by_id = rolled_back_by_id
             swap.rollback_reason = reason
 
@@ -560,7 +560,7 @@ class SwapEngine:
         from datetime import timedelta
 
         rollback_window = timedelta(hours=24)
-        time_since_execution = datetime.utcnow() - swap.executed_at
+        time_since_execution = datetime.now(UTC) - swap.executed_at
 
         return time_since_execution <= rollback_window
 

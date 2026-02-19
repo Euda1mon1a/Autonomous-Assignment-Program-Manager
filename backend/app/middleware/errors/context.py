@@ -5,7 +5,7 @@ enabling better debugging, monitoring, and error grouping.
 """
 
 import hashlib
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from fastapi import Request
@@ -25,7 +25,7 @@ class ErrorContext:
         """
         self.request = request
         self.exc = exc
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(UTC)
 
     def get_request_info(self, include_headers: bool = False) -> dict[str, Any]:
         """
@@ -342,7 +342,7 @@ class ErrorRateLimiter:
         Returns:
             True if error should be reported, False if rate limited
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Initialize or get existing timestamps for this fingerprint
         if fingerprint not in self._error_counts:
@@ -374,7 +374,7 @@ class ErrorRateLimiter:
         if fingerprint not in self._error_counts:
             return 0
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         cutoff = now.timestamp() - self.window_seconds
 
         # Clean up old timestamps

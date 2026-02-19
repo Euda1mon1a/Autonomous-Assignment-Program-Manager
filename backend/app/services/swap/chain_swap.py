@@ -7,7 +7,7 @@ are involved in a circular or chain swap pattern.
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -187,7 +187,7 @@ class ChainSwapCoordinator:
 
                     if swap:
                         swap.status = SwapStatus.EXECUTED
-                        swap.executed_at = datetime.utcnow()
+                        swap.executed_at = datetime.now(UTC)
                         swap.executed_by_id = executed_by_id
                         executed_swaps.append(str(swap.id))
 
@@ -291,7 +291,7 @@ class ChainSwapCoordinator:
             nodes.append(node)
 
         chain = SwapChain(
-            chain_id=f"cycle_{datetime.utcnow().timestamp()}",
+            chain_id=f"cycle_{datetime.now(UTC).timestamp()}",
             nodes=nodes,
             chain_type="cycle",
             total_swaps=len(nodes),
@@ -343,7 +343,7 @@ class ChainSwapCoordinator:
             nodes.append(node)
 
         chain = SwapChain(
-            chain_id=f"linear_{datetime.utcnow().timestamp()}",
+            chain_id=f"linear_{datetime.now(UTC).timestamp()}",
             nodes=nodes,
             chain_type="linear",
             total_swaps=len(nodes),

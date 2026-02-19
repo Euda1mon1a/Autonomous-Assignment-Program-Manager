@@ -22,7 +22,7 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Callable
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from typing import Any, Callable
 from uuid import UUID
 
@@ -354,7 +354,7 @@ class DataTransformer:
         Returns:
             Dict with audit fields
         """
-        updates: dict[str, Any] = {"updated_at": datetime.utcnow()}
+        updates: dict[str, Any] = {"updated_at": datetime.now(UTC)}
 
         if hasattr(record, "updated_by"):
             updates["updated_by"] = str(user)

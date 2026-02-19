@@ -19,7 +19,7 @@ import time
 import traceback
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -624,7 +624,7 @@ class TaskRetryManager:
         Args:
             task_id: Task identifier
         """
-        self.retry_history[task_id].append(datetime.utcnow())
+        self.retry_history[task_id].append(datetime.now(UTC))
 
     def get_retry_count(self, task_id: str) -> int:
         """
@@ -658,7 +658,7 @@ class SchedulerHealthMonitor:
 
     def __init__(self) -> None:
         """Initialize health monitor."""
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(UTC)
         self.metrics = {
             "tasks_executed": 0,
             "tasks_succeeded": 0,
@@ -717,7 +717,7 @@ class SchedulerHealthMonitor:
             task_execution: Failed task execution
         """
         error_entry = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "task_id": task_execution.task_id,
             "task_name": task_execution.task_name,
             "error": task_execution.error,
@@ -737,7 +737,7 @@ class SchedulerHealthMonitor:
         Returns:
             Dictionary with health metrics
         """
-        uptime = (datetime.utcnow() - self.start_time).total_seconds()
+        uptime = (datetime.now(UTC) - self.start_time).total_seconds()
 
         total_tasks = self.metrics["tasks_executed"]
         success_rate = (
@@ -770,7 +770,7 @@ class SchedulerHealthMonitor:
 
     def reset_metrics(self) -> None:
         """Reset all metrics."""
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(UTC)
         self.metrics = {
             k: 0 if isinstance(v, int) else 0.0 for k, v in self.metrics.items()
         }
@@ -892,7 +892,7 @@ class AdvancedTaskScheduler:
             task_name=task_def.task_name,
             status=TaskStatus.PENDING,
             priority=task_def.priority,
-            scheduled_time=scheduled_time or datetime.utcnow(),
+            scheduled_time=scheduled_time or datetime.now(UTC),
             dependencies=task_def.dependencies.copy(),
         )
 
@@ -932,7 +932,7 @@ class AdvancedTaskScheduler:
             raise ValueError(f"Task {task_id} not registered")
 
         try:
-            cron = croniter(cron_expression, start_time or datetime.utcnow())
+            cron = croniter(cron_expression, start_time or datetime.now(UTC))
         except Exception as e:
             raise ValueError(f"Invalid cron expression: {e}")
 
@@ -1031,7 +1031,7 @@ class AdvancedTaskScheduler:
                     continue
 
                     # Check if scheduled time has arrived
-                if task_execution.scheduled_time > datetime.utcnow():
+                if task_execution.scheduled_time > datetime.now(UTC):
                     # Re-queue for later
                     self.task_queue.enqueue(task_execution)
                     await asyncio.sleep(1)
@@ -1106,7 +1106,7 @@ class AdvancedTaskScheduler:
         try:
             # Update status
             task_execution.status = TaskStatus.RUNNING
-            task_execution.started_time = datetime.utcnow()
+            task_execution.started_time = datetime.now(UTC)
             self.running_tasks[task_execution.task_id] = task_execution
 
             # Acquire lock if required
@@ -1141,7 +1141,7 @@ class AdvancedTaskScheduler:
                 # Record success
             task_execution.status = TaskStatus.COMPLETED
             task_execution.result = result
-            task_execution.completed_time = datetime.utcnow()
+            task_execution.completed_time = datetime.now(UTC)
 
             logger.info(f"Task {task_execution.task_name} completed successfully")
 
@@ -1150,7 +1150,7 @@ class AdvancedTaskScheduler:
             task_execution.status = TaskStatus.FAILED
             task_execution.error = str(e)
             task_execution.traceback_str = traceback.format_exc()
-            task_execution.completed_time = datetime.utcnow()
+            task_execution.completed_time = datetime.now(UTC)
 
             logger.error(
                 f"Task {task_execution.task_name} failed: {e}",
@@ -1169,7 +1169,7 @@ class AdvancedTaskScheduler:
                 task_execution.retry_count += 1
 
                 # Schedule retry
-                retry_time = datetime.utcnow() + timedelta(seconds=delay)
+                retry_time = datetime.now(UTC) + timedelta(seconds=delay)
                 retry_execution = TaskExecution(
                     execution_id=uuid4(),
                     task_id=task_execution.task_id,

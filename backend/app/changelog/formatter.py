@@ -8,7 +8,7 @@ Supports multiple output formats:
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 
@@ -67,7 +67,7 @@ class ChangelogFormatter:
         lines.append(f"# API Changelog: {diff.old_version} → {diff.new_version}")
         lines.append("")
         lines.append(
-            f"**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}"
+            f"**Generated:** {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}"
         )
         lines.append("")
 
@@ -169,7 +169,7 @@ class ChangelogFormatter:
             "old_version": diff.old_version,
             "new_version": diff.new_version,
             "suggested_version": diff.suggest_version_bump(diff.old_version),
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "summary": {
                 "total_changes": len(diff.changes),
                 "breaking_changes": len(diff.breaking_changes),
@@ -206,7 +206,7 @@ class ChangelogFormatter:
         lines.append("<div class='container'>")
         lines.append(f"<h1>API Changelog: {diff.old_version} → {diff.new_version}</h1>")
         lines.append(
-            f"<p class='meta'>Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>"
+            f"<p class='meta'>Generated: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}</p>"
         )
 
         # Summary

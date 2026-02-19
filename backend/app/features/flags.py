@@ -9,7 +9,7 @@ This service provides the main interface for:
 
 import inspect
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from sqlalchemy import func, select
@@ -415,7 +415,7 @@ class FeatureFlagService:
         # Count recent evaluations (last 24 hours)
         from datetime import timedelta
 
-        yesterday = datetime.utcnow() - timedelta(days=1)
+        yesterday = datetime.now(UTC) - timedelta(days=1)
         recent_eval_result = await self._maybe_await(
             self.db.execute(
                 select(func.count(FeatureFlagEvaluation.id)).where(

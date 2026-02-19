@@ -55,7 +55,7 @@ import time
 from collections import defaultdict
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from threading import RLock
 from typing import Any
@@ -231,7 +231,7 @@ class IndexAlias:
     alias_name: str
     target_index: str
     previous_target: str | None = None
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         """Convert alias to dictionary."""
@@ -552,7 +552,7 @@ class SearchIndexer:
                 index_name=index_name,
                 version=version,
                 schema_hash=schema_hash,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 status=IndexStatus.CREATING,
                 mapping=mapping,
             )
@@ -689,7 +689,7 @@ class SearchIndexer:
                     # Update health
             if actual_index in self._health:
                 health = self._health[actual_index]
-                health.last_index_time = datetime.utcnow()
+                health.last_index_time = datetime.now(UTC)
                 health.doc_count = self._doc_counts[actual_index]
                 # Update rolling average
                 total_ops = self.metrics.total_indexed + self.metrics.total_updated
@@ -865,7 +865,7 @@ class SearchIndexer:
                     # Update health
             if actual_index in self._health:
                 health = self._health[actual_index]
-                health.last_index_time = datetime.utcnow()
+                health.last_index_time = datetime.now(UTC)
                 health.doc_count = total_docs
                 health.error_count += error_count
 
@@ -982,7 +982,7 @@ class SearchIndexer:
             if target_index in self._health:
                 health = self._health[target_index]
                 health.status = IndexStatus.ACTIVE
-                health.last_reindex_time = datetime.utcnow()
+                health.last_reindex_time = datetime.now(UTC)
                 health.doc_count = total_indexed
 
             duration_ms = (time.time() - start_time) * 1000
@@ -1374,7 +1374,7 @@ class SearchIndexer:
                             schema_hash=metadata.get("schema_hash", ""),
                             created_at=datetime.fromisoformat(
                                 metadata.get(
-                                    "created_at", datetime.utcnow().isoformat()
+                                    "created_at", datetime.now(UTC).isoformat()
                                 )
                             ),
                             status=IndexStatus(metadata.get("status", "active")),
@@ -1410,7 +1410,7 @@ class SearchIndexer:
                 alias_name=alias_name,
                 target_index=target_index,
                 previous_target=current_target,
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now(UTC),
             )
 
             # Update alias

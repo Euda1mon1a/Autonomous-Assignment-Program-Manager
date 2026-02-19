@@ -2,7 +2,7 @@
 
 import asyncio
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -35,7 +35,7 @@ class QueuedNotification(BaseModel):
     data: dict[str, Any]
     channels: list[str]
     priority: int = 0
-    queued_at: datetime = Field(default_factory=datetime.utcnow)
+    queued_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     retry_count: int = 0
 
 
@@ -294,7 +294,7 @@ class NotificationQueueManager:
                 type_counts[notification.notification_type] += 1
 
                 # Age statistics
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             ages = [(now - n.queued_at).total_seconds() for n in self._index.values()]
 
             return {

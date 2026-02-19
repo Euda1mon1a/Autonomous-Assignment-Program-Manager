@@ -13,7 +13,7 @@ import json
 import logging
 import os
 import tempfile
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 
 from celery import shared_task
@@ -83,7 +83,7 @@ def save_report_data_to_json(report_data: dict, report_type: str) -> str:
         reports_dir = os.getenv("REPORTS_DIR", default_reports_dir)
         os.makedirs(reports_dir, exist_ok=True)
 
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         filename = f"{report_type}_{timestamp}.json"
         filepath = os.path.join(reports_dir, filename)
 
