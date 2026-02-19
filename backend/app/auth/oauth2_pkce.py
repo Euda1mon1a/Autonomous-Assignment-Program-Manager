@@ -17,7 +17,7 @@ Flow:
 import base64
 import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -233,7 +233,7 @@ async def create_authorization_code(
 
     # Generate authorization code
     code = generate_authorization_code()
-    expires_at = datetime.utcnow() + timedelta(
+    expires_at = datetime.now(UTC) + timedelta(
         minutes=AUTHORIZATION_CODE_EXPIRE_MINUTES
     )
 

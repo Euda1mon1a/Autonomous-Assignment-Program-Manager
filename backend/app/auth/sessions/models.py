@@ -8,7 +8,7 @@ Defines Pydantic models for session management including:
 - Session lifecycle events
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -80,8 +80,8 @@ class SessionData(BaseModel):
     jti: str | None = Field(None, description="JWT token ID")
 
     # Session lifecycle
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_activity: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    last_activity: datetime = Field(default_factory=lambda: datetime.now(UTC))
     expires_at: datetime | None = None
     status: SessionStatus = SessionStatus.ACTIVE
 
@@ -126,7 +126,7 @@ class SessionData(BaseModel):
         if self.expires_at is None:
             return False
 
-        current = current_time or datetime.utcnow()
+        current = current_time or datetime.now(UTC)
         return current >= self.expires_at
 
     def update_activity(self, ip_address: str | None = None) -> None:
@@ -136,7 +136,7 @@ class SessionData(BaseModel):
         Args:
             ip_address: Optional IP address of current request
         """
-        self.last_activity = datetime.utcnow()
+        self.last_activity = datetime.now(UTC)
         self.request_count += 1
         if ip_address:
             self.last_ip = ip_address
@@ -188,7 +188,7 @@ class SessionActivity(BaseModel):
     session_id: str
     user_id: str
     activity_type: SessionActivityType
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     ip_address: str | None = None
     user_agent: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)

@@ -16,7 +16,7 @@ import hmac
 import ipaddress
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import HTTPException, Request, status
@@ -211,7 +211,7 @@ class APIKeyManager:
 
         # Schedule old key expiration
         if grace_period_hours > 0:
-            old_key.expires_at = datetime.utcnow() + timedelta(hours=grace_period_hours)
+            old_key.expires_at = datetime.now(UTC) + timedelta(hours=grace_period_hours)
         else:
             old_key.is_active = False
 
@@ -246,7 +246,7 @@ class APIKeyManager:
             raise ValueError("API key not found")
 
         api_key.is_active = False
-        api_key.revoked_at = datetime.utcnow()
+        api_key.revoked_at = datetime.now(UTC)
         api_key.revoked_by_id = revoked_by_id
         api_key.revoked_reason = reason
 
@@ -263,7 +263,7 @@ class APIKeyManager:
             api_key: The API key object
             client_ip: Client IP address
         """
-        api_key.last_used_at = datetime.utcnow()
+        api_key.last_used_at = datetime.now(UTC)
         api_key.last_used_ip = client_ip
         api_key.total_requests += 1
         self.db.commit()
@@ -389,7 +389,7 @@ class OAuth2Manager:
 
             # Create JWT token
         expires_delta = timedelta(seconds=client.access_token_lifetime_seconds)
-        expires_at = datetime.utcnow() + expires_delta
+        expires_at = datetime.now(UTC) + expires_delta
 
         token_data = {
             "sub": str(client.id),
@@ -397,13 +397,13 @@ class OAuth2Manager:
             "scopes": list(granted_scopes),
             "type": "client_credentials",
             "exp": expires_at,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(UTC),
         }
 
         access_token = jwt.encode(token_data, settings.SECRET_KEY, algorithm="HS256")
 
         # Update usage statistics
-        client.last_used_at = datetime.utcnow()
+        client.last_used_at = datetime.now(UTC)
         client.total_tokens_issued += 1
         self.db.commit()
 
@@ -473,7 +473,7 @@ class IPFilterManager:
                 and_(
                     IPBlacklist.is_active == True,
                     IPBlacklist.expires_at.is_(None)
-                    | (IPBlacklist.expires_at > datetime.utcnow()),
+                    | (IPBlacklist.expires_at > datetime.now(UTC)),
                 )
             )
         )
@@ -482,7 +482,7 @@ class IPFilterManager:
         for entry in blacklists:
             if self._ip_in_range(ip_address, entry.ip_address):
                 # Update last hit time
-                entry.last_hit_at = datetime.utcnow()
+                entry.last_hit_at = datetime.now(UTC)
                 self.db.commit()
 
                 logger.warning(
@@ -512,7 +512,7 @@ class IPFilterManager:
                 and_(
                     IPWhitelist.is_active == True,
                     IPWhitelist.expires_at.is_(None)
-                    | (IPWhitelist.expires_at > datetime.utcnow()),
+                    | (IPWhitelist.expires_at > datetime.now(UTC)),
                     (IPWhitelist.applies_to == applies_to)
                     | (IPWhitelist.applies_to == "all"),
                 )
@@ -630,7 +630,7 @@ class RequestSignatureValidator:
             request_time = datetime.fromisoformat(request_data.timestamp)
 
             # Check timestamp tolerance (prevent replay attacks)
-            time_diff = abs((datetime.utcnow() - request_time).total_seconds())
+            time_diff = abs((datetime.now(UTC) - request_time).total_seconds())
             if time_diff > SIGNATURE_TOLERANCE_SECONDS:
                 return (
                     False,

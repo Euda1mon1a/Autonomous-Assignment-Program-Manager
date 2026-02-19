@@ -27,7 +27,7 @@ Usage:
 import json
 import logging
 from collections.abc import Awaitable, Callable
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from functools import wraps
 from typing import Any, cast
@@ -154,14 +154,14 @@ class PermissionContext(BaseModel):
     resource_owner_id: UUID | None = None
     resource_metadata: dict[str, Any] = Field(default_factory=dict)
     ip_address: str | None = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class PermissionAuditEntry(BaseModel):
     """Audit entry for permission changes."""
 
     id: UUID = Field(default_factory=uuid4)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     action: str  # "granted", "revoked", "checked", "denied"
     role: UserRole
     resource: ResourceType
