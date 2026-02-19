@@ -303,10 +303,12 @@ async def list_snapshots(
                         f"{date_str}_{time_str}", "%Y%m%d_%H%M%S"
                     )
                 except ValueError:
-                    created_at = datetime.fromtimestamp(file_path.stat().st_mtime)
+                    created_at = datetime.fromtimestamp(
+                        file_path.stat().st_mtime, tz=UTC
+                    )
             else:
                 table_name = parts[0]
-                created_at = datetime.fromtimestamp(file_path.stat().st_mtime)
+                created_at = datetime.fromtimestamp(file_path.stat().st_mtime, tz=UTC)
 
             # Get file size as proxy for row count (rough estimate)
             file_size = file_path.stat().st_size
@@ -741,9 +743,11 @@ async def list_backups(
                         f"{date_str}_{time_str}", "%Y%m%d_%H%M%S"
                     )
                 except ValueError:
-                    created_at = datetime.fromtimestamp(backup_file.stat().st_mtime)
+                    created_at = datetime.fromtimestamp(
+                        backup_file.stat().st_mtime, tz=UTC
+                    )
             else:
-                created_at = datetime.fromtimestamp(backup_file.stat().st_mtime)
+                created_at = datetime.fromtimestamp(backup_file.stat().st_mtime, tz=UTC)
 
             metadata = parse_backup_metadata(backup_file)
 
@@ -1004,7 +1008,7 @@ async def get_backup_status(
         if backup_files:
             latest_backup = backup_files[0]
             latest_backup_id = latest_backup.stem.replace(".sql", "")
-            mtime = datetime.fromtimestamp(latest_backup.stat().st_mtime)
+            mtime = datetime.fromtimestamp(latest_backup.stat().st_mtime, tz=UTC)
             age = datetime.now(UTC) - mtime
             latest_backup_age_hours = age.total_seconds() / 3600
 

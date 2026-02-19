@@ -98,7 +98,7 @@ def _generate_mock_audit_entries(
     all_entries = [
         AuditLogEntry(
             id="audit-001",
-            timestamp=(datetime.now(UTC) - timedelta(hours=2)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(hours=2)).isoformat(),
             entity_type="assignment",
             entity_id="assign-123",
             entity_name="Night Shift - ICU",
@@ -126,7 +126,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-002",
-            timestamp=(datetime.now(UTC) - timedelta(hours=5)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(hours=5)).isoformat(),
             entity_type="assignment",
             entity_id="assign-124",
             entity_name="Day Shift - ER",
@@ -149,7 +149,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-003",
-            timestamp=(datetime.now(UTC) - timedelta(hours=8)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(hours=8)).isoformat(),
             entity_type="person",
             entity_id="person-789",
             entity_name="Dr. Alex Thompson",
@@ -175,7 +175,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-004",
-            timestamp=(datetime.now(UTC) - timedelta(hours=12)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(hours=12)).isoformat(),
             entity_type="schedule_run",
             entity_id="sched-001",
             entity_name="January 2025 Schedule",
@@ -192,7 +192,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-005",
-            timestamp=(datetime.now(UTC) - timedelta(hours=15)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(hours=15)).isoformat(),
             entity_type="absence",
             entity_id="absence-456",
             entity_name="Vacation - Dr. Smith",
@@ -253,7 +253,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-008",
-            timestamp=(datetime.now(UTC) - timedelta(days=2)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(days=2)).isoformat(),
             entity_type="system",
             entity_id="sys-001",
             entity_name="Audit System",
@@ -279,7 +279,7 @@ def _generate_mock_audit_entries(
         ),
         AuditLogEntry(
             id="audit-010",
-            timestamp=(datetime.now(UTC) - timedelta(days=3)).isoformat() + "Z",
+            timestamp=(datetime.now(UTC) - timedelta(days=3)).isoformat(),
             entity_type="assignment",
             entity_id="assign-200",
             entity_name="Call Shift - Pediatrics",
