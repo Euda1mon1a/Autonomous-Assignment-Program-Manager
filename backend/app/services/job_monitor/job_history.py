@@ -9,7 +9,7 @@ Provides historical task tracking and analysis including:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from celery import Celery
@@ -92,7 +92,7 @@ class JobHistoryService:
                     "end_date": end_date.isoformat() if end_date else None,
                     "status": status_filter,
                 },
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -101,7 +101,7 @@ class JobHistoryService:
                 "error": str(e),
                 "tasks": [],
                 "total_count": 0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def get_task_execution_details(self, task_id: str) -> dict[str, Any] | None:
@@ -151,7 +151,7 @@ class JobHistoryService:
             if hasattr(result, "info") and result.info:
                 details["metadata"] = result.info
 
-            details["timestamp"] = datetime.utcnow().isoformat()
+            details["timestamp"] = datetime.now(UTC).isoformat()
 
             return details
 
@@ -201,7 +201,7 @@ class JobHistoryService:
                     #     "average_runtime_seconds": 5.5,
                     # }
                 ],
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -209,7 +209,7 @@ class JobHistoryService:
             return {
                 "error": str(e),
                 "buckets": [],
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def get_recent_failures(
@@ -342,14 +342,14 @@ class JobHistoryService:
                     #     "failed_tasks": 1,
                     # }
                 ],
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error getting success rate history: {e}")
             return {
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     def search_tasks(self, query: str, limit: int = 50) -> list[dict[str, Any]]:

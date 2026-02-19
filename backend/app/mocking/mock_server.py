@@ -65,7 +65,7 @@ import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -121,7 +121,7 @@ class MockRequest:
     query_params: dict[str, Any] = field(default_factory=dict)
     headers: dict[str, str] = field(default_factory=dict)
     body: Any | None = None
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def get_header(self, name: str, default: str | None = None) -> str | None:
@@ -443,7 +443,7 @@ class ResponseTemplate:
             "path": request.path,
             "path_params": request.path_params,
             "query_params": request.query_params,
-            "now": datetime.utcnow().isoformat(),
+            "now": datetime.now(UTC).isoformat(),
             "timestamp": int(time.time()),
             "uuid": str(uuid4()),
             **(context or {}),

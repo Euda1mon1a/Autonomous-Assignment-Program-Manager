@@ -13,7 +13,7 @@ This service provides comprehensive usage metering capabilities including:
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Optional
@@ -321,7 +321,7 @@ class MeteringService:
         Returns:
             UsageEvent: Recorded event with cost calculation
         """
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
         metadata = metadata or {}
 
         # Calculate cost
@@ -386,7 +386,7 @@ class MeteringService:
         Args:
             event: Usage event
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Hourly counter
         hour_key = f"metering:hourly:{event.user_id}:{event.resource.value}:{now.strftime('%Y-%m-%d-%H')}"
@@ -430,7 +430,7 @@ class MeteringService:
         """
         # Default date range
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(UTC)
         if not start_date:
             start_date = end_date - timedelta(days=30)
 
@@ -564,7 +564,7 @@ class MeteringService:
         Returns:
             int: Current usage
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Determine key based on period
         if period == AggregationPeriod.HOURLY:
@@ -600,7 +600,7 @@ class MeteringService:
         Returns:
             int: Calculated usage
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Determine date range
         if period == AggregationPeriod.WEEKLY:
@@ -668,7 +668,7 @@ class MeteringService:
             overage_amount=overage_amount,
             overage_percentage=overage_percentage,
             period=period,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             severity=severity,
         )
 
@@ -769,7 +769,7 @@ class MeteringService:
         """
         # Default date range
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(UTC)
         if not start_date:
             start_date = end_date - timedelta(days=30)
 
@@ -1027,7 +1027,7 @@ class MeteringService:
             ForecastResult: Forecast with confidence intervals
         """
         # Get historical data (last 30 days)
-        end_date = datetime.utcnow()
+        end_date = datetime.now(UTC)
         start_date = end_date - timedelta(days=30)
 
         historical_usage = []
@@ -1118,7 +1118,7 @@ class MeteringService:
         Returns:
             dict[str, Any]: Trend analysis
         """
-        end_date = datetime.utcnow()
+        end_date = datetime.now(UTC)
         start_date = end_date - timedelta(days=days)
 
         # Get daily usage

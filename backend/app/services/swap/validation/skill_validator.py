@@ -7,7 +7,7 @@ for the duties they'll assume after a swap.
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -176,7 +176,7 @@ class SkillValidator:
                 cred_info = faculty_creds[cred_name]
                 if cred_info.get("expires_at"):
                     days_until_expiry = (
-                        cred_info["expires_at"] - datetime.utcnow().date()
+                        cred_info["expires_at"] - datetime.now(UTC).date()
                     ).days
 
                     if days_until_expiry < 30:

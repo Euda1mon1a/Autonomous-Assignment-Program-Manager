@@ -1,7 +1,7 @@
 """Unsubscribe management."""
 
 import hashlib
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -17,7 +17,7 @@ class UnsubscribeRecord(BaseModel):
 
     email: str
     notification_types: list[str] = Field(default_factory=list)  # Empty = all types
-    unsubscribed_at: datetime = Field(default_factory=datetime.utcnow)
+    unsubscribed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     reason: str | None = None
 
 

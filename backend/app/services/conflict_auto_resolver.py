@@ -6,7 +6,7 @@ with comprehensive impact analysis, validation, and batch processing capabilitie
 
 import time
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, func
@@ -112,7 +112,7 @@ class ConflictAutoResolver:
             blockers=blockers,
             recommended_strategies=recommended_strategies,
             estimated_resolution_time=estimated_time,
-            analyzed_at=datetime.utcnow(),
+            analyzed_at=datetime.now(UTC),
         )
 
     def generate_resolution_options(
@@ -134,7 +134,7 @@ class ConflictAutoResolver:
         cache_key = f"{conflict_id}_{max_options}"
         if cache_key in self._resolution_cache:
             cached_time, options = self._resolution_cache[cache_key]
-            if (datetime.utcnow() - cached_time).seconds < 300:  # 5 minute cache
+            if (datetime.now(UTC) - cached_time).seconds < 300:  # 5 minute cache
                 return options
 
         alert = self._get_alert(conflict_id)
@@ -175,7 +175,7 @@ class ConflictAutoResolver:
         )
 
         # Cache results
-        self._resolution_cache[cache_key] = (datetime.utcnow(), options[:max_options])
+        self._resolution_cache[cache_key] = (datetime.now(UTC), options[:max_options])
 
         return options[:max_options]
 
@@ -330,7 +330,7 @@ class ConflictAutoResolver:
         Returns:
             BatchResolutionReport with aggregate results
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         processing_start = time.time()
 
         report = BatchResolutionReport(
@@ -435,7 +435,7 @@ class ConflictAutoResolver:
         report.safety_checks_passed = safety_passed
         report.safety_checks_failed = safety_failed
         report.processing_time_seconds = processing_time
-        report.completed_at = datetime.utcnow()
+        report.completed_at = datetime.now(UTC)
 
         # Calculate success rate
         if report.conflicts_analyzed > 0:
@@ -1483,7 +1483,7 @@ class ConflictAutoResolver:
 
                 # Mark conflict as resolved
                 locked_alert.status = ConflictAlertStatus.RESOLVED
-                locked_alert.resolved_at = datetime.utcnow()
+                locked_alert.resolved_at = datetime.now(UTC)
                 locked_alert.resolved_by_id = user_id
                 locked_alert.resolution_notes = (
                     f"Auto-resolved via {option.strategy.value}: {option.title}"
@@ -1505,7 +1505,7 @@ class ConflictAutoResolver:
                 conflict_resolved=True,
                 new_conflicts_created=new_conflicts,
                 warnings=warnings,
-                applied_at=datetime.utcnow(),
+                applied_at=datetime.now(UTC),
                 applied_by_id=user_id,
                 can_rollback=True,
                 rollback_instructions="Contact scheduling coordinator to reverse changes",

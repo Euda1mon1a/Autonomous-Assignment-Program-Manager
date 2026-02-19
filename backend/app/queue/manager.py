@@ -13,7 +13,7 @@ import json
 import logging
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from celery import chain, chord, group
@@ -354,7 +354,7 @@ class QueueManager:
             "error": error,
             "error_type": error_type,
             "traceback": traceback,
-            "failed_at": datetime.utcnow().isoformat(),
+            "failed_at": datetime.now(UTC).isoformat(),
         }
 
         logger.error(
@@ -396,7 +396,7 @@ class QueueManager:
                 "job_data": job_data,
                 "error": str(error),
                 "retry_count": retry_count,
-                "failed_at": datetime.utcnow().isoformat(),
+                "failed_at": datetime.now(UTC).isoformat(),
                 "status": "failed",
             }
 
@@ -448,7 +448,7 @@ class QueueManager:
         reserved = inspect.reserved()
 
         stats = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "queues": {},
         }
 

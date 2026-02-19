@@ -21,7 +21,7 @@ Architecture:
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any, cast
 from uuid import UUID, uuid4
@@ -99,7 +99,7 @@ class UserSegment:
     required_flags: dict[str, bool] = field(default_factory=dict)  # Feature flags
 
     # Metadata
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     is_active: bool = True
 
     def matches(
@@ -209,7 +209,7 @@ class CanaryMetrics:
     Tracks both canary and baseline metrics to detect regressions.
     """
 
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     # Request metrics
     canary_request_count: int = 0
@@ -267,7 +267,7 @@ class MetricComparison:
     is_acceptable: bool = True
     difference: float = 0.0
     difference_percentage: float = 0.0
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
         """Calculate differences and acceptability."""
@@ -355,7 +355,7 @@ class CanaryRelease:
     metric_comparisons: list[MetricComparison] = field(default_factory=list)
 
     # Timing
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     started_at: datetime | None = None
     completed_at: datetime | None = None
     last_ramp_at: datetime | None = None
@@ -387,7 +387,7 @@ class CanaryRelease:
             metadata: Additional event data
         """
         event = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "type": event_type,
             "message": message,
             "state": self.state.value,
@@ -402,7 +402,7 @@ class CanaryRelease:
         if not self.started_at:
             return False
 
-        elapsed = datetime.utcnow() - self.started_at
+        elapsed = datetime.now(UTC) - self.started_at
         max_duration = timedelta(hours=self.config.maximum_release_duration_hours)
         return elapsed > max_duration
 
@@ -417,7 +417,7 @@ class CanaryRelease:
             # Check minimum observation time
         if self.last_ramp_at:
             min_interval = timedelta(minutes=self.config.ramp_interval_minutes)
-            if datetime.utcnow() - self.last_ramp_at < min_interval:
+            if datetime.now(UTC) - self.last_ramp_at < min_interval:
                 return False
 
         return True
@@ -515,8 +515,8 @@ class CanaryReleaseManager:
             return False
 
         release.state = CanaryState.RAMPING
-        release.started_at = datetime.utcnow()
-        release.last_ramp_at = datetime.utcnow()
+        release.started_at = datetime.now(UTC)
+        release.last_ramp_at = datetime.now(UTC)
         release.log_event(
             "started",
             f"Started canary at {release.current_traffic.canary_percentage}% traffic",
@@ -591,7 +591,7 @@ class CanaryReleaseManager:
 
                 # Save current metrics to history
         metrics_snapshot = CanaryMetrics(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             canary_request_count=release.current_metrics.canary_request_count,
             baseline_request_count=release.current_metrics.baseline_request_count,
             canary_error_count=release.current_metrics.canary_error_count,
@@ -783,7 +783,7 @@ class CanaryReleaseManager:
             if reason != RollbackReason.MANUAL
             else CanaryOutcome.MANUAL_ROLLBACK
         )
-        release.completed_at = datetime.utcnow()
+        release.completed_at = datetime.now(UTC)
 
         release.log_event(
             "rollback_complete", "Rollback complete, all traffic routed to baseline"
@@ -813,7 +813,7 @@ class CanaryReleaseManager:
 
         old_percentage = release.current_traffic.canary_percentage
         release.current_traffic = release.current_traffic.ramp_up()
-        release.last_ramp_at = datetime.utcnow()
+        release.last_ramp_at = datetime.now(UTC)
         new_percentage = release.current_traffic.canary_percentage
 
         release.log_event(
@@ -871,7 +871,7 @@ class CanaryReleaseManager:
                 min_observation = timedelta(
                     minutes=release.config.minimum_observation_minutes
                 )
-                if datetime.utcnow() - release.last_ramp_at < min_observation:
+                if datetime.now(UTC) - release.last_ramp_at < min_observation:
                     return {
                         "action": "waiting",
                         "message": "Observing current traffic level",
@@ -893,7 +893,7 @@ class CanaryReleaseManager:
             )
             if (
                 release.last_ramp_at
-                and datetime.utcnow() - release.last_ramp_at > min_observation
+                and datetime.now(UTC) - release.last_ramp_at > min_observation
             ):
                 self.complete_release(release_id)
                 return {
@@ -922,7 +922,7 @@ class CanaryReleaseManager:
 
         release.state = CanaryState.COMPLETE
         release.outcome = CanaryOutcome.SUCCESS
-        release.completed_at = datetime.utcnow()
+        release.completed_at = datetime.now(UTC)
 
         release.log_event(
             "complete", "Canary release completed successfully at 100% traffic"
@@ -1031,7 +1031,7 @@ class CanaryReleaseManager:
                     release.completed_at.isoformat() if release.completed_at else None
                 ),
                 "elapsed_minutes": (
-                    (datetime.utcnow() - release.started_at).total_seconds() / 60.0
+                    (datetime.now(UTC) - release.started_at).total_seconds() / 60.0
                     if release.started_at
                     else 0
                 ),
@@ -1121,7 +1121,7 @@ class CanaryReleaseManager:
         Returns:
             Number of releases removed
         """
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         to_remove = [
             release_id
             for release_id, release in self.releases.items()

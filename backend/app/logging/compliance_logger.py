@@ -11,7 +11,7 @@ Tracks:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 
@@ -65,7 +65,7 @@ class ComplianceEvent:
 
     event_type: ComplianceEventType
     severity: ComplianceSeverity
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     user_id: str | None = None
     affected_person: str | None = None
     affected_person_role: str | None = None

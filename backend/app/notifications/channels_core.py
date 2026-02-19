@@ -51,7 +51,7 @@ Example Usage
 
 import uuid
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -85,7 +85,7 @@ class NotificationPayload(BaseModel):
     body: str
     data: dict[str, Any] | None = None
     priority: str = "normal"
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class DeliveryResult(BaseModel):

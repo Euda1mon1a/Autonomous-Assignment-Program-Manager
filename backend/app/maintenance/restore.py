@@ -4,7 +4,7 @@ import gzip
 import json
 import logging
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -111,7 +111,7 @@ class RestoreService:
                 raise RestoreValidationError(f"Backup validation failed: {error_msg}")
 
             restore_id = str(uuid.uuid4())
-            restore_timestamp = datetime.utcnow()
+            restore_timestamp = datetime.now(UTC)
 
             if dry_run:
                 logger.info(f"Dry run completed for backup {backup_id}")

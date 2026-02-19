@@ -1,6 +1,6 @@
 """GraphQL mutation resolvers."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -137,7 +137,7 @@ class Mutation:
         if input.faculty_role is not None:
             db_person.faculty_role = input.faculty_role.value  # type: ignore[assignment]
 
-        db_person.updated_at = datetime.utcnow()  # type: ignore[assignment]
+        db_person.updated_at = datetime.now(UTC)  # type: ignore[assignment]
 
         db.commit()
         db.refresh(db_person)
@@ -246,9 +246,9 @@ class Mutation:
         if input.override_reason is not None:
             db_assignment.override_reason = input.override_reason  # type: ignore[assignment]
         if input.acknowledge_override:
-            db_assignment.override_acknowledged_at = datetime.utcnow()  # type: ignore[assignment]
+            db_assignment.override_acknowledged_at = datetime.now(UTC)  # type: ignore[assignment]
 
-        db_assignment.updated_at = datetime.utcnow()  # type: ignore[assignment]
+        db_assignment.updated_at = datetime.now(UTC)  # type: ignore[assignment]
 
         db.commit()
         db.refresh(db_assignment)

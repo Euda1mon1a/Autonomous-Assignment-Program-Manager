@@ -7,7 +7,7 @@ meet all requirements and won't cause issues.
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -78,15 +78,15 @@ class PreSwapValidator:
 
             # Check 2: Week validity
         checks_performed.append("week_validity")
-        if swap.source_week < datetime.utcnow().date():
+        if swap.source_week < datetime.now(UTC).date():
             errors.append("Cannot swap weeks in the past")
 
-        if swap.target_week and swap.target_week < datetime.utcnow().date():
+        if swap.target_week and swap.target_week < datetime.now(UTC).date():
             errors.append("Target week is in the past")
 
             # Check 3: Freeze horizon
         checks_performed.append("freeze_horizon")
-        days_until_swap = (swap.source_week - datetime.utcnow().date()).days
+        days_until_swap = (swap.source_week - datetime.now(UTC).date()).days
         if days_until_swap < 7:
             warnings.append(
                 f"Swap is only {days_until_swap} days away - very short notice"
@@ -138,7 +138,7 @@ class PreSwapValidator:
 
         metadata = {
             "total_checks": len(checks_performed),
-            "validation_timestamp": datetime.utcnow().isoformat(),
+            "validation_timestamp": datetime.now(UTC).isoformat(),
             "swap_id": str(swap.id),
         }
 
@@ -176,7 +176,7 @@ class PreSwapValidator:
             return False
 
             # Check week not in past
-        if swap.source_week < datetime.utcnow().date():
+        if swap.source_week < datetime.now(UTC).date():
             return False
 
         return True

@@ -56,7 +56,7 @@ import hashlib
 import logging
 import re
 import secrets
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, TypeVar
 from uuid import UUID
 
@@ -1418,7 +1418,7 @@ class TenantIsolationService:
             resource_type=resource_type,
             resource_id=resource_id,
             changes=changes,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
 
         self.session.add(audit_log)

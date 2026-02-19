@@ -8,7 +8,7 @@ This service handles:
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Union
 from uuid import UUID
 
@@ -225,7 +225,7 @@ class RotationTemplateService:
         )
 
         # Create new patterns
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         new_patterns = []
         for pattern_data in patterns:
             activity = await self._resolve_pattern_activity(
@@ -377,7 +377,7 @@ class RotationTemplateService:
             # Check if requirements already exist
         existing = await self.get_halfday_requirements(template_id)
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         if existing:
             # Update existing requirements
@@ -469,7 +469,7 @@ class RotationTemplateService:
         )
 
         # Create new preferences
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         new_preferences = []
         for pref_data in preferences:
             preference = RotationPreference(
@@ -818,7 +818,7 @@ class RotationTemplateService:
 
             # Phase 2: Create templates (if not dry run)
         if not dry_run:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             for idx, template_data in templates_to_create:
                 template = RotationTemplate(
                     **template_data,
@@ -972,7 +972,7 @@ class RotationTemplateService:
 
         return {
             "templates": templates_data,
-            "exported_at": datetime.utcnow().isoformat(),
+            "exported_at": datetime.now(UTC).isoformat(),
             "total": len(templates_data),
         }
 
@@ -1003,7 +1003,7 @@ class RotationTemplateService:
             raise ValueError(f"Template with ID {template_id} is already archived")
 
         template.is_archived = True
-        template.archived_at = datetime.utcnow()
+        template.archived_at = datetime.now(UTC)
         template.archived_by = user_id
 
         await self._flush()
@@ -1113,7 +1113,7 @@ class RotationTemplateService:
 
             # Phase 2: Archive templates (if not dry run)
         if not dry_run:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             for idx, template_id, template in templates_to_archive:
                 template.is_archived = True
                 template.archived_at = now

@@ -30,7 +30,7 @@ References:
 
 import math
 from dataclasses import dataclass, field
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, UTC
 from enum import Enum
 from typing import Optional
 from uuid import UUID
@@ -308,7 +308,7 @@ class SleepDebtModel:
         state = SleepDebtState(
             resident_id=resident_id,
             current_debt_hours=new_debt,
-            last_updated=datetime.utcnow(),
+            last_updated=datetime.now(UTC),
             consecutive_deficit_days=deficit_days,
             recovery_sleep_needed=recovery_needed,
             chronic_debt=chronic,

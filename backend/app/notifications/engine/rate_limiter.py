@@ -2,7 +2,7 @@
 
 import asyncio
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -34,11 +34,11 @@ class RateLimitBucket:
         self.capacity = capacity
         self.tokens = float(capacity)
         self.refill_rate = refill_rate
-        self.last_refill = datetime.utcnow()
+        self.last_refill = datetime.now(UTC)
 
     def refill(self) -> None:
         """Refill tokens based on time elapsed."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         elapsed = (now - self.last_refill).total_seconds() / 60  # minutes
 
         tokens_to_add = elapsed * self.refill_rate
@@ -314,7 +314,7 @@ class NotificationRateLimiter:
             Number of buckets cleaned up
         """
         async with self._lock:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             max_age = timedelta(hours=24)
 
             cleaned = 0

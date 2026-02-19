@@ -12,7 +12,7 @@ Tasks integrate with SecretRotationService and send notifications for rotation e
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 
 from celery import shared_task
@@ -199,7 +199,7 @@ def check_scheduled_rotations(self) -> dict:
                 rotation_status[secret_type.value] = f"error: {str(e)}"
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "rotation_status": rotation_status,
         }
 
@@ -310,7 +310,7 @@ def complete_grace_periods(self) -> dict:
             db.query(SecretRotationHistory)
             .filter(
                 SecretRotationHistory.status == RotationStatus.GRACE_PERIOD,
-                SecretRotationHistory.grace_period_ends <= datetime.utcnow(),
+                SecretRotationHistory.grace_period_ends <= datetime.now(UTC),
             )
             .all()
         )
@@ -333,7 +333,7 @@ def complete_grace_periods(self) -> dict:
                 results[rotation.secret_type.value] = {
                     "rotation_id": str(rotation.id),
                     "success": success,
-                    "completed_at": datetime.utcnow().isoformat(),
+                    "completed_at": datetime.now(UTC).isoformat(),
                 }
 
             except Exception as e:
@@ -348,7 +348,7 @@ def complete_grace_periods(self) -> dict:
                 }
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "grace_periods_completed": len(
                 [r for r in results.values() if r.get("success")]
             ),
@@ -422,7 +422,7 @@ def send_rotation_reminder(
             logger.error(f"Failed to send rotation notification: {e}", exc_info=True)
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "secret_type": secret_type,
             "days_until_due": days_until_due,
             "notification_sent": True,
@@ -431,7 +431,7 @@ def send_rotation_reminder(
     except Exception as e:
         logger.error(f"Failed to send rotation reminder: {e}", exc_info=True)
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "secret_type": secret_type,
             "notification_sent": False,
             "error": str(e),
@@ -469,7 +469,7 @@ def monitor_rotation_health(self) -> dict:
             .filter(
                 SecretRotationHistory.status == RotationStatus.FAILED,
                 SecretRotationHistory.started_at
-                >= datetime.utcnow() - timedelta(hours=24),
+                >= datetime.now(UTC) - timedelta(hours=24),
             )
             .count()
         )
@@ -487,7 +487,7 @@ def monitor_rotation_health(self) -> dict:
             .filter(
                 SecretRotationHistory.status == RotationStatus.GRACE_PERIOD,
                 SecretRotationHistory.grace_period_ends
-                <= datetime.utcnow() + timedelta(hours=6),
+                <= datetime.now(UTC) + timedelta(hours=6),
             )
             .count()
         )
@@ -550,7 +550,7 @@ def monitor_rotation_health(self) -> dict:
                 )
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "health_status": health_status,
             "failed_rotations_24h": failed_rotations,
             "active_grace_periods": active_grace_periods,
@@ -655,7 +655,7 @@ def emergency_rotate_all(
         )
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "reason": reason,
             "initiated_by": initiated_by,
             "successful_rotations": successful,
@@ -694,7 +694,7 @@ def cleanup_old_rotation_history(
 
     db = get_db_session()
     try:
-        cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=retention_days)
 
         # Delete old rotation records
         deleted_count = (
@@ -708,7 +708,7 @@ def cleanup_old_rotation_history(
         logger.info(f"Cleaned up {deleted_count} old rotation records")
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "retention_days": retention_days,
             "cutoff_date": cutoff_date.isoformat(),
             "records_deleted": deleted_count,

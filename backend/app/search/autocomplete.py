@@ -27,7 +27,7 @@ import ast
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 
@@ -107,7 +107,7 @@ class AutocompleteAnalytics:
     cache_hit: bool
     response_time_ms: float
     sources_used: list[str]
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         """Convert analytics to dictionary."""
@@ -229,7 +229,7 @@ class AutocompleteService:
                 limit=10
             )
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         sources_used: list[str] = []
 
         # Validate and normalize query
@@ -296,7 +296,7 @@ class AutocompleteService:
             await self._track_query(query, user_id, context)
 
             # Record analytics
-        response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
         await self._record_analytics(
             query=query,
             user_id=user_id,
@@ -912,7 +912,7 @@ class AutocompleteService:
 
             # Store in Redis with daily key for aggregation
             redis_client = self._get_redis()
-            date_key = datetime.utcnow().strftime("%Y-%m-%d")
+            date_key = datetime.now(UTC).strftime("%Y-%m-%d")
             analytics_key = f"{self.ANALYTICS_KEY_PREFIX}:{date_key}"
 
             # Add to list (limited to prevent unbounded growth)
@@ -950,7 +950,7 @@ class AutocompleteService:
             Analytics summary with metrics
         """
         if end_date is None:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(UTC)
         if start_date is None:
             start_date = end_date - timedelta(days=7)
 

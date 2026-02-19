@@ -9,7 +9,7 @@ Handles delivery of export files via:
 
 import io
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -315,7 +315,7 @@ class ExportDeliveryService:
                     # S3 delivery
         if delivery_method in ("s3", "both"):
             # Generate S3 key
-            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             s3_key = f"{s3_key_prefix or 'exports'}/{timestamp}_{filename}"
 
             s3_success, s3_url = self.s3_service.upload_export(
@@ -363,7 +363,7 @@ class ExportDeliveryService:
                 <div class="content">
                     <p>Your scheduled export is attached to this email.</p>
                     <p><strong>File:</strong> {filename}</p>
-                    <p><strong>Generated:</strong> {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}</p>
+                    <p><strong>Generated:</strong> {datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")}</p>
                 </div>
                 <div class="footer">
                     <p>This is an automated message from the Residency Scheduling System.</p>

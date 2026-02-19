@@ -1,7 +1,7 @@
 """Metrics collection for notification system."""
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from app.core.logging import get_logger
@@ -45,7 +45,7 @@ class NotificationMetrics:
         self._max_latencies = 1000  # Keep last 1000
 
         # Start time
-        self._start_time = datetime.utcnow()
+        self._start_time = datetime.now(UTC)
 
     def record_sent(
         self,
@@ -119,7 +119,7 @@ class NotificationMetrics:
             }
 
             # Calculate uptime
-        uptime_seconds = (datetime.utcnow() - self._start_time).total_seconds()
+        uptime_seconds = (datetime.now(UTC) - self._start_time).total_seconds()
 
         return {
             "sent": self._sent_count,
@@ -155,6 +155,6 @@ class NotificationMetrics:
         self._by_channel.clear()
         self._by_priority.clear()
         self._latencies.clear()
-        self._start_time = datetime.utcnow()
+        self._start_time = datetime.now(UTC)
 
         logger.info("Metrics reset")

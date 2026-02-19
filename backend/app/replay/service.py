@@ -15,7 +15,7 @@ import asyncio
 import hashlib
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -35,7 +35,7 @@ class CapturedRequest(BaseModel):
     """Model for a captured HTTP request."""
 
     id: str = Field(default_factory=lambda: str(uuid4()))
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     method: str
     url: str
     headers: dict[str, str] = Field(default_factory=dict)
@@ -69,7 +69,7 @@ class ReplayResult(BaseModel):
     """Result of a replay operation."""
 
     request_id: str
-    replay_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    replay_timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     success: bool = False
     status_code: int = 0
     response_body: dict[str, Any] | None = None
@@ -408,7 +408,7 @@ class ReplayService:
         result = ReplayResult(request_id=request_id)
 
         try:
-            start_time = datetime.utcnow()
+            start_time = datetime.now(UTC)
 
             # Build full URL
             full_url = modified_request.url
@@ -425,7 +425,7 @@ class ReplayService:
                 timeout=timeout_seconds,
             )
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(UTC)
             elapsed_ms = (end_time - start_time).total_seconds() * 1000
 
             # Store result
@@ -901,7 +901,7 @@ class ReplayService:
         Returns:
             Number of requests deleted
         """
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         count = 0
 
         for request_id, request in list(self.storage.requests.items()):

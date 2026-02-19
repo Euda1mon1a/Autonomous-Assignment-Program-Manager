@@ -9,7 +9,7 @@ Provides automated background tasks for:
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Coroutine, TypeVar
 
@@ -129,7 +129,7 @@ def initialize_embeddings(
         if health.status == "error":
             logger.error(f"RAG system unhealthy: {health.recommendations}")
             return {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "status": "error",
                 "error": "RAG system health check failed",
                 "recommendations": health.recommendations,
@@ -151,7 +151,7 @@ def initialize_embeddings(
         if not docs_path.exists():
             logger.error(f"Knowledge base directory not found: {docs_path}")
             return {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "status": "error",
                 "error": f"Directory not found: {docs_path}",
             }
@@ -161,7 +161,7 @@ def initialize_embeddings(
             if not files[0].exists():
                 logger.error(f"Document not found: {doc_filter}")
                 return {
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "status": "error",
                     "error": f"File not found: {doc_filter}",
                 }
@@ -171,7 +171,7 @@ def initialize_embeddings(
         if not files:
             logger.warning(f"No markdown files found in {docs_path}")
             return {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "status": "error",
                 "error": "No documents found",
             }
@@ -277,7 +277,7 @@ def initialize_embeddings(
         )
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "status": "completed",
             "documents_processed": len(files),
             "documents_successful": success_count,
@@ -364,7 +364,7 @@ def check_rag_health(self) -> dict[str, Any]:
         health = _run_async(rag_service.get_health())
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "status": health.status,
             "total_documents": health.total_documents,
             "documents_by_type": health.documents_by_type,
@@ -408,7 +408,7 @@ def periodic_refresh(self) -> dict[str, Any]:
 
     if not files:
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "status": "skipped",
             "reason": "No documents found",
         }
@@ -455,7 +455,7 @@ def clear_all_embeddings(self) -> dict[str, Any]:
         logger.info(f"Cleared {total_deleted} total chunks")
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "status": "completed",
             "total_deleted": total_deleted,
             "task_status": "completed",

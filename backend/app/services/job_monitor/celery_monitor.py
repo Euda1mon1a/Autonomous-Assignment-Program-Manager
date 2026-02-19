@@ -11,7 +11,7 @@ Provides real-time monitoring of Celery tasks including:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from celery import Celery
@@ -439,7 +439,7 @@ class CeleryMonitorService:
                 "online_workers": len(online_workers),
                 "offline_workers": max(0, total_workers - len(online_workers)),
                 "workers": online_workers,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -450,5 +450,5 @@ class CeleryMonitorService:
                 "online_workers": 0,
                 "offline_workers": 0,
                 "workers": [],
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }

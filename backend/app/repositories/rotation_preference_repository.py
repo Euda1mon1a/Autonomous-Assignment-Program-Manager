@@ -4,7 +4,7 @@ Provides async CRUD operations for rotation preferences with specialized
 queries for preference management in rotation templates.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Literal
 from uuid import UUID
 
@@ -120,7 +120,7 @@ class RotationPreferenceRepository(AsyncBaseRepository[RotationPreference]):
         Returns:
             List of created RotationPreference instances
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         new_preferences = []
 
         for pref_data in preferences:
@@ -203,7 +203,7 @@ class RotationPreferenceRepository(AsyncBaseRepository[RotationPreference]):
         preference = await self.get_by_type(template_id, preference_type)
         if preference:
             preference.is_active = not preference.is_active
-            preference.updated_at = datetime.utcnow()
+            preference.updated_at = datetime.now(UTC)
             await self.db.flush()
         return preference
 
@@ -226,7 +226,7 @@ class RotationPreferenceRepository(AsyncBaseRepository[RotationPreference]):
         preference = await self.get_by_type(template_id, preference_type)
         if preference:
             preference.weight = weight
-            preference.updated_at = datetime.utcnow()
+            preference.updated_at = datetime.now(UTC)
             await self.db.flush()
         return preference
 

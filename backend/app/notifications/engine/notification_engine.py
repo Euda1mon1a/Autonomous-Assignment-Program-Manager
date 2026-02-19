@@ -1,7 +1,7 @@
 """Main notification engine orchestrator."""
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -369,5 +369,5 @@ class NotificationEngine:
             "pending_batches": await self.batching.get_pending_count(),
             "pending_retries": await self.retry_handler.get_pending_count(),
             "deduplication_cache_size": self.deduplication.get_cache_size(),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }

@@ -11,7 +11,7 @@ These functions bridge the in-memory Tier 3 components with database storage.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -177,7 +177,7 @@ def update_decision_resolution(
     if record:
         record.outcome = outcome.value
         record.chosen_option = chosen_option
-        record.decided_at = datetime.utcnow()
+        record.decided_at = datetime.now(UTC)
         record.decided_by = decided_by
         record.actual_time_seconds = actual_time_seconds
         db.commit()
@@ -469,9 +469,9 @@ def update_protection_plan_status(
     if record:
         record.status = status
         if status == "active":
-            record.activated_at = datetime.utcnow()
+            record.activated_at = datetime.now(UTC)
         elif status == "completed":
-            record.deactivated_at = datetime.utcnow()
+            record.deactivated_at = datetime.now(UTC)
         db.commit()
         db.refresh(record)
 

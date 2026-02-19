@@ -39,7 +39,7 @@ Usage:
 import hashlib
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, TypedDict
 from uuid import UUID
 
@@ -253,7 +253,7 @@ class DataVersioningService:
             metadata: VersionMetadata = {
                 "version_id": transaction_id,
                 "transaction_id": transaction_id,
-                "timestamp": issued_at or datetime.utcnow(),
+                "timestamp": issued_at or datetime.now(UTC),
                 "user_id": user_id,
                 "operation": operation,
                 "tags": [],
@@ -613,7 +613,7 @@ class DataVersioningService:
             "entity_id": str(entity_id),
             "target_version": target_version,
             "rolled_back_by": user_id,
-            "rolled_back_at": datetime.utcnow(),
+            "rolled_back_at": datetime.now(UTC),
             "reason": reason,
         }
 
@@ -656,7 +656,7 @@ class DataVersioningService:
         # Create branch
         branch: VersionBranch = {
             "branch_name": new_branch_name,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(UTC),
             "created_by": user_id,
             "parent_branch": parent_branch,
             "base_version_id": base_version_id,
@@ -963,7 +963,7 @@ class DataVersioningService:
         result = self.db.execute(query, {"transaction_id": transaction_id})
         row = result.fetchone()
 
-        return row[0] if row else datetime.utcnow()
+        return row[0] if row else datetime.now(UTC)
 
     def _calculate_checksum(self, data: dict[str, Any] | None) -> str:
         """

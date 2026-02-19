@@ -11,7 +11,7 @@ Provides ready-to-use test scenarios for:
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -124,7 +124,7 @@ class ScheduleGenerationScenario(TestScenario):
                 "id": self.schedule_id,
                 "assignments": self._generate_sample_assignments(),
                 "metadata": {
-                    "generated_at": datetime.utcnow().isoformat(),
+                    "generated_at": datetime.now(UTC).isoformat(),
                     "acgme_compliant": True,
                 },
             },
@@ -228,7 +228,7 @@ class SwapWorkflowScenario(TestScenario):
             response={
                 "id": self.swap_id,
                 "status": "approved",
-                "approved_at": datetime.utcnow().isoformat(),
+                "approved_at": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -247,7 +247,7 @@ class SwapWorkflowScenario(TestScenario):
                     body={
                         "id": self.swap_id,
                         "status": "completed",
-                        "executed_at": datetime.utcnow().isoformat(),
+                        "executed_at": datetime.now(UTC).isoformat(),
                     },
                 ),
             ],

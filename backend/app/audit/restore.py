@@ -41,7 +41,7 @@ Usage:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -227,7 +227,7 @@ class AuditRestorer:
             records_found=len(all_records),
             records_restored=restored_count if not dry_run else 0,
             restore_mode=restore_mode,
-            restored_at=datetime.utcnow().isoformat(),
+            restored_at=datetime.now(UTC).isoformat(),
             filters_applied=filters,
             metadata={
                 "dry_run": dry_run,
@@ -427,7 +427,7 @@ class AuditRestorer:
             "archives_reviewed": len(archives),
             "entity_type_counts": entity_type_counts,
             "operation_counts": operation_counts,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "entity_type_filter": entity_types,
         }
 

@@ -6,7 +6,7 @@ Provides collectors for SQL queries, HTTP requests, and distributed traces.
 
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -205,7 +205,7 @@ class SQLQueryCollector(MetricCollector):
                 query_id=query_id,
                 sql=statement,
                 parameters=parameters if not executemany else None,
-                start_time=datetime.utcnow(),
+                start_time=datetime.now(UTC),
                 end_time=None,
                 duration_ms=None,
                 row_count=None,
@@ -226,7 +226,7 @@ class SQLQueryCollector(MetricCollector):
                 return
 
             query = self.active_queries[query_id]
-            query.end_time = datetime.utcnow()
+            query.end_time = datetime.now(UTC)
             query.duration_ms = (
                 query.end_time - query.start_time
             ).total_seconds() * 1000
@@ -245,7 +245,7 @@ class SQLQueryCollector(MetricCollector):
                 return
 
             query = self.active_queries[query_id]
-            query.end_time = datetime.utcnow()
+            query.end_time = datetime.now(UTC)
             query.duration_ms = (
                 query.end_time - query.start_time
             ).total_seconds() * 1000
@@ -352,7 +352,7 @@ class RequestCollector(MetricCollector):
             method=method,
             path=path,
             status_code=None,
-            start_time=datetime.utcnow(),
+            start_time=datetime.now(UTC),
             end_time=None,
             duration_ms=None,
             request_size_bytes=request_size_bytes,
@@ -381,7 +381,7 @@ class RequestCollector(MetricCollector):
             return
 
         metrics = self.active_requests[request_id]
-        metrics.end_time = datetime.utcnow()
+        metrics.end_time = datetime.now(UTC)
         metrics.duration_ms = (
             metrics.end_time - metrics.start_time
         ).total_seconds() * 1000
@@ -493,7 +493,7 @@ class TraceCollector(MetricCollector):
             span_id=span_id,
             parent_span_id=parent_span_id,
             operation_name=operation_name,
-            start_time=datetime.utcnow(),
+            start_time=datetime.now(UTC),
             end_time=None,
             duration_ms=None,
             tags=tags or {},
@@ -513,7 +513,7 @@ class TraceCollector(MetricCollector):
             return
 
         trace = self.active_traces[span_id]
-        trace.end_time = datetime.utcnow()
+        trace.end_time = datetime.now(UTC)
         trace.duration_ms = (trace.end_time - trace.start_time).total_seconds() * 1000
 
         self.add_item(trace)
@@ -536,7 +536,7 @@ class TraceCollector(MetricCollector):
         trace = self.active_traces[span_id]
         trace.logs.append(
             {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "message": message,
                 "fields": fields or {},
             }

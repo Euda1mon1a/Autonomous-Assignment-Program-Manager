@@ -10,7 +10,7 @@ import logging
 import shutil
 import tempfile
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
 from typing import Any, BinaryIO
 from uuid import UUID, uuid4
@@ -152,7 +152,7 @@ class LocalStorageBackend(StorageBackend):
             file_id = str(uuid4())
 
             # Create date-based subdirectory structure
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             date_path = (
                 self.base_path / str(now.year) / f"{now.month:02d}" / f"{now.day:02d}"
             )
@@ -355,7 +355,7 @@ class S3StorageBackend(StorageBackend):
             file_id = str(uuid4())
 
             # Create S3 key with date-based prefix
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             ext = Path(filename).suffix
             s3_key = f"{now.year}/{now.month:02d}/{now.day:02d}/{file_id}{ext}"
 

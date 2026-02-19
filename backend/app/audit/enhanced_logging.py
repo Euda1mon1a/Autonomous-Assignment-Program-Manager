@@ -68,7 +68,7 @@ Security:
 import hashlib
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -105,7 +105,7 @@ class AuditContext(BaseModel):
     user_agent: str | None = Field(None, description="User agent string")
     request_id: str | None = Field(None, description="Request correlation ID")
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="When action occurred"
+        default_factory=lambda: datetime.now(UTC), description="When action occurred"
     )
 
     class Config:
@@ -218,7 +218,7 @@ class EnhancedAuditLog(BaseModel):
 
     # Timestamps
     created_at: datetime = Field(
-        default_factory=datetime.utcnow, description="When log was created"
+        default_factory=lambda: datetime.now(UTC), description="When log was created"
     )
 
     class Config:
@@ -319,7 +319,8 @@ class ComplianceReport(BaseModel):
         default_factory=lambda: str(uuid4()), description="Unique report ID"
     )
     generated_at: datetime = Field(
-        default_factory=datetime.utcnow, description="When report was generated"
+        default_factory=lambda: datetime.now(UTC),
+        description="When report was generated",
     )
     generated_by: str = Field(..., description="User who generated the report")
 
@@ -474,7 +475,7 @@ class EnhancedAuditLogger:
             session_id=session_id,
             user_agent=user_agent,
             request_id=request_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
 
         # Calculate field changes

@@ -6,7 +6,7 @@ Provides optimized task queue management for Celery and async tasks.
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, Callable, Optional
 
@@ -89,7 +89,7 @@ class TaskQueue:
         Returns:
             Task ID
         """
-        task_id = task_id or f"task_{datetime.utcnow().timestamp()}"
+        task_id = task_id or f"task_{datetime.now(UTC).timestamp()}"
 
         task = Task(
             id=task_id,
@@ -97,7 +97,7 @@ class TaskQueue:
             args=args,
             kwargs=kwargs,
             priority=priority,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             max_retries=max_retries,
         )
 
@@ -189,14 +189,14 @@ class TaskQueue:
             task: Task to execute
         """
         async with self.semaphore:
-            start_time = datetime.utcnow()
+            start_time = datetime.now(UTC)
 
             try:
                 # Execute task
                 result = await task.func(*task.args, **task.kwargs)
 
                 # Track success
-                execution_time = (datetime.utcnow() - start_time).total_seconds()
+                execution_time = (datetime.now(UTC) - start_time).total_seconds()
                 self.stats["completed"] += 1
                 self.stats["total_time"] += execution_time
 

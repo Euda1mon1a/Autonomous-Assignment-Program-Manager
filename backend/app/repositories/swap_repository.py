@@ -1,6 +1,6 @@
 """Repository for swap data access."""
 
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from uuid import UUID
 
 from sqlalchemy import func, or_
@@ -46,7 +46,7 @@ class SwapRepository:
             status=SwapStatus.PENDING,
             reason=reason,
             requested_by_id=requested_by_id,
-            requested_at=datetime.utcnow(),
+            requested_at=datetime.now(UTC),
         )
         self.db.add(swap)
         self.db.commit()
@@ -90,7 +90,7 @@ class SwapRepository:
             return None
 
         swap.status = status
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         if status == SwapStatus.APPROVED:
             swap.approved_at = now
@@ -350,7 +350,7 @@ class SwapRepository:
             return None
 
         approval.approved = approved
-        approval.responded_at = datetime.utcnow()
+        approval.responded_at = datetime.now(UTC)
         approval.response_notes = notes
 
         self.db.commit()

@@ -9,7 +9,7 @@ import csv
 import gzip
 import io
 from collections.abc import AsyncIterator
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from typing import Any, BinaryIO
 
 from sqlalchemy import select
@@ -475,7 +475,7 @@ class CSVExporter:
         filename = base_name
 
         if timestamp:
-            ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             filename = f"{base_name}_{ts}"
 
         if compress:

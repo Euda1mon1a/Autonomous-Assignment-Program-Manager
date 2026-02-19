@@ -10,7 +10,7 @@ import time
 from collections import defaultdict
 from contextvars import ContextVar
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional
 
 from sqlalchemy import event, text
@@ -45,7 +45,7 @@ class QueryContext:
     n_plus_one_warnings: list[dict[str, Any]] = field(default_factory=list)
     slow_queries: list[QueryInfo] = field(default_factory=list)
     total_duration_ms: float = 0.0
-    start_time: datetime = field(default_factory=datetime.utcnow)
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 class QueryAnalyzer:
@@ -131,7 +131,7 @@ class QueryAnalyzer:
                 sql=statement,
                 params=parameters,
                 duration_ms=duration_ms,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 stack_trace=stack_trace,
             )
 

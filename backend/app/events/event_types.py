@@ -18,7 +18,7 @@ Event Versioning:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 
@@ -88,7 +88,7 @@ class EventMetadata(BaseModel):
     event_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     event_type: str
     event_version: int = Field(default=1, ge=1)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     correlation_id: str | None = None  # Links related events
     causation_id: str | None = None  # ID of event that caused this one
     user_id: str | None = None
@@ -340,7 +340,7 @@ class ACGMEViolationDetectedEvent(BaseEvent):
                 event_type=EventType.ACGME_VIOLATION_DETECTED
             )
         if "detected_at" not in data:
-            data["detected_at"] = datetime.utcnow()
+            data["detected_at"] = datetime.now(UTC)
         super().__init__(**data)
 
 

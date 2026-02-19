@@ -4,7 +4,7 @@ Provides async CRUD operations for weekly patterns with specialized
 queries for pattern management in rotation templates.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Sequence
 from uuid import UUID
 
@@ -101,7 +101,7 @@ class WeeklyPatternRepository(AsyncBaseRepository[WeeklyPattern]):
         Returns:
             List of created WeeklyPattern instances
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         new_patterns = []
 
         async def resolve_activity_id(

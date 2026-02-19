@@ -7,7 +7,7 @@ performance statistics.
 
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from threading import Lock
 
 from sqlalchemy.pool import Pool
@@ -127,7 +127,7 @@ class PoolMonitor:
         total_connections = size + overflow
 
         snapshot = PoolSnapshot(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             size=size,
             checked_in=checked_in,
             checked_out=checked_out,

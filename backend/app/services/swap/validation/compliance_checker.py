@@ -7,7 +7,7 @@ work hour limits, supervision ratios, and other requirements.
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -153,7 +153,7 @@ class ACGMEComplianceChecker:
             check_start = adding_week - timedelta(days=21)  # 3 weeks before
             check_end = adding_week + timedelta(days=7)  # 1 week after
         else:
-            check_start = datetime.utcnow().date()
+            check_start = datetime.now(UTC).date()
             check_end = check_start + timedelta(days=28)
 
             # Get assignments in this window

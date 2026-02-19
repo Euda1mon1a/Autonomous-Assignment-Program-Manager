@@ -9,7 +9,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any, AsyncGenerator, Optional
 
 import httpx
@@ -57,7 +57,7 @@ class LLMProvider(ABC):
         """
         self.name = name
         self._is_available = True
-        self._last_check = datetime.utcnow()
+        self._last_check = datetime.now(UTC)
         self._failure_count = 0
         self._latencies: list[float] = []
 
@@ -171,7 +171,7 @@ class LLMProvider(ABC):
             return ProviderHealth(
                 provider=self.name,
                 is_available=available,
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(UTC),
                 failure_count=self._failure_count,
                 avg_latency_ms=avg_latency,
                 error_message=None,
@@ -181,7 +181,7 @@ class LLMProvider(ABC):
             return ProviderHealth(
                 provider=self.name,
                 is_available=False,
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(UTC),
                 failure_count=self._failure_count,
                 error_message=str(e),
             )
@@ -445,7 +445,7 @@ class MLXProvider(LLMProvider):
 
     def is_available(self) -> bool:
         if not self._is_available:
-            if (datetime.utcnow() - self._last_check).seconds > 60:
+            if (datetime.now(UTC) - self._last_check).seconds > 60:
                 self._is_available = True
                 self._failure_count = 0
                 logger.info(f"Resetting {self.name} availability after cooldown")
@@ -701,7 +701,7 @@ class OllamaProvider(LLMProvider):
         """
         if not self._is_available:
             # Try to recover after 60 seconds
-            if (datetime.utcnow() - self._last_check).seconds > 60:
+            if (datetime.now(UTC) - self._last_check).seconds > 60:
                 self._is_available = True
                 self._failure_count = 0
                 logger.info(f"Resetting {self.name} availability after cooldown")
@@ -994,7 +994,7 @@ class CircuitBreaker:
             return True
         elif state.state == "open":
             # Check if recovery timeout passed
-            if state.next_retry and datetime.utcnow() >= state.next_retry:
+            if state.next_retry and datetime.now(UTC) >= state.next_retry:
                 state.state = "half_open"
                 logger.info(f"Circuit breaker for {provider} entering half-open state")
                 return True
@@ -1030,11 +1030,11 @@ class CircuitBreaker:
         """
         state = self.get_state(provider)
         state.failure_count += 1
-        state.last_failure = datetime.utcnow()
+        state.last_failure = datetime.now(UTC)
 
         if state.failure_count >= self.failure_threshold:
             state.state = "open"
-            state.next_retry = datetime.utcnow() + timedelta(
+            state.next_retry = datetime.now(UTC) + timedelta(
                 seconds=self.recovery_timeout
             )
             logger.warning(

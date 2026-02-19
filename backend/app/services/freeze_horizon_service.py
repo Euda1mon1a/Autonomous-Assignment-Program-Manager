@@ -37,7 +37,7 @@ Usage:
 """
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
@@ -360,7 +360,7 @@ class FreezeHorizonService:
         """
         record = FreezeOverrideAuditRecord(
             id=uuid4(),
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             assignment_id=assignment_id,
             block_id=block_id,
             block_date=block_date,

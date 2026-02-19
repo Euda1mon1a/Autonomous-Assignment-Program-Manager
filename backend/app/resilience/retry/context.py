@@ -11,7 +11,7 @@ Provides detailed information about retry execution, including:
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class RetryContext:
 
     operation_name: str
     max_attempts: int
-    start_time: datetime = field(default_factory=datetime.utcnow)
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
     attempts: list[RetryAttempt] = field(default_factory=list)
     last_delay: float = 0.0  # Track for decorrelated jitter
 
@@ -57,7 +57,7 @@ class RetryContext:
     @property
     def elapsed_time(self) -> timedelta:
         """Get the total elapsed time since retry started."""
-        return datetime.utcnow() - self.start_time
+        return datetime.now(UTC) - self.start_time
 
     @property
     def elapsed_seconds(self) -> float:
@@ -97,7 +97,7 @@ class RetryContext:
         """
         attempt = RetryAttempt(
             attempt_number=self.attempt_count + 1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             delay_before=delay_before,
             exception=exception,
             success=success,

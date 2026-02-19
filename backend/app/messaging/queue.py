@@ -11,7 +11,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 
@@ -167,7 +167,7 @@ class Message:
     def __post_init__(self) -> None:
         """Set defaults after initialization."""
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(UTC)
         if self.message_id is None:
             import uuid
 

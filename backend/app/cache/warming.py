@@ -45,7 +45,7 @@ import time
 from collections import defaultdict
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from threading import RLock
 from typing import Any
@@ -200,7 +200,7 @@ class CacheWarmingProgress:
         """
         if not self.start_time:
             return 0.0
-        return (datetime.utcnow() - self.start_time).total_seconds()
+        return (datetime.now(UTC) - self.start_time).total_seconds()
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -396,7 +396,7 @@ class CacheWarmer:
         # Initialize progress
         with self._metrics_lock:
             self.progress.in_progress = True
-            self.progress.start_time = datetime.utcnow()
+            self.progress.start_time = datetime.now(UTC)
             self.progress.errors.clear()
 
             # Sort warming functions by priority
@@ -480,7 +480,7 @@ class CacheWarmer:
             elapsed_ms = (time.time() - start_time) * 1000
             with self._metrics_lock:
                 self.metrics.startup_warming_time_ms = elapsed_ms
-                self.metrics.last_warm_timestamp = datetime.utcnow()
+                self.metrics.last_warm_timestamp = datetime.now(UTC)
                 self.progress.in_progress = False
                 self.progress.warmed_entries = entries_warmed
                 self.progress.total_entries = total_entries
@@ -870,7 +870,7 @@ class CacheWarmer:
             self.metrics.successful_warms += warmed_count
             self.metrics.failed_warms += failed_count
             self.metrics.total_warming_time_ms += elapsed_ms
-            self.metrics.last_warm_timestamp = datetime.utcnow()
+            self.metrics.last_warm_timestamp = datetime.now(UTC)
 
         return warmed_count
 
@@ -970,10 +970,10 @@ class CacheWarmer:
             return
 
         with self._access_lock:
-            self._access_patterns[cache_key].append(datetime.utcnow())
+            self._access_patterns[cache_key].append(datetime.now(UTC))
 
             # Trim old accesses
-            cutoff = datetime.utcnow() - timedelta(
+            cutoff = datetime.now(UTC) - timedelta(
                 hours=self.config.prediction_window_hours
             )
             self._access_patterns[cache_key] = [
@@ -995,7 +995,7 @@ class CacheWarmer:
         Returns:
             List of cache keys predicted to be accessed
         """
-        cutoff = datetime.utcnow() - timedelta(hours=window_hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=window_hours)
         predicted = []
 
         with self._access_lock:

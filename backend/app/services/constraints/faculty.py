@@ -15,7 +15,7 @@ Security:
 
 import logging
 import pickle
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from functools import lru_cache
 from threading import RLock
 from typing import Any
@@ -248,7 +248,7 @@ class FacultyPreferenceCache:
         with self._lock:
             if key in self._local_cache:
                 value, expiry = self._local_cache[key]
-                if datetime.utcnow() < expiry:
+                if datetime.now(UTC) < expiry:
                     return value
                 else:
                     del self._local_cache[key]
@@ -269,7 +269,7 @@ class FacultyPreferenceCache:
 
                 # Fallback to local cache
         with self._lock:
-            expiry = datetime.utcnow() + timedelta(seconds=self.ttl_seconds)
+            expiry = datetime.now(UTC) + timedelta(seconds=self.ttl_seconds)
             self._local_cache[key] = (value, expiry)
 
             # Limit local cache size

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections import Counter
 from copy import copy
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -502,7 +502,7 @@ class XMLToXlsxConverter:
         qa["A1"] = "Export QA Summary"
         qa["A1"].font = bold
         qa["A2"] = "Generated UTC"
-        qa["B2"] = f"{datetime.utcnow().isoformat(timespec='seconds')}Z"
+        qa["B2"] = f"{datetime.now(UTC).isoformat(timespec='seconds')}Z"
         qa["A3"] = "Block Start"
         qa["B3"] = str(stats.get("block_start", ""))
         qa["A4"] = "Block End"

@@ -9,7 +9,7 @@ Provides factories for:
 - Schedule generation responses
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -425,7 +425,7 @@ def create_acgme_validation_response(
             "one_in_seven_compliant": is_compliant,
             "supervision_ratios_met": is_compliant,
         },
-        "checked_at": datetime.utcnow().isoformat(),
+        "checked_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -449,7 +449,7 @@ def create_swap_request_response(
         "id": swap_id or str(uuid4()),
         "status": status,
         "swap_type": swap_type,
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "requester_id": str(uuid4()),
         "requested_assignment_id": str(uuid4()),
     }
@@ -472,7 +472,7 @@ def create_schedule_generation_response(
     return {
         "job_id": job_id or str(uuid4()),
         "status": status,
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "message": f"Schedule generation {status}",
     }
 
@@ -505,5 +505,5 @@ def create_resilience_health_response(
             "fallback_scheduler",
             "sacrifice_hierarchy",
         ],
-        "last_check": datetime.utcnow().isoformat(),
+        "last_check": datetime.now(UTC).isoformat(),
     }

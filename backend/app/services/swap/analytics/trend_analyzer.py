@@ -7,7 +7,7 @@ that can help optimize the swap system.
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -76,7 +76,7 @@ class SwapTrendAnalyzer:
         Returns:
             TrendAnalysis with comprehensive trend data
         """
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(UTC).date()
         start_date = end_date - timedelta(days=days)
 
         # Get all swaps in period
@@ -145,7 +145,7 @@ class SwapTrendAnalyzer:
         # Get historical data
         result = await self.db.execute(
             select(SwapRecord).where(
-                SwapRecord.requested_at >= datetime.utcnow() - timedelta(days=90)
+                SwapRecord.requested_at >= datetime.now(UTC) - timedelta(days=90)
             )
         )
 
@@ -166,7 +166,7 @@ class SwapTrendAnalyzer:
 
         predictions = []
         for i in range(1, weeks_ahead + 1):
-            week_start = datetime.utcnow().date() + timedelta(weeks=i)
+            week_start = datetime.now(UTC).date() + timedelta(weeks=i)
 
             predictions.append(
                 {
@@ -200,7 +200,7 @@ class SwapTrendAnalyzer:
             select(SwapRecord).where(
                 and_(
                     SwapRecord.status == SwapStatus.PENDING,
-                    SwapRecord.requested_at < datetime.utcnow() - timedelta(days=7),
+                    SwapRecord.requested_at < datetime.now(UTC) - timedelta(days=7),
                 )
             )
         )

@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -65,7 +65,7 @@ class HealthCheckResult:
         self.response_time_ms = response_time_ms
         self.details = details or {}
         self.error = error
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(UTC)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -90,7 +90,7 @@ class OverallHealthResult:
             results: List of individual check results
         """
         self.results = results
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(UTC)
 
     @property
     def overall_status(self) -> HealthStatus:

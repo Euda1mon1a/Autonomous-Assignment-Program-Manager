@@ -27,7 +27,7 @@ import hashlib
 import io
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from difflib import SequenceMatcher
 from typing import Any
 from uuid import UUID, uuid4
@@ -230,7 +230,7 @@ class ImportStagingService:
             # Create batch record
             batch = ImportBatch(
                 id=uuid4(),
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 created_by_id=created_by_id,
                 filename=filename,
                 file_hash=file_hash,
@@ -523,7 +523,7 @@ class ImportStagingService:
                         )
 
                         # Update batch status
-                now = datetime.utcnow()
+                now = datetime.now(UTC)
                 batch.status = ImportBatchStatus.APPLIED
                 batch.applied_at = now
                 batch.applied_by_id = applied_by_id
@@ -633,7 +633,7 @@ class ImportStagingService:
 
                 if (
                     batch.rollback_expires_at
-                    and datetime.utcnow() > batch.rollback_expires_at
+                    and datetime.now(UTC) > batch.rollback_expires_at
                 ):
                     return RollbackResult(
                         success=False,
@@ -684,7 +684,7 @@ class ImportStagingService:
 
                         # Update batch status
                 batch.status = ImportBatchStatus.ROLLED_BACK
-                batch.rolled_back_at = datetime.utcnow()
+                batch.rolled_back_at = datetime.now(UTC)
                 batch.rolled_back_by_id = rolled_back_by_id
                 batch.rollback_available = False
 
@@ -1139,7 +1139,7 @@ class ImportStagingService:
                 if staged.matched_rotation_id:
                     existing.rotation_template_id = staged.matched_rotation_id
                 existing.notes = (
-                    f"Updated via import batch at {datetime.utcnow().isoformat()}"
+                    f"Updated via import batch at {datetime.now(UTC).isoformat()}"
                 )
                 return existing.id
             elif resolution == ConflictResolutionMode.REPLACE:
@@ -1155,8 +1155,8 @@ class ImportStagingService:
             rotation_template_id=staged.matched_rotation_id,
             role="primary",
             created_by="import_staging_service",
-            created_at=datetime.utcnow(),
-            notes=f"Created via import batch at {datetime.utcnow().isoformat()}",
+            created_at=datetime.now(UTC),
+            notes=f"Created via import batch at {datetime.now(UTC).isoformat()}",
         )
         self.db.add(assignment)
         self.db.flush()

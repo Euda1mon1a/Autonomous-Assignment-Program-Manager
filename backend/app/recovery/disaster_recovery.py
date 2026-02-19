@@ -19,7 +19,7 @@ import asyncio
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -184,7 +184,7 @@ class RecoveryMetrics(BaseModel):
     """Metrics tracked during recovery."""
 
     recovery_id: UUID = Field(default_factory=uuid4)
-    started_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None
     duration_seconds: float = Field(default=0.0, ge=0.0)
     rto_target_minutes: int = Field(default=0, ge=0)
@@ -230,8 +230,8 @@ class RecoveryPlan:
     name: str = ""
     description: str = ""
     version: str = "1.0.0"
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    last_updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    last_updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     last_tested_at: datetime | None = None
 
     # Recovery objectives
@@ -266,7 +266,7 @@ class FailoverEvent:
     """Record of a failover event."""
 
     id: UUID = field(default_factory=uuid4)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     trigger: FailoverTrigger = FailoverTrigger.MANUAL
     reason: FailoverReason = FailoverReason.TESTING
     status: FailoverStatus = FailoverStatus.NOT_STARTED
@@ -488,7 +488,7 @@ class DisasterRecoveryService:
             # Check backup freshness
             if rpo.last_backup_at:
                 backup_age_minutes = (
-                    datetime.utcnow() - rpo.last_backup_at
+                    datetime.now(UTC) - rpo.last_backup_at
                 ).total_seconds() / 60
                 rpo.is_compliant = (
                     backup_age_minutes <= rpo.backup_frequency_minutes
@@ -714,7 +714,7 @@ class DisasterRecoveryService:
         Args:
             event: Failover event to execute
         """
-        event.started_at = datetime.utcnow()
+        event.started_at = datetime.now(UTC)
         event.status = FailoverStatus.VERIFYING_REPLICA
 
         try:
@@ -773,7 +773,7 @@ class DisasterRecoveryService:
 
         finally:
             # Record completion
-            event.completed_at = datetime.utcnow()
+            event.completed_at = datetime.now(UTC)
             if event.started_at:
                 event.duration_seconds = (
                     event.completed_at - event.started_at
@@ -933,7 +933,7 @@ class DisasterRecoveryService:
                 resource=resource,
                 status=status,
                 lag_seconds=lag_seconds,
-                last_sync_at=datetime.utcnow(),
+                last_sync_at=datetime.now(UTC),
                 is_healthy=is_healthy,
                 details={"target": "secondary", "method": "streaming_replication"},
             )
@@ -1033,7 +1033,7 @@ class DisasterRecoveryService:
 
         plan.steps.append(step)
         plan.steps.sort(key=lambda s: s.order)
-        plan.last_updated_at = datetime.utcnow()
+        plan.last_updated_at = datetime.now(UTC)
 
         logger.info(f"Added step '{name}' to plan '{plan.name}'")
         return step
@@ -1074,7 +1074,7 @@ class DisasterRecoveryService:
 
         # Update plan status
         plan.status = RecoveryPlanStatus.IN_PROGRESS
-        plan.last_execution_at = datetime.utcnow()
+        plan.last_execution_at = datetime.now(UTC)
         plan.execution_count += 1
 
         logger.info(f"Executing recovery plan: {plan.name}")
@@ -1105,13 +1105,13 @@ class DisasterRecoveryService:
 
         finally:
             # Record completion
-            metrics.completed_at = datetime.utcnow()
+            metrics.completed_at = datetime.now(UTC)
             metrics.duration_seconds = (
                 metrics.completed_at - metrics.started_at
             ).total_seconds()
 
             plan.last_execution_duration_minutes = metrics.duration_seconds / 60
-            plan.last_updated_at = datetime.utcnow()
+            plan.last_updated_at = datetime.now(UTC)
 
             self._active_recovery = None
 
@@ -1139,7 +1139,7 @@ class DisasterRecoveryService:
             executed_by: Who is executing
         """
         step.status = RecoveryPlanStatus.IN_PROGRESS
-        step.started_at = datetime.utcnow()
+        step.started_at = datetime.now(UTC)
         step.executed_by = executed_by
 
         logger.info(f"Executing step {step.order}: {step.name}")
@@ -1179,7 +1179,7 @@ class DisasterRecoveryService:
                 self._active_recovery.issues_encountered.append(f"{step.name}: {e}")
 
         finally:
-            step.completed_at = datetime.utcnow()
+            step.completed_at = datetime.now(UTC)
 
     async def _validate_recovery_step(self, step: RecoveryStep) -> bool:
         """
@@ -1257,7 +1257,7 @@ class DisasterRecoveryService:
             metrics = await self.execute_recovery_plan(plan_id, "test_runner")
 
             # Update test timestamp
-            plan.last_tested_at = datetime.utcnow()
+            plan.last_tested_at = datetime.now(UTC)
 
             return metrics
 
@@ -1276,7 +1276,7 @@ class DisasterRecoveryService:
         Returns:
             Health status dictionary
         """
-        self._last_health_check = datetime.utcnow()
+        self._last_health_check = datetime.now(UTC)
 
         health = {
             "timestamp": self._last_health_check.isoformat(),

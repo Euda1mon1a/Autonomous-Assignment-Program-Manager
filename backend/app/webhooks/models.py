@@ -2,7 +2,7 @@
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -121,8 +121,10 @@ class Webhook(Base):
     )
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
     last_triggered_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -200,7 +202,7 @@ class WebhookDelivery(Base):
     error_message = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
     first_attempted_at = Column(DateTime, nullable=True)
     last_attempted_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
@@ -290,7 +292,7 @@ class WebhookDeadLetter(Base):
     resolution_notes = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
 
     __table_args__ = (
         CheckConstraint("total_attempts > 0", name="check_total_attempts"),

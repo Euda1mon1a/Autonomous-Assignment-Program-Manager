@@ -31,7 +31,7 @@ import logging
 import secrets
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -135,7 +135,9 @@ class SecretRotationHistory(Base):
     )  # User ID or NULL for automated
 
     # Timing information
-    started_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    started_at = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC), index=True
+    )
     completed_at = Column(DateTime, nullable=True)
     grace_period_ends = Column(DateTime, nullable=True)
 
@@ -295,7 +297,7 @@ class SecretRotationService:
 
         # Create audit record
         rotation_id = uuid4()
-        started_at = datetime.utcnow()
+        started_at = datetime.now(UTC)
 
         history = SecretRotationHistory(
             id=rotation_id,
@@ -322,7 +324,7 @@ class SecretRotationService:
             # If grace period is configured, enter grace period
             grace_period_ends = None
             if config.grace_period_hours:
-                grace_period_ends = datetime.utcnow() + timedelta(
+                grace_period_ends = datetime.now(UTC) + timedelta(
                     hours=config.grace_period_hours
                 )
                 history.status = RotationStatus.GRACE_PERIOD
@@ -340,7 +342,7 @@ class SecretRotationService:
                 self._active_secrets[secret_type] = [new_secret]
 
                 # Record completion
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(UTC)
             history.completed_at = completed_at
             self.db.commit()
 
@@ -378,7 +380,7 @@ class SecretRotationService:
             # Update history
             history.status = RotationStatus.FAILED
             history.error_message = str(e)
-            history.completed_at = datetime.utcnow()
+            history.completed_at = datetime.now(UTC)
             self.db.commit()
 
             # Attempt rollback if configured
@@ -432,7 +434,7 @@ class SecretRotationService:
                 old_secret_hash=history.old_secret_hash,
                 new_secret_hash=history.new_secret_hash,
                 started_at=started_at,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(UTC),
                 error_message=str(e),
                 rolled_back=config.rollback_on_failure,
             )
@@ -465,7 +467,7 @@ class SecretRotationService:
             raise ValueError(f"No active grace period for {secret_type.value}")
 
             # Check if grace period has ended
-        if history.grace_period_ends and datetime.utcnow() < history.grace_period_ends:
+        if history.grace_period_ends and datetime.now(UTC) < history.grace_period_ends:
             logger.warning(
                 f"Grace period for {secret_type.value} has not ended yet "
                 f"(ends {history.grace_period_ends})"
@@ -542,7 +544,7 @@ class SecretRotationService:
                 continue
 
                 # Calculate days since last rotation
-            days_since = (datetime.utcnow() - last_rotation.started_at).days
+            days_since = (datetime.now(UTC) - last_rotation.started_at).days
             days_until_due = config.rotation_interval_days - days_since
 
             results[secret_type] = {
@@ -671,7 +673,7 @@ class SecretRotationService:
             return True  # Never rotated
 
             # Check if rotation interval has passed
-        days_since = (datetime.utcnow() - last_rotation.started_at).days
+        days_since = (datetime.now(UTC) - last_rotation.started_at).days
         return days_since >= config.rotation_interval_days
 
     async def _rollback_rotation(

@@ -8,7 +8,7 @@ This service handles:
 - Faculty matrix view for all-faculty scheduling display
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -191,7 +191,7 @@ class FacultyActivityService:
             existing.is_locked = is_locked
             existing.priority = priority
             existing.notes = notes
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
             await self._flush()
             await self._refresh(existing)
             return existing

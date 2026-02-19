@@ -1,7 +1,7 @@
 """Service for managing FMIT swap requests (portal workflow)."""
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session, selectinload
@@ -203,7 +203,7 @@ class SwapRequestService:
                     swap_type=swap_type,
                     status=SwapStatus.PENDING,
                     reason=reason,
-                    requested_at=datetime.utcnow(),
+                    requested_at=datetime.now(UTC),
                 )
                 self.db.add(swap_record)
                 self.db.commit()
@@ -229,7 +229,7 @@ class SwapRequestService:
             swap_type=swap_type,
             status=SwapStatus.PENDING,
             reason=reason,
-            requested_at=datetime.utcnow(),
+            requested_at=datetime.now(UTC),
         )
         self.db.add(swap_record)
         self.db.commit()
@@ -487,7 +487,7 @@ class SwapRequestService:
 
             # Mark as approved
         swap.status = SwapStatus.APPROVED
-        swap.approved_at = datetime.utcnow()
+        swap.approved_at = datetime.now(UTC)
         self.db.commit()
 
         # Execute the swap using the existing record

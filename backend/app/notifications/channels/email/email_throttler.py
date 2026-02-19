@@ -1,6 +1,6 @@
 """Email throttling to prevent rate limit issues."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from app.core.logging import get_logger
@@ -28,8 +28,8 @@ class EmailThrottler:
         """Initialize throttler."""
         self._hourly_count = 0
         self._daily_count = 0
-        self._hour_start = datetime.utcnow()
-        self._day_start = datetime.utcnow()
+        self._hour_start = datetime.now(UTC)
+        self._day_start = datetime.now(UTC)
         self._recipient_counts: dict[str, list[datetime]] = {}
 
     def can_send(self, recipient: str) -> tuple[bool, str | None]:
@@ -66,11 +66,11 @@ class EmailThrottler:
         if recipient not in self._recipient_counts:
             self._recipient_counts[recipient] = []
 
-        self._recipient_counts[recipient].append(datetime.utcnow())
+        self._recipient_counts[recipient].append(datetime.now(UTC))
 
     def _reset_if_needed(self) -> None:
         """Reset counters if time window elapsed."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Reset hourly
         if now - self._hour_start >= timedelta(hours=1):
@@ -88,7 +88,7 @@ class EmailThrottler:
             return True
 
             # Count sends in last hour
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
         recent_sends = [
             ts for ts in self._recipient_counts[recipient] if ts >= one_hour_ago
         ]

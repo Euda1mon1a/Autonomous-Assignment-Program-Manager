@@ -9,7 +9,7 @@ Manages scheduled and recurring tasks:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from celery.schedules import crontab, schedule
@@ -95,7 +95,7 @@ class TaskScheduler:
             priority=int(priority),
         )
 
-        execution_time = eta or (datetime.utcnow() + timedelta(seconds=countdown))
+        execution_time = eta or (datetime.now(UTC) + timedelta(seconds=countdown))
         logger.info(
             f"Task {task_name} scheduled for {execution_time.isoformat()} "
             f"(ID: {result.id})"
@@ -203,7 +203,7 @@ class TaskScheduler:
                 for name, config in self.app.conf.beat_schedule.items()
             },
             "total_tasks": len(self.app.conf.beat_schedule),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_scheduled_tasks(self) -> dict[str, Any]:
@@ -220,7 +220,7 @@ class TaskScheduler:
             return {
                 "tasks": {},
                 "total_tasks": 0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         result = {"tasks": {}, "total_tasks": 0}
@@ -239,7 +239,7 @@ class TaskScheduler:
             ]
             result["total_tasks"] += len(tasks)
 
-        result["timestamp"] = datetime.utcnow().isoformat()
+        result["timestamp"] = datetime.now(UTC).isoformat()
         return result
 
     def cancel_scheduled_task(self, task_id: str) -> bool:
@@ -354,7 +354,7 @@ class TaskScheduler:
         task_schedule = task_config["schedule"]
 
         # Calculate next run time
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         if isinstance(task_schedule, crontab):
             # Use crontab's is_due method to find next occurrence
             # is_due returns (is_due, next_time_to_run_in_seconds)

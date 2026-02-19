@@ -14,7 +14,7 @@ import tracemalloc
 from collections.abc import Callable
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, TypeVar, cast
 from uuid import uuid4
 
@@ -86,7 +86,7 @@ class CPUProfiler:
             ProfileResult: Result object that will be populated
         """
         profile_id = str(uuid4())
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         if not self.enabled:
             result = ProfileResult(
@@ -121,7 +121,7 @@ class CPUProfiler:
 
             # Collect statistics
             stats = pstats.Stats(profiler)
-            end_time = datetime.utcnow()
+            end_time = datetime.now(UTC)
 
             call_count = int(getattr(stats, "total_calls", 0))
             result = ProfileResult(
@@ -195,7 +195,7 @@ class MemoryProfiler:
             ProfileResult: Result object that will be populated
         """
         profile_id = str(uuid4())
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         if not self.enabled:
             result = ProfileResult(
@@ -233,7 +233,7 @@ class MemoryProfiler:
             top_stats = snapshot_end.compare_to(snapshot_start, "lineno")
             total_diff = sum(stat.size_diff for stat in top_stats)
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(UTC)
 
             result = ProfileResult(
                 profile_id=profile_id,

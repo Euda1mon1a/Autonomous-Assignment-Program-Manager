@@ -84,7 +84,7 @@ Performance Considerations
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -132,7 +132,7 @@ class ScheduledNotification(BaseModel):
     data: dict[str, Any]
     send_at: datetime
     status: str = "pending"
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class NotificationPreferences(BaseModel):
@@ -402,7 +402,7 @@ class NotificationService:
         Returns:
             Number of notifications sent
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         sent_count = 0
 
         # Query due notifications from database
@@ -459,7 +459,7 @@ class NotificationService:
                 # Update status based on results
                 all_success = all(r.success for r in results) if results else False
                 record.status = "sent" if all_success else "failed"
-                record.sent_at = datetime.utcnow()
+                record.sent_at = datetime.now(UTC)
                 if not all_success:
                     record.error_message = "; ".join(
                         r.message for r in results if not r.success
@@ -535,7 +535,7 @@ class NotificationService:
             self.db.query(Notification)
             .filter(Notification.id.in_(notification_ids))
             .update(
-                {"is_read": True, "read_at": datetime.utcnow()},
+                {"is_read": True, "read_at": datetime.now(UTC)},
                 synchronize_session=False,
             )
         )
@@ -598,7 +598,7 @@ class NotificationService:
             record.notification_types = preferences.notification_types
             record.quiet_hours_start = preferences.quiet_hours_start
             record.quiet_hours_end = preferences.quiet_hours_end
-            record.updated_at = datetime.utcnow()
+            record.updated_at = datetime.now(UTC)
         else:
             record = NotificationPreferenceRecord(
                 user_id=user_id,
@@ -637,7 +637,7 @@ class NotificationService:
             preferences.quiet_hours_start is not None
             and preferences.quiet_hours_end is not None
         ):
-            current_hour = datetime.utcnow().hour
+            current_hour = datetime.now(UTC).hour
             if (
                 preferences.quiet_hours_start
                 <= current_hour
@@ -684,7 +684,7 @@ async def notify_schedule_published(
         "total_assignments": total_assignments,
         "violations_count": violations_count,
         "publisher_name": publisher_name,
-        "published_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "published_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
     }
 
     return await service.send_bulk(
@@ -725,7 +725,7 @@ async def notify_acgme_warning(
         "person_name": person_name,
         "violation_details": violation_details,
         "recommended_action": recommended_action,
-        "detected_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "detected_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
     }
 
     return await service.send_notification(

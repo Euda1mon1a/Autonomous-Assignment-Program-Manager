@@ -18,7 +18,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from threading import RLock
 from typing import Any
 
@@ -362,7 +362,7 @@ class DistributedLock:
                     # Store owner metadata
                     owner_info = {
                         "token": self._token,
-                        "acquired_at": datetime.utcnow().isoformat(),
+                        "acquired_at": datetime.now(UTC).isoformat(),
                         "timeout": self.timeout,
                     }
                     await redis_conn.hset(
@@ -1045,7 +1045,7 @@ class DeadlockDetector:
         # Simple deadlock detection based on timeout expiration
         # More sophisticated detection would require tracking wait-for graphs
         deadlocks = []
-        current_time = datetime.utcnow()
+        current_time = datetime.now(UTC)
 
         for lock in active_locks:
             # Check if lock has been held past its timeout (potential deadlock)
@@ -1075,7 +1075,7 @@ class DeadlockDetector:
         """
         redis_conn = await self._get_redis()
         active_locks = await self.get_active_locks()
-        current_time = datetime.utcnow()
+        current_time = datetime.now(UTC)
         released_count = 0
 
         for lock in active_locks:

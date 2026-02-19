@@ -1,6 +1,6 @@
 """Advanced notification filtering."""
 
-from datetime import datetime, time
+from datetime import datetime, time, UTC
 from typing import Any
 from uuid import UUID
 
@@ -68,7 +68,7 @@ class NotificationFilter:
         if not dnd_start or not dnd_end:
             return False
 
-        current_time = datetime.utcnow().time()
+        current_time = datetime.now(UTC).time()
         return dnd_start <= current_time < dnd_end
 
     def _is_content_filtered(self, recipient_id: UUID, data: dict[str, Any]) -> bool:

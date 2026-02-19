@@ -4,7 +4,7 @@ These models persist saga execution state to enable recovery on service restart.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text
@@ -45,7 +45,7 @@ class SagaExecution(Base):
 
     # Timing
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False
+        DateTime, default=lambda: datetime.now(UTC), nullable=False
     )
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -241,7 +241,7 @@ class SagaEvent(Base):
 
     # Timing
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False, index=True
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
     )
 
     __table_args__ = (

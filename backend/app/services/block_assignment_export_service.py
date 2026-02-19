@@ -10,7 +10,7 @@ Handles:
 
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 
 from sqlalchemy import select
@@ -255,7 +255,7 @@ class BlockAssignmentExportService:
         self, request: BlockAssignmentExportRequest, extension: str
     ) -> str:
         """Generate export filename."""
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
         # Build filename parts
         parts = [f"block_assignments_{request.academic_year}"]

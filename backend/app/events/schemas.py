@@ -9,7 +9,7 @@ Note: This is separate from event_types.py which defines the actual event
 domain objects. These schemas are for API communication.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 
@@ -488,7 +488,7 @@ class EventValidationResult(BaseModel):
     version: int
     errors: list[EventValidationError] = Field(default_factory=list)
     warnings: list[EventValidationError] = Field(default_factory=list)
-    validated_at: datetime = Field(default_factory=datetime.utcnow)
+    validated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class BulkEventValidationRequest(BaseModel):

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
@@ -146,7 +146,7 @@ class FacultyPreferenceService:
         if notes is not None:
             preferences.notes = notes
 
-        preferences.updated_at = datetime.utcnow()
+        preferences.updated_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(preferences)
 
@@ -173,7 +173,7 @@ class FacultyPreferenceService:
                 ]
 
             preferences.preferred_weeks = preferences.preferred_weeks + [week_str]
-            preferences.updated_at = datetime.utcnow()
+            preferences.updated_at = datetime.now(UTC)
             self.db.commit()
             self.db.refresh(preferences)
             # Invalidate cache after update
@@ -197,7 +197,7 @@ class FacultyPreferenceService:
                 ]
 
             preferences.blocked_weeks = preferences.blocked_weeks + [week_str]
-            preferences.updated_at = datetime.utcnow()
+            preferences.updated_at = datetime.now(UTC)
             self.db.commit()
             self.db.refresh(preferences)
             # Invalidate cache after update
@@ -216,7 +216,7 @@ class FacultyPreferenceService:
             preferences.preferred_weeks = [
                 w for w in preferences.preferred_weeks if w != week_str
             ]
-            preferences.updated_at = datetime.utcnow()
+            preferences.updated_at = datetime.now(UTC)
             self.db.commit()
             self.db.refresh(preferences)
             # Invalidate cache after update
@@ -235,7 +235,7 @@ class FacultyPreferenceService:
             preferences.blocked_weeks = [
                 w for w in preferences.blocked_weeks if w != week_str
             ]
-            preferences.updated_at = datetime.utcnow()
+            preferences.updated_at = datetime.now(UTC)
             self.db.commit()
             self.db.refresh(preferences)
             # Invalidate cache after update
@@ -475,7 +475,7 @@ class FacultyPreferenceService:
                 and_(
                     Assignment.person_id == person_id,
                     Block.start_date
-                    >= datetime.utcnow().date(),  # Future assignments only
+                    >= datetime.now(UTC).date(),  # Future assignments only
                 )
             )
             .all()
@@ -501,7 +501,7 @@ class FacultyPreferenceService:
                         .filter(
                             and_(
                                 Assignment.person_id == partner_id,
-                                Block.start_date >= datetime.utcnow().date(),
+                                Block.start_date >= datetime.now(UTC).date(),
                             )
                         )
                         .all()
@@ -564,7 +564,7 @@ class FacultyPreferenceService:
             - preferred_partners: list of faculty IDs they often swap with
             - rejection_rate: float (0-1)
         """
-        cutoff_date = datetime.utcnow() - timedelta(days=lookback_days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=lookback_days)
 
         # Get swap history where this person was involved
         swaps = (

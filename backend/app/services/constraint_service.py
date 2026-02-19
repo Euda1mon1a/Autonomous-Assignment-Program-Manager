@@ -20,7 +20,7 @@ Security:
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -548,7 +548,7 @@ class ConstraintService:
             warning_count=warning_count,
             info_count=info_count,
             issues=issues,
-            validated_at=datetime.utcnow(),
+            validated_at=datetime.now(UTC),
             constraint_config=constraint_config,
             metadata={
                 "assignment_count": len(assignments),

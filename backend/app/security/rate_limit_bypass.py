@@ -21,7 +21,7 @@ import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 
 import redis
@@ -171,7 +171,7 @@ class RateLimitBypassDetector:
                 endpoint=endpoint,
                 fingerprint=fingerprint,
                 evidence={"reason": "Previously blocked for bypass attempts"},
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 should_block=True,
             )
 
@@ -275,7 +275,7 @@ class RateLimitBypassDetector:
                         "ip_list": list(ip_list),
                         "window_seconds": self.IP_ROTATION_WINDOW,
                     },
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     should_block=True,
                 )
 
@@ -336,7 +336,7 @@ class RateLimitBypassDetector:
                         "unique_user_agents": unique_uas,
                         "window_seconds": self.UA_CHANGE_WINDOW,
                     },
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     should_block=True,
                 )
 
@@ -392,7 +392,7 @@ class RateLimitBypassDetector:
                         "attacking_ips": list(ip_list)[:20],  # Limit for logging
                         "window_seconds": self.DISTRIBUTED_ATTACK_WINDOW,
                     },
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     should_block=True,
                 )
 
@@ -490,7 +490,7 @@ class RateLimitBypassDetector:
                             "total_count": total_suspicious,
                             "window_seconds": self.BEHAVIORAL_ANOMALY_WINDOW,
                         },
-                        timestamp=datetime.utcnow(),
+                        timestamp=datetime.now(UTC),
                         should_block=True,
                     )
 
@@ -537,7 +537,7 @@ class RateLimitBypassDetector:
                         "expected_fingerprint": stored_fingerprint,
                         "actual_fingerprint": fingerprint,
                     },
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     should_block=True,
                 )
             else:

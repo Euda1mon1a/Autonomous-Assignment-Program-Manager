@@ -34,7 +34,7 @@ import time
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from threading import RLock
 from typing import Any
@@ -85,7 +85,7 @@ class InvalidationEvent:
     pattern: str | None = None
     tag: str | None = None
     dependencies: list[str] = field(default_factory=list)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     duration_ms: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
 

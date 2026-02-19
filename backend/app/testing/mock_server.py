@@ -12,7 +12,7 @@ Provides a flexible mock server implementation that can:
 import asyncio
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from re import Pattern
 from typing import Any
@@ -45,7 +45,7 @@ class MockRequest:
     query_params: dict[str, Any] = field(default_factory=dict)
     headers: dict[str, str] = field(default_factory=dict)
     body: Any | None = None
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def matches(
         self, method: str = None, path: str = None, path_pattern: Pattern = None
@@ -529,7 +529,7 @@ class MockAPIServer:
             if format_type == "uuid":
                 return str(uuid4())
             elif format_type == "date-time":
-                return datetime.utcnow().isoformat()
+                return datetime.now(UTC).isoformat()
             elif format_type == "email":
                 return "test@example.com"
             return schema.get("example", "string")

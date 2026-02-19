@@ -17,7 +17,7 @@ import re
 import uuid
 from collections import defaultdict
 from collections.abc import Callable, Coroutine
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 
@@ -58,7 +58,7 @@ class EventMetadata(BaseModel):
     """Event metadata for tracking and auditing."""
 
     event_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     correlation_id: str | None = None
     source: str | None = None
     version: str = "1.0"
@@ -271,7 +271,7 @@ class EventSubscription(BaseModel):
     handler: Any  # EventHandler (can't serialize Callable)
     filter: EventFilter | None = None
     transformer: EventTransformer | None = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     max_retries: int = 3
     dead_letter_enabled: bool = True
 
@@ -326,7 +326,7 @@ class DeadLetterEvent(BaseModel):
     event_data: dict[str, Any]
     error_message: str
     retry_count: int
-    failed_at: datetime = Field(default_factory=datetime.utcnow)
+    failed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     subscription_id: str
 
 
@@ -943,7 +943,7 @@ class EventBus:
 
         Example:
             # Replay all events from last hour
-            one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+            one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
             events = await bus.replay(from_timestamp=one_hour_ago)
 
             # Replay specific topic

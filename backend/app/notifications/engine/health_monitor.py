@@ -1,6 +1,6 @@
 """Health monitoring for notification system."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from app.core.logging import get_logger
@@ -28,7 +28,7 @@ class HealthMonitor:
 
     def __init__(self) -> None:
         """Initialize health monitor."""
-        self._last_check = datetime.utcnow()
+        self._last_check = datetime.now(UTC)
         self._health_status = "healthy"
         self._issues: list[str] = []
 
@@ -65,7 +65,7 @@ class HealthMonitor:
             self._health_status = "healthy"
             self._issues = []
 
-        self._last_check = datetime.utcnow()
+        self._last_check = datetime.now(UTC)
 
         return {
             "status": self._health_status,

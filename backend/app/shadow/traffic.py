@@ -19,7 +19,7 @@ import random
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 from urllib.parse import urljoin
@@ -450,7 +450,7 @@ class ShadowTrafficManager:
         Returns:
             Unique request ID
         """
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         data = f"{method}:{path}:{timestamp}"
         if body:
             data += f":{hashlib.md5(body, usedforsecurity=False).hexdigest()}"
@@ -583,7 +583,7 @@ class ShadowTrafficManager:
         """
         comparison = ResponseComparison(
             request_id=request_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             primary_status=primary_status,
             primary_response_time=primary_response_time,
             shadow_response_time=shadow_response_time,
@@ -963,13 +963,13 @@ class ShadowTrafficManager:
             else:
                 self._health.status = "degraded"
 
-            self._health.last_check = datetime.utcnow()
+            self._health.last_check = datetime.now(UTC)
             self._health.avg_response_time = response_time
 
         except Exception as e:
             logger.error(f"Shadow service health check failed: {e}")
             self._health.status = "unhealthy"
-            self._health.last_check = datetime.utcnow()
+            self._health.last_check = datetime.now(UTC)
 
             # Calculate success rate
         if self._health.total_requests > 0:

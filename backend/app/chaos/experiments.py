@@ -23,7 +23,7 @@ import time
 import uuid
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
@@ -230,7 +230,7 @@ class ChaosExperimentRecord(Base):
 
     # Execution tracking
     status = Column(String(50), nullable=False, default="pending")
-    scheduled_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    scheduled_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     started_at = Column(DateTime)
     ended_at = Column(DateTime)
     max_duration_minutes = Column(Integer, nullable=False, default=15)
@@ -907,7 +907,7 @@ class ChaosExperiment:
         Args:
             observation: Human-readable observation
         """
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         self.observations.append(f"[{timestamp}] {observation}")
         logger.info(f"Chaos observation: {observation}")
 
@@ -959,7 +959,7 @@ class ChaosExperiment:
         )
 
         self.status = ChaosExperimentStatus.RUNNING
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(UTC)
 
         if PROMETHEUS_AVAILABLE:
             chaos_active_experiments.inc()
@@ -984,7 +984,7 @@ class ChaosExperiment:
         ]:
             logger.warning(f"Cannot stop experiment in status: {self.status}")
 
-        self.ended_at = datetime.utcnow()
+        self.ended_at = datetime.now(UTC)
 
         if self.status == ChaosExperimentStatus.RUNNING:
             self.status = ChaosExperimentStatus.COMPLETED
@@ -1004,7 +1004,7 @@ class ChaosExperiment:
         result = ExperimentResult(
             experiment_id=self.experiment_id,
             status=self.status,
-            started_at=self.started_at or datetime.utcnow(),
+            started_at=self.started_at or datetime.now(UTC),
             ended_at=self.ended_at,
             total_injections=self.injection_count,
             successful_injections=self.successful_injections,
@@ -1041,7 +1041,7 @@ class ChaosExperiment:
                 target_zone_id=self.config.target_zone_id,
                 target_user_id=self.config.target_user_id,
                 status=self.status,
-                scheduled_at=datetime.utcnow(),
+                scheduled_at=datetime.now(UTC),
                 started_at=self.started_at,
                 max_duration_minutes=self.config.max_duration_minutes,
                 auto_rollback=self.config.auto_rollback,
@@ -1247,7 +1247,7 @@ class ChaosExperimentScheduler:
             int: Number of experiments stopped
         """
         stopped_count = 0
-        current_time = datetime.utcnow()
+        current_time = datetime.now(UTC)
 
         for experiment_id, experiment in list(self.active_experiments.items()):
             if not experiment.started_at:

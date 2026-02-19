@@ -41,7 +41,7 @@ import json
 import logging
 import tempfile
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -272,7 +272,7 @@ class RollbackManager:
 
             # Create rollback point
         rollback_id = uuid4()
-        created_at = datetime.utcnow()
+        created_at = datetime.now(UTC)
         expires_at = None
         if expires_in_days or expires_in_days is None:
             days = expires_in_days or self.DEFAULT_EXPIRATION_DAYS
@@ -357,7 +357,7 @@ class RollbackManager:
             raise NotFoundError(f"Rollback point {rollback_point_id} not found")
 
             # Check expiration
-        if rollback_point.expires_at and datetime.utcnow() > rollback_point.expires_at:
+        if rollback_point.expires_at and datetime.now(UTC) > rollback_point.expires_at:
             raise RollbackExpiredError(
                 f"Rollback point expired at {rollback_point.expires_at}"
             )
@@ -385,7 +385,7 @@ class RollbackManager:
         if not snapshots_to_restore:
             raise ValidationError("No entities selected for rollback")
 
-        executed_at = datetime.utcnow()
+        executed_at = datetime.now(UTC)
         entities_restored = []
         entities_failed = []
 
@@ -514,7 +514,7 @@ class RollbackManager:
         if not rollback_point:
             raise NotFoundError(f"Rollback point {rollback_point_id} not found")
 
-        verified_at = datetime.utcnow()
+        verified_at = datetime.now(UTC)
         mismatches = []
         entities_verified = 0
         entities_failed = 0
@@ -643,7 +643,7 @@ class RollbackManager:
             if tags and not any(tag in point.tags for tag in tags):
                 continue
             if not include_expired and point.expires_at:
-                if datetime.utcnow() > point.expires_at:
+                if datetime.now(UTC) > point.expires_at:
                     continue
 
             filtered_points.append(point)
@@ -778,7 +778,7 @@ class RollbackManager:
         Returns:
             List of EntitySnapshot objects
         """
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or datetime.now(UTC)
         snapshots = []
 
         if entity_ids:

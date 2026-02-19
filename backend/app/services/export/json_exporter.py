@@ -9,7 +9,7 @@ import gzip
 import io
 import json
 from collections.abc import AsyncIterator
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -129,7 +129,7 @@ class JSONExporter:
                     "start_date": start_date.isoformat() if start_date else None,
                     "end_date": end_date.isoformat() if end_date else None,
                 },
-                "exported_at": datetime.utcnow().isoformat(),
+                "exported_at": datetime.now(UTC).isoformat(),
             },
         }
 
@@ -231,7 +231,7 @@ class JSONExporter:
                     "person_ids": person_ids,
                 },
                 "format": "nested" if nested else "flat",
-                "exported_at": datetime.utcnow().isoformat(),
+                "exported_at": datetime.now(UTC).isoformat(),
             },
         }
 
@@ -305,7 +305,7 @@ class JSONExporter:
                 "filters": {
                     "person_type": person_type,
                 },
-                "exported_at": datetime.utcnow().isoformat(),
+                "exported_at": datetime.now(UTC).isoformat(),
             },
         }
 
@@ -384,7 +384,7 @@ class JSONExporter:
                     "start_date": start_date.isoformat() if start_date else None,
                     "end_date": end_date.isoformat() if end_date else None,
                 },
-                "exported_at": datetime.utcnow().isoformat(),
+                "exported_at": datetime.now(UTC).isoformat(),
             },
         }
 
@@ -423,7 +423,7 @@ class JSONExporter:
             "metadata": {
                 "export_type": "analytics",
                 "total_count": len(metrics_data),
-                "exported_at": datetime.utcnow().isoformat(),
+                "exported_at": datetime.now(UTC).isoformat(),
             },
         }
 
@@ -515,7 +515,7 @@ class JSONExporter:
         filename = base_name
 
         if timestamp:
-            ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             filename = f"{base_name}_{ts}"
 
         if compress:

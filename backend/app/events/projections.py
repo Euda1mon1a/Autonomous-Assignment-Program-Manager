@@ -19,7 +19,7 @@ Projections can be:
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.orm import Session
@@ -58,7 +58,9 @@ class ProjectionState(Base):
     projection_name = Column(String(100), primary_key=True)
     last_event_sequence = Column(Integer, nullable=False, default=0)
     last_event_timestamp = Column(DateTime)
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_updated = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
     status = Column(String(50), default="active")  # active, rebuilding, paused
     error_message = Column(Text)
 
@@ -79,7 +81,7 @@ class ProjectionCheckpoint(Base):
     projection_name = Column(String(100), nullable=False)
     checkpoint_sequence = Column(Integer, nullable=False)
     checkpoint_data = Column(JSONType())
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 # =============================================================================
@@ -137,7 +139,7 @@ class EventProjection(ABC):
             state.last_event_sequence = self.last_event_sequence
             state.last_event_timestamp = self.last_event_timestamp
             state.status = self.status
-            state.last_updated = datetime.utcnow()
+            state.last_updated = datetime.now(UTC)
         else:
             state = ProjectionState(
                 projection_name=self.projection_name,

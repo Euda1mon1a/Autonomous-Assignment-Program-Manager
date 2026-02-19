@@ -6,7 +6,7 @@ quota enforcement, tracking, alerts, and reporting.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 
 import redis
 
@@ -266,7 +266,7 @@ class QuotaManager:
         # Store alert in Redis for retrieval
         alert_key = f"quota:alert:{user_id}:{resource_type}"
         alert_data = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "alert_level": alert_level,
             "resource_type": resource_type,
             "daily_percentage": daily_pct,

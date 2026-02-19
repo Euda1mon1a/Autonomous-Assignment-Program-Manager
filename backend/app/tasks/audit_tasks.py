@@ -35,7 +35,7 @@ Environment Variables:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from celery import shared_task
@@ -123,7 +123,7 @@ def archive_old_audit_logs(
             "size_bytes": result.size_bytes,
             "storage_backend": result.storage_backend,
             "purged": result.purged_from_db,
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except ValueError as e:
@@ -132,7 +132,7 @@ def archive_old_audit_logs(
         return {
             "status": "no_action",
             "message": str(e),
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -180,7 +180,7 @@ def generate_audit_compliance_report(
 
     try:
         # Calculate date range
-        end_date = datetime.utcnow()
+        end_date = datetime.now(UTC)
         start_date = end_date - timedelta(days=months_back * 30)
 
         # Create restorer
@@ -254,7 +254,7 @@ def cleanup_old_archives(
             retention_years = getattr(settings, "AUDIT_ARCHIVE_RETENTION_YEARS", 7)
 
         # Calculate cutoff date
-        cutoff_date = datetime.utcnow() - timedelta(days=retention_years * 365)
+        cutoff_date = datetime.now(UTC) - timedelta(days=retention_years * 365)
 
         # Get storage backend
         storage = get_storage_backend()
@@ -297,7 +297,7 @@ def cleanup_old_archives(
             "deleted_size_bytes": deleted_size,
             "cutoff_date": cutoff_date.isoformat(),
             "retention_years": retention_years,
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -358,7 +358,7 @@ def archive_by_entity_type(
             "entity_type": entity_type,
             "archive_id": result.archive_id,
             "record_count": result.record_count,
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except ValueError as e:
@@ -367,7 +367,7 @@ def archive_by_entity_type(
             "status": "no_action",
             "entity_type": entity_type,
             "message": str(e),
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -449,7 +449,7 @@ def verify_archive_integrity(
             "verified_count": verified_count,
             "error_count": error_count,
             "errors": errors[:10],  # Limit to first 10 errors
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:

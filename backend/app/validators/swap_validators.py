@@ -9,7 +9,7 @@ Validates schedule swap requests including:
 - Rollback window validation
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Optional
 from uuid import UUID
 
@@ -423,7 +423,7 @@ async def validate_swap_rollback_eligibility(
             "reason": "Swap has no execution timestamp",
         }
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     hours_since_execution = (now - swap.executed_at).total_seconds() / 3600
 
     if hours_since_execution > ROLLBACK_WINDOW_HOURS:

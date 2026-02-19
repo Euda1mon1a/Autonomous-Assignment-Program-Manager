@@ -26,7 +26,7 @@ References:
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, UTC
 from typing import Optional
 from uuid import UUID
 
@@ -222,7 +222,7 @@ class FRMSService:
         Returns:
             FatigueProfile with complete fatigue assessment
         """
-        target_time = target_time or datetime.utcnow()
+        target_time = target_time or datetime.now(UTC)
 
         # Get resident info
         resident = await self._get_resident(resident_id)
@@ -261,7 +261,7 @@ class FRMSService:
             resident_id=resident_id,
             resident_name=resident.name if resident else "Unknown",
             pgy_level=resident.pgy_level if resident else 0,
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(UTC),
             current_alertness=prediction.alertness_score,
             samn_perelli_level=prediction.samn_perelli_estimate,
             sleep_debt_hours=sleep_debt,
@@ -305,7 +305,7 @@ class FRMSService:
         Returns:
             List of FatigueProfile for matching residents
         """
-        target_time = target_time or datetime.utcnow()
+        target_time = target_time or datetime.now(UTC)
 
         residents = await self._get_all_residents()
         profiles = []
@@ -428,7 +428,7 @@ class FRMSService:
         residents = await self._get_all_residents()
         heatmap = {
             "date": target_date.isoformat(),
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "residents": [],
             "hours": list(range(24)),
         }
@@ -532,7 +532,7 @@ class FRMSService:
         """
         return {
             "version": "1.0",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "framework": "Aviation FRMS adapted for Medical Residency",
             "references": [
                 "FAA AC 120-103A",

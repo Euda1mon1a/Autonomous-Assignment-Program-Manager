@@ -11,7 +11,7 @@ This module provides the core saga orchestration logic including:
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any, cast
 from uuid import UUID, uuid4
 
@@ -162,7 +162,7 @@ class SagaOrchestrator:
 
             # Mark saga as completed
             saga_exec.status = result.status.value
-            saga_exec.completed_at = datetime.utcnow()
+            saga_exec.completed_at = datetime.now(UTC)
             saga_exec.error_message = result.error_message
             saga_exec.compensated_steps_count = result.compensated_steps
             saga_exec.context_data = context.accumulated_data
@@ -183,7 +183,7 @@ class SagaOrchestrator:
                 f"Saga {saga_id} timed out after {definition.timeout_seconds}s"
             )
             saga_exec.status = SagaStatus.TIMEOUT.value
-            saga_exec.completed_at = datetime.utcnow()
+            saga_exec.completed_at = datetime.now(UTC)
             saga_exec.error_message = (
                 f"Saga timed out after {definition.timeout_seconds}s"
             )
@@ -207,7 +207,7 @@ class SagaOrchestrator:
             # Handle unexpected errors
             logger.exception(f"Unexpected error in saga {saga_id}")
             saga_exec.status = SagaStatus.FAILED.value
-            saga_exec.completed_at = datetime.utcnow()
+            saga_exec.completed_at = datetime.now(UTC)
             saga_exec.error_message = str(e)
             self.db.commit()
 
@@ -239,7 +239,7 @@ class SagaOrchestrator:
         result = SagaExecutionResult(
             saga_id=context.saga_id,
             status=SagaStatus.RUNNING,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
         )
 
         # Mark saga as running
@@ -279,14 +279,14 @@ class SagaOrchestrator:
 
                         # All steps completed successfully
             result.status = SagaStatus.COMPLETED
-            result.completed_at = datetime.utcnow()
+            result.completed_at = datetime.now(UTC)
             return result
 
         except Exception as e:
             # Saga failed, trigger compensation
             logger.error(f"Saga {context.saga_id} failed: {e}")
             result.status = SagaStatus.FAILED
-            result.completed_at = datetime.utcnow()
+            result.completed_at = datetime.now(UTC)
             result.error_message = str(e)
 
             # Compensate completed steps
@@ -359,7 +359,7 @@ class SagaOrchestrator:
         result = SagaStepResult(
             step_name=step_def.name,
             status=StepStatus.RUNNING,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
         )
 
         # Mark step as running
@@ -394,7 +394,7 @@ class SagaOrchestrator:
                 # Step succeeded
                 result.status = StepStatus.COMPLETED
                 result.output_data = output
-                result.completed_at = datetime.utcnow()
+                result.completed_at = datetime.now(UTC)
                 result.retry_count = attempt
 
                 # Update persistence
@@ -446,7 +446,7 @@ class SagaOrchestrator:
                     # Final failure
                     result.status = StepStatus.FAILED
                     result.error_message = error_msg
-                    result.completed_at = datetime.utcnow()
+                    result.completed_at = datetime.now(UTC)
                     result.retry_count = attempt
 
                     step_exec.status = StepStatus.FAILED.value
@@ -484,7 +484,7 @@ class SagaOrchestrator:
                     # Final failure
                     result.status = StepStatus.FAILED
                     result.error_message = error_msg
-                    result.completed_at = datetime.utcnow()
+                    result.completed_at = datetime.now(UTC)
                     result.retry_count = attempt
 
                     step_exec.status = StepStatus.FAILED.value
@@ -537,7 +537,7 @@ class SagaOrchestrator:
                         step_name=steps[i].name,
                         status=StepStatus.FAILED,
                         error_message=str(result),
-                        completed_at=datetime.utcnow(),
+                        completed_at=datetime.now(UTC),
                     )
                 )
             else:
@@ -654,7 +654,7 @@ class SagaOrchestrator:
 
                 # Mark as compensated
                 step_exec.status = StepStatus.COMPENSATED.value
-                step_exec.compensated_at = datetime.utcnow()
+                step_exec.compensated_at = datetime.now(UTC)
                 self.db.commit()
 
                 compensated_count += 1
@@ -712,7 +712,7 @@ class SagaOrchestrator:
         Returns:
             Created saga execution
         """
-        timeout_at = datetime.utcnow() + timedelta(seconds=definition.timeout_seconds)
+        timeout_at = datetime.now(UTC) + timedelta(seconds=definition.timeout_seconds)
 
         saga_exec = SagaExecution(
             id=context.saga_id,
@@ -757,7 +757,7 @@ class SagaOrchestrator:
 
             # Create new step execution
         step_order = len(saga_exec.steps)
-        timeout_at = datetime.utcnow() + timedelta(seconds=step_def.timeout_seconds)
+        timeout_at = datetime.now(UTC) + timedelta(seconds=step_def.timeout_seconds)
 
         step_exec = SagaStepExecution(
             saga_id=saga_exec.id,
@@ -912,7 +912,7 @@ class SagaOrchestrator:
                 # Mark as failed for manual review
                 # In production, you might want to attempt recovery instead
                 saga_exec.status = SagaStatus.FAILED.value
-                saga_exec.completed_at = datetime.utcnow()
+                saga_exec.completed_at = datetime.now(UTC)
                 saga_exec.error_message = "Saga interrupted by service restart"
 
                 await self._log_event(
@@ -943,7 +943,7 @@ class SagaOrchestrator:
         Returns:
             Number of sagas deleted
         """
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
 
         stmt = (
             select(SagaExecution)

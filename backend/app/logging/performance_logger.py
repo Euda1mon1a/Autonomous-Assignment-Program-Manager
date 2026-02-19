@@ -13,7 +13,7 @@ Tracks:
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, ParamSpec, TypeVar
 
 from loguru import logger
@@ -34,7 +34,7 @@ class PerformanceMetric:
 
     operation: str
     duration_ms: float
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     success: bool = True
     error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)

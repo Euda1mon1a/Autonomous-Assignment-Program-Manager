@@ -1,6 +1,6 @@
 """Authentication service for business logic."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -47,7 +47,7 @@ class AuthService:
             return {"user": None, "error": "Incorrect username or password"}
 
         # Update last login
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(UTC)
         self.user_repo.commit()
 
         # Create access token with jti for blacklist support

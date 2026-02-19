@@ -8,7 +8,7 @@ Reference: https://tools.ietf.org/html/rfc7807
 """
 
 import traceback
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, cast
 from uuid import uuid4
 
@@ -176,7 +176,7 @@ class ErrorFormatter:
             instance=request_path,
             error_code=error_code,
             error_id=error_id,
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(UTC).isoformat() + "Z",
             request_id=request_id,
             fingerprint=fingerprint,
         )

@@ -7,7 +7,7 @@ and rollback capabilities.
 import asyncio
 import logging
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -42,7 +42,7 @@ class ConfigChangeEvent:
         self.new_config = new_config
         self.changed_fields = changed_fields
         self.source = source
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(UTC)
 
     def __repr__(self) -> str:
         """String representation."""

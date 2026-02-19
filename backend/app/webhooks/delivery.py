@@ -8,7 +8,7 @@ Handles the actual HTTP delivery of webhooks with:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 import httpx
 from sqlalchemy import select
@@ -98,10 +98,10 @@ class WebhookDeliveryManager:
             # Update delivery status
         delivery.status = WebhookDeliveryStatus.PROCESSING.value
         delivery.attempt_count += 1
-        delivery.last_attempted_at = datetime.utcnow()
+        delivery.last_attempted_at = datetime.now(UTC)
 
         if delivery.first_attempted_at is None:
-            delivery.first_attempted_at = datetime.utcnow()
+            delivery.first_attempted_at = datetime.now(UTC)
 
         await db.commit()
 
@@ -114,8 +114,8 @@ class WebhookDeliveryManager:
             if success:
                 # Mark as successful
                 delivery.status = WebhookDeliveryStatus.SUCCESS.value
-                delivery.completed_at = datetime.utcnow()
-                webhook.last_triggered_at = datetime.utcnow()
+                delivery.completed_at = datetime.now(UTC)
+                webhook.last_triggered_at = datetime.now(UTC)
                 logger.info(
                     f"Webhook delivery {delivery_id} succeeded "
                     f"(attempt {delivery.attempt_count})"
@@ -165,7 +165,7 @@ class WebhookDeliveryManager:
             headers.update(webhook.custom_headers)
 
             # Make request with timeout
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         try:
             async with httpx.AsyncClient(timeout=webhook.timeout_seconds) as client:
@@ -175,7 +175,7 @@ class WebhookDeliveryManager:
 
                 # Calculate response time
             response_time_ms = int(
-                (datetime.utcnow() - start_time).total_seconds() * 1000
+                (datetime.now(UTC) - start_time).total_seconds() * 1000
             )
 
             # Update delivery with response details
@@ -242,7 +242,7 @@ class WebhookDeliveryManager:
         if delivery.can_retry and webhook.retry_enabled:
             # Calculate next retry time with exponential backoff
             retry_delay = self._calculate_retry_delay(delivery.attempt_count)
-            delivery.next_retry_at = datetime.utcnow() + timedelta(seconds=retry_delay)
+            delivery.next_retry_at = datetime.now(UTC) + timedelta(seconds=retry_delay)
             delivery.status = WebhookDeliveryStatus.FAILED.value
 
             logger.info(
@@ -252,7 +252,7 @@ class WebhookDeliveryManager:
         else:
             # Max retries exceeded - move to dead letter queue
             delivery.status = WebhookDeliveryStatus.DEAD_LETTER.value
-            delivery.completed_at = datetime.utcnow()
+            delivery.completed_at = datetime.now(UTC)
 
             await self._move_to_dead_letter(db, delivery, webhook)
 
@@ -334,7 +334,7 @@ class WebhookDeliveryManager:
             )
             .where(
                 (WebhookDelivery.next_retry_at.is_(None))
-                | (WebhookDelivery.next_retry_at <= datetime.utcnow())
+                | (WebhookDelivery.next_retry_at <= datetime.now(UTC))
             )
             .limit(batch_size)
         )

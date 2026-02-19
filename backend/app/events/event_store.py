@@ -14,7 +14,7 @@ The event store is the single source of truth for all state changes.
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from sqlalchemy import (
@@ -72,7 +72,9 @@ class StoredEvent(Base):
     event_data = Column(JSONType(), nullable=False)
 
     # Metadata
-    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    timestamp = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC), index=True
+    )
     correlation_id = Column(String(255), index=True)  # Links related events
     causation_id = Column(String(255), index=True)  # Event that caused this one
     user_id = Column(String(255), index=True)
@@ -116,7 +118,9 @@ class EventSnapshot(Base):
 
     # Snapshot data
     snapshot_data = Column(JSONType(), nullable=False)
-    snapshot_timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+    snapshot_timestamp = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Metadata
     event_count = Column(Integer, nullable=False)  # Events replayed to build this

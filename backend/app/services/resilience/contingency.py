@@ -20,7 +20,7 @@ Uses SQLAlchemy-Continuum for tracking analysis history.
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from itertools import combinations
 from typing import Any, Optional, Protocol
 from uuid import UUID
@@ -415,7 +415,7 @@ class ContingencyService:
 
         result = ContingencyAnalysisResult(
             analysis_id=analysis_id,
-            analyzed_at=datetime.utcnow(),
+            analyzed_at=datetime.now(UTC),
             period_start=start_date,
             period_end=end_date,
             n1_pass=n1_pass,
@@ -1191,7 +1191,7 @@ class ContingencyService:
         """Return empty result when no data available."""
         return ContingencyAnalysisResult(
             analysis_id=analysis_id,
-            analyzed_at=datetime.utcnow(),
+            analyzed_at=datetime.now(UTC),
             period_start=start_date,
             period_end=end_date,
             n1_pass=True,

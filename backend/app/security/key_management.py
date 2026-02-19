@@ -19,7 +19,7 @@ import base64
 import logging
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from typing import Any
 
@@ -199,10 +199,13 @@ class CryptographicKey(Base):
     allowed_users = Column(JSONType, nullable=False, default=list)  # List of user IDs
 
     # Lifecycle management
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     created_by = Column(String(255), nullable=False)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
     expires_at = Column(DateTime, nullable=True)
     revoked_at = Column(DateTime, nullable=True)
@@ -251,7 +254,9 @@ class KeyUsageLog(Base):
     key_name = Column(String(255), nullable=False)
 
     # Usage details
-    used_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    used_at = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC), index=True
+    )
     used_by = Column(String(255), nullable=False, index=True)
     operation = Column(String(100), nullable=False)  # encrypt, decrypt, sign, verify
     success = Column(Boolean, nullable=False)
@@ -429,7 +434,7 @@ class KeyManagementService:
             # Calculate expiration date
         expires_at = None
         if request.expires_in_days:
-            expires_at = datetime.utcnow() + timedelta(days=request.expires_in_days)
+            expires_at = datetime.now(UTC) + timedelta(days=request.expires_in_days)
 
             # Create database record
         key_record = CryptographicKey(
@@ -458,7 +463,7 @@ class KeyManagementService:
             description=request.description,
             hsm_integrated=self.hsm_config.enabled,
             metadata={
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(UTC).isoformat(),
                 "algorithm": request.key_type.value,
             },
         )
@@ -734,7 +739,7 @@ class KeyManagementService:
 
         new_key.version = old_key.version + 1
         new_key.previous_version_id = old_key.id
-        new_key.last_rotated_at = datetime.utcnow()
+        new_key.last_rotated_at = datetime.now(UTC)
 
         await db.commit()
         await db.refresh(new_key)
@@ -776,7 +781,7 @@ class KeyManagementService:
             raise ForbiddenError(f"Access denied to key {key_record.name}")
 
         key_record.status = KeyStatus.REVOKED.value
-        key_record.revoked_at = datetime.utcnow()
+        key_record.revoked_at = datetime.now(UTC)
         key_record.revocation_reason = reason
 
         await db.commit()
@@ -916,7 +921,7 @@ class KeyManagementService:
 
         key_record.is_backed_up = True
         key_record.backup_location = backup_location
-        key_record.last_backup_at = datetime.utcnow()
+        key_record.last_backup_at = datetime.now(UTC)
 
         await db.commit()
         await db.refresh(key_record)
@@ -1037,7 +1042,7 @@ class KeyManagementService:
         # Update key usage statistics
         key.usage_count += 1
         if success:
-            key.last_used_at = datetime.utcnow()
+            key.last_used_at = datetime.now(UTC)
 
             # Create usage log
         log = KeyUsageLog(

@@ -104,7 +104,7 @@ import importlib
 import logging
 import traceback
 from collections.abc import Callable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -312,7 +312,7 @@ class WorkflowEngine:
         if is_active is not None:
             template.is_active = is_active
 
-        template.updated_at = datetime.utcnow()
+        template.updated_at = datetime.now(UTC)
         self.db.flush()
 
         return template
@@ -363,7 +363,7 @@ class WorkflowEngine:
             # Calculate timeout
         default_timeout = template.definition.get("default_timeout_seconds", 3600)
         timeout = timeout_seconds or default_timeout
-        timeout_at = datetime.utcnow() + timedelta(seconds=timeout)
+        timeout_at = datetime.now(UTC) + timedelta(seconds=timeout)
 
         instance = WorkflowInstance(
             template_id=template.id,
@@ -438,7 +438,7 @@ class WorkflowEngine:
             raise ValueError(f"Cannot cancel workflow in status {instance.status}")
 
         instance.status = WorkflowStatus.CANCELLED.value
-        instance.cancelled_at = datetime.utcnow()
+        instance.cancelled_at = datetime.now(UTC)
         instance.cancelled_by_id = cancelled_by_id
         instance.cancellation_reason = reason
 
@@ -446,7 +446,7 @@ class WorkflowEngine:
         for step_exec in instance.step_executions:
             if step_exec.status == StepStatus.RUNNING.value:
                 step_exec.status = StepStatus.CANCELLED.value
-                step_exec.completed_at = datetime.utcnow()
+                step_exec.completed_at = datetime.now(UTC)
 
         self.db.flush()
 
@@ -487,7 +487,7 @@ class WorkflowEngine:
 
             # Start workflow
         instance.status = WorkflowStatus.RUNNING.value
-        instance.started_at = datetime.utcnow()
+        instance.started_at = datetime.now(UTC)
         self.db.commit()
 
         logger.info(f"Starting workflow instance {instance_id}")
@@ -530,9 +530,9 @@ class WorkflowEngine:
                     return instance
 
                     # Check for timeout
-                if instance.timeout_at and datetime.utcnow() > instance.timeout_at:
+                if instance.timeout_at and datetime.now(UTC) > instance.timeout_at:
                     instance.status = WorkflowStatus.TIMED_OUT.value
-                    instance.completed_at = datetime.utcnow()
+                    instance.completed_at = datetime.now(UTC)
                     instance.error_message = "Workflow execution timed out"
                     self.db.commit()
                     raise WorkflowTimeoutError("Workflow execution timed out")
@@ -542,7 +542,7 @@ class WorkflowEngine:
 
                 # Workflow completed successfully
             instance.status = WorkflowStatus.COMPLETED.value
-            instance.completed_at = datetime.utcnow()
+            instance.completed_at = datetime.now(UTC)
             self.db.commit()
 
             logger.info(f"Workflow instance {instance_id} completed successfully")
@@ -554,7 +554,7 @@ class WorkflowEngine:
             instance = self.get_instance(instance_id)
             if instance:
                 instance.status = WorkflowStatus.FAILED.value
-                instance.completed_at = datetime.utcnow()
+                instance.completed_at = datetime.now(UTC)
                 instance.error_message = str(e)
                 instance.error_details = {
                     "error_type": type(e).__name__,
@@ -690,7 +690,7 @@ class WorkflowEngine:
                     )
 
                     step_exec.status = StepStatus.RETRYING.value
-                    step_exec.next_retry_at = datetime.utcnow() + timedelta(
+                    step_exec.next_retry_at = datetime.now(UTC) + timedelta(
                         seconds=delay
                     )
                     self.db.commit()
@@ -748,7 +748,7 @@ class WorkflowEngine:
             timeout_seconds = step_def.get("timeout_seconds")
             timeout_at = None
             if timeout_seconds:
-                timeout_at = datetime.utcnow() + timedelta(seconds=timeout_seconds)
+                timeout_at = datetime.now(UTC) + timedelta(seconds=timeout_seconds)
 
             step_exec = WorkflowStepExecution(
                 workflow_instance_id=instance.id,
@@ -767,7 +767,7 @@ class WorkflowEngine:
             step_exec.status = StepStatus.RUNNING.value
             step_exec.attempt_number = attempt
 
-        step_exec.started_at = datetime.utcnow()
+        step_exec.started_at = datetime.now(UTC)
         self.db.commit()
 
         # Prepare input data
@@ -795,7 +795,7 @@ class WorkflowEngine:
                 # Step completed successfully
             step_exec.status = StepStatus.COMPLETED.value
             step_exec.output_data = output_data
-            step_exec.completed_at = datetime.utcnow()
+            step_exec.completed_at = datetime.now(UTC)
 
             if step_exec.started_at:
                 duration = (
@@ -814,7 +814,7 @@ class WorkflowEngine:
 
         except TimeoutError:
             step_exec.status = StepStatus.TIMED_OUT.value
-            step_exec.completed_at = datetime.utcnow()
+            step_exec.completed_at = datetime.now(UTC)
             step_exec.error_message = f"Step timed out after {timeout_seconds}s"
             self.db.commit()
 
@@ -822,7 +822,7 @@ class WorkflowEngine:
 
         except Exception as e:
             step_exec.status = StepStatus.FAILED.value
-            step_exec.completed_at = datetime.utcnow()
+            step_exec.completed_at = datetime.now(UTC)
             step_exec.error_message = str(e)
             step_exec.error_details = {"error_type": type(e).__name__}
             step_exec.error_traceback = traceback.format_exc()
@@ -855,8 +855,8 @@ class WorkflowEngine:
             max_attempts=1,
             condition_result=False,
             condition_expression=step_def.get("condition"),
-            started_at=datetime.utcnow(),
-            completed_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
             duration_seconds=0.0,
         )
 

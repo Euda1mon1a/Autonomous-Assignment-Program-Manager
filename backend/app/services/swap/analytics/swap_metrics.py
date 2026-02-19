@@ -6,7 +6,7 @@ Tracks and reports on swap system performance and usage.
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, UTC
 from typing import Any
 from uuid import UUID
 
@@ -85,7 +85,7 @@ class SwapMetricsCollector:
             SwapMetrics with comprehensive data
         """
         if not end_date:
-            end_date = datetime.utcnow().date()
+            end_date = datetime.now(UTC).date()
 
         if not start_date:
             start_date = end_date - timedelta(days=30)
@@ -213,7 +213,7 @@ class SwapMetricsCollector:
         Returns:
             Dictionary of faculty-specific metrics
         """
-        start_date = datetime.utcnow().date() - timedelta(days=days)
+        start_date = datetime.now(UTC).date() - timedelta(days=days)
 
         result = await self.db.execute(
             select(SwapRecord).where(
@@ -247,7 +247,7 @@ class SwapMetricsCollector:
         Returns:
             Dictionary with weekly summary
         """
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(UTC).date()
         start_date = end_date - timedelta(days=7)
 
         metrics = await self.collect_metrics(start_date, end_date)

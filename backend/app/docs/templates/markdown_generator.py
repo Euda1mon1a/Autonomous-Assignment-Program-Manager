@@ -5,7 +5,7 @@ Generates comprehensive Markdown documentation from OpenAPI schemas.
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 
@@ -55,7 +55,7 @@ class MarkdownGenerator:
         header = f"""# {title}
 
 **Version:** {version}
-**Generated:** {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}
+**Generated:** {datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")}
 
 {description}
 """

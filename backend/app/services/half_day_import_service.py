@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -174,7 +174,7 @@ class HalfDayImportService:
 
         batch = ImportBatch(
             id=uuid4(),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             created_by_id=created_by_id,
             filename=filename or "block_template2.xlsx",
             status=ImportBatchStatus.STAGED,

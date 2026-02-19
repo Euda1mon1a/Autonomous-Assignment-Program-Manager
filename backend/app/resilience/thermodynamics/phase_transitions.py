@@ -28,7 +28,7 @@ References:
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 
 import numpy as np
@@ -68,7 +68,7 @@ class CriticalSignal:
     value: float
     threshold: float
     description: str
-    detected_at: datetime = field(default_factory=datetime.utcnow)
+    detected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass
@@ -129,7 +129,7 @@ class PhaseTransitionDetector:
         Args:
             metrics: Dictionary of metric name → value
         """
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
 
         for key, value in metrics.items():
             self.metric_history[key].append(value)

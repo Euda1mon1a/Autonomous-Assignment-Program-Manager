@@ -8,7 +8,7 @@ Background tasks for:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from celery import shared_task
@@ -141,7 +141,7 @@ def cleanup_old_executions(self, retention_days: int = 90) -> dict[str, Any]:
     async def _cleanup_old_executions():
         """Async implementation of cleaning up old executions."""
         async with get_async_session_context() as db:
-            cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+            cutoff_date = datetime.now(UTC) - timedelta(days=retention_days)
 
             # Delete old executions
             result = await db.execute(
@@ -204,7 +204,7 @@ def export_health_check(self) -> dict[str, Any]:
             scheduled_jobs = len(scheduled_jobs_result.scalars().all())
 
             # Count recent executions (last 24 hours)
-            last_24h = datetime.utcnow() - timedelta(hours=24)
+            last_24h = datetime.now(UTC) - timedelta(hours=24)
             recent_executions_result = await db.execute(
                 select(ExportJobExecution).where(
                     ExportJobExecution.started_at >= last_24h
@@ -224,7 +224,7 @@ def export_health_check(self) -> dict[str, Any]:
                 select(ExportJob).where(
                     ExportJob.enabled == True,
                     ExportJob.schedule_enabled == True,
-                    ExportJob.next_run_at < datetime.utcnow() - timedelta(hours=1),
+                    ExportJob.next_run_at < datetime.now(UTC) - timedelta(hours=1),
                 )
             )
             overdue_jobs = len(overdue_jobs_result.scalars().all())
@@ -244,7 +244,7 @@ def export_health_check(self) -> dict[str, Any]:
                 "successful_24h": successful,
                 "failed_24h": failed,
                 "overdue_jobs": overdue_jobs,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             logger.info(f"Export health check: {result}")
@@ -298,7 +298,7 @@ def update_next_run_times(self) -> dict[str, Any]:
             return {
                 "updated": updated_count,
                 "total_scheduled": len(scheduled_jobs),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     # Run async function

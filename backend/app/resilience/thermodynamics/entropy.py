@@ -20,7 +20,7 @@ import logging
 import math
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 import numpy as np
@@ -51,7 +51,7 @@ class EntropyMetrics:
     entropy_production_rate: float = 0.0
     normalized_entropy: float = 0.0
 
-    computed_at: datetime = field(default_factory=datetime.utcnow)
+    computed_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 def calculate_shannon_entropy(distribution: list[Any]) -> float:
@@ -319,7 +319,7 @@ class ScheduleEntropyMonitor:
         metrics = calculate_schedule_entropy(assignments)
 
         self.entropy_history.append(metrics.person_entropy)
-        self.timestamp_history.append(datetime.utcnow())
+        self.timestamp_history.append(datetime.now(UTC))
 
         # Calculate production rate if we have previous state
         if len(self.entropy_history) >= 2:

@@ -11,7 +11,7 @@ Provides:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, asdict
 
@@ -105,7 +105,7 @@ class ConnectionPoolMonitor:
             available_connections=available,
             overflow_connections=getattr(pool, "overflow", lambda: 0)(),
             pool_utilization_percent=utilization,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
 
         self.metrics.append(metrics)
@@ -179,7 +179,7 @@ class QueryLatencyTracker:
                 {
                     "query": query[:200],  # Truncate long queries
                     "duration_ms": duration_ms,
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": datetime.now(UTC),
                 }
             )
 
@@ -205,7 +205,7 @@ class QueryLatencyTracker:
                 min_duration_ms=0.0,
                 max_duration_ms=0.0,
                 slow_query_count=0,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
             )
 
         return QueryMetrics(
@@ -214,7 +214,7 @@ class QueryLatencyTracker:
             min_duration_ms=min(self.query_times),
             max_duration_ms=max(self.query_times),
             slow_query_count=len(self.slow_queries),
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
 
     def get_slow_queries(self, limit: int = 10) -> list[dict[str, Any]]:
@@ -269,11 +269,11 @@ class DeadlockDetector:
             self.deadlocks.extend(deadlocks)
 
             # Keep only recent deadlocks
-            cutoff = datetime.utcnow() - timedelta(hours=24)
+            cutoff = datetime.now(UTC) - timedelta(hours=24)
             self.deadlocks = [
                 d
                 for d in self.deadlocks
-                if d.get("timestamp", datetime.utcnow()) > cutoff
+                if d.get("timestamp", datetime.now(UTC)) > cutoff
             ]
 
             return len(deadlocks) > 0, deadlocks
@@ -392,7 +392,7 @@ class TableSizeMonitor:
                     row_count=row[1],
                     size_mb=row[2],
                     index_count=0,  # Could be fetched separately
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                 )
                 metrics.append(metric)
 
@@ -481,7 +481,7 @@ class DatabaseHealthCheck:
             Dictionary with all health metrics
         """
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "connection_pool": self.pool_monitor.get_metrics_summary(),
             "query_latency": self.latency_tracker.get_metrics().to_dict(),
             "slow_queries": self.latency_tracker.get_slow_queries(limit=5),
@@ -522,7 +522,7 @@ class DatabaseHealthCheck:
         """
         return {
             "healthy": self.is_healthy(),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "checks": {
                 "connection_pool": self.pool_monitor.is_healthy(),
                 "query_latency": self.latency_tracker.get_metrics().avg_duration_ms

@@ -124,7 +124,7 @@ class ImpersonationService:
 
         # Create impersonation token
         expires_delta = timedelta(minutes=IMPERSONATION_TOKEN_TTL_MINUTES)
-        expires_at = datetime.utcnow() + expires_delta
+        expires_at = datetime.now(UTC) + expires_delta
 
         import uuid
 
@@ -137,7 +137,7 @@ class ImpersonationService:
             "original_admin_id": str(admin_user.id),
             "target_user_id": str(target_user.id),
             "exp": expires_at,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(UTC),
             "jti": jti,
         }
 
@@ -235,7 +235,7 @@ class ImpersonationService:
                 target_id=target_user_id,
                 details={
                     "jti": jti,
-                    "ended_at": datetime.utcnow().isoformat(),
+                    "ended_at": datetime.now(UTC).isoformat(),
                 },
                 ip_address=ip_address,
                 user_agent=user_agent,

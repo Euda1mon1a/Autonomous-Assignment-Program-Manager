@@ -38,7 +38,7 @@ import copy
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from uuid import UUID
 
@@ -80,7 +80,7 @@ class StateMachineContext:
             return validate_swap(swap_id)
 
         def record_approval_action(ctx: StateMachineContext) -> None:
-            ctx.set("approved_at", datetime.utcnow().isoformat())
+            ctx.set("approved_at", datetime.now(UTC).isoformat())
             ctx.set("approved_by", str(ctx.triggered_by_id))
     """
 
@@ -891,7 +891,7 @@ class StateMachine:
             # Update state
         instance.current_state = transition.to_state
         instance.context = ctx.data
-        instance.updated_at = datetime.utcnow()
+        instance.updated_at = datetime.now(UTC)
 
         # Execute entry action on new state
         entry_action_name = None
@@ -903,7 +903,7 @@ class StateMachine:
             # Check if reached final state
         if to_state_obj.is_final:
             instance.status = StateMachineStatus.COMPLETED.value
-            instance.completed_at = datetime.utcnow()
+            instance.completed_at = datetime.now(UTC)
 
             # Record transition in history
         transition_record = StateMachineTransition(
@@ -1070,7 +1070,7 @@ class StateMachine:
             raise ValueError(f"Instance {instance_id} not found")
 
         instance.status = StateMachineStatus.SUSPENDED.value
-        instance.updated_at = datetime.utcnow()
+        instance.updated_at = datetime.now(UTC)
 
         db.commit()
         db.refresh(instance)
@@ -1110,7 +1110,7 @@ class StateMachine:
             )
 
         instance.status = StateMachineStatus.ACTIVE.value
-        instance.updated_at = datetime.utcnow()
+        instance.updated_at = datetime.now(UTC)
 
         db.commit()
         db.refresh(instance)
