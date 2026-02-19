@@ -227,7 +227,7 @@ class BackupScheduler:
         if self.config.get("daily_backup", {}).get("enabled"):
             daily = self.config["daily_backup"]
             backup_time = time.fromisoformat(daily["time"])
-            next_daily = datetime.combine(now.date(), backup_time)
+            next_daily = datetime.combine(now.date(), backup_time, tzinfo=UTC)
 
             if next_daily <= now:
                 next_daily += timedelta(days=1)
@@ -252,7 +252,7 @@ class BackupScheduler:
                 days_ahead += 7
 
             next_weekly = datetime.combine(
-                now.date() + timedelta(days=days_ahead), backup_time
+                now.date() + timedelta(days=days_ahead), backup_time, tzinfo=UTC
             )
 
             # If it's today but time has passed, schedule for next week

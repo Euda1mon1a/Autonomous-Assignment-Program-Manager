@@ -263,10 +263,12 @@ def cleanup_old_archives(
         all_archives = storage.list_archives()
 
         # Filter archives older than cutoff
+        def _parse_ts(iso: str) -> datetime:
+            dt = datetime.fromisoformat(iso)
+            return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
+
         old_archives = [
-            a
-            for a in all_archives
-            if datetime.fromisoformat(a["created_at"]) < cutoff_date
+            a for a in all_archives if _parse_ts(a["created_at"]) < cutoff_date
         ]
 
         # Delete old archives
