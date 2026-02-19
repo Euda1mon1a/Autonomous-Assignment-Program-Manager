@@ -138,12 +138,17 @@ def check_deployed_faculty(cur, block_start: date, block_end: date) -> Preflight
 
 def check_holidays_flagged(cur, block_start: date, block_end: date) -> PreflightResult:
     """Check that federal holidays within the block are flagged."""
-    # Get federal holidays in the block's calendar years
+    # Get federal holidays in the block's calendar years.
+    # Include adjacent years to catch observed New Year's Day on Dec 31
+    # (when Jan 1 falls on Saturday, OPM observes it on Friday Dec 31).
+    years_to_check = {block_start.year, block_end.year, block_start.year - 1, block_end.year + 1}
     holidays_to_check = []
-    for year in {block_start.year, block_end.year}:
+    seen_dates = set()
+    for year in sorted(years_to_check):
         for holiday in get_federal_holidays(year):
-            if block_start <= holiday.date <= block_end:
+            if block_start <= holiday.date <= block_end and holiday.date not in seen_dates:
                 holidays_to_check.append(holiday)
+                seen_dates.add(holiday.date)
 
     if not holidays_to_check:
         return PreflightResult(
@@ -155,19 +160,24 @@ def check_holidays_flagged(cur, block_start: date, block_end: date) -> Preflight
     details = []
     all_flagged = True
     for holiday in holidays_to_check:
+        # Check ALL half-day rows (AM + PM) — both must be flagged
         cur.execute(
-            "SELECT is_holiday, holiday_name FROM blocks WHERE date = %s LIMIT 1",
+            "SELECT time_of_day, is_holiday, holiday_name FROM blocks WHERE date = %s ORDER BY time_of_day",
             (holiday.date,),
         )
-        row = cur.fetchone()
-        if row is None:
+        rows = cur.fetchall()
+        if not rows:
             details.append(f"  {holiday.date} ({holiday.name}): NO BLOCK RECORD")
             all_flagged = False
-        elif not row[0]:
-            details.append(f"  {holiday.date} ({holiday.name}): NOT FLAGGED")
-            all_flagged = False
         else:
-            details.append(f"  {holiday.date} ({holiday.name}): OK (flagged as '{row[1]}')")
+            unflagged = [tod for tod, is_hol, _ in rows if not is_hol]
+            if unflagged:
+                slots = ", ".join(unflagged)
+                details.append(f"  {holiday.date} ({holiday.name}): NOT FLAGGED on {slots}")
+                all_flagged = False
+            else:
+                hol_name = rows[0][2] or holiday.name
+                details.append(f"  {holiday.date} ({holiday.name}): OK (flagged as '{hol_name}')")
 
     return PreflightResult(
         name="holidays flagged",
