@@ -278,5 +278,5 @@ Recommendations:
 ## See Also
 
 - [MCP Tools Reference](./MCP_TOOLS_REFERENCE.md)
-- [ACGME Compliance Rules](../../docs/user-guide/compliance.md)
+- [ACGME Compliance Rules](../docs/user-guide/compliance.md)
 - [Database Schema](../docs/architecture/database.md)

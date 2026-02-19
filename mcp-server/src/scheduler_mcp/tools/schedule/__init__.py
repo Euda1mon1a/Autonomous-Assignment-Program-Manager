@@ -2,7 +2,6 @@
 Schedule management tools for MCP.
 """
 
-from .clear_half_day_assignments import ClearHalfDayAssignmentsTool
 from .create_assignment import CreateAssignmentTool
 from .delete_assignment import DeleteAssignmentTool
 from .export_schedule import ExportScheduleTool
@@ -17,7 +16,6 @@ __all__ = [
     "CreateAssignmentTool",
     "UpdateAssignmentTool",
     "DeleteAssignmentTool",
-    "ClearHalfDayAssignmentsTool",
     "GenerateScheduleTool",
     "ValidateScheduleTool",
     "OptimizeScheduleTool",

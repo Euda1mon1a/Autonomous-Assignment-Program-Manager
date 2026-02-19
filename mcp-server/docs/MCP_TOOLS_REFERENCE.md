@@ -384,5 +384,5 @@ Recommendation: Reduce Dr. Smith's assignments by 2 blocks in week 3.
 ## See Also
 
 - [MCP Resources Reference](./MCP_RESOURCES_REFERENCE.md)
-- [ACGME Compliance Rules](../../docs/user-guide/compliance.md)
-- [Resilience Framework](../../docs/architecture/resilience.md)
+- [ACGME Compliance Rules](../docs/user-guide/compliance.md)
+- [Resilience Framework](../docs/architecture/resilience.md)
