@@ -246,7 +246,12 @@ class TestShapleyPlaceholder:
     """Test the improved Shapley placeholder in server.py."""
 
     def test_shapley_placeholder_not_uniform(self):
-        """Verify Shapley placeholder no longer returns uniform distribution."""
+        """Verify Shapley placeholder uses non-uniform (Dirichlet) distribution.
+
+        Note: This tests the algorithm directly rather than through the MCP tool
+        wrapper. Integration testing through calculate_shapley_workload_tool
+        requires a running MCP server context. See server.py fallback block.
+        """
         import random
 
         faculty_ids = ["fac-001", "fac-002", "fac-003", "fac-004"]
