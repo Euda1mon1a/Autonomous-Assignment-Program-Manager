@@ -808,7 +808,119 @@ def validate_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
     }
 
 
-# ─── Node 12: finalize ───────────────────────────────────────────────
+# ─── Node 12: ml_score ───────────────────────────────────────────────
+
+
+def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
+    """Score the generated schedule using ML models (if enabled).
+
+    Runs post-validation, pre-finalize. Provides quality metrics
+    (preference satisfaction, workload balance, conflict risk) that
+    are included in the final result for human review.
+
+    Gracefully degrades: if ML is disabled or models aren't trained,
+    returns empty scores and continues the pipeline.
+    """
+    engine = _get_engine(config)
+    settings = getattr(engine, "settings", None)
+
+    # Check if ML scoring is enabled
+    ml_enabled = False
+    if settings:
+        ml_enabled = getattr(settings, "ML_ENABLED", False)
+    if not ml_enabled:
+        ml_enabled = os.getenv("ML_ENABLED", "false").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+
+    if not ml_enabled:
+        logger.debug("ML scoring disabled (ML_ENABLED=false); skipping")
+        return {"ml_scores": {}}
+
+    try:
+        from pathlib import Path
+
+        from app.ml.inference.schedule_scorer import ScheduleScorer
+
+        # Resolve model paths from settings or env
+        models_dir = Path(
+            getattr(settings, "ML_MODELS_DIR", None)
+            or os.getenv("ML_MODELS_DIR", "models")
+        )
+        pref_path = getattr(settings, "ML_PREFERENCE_MODEL_PATH", None) or None
+        conflict_path = getattr(settings, "ML_CONFLICT_MODEL_PATH", None) or None
+        workload_path = getattr(settings, "ML_WORKLOAD_MODEL_PATH", None) or None
+
+        # Convert non-empty strings to Path, None otherwise
+        pref_path = Path(pref_path) if pref_path else None
+        conflict_path = Path(conflict_path) if conflict_path else None
+        workload_path = Path(workload_path) if workload_path else None
+
+        scorer = ScheduleScorer(
+            preference_model_path=pref_path,
+            workload_model_path=workload_path,
+            conflict_model_path=conflict_path,
+            db=None,  # Sync context; scorer uses pre-loaded models only
+        )
+
+        # Build schedule dict from state for the scorer
+        assignments = state.get("assignments", [])
+        residents = state.get("residents", [])
+        faculty = state.get("faculty", [])
+
+        schedule_dict: dict[str, Any] = {
+            "assignments": [
+                {
+                    "person": {
+                        "id": str(getattr(a, "person_id", "")),
+                        "type": "resident",
+                    },
+                    "rotation": {
+                        "id": str(getattr(a, "rotation_template_id", "")),
+                    },
+                    "block": {
+                        "id": str(getattr(a, "block_id", "")),
+                    },
+                }
+                for a in assignments
+            ],
+            "people": [
+                {
+                    "id": str(getattr(p, "id", "")),
+                    "type": getattr(p, "type", "resident"),
+                    "pgy_level": getattr(p, "pgy_level", None),
+                    "assignment_count": sum(
+                        1
+                        for a in assignments
+                        if getattr(a, "person_id", None) == getattr(p, "id", None)
+                    ),
+                }
+                for p in list(residents) + list(faculty)
+            ],
+            "metadata": {
+                "block_number": state.get("block_number"),
+                "academic_year": state.get("academic_year"),
+                "total_assignments": len(assignments),
+            },
+        }
+
+        ml_scores = scorer.score_schedule(schedule_dict)
+        logger.info(
+            f"ML scoring complete: {ml_scores.get('grade', '?')} "
+            f"(score={ml_scores.get('overall_score', 0):.3f})"
+        )
+        return {"ml_scores": ml_scores}
+
+    except Exception as e:
+        # ML scoring is advisory — never fail the pipeline
+        logger.warning(f"ML scoring failed (non-fatal): {e}")
+        return {"ml_scores": {"error": str(e)}}
+
+
+# ─── Node 13: finalize ───────────────────────────────────────────────
 
 
 def finalize_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
@@ -901,5 +1013,6 @@ def finalize_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
                 ),
                 "hub_faculty_count": (len(context.hub_scores) if context else 0),
             },
+            "ml_scores": state.get("ml_scores", {}),
         },
     }

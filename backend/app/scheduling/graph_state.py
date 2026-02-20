@@ -93,6 +93,11 @@ class ScheduleGraphState(TypedDict, total=False):
     nf_pc_audit: Any  # NFPCAudit pydantic model
     nf_pc_audit_raw: dict[str, Any]
 
+    # ── Phase: ml_score ──────────────────────────────────────────
+    ml_scores: dict[
+        str, Any
+    ]  # ScheduleScorer output (overall_score, grade, components)
+
     # ── Phase: finalize ──────────────────────────────────────────
     post_health_report: Any  # SystemHealthReport
     resilience_warnings: list[str]

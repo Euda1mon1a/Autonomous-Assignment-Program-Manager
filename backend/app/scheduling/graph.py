@@ -33,6 +33,7 @@ from app.scheduling.graph_nodes import (
     finalize_node,
     init_node,
     load_data_node,
+    ml_score_node,
     persist_and_call_node,
     persist_draft_or_live_node,
     pre_validate_node,
@@ -58,7 +59,7 @@ def build_scheduling_graph() -> Any:
 
         init → load_data → check_residents ─?→ build_context → pre_validate
           ─?→ solve ─?→ persist_and_call ─?→ activity_solver → backfill
-          → persist_draft_or_live → validate → finalize → END
+          → persist_draft_or_live → validate → ml_score → finalize → END
 
     Where ─?→ indicates a conditional edge that routes to END on failure.
     """
@@ -76,6 +77,7 @@ def build_scheduling_graph() -> Any:
     graph.add_node("backfill", backfill_node)
     graph.add_node("persist_draft_or_live", persist_draft_or_live_node)
     graph.add_node("validate", validate_node)
+    graph.add_node("ml_score", ml_score_node)
     graph.add_node("finalize", finalize_node)
 
     # Set entry point
@@ -115,11 +117,12 @@ def build_scheduling_graph() -> Any:
         {"continue": "activity_solver", "end": END},
     )
 
-    # Linear: activity_solver → backfill → persist → validate → finalize
+    # Linear: activity_solver → backfill → persist → validate → ml_score → finalize
     graph.add_edge("activity_solver", "backfill")
     graph.add_edge("backfill", "persist_draft_or_live")
     graph.add_edge("persist_draft_or_live", "validate")
-    graph.add_edge("validate", "finalize")
+    graph.add_edge("validate", "ml_score")
+    graph.add_edge("ml_score", "finalize")
     graph.add_edge("finalize", END)
 
     return graph.compile()

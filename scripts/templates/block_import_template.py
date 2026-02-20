@@ -36,12 +36,16 @@ BLOCK_CONFIG = {
     "end_date": date(2026, 1, 28),   # Last day of block
 }
 
-# Excel row ranges (1-indexed)
-RESIDENT_ROWS = range(9, 26)   # Adjust per block
-FACULTY_ROWS = range(31, 41)   # Adjust per block
-NAME_COL = 5                    # Column E = names (Last, First format)
-DATA_COL_START = 6              # Column F = first half-day slot
-DATA_COL_END = 61               # Column BI = last half-day slot (28 days x 2)
+# Excel column layout (1-indexed):
+# Col D = "PROVIDER" header, Col E = first half-day slot (Day 1 AM)
+# Each day = 2 columns (odd=AM, even=PM), 28 days = 56 columns (E through BH)
+NAME_COL = 4                    # Column D = names (Last, First format)
+DATA_COL_START = 5              # Column E = first half-day slot (Day 1 AM)
+DATA_COL_END = 60               # Column BH = last half-day slot (Day 28 PM)
+
+# Fallback row ranges — only used if auto-detection fails
+_FALLBACK_RESIDENT_ROWS = range(9, 50)
+_FALLBACK_FACULTY_ROWS = range(44, 75)
 
 # ── Name Mapping ─────────────────────────────────────────────────────────────
 # Maps "Last, First" from Excel to "First Last" in DB
@@ -84,12 +88,59 @@ LEAVE_TYPE_MAP = {
 }
 
 
+# ── Row Detection ────────────────────────────────────────────────────────────
+
+def detect_person_rows(ws):
+    """Scan worksheet to detect resident and faculty rows dynamically.
+
+    Looks for section markers in column B (TEMPLATE codes: R1, R2, R3, C17, C19)
+    and column C (ROLE labels: PGY 1, PGY 2, PGY 3, FAC, NP, MD).
+
+    Returns:
+        (resident_rows, faculty_rows) — lists of 1-indexed row numbers
+    """
+    resident_markers = {"R1", "R2", "R3"}
+    faculty_markers = {"C19", "C17"}
+    role_resident = {"PGY 1", "PGY 2", "PGY 3", "PGY1", "PGY2", "PGY3"}
+    role_faculty = {"FAC", "NP", "MD"}
+
+    resident_rows = []
+    faculty_rows = []
+
+    for row_idx in range(1, min(ws.max_row + 1, 120)):
+        template_val = str(ws.cell(row=row_idx, column=2).value or "").strip().upper()
+        role_val = str(ws.cell(row=row_idx, column=3).value or "").strip().upper()
+        name_val = str(ws.cell(row=row_idx, column=NAME_COL).value or "").strip()
+
+        if template_val in resident_markers:
+            resident_rows.append(row_idx)
+        elif template_val in faculty_markers:
+            faculty_rows.append(row_idx)
+        elif role_val in role_resident:
+            resident_rows.append(row_idx)
+        elif role_val in role_faculty:
+            faculty_rows.append(row_idx)
+        elif name_val and name_val in NAME_MAP:
+            resident_rows.append(row_idx)
+
+    return resident_rows, faculty_rows
+
+
 # ── Step 1: Parse Excel ──────────────────────────────────────────────────────
 
 def parse_excel():
     """Parse Excel handjam and return list of (name, date, time_of_day, code)."""
     wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
     ws = wb[SHEET_NAME]
+
+    # Detect person rows dynamically
+    resident_rows, faculty_rows = detect_person_rows(ws)
+    if not resident_rows and not faculty_rows:
+        print("  WARNING: Auto-detection found no person rows; using fallback ranges")
+        resident_rows = list(_FALLBACK_RESIDENT_ROWS)
+        faculty_rows = list(_FALLBACK_FACULTY_ROWS)
+    else:
+        print(f"  Auto-detected {len(resident_rows)} resident rows, {len(faculty_rows)} faculty rows")
 
     start = BLOCK_CONFIG["start_date"]
     num_days = (BLOCK_CONFIG["end_date"] - start).days + 1
@@ -101,7 +152,7 @@ def parse_excel():
         slots.append((d, "PM"))
 
     records = []
-    for row in list(RESIDENT_ROWS) + list(FACULTY_ROWS):
+    for row in resident_rows + faculty_rows:
         excel_name = ws.cell(row=row, column=NAME_COL).value
         if not excel_name or not str(excel_name).strip():
             continue
