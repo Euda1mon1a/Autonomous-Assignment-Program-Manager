@@ -903,13 +903,32 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
         }
 
         def _is_weekend(a: Any) -> bool:
-            """Check if assignment falls on a weekend."""
+            """Check if assignment falls on a weekend.
+
+            Prefers Block.is_weekend (boolean column), falls back to
+            Block.date.weekday() >= 5.
+            """
             block = getattr(a, "block", None)
             if block:
-                start = getattr(block, "start_date", None)
-                if start and hasattr(start, "weekday"):
-                    return start.weekday() >= 5
+                # Block model has an is_weekend boolean column
+                is_wknd = getattr(block, "is_weekend", None)
+                if is_wknd is not None:
+                    return bool(is_wknd)
+                # Fallback: derive from Block.date (not start_date)
+                d = getattr(block, "date", None)
+                if d and hasattr(d, "weekday"):
+                    return d.weekday() >= 5
             return False
+
+        # Build person attribute lookup for enriching assignment payloads
+        person_attr_map: dict[Any, dict[str, Any]] = {}
+        for p in list(residents) + list(faculty):
+            pid = getattr(p, "id", None)
+            person_attr_map[pid] = {
+                "pgy_level": getattr(p, "pgy_level", None),
+                "faculty_role": getattr(p, "faculty_role", None),
+                "target_clinical_blocks": getattr(p, "target_clinical_blocks", None),
+            }
 
         # Group assignments by person_id for conflict scoring (existing assignments)
         assignments_by_person: dict[Any, list[dict[str, Any]]] = {}
@@ -933,6 +952,7 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
                         "type": person_type_map.get(
                             getattr(a, "person_id", None), "resident"
                         ),
+                        **person_attr_map.get(getattr(a, "person_id", None), {}),
                     },
                     "rotation": {
                         "id": str(getattr(a, "rotation_template_id", "")),
@@ -942,6 +962,19 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
                     },
                     "block": {
                         "id": str(getattr(a, "block_id", "")),
+                        "date": str(
+                            getattr(getattr(a, "block", None), "date", "") or ""
+                        ),
+                        "time_of_day": getattr(
+                            getattr(a, "block", None), "time_of_day", None
+                        ),
+                        "is_weekend": _is_weekend(a),
+                        "is_holiday": getattr(
+                            getattr(a, "block", None), "is_holiday", False
+                        ),
+                        "block_number": getattr(
+                            getattr(a, "block", None), "block_number", None
+                        ),
                     },
                     "proposed": {
                         "rotation_id": str(getattr(a, "rotation_template_id", "")),
