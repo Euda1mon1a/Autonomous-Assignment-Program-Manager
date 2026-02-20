@@ -850,9 +850,21 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
             getattr(settings, "ML_MODELS_DIR", None)
             or os.getenv("ML_MODELS_DIR", "models")
         )
-        pref_path = getattr(settings, "ML_PREFERENCE_MODEL_PATH", None) or None
-        conflict_path = getattr(settings, "ML_CONFLICT_MODEL_PATH", None) or None
-        workload_path = getattr(settings, "ML_WORKLOAD_MODEL_PATH", None) or None
+        pref_path = (
+            getattr(settings, "ML_PREFERENCE_MODEL_PATH", None)
+            or os.getenv("ML_PREFERENCE_MODEL_PATH")
+            or None
+        )
+        conflict_path = (
+            getattr(settings, "ML_CONFLICT_MODEL_PATH", None)
+            or os.getenv("ML_CONFLICT_MODEL_PATH")
+            or None
+        )
+        workload_path = (
+            getattr(settings, "ML_WORKLOAD_MODEL_PATH", None)
+            or os.getenv("ML_WORKLOAD_MODEL_PATH")
+            or None
+        )
 
         # Convert non-empty strings to Path; fall back to models_dir defaults
         # Directory names match training pipeline (ml_tasks.py)

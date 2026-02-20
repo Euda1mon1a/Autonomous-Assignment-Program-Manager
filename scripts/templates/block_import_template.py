@@ -140,6 +140,12 @@ def parse_excel():
         resident_rows = list(_FALLBACK_RESIDENT_ROWS)
         faculty_rows = list(_FALLBACK_FACULTY_ROWS)
     else:
+        if not resident_rows:
+            print("  WARNING: No resident rows detected; using fallback resident range")
+            resident_rows = list(_FALLBACK_RESIDENT_ROWS)
+        if not faculty_rows:
+            print("  WARNING: No faculty rows detected; using fallback faculty range")
+            faculty_rows = list(_FALLBACK_FACULTY_ROWS)
         print(f"  Auto-detected {len(resident_rows)} resident rows, {len(faculty_rows)} faculty rows")
 
     start = BLOCK_CONFIG["start_date"]
