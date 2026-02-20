@@ -314,3 +314,8 @@ backend/tests/routes/test_swap_approval_workflow.py
 # Codex automation reports (generated)
 docs/reports/automation/
 RECENT_ACTIVITY.md
+
+# ML model artifacts (retrain from DB)
+models/**/*.pkl
+models/**/*.cbm
+catboost_info/

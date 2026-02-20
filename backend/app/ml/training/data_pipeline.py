@@ -21,6 +21,12 @@ from app.models.conflict_alert import ConflictAlert
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 
+
+def _to_date(dt):
+    """Convert datetime or date to date."""
+    return dt.date() if isinstance(dt, datetime) else dt
+
+
 # SwapRecord model doesn't track assignment-level swaps
 # from app.models.swap import SwapRecord
 
@@ -87,8 +93,8 @@ class TrainingDataPipeline:
             .outerjoin(
                 RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
             )
-            .where(Block.date >= start_date.date())
-            .where(Block.date <= end_date.date())
+            .where(Block.date >= _to_date(start_date))
+            .where(Block.date <= _to_date(end_date))
         )
 
         result = await self._execute(query)
@@ -197,8 +203,8 @@ class TrainingDataPipeline:
                 select(Assignment, Block)
                 .join(Block, Assignment.block_id == Block.id)
                 .where(Assignment.person_id == person.id)
-                .where(Block.date >= start_date.date())
-                .where(Block.date <= end_date.date())
+                .where(Block.date >= _to_date(start_date))
+                .where(Block.date <= _to_date(end_date))
             )
 
             assignments_result = await self._execute(assignments_query)
@@ -298,8 +304,8 @@ class TrainingDataPipeline:
             select(Assignment, Person, Block)
             .join(Person, Assignment.person_id == Person.id)
             .join(Block, Assignment.block_id == Block.id)
-            .where(Block.date >= start_date.date())
-            .where(Block.date <= end_date.date())
+            .where(Block.date >= _to_date(start_date))
+            .where(Block.date <= _to_date(end_date))
         )
 
         result = await self._execute(query)
@@ -744,8 +750,8 @@ class TrainingDataPipeline:
             select(func.count(Assignment.id))
             .join(Block, Assignment.block_id == Block.id)
             .where(Assignment.person_id == person_id)
-            .where(Block.date >= start_date.date())
-            .where(Block.date <= end_date.date())
+            .where(Block.date >= _to_date(start_date))
+            .where(Block.date <= _to_date(end_date))
         )
         result = await self._execute(total_query)
         total_assignments = result.scalar() or 0
@@ -819,8 +825,8 @@ class TrainingDataPipeline:
         total_assignments_query = (
             select(func.count(Assignment.id))
             .join(Block, Assignment.block_id == Block.id)
-            .where(Block.date >= start_date.date())
-            .where(Block.date <= end_date.date())
+            .where(Block.date >= _to_date(start_date))
+            .where(Block.date <= _to_date(end_date))
         )
         result = await self._execute(total_assignments_query)
         total_assignments = result.scalar() or 1
