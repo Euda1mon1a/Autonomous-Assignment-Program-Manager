@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-19 (Mini branch triage Wave 2, datetime migration, Codex fixes, stack health audit)
+> **Last Updated:** 2026-02-20 (ML scorer pipeline merged, working branch inventory)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -541,6 +541,26 @@ Three-phase plan to eliminate CLI dependency for all operations:
 
 **Confidence:** Medium — RED health status adds uncertainty. Security and migration debt can introduce hidden work.
 
+### 21. Working Branches With Committed Files (NEW - Feb 2026)
+**Added:** 2026-02-20
+**Source:** Branch inventory during ML scorer docs session
+
+Three active branches have committed work that needs review. All are **stale on `graph_nodes.py` and `test_scheduling_graph.py`** after PR #1181 merged the 13-node ML scorer pipeline. Rebasing these branches will show conflicts on those files.
+
+| Branch | Commits Ahead | Key Files | Status |
+|--------|---------------|-----------|--------|
+| `feature/empty-table-features` | 4 | Gemini seed scripts, seeding guide, schema drift report, game theory/wellness/notification seeds (28 files) | Stale — forked before PR #1181; graph files show -277/-120 line deltas |
+| `feat/schedule-vision-research` | 1 | Schedule-vision ML research scripts (24 files) | Stale — touches graph files |
+| `docs/repo-state-report-feb19` | 1 | Plain-English repo state report (17 files) | Stale — touches graph files |
+
+**Action:**
+1. Rebase each branch onto `main` (post-PR #1181 merge)
+2. Resolve graph_nodes.py / test file conflicts (accept main's 13-node version)
+3. Review committed content for merge-readiness
+4. Open PRs or discard if superseded
+
+**Effort:** 1-2 hours total (mostly conflict resolution + review)
+
 ---
 
 ## MEDIUM (Plan for Sprint)
@@ -828,9 +848,11 @@ FastAPI TestClient has undocumented behavior differences between versioned and n
 - Infrastructure exists, route registered
 - Minimal production usage - consider for Labs rollout
 
-### 17. ML Workload Analysis
-- `ml.py` returns "placeholder response"
-- Low priority unless ML features requested
+### 17. ML Workload Analysis — PARTIALLY RESOLVED
+- ~~`ml.py` returns "placeholder response"~~ ML scorer now wired into LangGraph pipeline (PR #1181)
+- **Done:** `ScheduleScorer` ensemble (PreferencePredictor, ConflictPredictor, WorkloadOptimizer) runs as `ml_score` node (node 12) in 13-node LangGraph StateGraph
+- **Remaining:** Models need training data to be fitted; currently gracefully degrades (returns empty scores) when models are unfitted
+- **Remaining:** `ml.py` placeholder API endpoint still returns mock data (separate from pipeline scorer)
 
 ### 18. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
@@ -951,10 +973,10 @@ done
 | Priority | Open | Resolved |
 |----------|------|----------|
 | **CRITICAL** | 2 | 6 |
-| **HIGH** | 10 | 9 |
+| **HIGH** | 11 | 9 |
 | **MEDIUM** | 16 | 12 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **41** | **30** |
+| **TOTAL** | **42** | **30** |
 
 ### Top 5 Actions for Next Session
 
@@ -974,6 +996,16 @@ done
 | 31 | CP-SAT Integration Tests | 4-8h | MEDIUM |
 
 **Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+### Session 2026-02-20 Updates
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Merged | PR #1181 | ML scorer node wired into LangGraph pipeline (13 nodes, 9 Codex review rounds) |
+| ✅ Created | PR #1183 | Documentation updates for 13-node pipeline (5 files: CP_SAT_CANONICAL_PIPELINE, SCHEDULE_GENERATION_RUNBOOK, ENGINE_ASSIGNMENT_FLOW, ARCHITECTURE, ADR-2026-02-17) |
+| 📝 Updated | LOW #17 | ML Workload Analysis → PARTIALLY RESOLVED (scorer in pipeline, models need training) |
+| ➕ Added | HIGH #21 | Working branches with committed files needing review/rebase (3 branches, all stale on graph files) |
+| 📋 Inventoried | 3 branches | `feature/empty-table-features` (4 commits), `feat/schedule-vision-research` (1 commit), `docs/repo-state-report-feb19` (1 commit) |
 
 ### Session 2026-02-19 Updates
 
