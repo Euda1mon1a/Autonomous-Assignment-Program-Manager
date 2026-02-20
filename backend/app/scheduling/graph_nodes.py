@@ -911,6 +911,20 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
                     return start.weekday() >= 5
             return False
 
+        # Group assignments by person_id for conflict scoring (existing assignments)
+        assignments_by_person: dict[Any, list[dict[str, Any]]] = {}
+        for a in assignments:
+            pid = getattr(a, "person_id", None)
+            entry = {
+                "rotation_template_id": str(getattr(a, "rotation_template_id", "")),
+                "rotation_name": template_name_map.get(
+                    getattr(a, "rotation_template_id", None), ""
+                ),
+                "block_id": str(getattr(a, "block_id", "")),
+                "is_weekend": _is_weekend(a),
+            }
+            assignments_by_person.setdefault(pid, []).append(entry)
+
         schedule_dict: dict[str, Any] = {
             "assignments": [
                 {
@@ -928,6 +942,24 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
                     },
                     "block": {
                         "id": str(getattr(a, "block_id", "")),
+                    },
+                    "proposed": {
+                        "rotation_id": str(getattr(a, "rotation_template_id", "")),
+                        "rotation_name": template_name_map.get(
+                            getattr(a, "rotation_template_id", None), ""
+                        ),
+                        "block_id": str(getattr(a, "block_id", "")),
+                    },
+                    "existing": [
+                        e
+                        for e in assignments_by_person.get(
+                            getattr(a, "person_id", None), []
+                        )
+                        if e["block_id"] != str(getattr(a, "block_id", ""))
+                    ],
+                    "context": {
+                        "block_number": state.get("block_number"),
+                        "academic_year": state.get("academic_year"),
                     },
                 }
                 for a in assignments
@@ -974,10 +1006,14 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
         )
         return {"ml_scores": ml_scores}
 
-    except Exception as e:
-        # ML scoring is advisory — never fail the pipeline
-        logger.warning(f"ML scoring failed (non-fatal): {e}")
+    except (FileNotFoundError, ImportError, OSError) as e:
+        # Expected operational failures: missing model files, uninstalled deps
+        logger.warning(f"ML scoring unavailable (non-fatal): {e}")
         return {"ml_scores": {"error": "ml_scoring_unavailable"}}
+    except Exception:
+        # Unexpected errors — log full traceback for debugging, don't mask
+        logger.exception("ML scoring failed unexpectedly")
+        raise
 
 
 # ─── Node 13: finalize ───────────────────────────────────────────────

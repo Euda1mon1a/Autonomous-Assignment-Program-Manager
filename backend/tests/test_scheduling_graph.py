@@ -405,8 +405,13 @@ class TestMLScoreNode:
         with patch("app.ml.inference.schedule_scorer.ScheduleScorer") as MockScorer:
             MockScorer.return_value.score_schedule.return_value = mock_scores
 
+            # Configure mock assignment with block=None so _is_weekend
+            # doesn't hit MagicMock comparison (TypeError on >= operator)
+            mock_assignment = MagicMock()
+            mock_assignment.block = None
+
             state = {
-                "assignments": [MagicMock()],
+                "assignments": [mock_assignment],
                 "residents": [MagicMock()],
                 "faculty": [MagicMock()],
                 "block_number": 12,
@@ -417,8 +422,8 @@ class TestMLScoreNode:
         assert result["ml_scores"] == mock_scores
         assert result["ml_scores"]["grade"] == "B+"
 
-    def test_graceful_degradation_on_error(self):
-        """ML scoring catches exceptions and returns error dict (never crashes pipeline)."""
+    def test_graceful_degradation_on_missing_models(self):
+        """ML scoring catches FileNotFoundError and returns error dict."""
         from app.scheduling.graph_nodes import ml_score_node
 
         engine = _make_engine_mock()
@@ -438,6 +443,26 @@ class TestMLScoreNode:
 
         assert "error" in result["ml_scores"]
         assert result["ml_scores"]["error"] == "ml_scoring_unavailable"
+
+    def test_unexpected_errors_propagate(self):
+        """Unexpected errors (not FileNotFoundError/ImportError/OSError) are raised."""
+        from app.scheduling.graph_nodes import ml_score_node
+
+        engine = _make_engine_mock()
+        engine.settings = MagicMock()
+        engine.settings.ML_ENABLED = True
+        engine.settings.ML_MODELS_DIR = "/tmp/models"
+        engine.settings.ML_PREFERENCE_MODEL_PATH = None
+        engine.settings.ML_CONFLICT_MODEL_PATH = None
+        engine.settings.ML_WORKLOAD_MODEL_PATH = None
+        config = _make_config(engine)
+
+        with patch("app.ml.inference.schedule_scorer.ScheduleScorer") as MockScorer:
+            MockScorer.side_effect = ValueError("Unexpected scorer bug")
+
+            state = {"assignments": [], "residents": [], "faculty": []}
+            with pytest.raises(ValueError, match="Unexpected scorer bug"):
+                ml_score_node(state, config)
 
 
 class TestRouteAfterFailureCheck:
