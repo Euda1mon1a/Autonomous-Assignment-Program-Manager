@@ -444,6 +444,32 @@ class TestMLScoreNode:
         assert "error" in result["ml_scores"]
         assert result["ml_scores"]["error"] == "ml_scoring_unavailable"
 
+    def test_graceful_degradation_on_unfitted_models(self):
+        """ML scoring catches NotFittedError when models exist but aren't trained."""
+        from app.scheduling.graph_nodes import ml_score_node
+
+        engine = _make_engine_mock()
+        engine.settings = MagicMock()
+        engine.settings.ML_ENABLED = True
+        engine.settings.ML_MODELS_DIR = "/tmp/models"
+        engine.settings.ML_PREFERENCE_MODEL_PATH = None
+        engine.settings.ML_CONFLICT_MODEL_PATH = None
+        engine.settings.ML_WORKLOAD_MODEL_PATH = None
+        config = _make_config(engine)
+
+        with patch("app.ml.inference.schedule_scorer.ScheduleScorer") as MockScorer:
+            from sklearn.exceptions import NotFittedError
+
+            MockScorer.return_value.score_schedule.side_effect = NotFittedError(
+                "This estimator is not fitted yet"
+            )
+
+            state = {"assignments": [], "residents": [], "faculty": []}
+            result = ml_score_node(state, config)
+
+        assert "error" in result["ml_scores"]
+        assert result["ml_scores"]["error"] == "ml_scoring_unavailable"
+
     def test_unexpected_errors_propagate(self):
         """Unexpected errors (not FileNotFoundError/ImportError/OSError) are raised."""
         from app.scheduling.graph_nodes import ml_score_node

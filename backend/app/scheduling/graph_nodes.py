@@ -843,6 +843,8 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
     try:
         from pathlib import Path
 
+        from sklearn.exceptions import NotFittedError
+
         from app.ml.inference.schedule_scorer import ScheduleScorer
 
         # Resolve model paths from settings or env
@@ -1039,8 +1041,9 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
         )
         return {"ml_scores": ml_scores}
 
-    except (FileNotFoundError, ImportError, OSError) as e:
-        # Expected operational failures: missing model files, uninstalled deps
+    except (FileNotFoundError, ImportError, OSError, NotFittedError) as e:
+        # Expected operational failures: missing model files, uninstalled
+        # deps, or unfitted models (ML_ENABLED=true but no trained artifacts)
         logger.warning(f"ML scoring unavailable (non-fatal): {e}")
         return {"ml_scores": {"error": "ml_scoring_unavailable"}}
     except Exception:
