@@ -171,12 +171,12 @@ for predictions that referenced codes not yet in the `activities` table.
 
 | Person | PGY | Rotation (`rotation_templates.name`) | NULLs | Root Cause |
 |--------|-----|--------------------------------------|-------|------------|
-| R2-C | 2 | Family Medicine Clinic | 27 | FMC weekday `activity_category='clinical'` codes split between `fm_clinic`, `US`, `LV`, `lec` at 21-33% confidence. The coordinator manually assigns clinic vs ultrasound vs lecture days — no repeating pattern across blocks. |
-| R1-B | 1 | NF-FMIT-PG (`is_block_half_rotation=True`) | 24 | Night float combined template: daytime codes (`off`/`NF`/`lec`) cycle irregularly. Weekday AM is 35% `off` (post-call recovery, `activity_category='time_off'`) vs 35% lecture (`is_protected=True`). |
-| R2-E | 2 | NF-DERM-PG (`is_block_half_rotation=True`) | 24 | Same NF combined template pattern as R1-B. Day-side schedule is coordinator-crafted per block, not pattern-driven. |
-| R1-C | 1 | MSK-SEL | 6 | Weekend slots where `HOL` (`activity_category='time_off'`) and `sm_clinic` (`activity_category='clinical'`) are each 25%. Ref: Block 11 gotcha #6 — holiday vs weekend priority ambiguity. |
-| R3-A | 3 | PEDS-EM | 3 | Thursday PM: `lec` (`is_protected=True`) at 38% — depends on teaching calendar, not rotation. |
-| R3-D | 3 | ELEC | 1 | Single Thursday PM `lec` slot at 38%. Same teaching calendar dependency. |
+| Alaine Gigon | 2 | Family Medicine Clinic | 27 | FMC weekday `activity_category='clinical'` codes split between `fm_clinic`, `US`, `LV`, `lec` at 21-33% confidence. The coordinator manually assigns clinic vs ultrasound vs lecture days — no repeating pattern across blocks. |
+| Clara Wilhelm | 1 | NF-FMIT-PG (`is_block_half_rotation=True`) | 24 | Night float combined template: daytime codes (`off`/`NF`/`lec`) cycle irregularly. Weekday AM is 35% `off` (post-call recovery, `activity_category='time_off'`) vs 35% lecture (`is_protected=True`). |
+| Devin Thomas | 2 | NF-DERM-PG (`is_block_half_rotation=True`) | 24 | Same NF combined template pattern as Wilhelm. Day-side schedule is coordinator-crafted per block, not pattern-driven. |
+| Colin Travis | 1 | MSK-SEL | 6 | Weekend slots where `HOL` (`activity_category='time_off'`) and `sm_clinic` (`activity_category='clinical'`) are each 25%. Ref: Block 11 gotcha #6 — holiday vs weekend priority ambiguity. |
+| Christian Hernandez | 3 | PEDS-EM | 3 | Thursday PM: `lec` (`is_protected=True`) at 38% — depends on teaching calendar, not rotation. |
+| Jae You | 3 | ELEC | 1 | Single Thursday PM `lec` slot at 38%. Same teaching calendar dependency. |
 
 **Key finding:** Three structural patterns resist ML prediction:
 1. **FMC rotation** — `fm_clinic`/`US`/`lec` day assignments are coordinator-discretionary, not algorithmic
