@@ -877,16 +877,42 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
         assignments = state.get("assignments", [])
         residents = state.get("residents", [])
         faculty = state.get("faculty", [])
+        templates = state.get("templates", [])
+
+        # Build lookups for enriching ML payloads
+        person_type_map = {}
+        for p in residents:
+            person_type_map[getattr(p, "id", None)] = "resident"
+        for p in faculty:
+            person_type_map[getattr(p, "id", None)] = "faculty"
+
+        template_name_map = {
+            getattr(t, "id", None): getattr(t, "name", "") for t in templates
+        }
+
+        def _is_weekend(a: Any) -> bool:
+            """Check if assignment falls on a weekend."""
+            block = getattr(a, "block", None)
+            if block:
+                start = getattr(block, "start_date", None)
+                if start and hasattr(start, "weekday"):
+                    return start.weekday() >= 5
+            return False
 
         schedule_dict: dict[str, Any] = {
             "assignments": [
                 {
                     "person": {
                         "id": str(getattr(a, "person_id", "")),
-                        "type": "resident",
+                        "type": person_type_map.get(
+                            getattr(a, "person_id", None), "resident"
+                        ),
                     },
                     "rotation": {
                         "id": str(getattr(a, "rotation_template_id", "")),
+                        "name": template_name_map.get(
+                            getattr(a, "rotation_template_id", None), ""
+                        ),
                     },
                     "block": {
                         "id": str(getattr(a, "block_id", "")),
@@ -898,15 +924,23 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
                 {
                     "person": {
                         "id": str(getattr(p, "id", "")),
-                        "type": getattr(p, "type", "resident"),
+                        "type": person_type_map.get(getattr(p, "id", None), "resident"),
                         "pgy_level": getattr(p, "pgy_level", None),
+                        "faculty_role": getattr(p, "faculty_role", None),
+                        "target_clinical_blocks": getattr(
+                            p, "target_clinical_blocks", None
+                        ),
                     },
                     "assignments": [
                         {
                             "rotation_template_id": str(
                                 getattr(a, "rotation_template_id", "")
                             ),
+                            "rotation_name": template_name_map.get(
+                                getattr(a, "rotation_template_id", None), ""
+                            ),
                             "block_id": str(getattr(a, "block_id", "")),
+                            "is_weekend": _is_weekend(a),
                         }
                         for a in assignments
                         if getattr(a, "person_id", None) == getattr(p, "id", None)
