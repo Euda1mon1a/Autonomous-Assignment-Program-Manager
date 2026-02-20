@@ -217,6 +217,8 @@ test_write.xlsx
 !.claude/skills/codex-app-automation-triage/SKILL.md
 !.claude/skills/codex-local-triage/
 !.claude/skills/codex-local-triage/SKILL.md
+!.claude/skills/mcp-recovery/
+!.claude/skills/mcp-recovery/SKILL.md
 .claude/settings.local.json
 .agent/
 local/
