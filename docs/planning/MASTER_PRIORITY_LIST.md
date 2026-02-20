@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-20 (MCP client config fix, watchdog merged)
+> **Last Updated:** 2026-02-20 (branch triage, ML integration status, Block 12 readiness)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -535,25 +535,27 @@ Three-phase plan to eliminate CLI dependency for all operations:
 
 **Confidence:** Medium — RED health status adds uncertainty. Security and migration debt can introduce hidden work.
 
-### 21. Working Branches With Committed Files (NEW - Feb 2026)
+### 21. Working Branches With Committed Files — MOSTLY RESOLVED (Feb 2026)
 **Added:** 2026-02-20
 **Source:** Branch inventory during ML scorer docs session
+**Triage:** [ML_INTEGRATION_STATUS.md](ML_INTEGRATION_STATUS.md) § Branch Triage Results
 
-Three active branches have committed work that needs review. All are **stale on `graph_nodes.py` and `test_scheduling_graph.py`** after PR #1181 merged the 13-node ML scorer pipeline. Rebasing these branches will show conflicts on those files.
+Five branches triaged. Two fully superseded and deleted, one merged, two remain:
 
 | Branch | Commits Ahead | Key Files | Status |
 |--------|---------------|-----------|--------|
-| `feature/empty-table-features` | 4 | Gemini seed scripts, seeding guide, schema drift report, game theory/wellness/notification seeds (28 files) | Stale — forked before PR #1181; graph files show -277/-120 line deltas |
-| `feat/schedule-vision-research` | 1 | Schedule-vision ML research scripts (24 files) | Stale — touches graph files |
-| `docs/repo-state-report-feb19` | 1 | Plain-English repo state report (17 files) | Stale — touches graph files |
+| ~~`feature/empty-table-features`~~ | ~~4~~ | ~~Gemini seed scripts~~ | ✅ Merged (PR #1182) |
+| ~~`feat/ml-scorer-graph-node-and-import-fixes`~~ | ~~12~~ | ~~Block 12 import, ml_score node~~ | ✅ Deleted — fully superseded by PR #1181 |
+| ~~`docs/ml-scorer-pipeline-docs`~~ | ~~5~~ | ~~Pipeline docs, MLP updates~~ | ✅ Deleted — main has newer content |
+| `feat/schedule-vision-research` | 1 | Schedule-vision ML research scripts (24 files) | Stale — needs rebase onto main |
+| `docs/repo-state-report-feb19` | 1 | Plain-English repo state report (17 files) | Stale — needs rebase onto main |
 
-**Action:**
-1. Rebase each branch onto `main` (post-PR #1181 merge)
+**Remaining action:**
+1. Rebase remaining 2 branches onto `main`
 2. Resolve graph_nodes.py / test file conflicts (accept main's 13-node version)
 3. Review committed content for merge-readiness
-4. Open PRs or discard if superseded
 
-**Effort:** 1-2 hours total (mostly conflict resolution + review)
+**Effort:** ~30 min
 
 ### 22. MCP Server Reliability — MOSTLY RESOLVED (Feb 2026)
 **Added:** 2026-02-20
@@ -858,6 +860,7 @@ FastAPI TestClient has undocumented behavior differences between versioned and n
 - **Done:** `ScheduleScorer` ensemble (PreferencePredictor, ConflictPredictor, WorkloadOptimizer) runs as `ml_score` node (node 12) in 13-node LangGraph StateGraph
 - **Remaining:** Models need training data to be fitted; currently gracefully degrades (returns empty scores) when models are unfitted
 - **Remaining:** `ml.py` placeholder API endpoint still returns mock data (separate from pipeline scorer)
+- **Full status:** [ML_INTEGRATION_STATUS.md](ML_INTEGRATION_STATUS.md) — branch triage, DB reality, Block 12 readiness, training data capture plan
 
 **Experimental ML Approaches (planned testing):**
 
@@ -1019,12 +1022,17 @@ done
 | ✅ Merged | PR #1181 | ML scorer node wired into LangGraph pipeline (13 nodes, 9 Codex review rounds) |
 | ✅ Merged | PR #1184 | MCP watchdog with launchd auto-restart (server-side reliability fix) |
 | ✅ Created | PR #1183 | Documentation updates for 13-node pipeline (5 files: CP_SAT_CANONICAL_PIPELINE, SCHEDULE_GENERATION_RUNBOOK, ENGINE_ASSIGNMENT_FLOW, ARCHITECTURE, ADR-2026-02-17) |
+| ✅ Merged | PR #1182 | Seed scripts (notifications, wellness, game theory, swaps, resilience) + seeding guide + schema drift report + idempotent seed fixes (Codex P2) |
 | ✅ Fixed | MCP client | Root cause: config in `~/.claude/config.json` not picked up; fix: `claude mcp add --transport http --scope local` writes to `~/.claude.json` project key |
 | 📝 Updated | HIGH #22 | MCP reliability → MOSTLY RESOLVED (server watchdog + client config fix) |
 | 📝 Updated | LOW #17 | ML Workload Analysis → PARTIALLY RESOLVED (scorer in pipeline, models need training) |
 | 📝 Updated | 3 docs | MCP_SETUP.md, MCP_IDE_INTEGRATION.md, mcp-recovery skill — client config precedence + transport types |
 | ➕ Added | HIGH #21 | Working branches with committed files needing review/rebase (3 branches, all stale on graph files) |
 | 📋 Inventoried | 3 branches | `feature/empty-table-features` (4 commits), `feat/schedule-vision-research` (1 commit), `docs/repo-state-report-feb19` (1 commit) |
+| 🗑️ Deleted | 2 branches | `feat/ml-scorer-graph-node-and-import-fixes` (fully superseded by PR #1181), `docs/ml-scorer-pipeline-docs` (main has newer content) |
+| ➕ Created | ML_INTEGRATION_STATUS.md | Branch triage results, DB reality, Block 12 readiness, training data capture plan |
+| 📝 Updated | HIGH #21 | Working branches → MOSTLY RESOLVED (2 deleted, 1 merged, 2 remain for rebase) |
+| 📝 Updated | LOW #17 | Added link to ML_INTEGRATION_STATUS.md |
 
 ### Session 2026-02-19 Updates
 
