@@ -37,6 +37,8 @@ CONTINUUM_TABLES = {
     "rotation_templates_version",
     "schedule_runs_version",
     "swap_records_version",
+    "users_version",
+    "schedule_drafts_version",
     # Legacy variant (if exists)
     "absence_version",
 }

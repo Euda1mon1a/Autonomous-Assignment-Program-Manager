@@ -478,9 +478,9 @@ class GameTheoryService:
                         payoff_matrix[p1.name][p2.name] = results.payoff_matrix[i][j]
 
             # Store matches
-            for interaction in results.interactions:
-                # Simplified - store summary matches
-                pass
+            # Note: interaction data access changed in recent axelrod versions
+            # Skipping detailed match storage for now to ensure stability
+            pass
 
             # Update tournament
             tournament.status = SimulationStatus.COMPLETED.value  # type: ignore[assignment]

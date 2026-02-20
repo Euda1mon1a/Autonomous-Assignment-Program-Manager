@@ -6,6 +6,7 @@ from app.models.activity import Activity, ActivityCategory
 from app.models.activity_log import ActivityActionType, ActivityLog
 from app.models.approval_record import ApprovalAction, ApprovalRecord
 from app.models.agent_memory import AgentEmbedding, ModelTier, TaskHistory
+from app.models.ai_usage_budget import AIBudgetConfig, AIUsageLog
 from app.models.assignment import Assignment
 from app.models.block_assignment import AssignmentReason, BlockAssignment
 from app.models.rag_document import RAGDocument
@@ -43,6 +44,16 @@ from app.models.feature_flag import (
     FeatureFlag,
     FeatureFlagAudit,
     FeatureFlagEvaluation,
+)
+from app.models.game_theory import (
+    ConfigStrategy,
+    EvolutionSimulation,
+    GameTheoryTournament,
+    SimulationStatus,
+    SimulationType,
+    StrategyType,
+    TournamentMatch,
+    ValidationResult,
 )
 from app.models.gateway_auth import (
     APIKey,
@@ -382,6 +393,18 @@ __all__ = [
     "StateMachineInstance",
     "StateMachineTransition",
     "StateMachineStatus",
+    # AI Usage and Budget models
+    "AIUsageLog",
+    "AIBudgetConfig",
+    # Game Theory models
+    "ConfigStrategy",
+    "GameTheoryTournament",
+    "EvolutionSimulation",
+    "TournamentMatch",
+    "ValidationResult",
+    "StrategyType",
+    "SimulationType",
+    "SimulationStatus",
     # Wellness & Survey models
     "Survey",
     "SurveyResponse",
