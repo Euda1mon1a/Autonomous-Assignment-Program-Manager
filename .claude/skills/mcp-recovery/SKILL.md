@@ -73,6 +73,7 @@ MCP DOWN + Watchdog OFF → Load watchdog or manual restart.
 | 4 | Port conflict | MCP can't bind to 8080 | Docker container or stale process holding port | `lsof -ti :8080` then kill the process |
 | 5 | RAG warming | 500 errors for ~30s after fresh start | Embedding model + document index loading | Wait 30 seconds, then retry |
 | 6 | Stale PID | Watchdog kills wrong process or skips restart | PID file points to dead/recycled PID | Delete `/tmp/residency-scheduler/mcp.pid` |
+| 7 | Client config wrong location | Server healthy but `/mcp` reconnect always fails | Config in `~/.claude/config.json` instead of `~/.claude.json` project section | Run `claude mcp add --transport http --scope local` (see Recovery #7) |
 
 ---
 
@@ -116,6 +117,25 @@ If backend is also down:
 ```
 
 This starts PostgreSQL, backend, frontend, Celery, and MCP in order.
+
+### Recovery #7: Fix Client Config Location
+
+If the server is healthy (`curl -sf http://127.0.0.1:8080/health`) but Claude Code refuses to connect via `/mcp`:
+
+```bash
+# Remove any stale entries
+claude mcp remove residency-scheduler 2>/dev/null
+
+# Re-add via CLI (writes to the correct location in ~/.claude.json)
+claude mcp add --transport http --scope local residency-scheduler http://127.0.0.1:8080/mcp
+
+# Reconnect
+# Then type /mcp in Claude Code
+```
+
+**Why this works:** Claude Code reads MCP config from `~/.claude.json` (per-project local scope) with highest priority. Manual edits to `~/.claude/config.json` or `.mcp.json` are lower priority and may not be picked up reliably. The `claude mcp add` CLI writes to the correct location.
+
+**Important:** `--transport http` means Streamable HTTP (not SSE). Do NOT use `--transport sse` — the server only exposes Streamable HTTP endpoints. Do NOT use `--transport stdio` — stdio limits parallel tool calls to one at a time.
 
 ### Recovery #5: Nuclear Option
 
@@ -162,7 +182,8 @@ kill $(lsof -ti :8080)
 | `scripts/start-mcp.sh` | Standalone MCP start script |
 | `scripts/start-native.sh` | Full native stack launcher |
 | `mcp-server/src/scheduler_mcp/server.py` | MCP server entry point (FastMCP 2.x) |
-| `~/.claude/config.json` | Claude Code MCP client config (`http://127.0.0.1:8080/mcp`) |
+| `~/.claude.json` (projects section) | Claude Code MCP client config (written by `claude mcp add`) |
+| `~/.claude/config.json` | Global MCP config (fallback — prefer `claude mcp add`) |
 | `~/Library/LaunchAgents/com.aapm.mcp-watchdog.plist` | launchd agent (60s interval + RunAtLoad) |
 | `/tmp/residency-scheduler/mcp.pid` | MCP process ID file |
 | `logs/native/mcp.log` | MCP server stdout/stderr |
@@ -193,11 +214,31 @@ tail -5 logs/native/mcp-watchdog.log
 
 ## Architecture Notes
 
-- **Transport:** HTTP (Starlette/uvicorn), not stdio. Claude Code connects via `http://127.0.0.1:8080/mcp`.
+- **Transport:** Streamable HTTP (Starlette/uvicorn via FastMCP 2.x `mcp.http_app(stateless_http=True)`), not stdio. Claude Code connects via `http://127.0.0.1:8080/mcp`. Stdio is NOT used because it limits parallel tool calls to one at a time.
 - **Daemon pattern:** Watchdog uses double-fork (`os.fork()` → `os.setsid()` → `os.fork()`) so MCP survives after the watchdog script exits. This is necessary because launchd kills all processes in the watchdog's process group.
 - **Backend dependency:** MCP server boots without the backend, but all 97+ tools that proxy to the FastAPI backend will fail. The health endpoint still returns 200 (MCP itself is fine).
 - **RAG warming:** After a cold start, RAG queries may 500 for ~30 seconds while the embedding model and document index load. This is normal.
 - **Port 8080:** Native MCP always uses 8080. Docker MCP uses 8081 (for future containerized use). They never run simultaneously.
+
+### Claude Code Client Config (Critical)
+
+Claude Code discovers MCP servers from multiple config locations with this precedence:
+
+| Priority | Location | Scope | Written by |
+|----------|----------|-------|------------|
+| 1 | `~/.claude.json` → `projects["/path/to/repo"].mcpServers` | Per-project local | `claude mcp add --scope local` |
+| 2 | `.mcp.json` (repo root) | Project (shared) | Manual edit |
+| 3 | `~/.claude/config.json` → `mcpServers` | Global | Manual edit |
+
+**The canonical way to register the MCP server:**
+
+```bash
+claude mcp add --transport http --scope local residency-scheduler http://127.0.0.1:8080/mcp
+```
+
+This writes to `~/.claude.json` under the project key, which is the most reliable path. Manual edits to `~/.claude/config.json` or `.mcp.json` may not be picked up after `/mcp` reconnect.
+
+**If `/mcp` reconnect fails after config changes**, fully quit and relaunch Claude Code from a new terminal — the MCP client caches connection state within a session.
 
 ---
 

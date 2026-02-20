@@ -226,14 +226,37 @@ Both IDE configurations use environment variable substitution:
 | `API_BASE_URL` | No | Main API endpoint | `http://localhost:8000` |
 | `LOG_LEVEL` | No | Logging verbosity | `INFO`, `DEBUG`, `WARNING` |
 
-### Claude Code Configuration (`.mcp.json`)
+### Claude Code Configuration
+
+**Canonical setup via CLI (recommended):**
+
+```bash
+claude mcp add --transport http --scope local residency-scheduler http://127.0.0.1:8080/mcp
+```
+
+This writes to `~/.claude.json` under the project key, which has the highest priority for Claude Code's MCP discovery.
+
+**Alternative: `.mcp.json` (project root, shared with team):**
 
 ```json
 {
   "mcpServers": {
     "residency-scheduler": {
       "type": "http",
-      "url": "http://localhost:8080/mcp",
+      "url": "http://127.0.0.1:8080/mcp"
+    }
+  }
+}
+```
+
+**With auth (production):**
+
+```json
+{
+  "mcpServers": {
+    "residency-scheduler": {
+      "type": "http",
+      "url": "http://127.0.0.1:8080/mcp",
       "headers": {
         "Authorization": "Bearer ${MCP_AUTH_TOKEN}"
       }
@@ -243,9 +266,9 @@ Both IDE configurations use environment variable substitution:
 ```
 
 **Key Features:**
-- HTTP transport for production-grade communication
-- Bearer token authentication
-- Docker container exposes HTTP endpoint
+- Streamable HTTP transport for parallel tool calls (NOT stdio, which serializes)
+- Bearer token authentication (optional, localhost skips auth)
+- Config precedence: `~/.claude.json` (local) > `.mcp.json` (project) > `~/.claude/config.json` (global)
 
 ### VSCode Configuration (`.vscode/mcp.json`)
 

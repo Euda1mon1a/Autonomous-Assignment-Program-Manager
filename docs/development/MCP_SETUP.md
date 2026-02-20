@@ -263,10 +263,33 @@ docker compose restart backend
 ### Claude Code Doesn't See MCP Server
 
 **Check**:
-1. Docker is running: `docker compose ps`
-2. `.mcp.json` exists in project root
-3. MCP server healthy: `docker compose exec -T mcp-server python -c "from scheduler_mcp.server import mcp; print('OK')"`
-4. Restart Claude Code if needed
+1. MCP server healthy: `curl -sf http://127.0.0.1:8080/health`
+2. Verify config is in the right location (see below)
+3. Run `/mcp` in Claude Code to reconnect
+4. If `/mcp` fails, fully quit and relaunch Claude Code from a new terminal
+
+**Critical: Client Config Location**
+
+Claude Code reads MCP config from multiple locations with this precedence:
+
+| Priority | Location | Written by |
+|----------|----------|------------|
+| 1 | `~/.claude.json` → `projects["/path/to/repo"].mcpServers` | `claude mcp add --scope local` |
+| 2 | `.mcp.json` (repo root) | Manual edit |
+| 3 | `~/.claude/config.json` → `mcpServers` | Manual edit |
+
+**The canonical way to register the MCP server:**
+
+```bash
+claude mcp add --transport http --scope local residency-scheduler http://127.0.0.1:8080/mcp
+```
+
+Manual edits to `~/.claude/config.json` or `.mcp.json` may not be picked up reliably. The CLI command writes to `~/.claude.json` under the project key, which has the highest priority.
+
+**Transport types:**
+- `--transport http` — Streamable HTTP (required, server only exposes this)
+- `--transport sse` — SSE (deprecated, server does NOT expose this endpoint)
+- `--transport stdio` — DO NOT USE (limits parallel tool calls to one at a time)
 
 ## Security Notes
 
