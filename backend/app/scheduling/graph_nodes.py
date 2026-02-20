@@ -855,18 +855,15 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
         workload_path = getattr(settings, "ML_WORKLOAD_MODEL_PATH", None) or None
 
         # Convert non-empty strings to Path; fall back to models_dir defaults
+        # Directory names match training pipeline (ml_tasks.py)
         pref_path = (
-            Path(pref_path) if pref_path else models_dir / "preference_model.joblib"
+            Path(pref_path) if pref_path else models_dir / "preference_predictor"
         )
         conflict_path = (
-            Path(conflict_path)
-            if conflict_path
-            else models_dir / "conflict_model.joblib"
+            Path(conflict_path) if conflict_path else models_dir / "conflict_predictor"
         )
         workload_path = (
-            Path(workload_path)
-            if workload_path
-            else models_dir / "workload_model.joblib"
+            Path(workload_path) if workload_path else models_dir / "workload_optimizer"
         )
 
         scorer = ScheduleScorer(
@@ -899,14 +896,21 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
             ],
             "people": [
                 {
-                    "id": str(getattr(p, "id", "")),
-                    "type": getattr(p, "type", "resident"),
-                    "pgy_level": getattr(p, "pgy_level", None),
-                    "assignment_count": sum(
-                        1
+                    "person": {
+                        "id": str(getattr(p, "id", "")),
+                        "type": getattr(p, "type", "resident"),
+                        "pgy_level": getattr(p, "pgy_level", None),
+                    },
+                    "assignments": [
+                        {
+                            "rotation_template_id": str(
+                                getattr(a, "rotation_template_id", "")
+                            ),
+                            "block_id": str(getattr(a, "block_id", "")),
+                        }
                         for a in assignments
                         if getattr(a, "person_id", None) == getattr(p, "id", None)
-                    ),
+                    ],
                 }
                 for p in list(residents) + list(faculty)
             ],
