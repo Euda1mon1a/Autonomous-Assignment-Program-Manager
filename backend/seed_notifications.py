@@ -95,6 +95,15 @@ async def seed_notifications():
 
         print("\nAdding sample notifications...")
         for person in people[:3]:
+            existing = await db.execute(
+                select(Notification).where(
+                    Notification.recipient_id == person.id,
+                    Notification.notification_type == "welcome",
+                )
+            )
+            if existing.scalar_one_or_none():
+                print(f" - Welcome notification already exists for: {person.name}")
+                continue
             notif = Notification(
                 recipient_id=person.id,
                 notification_type="welcome",

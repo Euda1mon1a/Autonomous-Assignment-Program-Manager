@@ -237,6 +237,16 @@ async def seed_wellness():
 
         print("\nAdding sample Hopfield positions...")
         for person in people[:5]:  # Just first 5 people
+            existing = await db.execute(
+                select(HopfieldPosition).where(
+                    HopfieldPosition.person_id == person.id,
+                    HopfieldPosition.block_number == 1,
+                    HopfieldPosition.academic_year == 2025,
+                )
+            )
+            if existing.scalar_one_or_none():
+                print(f" - Hopfield position already exists for: {person.name}")
+                continue
             pos = HopfieldPosition(
                 person_id=person.id,
                 x_position=0.4,
