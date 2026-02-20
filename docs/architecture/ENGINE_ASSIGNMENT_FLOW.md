@@ -266,19 +266,21 @@ List of Assignment objects passed to the solver as constraints.
 
 ## LangGraph Pipeline (Phase 1)
 
-As of ADR-2026-02-17, the same preserve-then-solve flow is also available as a **LangGraph StateGraph** via `generate_via_graph()`. The graph decomposes `generate()` into 12 independently testable nodes with conditional failure routing:
+As of ADR-2026-02-17, the same preserve-then-solve flow is also available as a **LangGraph StateGraph** via `generate_via_graph()`. The graph decomposes `generate()` into 13 independently testable nodes with conditional failure routing:
 
 ```
 init → load_data → check_residents ─?→ build_context → pre_validate
   ─?→ solve ─?→ persist_and_call ─?→ activity_solver → backfill
-  → persist_draft_or_live → validate → finalize → END
+  → persist_draft_or_live → validate → ml_score → finalize → END
 ```
 
 Where `─?→` = conditional edge that routes to END on failure.
 
+**Node 12 (`ml_score`)** runs post-validation when `ML_ENABLED=true`. Uses `ScheduleScorer` (ensemble of PreferencePredictor, ConflictPredictor, WorkloadOptimizer) to produce quality metrics (overall_score, grade, components). Gracefully degrades if models are missing or unfitted — returns empty scores and continues the pipeline.
+
 **Key files:**
 - `backend/app/scheduling/graph.py` — Graph definition + `generate_via_graph()` entry point
-- `backend/app/scheduling/graph_nodes.py` — 12 node functions wrapping engine phases
+- `backend/app/scheduling/graph_nodes.py` — 13 node functions wrapping engine phases
 - `backend/app/scheduling/graph_state.py` — `ScheduleGraphState` + `ScheduleGraphConfig` TypedDicts
 
 **Invocation:** `engine.generate_via_graph()` — identical signature and output to `engine.generate()`.
