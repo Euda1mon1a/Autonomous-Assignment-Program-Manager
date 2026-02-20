@@ -1,20 +1,17 @@
-"""Block schedule import template.
+"""Block 12 schedule import — Excel handjam to database.
 
-Template for importing block schedule data from an Excel handjam into the database.
-Copy this file and fill in the block-specific configuration to import a new block.
+Copy of block_import_template.py customized for Block 12 (May 7 – Jun 3, 2026).
+Pre-filled CODE_MAP from Block 11's proven mappings.
 
 Usage:
-  1. Copy to /tmp/import_blockNN.py
-  2. Fill in BLOCK_CONFIG, NAME_MAP, CODE_MAP
-  3. Run: backend/.venv/bin/python /tmp/import_blockNN.py
+  1. Fill in EXCEL_PATH, SHEET_NAME, NAME_MAP
+  2. Backup DB: ./checkpoint.sh pre_import
+  3. Run: backend/.venv/bin/python scripts/data/block12_import/import_block12.py
 
-Prerequisite:
-  - Database backup: pg_dump -U scheduler -d residency_scheduler -Fc -f /tmp/blockNN_pre_import.dump
-  - Excel file accessible at EXCEL_PATH
-
-Reference implementation: scripts/data/block11_import/ (local only, gitignored)
+Reference: docs/development/BLOCK11_SCHEDULE_LOAD.md
 """
 
+import sys
 import uuid
 from datetime import date, timedelta, datetime
 from collections import Counter
@@ -22,18 +19,21 @@ from collections import Counter
 import openpyxl
 import psycopg2
 
+sys.path.insert(0, "backend")
+sys.path.insert(0, "scripts/data")
+
 # ── Configuration ────────────────────────────────────────────────────────────
 
 CONN = "dbname=residency_scheduler user=scheduler host=localhost"
 
-EXCEL_PATH = "/path/to/block_import.xlsx"
-SHEET_NAME = "Block NN Import"
+EXCEL_PATH = "/Users/aaronmontgomery/Downloads/Current AY 25-26 pulled 11 FEB 2026.xlsx"
+SHEET_NAME = "Block 12"  # NOTE: Sheet doesn't exist yet in this Excel; will be added for handjam
 
 BLOCK_CONFIG = {
-    "block_number": 0,       # e.g., 11
-    "academic_year": 2025,   # AY start year
-    "start_date": date(2026, 1, 1),  # First day of block
-    "end_date": date(2026, 1, 28),   # Last day of block
+    "block_number": 12,
+    "academic_year": 2025,
+    "start_date": date(2026, 5, 7),
+    "end_date": date(2026, 6, 3),
 }
 
 # Excel column layout (1-indexed):
@@ -43,35 +43,125 @@ NAME_COL = 4                    # Column D = names (Last, First format)
 DATA_COL_START = 5              # Column E = first half-day slot (Day 1 AM)
 DATA_COL_END = 60               # Column BH = last half-day slot (Day 28 PM)
 
-# Fallback row ranges — only used if auto-detection fails
+# Section markers in column B (TEMPLATE) and column C (ROLE)
+# Used by detect_person_rows() to find resident/faculty rows dynamically.
+# Fallback ranges only used if auto-detection fails.
 _FALLBACK_RESIDENT_ROWS = range(9, 50)
 _FALLBACK_FACULTY_ROWS = range(44, 75)
 
 # ── Name Mapping ─────────────────────────────────────────────────────────────
 # Maps "Last, First" from Excel to "First Last" in DB
-# Fill in for each block's roster
+# Fill from Excel roster when received — watch for:
+#   - Asterisks (DO degree): "Mayell, Cameron*"
+#   - Trailing spaces: "Wilhelm, Clara "
+#   - Name variants: "Headid, Ronald" → "James Headid"
 
 NAME_MAP = {
-    # "Last, First": "First Last",
-    # "Last, First*": "First Last",  # asterisk = chief resident
+    # PGY-3 (R3) — asterisk = DO degree
+    "Connolly, Laura": "Laura Connolly",        # NOT in B12 (done after Block 10)
+    "Hernandez, Christian*": "Christian Hernandez",
+    "Mayell, Cameron*": "Cam Mayell",
+    "Petrie, William*": "Clay Petrie",           # William (Excel) -> Clay (DB)
+    "You, Jae*": "Jae You",
+    # PGY-2 (R2)
+    "Cataquiz, Felipe": "Felipe Cataquiz",
+    "Cook, Scott": "Scott Cook",
+    "Gigon, Alaine": "Alaine Gigon",
+    "Headid, Ronald": "James Headid",            # Ronald (Excel) -> James (DB)
+    "Maher, Nicholas": "Nick Maher",             # Nicholas -> Nick
+    "Thomas, Devin": "Devin Thomas",
+    # PGY-1 (R1)
+    "Sawyer, Tessa": "Tessa Sawyer",
+    "Wilhelm, Clara": "Clara Wilhelm",
+    "Travis, Colin": "Colin Travis",
+    "Byrnes, Katherine": "Katie Byrnes",         # Katherine -> Katie
+    "Sloss, Meleighe": "Meleigh Sloss",          # Meleighe -> Meleigh
+    "Monsivais, Joshua": "Josh Monsivais",       # Joshua -> Josh
+    # Faculty (C19)
+    "Bevis, Zach": "Zach Bevis",
+    "Kinkennon, Sarah": "Sarah Kinkennon",
+    "LaBounty, Alex*": "Alex LaBounty",
+    "McGuire, Chris": "Chris McGuire",
+    "Dahl, Brian*": "Brian Dahl",
+    "McRae, Zachery": "Zach McRae",              # Zachery -> Zach
+    "Tagawa, Chelsea": "Chelsea Tagawa",
+    "Montgomery, Aaron": "Aaron Montgomery",
+    "Colgan, Bridget": "Bridget Colgan",         # DEPLOYED Feb-Jun 2026
+    "Chu, Jimmy*": "Jimmy Chu",
 }
 
 # ── Activity Code Mapping ────────────────────────────────────────────────────
-# Maps Excel display codes to DB activity codes
-# Most are lowercase or match directly; exceptions listed here
+# Proven mappings from Block 11 (50+ codes)
+# Excel display code → DB activity code
 
 CODE_MAP = {
-    "C": "fm_clinic",
     "SM": "sm_clinic",
-    "retreat": "RETREAT",
-    "L&D": "KAP-LD",       # Default; override per person if TAMC vs KAP
-    "OFF": "off",
+    "aSM": "aSM",
+    "LEC": "lec",
+    "CLC": "CLC",
+    "CC": "CC",
     "W": "W",
-    "LV": "LV",
-    "TDY": "TDY",
-    "DEP": "DEP",
+    "C": "fm_clinic",
+    "C`": "fm_clinic",      # Typo variant
+    "FLX": "FLX",
+    "HC": "HLC",
+    "PI": "PI",
+    "GME": "gme",
+    "FMIT": "FMIT",
+    "retreat": "RETREAT",
+    "RETREAT": "RETREAT",
+    "NF": "NF",
+    "OFF": "off",
+    "PCAT": "pcat",
+    "DO": "do",
+    "DFM": "dfm",
+    "CCC": "CCC",
     "SLV": "SLV",
-    # Add block-specific codes here
+    "CV": "CV",
+    "DEP": "DEP",
+    "PC": "recovery",
+    "LV": "LV",
+    "AT": "at",
+    "at": "at",
+    "NEURO": "NEURO",
+    "PedSP": "PEDS-S",
+    "Derm": "DERM",
+    "NBN": "NBN",
+    "PR": "PR",
+    "TDY": "TDY",
+    "ADM": "ADM",
+    "OB": "OB",
+    "L&D": "KAP-LD",        # Default; override per person if TAMC vs KAP
+    "Orient": "ORIENT",
+    "VasC": "VASC",
+    "BOARDS": "ADM",
+    "C-N": "C-N",
+    "HR for Sup Training": "HR-SUP",
+    "HR for Sup": "HR-SUP",
+    "EPIC": "ORIENT",
+    "STRAUB": "elective",
+    "SIM": "SIM",
+    "V2": "V2",
+    "HV": "HV",
+    "KAP": "KAP-LD",
+    "procedure": "procedure",
+    "ADV": "ADV",
+    "VAS": "VAS",
+    "Coding": "CODING",
+    "C30": "C30",
+    "LDNF": "LDNF",
+    # Block 12 predicted codes (from ML pattern learning)
+    "HOL": "HOL",           # Holiday
+    "PedW": "PEDSW",        # Peds Ward
+    "TNG": "TNG",           # Training
+    "P ER": "PEDS-ER",      # Peds ER
+    "ER": "ER",             # Emergency Room
+    "US": "US",             # Ultrasound
+    "C-I": "C-I",           # Clinic Inpatient
+    "C40": "C40",           # Clinic 40-min slots
+    "Rad": "RAD",           # Radiology
+    "Cast": "CAST",         # Casting
+    "TENT": "TENT",         # Tentative
 }
 
 # Leave-type activity codes (for absence sync)
@@ -95,6 +185,7 @@ def detect_person_rows(ws):
 
     Looks for section markers in column B (TEMPLATE codes: R1, R2, R3, C17, C19)
     and column C (ROLE labels: PGY 1, PGY 2, PGY 3, FAC, NP, MD).
+    Also detects rows with a name in the NAME_COL that matches NAME_MAP.
 
     Returns:
         (resident_rows, faculty_rows) — lists of 1-indexed row numbers
@@ -112,15 +203,21 @@ def detect_person_rows(ws):
         role_val = str(ws.cell(row=row_idx, column=3).value or "").strip().upper()
         name_val = str(ws.cell(row=row_idx, column=NAME_COL).value or "").strip()
 
+        # Check template marker (column B)
         if template_val in resident_markers:
             resident_rows.append(row_idx)
         elif template_val in faculty_markers:
             faculty_rows.append(row_idx)
+        # Check role label (column C)
         elif role_val in role_resident:
             resident_rows.append(row_idx)
         elif role_val in role_faculty:
             faculty_rows.append(row_idx)
+        # Fallback: check if name is in NAME_MAP (catches unlabeled rows)
         elif name_val and name_val in NAME_MAP:
+            # Determine resident vs faculty by NAME_MAP key position
+            # (R1/R2/R3 keys appear before faculty keys in the map)
+            # Conservative: add to resident list; load_hdas validates by DB role
             resident_rows.append(row_idx)
 
     return resident_rows, faculty_rows
@@ -158,6 +255,9 @@ def parse_excel():
         slots.append((d, "PM"))
 
     records = []
+    unmapped_names = set()
+    unmapped_codes = Counter()
+
     for row in resident_rows + faculty_rows:
         excel_name = ws.cell(row=row, column=NAME_COL).value
         if not excel_name or not str(excel_name).strip():
@@ -166,7 +266,7 @@ def parse_excel():
 
         db_name = NAME_MAP.get(excel_name)
         if not db_name:
-            print(f"  WARNING: No name mapping for '{excel_name}' (row {row})")
+            unmapped_names.add(excel_name)
             continue
 
         for idx, (d, tod) in enumerate(slots):
@@ -174,8 +274,22 @@ def parse_excel():
             val = ws.cell(row=row, column=col).value
             code = str(val).strip() if val else None
             if code:
-                db_code = CODE_MAP.get(code, code.lower())
+                db_code = CODE_MAP.get(code)
+                if db_code is None:
+                    unmapped_codes[code] += 1
+                    db_code = code.lower()
                 records.append((db_name, d, tod, db_code))
+
+    # Report unmapped items (potential gotchas)
+    if unmapped_names:
+        print(f"\n  UNMAPPED NAMES ({len(unmapped_names)}):")
+        for name in sorted(unmapped_names):
+            print(f"    - '{name}'")
+
+    if unmapped_codes:
+        print(f"\n  UNMAPPED CODES ({len(unmapped_codes)}):")
+        for code, count in unmapped_codes.most_common():
+            print(f"    - '{code}' ({count} occurrences)")
 
     return records
 
@@ -196,16 +310,19 @@ def load_hdas(records):
     activities = {code: aid for aid, code in cur.fetchall()}
 
     created, updated, skipped = 0, 0, 0
+    missing_people = set()
+    missing_activities = set()
+
     for name, d, tod, code in records:
         person_id = people.get(name)
         activity_id = activities.get(code)
 
         if not person_id:
-            print(f"  SKIP: Person '{name}' not in DB")
+            missing_people.add(name)
             skipped += 1
             continue
         if not activity_id:
-            print(f"  SKIP: Activity '{code}' not in DB")
+            missing_activities.add(code)
             skipped += 1
             continue
 
@@ -219,7 +336,7 @@ def load_hdas(records):
         if cur.rowcount > 0:
             updated += cur.rowcount
         else:
-            # Insert new
+            # Insert new (source='manual' — Block 11 gotcha #1)
             cur.execute(
                 """INSERT INTO half_day_assignments
                 (id, person_id, date, time_of_day, activity_id, source, created_at, updated_at)
@@ -231,7 +348,19 @@ def load_hdas(records):
     conn.commit()
     cur.close()
     conn.close()
-    print(f"  HDAs: {updated} updated, {created} created, {skipped} skipped")
+
+    # Report missing items (potential gotchas)
+    if missing_people:
+        print(f"\n  MISSING PEOPLE ({len(missing_people)}):")
+        for name in sorted(missing_people):
+            print(f"    - '{name}'")
+
+    if missing_activities:
+        print(f"\n  MISSING ACTIVITIES ({len(missing_activities)}):")
+        for code in sorted(missing_activities):
+            print(f"    - '{code}'")
+
+    print(f"\n  HDAs: {updated} updated, {created} created, {skipped} skipped")
 
 
 # ── Step 3: Sync Absences ────────────────────────────────────────────────────
@@ -251,8 +380,8 @@ def sync_absences(records):
         if code.upper() in LEAVE_CODES:
             leave_by_person.setdefault(name, []).append((d, tod, code))
 
-    # Delete existing block-specific absences (scoped to date range to avoid
-    # clobbering same block number from a different academic year)
+    # Delete existing block-specific absences (scoped to date range —
+    # Block 11 gotcha #4: LIKE 'Block N%' matches across academic years)
     block_num = BLOCK_CONFIG["block_number"]
     block_start = BLOCK_CONFIG["start_date"]
     block_end = BLOCK_CONFIG["end_date"]
@@ -321,18 +450,58 @@ def sync_absences(records):
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
+def preflight():
+    """Run pre-flight validation before import. Aborts on critical failures."""
+    from block_import_preflight import run_preflight
+
+    block_num = BLOCK_CONFIG["block_number"]
+    ay = BLOCK_CONFIG["academic_year"]
+
+    print("\n=== Pre-Flight Validation ===")
+    results = run_preflight(block_num, ay)
+
+    critical = [r for r in results if not r.passed and r.severity == "CRITICAL"]
+    warnings = [r for r in results if not r.passed and r.severity == "WARNING"]
+
+    for r in results:
+        icon = "PASS" if r.passed else "FAIL"
+        severity = f" [{r.severity}]" if not r.passed else ""
+        print(f"  [{icon}]{severity} {r.name}")
+        if not r.passed:
+            for detail in r.details:
+                print(f"    {detail}")
+
+    if critical:
+        print(f"\n  BLOCKED: {len(critical)} critical issue(s). Fix before importing.")
+        sys.exit(1)
+
+    if warnings:
+        print(f"\n  {len(warnings)} warning(s) — review before proceeding.")
+
+    passed = sum(1 for r in results if r.passed)
+    print(f"\n  Pre-flight: {passed}/{len(results)} passed")
+
+
 def main():
-    print("=== Parsing Excel ===")
+    print("=" * 60)
+    print("Block 12 Schedule Import (May 7 – Jun 3, 2026)")
+    print("=" * 60)
+
+    preflight()
+
+    print("\n=== Step 1: Parsing Excel ===")
     records = parse_excel()
     print(f"  Parsed {len(records)} records")
 
-    print("\n=== Loading HDAs ===")
+    print("\n=== Step 2: Loading HDAs ===")
     load_hdas(records)
 
-    print("\n=== Syncing Absences ===")
+    print("\n=== Step 3: Syncing Absences ===")
     sync_absences(records)
 
-    print("\nDone.")
+    print("\n" + "=" * 60)
+    print("Done. Update BLOCK12_SCHEDULE_LOAD.md with results.")
+    print("=" * 60)
 
 
 if __name__ == "__main__":

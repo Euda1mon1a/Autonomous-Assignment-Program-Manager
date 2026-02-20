@@ -808,7 +808,281 @@ def validate_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
     }
 
 
-# ─── Node 12: finalize ───────────────────────────────────────────────
+# ─── Node 12: ml_score ───────────────────────────────────────────────
+
+
+def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
+    """Score the generated schedule using ML models (if enabled).
+
+    Runs post-validation, pre-finalize. Provides quality metrics
+    (preference satisfaction, workload balance, conflict risk) that
+    are included in the final result for human review.
+
+    Gracefully degrades: if ML is disabled or models aren't trained,
+    returns empty scores and continues the pipeline.
+    """
+    engine = _get_engine(config)
+    settings = getattr(engine, "settings", None)
+
+    # Check if ML scoring is enabled
+    ml_enabled = False
+    if settings:
+        ml_enabled = getattr(settings, "ML_ENABLED", False)
+    if not ml_enabled:
+        ml_enabled = os.getenv("ML_ENABLED", "false").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+
+    if not ml_enabled:
+        logger.debug("ML scoring disabled (ML_ENABLED=false); skipping")
+        return {"ml_scores": {}}
+
+    # Pre-bind NotFittedError so the except clause works even if sklearn
+    # is not installed (ImportError is caught by the handler itself).
+    try:
+        from sklearn.exceptions import NotFittedError
+    except ImportError:
+        NotFittedError = type("NotFittedError", (Exception,), {})  # type: ignore[misc,assignment]
+
+    try:
+        from pathlib import Path
+
+        from app.ml.inference.schedule_scorer import ScheduleScorer
+
+        # Resolve model paths from settings or env
+        models_dir = Path(
+            getattr(settings, "ML_MODELS_DIR", None)
+            or os.getenv("ML_MODELS_DIR", "models")
+        )
+        pref_path = (
+            getattr(settings, "ML_PREFERENCE_MODEL_PATH", None)
+            or os.getenv("ML_PREFERENCE_MODEL_PATH")
+            or None
+        )
+        conflict_path = (
+            getattr(settings, "ML_CONFLICT_MODEL_PATH", None)
+            or os.getenv("ML_CONFLICT_MODEL_PATH")
+            or None
+        )
+        workload_path = (
+            getattr(settings, "ML_WORKLOAD_MODEL_PATH", None)
+            or os.getenv("ML_WORKLOAD_MODEL_PATH")
+            or None
+        )
+
+        # Convert non-empty strings to Path; fall back to models_dir defaults
+        # Directory names match training pipeline (ml_tasks.py)
+        pref_path = (
+            Path(pref_path) if pref_path else models_dir / "preference_predictor"
+        )
+        conflict_path = (
+            Path(conflict_path) if conflict_path else models_dir / "conflict_predictor"
+        )
+        workload_path = (
+            Path(workload_path) if workload_path else models_dir / "workload_optimizer"
+        )
+
+        scorer = ScheduleScorer(
+            preference_model_path=pref_path,
+            workload_model_path=workload_path,
+            conflict_model_path=conflict_path,
+            db=None,  # Sync context; scorer uses pre-loaded models only
+        )
+
+        # Build schedule dict from state for the scorer
+        assignments = state.get("assignments", [])
+        residents = state.get("residents", [])
+        faculty = state.get("faculty", [])
+        templates = state.get("templates", [])
+
+        # Build lookups for enriching ML payloads
+        person_type_map = {}
+        for p in residents:
+            person_type_map[getattr(p, "id", None)] = "resident"
+        for p in faculty:
+            person_type_map[getattr(p, "id", None)] = "faculty"
+
+        template_name_map = {
+            getattr(t, "id", None): getattr(t, "name", "") for t in templates
+        }
+
+        def _is_weekend(a: Any) -> bool:
+            """Check if assignment falls on a weekend.
+
+            Prefers Block.is_weekend (boolean column), falls back to
+            Block.date.weekday() >= 5.
+            """
+            block = getattr(a, "block", None)
+            if block:
+                # Block model has an is_weekend boolean column
+                is_wknd = getattr(block, "is_weekend", None)
+                if is_wknd is not None:
+                    return bool(is_wknd)
+                # Fallback: derive from Block.date (not start_date)
+                d = getattr(block, "date", None)
+                if d and hasattr(d, "weekday"):
+                    return d.weekday() >= 5
+            return False
+
+        # Build person attribute lookup for enriching assignment payloads
+        # Includes call-load features consumed by conflict_predictor and
+        # workload_optimizer (weekday_call_count, sunday_call_count, fmit_weeks_count)
+        person_attr_map: dict[Any, dict[str, Any]] = {}
+        for p in list(residents) + list(faculty):
+            pid = getattr(p, "id", None)
+            person_attr_map[pid] = {
+                "pgy_level": getattr(p, "pgy_level", None),
+                "faculty_role": getattr(p, "faculty_role", None),
+                "target_clinical_blocks": getattr(p, "target_clinical_blocks", None),
+                "weekday_call_count": getattr(p, "weekday_call_count", 0) or 0,
+                "sunday_call_count": getattr(p, "sunday_call_count", 0) or 0,
+                "fmit_weeks_count": getattr(p, "fmit_weeks_count", 0) or 0,
+            }
+
+        # Group assignments by person_id for conflict scoring (existing assignments)
+        # Include date for same-day conflict detection (conflict_predictor:183)
+        assignments_by_person: dict[Any, list[dict[str, Any]]] = {}
+        for a in assignments:
+            pid = getattr(a, "person_id", None)
+            block = getattr(a, "block", None)
+            entry = {
+                "rotation_template_id": str(getattr(a, "rotation_template_id", "")),
+                "rotation_name": template_name_map.get(
+                    getattr(a, "rotation_template_id", None), ""
+                ),
+                "block_id": str(getattr(a, "block_id", "")),
+                "date": str(getattr(block, "date", "") or ""),
+                "is_weekend": _is_weekend(a),
+            }
+            assignments_by_person.setdefault(pid, []).append(entry)
+
+        schedule_dict: dict[str, Any] = {
+            "assignments": [
+                {
+                    "person": {
+                        "id": str(getattr(a, "person_id", "")),
+                        "type": person_type_map.get(
+                            getattr(a, "person_id", None), "resident"
+                        ),
+                        **person_attr_map.get(getattr(a, "person_id", None), {}),
+                    },
+                    "rotation": {
+                        "id": str(getattr(a, "rotation_template_id", "")),
+                        "name": template_name_map.get(
+                            getattr(a, "rotation_template_id", None), ""
+                        ),
+                    },
+                    "block": {
+                        "id": str(getattr(a, "block_id", "")),
+                        "date": str(
+                            getattr(getattr(a, "block", None), "date", "") or ""
+                        ),
+                        "time_of_day": getattr(
+                            getattr(a, "block", None), "time_of_day", None
+                        ),
+                        "is_weekend": _is_weekend(a),
+                        "is_holiday": getattr(
+                            getattr(a, "block", None), "is_holiday", False
+                        ),
+                        "block_number": getattr(
+                            getattr(a, "block", None), "block_number", None
+                        ),
+                    },
+                    "proposed": {
+                        "rotation_id": str(getattr(a, "rotation_template_id", "")),
+                        "rotation_name": template_name_map.get(
+                            getattr(a, "rotation_template_id", None), ""
+                        ),
+                        "block_id": str(getattr(a, "block_id", "")),
+                        "date": str(
+                            getattr(getattr(a, "block", None), "date", "") or ""
+                        ),
+                        "is_weekend": _is_weekend(a),
+                        "is_holiday": getattr(
+                            getattr(a, "block", None), "is_holiday", False
+                        ),
+                    },
+                    "existing": [
+                        e
+                        for e in assignments_by_person.get(
+                            getattr(a, "person_id", None), []
+                        )
+                        if e["block_id"] != str(getattr(a, "block_id", ""))
+                    ],
+                    "context": {
+                        "block_number": state.get("block_number"),
+                        "academic_year": state.get("academic_year"),
+                        # Coverage/supervision features for conflict_predictor
+                        "faculty_count_on_date": len(faculty),
+                        "resident_count_on_date": len(residents),
+                        "historical_conflict_rate": 0.0,
+                        "recent_swap_count": 0,
+                        "coverage_level": (
+                            len(residents) / max(len(faculty) * 2, 1)
+                            if faculty
+                            else 1.0
+                        ),
+                    },
+                }
+                for a in assignments
+            ],
+            "people": [
+                {
+                    "person": {
+                        "id": str(getattr(p, "id", "")),
+                        "type": person_type_map.get(getattr(p, "id", None), "resident"),
+                        "pgy_level": getattr(p, "pgy_level", None),
+                        "faculty_role": getattr(p, "faculty_role", None),
+                        "target_clinical_blocks": getattr(
+                            p, "target_clinical_blocks", None
+                        ),
+                    },
+                    "assignments": [
+                        {
+                            "rotation_template_id": str(
+                                getattr(a, "rotation_template_id", "")
+                            ),
+                            "rotation_name": template_name_map.get(
+                                getattr(a, "rotation_template_id", None), ""
+                            ),
+                            "block_id": str(getattr(a, "block_id", "")),
+                            "is_weekend": _is_weekend(a),
+                        }
+                        for a in assignments
+                        if getattr(a, "person_id", None) == getattr(p, "id", None)
+                    ],
+                }
+                for p in list(residents) + list(faculty)
+            ],
+            "metadata": {
+                "block_number": state.get("block_number"),
+                "academic_year": state.get("academic_year"),
+                "total_assignments": len(assignments),
+            },
+        }
+
+        ml_scores = scorer.score_schedule(schedule_dict)
+        logger.info(
+            f"ML scoring complete: {ml_scores.get('grade', '?')} "
+            f"(score={ml_scores.get('overall_score', 0):.3f})"
+        )
+        return {"ml_scores": ml_scores}
+
+    except (FileNotFoundError, ImportError, OSError, NotFittedError) as e:
+        # Expected operational failures: missing model files, uninstalled
+        # deps, or unfitted models (ML_ENABLED=true but no trained artifacts)
+        logger.warning(f"ML scoring unavailable (non-fatal): {e}")
+        return {"ml_scores": {"error": "ml_scoring_unavailable"}}
+    except Exception:
+        # Unexpected errors — log full traceback for debugging, don't mask
+        logger.exception("ML scoring failed unexpectedly")
+        raise
+
+
+# ─── Node 13: finalize ───────────────────────────────────────────────
 
 
 def finalize_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
@@ -901,5 +1175,6 @@ def finalize_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
                 ),
                 "hub_faculty_count": (len(context.hub_scores) if context else 0),
             },
+            "ml_scores": state.get("ml_scores", {}),
         },
     }

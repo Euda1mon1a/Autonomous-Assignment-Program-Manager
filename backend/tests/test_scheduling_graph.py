@@ -319,6 +319,7 @@ class TestGraphCompilation:
             "backfill",
             "persist_draft_or_live",
             "validate",
+            "ml_score",
             "finalize",
             "__end__",
         }
@@ -369,6 +370,125 @@ class TestGenerateViaGraphCrashRecovery:
         # Should still rollback, but NOT try to update run status
         engine.db.rollback.assert_called()
         engine._update_run_status.assert_not_called()
+
+
+class TestMLScoreNode:
+    def test_skips_when_ml_disabled(self):
+        """ML scoring returns empty dict when ML_ENABLED is false."""
+        from app.scheduling.graph_nodes import ml_score_node
+
+        engine = _make_engine_mock()
+        engine.settings = MagicMock()
+        engine.settings.ML_ENABLED = False
+        config = _make_config(engine)
+
+        state = {"assignments": [], "residents": [], "faculty": []}
+        result = ml_score_node(state, config)
+
+        assert result["ml_scores"] == {}
+
+    def test_returns_scores_when_enabled(self):
+        """ML scoring returns scorer output when enabled and models load."""
+        from app.scheduling.graph_nodes import ml_score_node
+
+        engine = _make_engine_mock()
+        engine.settings = MagicMock()
+        engine.settings.ML_ENABLED = True
+        engine.settings.ML_MODELS_DIR = "/tmp/models"
+        engine.settings.ML_PREFERENCE_MODEL_PATH = None
+        engine.settings.ML_CONFLICT_MODEL_PATH = None
+        engine.settings.ML_WORKLOAD_MODEL_PATH = None
+        config = _make_config(engine)
+
+        mock_scores = {"overall_score": 0.85, "grade": "B+", "components": {}}
+
+        with patch("app.ml.inference.schedule_scorer.ScheduleScorer") as MockScorer:
+            MockScorer.return_value.score_schedule.return_value = mock_scores
+
+            # Configure mock assignment with block=None so _is_weekend
+            # doesn't hit MagicMock comparison (TypeError on >= operator)
+            mock_assignment = MagicMock()
+            mock_assignment.block = None
+
+            state = {
+                "assignments": [mock_assignment],
+                "residents": [MagicMock()],
+                "faculty": [MagicMock()],
+                "block_number": 12,
+                "academic_year": 2025,
+            }
+            result = ml_score_node(state, config)
+
+        assert result["ml_scores"] == mock_scores
+        assert result["ml_scores"]["grade"] == "B+"
+
+    def test_graceful_degradation_on_missing_models(self):
+        """ML scoring catches FileNotFoundError and returns error dict."""
+        from app.scheduling.graph_nodes import ml_score_node
+
+        engine = _make_engine_mock()
+        engine.settings = MagicMock()
+        engine.settings.ML_ENABLED = True
+        engine.settings.ML_MODELS_DIR = "/tmp/models"
+        engine.settings.ML_PREFERENCE_MODEL_PATH = None
+        engine.settings.ML_CONFLICT_MODEL_PATH = None
+        engine.settings.ML_WORKLOAD_MODEL_PATH = None
+        config = _make_config(engine)
+
+        with patch("app.ml.inference.schedule_scorer.ScheduleScorer") as MockScorer:
+            MockScorer.side_effect = FileNotFoundError("Model file not found")
+
+            state = {"assignments": [], "residents": [], "faculty": []}
+            result = ml_score_node(state, config)
+
+        assert "error" in result["ml_scores"]
+        assert result["ml_scores"]["error"] == "ml_scoring_unavailable"
+
+    def test_graceful_degradation_on_unfitted_models(self):
+        """ML scoring catches NotFittedError when models exist but aren't trained."""
+        from app.scheduling.graph_nodes import ml_score_node
+
+        engine = _make_engine_mock()
+        engine.settings = MagicMock()
+        engine.settings.ML_ENABLED = True
+        engine.settings.ML_MODELS_DIR = "/tmp/models"
+        engine.settings.ML_PREFERENCE_MODEL_PATH = None
+        engine.settings.ML_CONFLICT_MODEL_PATH = None
+        engine.settings.ML_WORKLOAD_MODEL_PATH = None
+        config = _make_config(engine)
+
+        with patch("app.ml.inference.schedule_scorer.ScheduleScorer") as MockScorer:
+            from sklearn.exceptions import NotFittedError
+
+            MockScorer.return_value.score_schedule.side_effect = NotFittedError(
+                "This estimator is not fitted yet"
+            )
+
+            state = {"assignments": [], "residents": [], "faculty": []}
+            result = ml_score_node(state, config)
+
+        assert "error" in result["ml_scores"]
+        assert result["ml_scores"]["error"] == "ml_scoring_unavailable"
+
+    def test_unexpected_errors_propagate(self):
+        """Unexpected errors (not FileNotFoundError/ImportError/OSError) are raised."""
+        from app.scheduling.graph_nodes import ml_score_node
+
+        engine = _make_engine_mock()
+        engine.settings = MagicMock()
+        engine.settings.ML_ENABLED = True
+        engine.settings.ML_MODELS_DIR = "/tmp/models"
+        engine.settings.ML_PREFERENCE_MODEL_PATH = None
+        engine.settings.ML_CONFLICT_MODEL_PATH = None
+        engine.settings.ML_WORKLOAD_MODEL_PATH = None
+        config = _make_config(engine)
+
+        with patch("app.ml.inference.schedule_scorer.ScheduleScorer") as MockScorer:
+            MockScorer.side_effect = ValueError("Unexpected scorer bug")
+
+            state = {"assignments": [], "residents": [], "faculty": []}
+            with pytest.raises(ValueError, match="Unexpected scorer bug"):
+                ml_score_node(state, config)
 
 
 class TestRouteAfterFailureCheck:
