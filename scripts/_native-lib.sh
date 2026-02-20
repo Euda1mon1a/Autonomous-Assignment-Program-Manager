@@ -73,7 +73,7 @@ get_service_port() {
   case "$1" in
     backend)  echo 8000 ;;
     frontend) echo 3000 ;;
-    mcp)      echo 8081 ;;
+    mcp)      echo 8080 ;;
     mlx)      echo 8082 ;;
     *)        echo "" ;;
   esac
@@ -83,7 +83,7 @@ get_service_port() {
 get_service_health_url() {
   case "$1" in
     backend)  echo "http://localhost:8000/health" ;;
-    mcp)      echo "http://localhost:8081/health" ;;
+    mcp)      echo "http://localhost:8080/health" ;;
     frontend) echo "http://localhost:3000" ;;
     *)        echo "" ;;
   esac
@@ -173,4 +173,25 @@ wait_for_port() {
         elapsed=$((elapsed + 1))
     done
     return 1
+}
+
+# -----------------------------------------------------------
+# Environment setup
+# -----------------------------------------------------------
+
+# Set database and API environment variables with dev defaults.
+# Sourced by start-native.sh, watchdog-mcp.sh, etc.
+# Actual credentials come from environment or macOS Keychain;
+# the defaults here are for local dev only and match the Docker
+# Compose config.
+setup_db_env() {
+    if [ -z "${DATABASE_URL:-}" ]; then
+        local _conn
+        printf -v _conn 'postgresql://%s:%s@%s:%s/%s' \
+            "${DB_USER:-scheduler}" "${DB_PASSWORD:-scheduler}" \
+            "${DB_HOST:-localhost}" "${DB_PORT:-5432}" \
+            "${DB_NAME:-residency_scheduler}"
+        export DATABASE_URL="$_conn"
+    fi
+    export API_BASE_URL="${API_BASE_URL:-http://127.0.0.1:8000}"
 }

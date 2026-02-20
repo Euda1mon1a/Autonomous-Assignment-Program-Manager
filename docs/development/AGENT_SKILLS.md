@@ -2,9 +2,9 @@
 
 > **Complete reference for AI Agent Skills in the Residency Scheduler**
 >
-> Last Updated: 2026-02-06
+> Last Updated: 2026-02-20
 >
-> Note: Skills inventory updated (44 skills). Notable additions: check-camelcase, check-codex, codex-*-triage, resilience-*, force-multiplier.
+> Note: Skills inventory updated (45 skills). Notable additions: mcp-recovery, check-camelcase, check-codex, codex-*-triage, resilience-*, force-multiplier.
 
 ---
 
@@ -70,6 +70,8 @@ All skills are located in `.claude/skills/`:
 │   ├── SKILL.md
 │   ├── python.md
 │   └── typescript.md
+├── mcp-recovery/               # MCP server diagnosis & recovery
+│   └── SKILL.md
 ├── pdf/                        # PDF generation & extraction
 │   └── SKILL.md
 ├── pr-reviewer/                # Pull request review
@@ -154,6 +156,7 @@ All skills are located in `.claude/skills/`:
 | Skill | Description | Primary Use Case |
 |-------|-------------|------------------|
 | `production-incident-responder` | Crisis response | System failures, emergency coverage |
+| `mcp-recovery` | MCP server diagnosis and restart | MCP tools failing, server down, watchdog issues |
 
 ---
 
@@ -934,6 +937,29 @@ Route (thin) → Controller → Service → Repository → Model
 7. Offer rollback if results are bad
 
 **Critical Rule**: NEVER execute schedule-modifying MCP tools without backup verification.
+
+---
+
+### mcp-recovery
+
+**Purpose**: Diagnose and recover MCP server (97+ AI tools) when it goes down or tools start failing.
+
+**Activates When**:
+- `mcp__residency-scheduler__*` tool calls return errors or timeouts
+- Claude Code shows "MCP server not available" or connection refused
+- After system sleep/wake, reboot, or terminal session end
+- RAG queries returning 500 errors
+
+**Quick Triage**:
+1. `curl http://127.0.0.1:8080/health` — MCP health
+2. `curl http://127.0.0.1:8000/health` — Backend dependency
+3. `launchctl list | grep aapm` — Watchdog status
+
+**Common Failure Modes**: MCP down (wait for watchdog or manual restart), backend down (MCP healthy but tools fail), port conflict (Docker remnant), RAG warming (~30s after cold start), stale PID file.
+
+**Recovery Options**: Wait for launchd watchdog (auto, 60s), run `./scripts/watchdog-mcp.sh` (manual), `./scripts/start-native.sh` (full stack), nuclear kill+restart.
+
+**Key Files**: `scripts/watchdog-mcp.sh`, `~/Library/LaunchAgents/com.aapm.mcp-watchdog.plist`, `logs/native/mcp.log`, `logs/native/mcp-watchdog.log`
 
 ---
 

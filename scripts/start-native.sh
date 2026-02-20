@@ -329,7 +329,7 @@ export PYTHONPATH="${PROJECT_ROOT}/mcp-server/src"
 export API_BASE_URL="http://localhost:8000"
 
 start_service "mcp" "$PROJECT_ROOT/mcp-server/src" \
-    python -m scheduler_mcp.server --host 127.0.0.1 --port 8081
+    python -m scheduler_mcp.server --host 127.0.0.1 --port 8080
 
 # 6. Optional MLX server
 if [ "$MLX" = true ]; then
@@ -351,7 +351,7 @@ echo -e "${GREEN}Access Points:${NC}"
 echo "  Frontend:  http://localhost:3000"
 echo "  Backend:   http://localhost:8000"
 echo "  API Docs:  http://localhost:8000/docs"
-echo "  MCP:       http://localhost:8081"
+echo "  MCP:       http://localhost:8080"
 if [ "$MLX" = true ]; then
     echo "  MLX:       http://localhost:8082"
 fi
