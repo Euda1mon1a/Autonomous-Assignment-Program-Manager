@@ -854,6 +854,16 @@ FastAPI TestClient has undocumented behavior differences between versioned and n
 - **Remaining:** Models need training data to be fitted; currently gracefully degrades (returns empty scores) when models are unfitted
 - **Remaining:** `ml.py` placeholder API endpoint still returns mock data (separate from pipeline scorer)
 
+**Experimental ML Approaches (planned testing):**
+
+| Approach | Branch/Location | Status | Description |
+|----------|-----------------|--------|-------------|
+| `schedule-vision` | `feat/schedule-vision-research` | Branch exists (1 commit, 8 files) | CatBoost + TabPFN + distillation scripts |
+| `schedule-vision-neural` | Not yet created | Planned | Neural variant to benchmark against schedule-vision |
+| (additional experimental ML) | TBD | Planned | Third ML approach for comparative evaluation |
+
+**Next:** Train models on historical data, then benchmark all three approaches against each other for schedule quality scoring.
+
 ### 18. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
 - Acceptable fallback to empty schedules
