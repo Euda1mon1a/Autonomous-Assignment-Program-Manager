@@ -33,7 +33,7 @@ async def seed_notifications():
     )
 
     async with AsyncSessionLocal() as db:
-        now_naive = datetime.utcnow()
+        now_naive = datetime.now(UTC)
 
         print("Seeding Email Templates...")
         templates_data = [

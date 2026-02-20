@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from datetime import datetime, timedelta, date
+from datetime import UTC, date, datetime, timedelta
 import sys
 import os
 
@@ -149,7 +149,7 @@ async def seed_wellness():
     async with AsyncSessionLocal() as db:
         print("Seeding Surveys...")
 
-        now_naive = datetime.utcnow()
+        now_naive = datetime.now(UTC)
 
         surveys_data = [
             {

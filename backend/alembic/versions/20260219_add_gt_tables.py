@@ -1,6 +1,6 @@
 """Add game theory tables
 
-Revision ID: a399bc3fb338
+Revision ID: 20260219_add_gt_tables
 Revises: 20260219_ai_budget_tables
 Create Date: 2026-02-19 13:48:30.664203
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 import app.db.types
 
 # revision identifiers, used by Alembic.
-revision: str = "a399bc3fb338"
+revision: str = "20260219_add_gt_tables"
 down_revision: str | None = "20260219_ai_budget_tables"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None

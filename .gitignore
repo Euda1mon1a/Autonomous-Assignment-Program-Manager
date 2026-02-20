@@ -156,6 +156,9 @@ data/local/**/*.csv
 data/inpatient_time_off_overrides.json
 data/inpatient_time_off_overrides_manual.json
 
+# Excel Schedule Archive (real faculty schedules AY 2016-2025 - OPSEC/PERSEC)
+Excel Schedule Archive/
+
 # Docker bind mount data (local persistence - contains database files)
 data/postgres/
 data/redis/
@@ -246,6 +249,10 @@ frontend/src/types/api-generated-check.ts
 # Session scratchpads with PII (real resident names - local only)
 docs/scratchpad/session-132-rotation-template-import.md
 
+# Schedule-vision ML research (large data, training artifacts)
+scripts/schedule-vision/data/
+scripts/schedule-vision/catboost_info/
+
 # Misc local work (root-level only)
 /skills/
 /src/
@@ -293,6 +300,7 @@ docs/thinkos_cli_browser_pairing_plan.md
 # Claude overnight artifacts (session work products)
 .claude/dontreadme/overnight/
 .claude/dontreadme/wip_migrations/
+.claude/dontreadme/stack-health/
 
 # WIP frontend components (not ready for commit)
 frontend/src/app/admin/wellness/

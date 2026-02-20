@@ -7,7 +7,7 @@ from the actual database columns (schema drift).
 import asyncio
 import random
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -28,7 +28,7 @@ async def seed_resilience():
     )
 
     async with AsyncSessionLocal() as db:
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         week_ago = now - timedelta(days=7)
         two_weeks_ago = now - timedelta(days=14)
 
@@ -130,8 +130,8 @@ async def seed_resilience():
                     text(
                         """
                     INSERT INTO resilience_events
-                        (id, timestamp, event_type, severity, reason, triggered_by)
-                    VALUES (:id, :ts, :etype, :sev, :reason, :trig)
+                        (id, timestamp, event_type, severity, reason, triggered_by, metadata)
+                    VALUES (:id, :ts, :etype, :sev, :reason, :trig, :meta)
                 """
                     ),
                     {
@@ -141,6 +141,7 @@ async def seed_resilience():
                         "sev": sev,
                         "reason": reason,
                         "trig": f"user:{people[0].id}",
+                        "meta": '{"auto_seeded": true, "source": "seed_resilience.py"}',
                     },
                 )
                 print(f"  - Event: {etype} ({sev})")

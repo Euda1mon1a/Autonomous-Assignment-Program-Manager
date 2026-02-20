@@ -2,7 +2,7 @@
 
 import asyncio
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -23,7 +23,7 @@ async def seed_swaps():
     )
 
     async with AsyncSessionLocal() as db:
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         week_ago = now - timedelta(days=7)
 
         result = await db.execute(select(Person))

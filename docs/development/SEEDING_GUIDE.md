@@ -62,7 +62,13 @@ All feature seed scripts check for existing data before inserting (via `count_ro
 
 ### Datetime Handling
 
-Feature seed scripts use `datetime.utcnow()` (naive datetime) for timestamp fields. This matches the database expectations. Do not use `datetime.now(UTC)` (timezone-aware) for seed data — it causes `TypeError` with the existing schema.
+Feature seed scripts use `datetime.now(UTC)` (timezone-aware) for timestamp fields. This follows the project-wide convention established in PRs #1162-#1168 which migrated all `datetime.utcnow()` calls. The `utcnow()` function is deprecated in Python 3.12+.
+
+Import pattern:
+```python
+from datetime import UTC, datetime, timedelta
+now = datetime.now(UTC)
+```
 
 ### Check Constraints
 
