@@ -342,8 +342,8 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 **Action:**
 1. Bulk fix `-> None` patterns with sed
 2. Bulk fix SQLAlchemy Column casts
-3. ~~Install bandit: `pip install bandit`~~ ✅ Added to requirements.txt (PR #839)
-4. ~~Update Modron March to check correct type locations~~ ✅ Fixed (PR #838)
+
+**✅ Resolved sub-items:** bandit added to requirements.txt (PR #839), Modron March fixed (PR #838)
 
 ### 8. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
 Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
@@ -357,12 +357,6 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 | **gRPC** (`backend/app/grpc/`) | 1,775 | Full server, JWT auth | **EVALUATE** - MCP/external integrations |
 
 **Decision:** Keep all modules on roadmap. Integrate as features require.
-
-### ~~11. No DB-Schema Drift Detection~~ — RESOLVED
-See [COMPLETED section](#11-no-db-schema-drift-detection-high-11--resolved-2026-01-31)
-
-### ~~12. API Test Coverage Gap~~ — RESOLVED
-See [COMPLETED section](#12-api-test-coverage-gap-high-12--resolved-2026-01-31)
 
 ### 14. Admin GUI Backend Gaps (NEW - Session 156)
 **Added:** 2026-02-01
@@ -617,9 +611,11 @@ Three active branches have committed work that needs review. All are **stale on 
 
 | Gap | Current State | Impact |
 |-----|---------------|--------|
-| ~~No pre-push hook~~ | ✅ Githyanki Gatekeeper merged (PR #837) | Blocks force-push to main, requires clean tests |
-| ~~24 sequential phases~~ | D&D hooks parallel, others sequential | ~~15-30s~~ Improved |
 | MyPy/Bandit advisory | `|| true` patterns | Bugs/security issues slip through |
+
+**✅ Resolved sub-items:**
+- Pre-push hook: Githyanki Gatekeeper merged (PR #837)
+- Sequential phases: D&D hooks now parallel
 
 **Human Decisions Required:**
 - [ ] Approve full parallel pre-commit approach
@@ -666,22 +662,6 @@ Database Inspector now supports multiple data types but Activities view has upst
 
 **Next:** Run schedule generation (preload + solver)
 
-### ~~15. Missing Dependencies in requirements.txt~~ — RESOLVED (PR #839)
-**Priority:** LOW (Quick Fix)
-**Added:** 2026-01-23 (Session 136)
-**Resolved:** PR #839 — Added `bandit>=1.7.0` and `types-PyYAML>=6.0.0`
-
-~~Pre-commit hooks fail due to missing dependencies:~~
-
-| Package | Issue | Fix |
-|---------|-------|-----|
-| ~~`bandit`~~ | ~~Pre-commit `command not found`~~ | ✅ Added |
-| ~~`types-PyYAML`~~ | ~~mypy missing stubs error~~ | ✅ Added |
-
-**Also consider:**
-- Split into `requirements.txt` (core) + `requirements-dev.txt` (testing/linting)
-- Heavy ML deps (`sentence-transformers`, `transformers`) could be optional
-
 ### 20. Skills-Tools Rationalization (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [Skills-Tools Rationalization](reports/SKILLS_TOOLS_RATIONALIZATION_2026-01-23.md)
@@ -693,10 +673,7 @@ Database Inspector now supports multiple data types but Activities view has upst
 | Skills → RAG | 5 | `hierarchy`, `parties`, `python-testing-patterns` |
 | Redundancies | 4 | `startupO-legacy`, `deep-research`+`devcom` |
 
-~~**Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.~~ ✅ Created (PR #839)
-
-### ~~24. Preload Service Code Duplication~~ — RESOLVED
-See [COMPLETED section](#24-preload-service-code-duplication-medium-24--resolved-2026-02-18)
+✅ `check-camelcase` skill created (PR #839)
 
 **NOTE (2026-02-06):** Codex implemented faculty clinic floor constraints in activity solver (commit `000fa24d`, branch `codex/excel-export-functional-20260206`):
 - Faculty clinic min/max caps now enforced with **hard floor (>=1)** + **soft penalty** for min shortfall
@@ -1027,9 +1004,9 @@ done
 ### Top 5 Actions for Next Session
 
 1. **Purge PII from Git History** (CRITICAL #1) - `git filter-repo` + force push + re-clone
-2. **MCP Production Security Checklist** (CRITICAL #2) - set `MCP_API_KEY`, lock ports
-3. ~~**Add DB-Schema Drift Tests** (HIGH #11)~~ ✅ Resolved (PR #796)
-4. ~~**Add Resilience Route Tests** (HIGH #12)~~ ✅ Resolved (PR #797)
+2. **MCP Server Reliability** (HIGH #22) - diagnose and fix recurring MCP downtime
+3. **MCP Production Security Checklist** (CRITICAL #2) - set `MCP_API_KEY`, lock ports
+4. **Alembic Head Sync** (HIGH #18) - `alembic upgrade head` + re-run stack audit
 5. **Resolve ACGME Compliance Gaps** (HIGH #5) - merge call_assignments into rest checks
 
 ### Blind Spot Assessment Items (2026-01-27)
@@ -1168,6 +1145,11 @@ done
 | ✅ Verified | Hooks Consolidation | All 15 scripts aligned, D&D parallel |
 
 ## COMPLETED / ARCHIVE
+
+### 15. Missing Dependencies in requirements.txt (MEDIUM #15) — RESOLVED (PR #839)
+**Added:** 2026-01-23 (Session 136)
+**Resolved:** PR #839 — Added `bandit>=1.7.0` and `types-PyYAML>=6.0.0`
+**Also consider (future):** Split into `requirements.txt` (core) + `requirements-dev.txt` (testing/linting)
 
 ### Mini Branch Triage (Waves 1+2) — COMPLETED (2026-02-19)
 **Wave 1:** 19 branches → 5 merged, 8 discarded, 6 modified (PR #1119)
