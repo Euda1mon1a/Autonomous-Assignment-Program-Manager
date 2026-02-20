@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-20 (ML scorer pipeline merged, working branch inventory)
+> **Last Updated:** 2026-02-20 (MCP client config fix, watchdog merged)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -555,41 +555,33 @@ Three active branches have committed work that needs review. All are **stale on 
 
 **Effort:** 1-2 hours total (mostly conflict resolution + review)
 
-### 22. MCP Server Reliability — Recurring Downtime (NEW - Feb 2026)
+### 22. MCP Server Reliability — MOSTLY RESOLVED (Feb 2026)
 **Added:** 2026-02-20
-**Status:** Active — MCP server repeatedly going down
+**Status:** ✅ Server-side fixed (PR #1184); ✅ Client-side config fix documented
 
-**Symptom:** MCP server (Streamable HTTP on port 8081) keeps going down. Affects all AI-assisted workflows (Claude Code, Codex CLI, Gemini CLI) that depend on 97+ MCP tools for scheduling, validation, RAG, and resilience operations.
+**Server-Side (PR #1184 — merged):**
+- ✅ `scripts/watchdog-mcp.sh` — Health check + double-fork auto-restart daemon
+- ✅ `com.aapm.mcp-watchdog` launchd agent — 60s interval, RunAtLoad, auto-restart
+- ✅ Port corrected: 8081 → 8080 in `_native-lib.sh` and `start-native.sh`
+- ✅ `/mcp-recovery` skill created (45th skill) with 7 recovery procedures
+- ✅ Health endpoint: `curl -sf http://127.0.0.1:8080/health`
 
-**Investigation Required:**
-1. Check MCP server process management — is it supervised (systemd/launchd/pm2) or running bare?
-2. Review crash logs / stderr output for the MCP server process
-3. Check for OOM kills, port conflicts, or connection exhaustion
-4. Review `mcp-server/src/scheduler_mcp/server.py` startup and error handling
-5. Check if backend (FastAPI on 8000) going down cascades to MCP
-6. Check Redis/PostgreSQL dependency — does MCP crash when either is unavailable?
-7. Review RAG backend warming issue (known ~30s of 500 errors after restart)
+**Client-Side (config fix — this session):**
+- ✅ Root cause: Claude Code reads MCP config from `~/.claude.json` (per-project local scope) with highest priority, not `~/.claude/config.json`
+- ✅ Fix: `claude mcp add --transport http --scope local residency-scheduler http://127.0.0.1:8080/mcp`
+- ✅ Transport: Streamable HTTP (`--transport http`), NOT SSE or stdio. Server uses FastMCP 2.x `mcp.http_app(stateless_http=True)`
+- ✅ Documented in: `MCP_SETUP.md`, `MCP_IDE_INTEGRATION.md`, `/mcp-recovery` skill (Recovery #7)
 
-**Potential Causes:**
-- No process supervisor (bare `python` process dies and stays dead)
-- Unhandled exceptions in tool handlers crashing the server
-- Memory leak over time (97+ tools, RAG vector store)
-- Backend dependency not health-checked (MCP calls backend, backend calls DB)
-- Port 8081 conflict with another process
-
-**Action:**
-1. Reproduce the failure — check current MCP status and recent crash patterns
-2. Add process supervision (launchd plist or pm2) with auto-restart
-3. Add health check endpoint and watchdog
-4. Add structured logging for crash diagnostics
-5. Consider circuit breaker between MCP → backend to prevent cascade failures
+**Remaining:**
+- Monitor for memory leaks over time (97+ tools, RAG vector store)
+- Consider circuit breaker between MCP → backend for cascade failure prevention
 
 **Files:**
-- `mcp-server/src/scheduler_mcp/server.py` — Server entry point
-- `mcp-server/src/scheduler_mcp/middleware/` — Auth and logging middleware
-- `docker-compose.yml` / `docker-compose.local.yml` — Container config (if running in Docker)
-
-**Effort:** 2-4 hours investigation + fix (depends on root cause)
+- `scripts/watchdog-mcp.sh` — Watchdog daemon
+- `~/Library/LaunchAgents/com.aapm.mcp-watchdog.plist` — launchd config
+- `.claude/skills/mcp-recovery/SKILL.md` — Recovery skill (7 procedures)
+- `docs/development/MCP_SETUP.md` — Setup + troubleshooting
+- `docs/development/MCP_IDE_INTEGRATION.md` — IDE config
 
 ---
 
@@ -996,18 +988,18 @@ done
 | Priority | Open | Resolved |
 |----------|------|----------|
 | **CRITICAL** | 2 | 6 |
-| **HIGH** | 12 | 9 |
+| **HIGH** | 11 | 10 |
 | **MEDIUM** | 16 | 12 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **43** | **30** |
+| **TOTAL** | **42** | **31** |
 
 ### Top 5 Actions for Next Session
 
 1. **Purge PII from Git History** (CRITICAL #1) - `git filter-repo` + force push + re-clone
-2. **MCP Server Reliability** (HIGH #22) - diagnose and fix recurring MCP downtime
-3. **MCP Production Security Checklist** (CRITICAL #2) - set `MCP_API_KEY`, lock ports
-4. **Alembic Head Sync** (HIGH #18) - `alembic upgrade head` + re-run stack audit
-5. **Resolve ACGME Compliance Gaps** (HIGH #5) - merge call_assignments into rest checks
+2. **MCP Production Security Checklist** (CRITICAL #2) - set `MCP_API_KEY`, lock ports
+3. **Alembic Head Sync** (HIGH #18) - `alembic upgrade head` + re-run stack audit
+4. **Resolve ACGME Compliance Gaps** (HIGH #5) - merge call_assignments into rest checks
+5. **CP-SAT Infeasible With Preassigned** (HIGH #3.1) - clear stale preloads, verify regen
 
 ### Blind Spot Assessment Items (2026-01-27)
 
@@ -1025,10 +1017,13 @@ done
 | Change | Item | Reason |
 |--------|------|--------|
 | ✅ Merged | PR #1181 | ML scorer node wired into LangGraph pipeline (13 nodes, 9 Codex review rounds) |
+| ✅ Merged | PR #1184 | MCP watchdog with launchd auto-restart (server-side reliability fix) |
 | ✅ Created | PR #1183 | Documentation updates for 13-node pipeline (5 files: CP_SAT_CANONICAL_PIPELINE, SCHEDULE_GENERATION_RUNBOOK, ENGINE_ASSIGNMENT_FLOW, ARCHITECTURE, ADR-2026-02-17) |
+| ✅ Fixed | MCP client | Root cause: config in `~/.claude/config.json` not picked up; fix: `claude mcp add --transport http --scope local` writes to `~/.claude.json` project key |
+| 📝 Updated | HIGH #22 | MCP reliability → MOSTLY RESOLVED (server watchdog + client config fix) |
 | 📝 Updated | LOW #17 | ML Workload Analysis → PARTIALLY RESOLVED (scorer in pipeline, models need training) |
+| 📝 Updated | 3 docs | MCP_SETUP.md, MCP_IDE_INTEGRATION.md, mcp-recovery skill — client config precedence + transport types |
 | ➕ Added | HIGH #21 | Working branches with committed files needing review/rebase (3 branches, all stale on graph files) |
-| ➕ Added | HIGH #22 | MCP server reliability — recurring downtime investigation |
 | 📋 Inventoried | 3 branches | `feature/empty-table-features` (4 commits), `feat/schedule-vision-research` (1 commit), `docs/repo-state-report-feb19` (1 commit) |
 
 ### Session 2026-02-19 Updates
