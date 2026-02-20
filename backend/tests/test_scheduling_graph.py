@@ -437,7 +437,7 @@ class TestMLScoreNode:
             result = ml_score_node(state, config)
 
         assert "error" in result["ml_scores"]
-        assert "Model file not found" in result["ml_scores"]["error"]
+        assert result["ml_scores"]["error"] == "ml_scoring_unavailable"
 
 
 class TestRouteAfterFailureCheck:

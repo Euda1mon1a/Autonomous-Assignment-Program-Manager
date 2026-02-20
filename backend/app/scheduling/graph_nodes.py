@@ -854,10 +854,20 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
         conflict_path = getattr(settings, "ML_CONFLICT_MODEL_PATH", None) or None
         workload_path = getattr(settings, "ML_WORKLOAD_MODEL_PATH", None) or None
 
-        # Convert non-empty strings to Path, None otherwise
-        pref_path = Path(pref_path) if pref_path else None
-        conflict_path = Path(conflict_path) if conflict_path else None
-        workload_path = Path(workload_path) if workload_path else None
+        # Convert non-empty strings to Path; fall back to models_dir defaults
+        pref_path = (
+            Path(pref_path) if pref_path else models_dir / "preference_model.joblib"
+        )
+        conflict_path = (
+            Path(conflict_path)
+            if conflict_path
+            else models_dir / "conflict_model.joblib"
+        )
+        workload_path = (
+            Path(workload_path)
+            if workload_path
+            else models_dir / "workload_model.joblib"
+        )
 
         scorer = ScheduleScorer(
             preference_model_path=pref_path,
@@ -917,7 +927,7 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
     except Exception as e:
         # ML scoring is advisory — never fail the pipeline
         logger.warning(f"ML scoring failed (non-fatal): {e}")
-        return {"ml_scores": {"error": str(e)}}
+        return {"ml_scores": {"error": "ml_scoring_unavailable"}}
 
 
 # ─── Node 13: finalize ───────────────────────────────────────────────
