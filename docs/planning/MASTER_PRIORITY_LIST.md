@@ -561,6 +561,42 @@ Three active branches have committed work that needs review. All are **stale on 
 
 **Effort:** 1-2 hours total (mostly conflict resolution + review)
 
+### 22. MCP Server Reliability — Recurring Downtime (NEW - Feb 2026)
+**Added:** 2026-02-20
+**Status:** Active — MCP server repeatedly going down
+
+**Symptom:** MCP server (Streamable HTTP on port 8081) keeps going down. Affects all AI-assisted workflows (Claude Code, Codex CLI, Gemini CLI) that depend on 97+ MCP tools for scheduling, validation, RAG, and resilience operations.
+
+**Investigation Required:**
+1. Check MCP server process management — is it supervised (systemd/launchd/pm2) or running bare?
+2. Review crash logs / stderr output for the MCP server process
+3. Check for OOM kills, port conflicts, or connection exhaustion
+4. Review `mcp-server/src/scheduler_mcp/server.py` startup and error handling
+5. Check if backend (FastAPI on 8000) going down cascades to MCP
+6. Check Redis/PostgreSQL dependency — does MCP crash when either is unavailable?
+7. Review RAG backend warming issue (known ~30s of 500 errors after restart)
+
+**Potential Causes:**
+- No process supervisor (bare `python` process dies and stays dead)
+- Unhandled exceptions in tool handlers crashing the server
+- Memory leak over time (97+ tools, RAG vector store)
+- Backend dependency not health-checked (MCP calls backend, backend calls DB)
+- Port 8081 conflict with another process
+
+**Action:**
+1. Reproduce the failure — check current MCP status and recent crash patterns
+2. Add process supervision (launchd plist or pm2) with auto-restart
+3. Add health check endpoint and watchdog
+4. Add structured logging for crash diagnostics
+5. Consider circuit breaker between MCP → backend to prevent cascade failures
+
+**Files:**
+- `mcp-server/src/scheduler_mcp/server.py` — Server entry point
+- `mcp-server/src/scheduler_mcp/middleware/` — Auth and logging middleware
+- `docker-compose.yml` / `docker-compose.local.yml` — Container config (if running in Docker)
+
+**Effort:** 2-4 hours investigation + fix (depends on root cause)
+
 ---
 
 ## MEDIUM (Plan for Sprint)
@@ -983,10 +1019,10 @@ done
 | Priority | Open | Resolved |
 |----------|------|----------|
 | **CRITICAL** | 2 | 6 |
-| **HIGH** | 11 | 9 |
+| **HIGH** | 12 | 9 |
 | **MEDIUM** | 16 | 12 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **42** | **30** |
+| **TOTAL** | **43** | **30** |
 
 ### Top 5 Actions for Next Session
 
@@ -1015,6 +1051,7 @@ done
 | ✅ Created | PR #1183 | Documentation updates for 13-node pipeline (5 files: CP_SAT_CANONICAL_PIPELINE, SCHEDULE_GENERATION_RUNBOOK, ENGINE_ASSIGNMENT_FLOW, ARCHITECTURE, ADR-2026-02-17) |
 | 📝 Updated | LOW #17 | ML Workload Analysis → PARTIALLY RESOLVED (scorer in pipeline, models need training) |
 | ➕ Added | HIGH #21 | Working branches with committed files needing review/rebase (3 branches, all stale on graph files) |
+| ➕ Added | HIGH #22 | MCP server reliability — recurring downtime investigation |
 | 📋 Inventoried | 3 branches | `feature/empty-table-features` (4 commits), `feat/schedule-vision-research` (1 commit), `docs/repo-state-report-feb19` (1 commit) |
 
 ### Session 2026-02-19 Updates
