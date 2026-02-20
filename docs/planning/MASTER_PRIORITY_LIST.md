@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-19 (Mini branch triage Wave 2, datetime migration, Codex fixes, stack health audit)
+> **Last Updated:** 2026-02-20 (ML scorer pipeline merged, working branch inventory)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -342,8 +342,8 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 **Action:**
 1. Bulk fix `-> None` patterns with sed
 2. Bulk fix SQLAlchemy Column casts
-3. ~~Install bandit: `pip install bandit`~~ ✅ Added to requirements.txt (PR #839)
-4. ~~Update Modron March to check correct type locations~~ ✅ Fixed (PR #838)
+
+**✅ Resolved sub-items:** bandit added to requirements.txt (PR #839), Modron March fixed (PR #838)
 
 ### 8. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
 Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
@@ -357,12 +357,6 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 | **gRPC** (`backend/app/grpc/`) | 1,775 | Full server, JWT auth | **EVALUATE** - MCP/external integrations |
 
 **Decision:** Keep all modules on roadmap. Integrate as features require.
-
-### ~~11. No DB-Schema Drift Detection~~ — RESOLVED
-See [COMPLETED section](#11-no-db-schema-drift-detection-high-11--resolved-2026-01-31)
-
-### ~~12. API Test Coverage Gap~~ — RESOLVED
-See [COMPLETED section](#12-api-test-coverage-gap-high-12--resolved-2026-01-31)
 
 ### 14. Admin GUI Backend Gaps (NEW - Session 156)
 **Added:** 2026-02-01
@@ -541,6 +535,62 @@ Three-phase plan to eliminate CLI dependency for all operations:
 
 **Confidence:** Medium — RED health status adds uncertainty. Security and migration debt can introduce hidden work.
 
+### 21. Working Branches With Committed Files (NEW - Feb 2026)
+**Added:** 2026-02-20
+**Source:** Branch inventory during ML scorer docs session
+
+Three active branches have committed work that needs review. All are **stale on `graph_nodes.py` and `test_scheduling_graph.py`** after PR #1181 merged the 13-node ML scorer pipeline. Rebasing these branches will show conflicts on those files.
+
+| Branch | Commits Ahead | Key Files | Status |
+|--------|---------------|-----------|--------|
+| `feature/empty-table-features` | 4 | Gemini seed scripts, seeding guide, schema drift report, game theory/wellness/notification seeds (28 files) | Stale — forked before PR #1181; graph files show -277/-120 line deltas |
+| `feat/schedule-vision-research` | 1 | Schedule-vision ML research scripts (24 files) | Stale — touches graph files |
+| `docs/repo-state-report-feb19` | 1 | Plain-English repo state report (17 files) | Stale — touches graph files |
+
+**Action:**
+1. Rebase each branch onto `main` (post-PR #1181 merge)
+2. Resolve graph_nodes.py / test file conflicts (accept main's 13-node version)
+3. Review committed content for merge-readiness
+4. Open PRs or discard if superseded
+
+**Effort:** 1-2 hours total (mostly conflict resolution + review)
+
+### 22. MCP Server Reliability — Recurring Downtime (NEW - Feb 2026)
+**Added:** 2026-02-20
+**Status:** Active — MCP server repeatedly going down
+
+**Symptom:** MCP server (Streamable HTTP on port 8081) keeps going down. Affects all AI-assisted workflows (Claude Code, Codex CLI, Gemini CLI) that depend on 97+ MCP tools for scheduling, validation, RAG, and resilience operations.
+
+**Investigation Required:**
+1. Check MCP server process management — is it supervised (systemd/launchd/pm2) or running bare?
+2. Review crash logs / stderr output for the MCP server process
+3. Check for OOM kills, port conflicts, or connection exhaustion
+4. Review `mcp-server/src/scheduler_mcp/server.py` startup and error handling
+5. Check if backend (FastAPI on 8000) going down cascades to MCP
+6. Check Redis/PostgreSQL dependency — does MCP crash when either is unavailable?
+7. Review RAG backend warming issue (known ~30s of 500 errors after restart)
+
+**Potential Causes:**
+- No process supervisor (bare `python` process dies and stays dead)
+- Unhandled exceptions in tool handlers crashing the server
+- Memory leak over time (97+ tools, RAG vector store)
+- Backend dependency not health-checked (MCP calls backend, backend calls DB)
+- Port 8081 conflict with another process
+
+**Action:**
+1. Reproduce the failure — check current MCP status and recent crash patterns
+2. Add process supervision (launchd plist or pm2) with auto-restart
+3. Add health check endpoint and watchdog
+4. Add structured logging for crash diagnostics
+5. Consider circuit breaker between MCP → backend to prevent cascade failures
+
+**Files:**
+- `mcp-server/src/scheduler_mcp/server.py` — Server entry point
+- `mcp-server/src/scheduler_mcp/middleware/` — Auth and logging middleware
+- `docker-compose.yml` / `docker-compose.local.yml` — Container config (if running in Docker)
+
+**Effort:** 2-4 hours investigation + fix (depends on root cause)
+
 ---
 
 ## MEDIUM (Plan for Sprint)
@@ -561,9 +611,11 @@ Three-phase plan to eliminate CLI dependency for all operations:
 
 | Gap | Current State | Impact |
 |-----|---------------|--------|
-| ~~No pre-push hook~~ | ✅ Githyanki Gatekeeper merged (PR #837) | Blocks force-push to main, requires clean tests |
-| ~~24 sequential phases~~ | D&D hooks parallel, others sequential | ~~15-30s~~ Improved |
 | MyPy/Bandit advisory | `|| true` patterns | Bugs/security issues slip through |
+
+**✅ Resolved sub-items:**
+- Pre-push hook: Githyanki Gatekeeper merged (PR #837)
+- Sequential phases: D&D hooks now parallel
 
 **Human Decisions Required:**
 - [ ] Approve full parallel pre-commit approach
@@ -610,22 +662,6 @@ Database Inspector now supports multiple data types but Activities view has upst
 
 **Next:** Run schedule generation (preload + solver)
 
-### ~~15. Missing Dependencies in requirements.txt~~ — RESOLVED (PR #839)
-**Priority:** LOW (Quick Fix)
-**Added:** 2026-01-23 (Session 136)
-**Resolved:** PR #839 — Added `bandit>=1.7.0` and `types-PyYAML>=6.0.0`
-
-~~Pre-commit hooks fail due to missing dependencies:~~
-
-| Package | Issue | Fix |
-|---------|-------|-----|
-| ~~`bandit`~~ | ~~Pre-commit `command not found`~~ | ✅ Added |
-| ~~`types-PyYAML`~~ | ~~mypy missing stubs error~~ | ✅ Added |
-
-**Also consider:**
-- Split into `requirements.txt` (core) + `requirements-dev.txt` (testing/linting)
-- Heavy ML deps (`sentence-transformers`, `transformers`) could be optional
-
 ### 20. Skills-Tools Rationalization (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [Skills-Tools Rationalization](reports/SKILLS_TOOLS_RATIONALIZATION_2026-01-23.md)
@@ -637,10 +673,7 @@ Database Inspector now supports multiple data types but Activities view has upst
 | Skills → RAG | 5 | `hierarchy`, `parties`, `python-testing-patterns` |
 | Redundancies | 4 | `startupO-legacy`, `deep-research`+`devcom` |
 
-~~**Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.~~ ✅ Created (PR #839)
-
-### ~~24. Preload Service Code Duplication~~ — RESOLVED
-See [COMPLETED section](#24-preload-service-code-duplication-medium-24--resolved-2026-02-18)
+✅ `check-camelcase` skill created (PR #839)
 
 **NOTE (2026-02-06):** Codex implemented faculty clinic floor constraints in activity solver (commit `000fa24d`, branch `codex/excel-export-functional-20260206`):
 - Faculty clinic min/max caps now enforced with **hard floor (>=1)** + **soft penalty** for min shortfall
@@ -828,9 +861,21 @@ FastAPI TestClient has undocumented behavior differences between versioned and n
 - Infrastructure exists, route registered
 - Minimal production usage - consider for Labs rollout
 
-### 17. ML Workload Analysis
-- `ml.py` returns "placeholder response"
-- Low priority unless ML features requested
+### 17. ML Workload Analysis — PARTIALLY RESOLVED
+- ~~`ml.py` returns "placeholder response"~~ ML scorer now wired into LangGraph pipeline (PR #1181)
+- **Done:** `ScheduleScorer` ensemble (PreferencePredictor, ConflictPredictor, WorkloadOptimizer) runs as `ml_score` node (node 12) in 13-node LangGraph StateGraph
+- **Remaining:** Models need training data to be fitted; currently gracefully degrades (returns empty scores) when models are unfitted
+- **Remaining:** `ml.py` placeholder API endpoint still returns mock data (separate from pipeline scorer)
+
+**Experimental ML Approaches (planned testing):**
+
+| Approach | Branch/Location | Status | Description |
+|----------|-----------------|--------|-------------|
+| `schedule-vision` | `feat/schedule-vision-research` | Branch exists (1 commit, 8 files) | CatBoost + TabPFN + distillation scripts |
+| `schedule-vision-neural` | Not yet created | Planned | Neural variant to benchmark against schedule-vision |
+| (additional experimental ML) | TBD | Planned | Third ML approach for comparative evaluation |
+
+**Next:** Train models on historical data, then benchmark all three approaches against each other for schedule quality scoring.
 
 ### 18. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
@@ -951,17 +996,17 @@ done
 | Priority | Open | Resolved |
 |----------|------|----------|
 | **CRITICAL** | 2 | 6 |
-| **HIGH** | 10 | 9 |
+| **HIGH** | 12 | 9 |
 | **MEDIUM** | 16 | 12 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **41** | **30** |
+| **TOTAL** | **43** | **30** |
 
 ### Top 5 Actions for Next Session
 
 1. **Purge PII from Git History** (CRITICAL #1) - `git filter-repo` + force push + re-clone
-2. **MCP Production Security Checklist** (CRITICAL #2) - set `MCP_API_KEY`, lock ports
-3. ~~**Add DB-Schema Drift Tests** (HIGH #11)~~ ✅ Resolved (PR #796)
-4. ~~**Add Resilience Route Tests** (HIGH #12)~~ ✅ Resolved (PR #797)
+2. **MCP Server Reliability** (HIGH #22) - diagnose and fix recurring MCP downtime
+3. **MCP Production Security Checklist** (CRITICAL #2) - set `MCP_API_KEY`, lock ports
+4. **Alembic Head Sync** (HIGH #18) - `alembic upgrade head` + re-run stack audit
 5. **Resolve ACGME Compliance Gaps** (HIGH #5) - merge call_assignments into rest checks
 
 ### Blind Spot Assessment Items (2026-01-27)
@@ -974,6 +1019,17 @@ done
 | 31 | CP-SAT Integration Tests | 4-8h | MEDIUM |
 
 **Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+### Session 2026-02-20 Updates
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Merged | PR #1181 | ML scorer node wired into LangGraph pipeline (13 nodes, 9 Codex review rounds) |
+| ✅ Created | PR #1183 | Documentation updates for 13-node pipeline (5 files: CP_SAT_CANONICAL_PIPELINE, SCHEDULE_GENERATION_RUNBOOK, ENGINE_ASSIGNMENT_FLOW, ARCHITECTURE, ADR-2026-02-17) |
+| 📝 Updated | LOW #17 | ML Workload Analysis → PARTIALLY RESOLVED (scorer in pipeline, models need training) |
+| ➕ Added | HIGH #21 | Working branches with committed files needing review/rebase (3 branches, all stale on graph files) |
+| ➕ Added | HIGH #22 | MCP server reliability — recurring downtime investigation |
+| 📋 Inventoried | 3 branches | `feature/empty-table-features` (4 commits), `feat/schedule-vision-research` (1 commit), `docs/repo-state-report-feb19` (1 commit) |
 
 ### Session 2026-02-19 Updates
 
@@ -1089,6 +1145,11 @@ done
 | ✅ Verified | Hooks Consolidation | All 15 scripts aligned, D&D parallel |
 
 ## COMPLETED / ARCHIVE
+
+### 15. Missing Dependencies in requirements.txt (MEDIUM #15) — RESOLVED (PR #839)
+**Added:** 2026-01-23 (Session 136)
+**Resolved:** PR #839 — Added `bandit>=1.7.0` and `types-PyYAML>=6.0.0`
+**Also consider (future):** Split into `requirements.txt` (core) + `requirements-dev.txt` (testing/linting)
 
 ### Mini Branch Triage (Waves 1+2) — COMPLETED (2026-02-19)
 **Wave 1:** 19 branches → 5 merged, 8 discarded, 6 modified (PR #1119)

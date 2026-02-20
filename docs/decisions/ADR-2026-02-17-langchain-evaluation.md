@@ -72,11 +72,12 @@ The codebase is structurally closer to LangChain than the original evaluation ga
 
 ## Adoption Path (Incremental)
 
-### Phase 1: LangGraph for Scheduling Pipeline
+### Phase 1: LangGraph for Scheduling Pipeline *(Completed — PR #1157, #1181)*
 - Convert `SchedulingEngine.generate()` phases into a LangGraph StateGraph
 - Keep all existing solver/validator/constraint code unchanged
 - Add state checkpointing for solver recovery
-- **Files:** New `backend/app/scheduling/graph.py`, thin adapter in engine.py
+- Added `ml_score` node (node 12) for post-validation ML scoring via ScheduleScorer
+- **Files:** `backend/app/scheduling/graph.py`, `graph_nodes.py` (13 nodes), `graph_state.py`
 
 ### Phase 2: MCP Tool Adapter Layer
 - Thin adapter to expose MCP tools as LangChain tools

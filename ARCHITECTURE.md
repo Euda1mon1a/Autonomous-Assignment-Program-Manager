@@ -159,7 +159,7 @@ Beyond the standard layers, the codebase has domain modules:
 
 | Module | Purpose |
 |--------|---------|
-| `app/scheduling/` | CP-SAT constraint solver, schedule generation, periodicity analysis |
+| `app/scheduling/` | CP-SAT constraint solver, 13-node LangGraph pipeline, ML scoring, periodicity analysis |
 | `app/scheduling/validators/` | ACGME compliance validation (80-hour, 1-in-7, supervision) |
 | `app/analytics/` | Reporting engines (coverage, fairness, workload, chart generation) |
 | `app/resilience/` | Defense-in-depth: circuit breakers, SPC monitoring, epidemiology models, thermodynamic stability |

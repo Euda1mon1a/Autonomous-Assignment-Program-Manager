@@ -678,7 +678,7 @@ curl -X POST http://localhost:8000/api/v1/scheduler/runs/{run_id}/abort \
 
 ## Alternative: LangGraph Pipeline
 
-The same generation flow is available via `engine.generate_via_graph()`, which uses a LangGraph StateGraph with 12 nodes and conditional failure routing. Same inputs, same outputs — but each phase is independently traceable and testable.
+The same generation flow is available via `engine.generate_via_graph()`, which uses a LangGraph StateGraph with 13 nodes and conditional failure routing. Same inputs, same outputs — but each phase is independently traceable and testable. Node 12 (`ml_score`) runs post-validation ML scoring when `ML_ENABLED=true`, providing quality metrics (preference satisfaction, workload balance, conflict risk) in the result dict.
 
 - **Entry point:** `backend/app/scheduling/graph.py` → `generate_via_graph()`
 - **Fallback:** If langgraph is not installed, automatically delegates to `generate()`
