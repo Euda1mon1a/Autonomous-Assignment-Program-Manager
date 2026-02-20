@@ -928,6 +928,8 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
             return False
 
         # Build person attribute lookup for enriching assignment payloads
+        # Includes call-load features consumed by conflict_predictor and
+        # workload_optimizer (weekday_call_count, sunday_call_count, fmit_weeks_count)
         person_attr_map: dict[Any, dict[str, Any]] = {}
         for p in list(residents) + list(faculty):
             pid = getattr(p, "id", None)
@@ -935,18 +937,24 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
                 "pgy_level": getattr(p, "pgy_level", None),
                 "faculty_role": getattr(p, "faculty_role", None),
                 "target_clinical_blocks": getattr(p, "target_clinical_blocks", None),
+                "weekday_call_count": getattr(p, "weekday_call_count", 0) or 0,
+                "sunday_call_count": getattr(p, "sunday_call_count", 0) or 0,
+                "fmit_weeks_count": getattr(p, "fmit_weeks_count", 0) or 0,
             }
 
         # Group assignments by person_id for conflict scoring (existing assignments)
+        # Include date for same-day conflict detection (conflict_predictor:183)
         assignments_by_person: dict[Any, list[dict[str, Any]]] = {}
         for a in assignments:
             pid = getattr(a, "person_id", None)
+            block = getattr(a, "block", None)
             entry = {
                 "rotation_template_id": str(getattr(a, "rotation_template_id", "")),
                 "rotation_name": template_name_map.get(
                     getattr(a, "rotation_template_id", None), ""
                 ),
                 "block_id": str(getattr(a, "block_id", "")),
+                "date": str(getattr(block, "date", "") or ""),
                 "is_weekend": _is_weekend(a),
             }
             assignments_by_person.setdefault(pid, []).append(entry)
@@ -989,6 +997,13 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
                             getattr(a, "rotation_template_id", None), ""
                         ),
                         "block_id": str(getattr(a, "block_id", "")),
+                        "date": str(
+                            getattr(getattr(a, "block", None), "date", "") or ""
+                        ),
+                        "is_weekend": _is_weekend(a),
+                        "is_holiday": getattr(
+                            getattr(a, "block", None), "is_holiday", False
+                        ),
                     },
                     "existing": [
                         e
@@ -1000,6 +1015,16 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
                     "context": {
                         "block_number": state.get("block_number"),
                         "academic_year": state.get("academic_year"),
+                        # Coverage/supervision features for conflict_predictor
+                        "faculty_count_on_date": len(faculty),
+                        "resident_count_on_date": len(residents),
+                        "historical_conflict_rate": 0.0,
+                        "recent_swap_count": 0,
+                        "coverage_level": (
+                            len(residents) / max(len(faculty) * 2, 1)
+                            if faculty
+                            else 1.0
+                        ),
                     },
                 }
                 for a in assignments
