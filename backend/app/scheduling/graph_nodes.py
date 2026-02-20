@@ -840,10 +840,15 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
         logger.debug("ML scoring disabled (ML_ENABLED=false); skipping")
         return {"ml_scores": {}}
 
+    # Pre-bind NotFittedError so the except clause works even if sklearn
+    # is not installed (ImportError is caught by the handler itself).
+    try:
+        from sklearn.exceptions import NotFittedError
+    except ImportError:
+        NotFittedError = type("NotFittedError", (Exception,), {})  # type: ignore[misc,assignment]
+
     try:
         from pathlib import Path
-
-        from sklearn.exceptions import NotFittedError
 
         from app.ml.inference.schedule_scorer import ScheduleScorer
 
