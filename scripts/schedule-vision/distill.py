@@ -148,6 +148,7 @@ def train_teacher(df: pd.DataFrame, iterations: int = 1000
     cat_indices = get_cat_indices(feature_cols)
 
     le = LabelEncoder()
+    le.fit(df[TARGET])
     X, y, le = prepare_catboost_data(df, feature_cols, le)
     n_classes = len(le.classes_)
 
@@ -320,11 +321,12 @@ def run_distillation_cv(
         teacher_pool = Pool(X_teacher, y_teacher, cat_features=teacher_cat_idx)
         fold_teacher.fit(teacher_pool)
         fold_proba = fold_teacher.predict_proba(teacher_pool)
-        # Pad to global class count if fold is missing highest-indexed classes
+        # Map fold columns to global class indices using fold_teacher.classes_
         n_global = len(le.classes_)
         if fold_proba.shape[1] < n_global:
             padded = np.zeros((fold_proba.shape[0], n_global))
-            padded[:, :fold_proba.shape[1]] = fold_proba
+            for i, cls in enumerate(fold_teacher.classes_):
+                padded[:, cls] = fold_proba[:, i]
             fold_proba = padded
         fold_soft_labels = temperature_scale(fold_proba, temperature)
 

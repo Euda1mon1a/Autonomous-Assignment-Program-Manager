@@ -218,6 +218,7 @@ def run_feature_importance(df: pd.DataFrame, feature_cols: list[str]):
     """Train on full data and report feature importance."""
     cat_indices = get_cat_indices(feature_cols)
     le = LabelEncoder()
+    le.fit(df[TARGET])
     X, y, le = prepare_catboost_data(df, feature_cols, le)
 
     clf = make_catboost(len(le.classes_), iterations=500)

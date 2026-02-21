@@ -426,10 +426,10 @@ def extract_era2(ws, sheet_name: str, academic_year: int,
     # Collect all person rows
     people = []
 
-    # Column indices for metadata
+    # Column indices for metadata (name is always one column before schedule data)
     col_template = 2  # B
     col_role = 3      # C
-    col_name = 4      # D
+    col_name = col_start - 1  # D when col_start=5, E when col_start=6
 
     def _add_rows(start, end, default_type, default_pgy_str=""):
         for row_idx in range(start, end + 1):
