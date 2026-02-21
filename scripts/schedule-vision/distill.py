@@ -634,13 +634,32 @@ def main():
         soft_labels, classes, temperature = load_soft_labels(args.soft_labels)
         print(f"  Loaded {soft_labels.shape[0]} soft labels, "
               f"{soft_labels.shape[1]} classes, T={temperature}")
-        # Validate alignment: soft labels must match current feature count
+        # Validate alignment: soft labels must match current data
         if soft_labels.shape[0] != len(df):
             print(
                 f"\n  ERROR: Soft labels have {soft_labels.shape[0]} rows but "
                 f"features have {len(df)} rows. The .npz file is stale — "
                 f"re-run without --student-only to regenerate soft labels."
             )
+            sys.exit(1)
+        # Validate class alignment: .npz classes must match current data's codes
+        le_check = LabelEncoder()
+        le_check.fit(df[TARGET])
+        current_classes = set(le_check.classes_)
+        loaded_classes = set(classes)
+        if current_classes != loaded_classes:
+            missing = current_classes - loaded_classes
+            extra = loaded_classes - current_classes
+            print(f"\n  ERROR: Class set mismatch between .npz and current data.")
+            if missing:
+                print(f"    In data but not in .npz: {sorted(missing)[:10]}")
+            if extra:
+                print(f"    In .npz but not in data: {sorted(extra)[:10]}")
+            print(
+                f"    .npz has {len(loaded_classes)} classes, "
+                f"data has {len(current_classes)} classes."
+            )
+            print(f"    Re-run without --student-only to regenerate soft labels.")
             sys.exit(1)
     else:
         print(f"\n{'─' * 65}")

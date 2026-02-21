@@ -49,6 +49,7 @@ def main():
             JOIN people p ON h.person_id = p.id
             JOIN activities a ON h.activity_id = a.id
             WHERE h.date >= %s AND h.date <= %s
+              AND h.source IN ('preload', 'manual')
             ORDER BY p.name, h.date, h.time_of_day
         """, (start_date, end_date))
 
