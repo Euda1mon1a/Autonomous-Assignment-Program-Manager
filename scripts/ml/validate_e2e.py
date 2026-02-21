@@ -249,6 +249,9 @@ def compute_metrics(ground_truth, solver_output, block_templates, requirements,
     Tier 3: Slot-level exact match rate
     New: Jensen-Shannon divergence, gme concentration ratio
     """
+    # Block start for week number calculation
+    block_start = block_dates.start_date
+
     # Group by person
     persons_gt = defaultdict(dict)
     persons_sv = defaultdict(dict)
@@ -394,7 +397,18 @@ def compute_metrics(ground_truth, solver_output, block_templates, requirements,
                 preloaded_skipped += 1
                 continue
             satisfaction_checks += 1
-            actual_count = sv_counts.get(act_code, 0)
+
+            # Filter by applicable_weeks if the requirement is week-scoped
+            applicable = req.get("applicable_weeks")
+            if applicable:
+                actual_count = 0
+                for (d, tod), code in persons_sv.get(pid, {}).items():
+                    if code == act_code:
+                        week_num = ((d - block_start).days // 7) + 1
+                        if week_num in applicable:
+                            actual_count += 1
+            else:
+                actual_count = sv_counts.get(act_code, 0)
             req_min = req["min"]
             req_max = req["max"]
 

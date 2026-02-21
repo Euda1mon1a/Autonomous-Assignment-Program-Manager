@@ -1366,12 +1366,16 @@ class CPSATActivitySolver:
                     and clinic_activity
                     and entry["activity_id"] == clinic_activity.id
                 ):
-                    pgy_level = slot_meta[all_slot_indices[0]].get("pgy_level") or 0
+                    scoped_slots = sorted(entry.get("scope_slots", all_slot_indices))
+                    pgy_level = (
+                        slot_meta[scoped_slots[0]].get("pgy_level") or 0
+                        if scoped_slots
+                        else 0
+                    )
                     cv_allowed = bool(
                         cv_activity
                         and any(
-                            cv_activity.id in slot_allowed[s_i]
-                            for s_i in all_slot_indices
+                            cv_activity.id in slot_allowed[s_i] for s_i in scoped_slots
                         )
                     )
                     enforce_floor = pgy_level == 1 or not cv_allowed
