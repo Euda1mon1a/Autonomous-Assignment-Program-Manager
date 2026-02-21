@@ -1306,6 +1306,7 @@ class CPSATActivitySolver:
                         "vars": vars_for_req,
                         "min": min_needed,
                         "max": max_allowed,
+                        "scope_slots": set(scope_slot_indices),
                     }
                 )
 
@@ -1314,8 +1315,14 @@ class CPSATActivitySolver:
 
             # If per-activity max totals don't cover all slots, relax max to fill.
             # Prefer giving slack to clinic_activity (most flexible, least harm).
+            # Use the union of constrained scope slots (not all_slot_indices)
+            # to avoid inflating slack when reqs are scoped to specific weeks
+            # via applicable_weeks — otherwise week-scoped max caps get violated.
+            constrained_slots = set()
+            for entry in req_entries:
+                constrained_slots.update(entry["scope_slots"])
             total_max = sum(entry["max"] for entry in req_entries)
-            slack = len(all_slot_indices) - total_max
+            slack = len(constrained_slots) - total_max
             if slack > 0:
                 # Prefer giving slack to clinic_activity first
                 clinic_entry = None
@@ -1405,6 +1412,10 @@ class CPSATActivitySolver:
             # ==================================================
             # FACULTY CLINIC CAPS (min/max per week)
             # ==================================================
+        # Initialize faculty lookup dicts unconditionally so the GME caps
+        # block below can reference them even if clinic_activity is None.
+        faculty_by_id: dict[UUID, Person] = {}
+        faculty_week_slots: dict[tuple[UUID, int], list[int]] = defaultdict(list)
         faculty_clinic_shortfalls: list[Any] = []
         faculty_clinic_overages: list[Any] = []
         faculty_clinic_floor_constraints = 0
@@ -1477,14 +1488,13 @@ class CPSATActivitySolver:
         faculty_gme_overages: list[Any] = []
         faculty_gme_constraint_count = 0
         if faculty_slots:
+            # Populate faculty lookups if not already built by clinic caps
             if not faculty_by_id:
-                faculty_by_id = {}
                 for s_i in faculty_slots:
                     sp = slots[s_i].person
                     if sp:
                         faculty_by_id[sp.id] = sp
             if not faculty_week_slots:
-                faculty_week_slots = defaultdict(list)
                 for s_i in faculty_slots:
                     m = slot_meta[s_i]
                     faculty_week_slots[(m["person_id"], m["week"])].append(s_i)
