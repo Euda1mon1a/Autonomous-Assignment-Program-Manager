@@ -510,10 +510,11 @@ def compute_metrics(ground_truth, solver_output, block_templates, requirements,
         "gme_concentration": {
             "solver_gme": gme_solver_count,
             "gt_gme": gme_gt_count,
+            "total_slots": len(ground_truth),
             "solver_total_filled": total_solver_filled,
             "solver_gme_ratio": round(
-                gme_solver_count / total_solver_filled, 4
-            ) if total_solver_filled else 0,
+                gme_solver_count / len(ground_truth), 4
+            ) if ground_truth else 0,
             "gt_gme_ratio": round(
                 gme_gt_count / len(ground_truth), 4
             ) if ground_truth else 0,

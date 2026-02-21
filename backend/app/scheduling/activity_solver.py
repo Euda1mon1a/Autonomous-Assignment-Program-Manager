@@ -1068,6 +1068,9 @@ class CPSATActivitySolver:
         baseline_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
         locked_faculty_clinic_counts: dict[tuple[UUID, int], int] = defaultdict(int)
         locked_faculty_admin_counts: dict[tuple[UUID, int], int] = defaultdict(int)
+        locked_faculty_per_activity: dict[tuple[UUID, int, UUID], int] = defaultdict(
+            int
+        )
         locked_faculty_supervision_counts: dict[tuple[UUID, int], int] = defaultdict(
             int
         )
@@ -1142,6 +1145,9 @@ class CPSATActivitySolver:
                     locked_faculty_clinic_counts[(locked.person_id, week_number)] += 1
                 if locked.activity_id in admin_equity_ids:
                     locked_faculty_admin_counts[(locked.person_id, week_number)] += 1
+                locked_faculty_per_activity[
+                    (locked.person_id, week_number, locked.activity_id)
+                ] += 1
                 if locked.activity_id in academic_equity_ids:
                     locked_faculty_academic_counts[(locked.person_id, week_number)] += 1
                 if locked.activity_id in supervision_equity_ids:
@@ -1507,12 +1513,21 @@ class CPSATActivitySolver:
                 faculty = faculty_by_id.get(faculty_id)
                 if not faculty:
                     continue
-                gme_min_cap = faculty.gme_min
-                gme_max_cap = faculty.gme_max
+                # Select caps based on faculty admin type
+                admin_type = (getattr(faculty, "admin_type", "GME") or "GME").upper()
+                if admin_type == "DFM":
+                    gme_min_cap = faculty.dfm_min
+                    gme_max_cap = faculty.dfm_max
+                elif admin_type == "SM":
+                    gme_min_cap = getattr(faculty, "sm_min", None)
+                    gme_max_cap = getattr(faculty, "sm_max", None)
+                else:
+                    gme_min_cap = faculty.gme_min
+                    gme_max_cap = faculty.gme_max
                 if gme_min_cap is None and gme_max_cap is None:
                     continue
 
-                # Find admin activity for this faculty (GME or DFM)
+                # Find admin activity for this faculty (GME, DFM, or SM)
                 admin_activity = self._get_admin_activity_for_faculty(
                     faculty, self._activity_cache
                 )
@@ -1527,7 +1542,9 @@ class CPSATActivitySolver:
                 if not gme_vars:
                     continue
 
-                locked_gme = locked_faculty_admin_counts.get((faculty_id, week), 0)
+                locked_gme = locked_faculty_per_activity.get(
+                    (faculty_id, week, admin_activity.id), 0
+                )
                 min_needed = max(
                     0, (gme_min_cap if gme_min_cap is not None else 0) - locked_gme
                 )
