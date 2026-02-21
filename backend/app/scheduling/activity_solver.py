@@ -1511,10 +1511,6 @@ class CPSATActivitySolver:
                 gme_max_cap = faculty.gme_max
                 if gme_min_cap is None and gme_max_cap is None:
                     continue
-                if (gme_max_cap is None or gme_max_cap == 0) and (
-                    gme_min_cap is None or gme_min_cap == 0
-                ):
-                    continue
 
                 # Find admin activity for this faculty (GME or DFM)
                 admin_activity = self._get_admin_activity_for_faculty(
