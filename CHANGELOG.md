@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Phase 7: Block-Level Constraint Granularity Fix (Feb 20, 2026)
+
+**Phase 7a — Metric Fix + Constraint Cleanup**
+- Added outpatient-only filter and preloaded activity filter to E2E validation metrics
+- Added Jensen-Shannon divergence metric for activity distribution comparison
+- Added GME concentration ratio metric (solver vs ground truth)
+- Removed 30 orphaned constraints from `rotation_activity_requirements` (never observed in 9 blocks)
+- Swept all remaining lec/ADV constraints to min=0
+- Added GME max constraints from historical P95 values
+
+**Phase 7b — Block-Level Sum Constraints in Solver**
+- Refactored activity solver constraint loop from weekly to block-level aggregation
+- New `slots_by_person_template` index: `(person_id, template_id) → {week: [slot_indices]}`
+- `applicable_weeks` field controls split-block aggregation (null=full block, [1,2]=H1, [3,4]=H2)
+- Clinic-preference overflow handler (gives slack to fm_clinic first)
+- Added `LINK_BLOCK_ASSIGNMENTS_SQL` to fix NULL block_assignment_id on all HDAs
+
+**Phase 7c — Activity Pool Expansion**
+- Regenerated full ML pipeline: 356 total constraints (was 174) — 181 INSERTs + 43 UPDATEs
+- Added activity variety: Cardiology CV/CLC/FLX, Geriatrics ADM/VA, Musculoskeletal CAST/RAD, etc.
+
+**Faculty GME Caps**
+- Added per-person `gme_min`/`gme_max` soft constraints in activity solver
+- Added 12 missing Column declarations to Person model (clinic/at/gme/dfm/sm min/max, is_sm_faculty, has_split_admin)
+- Updated GME bounds: PD (7-9), OIC (3-4), Dept Chief (6-8)
+- Penalty weights: shortfall=15, overage=30
+
+**Results:**
+- Constraint satisfaction: 17-25% → 88-92% (target ≥80%)
+- GME concentration: 26-52% → 19-23% (target ≤20%)
+- Solve time: 180s FEASIBLE → 1-2s OPTIMAL (target <5s)
+
 #### Project Realization Sprint (PRs #1099-#1108, Feb 9-10, 2026)
 
 **Build & Quality (#1099)**

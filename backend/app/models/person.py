@@ -106,6 +106,20 @@ class Person(Base):
     )
     admin_type = Column(String(20), default="GME", comment="Admin type: GME, DFM, SM")
 
+    # Per-person half-day caps (per week) — used by solver for role-based scheduling
+    clinic_min = Column(Integer, comment="Min clinic half-days per week")
+    clinic_max = Column(Integer, comment="Max clinic half-days per week")
+    at_min = Column(Integer, comment="Min AT half-days per week")
+    at_max = Column(Integer, comment="Max AT half-days per week")
+    gme_min = Column(Integer, comment="Min GME/admin half-days per week")
+    gme_max = Column(Integer, comment="Max GME/admin half-days per week")
+    dfm_min = Column(Integer, comment="Min DFM half-days per week")
+    dfm_max = Column(Integer, comment="Max DFM half-days per week")
+    is_sm_faculty = Column(Boolean, default=False, comment="Sports Medicine faculty")
+    has_split_admin = Column(Boolean, default=False, comment="Split admin type")
+    sm_min = Column(Integer, comment="Min SM clinic half-days per week")
+    sm_max = Column(Integer, comment="Max SM clinic half-days per week")
+
     # Screener-specific fields
     screener_role = Column(
         String(50)

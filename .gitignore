@@ -110,6 +110,7 @@ scripts/data/name_map.json
 docs/data/airtable_*.json
 docs/data/*_export.json
 docs/data/*.json
+docs/data/*ROSTER*.md
 !docs/data/sanitized_*.json
 docs/data/pii_mapping*.json
 docs/data/*_pii_mapping*.json
@@ -322,3 +323,4 @@ RECENT_ACTIVITY.md
 models/**/*.pkl
 models/**/*.cbm
 catboost_info/
+docs/planning/ml_context_dump/e2e_results_summary.json
