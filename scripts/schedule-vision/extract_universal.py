@@ -63,7 +63,7 @@ _active_theme_colors: list[tuple[int, int, int]] = list(DEFAULT_THEME_COLORS)
 def _extract_theme_colors(wb) -> list[tuple[int, int, int]]:
     """Extract theme colors from workbook theme XML, fallback to defaults."""
     try:
-        theme_xml = getattr(wb, "theme", None)
+        theme_xml = getattr(wb, "loaded_theme", None)
         if not theme_xml:
             return list(DEFAULT_THEME_COLORS)
         root = xml_fromstring(theme_xml)
