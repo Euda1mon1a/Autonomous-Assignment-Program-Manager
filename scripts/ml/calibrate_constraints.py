@@ -124,7 +124,9 @@ def fetch_existing_requirements(cur):
     """)
     reqs = {}
     for row in cur.fetchall():
-        key = (row[2], row[4])  # (template_name, activity_code)
+        weeks_raw = row[8]  # applicable_weeks (JSON list or None)
+        weeks_key = json.dumps(weeks_raw, sort_keys=True) if weeks_raw is not None else None
+        key = (row[2], row[4], weeks_key)  # (template_name, activity_code, weeks)
         reqs[key] = {
             "id": str(row[0]),
             "template_id": str(row[1]),
@@ -214,7 +216,9 @@ def plan_changes(learned, existing_reqs, template_ids, activity_ids, apply_tiers
                 skips.append(("tier_excluded", f"{template_name}/{code} [{tier}]"))
                 continue
 
-            key = (template_name, code)
+            raw_weeks = lc.get("applicable_weeks") or applicable_weeks
+            weeks_key = json.dumps(raw_weeks, sort_keys=True) if raw_weeks is not None else None
+            key = (template_name, code, weeks_key)
             existing = existing_reqs.get(key)
 
             if existing:
@@ -272,7 +276,7 @@ def plan_changes(learned, existing_reqs, template_ids, activity_ids, apply_tiers
 
     # Special: fix orphaned ADV constraints (set min=0)
     for key, req in existing_reqs.items():
-        tname, code = key
+        tname, code, _weeks = key
         if code == "ADV" and req["min_halfdays"] > 0:
             # Check if this template has learned data
             if tname in learned:
