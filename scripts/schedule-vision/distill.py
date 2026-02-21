@@ -608,6 +608,14 @@ def main():
         soft_labels, classes, temperature = load_soft_labels(args.soft_labels)
         print(f"  Loaded {soft_labels.shape[0]} soft labels, "
               f"{soft_labels.shape[1]} classes, T={temperature}")
+        # Validate alignment: soft labels must match current feature count
+        if soft_labels.shape[0] != len(df):
+            print(
+                f"\n  ERROR: Soft labels have {soft_labels.shape[0]} rows but "
+                f"features have {len(df)} rows. The .npz file is stale — "
+                f"re-run without --student-only to regenerate soft labels."
+            )
+            sys.exit(1)
     else:
         print(f"\n{'─' * 65}")
         print(f"  STEP 1: TRAIN TEACHER (all features + visual RGB)")

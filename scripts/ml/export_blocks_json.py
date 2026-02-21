@@ -56,17 +56,19 @@ def main():
         if not rows:
             continue
 
-        # Group by person
+        # Group by person_id (stable UUID) to avoid merging distinct people
+        # who happen to share the same normalized name.
         people = defaultdict(lambda: {"days": []})
         for person_id, name, ptype, pgy, date, tod, code, source in rows:
             # Convert "First Last" to "Last, First" for extract.py compatibility
             parts = name.strip().split()
             if len(parts) >= 2:
-                key = f"{parts[-1]}, {' '.join(parts[:-1])}"
+                display_name = f"{parts[-1]}, {' '.join(parts[:-1])}"
             else:
-                key = name
+                display_name = name
+            key = str(person_id)
             p = people[key]
-            p["name"] = key
+            p["name"] = display_name
             p["person_type"] = ptype
             p["pgy_level"] = pgy
             p["days"].append({

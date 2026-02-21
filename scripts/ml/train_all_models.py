@@ -25,7 +25,10 @@ logging.basicConfig(
 logger = logging.getLogger("train_all")
 
 
-def main():
+def main() -> int:
+    """Train all models. Returns exit code (0=all OK, 1=any failure)."""
+    failures: list[str] = []
+
     from dotenv import load_dotenv
     env_path = Path.home() / ".aapm-env"
     if env_path.exists():
@@ -57,7 +60,7 @@ def main():
 
         if count < 50:
             logger.error("Not enough assignments to train. Need at least 50.")
-            return
+            return 1
 
         # The TrainingDataPipeline uses async methods but supports sync sessions
         # via the _execute wrapper. We'll call the methods using asyncio.run().
@@ -90,6 +93,7 @@ def main():
             logger.info(f"  Metrics: {pref_metrics}")
         except Exception as e:
             logger.error(f"  FAILED: {e}", exc_info=True)
+            failures.append("PreferencePredictor")
 
         # ═══════════════════════════════════════════
         # 2. CONFLICT PREDICTOR
@@ -114,6 +118,7 @@ def main():
             logger.info(f"  Metrics: {conf_metrics}")
         except Exception as e:
             logger.error(f"  FAILED: {e}", exc_info=True)
+            failures.append("ConflictPredictor")
 
         # ═══════════════════════════════════════════
         # 3. WORKLOAD OPTIMIZER
@@ -138,6 +143,7 @@ def main():
             logger.info(f"  Metrics: {work_metrics}")
         except Exception as e:
             logger.error(f"  FAILED: {e}", exc_info=True)
+            failures.append("WorkloadOptimizer")
 
         # ═══════════════════════════════════════════
         # SUMMARY
@@ -158,6 +164,11 @@ def main():
 
     engine.dispose()
 
+    if failures:
+        logger.error(f"FAILED models ({len(failures)}): {', '.join(failures)}")
+        return 1
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

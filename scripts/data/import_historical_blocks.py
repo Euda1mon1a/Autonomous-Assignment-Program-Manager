@@ -38,77 +38,25 @@ from code_maps import CODE_MAP, display_to_db  # noqa: E402
 CONN = "dbname=residency_scheduler user=scheduler host=localhost"
 
 # ── Name Matching ────────────────────────────────────────────────────────────
-# Maps "Last, First" from Excel to DB name. Reuses the same manual mapping
-# from import_block12.py. This must stay local (OPSEC: no real names in git).
+# Maps "Last, First" from Excel to DB name. Loaded from a local-only JSON
+# file that is gitignored (OPSEC: no real names in version control).
+#
+# To create the mapping file:
+#   cp scripts/data/name_map.json.example scripts/data/name_map.json
+#   # Edit name_map.json with actual mappings
+#
+# Format: {"Excel Name": "DB Name", ...}
 
-NAME_MAP = {
-    # PGY-3 (R3) — includes graduated R3s from earlier blocks
-    "Connolly, Laura": "Laura Connolly",
-    "Hernandez, Christian*": "Christian Hernandez",
-    "Mayell, Cameron*": "Cam Mayell",
-    "Petrie, William*": "Clay Petrie",
-    "You, Jae*": "Jae You",
-    "Doria, Russell*": "Russell Doria",
-    "Doyle, Jacob*": "Jacob Doyle",
-    "Doyle, Jake": "Jacob Doyle",           # Alternate in later blocks
-    "Evans, Amber": "Amber Evans",
-    "Giblin, Bailey*": "Bailey Giblin",
-    "Idelkope, Daniel": "Daniel Idelkope",
-    "Kerby, Mary*": "Mary Kerby",
-    "Machado, Jared*": "Jared Machado",
-    # PGY-2 (R2)
-    "Cataquiz, Felipe": "Felipe Cataquiz",
-    "Cook, Scott": "Scott Cook",
-    "Gigon, Alaine": "Alaine Gigon",
-    "Headid, Ronald": "James Headid",
-    "Maher, Nicholas": "Nick Maher",
-    "Thomas, Devin": "Devin Thomas",
-    "Booth, CJ": "CJ Booth",
-    # PGY-1 (R1)
-    "Sawyer, Tessa": "Tessa Sawyer",
-    "Wilhelm, Clara": "Clara Wilhelm",
-    "Travis, Colin": "Colin Travis",
-    "Byrnes, Katherine": "Katie Byrnes",
-    "Burns, Catherine": "Katie Byrnes",      # Alternate spelling
-    "Sloss, Meleighe": "Meleigh Sloss",
-    "Monsivais, Joshua": "Josh Monsivais",
-    # Faculty (C19)
-    "Bevis, Zach": "Zach Bevis",
-    "Kinkennon, Sarah": "Sarah Kinkennon",
-    "LaBounty, Alex*": "Alex LaBounty",
-    "McGuire, Chris": "Chris McGuire",
-    "Dahl, Brian*": "Brian Dahl",
-    "McRae, Zachery": "Zach McRae",
-    "Tagawa, Chelsea": "Chelsea Tagawa",
-    "Montgomery, Aaron": "Aaron Montgomery",
-    "Colgan, Bridget": "Bridget Colgan",
-    "Chu, Jimmy*": "Jimmy Chu",
-    "Chu, Jimmy": "Jimmy Chu",
-    "Napierala, Joseph": "Joseph Napierala",
-    "Thiel, Derrick": "Derrick Thiel",
-    "Van Brunt, T. Blake": "Blake Van Brunt",
-    "Samblanet, Kyle (IMA)*": "Kyle Samblanet",
-    "Lamoureux, Anne": "Anne Lamoureux",
-    "Bohringer, Kate": "Kate Bohringer",
-    "Gomes, Lisa": "Lisa Gomes",
-    # Visiting / IMA / TY residents
-    "Bennett, Nick (IMA)*": "Nick Bennett",
-    "Bennett, Nick (IMA)": "Nick Bennett",
-    "Ching, Collette": "Collette Ching",
-    "Davidson, Nathan": "Nathan Davidson",
-    "Gouthro, Kathryn": "Kathryn Gouthro",
-    "McGarity, Daniel": "Daniel McGarity",
-    "Oh, Jaeyoung": "Jaeyoung Oh",
-    "Wong-Lopez, Jaime": "Jaime Wong-Lopez",
-    "Raymond, Tyler (IMA)*": "Tyler Raymond",
-    "Richter, Jordan (25 Aug - 19 Sep)": "Jordan Richter",
-    "Edward, Simon (TY)": "Simon Edward",
-    "Icaza, Veronica (IM)": "Veronica Icaza",
-    "Icaza, Veronica (IM) Mar 9-27?": "Veronica Icaza",
-    "Nandakumar, Tharun (2 Sep - 26 Sep)": "Tharun Nandakumar",
-    "Pusztai, Benjamin (2 Sep - 26 Sep)": "Benjamin Pusztai",
-    "Smith, Alexa (2 Sep - 26 Sep)": "Alexa Smith",
-}
+_NAME_MAP_PATH = Path(__file__).parent / "name_map.json"
+
+if _NAME_MAP_PATH.exists():
+    NAME_MAP: dict[str, str] = json.loads(_NAME_MAP_PATH.read_text())
+else:
+    NAME_MAP = {}
+    print(
+        f"WARNING: {_NAME_MAP_PATH} not found. "
+        f"Name matching will rely on last-name fallback only."
+    )
 
 
 def _last_name(name: str) -> str:

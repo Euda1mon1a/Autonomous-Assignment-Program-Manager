@@ -103,6 +103,9 @@ frontend/coverage/
 # RAG PII documents (real names, rosters, schedules - local ingestion only)
 docs/rag-knowledge/local/
 
+# Name mapping (OPSEC/PERSEC - contains real names)
+scripts/data/name_map.json
+
 # Schedule data exports (OPSEC/PERSEC - never commit)
 docs/data/airtable_*.json
 docs/data/*_export.json

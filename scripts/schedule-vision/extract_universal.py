@@ -150,9 +150,21 @@ def _parse_pgy(role_str: str) -> int | None:
     return None
 
 
+# Salt for name hashing — prevents dictionary reversal of name hashes.
+# This is a fixed salt (not secret) that makes the hash non-trivial to
+# reverse via brute-force of common names.
+_NAME_HASH_SALT = b"aapm-schedule-vision-2025"
+
+
 def _name_hash(name: str) -> int:
-    """Anonymized person hash for per-person pattern tracking."""
-    return int(hashlib.md5(name.lower().strip().encode()).hexdigest()[:8], 16)
+    """Anonymized person hash for per-person pattern tracking.
+
+    Uses HMAC-SHA256 (salted) instead of plain MD5 to resist dictionary
+    attacks against a small set of resident/faculty names.
+    """
+    import hmac
+    digest = hmac.new(_NAME_HASH_SALT, name.lower().strip().encode(), hashlib.sha256).hexdigest()
+    return int(digest[:8], 16)
 
 
 def _detect_era(sheet_name: str) -> str:
@@ -356,33 +368,46 @@ ERA2_OTHER_RANGES = [
 ]
 
 
-def _find_era2_col_start(ws) -> int:
-    """Detect where schedule data starts in era2 format."""
-    # Check if dates are in row 3 starting at col E (5) or F (6)
-    for start in (5, 6):
-        val = ws.cell(row=ERA2_ROW_DATES, column=start).value
-        if isinstance(val, (datetime, date)):
-            return start
-    # Fallback: scan for first date in row 3
-    for col in range(1, 20):
-        val = ws.cell(row=ERA2_ROW_DATES, column=col).value
-        if isinstance(val, (datetime, date)):
-            return col
-    return 6  # Default to F
+def _find_era2_col_start(ws) -> tuple[int, int]:
+    """Detect where schedule data starts in era2 format.
+
+    Returns (col_start, date_row) since some era2 sheets place dates
+    on row 2 instead of row 3.
+    """
+    # Check rows 2 and 3 for dates at likely starting columns
+    for date_row in (ERA2_ROW_DATES, 2):
+        for start in (5, 6):
+            val = ws.cell(row=date_row, column=start).value
+            if isinstance(val, (datetime, date)):
+                return start, date_row
+        # Fallback: scan first 20 columns in this row
+        for col in range(1, 20):
+            val = ws.cell(row=date_row, column=col).value
+            if isinstance(val, (datetime, date)):
+                return col, date_row
+    return 6, ERA2_ROW_DATES  # Default to F, row 3
 
 
-def _find_era2_dates(ws, col_start: int) -> list[date | None]:
-    """Find dates in era2 format (row 3, every 2 columns)."""
+def _find_era2_dates(ws, col_start: int, date_row: int = ERA2_ROW_DATES) -> list[date | None]:
+    """Find dates in era2 format (every 2 columns in the given row)."""
     dates = []
+    consecutive_blanks = 0
     col = col_start
     while col <= ws.max_column:
-        val = ws.cell(row=ERA2_ROW_DATES, column=col).value
+        val = ws.cell(row=date_row, column=col).value
         if isinstance(val, datetime):
             dates.append(val.date())
+            consecutive_blanks = 0
         elif isinstance(val, date):
             dates.append(val)
+            consecutive_blanks = 0
         elif val is None and dates:
-            # Sometimes dates are merged and only in odd columns
+            consecutive_blanks += 1
+            # Stop after 2 consecutive blanks — avoids pulling in
+            # trailing summary/formatted columns past the real schedule.
+            if consecutive_blanks >= 2:
+                break
+            # Single blank: may be a merged cell, append placeholder
             dates.append(None)
         else:
             break
@@ -394,8 +419,8 @@ def extract_era2(ws, sheet_name: str, academic_year: int,
                  filename: str) -> list[dict]:
     """Extract features from an era2 (Block N) sheet."""
     block_num = _parse_block_number(sheet_name)
-    col_start = _find_era2_col_start(ws)
-    dates = _find_era2_dates(ws, col_start)
+    col_start, date_row = _find_era2_col_start(ws)
+    dates = _find_era2_dates(ws, col_start, date_row)
     n_days = len(dates)
 
     # Collect all person rows
@@ -598,7 +623,7 @@ def main():
         feats = extract_workbook(fp)
         all_features.extend(feats)
         if ay:
-            ay_stats[ay] = len(feats)
+            ay_stats[ay] += len(feats)
 
     # Remove metadata fields not needed for training
     for f in all_features:
