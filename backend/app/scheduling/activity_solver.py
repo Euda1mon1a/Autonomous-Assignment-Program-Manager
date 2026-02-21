@@ -1528,8 +1528,14 @@ class CPSATActivitySolver:
                     continue
 
                 locked_gme = locked_faculty_admin_counts.get((faculty_id, week), 0)
-                min_needed = max(0, (gme_min_cap or 0) - locked_gme)
-                max_allowed = max(0, (gme_max_cap or len(gme_vars)) - locked_gme)
+                min_needed = max(
+                    0, (gme_min_cap if gme_min_cap is not None else 0) - locked_gme
+                )
+                max_allowed = max(
+                    0,
+                    (gme_max_cap if gme_max_cap is not None else len(gme_vars))
+                    - locked_gme,
+                )
 
                 # Soft min
                 if min_needed > 0:
