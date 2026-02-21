@@ -4,6 +4,7 @@
 Maps column names and decomposes hex RGB to float channels.
 """
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -23,8 +24,15 @@ def hex_to_rgb(hex_str: str | None) -> tuple[float, float, float]:
 
 
 def main():
-    inp = Path(sys.argv[1])
-    out = Path(sys.argv[2]) if len(sys.argv) > 2 else inp.with_name("features_catboost.json")
+    parser = argparse.ArgumentParser(description="Adapt extract.py features for CatBoost")
+    parser.add_argument("input", help="Input features JSON")
+    parser.add_argument("output", nargs="?", default=None, help="Output path")
+    parser.add_argument("--academic-year", type=int, default=None,
+                        help="Override academic year (default: read from input data, fallback 2025)")
+    args = parser.parse_args()
+
+    inp = Path(args.input)
+    out = Path(args.output) if args.output else inp.with_name("features_catboost.json")
 
     data = json.loads(inp.read_text())
     adapted = []
@@ -56,7 +64,7 @@ def main():
             "font_bold": 1 if f.get("font_bold") else 0,
             "has_fill": 1 if f.get("fill_rgb") else 0,
             "has_font_color": 1 if f.get("font_rgb") else 0,
-            "academic_year": 2025,
+            "academic_year": f.get("academic_year") or args.academic_year or 2025,
             "block_number": f.get("block_number", 0),
             "row_position": f.get("row", 0),
             "prev_same_half": f.get("prev_code") or "",

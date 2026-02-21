@@ -159,6 +159,7 @@ def import_block(
 
         if not person_id:
             stats["unmapped_names"].add(excel_name)
+            stats["skipped_no_person"] += 1
             continue
 
         for day in person["days"]:
