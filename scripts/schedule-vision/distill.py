@@ -642,22 +642,26 @@ def main():
                 f"re-run without --student-only to regenerate soft labels."
             )
             sys.exit(1)
-        # Validate class alignment: .npz classes must match current data's codes
+        # Validate class alignment: .npz classes must match current data's codes AND order
         le_check = LabelEncoder()
         le_check.fit(df[TARGET])
-        current_classes = set(le_check.classes_)
-        loaded_classes = set(classes)
-        if current_classes != loaded_classes:
-            missing = current_classes - loaded_classes
-            extra = loaded_classes - current_classes
-            print(f"\n  ERROR: Class set mismatch between .npz and current data.")
-            if missing:
-                print(f"    In data but not in .npz: {sorted(missing)[:10]}")
-            if extra:
-                print(f"    In .npz but not in data: {sorted(extra)[:10]}")
+        if not np.array_equal(le_check.classes_, classes):
+            current_set = set(le_check.classes_)
+            loaded_set = set(classes)
+            if current_set == loaded_set:
+                print(f"\n  ERROR: Class ORDER mismatch between .npz and current data.")
+                print(f"    Same classes but different column ordering.")
+            else:
+                missing = current_set - loaded_set
+                extra = loaded_set - current_set
+                print(f"\n  ERROR: Class set mismatch between .npz and current data.")
+                if missing:
+                    print(f"    In data but not in .npz: {sorted(missing)[:10]}")
+                if extra:
+                    print(f"    In .npz but not in data: {sorted(extra)[:10]}")
             print(
-                f"    .npz has {len(loaded_classes)} classes, "
-                f"data has {len(current_classes)} classes."
+                f"    .npz has {len(classes)} classes, "
+                f"data has {len(le_check.classes_)} classes."
             )
             print(f"    Re-run without --student-only to regenerate soft labels.")
             sys.exit(1)
