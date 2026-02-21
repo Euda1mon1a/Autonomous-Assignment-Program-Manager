@@ -21,6 +21,7 @@ import psycopg2
 
 sys.path.insert(0, "backend")
 sys.path.insert(0, "scripts/data")
+sys.path.insert(0, "scripts/data/block12_import")
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
@@ -91,78 +92,8 @@ NAME_MAP = {
 }
 
 # ── Activity Code Mapping ────────────────────────────────────────────────────
-# Proven mappings from Block 11 (50+ codes)
-# Excel display code → DB activity code
-
-CODE_MAP = {
-    "SM": "sm_clinic",
-    "aSM": "aSM",
-    "LEC": "lec",
-    "CLC": "CLC",
-    "CC": "CC",
-    "W": "W",
-    "C": "fm_clinic",
-    "C`": "fm_clinic",      # Typo variant
-    "FLX": "FLX",
-    "HC": "HLC",
-    "PI": "PI",
-    "GME": "gme",
-    "FMIT": "FMIT",
-    "retreat": "RETREAT",
-    "RETREAT": "RETREAT",
-    "NF": "NF",
-    "OFF": "off",
-    "PCAT": "pcat",
-    "DO": "do",
-    "DFM": "dfm",
-    "CCC": "CCC",
-    "SLV": "SLV",
-    "CV": "CV",
-    "DEP": "DEP",
-    "PC": "recovery",
-    "LV": "LV",
-    "AT": "at",
-    "at": "at",
-    "NEURO": "NEURO",
-    "PedSP": "PEDS-S",
-    "Derm": "DERM",
-    "NBN": "NBN",
-    "PR": "PR",
-    "TDY": "TDY",
-    "ADM": "ADM",
-    "OB": "OB",
-    "L&D": "KAP-LD",        # Default; override per person if TAMC vs KAP
-    "Orient": "ORIENT",
-    "VasC": "VASC",
-    "BOARDS": "ADM",
-    "C-N": "C-N",
-    "HR for Sup Training": "HR-SUP",
-    "HR for Sup": "HR-SUP",
-    "EPIC": "ORIENT",
-    "STRAUB": "elective",
-    "SIM": "SIM",
-    "V2": "V2",
-    "HV": "HV",
-    "KAP": "KAP-LD",
-    "procedure": "procedure",
-    "ADV": "ADV",
-    "VAS": "VAS",
-    "Coding": "CODING",
-    "C30": "C30",
-    "LDNF": "LDNF",
-    # Block 12 predicted codes (from ML pattern learning)
-    "HOL": "HOL",           # Holiday
-    "PedW": "PEDSW",        # Peds Ward
-    "TNG": "TNG",           # Training
-    "P ER": "PEDS-ER",      # Peds ER
-    "ER": "ER",             # Emergency Room
-    "US": "US",             # Ultrasound
-    "C-I": "C-I",           # Clinic Inpatient
-    "C40": "C40",           # Clinic 40-min slots
-    "Rad": "RAD",           # Radiology
-    "Cast": "CAST",         # Casting
-    "TENT": "TENT",         # Tentative
-}
+# Shared CODE_MAP from scripts/data/code_maps.py
+from code_maps import CODE_MAP
 
 # Leave-type activity codes (for absence sync)
 LEAVE_CODES = {"LV", "LV-AM", "LV-PM", "TDY", "DEP", "SLV"}
