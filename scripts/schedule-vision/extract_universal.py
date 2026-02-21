@@ -33,6 +33,7 @@ from collections import Counter
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
+from xml.etree.ElementTree import fromstring as xml_fromstring
 
 from openpyxl import load_workbook
 from openpyxl.cell.cell import MergedCell
@@ -54,6 +55,55 @@ DEFAULT_THEME_COLORS = [
     (0, 0, 255),      # theme:10 = hlink
     (150, 0, 150),    # theme:11 = folHlink
 ]
+
+# Active theme colors for the current workbook (set by extract_workbook)
+_active_theme_colors: list[tuple[int, int, int]] = list(DEFAULT_THEME_COLORS)
+
+
+def _extract_theme_colors(wb) -> list[tuple[int, int, int]]:
+    """Extract theme colors from workbook theme XML, fallback to defaults."""
+    try:
+        theme_xml = getattr(wb, "theme", None)
+        if not theme_xml:
+            return list(DEFAULT_THEME_COLORS)
+        root = xml_fromstring(theme_xml)
+        ns = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+        scheme = root.find(".//a:clrScheme", ns)
+        if scheme is None:
+            return list(DEFAULT_THEME_COLORS)
+        # Tags in Excel theme-index order (0=lt1, 1=dk1, ...)
+        tags = [
+            "a:lt1", "a:dk1", "a:lt2", "a:dk2",
+            "a:accent1", "a:accent2", "a:accent3", "a:accent4",
+            "a:accent5", "a:accent6", "a:hlink", "a:folHlink",
+        ]
+        colors: list[tuple[int, int, int]] = []
+        for i, tag in enumerate(tags):
+            fallback = DEFAULT_THEME_COLORS[i] if i < len(DEFAULT_THEME_COLORS) else (0, 0, 0)
+            elem = scheme.find(tag, ns)
+            if elem is None:
+                colors.append(fallback)
+                continue
+            srgb = elem.find("a:srgbClr", ns)
+            sysclr = elem.find("a:sysClr", ns)
+            hex_val = None
+            if srgb is not None and srgb.get("val"):
+                hex_val = srgb.get("val")
+            elif sysclr is not None and sysclr.get("lastClr"):
+                hex_val = sysclr.get("lastClr")
+            if hex_val and len(hex_val) >= 6:
+                try:
+                    r = int(hex_val[0:2], 16)
+                    g = int(hex_val[2:4], 16)
+                    b = int(hex_val[4:6], 16)
+                    colors.append((r, g, b))
+                    continue
+                except (ValueError, IndexError):
+                    pass
+            colors.append(fallback)
+        return colors
+    except Exception:
+        return list(DEFAULT_THEME_COLORS)
 
 
 def _apply_tint(rgb: tuple[int, int, int], tint: float) -> tuple[int, int, int]:
@@ -92,11 +142,11 @@ def _resolve_color(color: Color | None) -> tuple[int, int, int] | None:
         except (ValueError, IndexError):
             return None
 
-    # Theme color
+    # Theme color (uses active workbook theme, not hardcoded defaults)
     if color.type == "theme" and color.theme is not None:
         idx = int(color.theme)
-        if 0 <= idx < len(DEFAULT_THEME_COLORS):
-            base = DEFAULT_THEME_COLORS[idx]
+        if 0 <= idx < len(_active_theme_colors):
+            base = _active_theme_colors[idx]
             tint = float(color.tint) if color.tint else 0.0
             return _apply_tint(base, tint)
         return None
@@ -555,6 +605,9 @@ def extract_workbook(filepath: Path) -> list[dict]:
         print(f"  ERROR loading {filename}: {e}")
         return []
 
+    global _active_theme_colors
+    _active_theme_colors = _extract_theme_colors(wb)
+
     all_features = []
     for sheet_name in wb.sheetnames:
         era = _detect_era(sheet_name)
@@ -609,6 +662,11 @@ def main():
         f for f in archive.glob("Family Medicine Clinic Schedule*.xlsx")
         if "~$" not in f.name  # Skip temp files
     )
+
+    if not xlsx_files:
+        print(f"ERROR: No schedule workbooks found in {archive}")
+        print("  Expected files matching: Family Medicine Clinic Schedule*.xlsx")
+        sys.exit(1)
 
     print(f"Found {len(xlsx_files)} schedule workbooks in {archive}")
 
