@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import uuid
 from collections import Counter
@@ -34,6 +35,8 @@ import psycopg2
 
 sys.path.insert(0, "scripts/data")
 from code_maps import CODE_MAP, display_to_db  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 CONN = "dbname=residency_scheduler user=scheduler host=localhost"
 
@@ -105,11 +108,17 @@ def resolve_name(excel_name: str, person_index: dict[str, str]) -> str | None:
         pid = person_index.get(db_name)
         if pid:
             return pid
-    # Fallback: try last-name match
+    # Fallback: try last-name match (reject ambiguous)
     ln = _last_name(excel_name)
-    for name, pid in person_index.items():
-        if _last_name(name) == ln:
-            return pid
+    matches = [(name, pid) for name, pid in person_index.items()
+               if _last_name(name) == ln]
+    if len(matches) == 1:
+        return matches[0][1]
+    if len(matches) > 1:
+        logger.warning(
+            "Ambiguous last-name match for '%s': %s — skipping",
+            excel_name, [m[0] for m in matches],
+        )
     return None
 
 

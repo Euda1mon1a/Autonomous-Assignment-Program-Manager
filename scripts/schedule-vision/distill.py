@@ -201,8 +201,7 @@ def train_student_fold(
     test_df: pd.DataFrame,
     feature_cols: list[str],
     le: LabelEncoder,
-    soft_labels_full: np.ndarray,
-    train_indices: np.ndarray,
+    fold_soft_labels: np.ndarray,
     alpha: float,
     iterations: int,
 ) -> tuple[float, np.ndarray, np.ndarray]:
@@ -215,6 +214,11 @@ def train_student_fold(
 
     AND we use the teacher's argmax as the label for a fraction of the data
     (the alpha fraction), which transfers the teacher's opinion on ambiguous codes.
+
+    Args:
+        fold_soft_labels: Pre-computed soft labels aligned to train_df rows.
+            Must be generated from a teacher trained on train_df only (not full data)
+            to prevent information leakage during cross-validation.
     """
     cat_indices = get_cat_indices(feature_cols)
 
@@ -222,8 +226,8 @@ def train_student_fold(
     X_train, y_train_hard, _ = prepare_catboost_data(train_df, feature_cols, le)
     X_test, y_test, _ = prepare_catboost_data(test_df, feature_cols, le)
 
-    # Get soft labels for training rows
-    soft_train = soft_labels_full[train_indices]
+    # Soft labels already aligned to training rows
+    soft_train = fold_soft_labels
 
     # Teacher's prediction (argmax of soft labels)
     y_train_soft = soft_train.argmax(axis=1)
@@ -260,12 +264,17 @@ def train_student_fold(
 def run_distillation_cv(
     df: pd.DataFrame,
     split_col: str,
-    soft_labels: np.ndarray,
     alpha: float,
     iterations: int,
     desc: str,
+    temperature: float = 3.0,
 ) -> dict:
-    """Run leave-one-out CV for distilled student (structural features only)."""
+    """Run leave-one-out CV for distilled student (structural features only).
+
+    Trains a fold-specific teacher per fold on training data only to prevent
+    soft-label leakage into the evaluation. Slower (~N× for N folds) but
+    produces unbiased CV estimates.
+    """
     feature_cols = get_feature_cols(include_visual=False, include_context=False)
     groups = sorted(df[split_col].unique())
 
@@ -302,12 +311,20 @@ def run_distillation_cv(
             print(f"    {split_col}={group}: SKIP (all codes unseen)")
             continue
 
-        train_indices = train_df.index.values
+        # Train fold-specific teacher on training data only (prevents leakage)
+        teacher_cols = get_feature_cols(include_visual=True, include_context=False)
+        teacher_cat_idx = get_cat_indices(teacher_cols)
+        X_teacher, y_teacher, _ = prepare_catboost_data(train_df, teacher_cols, le)
+        fold_teacher = make_catboost(len(le.classes_), iterations)
+        teacher_pool = Pool(X_teacher, y_teacher, cat_features=teacher_cat_idx)
+        fold_teacher.fit(teacher_pool)
+        fold_proba = fold_teacher.predict_proba(teacher_pool)
+        fold_soft_labels = temperature_scale(fold_proba, temperature)
 
         t0 = time.time()
         acc, y_test, y_pred = train_student_fold(
             train_df, test_df, feature_cols, le,
-            soft_labels, train_indices, alpha, iterations,
+            fold_soft_labels, alpha, iterations,
         )
         elapsed = time.time() - t0
 
@@ -530,10 +547,10 @@ def alpha_sweep(df: pd.DataFrame, soft_labels: np.ndarray,
     results = {}
 
     for a in alphas:
+        fold_soft = soft_labels[train_indices_in_full[:len(train_df)]]
         acc, _, _ = train_student_fold(
             train_df, test_df, feature_cols, le,
-            soft_labels, train_indices_in_full[:len(train_df)],
-            alpha=a, iterations=iterations,
+            fold_soft, alpha=a, iterations=iterations,
         )
         results[a] = float(acc)
         print(f"    alpha={a:.1f}: {acc:.1%}")
@@ -684,8 +701,9 @@ def main():
     print(f"{'─' * 65}")
 
     student_loayo = run_distillation_cv(
-        df, "academic_year", soft_labels, args.alpha, args.iterations,
+        df, "academic_year", args.alpha, args.iterations,
         f"Student LOAYO (alpha={args.alpha}, T={args.temperature})",
+        temperature=args.temperature,
     )
     results["student_loayo"] = student_loayo
 
@@ -707,17 +725,13 @@ def main():
     )
     results["vanilla_lobo"] = vanilla_lobo
 
-    # Student LOBO — need soft labels aligned to this AY subset
-    df_ay_reset = df_ay.reset_index(drop=False)
-    ay_original_indices = df_ay_reset["index"].values
-    soft_labels_ay = soft_labels[ay_original_indices]
-
-    # Re-index for LOBO
+    # Student LOBO — fold teachers trained per-fold inside run_distillation_cv
     df_ay_for_lobo = df_ay.reset_index(drop=True)
     student_lobo = run_distillation_cv(
-        df_ay_for_lobo, "block_number", soft_labels_ay,
+        df_ay_for_lobo, "block_number",
         args.alpha, args.iterations,
         f"Student LOBO (alpha={args.alpha})",
+        temperature=args.temperature,
     )
     results["student_lobo"] = student_lobo
 
