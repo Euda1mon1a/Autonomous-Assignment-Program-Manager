@@ -87,6 +87,8 @@ SUPERVISION_EQUITY_CODES = {"AT", "PCAT"}
 RESIDENT_CLINIC_EQUITY_CODES = {"C", "CV", "FM_CLINIC"}
 FACULTY_CLINIC_SHORTFALL_PENALTY = 10
 FACULTY_CLINIC_OVERAGE_PENALTY = 40
+FACULTY_GME_SHORTFALL_PENALTY = 15
+FACULTY_GME_OVERAGE_PENALTY = 30
 OIC_CLINICAL_AVOID_PENALTY = 18
 FACULTY_ADMIN_EQUITY_PENALTY = 12
 FACULTY_AT_EQUITY_PENALTY = 12
@@ -1040,7 +1042,7 @@ class CPSATActivitySolver:
         for s_i, allowed in slot_allowed.items():
             model.Add(sum(a[s_i, act_id] for act_id in allowed) == 1)
 
-            # Constraint 2: Activity requirements (per week, per person, per rotation)
+            # Constraint 2: Activity requirements (block-level, per person, per rotation)
         slots_by_key: dict[tuple[UUID, UUID, int], list[int]] = defaultdict(list)
         for s_i, meta in slot_meta.items():
             template_id = meta["template_id"]
@@ -1049,11 +1051,26 @@ class CPSATActivitySolver:
             key = (meta["person_id"], template_id, meta["week"])
             slots_by_key[key].append(s_i)
 
+        # Block-level scope: (person_id, template_id) -> {week: [slot_indices]}
+        slots_by_person_template: dict[tuple[UUID, UUID], dict[int, list[int]]] = (
+            defaultdict(lambda: defaultdict(list))
+        )
+        for s_i, meta in slot_meta.items():
+            template_id = meta["template_id"]
+            if not template_id:
+                continue
+            slots_by_person_template[(meta["person_id"], template_id)][
+                meta["week"]
+            ].append(s_i)
+
         locked_counts: dict[tuple[UUID, UUID, int, UUID], int] = defaultdict(int)
         baseline_resident_demand: dict[tuple[date, str], int] = defaultdict(int)
         baseline_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
         locked_faculty_clinic_counts: dict[tuple[UUID, int], int] = defaultdict(int)
         locked_faculty_admin_counts: dict[tuple[UUID, int], int] = defaultdict(int)
+        locked_faculty_per_activity: dict[tuple[UUID, int, UUID], int] = defaultdict(
+            int
+        )
         locked_faculty_supervision_counts: dict[tuple[UUID, int], int] = defaultdict(
             int
         )
@@ -1128,6 +1145,9 @@ class CPSATActivitySolver:
                     locked_faculty_clinic_counts[(locked.person_id, week_number)] += 1
                 if locked.activity_id in admin_equity_ids:
                     locked_faculty_admin_counts[(locked.person_id, week_number)] += 1
+                locked_faculty_per_activity[
+                    (locked.person_id, week_number, locked.activity_id)
+                ] += 1
                 if locked.activity_id in academic_equity_ids:
                     locked_faculty_academic_counts[(locked.person_id, week_number)] += 1
                 if locked.activity_id in supervision_equity_ids:
@@ -1209,28 +1229,47 @@ class CPSATActivitySolver:
             "by_template": defaultdict(lambda: {"count": 0, "max_shortage": 0}),
             "by_activity": defaultdict(lambda: {"count": 0, "max_shortage": 0}),
         }
-        for (person_id, template_id, week), slot_indices in slots_by_key.items():
+        for (person_id, template_id), weeks_slots in slots_by_person_template.items():
             reqs = requirements_by_template.get(template_id, [])
             if not reqs:
                 continue
+            available_weeks = sorted(weeks_slots.keys())
+
+            # Collect ALL slots for this person-template (for overflow check)
+            all_slot_indices = []
+            for w in available_weeks:
+                all_slot_indices.extend(weeks_slots[w])
 
             req_entries = []
             for req in reqs:
                 if req.activity_id not in assignable_ids:
                     continue
-                if req.applicable_weeks and week not in req.applicable_weeks:
+                # Determine scope: applicable_weeks controls aggregation level
+                if req.applicable_weeks:
+                    scope_weeks = [w for w in req.applicable_weeks if w in weeks_slots]
+                else:
+                    scope_weeks = available_weeks  # ALL weeks = block-level
+
+                if not scope_weeks:
                     continue
+
+                # Collect slots across ALL scope weeks (the key fix)
+                scope_slot_indices = []
+                for w in scope_weeks:
+                    scope_slot_indices.extend(weeks_slots.get(w, []))
 
                 vars_for_req = [
                     a[s_i, req.activity_id]
-                    for s_i in slot_indices
+                    for s_i in scope_slot_indices
                     if req.activity_id in slot_allowed[s_i]
                 ]
                 if not vars_for_req:
                     continue
 
-                locked_count = locked_counts.get(
-                    (person_id, template_id, week, req.activity_id), 0
+                # Aggregate locked counts across scope weeks
+                locked_count = sum(
+                    locked_counts.get((person_id, template_id, w, req.activity_id), 0)
+                    for w in scope_weeks
                 )
                 min_needed = max(0, req.min_halfdays - locked_count)
                 max_allowed = max(0, req.max_halfdays - locked_count)
@@ -1251,9 +1290,12 @@ class CPSATActivitySolver:
                     activity_entry["max_shortage"] = max(
                         activity_entry["max_shortage"], shortage
                     )
+                    scope_label = (
+                        f"weeks={scope_weeks}" if req.applicable_weeks else "block"
+                    )
                     logger.warning(
                         f"Clamping min requirement for person={person_id} "
-                        f"template={template_id} week={week} "
+                        f"template={template_id} scope={scope_label} "
                         f"activity={req.activity_id}: min={min_needed} "
                         f"available={len(vars_for_req)}"
                     )
@@ -1270,32 +1312,41 @@ class CPSATActivitySolver:
                         "vars": vars_for_req,
                         "min": min_needed,
                         "max": max_allowed,
+                        "scope_slots": set(scope_slot_indices),
                     }
                 )
 
             if not req_entries:
                 continue
 
-                # If per-activity max totals don't cover all slots, relax max to fill
+            # If per-activity max totals don't cover all slots, relax max to fill.
+            # Prefer giving slack to clinic_activity (most flexible, least harm).
+            # Use the union of constrained scope slots (not all_slot_indices)
+            # to avoid inflating slack when reqs are scoped to specific weeks
+            # via applicable_weeks — otherwise week-scoped max caps get violated.
+            constrained_slots = set()
+            for entry in req_entries:
+                constrained_slots.update(entry["scope_slots"])
             total_max = sum(entry["max"] for entry in req_entries)
-            slack = len(slot_indices) - total_max
+            slack = len(constrained_slots) - total_max
             if slack > 0:
-                # Prefer giving slack to clinic activity
-                clinic_id = clinic_activity.id if clinic_activity else None
+                # Prefer giving slack to clinic_activity first
+                clinic_entry = None
                 for entry in req_entries:
-                    if clinic_id and entry["activity_id"] == clinic_id:
-                        room = len(entry["vars"]) - entry["max"]
-                        bump = min(slack, room)
-                        if bump:
-                            entry["max"] += bump
-                            slack -= bump
+                    if clinic_activity and entry["activity_id"] == clinic_activity.id:
+                        clinic_entry = entry
                         break
-                        # If still slack, distribute to any activity with room
+                if clinic_entry:
+                    room = len(clinic_entry["vars"]) - clinic_entry["max"]
+                    bump = min(slack, room)
+                    clinic_entry["max"] += bump
+                    slack -= bump
+                # Distribute remainder to any activity with room
                 if slack > 0:
                     for entry in req_entries:
                         room = len(entry["vars"]) - entry["max"]
                         bump = min(slack, room)
-                        if bump:
+                        if bump > 0:
                             entry["max"] += bump
                             slack -= bump
                         if slack <= 0:
@@ -1303,10 +1354,9 @@ class CPSATActivitySolver:
                 if slack > 0:
                     logger.warning(
                         "Unable to relax max enough for person=%s template=%s "
-                        "week=%s (slack remaining=%s)",
+                        "(slack remaining=%s)",
                         person_id,
                         template_id,
-                        week,
                         slack,
                     )
 
@@ -1322,11 +1372,16 @@ class CPSATActivitySolver:
                     and clinic_activity
                     and entry["activity_id"] == clinic_activity.id
                 ):
-                    pgy_level = slot_meta[slot_indices[0]].get("pgy_level") or 0
+                    scoped_slots = sorted(entry.get("scope_slots", all_slot_indices))
+                    pgy_level = (
+                        slot_meta[scoped_slots[0]].get("pgy_level") or 0
+                        if scoped_slots
+                        else 0
+                    )
                     cv_allowed = bool(
                         cv_activity
                         and any(
-                            cv_activity.id in slot_allowed[s_i] for s_i in slot_indices
+                            cv_activity.id in slot_allowed[s_i] for s_i in scoped_slots
                         )
                     )
                     enforce_floor = pgy_level == 1 or not cv_allowed
@@ -1334,7 +1389,7 @@ class CPSATActivitySolver:
                         hard_min = min(1, len(vars_for_req))
                         model.Add(sum(vars_for_req) >= hard_min)
 
-                        # Soft mins for all activities (including clinic above hard floor)
+                # Soft mins for all activities (including clinic above hard floor)
                 if min_target > hard_min:
                     shortfall_max = min_target - hard_min
                     shortfall = model.NewIntVar(
@@ -1359,11 +1414,18 @@ class CPSATActivitySolver:
                 constraint_count += 1
 
         if constraint_count:
-            logger.info(f"Added {constraint_count} activity requirement constraints")
+            logger.info(
+                f"Added {constraint_count} block-level activity requirement constraints "
+                f"across {len(slots_by_person_template)} person-template groups"
+            )
 
             # ==================================================
             # FACULTY CLINIC CAPS (min/max per week)
             # ==================================================
+        # Initialize faculty lookup dicts unconditionally so the GME caps
+        # block below can reference them even if clinic_activity is None.
+        faculty_by_id: dict[UUID, Person] = {}
+        faculty_week_slots: dict[tuple[UUID, int], list[int]] = defaultdict(list)
         faculty_clinic_shortfalls: list[Any] = []
         faculty_clinic_overages: list[Any] = []
         faculty_clinic_floor_constraints = 0
@@ -1427,6 +1489,96 @@ class CPSATActivitySolver:
         if faculty_clinic_floor_constraints:
             logger.info(
                 f"Added faculty clinic floor constraints: {faculty_clinic_floor_constraints}"
+            )
+
+            # ==================================================
+            # FACULTY GME/ADMIN CAPS (min/max per week from person record)
+            # ==================================================
+        faculty_gme_shortfalls: list[Any] = []
+        faculty_gme_overages: list[Any] = []
+        faculty_gme_constraint_count = 0
+        if faculty_slots:
+            # Populate faculty lookups if not already built by clinic caps
+            if not faculty_by_id:
+                for s_i in faculty_slots:
+                    sp = slots[s_i].person
+                    if sp:
+                        faculty_by_id[sp.id] = sp
+            if not faculty_week_slots:
+                for s_i in faculty_slots:
+                    m = slot_meta[s_i]
+                    faculty_week_slots[(m["person_id"], m["week"])].append(s_i)
+
+            for (faculty_id, week), slot_indices in faculty_week_slots.items():
+                faculty = faculty_by_id.get(faculty_id)
+                if not faculty:
+                    continue
+                # Select caps based on faculty admin type
+                admin_type = (getattr(faculty, "admin_type", "GME") or "GME").upper()
+                if admin_type == "DFM":
+                    gme_min_cap = faculty.dfm_min
+                    gme_max_cap = faculty.dfm_max
+                elif admin_type == "SM":
+                    gme_min_cap = getattr(faculty, "sm_min", None)
+                    gme_max_cap = getattr(faculty, "sm_max", None)
+                else:
+                    gme_min_cap = faculty.gme_min
+                    gme_max_cap = faculty.gme_max
+                if gme_min_cap is None and gme_max_cap is None:
+                    continue
+
+                # Find admin activity for this faculty (GME, DFM, or SM)
+                admin_activity = self._get_admin_activity_for_faculty(
+                    faculty, self._activity_cache
+                )
+                if not admin_activity or admin_activity.id not in assignable_ids:
+                    continue
+
+                gme_vars = [
+                    a[s_i, admin_activity.id]
+                    for s_i in slot_indices
+                    if admin_activity.id in slot_allowed[s_i]
+                ]
+                if not gme_vars:
+                    continue
+
+                locked_gme = locked_faculty_per_activity.get(
+                    (faculty_id, week, admin_activity.id), 0
+                )
+                min_needed = max(
+                    0, (gme_min_cap if gme_min_cap is not None else 0) - locked_gme
+                )
+                max_allowed = max(
+                    0,
+                    (gme_max_cap if gme_max_cap is not None else len(gme_vars))
+                    - locked_gme,
+                )
+
+                # Soft min
+                if min_needed > 0:
+                    shortfall = model.NewIntVar(
+                        0,
+                        min_needed,
+                        f"fac_gme_short_{str(faculty_id)[:8]}_{week}",
+                    )
+                    model.Add(sum(gme_vars) + shortfall >= min_needed)
+                    faculty_gme_shortfalls.append(shortfall)
+
+                # Soft max
+                if max_allowed < len(gme_vars):
+                    overage = model.NewIntVar(
+                        0,
+                        len(gme_vars) - max_allowed,
+                        f"fac_gme_over_{str(faculty_id)[:8]}_{week}",
+                    )
+                    model.Add(sum(gme_vars) <= max_allowed + overage)
+                    faculty_gme_overages.append(overage)
+
+                faculty_gme_constraint_count += 1
+
+        if faculty_gme_constraint_count:
+            logger.info(
+                f"Added {faculty_gme_constraint_count} faculty GME cap constraints"
             )
 
             # ==================================================
@@ -2267,6 +2419,18 @@ class CPSATActivitySolver:
                 objective_expr - penalty if objective_expr is not None else -penalty
             )
 
+        if faculty_gme_shortfalls:
+            penalty = sum(faculty_gme_shortfalls) * FACULTY_GME_SHORTFALL_PENALTY
+            objective_expr = (
+                objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
+        if faculty_gme_overages:
+            penalty = sum(faculty_gme_overages) * FACULTY_GME_OVERAGE_PENALTY
+            objective_expr = (
+                objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
         if activity_min_shortfalls:
             penalties = []
             for shortfall, activity_id in activity_min_shortfalls:
@@ -2619,6 +2783,16 @@ class CPSATActivitySolver:
                 f"VAS faculty overrides: {vas_overrides_applied} faculty "
                 f"assigned to VAS supervision"
             )
+
+        if faculty_gme_shortfalls or faculty_gme_overages:
+            gme_short = sum(solver.Value(v) for v in faculty_gme_shortfalls)
+            gme_over = sum(solver.Value(v) for v in faculty_gme_overages)
+            if gme_short or gme_over:
+                logger.warning(
+                    f"Faculty GME cap: shortfall={gme_short}, overage={gme_over}"
+                )
+            else:
+                logger.info("Faculty GME caps: all within bounds")
 
         if activity_min_shortfalls:
             min_total = sum(

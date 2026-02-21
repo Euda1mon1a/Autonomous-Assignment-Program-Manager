@@ -76,11 +76,23 @@ The workbook has two column layouts that the extraction script now handles autom
 - **115 activity codes** covering all observed schedule codes
 - Data spans July 2025 through May 2026
 
+### Phase 7 Constraint Calibration (COMPLETE — 2026-02-20)
+
+This training data was used to calibrate the CP-SAT activity solver constraints:
+
+1. **mine_rotation_patterns.py** → 386 profiles from historical HDAs
+2. **learn_constraints.py** → learned constraints across 31 templates
+3. **calibrate_constraints.py --apply-all** → 356 total requirements (181 INSERTs + 43 UPDATEs)
+4. **validate_e2e.py** → E2E validation using unlock-manual mode
+
+Results: 88-92% constraint satisfaction, 19-23% GME concentration, 1-2s OPTIMAL solve times.
+See `docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE7.md` for full details.
+
 ### Next Steps
-1. **Rebase `feat/schedule-vision-research` branch** — Training pipeline can now use 10 blocks
-2. **Fit ScheduleScorer** — `ml_score` node (PR #1181) can be trained on this data
-3. **Diff analysis** — Run `diff_truth_vs_db.py` to compare solver output vs ground truth
-4. **Block 12 solver** — 10 blocks of pattern data available for informing solver parameters
+1. **Phase 8 — Individual preferences** — Faculty weekly templates, rotation-specific scheduling rules
+2. **JS divergence reduction** — Currently 0.46-0.56 (target ≤0.25), needs preference modeling
+3. **Fit ScheduleScorer** — `ml_score` node (PR #1181) can be trained on this data
+4. **Diff analysis** — Run `diff_truth_vs_db.py` to compare solver output vs ground truth
 
 ### Unmapped Code Categories (for future cleanup)
 - **Last-name call codes** (e.g., "LastnameA", "LastnameB") — coordinator shorthand for call assignments
