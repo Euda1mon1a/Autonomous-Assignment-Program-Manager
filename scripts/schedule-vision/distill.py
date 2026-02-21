@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -319,6 +320,12 @@ def run_distillation_cv(
         teacher_pool = Pool(X_teacher, y_teacher, cat_features=teacher_cat_idx)
         fold_teacher.fit(teacher_pool)
         fold_proba = fold_teacher.predict_proba(teacher_pool)
+        # Pad to global class count if fold is missing highest-indexed classes
+        n_global = len(le.classes_)
+        if fold_proba.shape[1] < n_global:
+            padded = np.zeros((fold_proba.shape[0], n_global))
+            padded[:, :fold_proba.shape[1]] = fold_proba
+            fold_proba = padded
         fold_soft_labels = temperature_scale(fold_proba, temperature)
 
         t0 = time.time()

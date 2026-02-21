@@ -6,7 +6,7 @@ produces a comparison table against the current 68.8% lookup baseline.
 Also runs a soft-vote ensemble of TabPFN + CatBoost predictions.
 
 Usage:
-    python benchmark.py --features data/features_universal.json
+    python benchmark.py --tabpfn-results data/tabpfn_results.json --catboost-results data/catboost_results.json
 """
 
 from __future__ import annotations
