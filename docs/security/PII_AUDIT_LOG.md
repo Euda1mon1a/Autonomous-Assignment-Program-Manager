@@ -120,11 +120,54 @@ When performing a new audit, add an entry below with:
 | # | Date | Commit | Result | Notes |
 |---|------|--------|--------|-------|
 | 001 | 2025-12-23 | `935c0bd` | CLEAN | Initial baseline audit |
-| 002 | 2026-02-21 | `e36c550` | INCIDENT | PII wipe tool corrupted origin; restored from bundle. See Incident #001 below. |
+| 002 | 2026-02-05 | `8ba81cf` | INCIDENT | PII discovered in tracked files. See Incident #001 below. |
+| 003 | 2026-02-21 | `e36c550` | INCIDENT | PII wipe tool corrupted origin; restored from bundle. See Incident #002 below. |
 
 ---
 
-## Incident #001 — PII Wipe Tool Corruption (2026-02-21)
+## Incident #001 — PII Contamination Discovery & Scrub (2026-02-05 to 2026-02-15)
+
+| Field | Value |
+|-------|-------|
+| **Date Range** | 2026-02-05 through 2026-02-15 |
+| **Severity** | MODERATE — real names scattered across tracked files |
+| **Scope** | 28 people (17 residents, 11 faculty) in ~29 files on HEAD, ~48 historical paths |
+| **Resolution** | Scrubbed over 4 commits; migrations left as Hard Boundary |
+
+### Timeline
+
+| Date | Commit | Action |
+|------|--------|--------|
+| Feb 5 | `8ba81cf7` | Untracked 8 skill files containing real resident/faculty names (3,849 lines) |
+| Feb 10 | `268c69ca` | Removed hardcoded faculty names from clinic capacity constraint (DEBT-021) |
+| Feb 14 | `d88a7952` | Scrubbed 6 faculty names from docstrings, schemas, test fixtures across 11 files |
+| Feb 15 | `2432d415` | Fixed PII sanitizer silent failures + batch index drift |
+
+### What Was Found
+- **8 skill files** tracked in git with real names (`.claude/skills/fm-residency-scheduling/SKILL.md`, `tamc-cpsat-constraints/SKILL.md`, `tamc-excel-scheduling/SKILL.md` + reference files, `managed/import-block.md`)
+- **Constraint code** with 6 hardcoded faculty names (see KNOWN_NAMES in `scripts/pii-scan.sh`)
+- **Docstrings, schemas, and test fixtures** referencing real faculty across 11 backend files
+- **PII sanitizer** (`scripts/sanitize_pii.py`) silently passing on date sanitization failures
+
+### Hard Boundary (Unresolved)
+6 faculty names remain in Alembic migration files (immutable per policy):
+- `20260114_faculty_constraints.py`
+- `20260114_half_day_tables.py`
+- `20260114_sm_constraints.py`
+
+Requires BFG history rewrite to fully resolve. Plan documented in `docs/planning/PII_HISTORY_PURGE_PLAN.md`.
+
+### Remediation Created
+- `scripts/pii-scan.sh` — pre-commit hook with KNOWN_NAMES list (29 surnames)
+- `scripts/sanitize_pii.py` — reversible data sanitization tool (stderr warnings added)
+- `scripts/cleanup_pii_history.sh` — git history cleanup helper
+- `.github/workflows/pii-scan.yml` — weekly + PR-triggered automated scans
+- `docs/security/PII_SANITIZATION_SOP.md` — full sanitization workflow
+- `docs/planning/PII_HISTORY_PURGE_PLAN.md` — BFG execution plan for history cleanup
+
+---
+
+## Incident #002 — PII Wipe Tool Corruption (2026-02-21)
 
 | Field | Value |
 |-------|-------|
