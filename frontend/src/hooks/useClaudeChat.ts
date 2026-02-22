@@ -230,36 +230,8 @@ export const useClaudeChat = () => {
   const handleWsMessageRef = useRef<((data: WsMessage) => void) | null>(null);
   const onStreamUpdateRef = useRef<((update: StreamUpdate) => void) | null>(null);
 
-  // Persist session to localStorage when it changes
-  useEffect(() => {
-    if (session) {
-      saveToStorage(STORAGE_KEY_SESSION, session);
-      updateSessionsList(session, messages.length);
-    }
-  }, [session, messages.length]);
-
-  // Persist messages to localStorage when they change
-  useEffect(() => {
-    saveToStorage(STORAGE_KEY_MESSAGES, messages);
-    if (session && messages.length > 0) {
-      updateSessionsList({ ...session, updatedAt: new Date() }, messages.length);
-    }
-  }, [messages, session]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, []);
-
   // Update sessions list for session history
-  const updateSessionsList = (currentSession: ChatSession, messageCount: number): void => {
+  const updateSessionsList = useCallback((currentSession: ChatSession, messageCount: number): void => {
     const sessionsList = loadFromStorage<SavedSession[]>(STORAGE_KEY_SESSIONS_LIST) || [];
     const existingIndex = sessionsList.findIndex(s => s.id === currentSession.id);
 
@@ -280,7 +252,35 @@ export const useClaudeChat = () => {
 
     const trimmedList = sessionsList.slice(0, 20);
     saveToStorage(STORAGE_KEY_SESSIONS_LIST, trimmedList);
-  };
+  }, []);
+
+  // Persist session to localStorage when it changes
+  useEffect(() => {
+    if (session) {
+      saveToStorage(STORAGE_KEY_SESSION, session);
+      updateSessionsList(session, messages.length);
+    }
+  }, [session, messages.length, updateSessionsList]);
+
+  // Persist messages to localStorage when they change
+  useEffect(() => {
+    saveToStorage(STORAGE_KEY_MESSAGES, messages);
+    if (session && messages.length > 0) {
+      updateSessionsList({ ...session, updatedAt: new Date() }, messages.length);
+    }
+  }, [messages, session, updateSessionsList]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Connect to WebSocket

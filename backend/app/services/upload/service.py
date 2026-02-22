@@ -5,6 +5,7 @@ Coordinates file validation, processing, and storage.
 
 import logging
 from datetime import datetime, UTC
+from pathlib import Path
 from typing import Any, BinaryIO
 from uuid import UUID, uuid4
 
@@ -34,7 +35,7 @@ class UploadProgress:
         self.total_size = total_size
         self.uploaded_size = 0
         self.started_at = datetime.now(UTC)
-        self.completed_at = None
+        self.completed_at: datetime | None = None
         self.status = "in_progress"  # in_progress, completed, failed
 
     @property
@@ -344,8 +345,3 @@ class UploadService:
             return processor.process_image(file_content, sizes=sizes_to_generate)
         else:
             return processor.process_image(file_content, sizes=None)
-
-            # Import Path for filename operations
-
-
-from pathlib import Path

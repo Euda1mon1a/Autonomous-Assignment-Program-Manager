@@ -66,7 +66,7 @@ class CSVExporter:
             CSV data as bytes (optionally compressed)
         """
         output = io.StringIO()
-        writer = None
+        writer: csv.DictWriter[str] | None = None
         offset = 0
 
         while True:
@@ -106,17 +106,17 @@ class CSVExporter:
             ]
 
             # Write header on first batch
-            if writer is None:
-                if rows:
-                    fieldnames = list(rows[0].keys())
-                    writer = csv.DictWriter(output, fieldnames=fieldnames)
-                    writer.writeheader()
+            if writer is None and rows:
+                fieldnames = list(rows[0].keys())
+                writer = csv.DictWriter(output, fieldnames=fieldnames)
+                writer.writeheader()
 
             # Write rows
-            for row in rows:
-                # Sanitize values for CSV
-                sanitized = {k: sanitize_for_export(v) for k, v in row.items()}
-                writer.writerow(sanitized)
+            if writer is not None:
+                for row in rows:
+                    # Sanitize values for CSV
+                    sanitized = {k: sanitize_for_export(v) for k, v in row.items()}
+                    writer.writerow(sanitized)
 
             offset += batch_size
 
@@ -153,7 +153,7 @@ class CSVExporter:
             CSV data as bytes (optionally compressed)
         """
         output = io.StringIO()
-        writer = None
+        writer: csv.DictWriter[str] | None = None
         offset = 0
 
         while True:
@@ -194,16 +194,16 @@ class CSVExporter:
                 rows = [{k: v for k, v in row.items() if k in fields} for row in rows]
 
             # Write header on first batch
-            if writer is None:
-                if rows:
-                    fieldnames = list(rows[0].keys())
-                    writer = csv.DictWriter(output, fieldnames=fieldnames)
-                    writer.writeheader()
+            if writer is None and rows:
+                fieldnames = list(rows[0].keys())
+                writer = csv.DictWriter(output, fieldnames=fieldnames)
+                writer.writeheader()
 
             # Write rows
-            for row in rows:
-                sanitized = {k: sanitize_for_export(v) for k, v in row.items()}
-                writer.writerow(sanitized)
+            if writer is not None:
+                for row in rows:
+                    sanitized = {k: sanitize_for_export(v) for k, v in row.items()}
+                    writer.writerow(sanitized)
 
             offset += batch_size
 
@@ -236,7 +236,7 @@ class CSVExporter:
             CSV data as bytes (optionally compressed)
         """
         output = io.StringIO()
-        writer = None
+        writer: csv.DictWriter[str] | None = None
         offset = 0
 
         while True:
@@ -261,16 +261,16 @@ class CSVExporter:
             rows = [format_person(p, fields=fields) for p in people]
 
             # Write header on first batch
-            if writer is None:
-                if rows:
-                    fieldnames = list(rows[0].keys())
-                    writer = csv.DictWriter(output, fieldnames=fieldnames)
-                    writer.writeheader()
+            if writer is None and rows:
+                fieldnames = list(rows[0].keys())
+                writer = csv.DictWriter(output, fieldnames=fieldnames)
+                writer.writeheader()
 
             # Write rows
-            for row in rows:
-                sanitized = {k: sanitize_for_export(v) for k, v in row.items()}
-                writer.writerow(sanitized)
+            if writer is not None:
+                for row in rows:
+                    sanitized = {k: sanitize_for_export(v) for k, v in row.items()}
+                    writer.writerow(sanitized)
 
             offset += batch_size
 
@@ -305,7 +305,7 @@ class CSVExporter:
             CSV data as bytes (optionally compressed)
         """
         output = io.StringIO()
-        writer = None
+        writer: csv.DictWriter[str] | None = None
         offset = 0
 
         while True:
@@ -332,16 +332,16 @@ class CSVExporter:
             rows = [format_block(b, fields=fields) for b in blocks]
 
             # Write header on first batch
-            if writer is None:
-                if rows:
-                    fieldnames = list(rows[0].keys())
-                    writer = csv.DictWriter(output, fieldnames=fieldnames)
-                    writer.writeheader()
+            if writer is None and rows:
+                fieldnames = list(rows[0].keys())
+                writer = csv.DictWriter(output, fieldnames=fieldnames)
+                writer.writeheader()
 
             # Write rows
-            for row in rows:
-                sanitized = {k: sanitize_for_export(v) for k, v in row.items()}
-                writer.writerow(sanitized)
+            if writer is not None:
+                for row in rows:
+                    sanitized = {k: sanitize_for_export(v) for k, v in row.items()}
+                    writer.writerow(sanitized)
 
             offset += batch_size
 
@@ -375,11 +375,11 @@ class CSVExporter:
         output = io.StringIO()
 
         # Get all unique field names from all metrics
-        fieldnames = set()
+        fieldnames_set: set[str] = set()
         for row in metrics_data:
-            fieldnames.update(row.keys())
+            fieldnames_set.update(row.keys())
 
-        fieldnames = sorted(fieldnames)
+        fieldnames = sorted(fieldnames_set)
 
         # Write CSV
         writer = csv.DictWriter(output, fieldnames=fieldnames)

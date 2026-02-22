@@ -814,6 +814,10 @@ class CPSATSolver(BaseSolver):
 
         start_time = time.time()
 
+        # Normalise optional param to avoid NoneType iteration / len() errors
+        if existing_assignments is None:
+            existing_assignments = []
+
         # Filter to workday blocks
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
 

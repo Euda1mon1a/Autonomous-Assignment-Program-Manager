@@ -93,6 +93,11 @@ export function useAssignmentsForRange(
     })),
   })
 
+  // Derive a stable dependency from additional page query data.
+  // useQueries returns a new array reference every render, so using it directly
+  // as a useMemo dep defeats memoization. Instead, track the individual .data refs.
+  const additionalPageData = additionalPageQueries.map((q) => q.data)
+
   // Combine results from all pages
   const combinedData = useMemo((): ListResponse<Assignment> | undefined => {
     if (!firstPageQuery.data) return undefined
@@ -101,9 +106,9 @@ export function useAssignmentsForRange(
     const allItems = [...(firstPageQuery.data.items || [])]
 
     // Add items from additional pages
-    for (const query of additionalPageQueries) {
-      if (query.data?.items) {
-        allItems.push(...query.data.items)
+    for (const pageData of additionalPageData) {
+      if (pageData?.items) {
+        allItems.push(...pageData.items)
       }
     }
 
@@ -111,7 +116,8 @@ export function useAssignmentsForRange(
       items: allItems,
       total: firstPageQuery.data.total,
     }
-  }, [firstPageQuery.data, additionalPageQueries])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- additionalPageData elements are stable refs from react-query cache
+  }, [firstPageQuery.data, ...additionalPageData])
 
   // Calculate aggregate loading/error states
   const isLoading = firstPageQuery.isLoading || additionalPageQueries.some((q) => q.isLoading)

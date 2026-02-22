@@ -66,6 +66,7 @@ import type {
   ExperimentRun,
 } from '@/types/admin-scheduling';
 import dynamic from 'next/dynamic';
+import { SectionErrorBoundary } from '@/components/SectionErrorBoundary';
 
 // Lazy load 3D components to avoid loading Three.js bundle on initial page load
 // Critical for DoD/DHA machines with limited GPU resources
@@ -241,91 +242,105 @@ export default function AdminSchedulingPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
         {activeTab === 'configuration' && (
-          <ConfigurationPanel
-            configuration={configuration}
-            constraints={constraints || []}
-            isLoading={constraintsLoading}
-            onChange={handleConfigChange}
-            onRun={handleValidateAndRun}
-            onValidate={() => validateConfig.mutate(configuration)}
-            isRunning={isRunning}
-            isValidating={validateConfig.isPending}
-            validationResult={validateConfig.data}
-          />
+          <SectionErrorBoundary sectionName="Configuration">
+            <ConfigurationPanel
+              configuration={configuration}
+              constraints={constraints || []}
+              isLoading={constraintsLoading}
+              onChange={handleConfigChange}
+              onRun={handleValidateAndRun}
+              onValidate={() => validateConfig.mutate(configuration)}
+              isRunning={isRunning}
+              isValidating={validateConfig.isPending}
+              validationResult={validateConfig.data}
+            />
+          </SectionErrorBoundary>
         )}
 
         {activeTab === 'experimentation' && (
-          <ExperimentationPanel
-            configuration={configuration}
-            queue={queue}
-            isLoading={queueLoading}
-            onQueueExperiments={(configs) => queueExperiments.mutate(configs)}
-            onCancelExperiment={(id) => cancelExperiment.mutate(id)}
-            isQueuing={queueExperiments.isPending}
-          />
+          <SectionErrorBoundary sectionName="Experimentation">
+            <ExperimentationPanel
+              configuration={configuration}
+              queue={queue}
+              isLoading={queueLoading}
+              onQueueExperiments={(configs) => queueExperiments.mutate(configs)}
+              onCancelExperiment={(id) => cancelExperiment.mutate(id)}
+              isQueuing={queueExperiments.isPending}
+            />
+          </SectionErrorBoundary>
         )}
 
         {activeTab === 'metrics' && (
-          <MetricsPanel
-            metrics={metrics}
-            isLoading={metricsLoading}
-            runs={processedRuns}
-          />
+          <SectionErrorBoundary sectionName="Metrics">
+            <MetricsPanel
+              metrics={metrics}
+              isLoading={metricsLoading}
+              runs={processedRuns}
+            />
+          </SectionErrorBoundary>
         )}
 
         {activeTab === 'history' && (
-          <HistoryPanel
-            runs={processedRuns}
-            isLoading={runsLoading}
-            selectedRuns={selectedRuns}
-            comparisonMode={comparisonMode}
-            onSelectRun={(id) => {
-              if (comparisonMode) {
-                setSelectedRuns(prev =>
-                  prev.includes(id)
-                    ? prev.filter(r => r !== id)
-                    : prev.length < 2 ? [...prev, id] : [prev[1], id]
-                );
-              }
-            }}
-            onToggleComparison={() => {
-              setComparisonMode(prev => !prev);
-              setSelectedRuns([]);
-            }}
-          />
+          <SectionErrorBoundary sectionName="History">
+            <HistoryPanel
+              runs={processedRuns}
+              isLoading={runsLoading}
+              selectedRuns={selectedRuns}
+              comparisonMode={comparisonMode}
+              onSelectRun={(id) => {
+                if (comparisonMode) {
+                  setSelectedRuns(prev =>
+                    prev.includes(id)
+                      ? prev.filter(r => r !== id)
+                      : prev.length < 2 ? [...prev, id] : [prev[1], id]
+                  );
+                }
+              }}
+              onToggleComparison={() => {
+                setComparisonMode(prev => !prev);
+                setSelectedRuns([]);
+              }}
+            />
+          </SectionErrorBoundary>
         )}
 
         {activeTab === 'overrides' && (
-          <OverridesPanel
-            locks={locks || []}
-            holidays={holidays || []}
-            rollbackPoints={rollbackPoints || []}
-            syncMeta={syncMeta}
-            onCreateRollback={(desc) => createRollback.mutate({ description: desc })}
-            onRevert={(pointId, reason) => revertRollback.mutate({
-              rollbackPointId: pointId,
-              reason,
-              dryRun: false,
-            })}
-            onSync={() => triggerSync.mutate()}
-            onUnlock={(lockId) => unlockAssignment.mutate(lockId)}
-            isCreatingRollback={createRollback.isPending}
-            isReverting={revertRollback.isPending}
-            isSyncing={triggerSync.isPending}
-            isUnlocking={unlockAssignment.isPending}
-          />
+          <SectionErrorBoundary sectionName="Overrides">
+            <OverridesPanel
+              locks={locks || []}
+              holidays={holidays || []}
+              rollbackPoints={rollbackPoints || []}
+              syncMeta={syncMeta}
+              onCreateRollback={(desc) => createRollback.mutate({ description: desc })}
+              onRevert={(pointId, reason) => revertRollback.mutate({
+                rollbackPointId: pointId,
+                reason,
+                dryRun: false,
+              })}
+              onSync={() => triggerSync.mutate()}
+              onUnlock={(lockId) => unlockAssignment.mutate(lockId)}
+              isCreatingRollback={createRollback.isPending}
+              isReverting={revertRollback.isPending}
+              isSyncing={triggerSync.isPending}
+              isUnlocking={unlockAssignment.isPending}
+            />
+          </SectionErrorBoundary>
         )}
 
         {activeTab === 'solver-viz' && (
-          <div className="h-[600px] bg-slate-900 rounded-lg">
-            <SolverVisualization taskId={queue?.runs?.find(r => r.status === 'running')?.id ?? null} />
-          </div>
+          <SectionErrorBoundary sectionName="Solver Visualization">
+            <div className="h-[600px] bg-slate-900 rounded-lg">
+              <SolverVisualization taskId={queue?.runs?.find(r => r.status === 'running')?.id ?? null} />
+            </div>
+          </SectionErrorBoundary>
         )}
 
         {activeTab === 'schedule-3d' && (
-          <div className="h-[600px] bg-slate-900 rounded-lg">
-            <VoxelScheduleView3D userTier={2} />
-          </div>
+          <SectionErrorBoundary sectionName="Schedule 3D">
+            <div className="h-[600px] bg-slate-900 rounded-lg">
+              <VoxelScheduleView3D userTier={2} />
+            </div>
+          </SectionErrorBoundary>
         )}
       </main>
 

@@ -47,6 +47,12 @@ export function BridgeSyncVisualizer({
   const [stats, setStats] = useState<SyncStats>(generateStats);
   const [connection, setConnection] = useState<ConnectionStatus>('connecting');
   const mountedRef = useRef(true);
+  const connectionRef = useRef<ConnectionStatus>(connection);
+
+  // Keep connectionRef in sync with connection state
+  useEffect(() => {
+    connectionRef.current = connection;
+  }, [connection]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -56,14 +62,14 @@ export function BridgeSyncVisualizer({
       if (mountedRef.current) setConnection('connected');
     }, 1500);
 
-    // Generate packets periodically
+    // Generate packets periodically — read connectionRef.current to avoid stale closure
     const packetInterval = setInterval(() => {
-      if (!mountedRef.current || connection !== 'connected') return;
+      if (!mountedRef.current || connectionRef.current !== 'connected') return;
 
       // Pick a random edge
       const edge = INITIAL_EDGES[Math.floor(Math.random() * INITIAL_EDGES.length)];
-      const sourceNode = nodes.find((n) => n.id === edge.source);
-      const targetNode = nodes.find((n) => n.id === edge.target);
+      const sourceNode = INITIAL_NODES.find((n) => n.id === edge.source);
+      const targetNode = INITIAL_NODES.find((n) => n.id === edge.target);
 
       if (!sourceNode || !targetNode) return;
 
@@ -101,7 +107,7 @@ export function BridgeSyncVisualizer({
       clearInterval(packetInterval);
       clearInterval(statsInterval);
     };
-  }, [connection, nodes]);
+  }, []);
 
   const handlePacketComplete = useCallback((id: string) => {
     setPackets((prev) => prev.filter((p) => p.id !== id));

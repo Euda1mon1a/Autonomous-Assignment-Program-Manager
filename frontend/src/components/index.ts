@@ -30,4 +30,5 @@ export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
 export { ErrorAlert } from './ErrorAlert';
 export { ErrorBoundary } from './ErrorBoundary';
+export { SectionErrorBoundary } from './SectionErrorBoundary';
 export { LoadingSpinner } from './LoadingSpinner';

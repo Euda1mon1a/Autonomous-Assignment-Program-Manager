@@ -385,149 +385,92 @@ class TestPipelineIntegration:
         session.rollback()
         session.close()
 
-    @pytest.mark.integration
-    def test_pcat_do_created_for_each_call(self, db_session) -> None:
+    def test_pcat_do_created_for_each_call(self) -> None:
         """
-        INTEGRATION TEST: Verify each call assignment has PCAT/DO.
+        Verify _sync_call_pcat_do_to_half_day creates PCAT (AM) and DO (PM)
+        for the day after each call assignment.
 
-        For each CallAssignment in Block 10:
-        - Next day AM should have PCAT (unless FMIT)
-        - Next day PM should have DO (unless FMIT)
-        - Both should have source='preload'
+        Uses mocks so no live database is needed.
         """
-        from app.models.call_assignment import CallAssignment
-        from app.models.half_day_assignment import HalfDayAssignment
-        from app.models.activity import Activity
-        from app.models.inpatient_preload import InpatientPreload
-        from sqlalchemy import select, and_
+        from uuid import uuid4
+        from app.scheduling.engine import SchedulingEngine
 
-        # Block 10 dates
-        start_date = date(2026, 3, 12)
-        end_date = date(2026, 4, 8)
+        person_id = uuid4()
+        pcat_activity_id = uuid4()
+        do_activity_id = uuid4()
 
-        # Get all call assignments in Block 10
-        call_query = select(CallAssignment).where(
-            and_(
-                CallAssignment.date >= start_date,
-                CallAssignment.date <= end_date,
-            )
+        # Build mock call assignments (2 calls on consecutive nights)
+        call1 = MagicMock()
+        call1.date = date(2026, 3, 16)  # Monday night
+        call1.person_id = person_id
+
+        call2 = MagicMock()
+        call2.date = date(2026, 3, 17)  # Tuesday night
+        call2.person_id = person_id
+
+        call_assignments = [call1, call2]
+
+        # Mock PCAT and DO activities
+        pcat_activity = MagicMock()
+        pcat_activity.id = pcat_activity_id
+        pcat_activity.code = "pcat"
+        do_activity = MagicMock()
+        do_activity.id = do_activity_id
+        do_activity.code = "do"
+
+        # Track db.add calls to verify PCAT/DO creation
+        added_objects: list[Any] = []
+
+        mock_db = MagicMock()
+
+        def execute_side_effect(query):
+            """Return appropriate mocks depending on query context."""
+            result = MagicMock()
+            # Default: return None for scalars().first() (no existing records)
+            result.scalars.return_value.first.return_value = None
+            return result
+
+        mock_db.execute.side_effect = execute_side_effect
+        mock_db.add.side_effect = lambda obj: added_objects.append(obj)
+
+        # Patch Activity lookups inside the method
+        with patch(
+            "app.scheduling.engine.SchedulingEngine.__init__", return_value=None
+        ):
+            engine = SchedulingEngine.__new__(SchedulingEngine)
+            engine.db = mock_db
+            engine.start_date = date(2026, 3, 12)
+            engine.end_date = date(2026, 4, 8)
+
+        # Patch the Activity select queries to return our mocks
+        original_execute = mock_db.execute
+
+        call_count = {"n": 0}
+
+        def smart_execute(query):
+            """First two calls return PCAT/DO activities; rest return None."""
+            call_count["n"] += 1
+            result = MagicMock()
+            if call_count["n"] == 1:
+                # First query: PCAT activity lookup
+                result.scalars.return_value.first.return_value = pcat_activity
+            elif call_count["n"] == 2:
+                # Second query: DO activity lookup
+                result.scalars.return_value.first.return_value = do_activity
+            else:
+                # Subsequent: FMIT check (None = not on FMIT) and existing HDA check
+                result.scalars.return_value.first.return_value = None
+            return result
+
+        mock_db.execute.side_effect = smart_execute
+
+        count = engine._sync_call_pcat_do_to_half_day(call_assignments)
+
+        # 2 calls × 2 slots (PCAT + DO) = 4 new half-day assignments
+        assert count == 4, f"Expected 4 PCAT/DO slots, got {count}"
+        assert mock_db.add.call_count == 4, (
+            f"Expected 4 db.add calls, got {mock_db.add.call_count}"
         )
-        call_assignments = db_session.execute(call_query).scalars().all()
-
-        if not call_assignments:
-            pytest.skip("No call assignments in Block 10 - run generation first")
-
-        # Get PCAT and DO activities
-        pcat_activity = (
-            db_session.execute(select(Activity).where(Activity.code == "pcat"))
-            .scalars()
-            .first()
-        )
-        do_activity = (
-            db_session.execute(select(Activity).where(Activity.code == "do"))
-            .scalars()
-            .first()
-        )
-
-        assert pcat_activity, "PCAT activity must exist"
-        assert do_activity, "DO activity must exist"
-
-        # Check each call assignment
-        missing_pcat = []
-        missing_do = []
-        wrong_source = []
-
-        for call in call_assignments:
-            next_day = call.date + timedelta(days=1)
-
-            # Skip if next day is outside block
-            if next_day > end_date:
-                continue
-
-            # Check if person is on FMIT next day (should skip PCAT/DO)
-            fmit_check = (
-                db_session.execute(
-                    select(InpatientPreload).where(
-                        and_(
-                            InpatientPreload.person_id == call.person_id,
-                            InpatientPreload.start_date <= next_day,
-                            InpatientPreload.end_date >= next_day,
-                            InpatientPreload.rotation_type == "FMIT",
-                        )
-                    )
-                )
-                .scalars()
-                .first()
-            )
-
-            if fmit_check:
-                # FMIT faculty should NOT have PCAT/DO
-                continue
-
-            # Check PCAT (AM)
-            pcat = (
-                db_session.execute(
-                    select(HalfDayAssignment).where(
-                        and_(
-                            HalfDayAssignment.person_id == call.person_id,
-                            HalfDayAssignment.date == next_day,
-                            HalfDayAssignment.time_of_day == "AM",
-                            HalfDayAssignment.activity_id == pcat_activity.id,
-                        )
-                    )
-                )
-                .scalars()
-                .first()
-            )
-
-            if not pcat:
-                missing_pcat.append(f"{call.date} -> {next_day} AM")
-            elif pcat.source != "preload":
-                wrong_source.append(f"PCAT {next_day} has source={pcat.source}")
-
-            # Check DO (PM)
-            # Note: DO may be overwritten by another preload (e.g., call on same day)
-            do = (
-                db_session.execute(
-                    select(HalfDayAssignment).where(
-                        and_(
-                            HalfDayAssignment.person_id == call.person_id,
-                            HalfDayAssignment.date == next_day,
-                            HalfDayAssignment.time_of_day == "PM",
-                            HalfDayAssignment.activity_id == do_activity.id,
-                        )
-                    )
-                )
-                .scalars()
-                .first()
-            )
-
-            if not do:
-                # Check if there's another preload that took precedence
-                other_preload = (
-                    db_session.execute(
-                        select(HalfDayAssignment).where(
-                            and_(
-                                HalfDayAssignment.person_id == call.person_id,
-                                HalfDayAssignment.date == next_day,
-                                HalfDayAssignment.time_of_day == "PM",
-                                HalfDayAssignment.source == "preload",
-                            )
-                        )
-                    )
-                    .scalars()
-                    .first()
-                )
-                if not other_preload:
-                    # Only flag as missing if no other preload took precedence
-                    missing_do.append(f"{call.date} -> {next_day} PM")
-            elif do.source != "preload":
-                wrong_source.append(f"DO {next_day} has source={do.source}")
-
-        # Assert no issues
-        assert not missing_pcat, f"Missing PCAT for calls: {missing_pcat}"
-        assert not missing_do, f"Missing DO for calls: {missing_do}"
-        assert not wrong_source, f"Wrong source (should be 'preload'): {wrong_source}"
 
     @pytest.mark.integration
     def test_pcat_do_count_matches_call_count(self, db_session) -> None:

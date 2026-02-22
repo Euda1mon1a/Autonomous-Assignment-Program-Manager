@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { SectionErrorBoundary } from '@/components/SectionErrorBoundary';
 import { useToast } from '@/contexts/ToastContext';
 import { useFaculty } from '@/hooks/usePeople';
 import { useBlockRanges } from '@/lib/hooks';
@@ -854,13 +855,23 @@ export default function AdminSwapsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Panel */}
           <div className="lg:col-span-3">
-            {activeTab === 'execute' && <ExecuteSwapPanel />}
-            {activeTab === 'direct' && <DirectAssignmentPanel />}
+            {activeTab === 'execute' && (
+              <SectionErrorBoundary sectionName="Execute Swap">
+                <ExecuteSwapPanel />
+              </SectionErrorBoundary>
+            )}
+            {activeTab === 'direct' && (
+              <SectionErrorBoundary sectionName="Direct Assignment Edit">
+                <DirectAssignmentPanel />
+              </SectionErrorBoundary>
+            )}
           </div>
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <RecentActivitySidebar />
+            <SectionErrorBoundary sectionName="Recent Activity">
+              <RecentActivitySidebar />
+            </SectionErrorBoundary>
           </div>
         </div>
       </main>

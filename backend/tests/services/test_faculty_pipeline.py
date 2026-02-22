@@ -267,6 +267,35 @@ class TestFacultyExpansionTiming:
         assert hasattr(SchedulingEngine, "generate")
         assert callable(SchedulingEngine.generate)
 
+    def test_engine_calls_faculty_expansion_after_resident_expansion(self):
+        """Faculty half-day persistence must run AFTER resident half-day persistence.
+
+        The scheduling engine pipeline requires this ordering so that faculty
+        assignments (clinic, AT, PCAT, DO) are written after resident rotation
+        assignments are persisted.  This test inspects the source of
+        ``SchedulingEngine.generate`` to confirm that
+        ``_persist_faculty_half_day_from_solver`` is called after
+        ``_persist_solver_assignments_to_half_day``.
+        """
+        import inspect
+        from app.scheduling.engine import SchedulingEngine
+
+        source = inspect.getsource(SchedulingEngine.generate)
+
+        resident_pos = source.find("_persist_solver_assignments_to_half_day")
+        faculty_pos = source.find("_persist_faculty_half_day_from_solver")
+
+        assert resident_pos != -1, (
+            "_persist_solver_assignments_to_half_day not found in generate()"
+        )
+        assert faculty_pos != -1, (
+            "_persist_faculty_half_day_from_solver not found in generate()"
+        )
+        assert resident_pos < faculty_pos, (
+            "Faculty half-day persistence must come AFTER resident half-day "
+            "persistence in the generate() pipeline"
+        )
+
 
 # =============================================================================
 # Test: Faculty Coverage Validation (API Response Structure)

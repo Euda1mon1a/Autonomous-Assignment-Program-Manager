@@ -9,6 +9,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { SectionErrorBoundary } from '@/components/SectionErrorBoundary';
 
 export default function AdminComplianceRedirect() {
   const router = useRouter();
@@ -20,15 +21,17 @@ export default function AdminComplianceRedirect() {
   }, [router]);
 
   return (
-    <div
-      className="flex flex-col items-center justify-center min-h-[60vh]"
-      role="status"
-      aria-live="polite"
-    >
-      <Loader2 className="w-8 h-8 animate-spin text-blue-600" aria-hidden="true" />
-      <p className="mt-3 text-gray-600">
-        Redirecting to Compliance Hub...
-      </p>
-    </div>
+    <SectionErrorBoundary sectionName="Compliance Redirect">
+      <div
+        className="flex flex-col items-center justify-center min-h-[60vh]"
+        role="status"
+        aria-live="polite"
+      >
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" aria-hidden="true" />
+        <p className="mt-3 text-gray-600">
+          Redirecting to Compliance Hub...
+        </p>
+      </div>
+    </SectionErrorBoundary>
   );
 }

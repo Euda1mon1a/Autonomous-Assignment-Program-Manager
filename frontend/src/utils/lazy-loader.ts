@@ -138,6 +138,7 @@ export interface IntersectionLazyLoadOptions {
 export function useIntersectionLazyLoad(
   options: IntersectionLazyLoadOptions = {}
 ) {
+  const { root, rootMargin = '50px', threshold = 0 } = options;
   const [isIntersecting, setIsIntersecting] = React.useState(false);
   const targetRef = React.useRef<HTMLElement>(null);
 
@@ -150,9 +151,9 @@ export function useIntersectionLazyLoad(
         setIsIntersecting(entry.isIntersecting);
       },
       {
-        root: options.root,
-        rootMargin: options.rootMargin || '50px',
-        threshold: options.threshold || 0,
+        root,
+        rootMargin,
+        threshold,
       }
     );
 
@@ -161,7 +162,7 @@ export function useIntersectionLazyLoad(
     return () => {
       observer.disconnect();
     };
-  }, [options]);
+  }, [root, rootMargin, threshold]);
 
   return {
     targetRef,
