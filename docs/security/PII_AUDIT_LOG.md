@@ -120,6 +120,55 @@ When performing a new audit, add an entry below with:
 | # | Date | Commit | Result | Notes |
 |---|------|--------|--------|-------|
 | 001 | 2025-12-23 | `935c0bd` | CLEAN | Initial baseline audit |
+| 002 | 2026-02-21 | `e36c550` | INCIDENT | PII wipe tool corrupted origin; restored from bundle. See Incident #001 below. |
+
+---
+
+## Incident #001 — PII Wipe Tool Corruption (2026-02-21)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-02-21 |
+| **Severity** | CRITICAL — near-total repository loss |
+| **Trigger** | PII wipe tool (git-filter-repo or similar) run against GitHub origin |
+| **Impact** | `origin/main` corrupted — all `#` characters replaced with `***REMOVED***` across 4,629 files (179,771 lines). Entire commit history rewritten with new SHAs. |
+| **Recovery** | Restored from pre-purge bundle: `aapm-pre-purge-20260221T154056.bundle` (28MB) |
+
+### What Was Lost
+- All feature branches (only `main` in bundle)
+- Full reflog history
+- All stashed changes
+- `.env` file (gitignored, not in bundle)
+- `node_modules/`, `.venv/` directories (gitignored)
+
+### What Survived
+- Complete commit history on `main` (2,414 commits)
+- All source code, documentation, and configuration
+- PostgreSQL database (independent of git)
+- Brew services (PostgreSQL 17, Redis 8.4)
+
+### Recovery Actions Taken
+1. Cloned from pre-purge bundle
+2. Ran `git gc --prune=now --aggressive` to purge 65 dangling objects (some containing PII: real names in Block 12 import scripts)
+3. Reinstalled pre-commit hooks (required unsetting `core.hooksPath` temporarily)
+4. Created `.env` from template with generated secrets
+5. Symlinked `backend/.venv` to pyenv `aapm` virtualenv
+6. Ran `npm install` for frontend
+7. Created MCP server `.venv`
+8. Stamped DB from orphan revision `a399bc3fb338` to `20260219_add_gt_tables`
+9. Verified all services running (backend, frontend, MCP, PostgreSQL, Redis)
+
+### Residual Issues
+- `origin/main` still corrupted — needs `git push --force origin main`
+- 6 faculty names remain in migration files (Hard Boundary — migrations immutable)
+- 2 PII scan false positives: SPC textbook citation (academic author surname), AI audience note
+
+### Lessons Learned
+1. **Always bundle before history-rewriting tools**: `git bundle create backup.bundle --all`
+2. **Test on throwaway clone first**: Never run PII tools directly on the only copy
+3. **`#` is not PII**: Regex-based tools need careful pattern tuning
+4. **Bundle restores are fast** but lose branches, reflog, stash, and gitignored files
+5. **DB is independent**: Bundle restore doesn't affect PostgreSQL; may need migration stamp fix
 
 ---
 

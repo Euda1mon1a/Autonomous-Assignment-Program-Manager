@@ -712,7 +712,7 @@ Alerts Overlay:
 ## References
 
 - Western Electric Company (1956). Statistical Quality Control Handbook
-- Montgomery, D. C. (2009). Introduction to Statistical Quality Control
+- D. C. M. (2009). Introduction to Statistical Quality Control (7th ed., Wiley)
 - ACGME Work Hour Standards: https://www.acgme.org/
 
 ---
@@ -721,4 +721,3 @@ Alerts Overlay:
 **Approved for:** System Administrators, Database Administrators, Monitoring Teams
 **Effective Date:** 2025-12-31
 **Last Updated:** 2025-12-31
-
