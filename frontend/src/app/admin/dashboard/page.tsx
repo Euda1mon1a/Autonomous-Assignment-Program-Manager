@@ -23,6 +23,7 @@ import {
   Undo2,
 } from 'lucide-react';
 import { useAdminDashboardSummary } from '@/hooks/useAdminDashboard';
+import { SectionErrorBoundary } from '@/components/SectionErrorBoundary';
 
 // ============================================================================
 // Helper Components
@@ -189,100 +190,108 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Users & People */}
-      <MetricGroup title="Users & Personnel">
-        <MetricCard
-          label="Total Users"
-          value={users.total}
-          subLabel="Active"
-          subValue={users.active}
-          icon={Users}
-        />
-        <MetricCard
-          label="Residents"
-          value={people.residents}
-          icon={UserCheck}
-        />
-        <MetricCard
-          label="Faculty"
-          value={people.faculty}
-          subLabel="Total People"
-          subValue={people.total}
-          icon={UserCheck}
-        />
-      </MetricGroup>
+      <SectionErrorBoundary sectionName="Users & Personnel">
+        <MetricGroup title="Users & Personnel">
+          <MetricCard
+            label="Total Users"
+            value={users.total}
+            subLabel="Active"
+            subValue={users.active}
+            icon={Users}
+          />
+          <MetricCard
+            label="Residents"
+            value={people.residents}
+            icon={UserCheck}
+          />
+          <MetricCard
+            label="Faculty"
+            value={people.faculty}
+            subLabel="Total People"
+            subValue={people.total}
+            icon={UserCheck}
+          />
+        </MetricGroup>
+      </SectionErrorBoundary>
 
       {/* Absences */}
-      <MetricGroup title="Absences">
-        <MetricCard
-          label="Active Absences"
-          value={absences.active}
-          icon={Calendar}
-          variant={absences.active > 5 ? 'warning' : 'default'}
-        />
-        <MetricCard
-          label="Upcoming"
-          value={absences.upcoming}
-          icon={Clock}
-        />
-      </MetricGroup>
+      <SectionErrorBoundary sectionName="Absences">
+        <MetricGroup title="Absences">
+          <MetricCard
+            label="Active Absences"
+            value={absences.active}
+            icon={Calendar}
+            variant={absences.active > 5 ? 'warning' : 'default'}
+          />
+          <MetricCard
+            label="Upcoming"
+            value={absences.upcoming}
+            icon={Clock}
+          />
+        </MetricGroup>
+      </SectionErrorBoundary>
 
       {/* Swaps */}
-      <MetricGroup title="Swap Requests">
-        <MetricCard
-          label="Pending"
-          value={swaps.pending}
-          icon={ArrowLeftRight}
-          variant={swaps.pending > 0 ? 'warning' : 'default'}
-        />
-        <MetricCard
-          label="Approved"
-          value={swaps.approved}
-          icon={CheckCircle2}
-          variant="success"
-        />
-        <MetricCard
-          label="Executed"
-          value={swaps.executed}
-          icon={CheckCircle2}
-        />
-        <MetricCard
-          label="Rejected"
-          value={swaps.rejected}
-          icon={XCircle}
-        />
-        <MetricCard
-          label="Rolled Back"
-          value={swaps.rolledBack}
-          icon={Undo2}
-          variant={swaps.rolledBack > 0 ? 'warning' : 'default'}
-        />
-      </MetricGroup>
+      <SectionErrorBoundary sectionName="Swap Requests">
+        <MetricGroup title="Swap Requests">
+          <MetricCard
+            label="Pending"
+            value={swaps.pending}
+            icon={ArrowLeftRight}
+            variant={swaps.pending > 0 ? 'warning' : 'default'}
+          />
+          <MetricCard
+            label="Approved"
+            value={swaps.approved}
+            icon={CheckCircle2}
+            variant="success"
+          />
+          <MetricCard
+            label="Executed"
+            value={swaps.executed}
+            icon={CheckCircle2}
+          />
+          <MetricCard
+            label="Rejected"
+            value={swaps.rejected}
+            icon={XCircle}
+          />
+          <MetricCard
+            label="Rolled Back"
+            value={swaps.rolledBack}
+            icon={Undo2}
+            variant={swaps.rolledBack > 0 ? 'warning' : 'default'}
+          />
+        </MetricGroup>
+      </SectionErrorBoundary>
 
       {/* Conflicts */}
-      <MetricGroup title="Schedule Conflicts">
-        <MetricCard
-          label="New Conflicts"
-          value={conflicts.new}
-          icon={AlertTriangle}
-          variant={conflicts.new > 0 ? 'danger' : 'default'}
-        />
-        <MetricCard
-          label="Acknowledged"
-          value={conflicts.acknowledged}
-          icon={CheckCircle2}
-        />
-        <MetricCard
-          label="Resolved"
-          value={conflicts.resolved}
-          icon={CheckCircle2}
-          variant="success"
-        />
-        <MetricCard
-          label="Ignored"
-          value={conflicts.ignored}
-          icon={XCircle}
-        />
-      </MetricGroup>
+      <SectionErrorBoundary sectionName="Schedule Conflicts">
+        <MetricGroup title="Schedule Conflicts">
+          <MetricCard
+            label="New Conflicts"
+            value={conflicts.new}
+            icon={AlertTriangle}
+            variant={conflicts.new > 0 ? 'danger' : 'default'}
+          />
+          <MetricCard
+            label="Acknowledged"
+            value={conflicts.acknowledged}
+            icon={CheckCircle2}
+          />
+          <MetricCard
+            label="Resolved"
+            value={conflicts.resolved}
+            icon={CheckCircle2}
+            variant="success"
+          />
+          <MetricCard
+            label="Ignored"
+            value={conflicts.ignored}
+            icon={XCircle}
+          />
+        </MetricGroup>
+      </SectionErrorBoundary>
     </div>
   );
 }

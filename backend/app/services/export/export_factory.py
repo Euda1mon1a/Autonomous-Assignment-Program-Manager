@@ -51,7 +51,9 @@ class ExportFactory:
             db: Async database session
         """
         self.db = db
-        self._exporters = {
+        self._exporters: dict[
+            ExportFormat, CSVExporter | JSONExporter | XMLExporter
+        ] = {
             ExportFormat.CSV: CSVExporter(db),
             ExportFormat.JSON: JSONExporter(db),
             ExportFormat.XML: XMLExporter(db),

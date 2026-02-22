@@ -74,7 +74,7 @@ class ImageProcessor:
         """
         try:
             # Load image
-            image = self.Image.open(io.BytesIO(file_content))
+            image: Any = self.Image.open(io.BytesIO(file_content))
 
             # Extract EXIF data
             exif_data = self._extract_exif(image)
@@ -112,7 +112,7 @@ class ImageProcessor:
             }
 
             # Process original
-            output_format = format or image.format
+            output_format: str = format or image.format or "JPEG"
             result["versions"]["original"] = self._save_image(
                 image, output_format, quality
             )
@@ -160,7 +160,7 @@ class ImageProcessor:
             bytes: Thumbnail image bytes
         """
         try:
-            image = self.Image.open(io.BytesIO(file_content))
+            image: Any = self.Image.open(io.BytesIO(file_content))
 
             # Auto-rotate based on EXIF
             image = self.ImageOps.exif_transpose(image)

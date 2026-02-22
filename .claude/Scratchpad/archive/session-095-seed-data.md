@@ -25,7 +25,7 @@ Restored database with real TAMC personnel data from `immaculate_real_personnel_
 - PGY-2 (6): Scott Cook, Nick Maher, Felipe Cataquiz, Alaine Gigon, Devin Thomas, James Headid
 - PGY-3 (5): Jae You, Clay Petrie, Cam Mayell, Christian Hernandez, Laura Connolly
 
-**12 Faculty:** Aaron Montgomery, Alex LaBounty, Blake Van Brunt, Brian Dahl, Bridget Colgan, Chelsea Tagawa, Chris McGuire, Jimmy Chu, Joe Napierala, Sarah Kinkennon, Zach Bevis, Zach McRae
+**12 Faculty:** Faculty-L, Faculty-D, Faculty-E, Faculty-B, Faculty-A, Faculty-C, Faculty-F, Faculty-G, Faculty-H, Faculty-I, Faculty-J, Faculty-K
 
 ## Key Points
 

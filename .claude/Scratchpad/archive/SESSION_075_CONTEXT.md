@@ -472,7 +472,7 @@ API returns snake_case, frontend expects camelCase. Fields affected:
 
 ### Faculty Roles (Current DB State)
 ```
-Aaron Montgomery: apd (changed via UI)
+Faculty-L: apd (changed via UI)
 Alex LaBounty: core (changed via UI)
 Bridget Colgan: oic
 Joe Napierala: dept_chief

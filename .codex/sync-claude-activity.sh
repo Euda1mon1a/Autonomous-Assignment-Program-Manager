@@ -31,7 +31,7 @@ if ! ssh $SSH_OPTS "$MINI" 'true' 2>/dev/null; then
     exit 0
 fi
 
-# 1. Fetch completed tasks from coder log (last 24h)
+# 1. Fetch completed tasks from coder log (last 24h), deduped
 COMPLETED=$(ssh $SSH_OPTS "$MINI" '
     LOG="$HOME/.openclaw/logs/claude-coder.log"
     if [ -f "$LOG" ]; then
@@ -41,29 +41,37 @@ COMPLETED=$(ssh $SSH_OPTS "$MINI" '
             if [[ "$LOG_DATE" > "$CUTOFF" || "$LOG_DATE" == "$CUTOFF" ]]; then
                 echo "$line"
             fi
-        done
+        done | sort -u
     fi
 ' 2>/dev/null || echo "")
 
-# 2. Get list of claude/* branches on Mini bare repos
+# 2. Get list of claude/* branches on Mini bare repos, deduped
+#    Uses realpath to avoid scanning the same repo twice (e.g. aapm.git
+#    appears under both ~/repos/personal/ and ~/repos/), and pipes through
+#    sort -u to eliminate any remaining duplicate repo|branch lines.
 CLAUDE_BRANCHES=$(ssh $SSH_OPTS "$MINI" '
+    SEEN_REPOS=""
+    scan_repo() {
+        local repo="$1" rname="$2"
+        [ -d "$repo" ] || return 0
+        local real
+        real=$(cd "$repo" && pwd -P)
+        case "$SEEN_REPOS" in *"|${real}|"*) return 0 ;; esac
+        SEEN_REPOS="${SEEN_REPOS}|${real}|"
+        git -C "$repo" branch 2>/dev/null | grep "claude/" | sed "s/^..//" | while read -r b; do
+            LAST=$(git -C "$repo" log -1 --format="%cd|%s" --date=short "$b" 2>/dev/null)
+            echo "$rname|$b|$LAST"
+        done
+    }
     for repo in ~/repos/personal/aapm.git ~/repos/aapm.git; do
-        if [ -d "$repo" ]; then
-            git -C "$repo" branch 2>/dev/null | grep "claude/" | sed "s/^..//" | while read -r b; do
-                LAST=$(git -C "$repo" log -1 --format="%cd|%s" --date=short "$b" 2>/dev/null)
-                echo "aapm|$b|$LAST"
-            done
-        fi
+        scan_repo "$repo" "aapm"
     done
     for repo in ~/repos/moltbot/*.git ~/repos/personal/*.git; do
         [ -d "$repo" ] || continue
         RNAME=$(basename "$repo" .git)
-        git -C "$repo" branch 2>/dev/null | grep "claude/" | sed "s/^..//" | while read -r b; do
-            LAST=$(git -C "$repo" log -1 --format="%cd|%s" --date=short "$b" 2>/dev/null)
-            echo "$RNAME|$b|$LAST"
-        done
+        scan_repo "$repo" "$RNAME"
     done
-' 2>/dev/null || echo "")
+' 2>/dev/null | sort -u || echo "")
 
 # 3. Write digest file
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M HST")
@@ -78,21 +86,23 @@ cat > "$DIGEST_FILE" << HEADER
 HEADER
 
 if [ -n "$COMPLETED" ]; then
-    echo "$COMPLETED" | while IFS= read -r line; do
+    # Build digest lines first, then dedup before writing
+    DIGEST_LINES=$(echo "$COMPLETED" | while IFS= read -r line; do
         # Extract task description and repo
         if echo "$line" | grep -q "Task COMPLETED"; then
             TASK=$(echo "$line" | sed 's/.*Task COMPLETED: //' | sed 's/ ([0-9]* commits.*//')
             TS=$(echo "$line" | grep -oE '^\[[0-9-]+ [0-9:]+\]')
-            echo "- $TS DONE: $TASK" >> "$DIGEST_FILE"
+            echo "- $TS DONE: $TASK"
         elif echo "$line" | grep -q "Task FAILED"; then
             TASK=$(echo "$line" | sed 's/.*Task FAILED: //')
             TS=$(echo "$line" | grep -oE '^\[[0-9-]+ [0-9:]+\]')
-            echo "- $TS FAILED: $TASK" >> "$DIGEST_FILE"
+            echo "- $TS FAILED: $TASK"
         elif echo "$line" | grep -q "Skipping already-completed"; then
             TASK=$(echo "$line" | sed 's/.*Skipping already-completed: //')
-            echo "- SKIPPED (already done): $TASK" >> "$DIGEST_FILE"
+            echo "- SKIPPED (already done): $TASK"
         fi
-    done
+    done | awk '!seen[$0]++')
+    echo "$DIGEST_LINES" >> "$DIGEST_FILE"
 else
     echo "(no activity in last 24h)" >> "$DIGEST_FILE"
 fi
@@ -106,7 +116,8 @@ cat >> "$DIGEST_FILE" << 'MIDHEADER'
 MIDHEADER
 
 if [ -n "$CLAUDE_BRANCHES" ]; then
-    echo "$CLAUDE_BRANCHES" | while IFS='|' read -r repo branch datesubj; do
+    # Dedup branch rows (awk preserves first-seen order)
+    echo "$CLAUDE_BRANCHES" | awk -F'|' '!seen[$1,$2]++' | while IFS='|' read -r repo branch datesubj; do
         CDATE=$(echo "$datesubj" | cut -d'|' -f1)
         SUBJ=$(echo "$datesubj" | cut -d'|' -f2-)
         echo "| $repo | \`$branch\` | $CDATE | $SUBJ |" >> "$DIGEST_FILE"

@@ -17,6 +17,8 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "warn",
       "react/no-unescaped-entities": "off",
       "prefer-const": "warn",
+      // Ensure useEffect/useMemo/useCallback dependency arrays are correct
+      "react-hooks/exhaustive-deps": "warn",
       // Phase 24: Prevent unclickable buttons (Session 086)
       // jsx-a11y rules help catch interactive elements without proper handlers
       "jsx-a11y/interactive-supports-focus": "warn",

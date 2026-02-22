@@ -365,7 +365,7 @@ class S3StorageBackend(StorageBackend):
             s3_metadata["upload_timestamp"] = now.isoformat()
 
             # Upload to S3
-            upload_args = {
+            upload_args: dict[str, Any] = {
                 "Bucket": self.bucket_name,
                 "Key": s3_key,
                 "ContentType": content_type,

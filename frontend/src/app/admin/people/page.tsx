@@ -32,6 +32,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useKeyboardShortcuts, getShortcutDisplay } from '@/hooks/useKeyboardShortcuts';
 import { useToast } from '@/contexts/ToastContext';
 import type { PersonUpdate } from '@/types/api';
+import { SectionErrorBoundary } from '@/components/SectionErrorBoundary';
 
 // ============================================================================
 // Types
@@ -338,88 +339,90 @@ export default function AdminPeoplePage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-4 mb-6">
-          {/* Search */}
-          <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder={`Search people... (${getShortcutDisplay({ key: 'k', modifiers: ['cmd'] })})`}
-              value={filters.search}
-              onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-              className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900"
-            />
-            {filters.search && (
-              <button
-                onClick={() => setFilters((prev) => ({ ...prev, search: '' }))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white transition-colors"
+        <SectionErrorBoundary sectionName="People Management">
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-4 mb-6">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder={`Search people... (${getShortcutDisplay({ key: 'k', modifiers: ['cmd'] })})`}
+                value={filters.search}
+                onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+                className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+              />
+              {filters.search && (
+                <button
+                  onClick={() => setFilters((prev) => ({ ...prev, search: '' }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Type Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-slate-300" />
+              <select
+                value={filters.type}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, type: e.target.value as PersonType | '' }))
+                }
+                className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900"
               >
-                <X className="w-4 h-4" />
-              </button>
+                <option value="">All Types</option>
+                <option value="resident">Residents</option>
+                <option value="faculty">Faculty</option>
+              </select>
+            </div>
+
+            {/* PGY Level Filter (only show for residents) */}
+            {(filters.type === '' || filters.type === 'resident') && (
+              <select
+                value={filters.pgyLevel}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    pgyLevel: e.target.value ? Number(e.target.value) : '',
+                  }))
+                }
+                className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+              >
+                <option value="">All PGY Levels</option>
+                {[1, 2, 3, 4, 5].map((level) => (
+                  <option key={level} value={level}>PGY-{level}</option>
+                ))}
+              </select>
             )}
+
+            {/* Stats */}
+            <div className="flex-1" />
+            <div className="text-sm text-slate-300">
+              {people.length} {people.length === 1 ? 'person' : 'people'}
+              {peopleData?.total && peopleData.total !== people.length && (
+                <span> of {peopleData.total}</span>
+              )}
+            </div>
           </div>
 
-          {/* Type Filter */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-300" />
-            <select
-              value={filters.type}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, type: e.target.value as PersonType | '' }))
-              }
-              className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900"
-            >
-              <option value="">All Types</option>
-              <option value="resident">Residents</option>
-              <option value="faculty">Faculty</option>
-            </select>
-          </div>
-
-          {/* PGY Level Filter (only show for residents) */}
-          {(filters.type === '' || filters.type === 'resident') && (
-            <select
-              value={filters.pgyLevel}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  pgyLevel: e.target.value ? Number(e.target.value) : '',
-                }))
-              }
-              className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900"
-            >
-              <option value="">All PGY Levels</option>
-              {[1, 2, 3, 4, 5].map((level) => (
-                <option key={level} value={level}>PGY-{level}</option>
-              ))}
-            </select>
+          {/* People Table */}
+          {peopleLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <PeopleTable
+              people={people}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+              sort={sort}
+              onSortChange={handleSortChange}
+            />
           )}
-
-          {/* Stats */}
-          <div className="flex-1" />
-          <div className="text-sm text-slate-300">
-            {people.length} {people.length === 1 ? 'person' : 'people'}
-            {peopleData?.total && peopleData.total !== people.length && (
-              <span> of {peopleData.total}</span>
-            )}
-          </div>
-        </div>
-
-        {/* People Table */}
-        {peopleLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <LoadingSpinner />
-          </div>
-        ) : (
-          <PeopleTable
-            people={people}
-            selectedIds={selectedIds}
-            onSelectionChange={setSelectedIds}
-            sort={sort}
-            onSortChange={handleSortChange}
-          />
-        )}
+        </SectionErrorBoundary>
       </main>
 
       {/* Bulk Actions Toolbar */}

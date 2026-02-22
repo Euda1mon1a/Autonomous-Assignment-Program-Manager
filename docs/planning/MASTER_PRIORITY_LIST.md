@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-20 (MCP client config fix, watchdog merged)
+> **Last Updated:** 2026-02-21 (PRs #1187 + #1188 merged, schedule-vision + Phase 7 constraints)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -535,25 +535,20 @@ Three-phase plan to eliminate CLI dependency for all operations:
 
 **Confidence:** Medium — RED health status adds uncertainty. Security and migration debt can introduce hidden work.
 
-### 21. Working Branches With Committed Files (NEW - Feb 2026)
+### 21. Working Branches With Committed Files — RESOLVED (Feb 2026)
 **Added:** 2026-02-20
-**Source:** Branch inventory during ML scorer docs session
+**Resolved:** 2026-02-21
 
-Three active branches have committed work that needs review. All are **stale on `graph_nodes.py` and `test_scheduling_graph.py`** after PR #1181 merged the 13-node ML scorer pipeline. Rebasing these branches will show conflicts on those files.
+| Branch | Disposition |
+|--------|------------|
+| `feature/empty-table-features` | ✅ Merged as PR #1182 |
+| `feat/schedule-vision-research` | ✅ Superseded by PR #1187 (merged) |
+| `docs/repo-state-report-feb19` | Stale — can be deleted |
+| `feat/ml-training-deployment` | ✅ Merged as PR #1187 |
+| `feat/phase7-block-level-constraints-gh` | ✅ Merged as PR #1188 |
+| `docs/ml-integration-status-and-branch-triage` | Closed (PR #1186, superseded) |
 
-| Branch | Commits Ahead | Key Files | Status |
-|--------|---------------|-----------|--------|
-| `feature/empty-table-features` | 4 | Gemini seed scripts, seeding guide, schema drift report, game theory/wellness/notification seeds (28 files) | Stale — forked before PR #1181; graph files show -277/-120 line deltas |
-| `feat/schedule-vision-research` | 1 | Schedule-vision ML research scripts (24 files) | Stale — touches graph files |
-| `docs/repo-state-report-feb19` | 1 | Plain-English repo state report (17 files) | Stale — touches graph files |
-
-**Action:**
-1. Rebase each branch onto `main` (post-PR #1181 merge)
-2. Resolve graph_nodes.py / test file conflicts (accept main's 13-node version)
-3. Review committed content for merge-readiness
-4. Open PRs or discard if superseded
-
-**Effort:** 1-2 hours total (mostly conflict resolution + review)
+All local branches deleted, remote refs pruned.
 
 ### 22. MCP Server Reliability — MOSTLY RESOLVED (Feb 2026)
 **Added:** 2026-02-20
@@ -853,21 +848,27 @@ FastAPI TestClient has undocumented behavior differences between versioned and n
 - Infrastructure exists, route registered
 - Minimal production usage - consider for Labs rollout
 
-### 17. ML Workload Analysis — PARTIALLY RESOLVED
+### 17. ML Workload Analysis — MOSTLY RESOLVED (Feb 2026)
 - ~~`ml.py` returns "placeholder response"~~ ML scorer now wired into LangGraph pipeline (PR #1181)
 - **Done:** `ScheduleScorer` ensemble (PreferencePredictor, ConflictPredictor, WorkloadOptimizer) runs as `ml_score` node (node 12) in 13-node LangGraph StateGraph
+- **Done:** Schedule-vision pipeline merged (PR #1187) — CatBoost + distillation + multi-AY feature extraction with theme color resolution, 9 rounds of Codex review
+- **Done:** Phase 7 block-level constraint calibration merged (PR #1188) — faculty GME/DFM/SM caps, per-activity locked counters, week-scoped requirement keying, 9 rounds of Codex review
 - **Remaining:** Models need training data to be fitted; currently gracefully degrades (returns empty scores) when models are unfitted
 - **Remaining:** `ml.py` placeholder API endpoint still returns mock data (separate from pipeline scorer)
 
-**Experimental ML Approaches (planned testing):**
+**Schedule-Vision Pipeline (on main — PR #1187):**
 
-| Approach | Branch/Location | Status | Description |
-|----------|-----------------|--------|-------------|
-| `schedule-vision` | `feat/schedule-vision-research` | Branch exists (1 commit, 8 files) | CatBoost + TabPFN + distillation scripts |
-| `schedule-vision-neural` | Not yet created | Planned | Neural variant to benchmark against schedule-vision |
-| (additional experimental ML) | TBD | Planned | Third ML approach for comparative evaluation |
+| Script | Purpose |
+|--------|---------|
+| `scripts/schedule-vision/extract_universal.py` | Multi-AY Excel feature extractor (theme colors, era1/era2 layouts) |
+| `scripts/schedule-vision/learn_catboost.py` | CatBoost evaluation (LOAYO + LOBO CV, feature importance, ablation) |
+| `scripts/schedule-vision/distill.py` | Knowledge distillation (teacher with RGB → student without) |
+| `scripts/schedule-vision/benchmark.py` | Head-to-head comparison vs 68.8% baseline |
+| `scripts/ml/export_blocks_json.py` | DB export with source filtering (preload/manual only) |
+| `scripts/ml/calibrate_constraints.py` | Constraint calibration from learned data (week-scoped) |
+| `scripts/ml/validate_e2e.py` | E2E validation metrics for constraint calibration |
 
-**Next:** Train models on historical data, then benchmark all three approaches against each other for schedule quality scoring.
+**Next:** Train models on historical data, benchmark against baseline.
 
 ### 18. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
@@ -1011,6 +1012,23 @@ done
 | 31 | CP-SAT Integration Tests | 4-8h | MEDIUM |
 
 **Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+### Session 2026-02-21 Updates
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Merged | PR #1187 | ML training pipeline + schedule-vision models (CatBoost, distillation, multi-AY extraction, theme colors, 9 Codex rounds) |
+| ✅ Merged | PR #1188 | Phase 7 block-level constraint calibration + faculty GME/DFM/SM caps (per-activity counters, week-scoped keying, 9 Codex rounds) |
+| ✅ Closed | PR #1186 | docs: ML integration status — superseded by #1187/#1188 merges |
+| 🗑️ Deleted | 8 branches | Stale feature/review branches (feat/ml-training-deployment, feat/phase7-*, pr-1186/1187/1188, etc.) |
+| 🗑️ Pruned | 2 remote refs | origin/feat/ml-training-deployment, origin/feat/phase7-block-level-constraints-gh |
+| 📝 Updated | HIGH #21 | Working branches → RESOLVED (all merged, closed, or deleted) |
+| 📝 Updated | LOW #17 | ML Workload Analysis → MOSTLY RESOLVED (schedule-vision + constraint calibration on main) |
+
+**Codex review rounds (PRs #1187 + #1188 combined):**
+- Rounds 2-9 across both PRs
+- 27+ Codex bot findings triaged (real bugs, false positives, cross-PR, already fixed)
+- Key fixes: fold padding class alignment, LabelEncoder fit, or-falsiness zero-caps, theme color XML, per-activity locked counters, admin_type cap selection, week-scoped requirement keying, export source filtering, class-order validation
 
 ### Session 2026-02-20 Updates
 
