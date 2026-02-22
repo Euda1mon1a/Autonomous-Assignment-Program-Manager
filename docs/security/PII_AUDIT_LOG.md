@@ -120,12 +120,53 @@ When performing a new audit, add an entry below with:
 | # | Date | Commit | Result | Notes |
 |---|------|--------|--------|-------|
 | 001 | 2025-12-23 | `935c0bd` | CLEAN | Initial baseline audit |
-| 002 | 2026-02-05 | `8ba81cf` | INCIDENT | PII discovered in tracked files. See Incident #001 below. |
-| 003 | 2026-02-21 | `e36c550` | INCIDENT | PII wipe tool corrupted origin; restored from bundle. See Incident #002 below. |
+| 002 | 2025-12-21 | `0fc0e6d5` | INCIDENT | PII in seed scripts, docstrings, tests. History rewrite + force-push. See Incident #001 below. |
+| 003 | 2026-02-05 | `8ba81cf` | INCIDENT | PII discovered in tracked files (round 2). See Incident #002 below. |
+| 004 | 2026-02-21 | `e36c550` | INCIDENT | PII wipe tool corrupted origin; restored from bundle. See Incident #003 below. |
 
 ---
 
-## Incident #001 — PII Contamination Discovery & Scrub (2026-02-05 to 2026-02-15)
+## Incident #001 — Original PII Cleanup & History Rewrite (2025-12-21 to 2025-12-22)
+
+| Field | Value |
+|-------|-------|
+| **Date Range** | 2025-12-21 through 2025-12-22 |
+| **Severity** | HIGH — required history rewrite, force-push, and `--allow-unrelated-histories` reconciliation |
+| **Scope** | Seed scripts, docstrings, test fixtures, data export docs |
+| **Resolution** | PII removed on `docs/session-14-summary` branch, force-pushed, merged with `--allow-unrelated-histories` |
+
+### Timeline
+
+| Date | Commit | Action |
+|------|--------|--------|
+| Dec 21 | `2ce9f0b9` | Removed PII from seed scripts (`scripts/seed_people.py`) and data docs (`AIRTABLE_EXPORT_SUMMARY.md`) |
+| Dec 21 | `05651fde` | Removed remaining PII from docstrings and tests (`schedule.py`, `xlsx_import.py`, `test_xlsx_import.py`) |
+| Dec 21 | `0fc0e6d5` | Added gitignore entries for local PII data files |
+| Dec 22 | `5ee6cfbe` | Reconciliation merge using `--allow-unrelated-histories` (diverged after force-push) |
+| Dec 22 | `664c2255` | Post-merge fix: restored FMIT preservation code lost in merge conflict |
+
+### What Was Found
+- **Seed scripts** (`scripts/seed_people.py`) with real resident/faculty names
+- **Docstrings and tests** in backend files referencing real people
+- **Data export summary** (`docs/data/AIRTABLE_EXPORT_SUMMARY.md`) with real identifiers
+
+### Impact
+- History rewrite on `docs/session-14-summary` branch created new commit SHAs for all prior commits
+- Force-push to origin replaced the canonical history
+- Local repo diverged from origin (no common merge base)
+- **Extended local-only development period** — could not push/pull normally
+- Reconciled via `git merge --allow-unrelated-histories`, creating duplicate commit SHAs throughout history
+- Every pre-merge commit exists twice in history (original SHA + rewritten SHA)
+- 1,186 commits followed this merge on `main`
+
+### Lasting Effects
+- Duplicate commit history persists (cannot be undone without another history rewrite)
+- Set precedent for PII handling that led to Incidents #002 and #003
+- `.gitignore` patterns for `docs/data/*.json` added during this incident
+
+---
+
+## Incident #002 — PII Contamination Discovery & Scrub (2026-02-05 to 2026-02-15)
 
 | Field | Value |
 |-------|-------|
@@ -167,7 +208,7 @@ Requires BFG history rewrite to fully resolve. Plan documented in `docs/planning
 
 ---
 
-## Incident #002 — PII Wipe Tool Corruption (2026-02-21)
+## Incident #003 — PII Wipe Tool Corruption (2026-02-21)
 
 | Field | Value |
 |-------|-------|
