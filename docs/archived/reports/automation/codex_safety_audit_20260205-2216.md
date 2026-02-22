@@ -10,4 +10,3 @@
 - .git/hooks/pre-commit: `present`
 
 **Result:** PASS
-

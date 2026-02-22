@@ -45,7 +45,7 @@ ALLOWED_REDIRECT_HOSTS = ["localhost", "127.0.0.1"]
 def validate_redirect_url(url: str | None) -> str:
     """
     Validate redirect URL is safe, preventing open redirect attacks.
-    
+
     Security:
         - Only allows relative URLs (starting with / but not //)
         - Validates absolute URLs against ALLOWED_REDIRECT_HOSTS whitelist
@@ -226,7 +226,7 @@ except ValueError as e:
 export RATE_LIMIT_ENABLED=true
 
 # Trigger rate limit (should get 429 after 5 attempts)
-for i in {1..10}; do 
+for i in {1..10}; do
   curl -i http://localhost:8000/api/auth/login \
     -H "Content-Type: application/json" \
     -d '{"username":"test","password":"wrong"}'

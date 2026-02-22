@@ -27,4 +27,3 @@ Gitleaks - Detect secrets................................................Passed
 ```
 
 **Result:** PASS
-

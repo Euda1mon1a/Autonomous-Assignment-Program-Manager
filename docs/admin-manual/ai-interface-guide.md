@@ -375,4 +375,3 @@ The admin interface includes a Claude Code chat panel with MCP tools. See the [M
 "Run N-1 contingency analysis"
 "What is our current defense level?"
 ```
-

@@ -197,7 +197,7 @@ See `quick-reference.md` → "Performance Expectations" for full table
 
 **For Core Tools:** FastAPI backend running
 
-**For Async Tools:** 
+**For Async Tools:**
 - Redis (message broker)
 - Celery worker (task processor)
 

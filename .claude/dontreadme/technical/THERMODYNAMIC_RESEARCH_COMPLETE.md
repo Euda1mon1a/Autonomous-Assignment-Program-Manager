@@ -164,7 +164,7 @@ Developer documentation for the thermodynamics module.
 
 **Discovery:** Landauer's principle proves that erasing information generates entropy (minimum k_B ln(2) per bit).
 
-**Implication:** 
+**Implication:**
 - Monitoring metrics costs computational energy
 - Making decisions is irreversible (erases alternatives)
 - We can optimize monitoring using information value analysis
@@ -274,10 +274,10 @@ if risk.overall_severity == TransitionSeverity.CRITICAL:
     print(f"   Signals: {len(risk.signals)}")
     print(f"   Time to transition: {risk.time_to_transition:.1f} hours")
     print(f"   Confidence: {risk.confidence:.1%}")
-    
+
     for signal in risk.signals:
         print(f"   - {signal.description}")
-    
+
     print(f"\nRecommended actions:")
     for action in risk.recommendations:
         print(f"   • {action}")
@@ -297,30 +297,30 @@ class ResilienceService:
         # Existing components
         self.utilization = UtilizationMonitor()
         self.homeostasis = HomeostasisMonitor()
-        
+
         # NEW: Thermodynamic monitors
         self.entropy_monitor = ScheduleEntropyMonitor()
         self.critical_monitor = CriticalPhenomenaMonitor()
-    
+
     async def health_check(self):
         # Update entropy
         assignments = await get_assignments(self.db)
         self.entropy_monitor.update(assignments)
-        
+
         # Check phase transitions
         metrics = {
             "utilization": self.utilization.current_rate,
             "coverage": self.coverage_rate,
             "violations": len(self.violations),
         }
-        
+
         phase_risk = await self.critical_monitor.update_and_assess(metrics)
-        
+
         # Escalate if critical thermodynamic signal
         if phase_risk.overall_severity == TransitionSeverity.CRITICAL:
             logger.error("Thermodynamic early warning - escalating defense")
             self.defense.escalate("PHASE_TRANSITION_RISK")
-        
+
         return ResilienceHealth(
             # ... existing fields ...
             entropy=self.entropy_monitor.get_current_metrics(),

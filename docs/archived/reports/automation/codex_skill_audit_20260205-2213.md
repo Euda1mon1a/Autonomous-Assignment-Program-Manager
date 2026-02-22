@@ -28,4 +28,3 @@
 - Run `scripts/ops/codex_cherry_pick_hunter.sh --save` before any worktree prune
 - Keep high-signal skills in one canonical location to reduce routing ambiguity
 - Add/normalize frontmatter `name:` where missing for reliable discovery
-

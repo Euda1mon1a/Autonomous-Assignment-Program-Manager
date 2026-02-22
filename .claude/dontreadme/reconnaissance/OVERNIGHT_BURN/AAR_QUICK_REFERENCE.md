@@ -70,7 +70,7 @@
 - Cost efficiency: Excellent ($38.50 total)
 - System stability: Perfect (66% API, no throttling)
 
-**Could we push harder?** 
+**Could we push harder?**
 - Theoretically: 15-20 agents/batch (within rate limits)
 - Practically: Insufficient metrics to push safely
 - Recommendation: Try 15-agent batches next time with detailed monitoring

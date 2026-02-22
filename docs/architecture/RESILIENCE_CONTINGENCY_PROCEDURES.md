@@ -704,4 +704,3 @@ Monthly Drill Schedule:
 **Approved for:** Program Directors, Chiefs, Scheduling Coordinators
 **Effective Date:** 2025-12-31
 **Review Cycle:** Quarterly (by chief resident) + Annual (by director)
-

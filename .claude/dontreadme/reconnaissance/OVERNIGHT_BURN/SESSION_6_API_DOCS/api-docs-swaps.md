@@ -1098,4 +1098,3 @@ Planned features not yet implemented:
 - [Swap Management Workflows](../guides/swap-management.md)
 - [ACGME Compliance](compliance.md)
 - [Call Assignment System](call-assignments.md)
-

@@ -1253,4 +1253,3 @@ The Residency Scheduler implements a **sophisticated, multi-layered resilience f
 
 **Deliverable Location:**
 `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Scratchpad/OVERNIGHT_BURN/SESSION_7_RESILIENCE/resilience-core-concepts.md`
-

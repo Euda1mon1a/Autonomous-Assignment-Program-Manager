@@ -284,4 +284,3 @@ python -m app.swaps.analyzer --resident1=A --simulate --dates=START-END
 - Swap management procedures in swap-management skill
 - ACGME rules in acgme-compliance skill
 - Swap execution in swap-execution skill
-

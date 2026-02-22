@@ -395,4 +395,3 @@ This specification elevates SCHEDULER from "operational agent" to **master-level
 **Signed**: G2_RECON SEARCH_PARTY Operation
 **Date**: 2025-12-30
 **Next Review**: 2026-01-27
-

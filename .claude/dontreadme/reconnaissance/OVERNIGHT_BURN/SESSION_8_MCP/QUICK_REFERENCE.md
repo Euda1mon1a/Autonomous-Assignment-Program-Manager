@@ -436,4 +436,3 @@ docker-compose exec db psql -U scheduler -d residency_scheduler -c "SELECT count
 8. Check `/health` if things seem broken
 
 **You're good to go!** 🚀
-

@@ -1015,4 +1015,3 @@ Key integration points:
 - **AbsenceConflictDetection**: Alerts when approved leave conflicts with non-leave-eligible rotations
 
 All endpoints require authentication and support full CRUD operations with proper validation and error handling.
-

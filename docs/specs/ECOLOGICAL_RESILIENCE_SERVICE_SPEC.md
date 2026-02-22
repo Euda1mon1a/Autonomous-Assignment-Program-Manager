@@ -2546,4 +2546,3 @@ Key sources:
 | Date | Version | Changes | Author |
 |------|---------|---------|--------|
 | 2025-12-26 | 1.0 | Initial specification | Resilience Engineering Team |
-

@@ -1990,4 +1990,3 @@ For integration guidance, see:
 - `/docs` - OpenAPI specification
 - `docs/monitoring/RESILIENCE_MONITORING.md` - Monitoring setup
 - `docs/architecture/cross-disciplinary-resilience.md` - Resilience concepts
-

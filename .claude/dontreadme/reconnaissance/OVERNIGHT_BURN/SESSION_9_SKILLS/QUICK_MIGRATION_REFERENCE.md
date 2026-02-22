@@ -338,4 +338,3 @@ Core Infrastructure:
 **Last Updated**: 2025-12-30
 **Format**: Quick Reference Card
 **Purpose**: Fast lookups during skill migrations
-

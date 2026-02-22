@@ -234,4 +234,3 @@ What we measured vs. what's missing:
 **Report Status:** READY FOR DECISION
 **Distribution:** Operations Leadership, Technical Directors, Product Management
 **Review Cycle:** Monthly (next review 2026-01-27)
-

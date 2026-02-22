@@ -320,7 +320,7 @@ Manager. The deliverables provide:
 1. DEEP TECHNICAL KNOWLEDGE (resilience-burnout-epidemiology.md)
    - Understand SIR models, Rt calculation, intervention strategies
    - 1,131 lines of comprehensive documentation
-   
+
 2. OPERATIONAL AGILITY (epidemiology-quick-reference.md)
    - Make real-time decisions during crises
    - Print and post for quick reference

@@ -976,4 +976,3 @@ The MCP database query architecture prioritizes:
 5. **Resilience**: Error handling, retry logic, health checks
 
 **Key Takeaway:** AI agents should use the API client for all data access, not direct database connections. The 30+ analysis tools provide comprehensive coverage of scheduling, compliance, and resilience domains without requiring raw SQL or ORM knowledge.
-

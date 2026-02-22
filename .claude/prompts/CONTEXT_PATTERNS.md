@@ -841,4 +841,3 @@ Use this at the start of each session:
 - Validate context consistency regularly
 - Use clear handoff documents for agent transitions
 - Document decisions and rationale for future reference
-

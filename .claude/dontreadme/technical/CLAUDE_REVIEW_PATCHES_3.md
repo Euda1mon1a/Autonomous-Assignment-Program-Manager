@@ -36,4 +36,3 @@ index 9d8f0b6..XXXXXXX 100644
 ```
 
 Optional: update the query key to avoid caching issues between `ALL` and null if needed.
-

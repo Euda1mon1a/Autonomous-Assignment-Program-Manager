@@ -273,4 +273,3 @@ Is on-call team ready?
 - See PROMPT_LIBRARY.md for deployment validation templates
 - See CLAUDE.md for deployment procedures
 - Incident response procedures in incident-responder skill
-

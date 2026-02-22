@@ -53,7 +53,7 @@ Goal → Decompose → Execute Tasks → Propagate Context → Complete
 async def sample_llm(prompt: str, context: dict) -> str:
     """
     Call LLM for reasoning using MCP sampling protocol.
-    
+
     Used for:
     - Root cause analysis
     - Solution generation
@@ -213,7 +213,7 @@ class AgentMCPServer:
     def __init__(self, db_session=None):
         self.resilience = ResilienceService(db_session)
         self.swap_executor = SwapExecutor()
-    
+
     async def _execute_standard_task(self, task, context):
         # Call actual backend services
         if task.name == "apply_fixes":

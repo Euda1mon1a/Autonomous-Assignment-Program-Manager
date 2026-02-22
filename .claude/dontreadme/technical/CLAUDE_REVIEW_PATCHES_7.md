@@ -27,14 +27,14 @@ index a330e44..XXXXXXX 100644
 +            # Defer deletion until after a successful solve
 @@
              solver_result = self._run_solver(algorithm, context, timeout_seconds)
- 
+
              if not solver_result.success:
                  logger.warning(f"Solver failed: {solver_result.solver_status}")
                  # Fallback to greedy if advanced solver fails
                  if algorithm != "greedy":
                      logger.info("Falling back to greedy solver")
                      solver_result = self._run_solver("greedy", context, timeout_seconds)
- 
+
 +            if not solver_result.success:
 +                # Do not delete existing assignments on failure
 +                self._update_run_status(run, "failed", 0, 0, time.time() - start_time)

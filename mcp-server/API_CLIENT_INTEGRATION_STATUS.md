@@ -106,7 +106,7 @@ Major progress on integrating the orphaned API client across all MCP tools. The 
 ```python
 async def execute(self, request):
     client = self._require_api_client()
-    
+
     result = await client.client.get(  # Direct HTTP call
         f"{client.config.api_prefix}/compliance/work-hours",
         headers=await client._ensure_authenticated(),
@@ -120,7 +120,7 @@ async def execute(self, request):
 ```python
 async def execute(self, request):
     client = self._require_api_client()
-    
+
     data = await client.check_work_hours(  # Dedicated method
         start_date=request.start_date,
         end_date=request.end_date,
@@ -207,10 +207,10 @@ def update_tool(tool_path, old_pattern, new_code):
     """Update a single tool file."""
     path = Path(tool_path)
     content = path.read_text()
-    
+
     # Replace old pattern with new code
     updated = re.sub(old_pattern, new_code, content, flags=re.DOTALL)
-    
+
     if updated != content:
         path.write_text(updated)
         print(f"✅ Updated {tool_path}")

@@ -334,9 +334,7 @@ class TestClinicLimits:
             for fac_id, _, activity in result.faculty_half_day_assignments
             if fac_id == faculty[0].id and activity == "C"
         )
-        assert clinic_count == 0, (
-            f"PD has {clinic_count} clinic sessions, should be 0"
-        )
+        assert clinic_count == 0, f"PD has {clinic_count} clinic sessions, should be 0"
 
     def test_apd_max_2_clinic_per_week(self):
         """APD should have max 2 clinic sessions per week."""
@@ -359,9 +357,7 @@ class TestClinicLimits:
             for fac_id, _, activity in result.faculty_half_day_assignments
             if fac_id == faculty[0].id and activity == "C"
         )
-        assert clinic_count <= 2, (
-            f"APD has {clinic_count} clinic sessions, max is 2"
-        )
+        assert clinic_count <= 2, f"APD has {clinic_count} clinic sessions, max is 2"
 
 
 class TestPCATDOLinkage:
@@ -376,7 +372,9 @@ class TestPCATDOLinkage:
         for i in range(3):  # Mon, Tue, Wed
             d = start + timedelta(days=i)
             for tod in ["AM", "PM"]:
-                blocks.append(MockBlock(block_date=d, time_of_day=tod, is_weekend=False))
+                blocks.append(
+                    MockBlock(block_date=d, time_of_day=tod, is_weekend=False)
+                )
 
         context = create_context_with_availability([], faculty, blocks)
 
@@ -399,7 +397,11 @@ class TestPCATDOLinkage:
 
                     # Find next AM block
                     next_am_block = next(
-                        (b for b in blocks if b.date == next_date and b.time_of_day == "AM"),
+                        (
+                            b
+                            for b in blocks
+                            if b.date == next_date and b.time_of_day == "AM"
+                        ),
                         None,
                     )
                     if next_am_block:
@@ -422,7 +424,9 @@ class TestPCATDOLinkage:
         for i in range(3):
             d = start + timedelta(days=i)
             for tod in ["AM", "PM"]:
-                blocks.append(MockBlock(block_date=d, time_of_day=tod, is_weekend=False))
+                blocks.append(
+                    MockBlock(block_date=d, time_of_day=tod, is_weekend=False)
+                )
 
         context = create_context_with_availability([], faculty, blocks)
 
@@ -442,7 +446,11 @@ class TestPCATDOLinkage:
                     next_date = call_block.date + timedelta(days=1)
 
                     next_pm_block = next(
-                        (b for b in blocks if b.date == next_date and b.time_of_day == "PM"),
+                        (
+                            b
+                            for b in blocks
+                            if b.date == next_date and b.time_of_day == "PM"
+                        ),
                         None,
                     )
                     if next_pm_block:
@@ -471,7 +479,9 @@ class TestSupervisionRatio:
         blocks = create_week_of_blocks()
         template = MockTemplate(name="Clinic")
 
-        context = create_context_with_availability(residents, faculty, blocks, [template])
+        context = create_context_with_availability(
+            residents, faculty, blocks, [template]
+        )
 
         solver = CPSATSolver(
             constraint_manager=ConstraintManager(),
@@ -495,7 +505,9 @@ class TestSupervisionRatio:
         blocks = create_week_of_blocks()
         template = MockTemplate(name="Clinic")
 
-        context = create_context_with_availability(residents, faculty, blocks, [template])
+        context = create_context_with_availability(
+            residents, faculty, blocks, [template]
+        )
 
         solver = CPSATSolver(
             constraint_manager=ConstraintManager(),
@@ -523,7 +535,9 @@ class TestFacultySolverIntegration:
             create_faculty("Dr. PD", faculty_role="program_director"),
             create_faculty("Dr. APD", faculty_role="assistant_program_director"),
         ]
-        residents = [create_resident(f"Resident {i}", pgy_level=(i % 3) + 1) for i in range(6)]
+        residents = [
+            create_resident(f"Resident {i}", pgy_level=(i % 3) + 1) for i in range(6)
+        ]
         blocks = create_4_week_blocks()
 
         context = create_context_with_availability(residents, faculty, blocks)

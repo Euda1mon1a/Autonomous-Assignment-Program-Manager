@@ -370,7 +370,9 @@ def create_request_context(
     )
 
 
-def with_log_context(**context_fields: Any) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def with_log_context(
+    **context_fields: Any,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Decorator to add context to function logging.
 

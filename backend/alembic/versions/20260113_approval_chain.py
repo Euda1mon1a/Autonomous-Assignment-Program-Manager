@@ -65,9 +65,7 @@ def upgrade() -> None:
             sa.ForeignKey("users.id", ondelete="SET NULL"),
             nullable=True,
         ),
-        sa.Column(
-            "actor_type", sa.String(20), nullable=False, server_default="human"
-        ),
+        sa.Column("actor_type", sa.String(20), nullable=False, server_default="human"),
         # Justification (especially for ACGME overrides)
         sa.Column("reason", sa.Text(), nullable=True),
         # Target entity references
@@ -93,9 +91,7 @@ def upgrade() -> None:
     )
 
     # Index for chain lookups
-    op.create_index(
-        "ix_approval_record_chain_id", "approval_record", ["chain_id"]
-    )
+    op.create_index("ix_approval_record_chain_id", "approval_record", ["chain_id"])
 
     # Index for chain traversal (most common query pattern)
     op.create_index(
@@ -105,14 +101,10 @@ def upgrade() -> None:
     )
 
     # Index for actor lookups
-    op.create_index(
-        "ix_approval_record_actor_id", "approval_record", ["actor_id"]
-    )
+    op.create_index("ix_approval_record_actor_id", "approval_record", ["actor_id"])
 
     # Index for action type filtering
-    op.create_index(
-        "ix_approval_record_action", "approval_record", ["action"]
-    )
+    op.create_index("ix_approval_record_action", "approval_record", ["action"])
 
     # Index for time-range queries (descending for recent-first)
     op.create_index(

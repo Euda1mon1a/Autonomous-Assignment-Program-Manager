@@ -97,7 +97,9 @@ class TestScheduleGenerationRoutes:
             schedule_routes, "get_settings", lambda: SimpleNamespace(DEBUG=False)
         )
 
-        with patch.object(schedule_routes.SchedulingEngine, "generate") as mock_generate:
+        with patch.object(
+            schedule_routes.SchedulingEngine, "generate"
+        ) as mock_generate:
             response = client.post(
                 "/api/schedule/generate",
                 headers=auth_headers,
@@ -225,9 +227,7 @@ class TestScheduleModificationRoutes:
 class TestScheduleRunRoutes:
     """Test suite for schedule run listing endpoints."""
 
-    def test_list_schedule_runs_pagination_and_total(
-        self, client, auth_headers, db
-    ):
+    def test_list_schedule_runs_pagination_and_total(self, client, auth_headers, db):
         """Ensure /api/schedule/runs returns total count even with pagination."""
         start_date = date.today()
         for i, status in enumerate(["success", "success", "failed"]):
@@ -253,9 +253,7 @@ class TestScheduleRunRoutes:
         assert data["total"] == 3
         assert len(data["runs"]) == 1
 
-    def test_list_schedule_runs_status_filter(
-        self, client, auth_headers, db
-    ):
+    def test_list_schedule_runs_status_filter(self, client, auth_headers, db):
         """Ensure status filter affects total count."""
         start_date = date.today()
         for i, status in enumerate(["success", "success", "failed"]):

@@ -660,4 +660,3 @@ The sacrifice hierarchy embodies **utilitarian triage ethics**:
 The Sacrifice Hierarchy is a **decision catalyst** that removes crisis decision-making from the moment of crisis. By pre-establishing priorities, documenting authority, and maintaining audit trails, it enables transparent, defensible load shedding that protects both patient safety and program accreditation while explicitly managing the difficult tradeoffs that crises require.
 
 **The core insight**: *The best time to make hard decisions is before you need to make them.*
-

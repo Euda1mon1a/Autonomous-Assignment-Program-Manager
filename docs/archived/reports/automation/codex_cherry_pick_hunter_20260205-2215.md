@@ -75,5 +75,3 @@ Dirty paths:
 ?? .claude/dontreadme/stack-health/2026-02-04_080507.json
 ?? frontend/.npm-cache/
 ```
-
-

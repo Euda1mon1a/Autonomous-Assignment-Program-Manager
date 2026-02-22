@@ -33,7 +33,7 @@
 
 ### Section 1: Overview & Mission (5 KB)
 - **Lenses Applied**: PERCEPTION, INSIGHT
-- **Deliverables**: 
+- **Deliverables**:
   - Agent role definition
   - 6 core competencies
   - Mission statement
@@ -353,4 +353,3 @@
 **Next Review**: 2026-01-27 (monthly)
 
 ---
-

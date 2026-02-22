@@ -102,13 +102,13 @@ Never:
    ```bash
    # Install BFG Repo Cleaner
    brew install bfg
-   
+
    # Remove file from all history
    bfg --delete-files <filename> --no-blob-protection
    git reflog expire --expire=now --all && git gc --prune=now --aggressive
    git push --force
    ```
-   
+
    > ⚠️ Coordinate with team before force-pushing to shared branches.
 
 3. **Notify**: Inform project leads of potential exposure

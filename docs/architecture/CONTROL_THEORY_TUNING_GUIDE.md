@@ -1827,7 +1827,7 @@ Model Predictive Control (MPC) generates **optimal multi-week schedules** by sol
 **Control Law:**
 
 ```
-min  Σ[t=0 to N-1] { q_c·(coverage[t] - 0.95)² 
+min  Σ[t=0 to N-1] { q_c·(coverage[t] - 0.95)²
                      + q_u·(utilization[t] - 0.75)²
                      + q_w·workload_variance[t]
                      + q_p·preference_mismatch[t] }
@@ -2973,4 +2973,3 @@ if solution.status == "INFEASIBLE":
 **Word Count:** ~11,500 words
 
 **Maintenance:** Update this guide when new tuning methods are discovered or system dynamics change significantly.
-

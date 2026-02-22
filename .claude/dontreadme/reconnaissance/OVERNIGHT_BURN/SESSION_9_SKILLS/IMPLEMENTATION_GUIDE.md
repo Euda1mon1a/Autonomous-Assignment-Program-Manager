@@ -664,4 +664,3 @@ A skill is "done" (v1.0) when:
 7. Submit for review
 
 **Questions:** Reference `skills-new-recommendations.md` section on that skill's detailed spec.
-

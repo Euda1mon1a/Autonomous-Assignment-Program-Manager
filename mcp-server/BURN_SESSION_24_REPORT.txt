@@ -15,7 +15,7 @@ Core Infrastructure (15 tasks):
   ✅ Tool registry with category support
   ✅ Tool executor with timing and stats
   ✅ Input validator with security checks
-  
+
 Middleware (4 tasks):
   ✅ Authentication middleware
   ✅ Rate limiting (token bucket)

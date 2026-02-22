@@ -553,10 +553,14 @@ class FacultyOutpatientAssignmentService:
             key = (selected_faculty.id, block.date, block.time_of_day)
             existing = existing_by_slot.get(key)
             if existing:
-                if existing.source in (
-                    AssignmentSource.PRELOAD.value,
-                    AssignmentSource.MANUAL.value,
-                ) or existing.is_override:
+                if (
+                    existing.source
+                    in (
+                        AssignmentSource.PRELOAD.value,
+                        AssignmentSource.MANUAL.value,
+                    )
+                    or existing.is_override
+                ):
                     continue
                 existing.activity_id = clinic_activity.id
                 existing.counts_toward_fmc_capacity = counts_toward

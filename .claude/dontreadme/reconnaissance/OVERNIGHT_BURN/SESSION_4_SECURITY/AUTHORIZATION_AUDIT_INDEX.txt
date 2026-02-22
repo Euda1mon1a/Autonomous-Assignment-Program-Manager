@@ -15,7 +15,7 @@ DOCUMENT OVERVIEW
    Length: 433 lines
    Audience: Managers, Security Leads, Decision Makers
    Read Time: 15 minutes
-   
+
    Contents:
    ├─ Security ratings (A-D) by category
    ├─ 10 Critical/High priority findings with impacts
@@ -32,7 +32,7 @@ DOCUMENT OVERVIEW
    Length: 1,030 lines
    Audience: Security Engineers, Developers, Architects
    Read Time: 45 minutes
-   
+
    Contents:
    ├─ PERCEPTION: Current implementation (8 roles, JWT, dual systems)
    ├─ INVESTIGATION: Permission propagation (hierarchy conflicts)
@@ -59,7 +59,7 @@ DOCUMENT OVERVIEW
    Length: 440 lines
    Audience: RBAC system maintainers, Developers
    Read Time: 30 minutes
-   
+
    Contents:
    ├─ Complete matrix by role (8 roles × 26 resources × 9 actions)
    ├─ Risk-ranked violations with attack examples

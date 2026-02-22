@@ -638,4 +638,3 @@ PUT /api/programs/{program_id}/spc/config
 **Distribution:** Internal Use Only
 **Archival:** Store with SESSION_7_RESILIENCE documentation
 **Version:** 1.0 (2025-12-31)
-

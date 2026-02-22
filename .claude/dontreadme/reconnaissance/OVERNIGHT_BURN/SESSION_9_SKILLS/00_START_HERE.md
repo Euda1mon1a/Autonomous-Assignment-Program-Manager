@@ -69,7 +69,7 @@ Comprehensive documentation covering all 11 SEARCH_PARTY investigation lenses:
 - Section: MEDICINE (actual workflows in scheduling domain)
 
 ### For Implementing Compositions
-**Read:** 
+**Read:**
 - Section: SURVIVAL (error handling strategies)
 - Section: INVESTIGATION (dependency analysis)
 - `skills-testing-patterns.md` (from prior session)

@@ -11,6 +11,7 @@ from app.services.block_service import BlockService
 from app.services.email_service import EmailConfig, EmailService
 from app.services.conflict_alert_service import ConflictAlertService
 from app.services.conflict_auto_detector import ConflictAutoDetector, ConflictInfo
+
 # FacultyOutpatientAssignmentService archived - global CP-SAT solver now handles faculty
 from app.services.faculty_preference_service import FacultyPreferenceService
 from app.services.fmit_scheduler_service import FMITSchedulerService

@@ -39,4 +39,3 @@ rm -rf "/Users/aaronmontgomery/.codex/worktrees/b55a"
 
 - This plan intentionally excludes `bad1` unless you remove it from `--exclude-ids`.
 - Re-run this script before any destructive cleanup to account for new commits.
-

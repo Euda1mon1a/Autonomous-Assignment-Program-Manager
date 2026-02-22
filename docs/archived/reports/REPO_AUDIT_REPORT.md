@@ -43,7 +43,7 @@
 - **History:** Some evidence of scholarly references (e.g., academic citations) triggering PII scanners, requiring manual overrides.
 
 ### Authentication & Secrets
-- **Patterns:** Standard JWT with refresh token logic. 
+- **Patterns:** Standard JWT with refresh token logic.
 - **Secrets Management:** Multi-option approach (Keychain, Env, .env) with a custom loader. Production startup checks enforce high-entropy keys.
 - **Consistency:** `.env.example` is well-maintained and covers 95% of usage, though some internal path variables (`REPORTS_DIR`, `API_VERSION_STORAGE_DIR`) are missing.
 

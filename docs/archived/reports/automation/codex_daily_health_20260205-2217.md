@@ -9,10 +9,10 @@
 - enabled rows detected: `2`
 
 ```text
-Name        Command  Args                          Env                       Cwd  Status   Auth       
+Name        Command  Args                          Env                       Cwd  Status   Auth  
 perplexity  npx      -y @perplexity-ai/mcp-server  PERPLEXITY_API_KEY=*****  -    enabled  Unsupported
 
-Name                 Url                        Bearer Token Env Var  Status   Auth       
+Name                 Url                        Bearer Token Env Var  Status   Auth  
 residency-scheduler  http://127.0.0.1:8081/mcp  -                     enabled  Unsupported
 ```
 

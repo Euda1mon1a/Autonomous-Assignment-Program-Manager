@@ -1105,4 +1105,3 @@ Each template should indicate which skill uses it:
 - Use placeholders sparingly to avoid confusion
 - Prefer specific examples over generic descriptions
 - Keep templates focused on single task (not meta-work)
-

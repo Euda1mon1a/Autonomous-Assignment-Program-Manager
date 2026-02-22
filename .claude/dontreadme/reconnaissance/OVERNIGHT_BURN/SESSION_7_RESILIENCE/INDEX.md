@@ -196,7 +196,7 @@ Use: **resilience-defense-levels.md**
 
 ---
 
-**Archive Location:** 
+**Archive Location:**
 `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Scratchpad/OVERNIGHT_BURN/SESSION_7_RESILIENCE/`
 
 **Session:** G2_RECON SEARCH_PARTY

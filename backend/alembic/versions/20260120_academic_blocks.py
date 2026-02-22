@@ -160,7 +160,6 @@ def upgrade() -> None:
             )
         )
 
-
     # Step 3: Add FK column to block_assignments
     op.add_column(
         "block_assignments",
@@ -194,7 +193,9 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Remove FK and academic_blocks table."""
     # Drop FK column from block_assignments
-    op.drop_index("ix_block_assignments_academic_block_id", table_name="block_assignments")
+    op.drop_index(
+        "ix_block_assignments_academic_block_id", table_name="block_assignments"
+    )
     op.drop_column("block_assignments", "academic_block_id")
 
     # Drop academic_blocks table
