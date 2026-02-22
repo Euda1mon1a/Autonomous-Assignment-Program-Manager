@@ -232,18 +232,30 @@ echo "[4/7] Running git-filter-repo --replace-text..."
 echo "  This rewrites ~2000 commits. May take 2-5 minutes."
 git filter-repo --replace-text "$REPLACEMENTS" --force
 
+# ── Step 4b: Re-add remotes (git-filter-repo strips them by design) ──
+echo ""
+echo "  Re-adding remotes (stripped by git-filter-repo)..."
+git remote add origin https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager.git
+git remote add mini ssh://aaronmontgomerymini@100.69.127.98/Users/aaronmontgomerymini/repos/personal/aapm.git
+
 # ── Step 5: Verify no PII remains ──
 echo ""
 echo "[5/7] Verifying PII removal..."
-# Check a sample of known PII names
+# Check ALL names from the roster (not just a sample)
 LEAKED=0
-for name in "Colgan" "Sawyer" "Monsivais" "Cataquiz" "Gigon" "Headid"; do
+for name in \
+    "Monsivais" "Sawyer" "Wilhelm" "Sloss" "Byrnes" \
+    "Cataquiz" "Gigon" "Headid" "Maher" \
+    "Petrie" "Mayell" "Hernandez" "Connolly" \
+    "Colgan" "Tagawa" "LaBounty" "Van Brunt" "McGuire" \
+    "Napierala" "Kinkennon" "Bevis" "McRae" "Dahl"; do
     COUNT=$(git log --all -S "$name" --oneline 2>/dev/null | wc -l)
     if [ "$COUNT" -gt 0 ]; then
         echo "  STILL FOUND: $name ($COUNT commits)"
         LEAKED=1
     fi
 done
+# Note: Travis, Cook, Thomas, You, Chu skipped (common words, only full names replaced)
 if [ "$LEAKED" -eq 0 ]; then
     echo "  ✓ All checked names removed from history"
 else
@@ -297,79 +309,20 @@ echo "Rewrite dir: $WORK_DIR (safe to delete after verification)"
 
 ---
 
-## 6. Replacements File Template
+## 6. Replacements File
 
-Create `/tmp/pii-replacements.txt` before running the script. Format: `literal:REAL==>FAKE`
+**CORRECTED FILE:** `/tmp/pii-replacements.txt` (generated 2026-02-21)
 
-```
-# ── Residents ──
-literal:Tessa Sawyer==>Resident-R01
-literal:Clara Wilhelm==>Resident-R02
-literal:Colin Travis==>Resident-R03
-literal:Katie Byrnes==>Resident-R04
-literal:Meleigh Sloss==>Resident-R05
-literal:Josh Monsivais==>Resident-R06
-literal:Felipe Cataquiz==>Resident-R07
-literal:Scott Cook==>Resident-R08
-literal:Alaine Gigon==>Resident-R09
-literal:James Headid==>Resident-R10
-literal:Nick Maher==>Resident-R11
-literal:Devin Thomas==>Resident-R12
-literal:Christian Hernandez==>Resident-R13
-literal:Cam Mayell==>Resident-R14
-literal:Clay Petrie==>Resident-R15
-literal:Jae You==>Resident-R16
-literal:Laura Connolly==>Resident-R17
-literal:Brian Dahl==>Resident-R18
-literal:Chelsea Tagawa==>Resident-R19
+The corrected replacements file fixes these issues from the original template:
+1. **Added 10 missing faculty** (LaBounty, Van Brunt, McGuire, Chu, Napierala, Kinkennon, Bevis, McRae + fixed Dahl/Tagawa miscategorized as residents)
+2. **Fixed ordering**: "Last, First" → "First Last" → last-name-only (longest match first)
+3. **Role-based pseudonyms**: PGY1-A through PGY3-E, Faculty-A through Faculty-K
+4. **Excluded Montgomery** (developer — scheduling files replaced manually on HEAD only)
+5. **Skipped dangerous last-name-only**: Travis, Cook, Thomas, You, Chu (common words)
 
-# ── Faculty ──
-literal:Bridget Colgan==>Faculty-F01
+**Full roster: 17 residents + 11 faculty = 28 people** (excludes developer)
 
-# ── Last-name-only references (catch partial matches) ──
-# ORDER MATTERS: longer strings first to avoid partial replacement
-literal:Monsivais==>R06-Last
-literal:Cataquiz==>R07-Last
-literal:Hernandez==>R13-Last
-literal:Connolly==>R17-Last
-literal:Wilhelm==>R02-Last
-literal:Sawyer==>R01-Last
-literal:Mayell==>R14-Last
-literal:Petrie==>R15-Last
-literal:Headid==>R10-Last
-literal:Colgan==>F01-Last
-literal:Byrnes==>R04-Last
-literal:Gigon==>R09-Last
-literal:Sloss==>R05-Last
-literal:Maher==>R11-Last
-literal:Tagawa==>R19-Last
-literal:Dahl==>R18-Last
-
-# ── "Last, First" format (Excel imports) ──
-literal:Sawyer, Tessa==>R01-Last, R01-First
-literal:Wilhelm, Clara==>R02-Last, R02-First
-literal:Travis, Colin==>R03-Last, R03-First
-literal:Byrnes, Katie==>R04-Last, R04-First
-literal:Sloss, Meleigh==>R05-Last, R05-First
-literal:Monsivais, Josh==>R06-Last, R06-First
-literal:Cataquiz, Felipe==>R07-Last, R07-First
-literal:Cook, Scott==>R08-Last, R08-First
-literal:Gigon, Alaine==>R09-Last, R09-First
-literal:Headid, James==>R10-Last, R10-First
-literal:Maher, Nick==>R11-Last, R11-First
-literal:Thomas, Devin==>R12-Last, R12-First
-literal:Hernandez, Christian==>R13-Last, R13-First
-literal:Mayell, Cam==>R14-Last, R14-First
-literal:Petrie, Clay==>R15-Last, R15-First
-literal:You, Jae==>R16-Last, R16-First
-literal:Colgan, Bridget==>F01-Last, F01-First
-```
-
-**IMPORTANT:** This template is incomplete. Before execution:
-1. Run `git log --all -S "NAME" --oneline` for each name to verify coverage
-2. Check `git grep -i "NAME"` on HEAD for variant spellings
-3. Add any names found in the DB seed data or test fixtures
-4. The "Last, First" entries MUST come before "First Last" entries (longer match first)
+**Validation completed:** All 28 names verified against `git grep` (HEAD) and `git log -S` (history). No false positives for full-name matches. Last-name-only entries match scheduling files only.
 
 ---
 
@@ -404,11 +357,13 @@ literal:Colgan, Bridget==>F01-Last, F01-First
 
 ---
 
-## 9. Decision Points for Operator
+## 9. Decisions Made
 
-1. **Pseudonym style:** Generic (Resident-R01) vs realistic fake names?
-2. **Migration files:** `20260114_faculty_constraints.py` has names in comments. Rewriting migration files changes their hashes — acceptable?
-3. **Test fixtures:** `conftest.py` may use real names as test data. Replace with synthetic?
+1. **Pseudonym style:** Role-based (PGY1-A, Faculty-B, etc.) — encodes PGY level for scheduling context
+2. **Aaron Montgomery:** Scheduling files only (manual HEAD pass), excluded from history rewrite
+3. **Migration files:** Acceptable to rewrite — comments only, not functional code
+4. **Mini unique commits:** Already on origin via PRs #1187/#1188 — no cherry-pick needed
+5. **Scope:** GitHub origin purge + mini sync. Laptop keeps original history locally.
 4. **Timing:** Best done during a quiet period (no active PRs, no Codex runs)
 5. **GitHub cache purge:** Contact GitHub support to clear dangling commits? (Optional but thorough)
 

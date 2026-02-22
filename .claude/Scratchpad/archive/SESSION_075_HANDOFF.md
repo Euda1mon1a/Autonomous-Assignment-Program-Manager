@@ -72,7 +72,7 @@ Field operative for Antigravity IDE - operates outside CLI, controls browser/GUI
 
 ## Database State
 
-- **11 faculty templates** saved (Aaron Montgomery, Blake Van Brunt)
+- **11 faculty templates** saved (Faculty-L, Faculty-E)
 - **10 overrides** saved
 - **Backup:** `backups/db_backup_20260108_160340.sql` (1.77 MB)
 

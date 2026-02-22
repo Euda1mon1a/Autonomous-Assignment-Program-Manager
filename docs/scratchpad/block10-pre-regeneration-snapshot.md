@@ -10,7 +10,7 @@
 
 | Type | Name | Total | Preload | Solver | Template |
 |------|------|-------|---------|--------|----------|
-| faculty | Aaron Montgomery | 56 | 6 | 0 | 50 |
+| faculty | Faculty-L | 56 | 6 | 0 | 50 |
 | faculty | Alex LaBounty | 56 | 15 | 0 | 41 |
 | faculty | Blake Van Brunt | 6 | 6 | 0 | 0 |
 | faculty | Brian Dahl | 56 | 3 | 0 | 53 |
@@ -52,7 +52,7 @@
 | Chris McGuire | 2026-03-17 | overnight |
 | Zach McRae | 2026-03-18 | overnight |
 | Chelsea Tagawa | 2026-03-19 | overnight |
-| Aaron Montgomery | 2026-03-22 | weekend |
+| Faculty-L | 2026-03-22 | weekend |
 | Jimmy Chu | 2026-03-23 | overnight |
 | Brian Dahl | 2026-03-24 | overnight |
 | Zach Bevis | 2026-03-25 | overnight |
@@ -61,7 +61,7 @@
 | Chris McGuire | 2026-03-30 | overnight |
 | Zach McRae | 2026-03-31 | overnight |
 | Chelsea Tagawa | 2026-04-01 | overnight |
-| Aaron Montgomery | 2026-04-02 | overnight |
+| Faculty-L | 2026-04-02 | overnight |
 | Jimmy Chu | 2026-04-05 | weekend |
 | Brian Dahl | 2026-04-06 | overnight |
 | Zach Bevis | 2026-04-07 | overnight |
@@ -73,11 +73,11 @@
 
 | Faculty | Activity | Count |
 |---------|----------|-------|
-| Aaron Montgomery | call | 2 |
-| Aaron Montgomery | do | 2 |
-| Aaron Montgomery | gme | 34 |
-| Aaron Montgomery | pcat | 2 |
-| Aaron Montgomery | W | 16 |
+| Faculty-L | call | 2 |
+| Faculty-L | do | 2 |
+| Faculty-L | gme | 34 |
+| Faculty-L | pcat | 2 |
+| Faculty-L | W | 16 |
 | Alex LaBounty | call | 1 |
 | Alex LaBounty | do | 1 |
 | Alex LaBounty | gme | 29 |
