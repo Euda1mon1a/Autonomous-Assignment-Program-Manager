@@ -76,6 +76,12 @@ class TestCanonicalRotationCode:
         assert service._canonical_rotation_code("CARDIO") == "CARDIO"
         assert service._canonical_rotation_code("IM") == "IM"
 
+    def test_d_plus_n_alias(self, service):
+        assert service._canonical_rotation_code("D+N") == "DERM-NF"
+
+    def test_c_plus_n_alias(self, service):
+        assert service._canonical_rotation_code("C+N") == "CARDS-NF"
+
 
 # ============================================================================
 # _is_last_wednesday
@@ -331,6 +337,24 @@ class TestConstants:
             )
             assert len(canonical) <= 10, f"Canonical code {canonical} too long"
 
+    def test_nf_combined_codes_in_all_classification_sets(self):
+        """All NF combined codes must be in night float, LEC-exempt,
+        intern-continuity-exempt, and Saturday-off sets."""
+        nf_combined_codes = {
+            "NF-CARDIO",
+            "NF-FMIT-PG",
+            "NF-DERM-PG",
+            "CARDS-NF",
+            "DERM-NF",
+        }
+        for code in nf_combined_codes:
+            assert code in _NIGHT_FLOAT_ROTATIONS, f"{code} missing from NF set"
+            assert code in _LEC_EXEMPT_ROTATIONS, f"{code} missing from LEC-exempt"
+            assert code in _INTERN_CONTINUITY_EXEMPT_ROTATIONS, (
+                f"{code} missing from intern-continuity-exempt"
+            )
+            assert code in _SATURDAY_OFF_ROTATIONS, f"{code} missing from Saturday-off"
+
     def test_clinic_pattern_codes(self):
         for code in ("C", "C-I", "C-N"):
             assert code in _CLINIC_PATTERN_CODES
@@ -487,3 +511,134 @@ class TestGetRotationPreloadCodes:
             pgy_level=1,
             is_outpatient=True,
         ) == ("C", "LEC")  # KAP Wednesday pattern
+
+    # -- NF Combined (NF-first) half-block tests --
+    # Block: Mar 13 (Thu) – Apr 8 (Wed). Mid-block = Mar 27 (day 14).
+    # First half (days 0-13): Night Float. Day 14: recovery. Second half (days 15+): specialty.
+
+    def test_nf_combined_first_half_weekday(self, service):
+        # Mon Mar 17 (day 4, first half) -> NF pattern
+        assert service._get_rotation_preload_codes(
+            "NF-CARDIO",
+            date(2025, 3, 17),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            3,
+            False,
+        ) == ("OFF", "NF")
+
+    def test_nf_combined_second_half_weekday(self, service):
+        # Mon Mar 31 (day 18, second half) -> specialty
+        assert service._get_rotation_preload_codes(
+            "NF-CARDIO",
+            date(2025, 3, 31),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            3,
+            False,
+        ) == ("CARDS", "CARDS")
+
+    def test_nf_combined_mid_block_recovery(self, service):
+        # Thu Mar 27 (day 14, mid-block) -> recovery
+        assert service._get_rotation_preload_codes(
+            "NF-CARDIO",
+            date(2025, 3, 27),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            3,
+            False,
+        ) == ("recovery", "recovery")
+
+    def test_nf_combined_wednesday_deferred(self, service):
+        # Wed Mar 19 (day 6) -> deferred to weekly_patterns (LEC)
+        assert service._get_rotation_preload_codes(
+            "NF-CARDIO",
+            date(2025, 3, 19),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            3,
+            False,
+        ) == (None, None)
+
+    def test_nf_combined_sunday_off(self, service):
+        # Sun Mar 16 (day 3) -> W/W
+        assert service._get_rotation_preload_codes(
+            "NF-CARDIO",
+            date(2025, 3, 16),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            3,
+            False,
+        ) == ("W", "W")
+
+    def test_nf_combined_saturday_off(self, service):
+        # Sat Mar 22 (day 9) -> W/W via SATURDAY_OFF_ROTATIONS (fires before handler)
+        assert service._get_rotation_preload_codes(
+            "NF-CARDIO",
+            date(2025, 3, 22),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            3,
+            False,
+        ) == ("W", "W")
+
+    def test_nf_fmit_second_half(self, service):
+        # NF-FMIT-PG second half -> FMIT
+        assert service._get_rotation_preload_codes(
+            "NF-FMIT-PG",
+            date(2025, 3, 31),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            1,
+            False,
+        ) == ("FMIT", "FMIT")
+
+    def test_nf_derm_second_half(self, service):
+        # NF-DERM-PG second half -> DERM
+        assert service._get_rotation_preload_codes(
+            "NF-DERM-PG",
+            date(2025, 3, 31),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            2,
+            False,
+        ) == ("DERM", "DERM")
+
+    def test_nf_combined_last_wednesday_overrides(self, service):
+        # Last Wednesday Apr 2 -> LEC/ADV (fires before NF combined handler)
+        assert service._get_rotation_preload_codes(
+            "NF-CARDIO", date(2025, 4, 2), date(2025, 3, 13), date(2025, 4, 8), 3, False
+        ) == ("LEC", "ADV")
+
+    # -- Mirror/Reverse NF Combined (specialty-first) half-block tests --
+    # First half (days 0-13): specialty. Day 14: recovery. Second half (days 15+): NF.
+
+    def test_reverse_derm_nf_first_half(self, service):
+        # Mon Mar 17 (first half) -> DERM/DERM (specialty first)
+        assert service._get_rotation_preload_codes(
+            "DERM-NF", date(2025, 3, 17), date(2025, 3, 13), date(2025, 4, 8), 2, False
+        ) == ("DERM", "DERM")
+
+    def test_reverse_derm_nf_second_half(self, service):
+        # Mon Mar 31 (second half) -> OFF/NF (NF second)
+        assert service._get_rotation_preload_codes(
+            "DERM-NF", date(2025, 3, 31), date(2025, 3, 13), date(2025, 4, 8), 2, False
+        ) == ("OFF", "NF")
+
+    def test_reverse_derm_nf_mid_block(self, service):
+        # Thu Mar 27 (day 14) -> recovery
+        assert service._get_rotation_preload_codes(
+            "DERM-NF", date(2025, 3, 27), date(2025, 3, 13), date(2025, 4, 8), 2, False
+        ) == ("recovery", "recovery")
+
+    def test_reverse_cards_nf_first_half(self, service):
+        # CARDS-NF first half -> CARDS/CARDS
+        assert service._get_rotation_preload_codes(
+            "CARDS-NF", date(2025, 3, 17), date(2025, 3, 13), date(2025, 4, 8), 3, False
+        ) == ("CARDS", "CARDS")
+
+    def test_reverse_cards_nf_second_half(self, service):
+        # CARDS-NF second half -> OFF/NF
+        assert service._get_rotation_preload_codes(
+            "CARDS-NF", date(2025, 3, 31), date(2025, 3, 13), date(2025, 4, 8), 3, False
+        ) == ("OFF", "NF")

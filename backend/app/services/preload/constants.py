@@ -23,13 +23,29 @@ ROTATION_ALIASES: dict[str, str] = {
     "JAPAN OFF-SITE ROTATION": "JAPAN",
     "PEDS EM": "PEDS-EM",
     "PEDIATRIC EMERGENCY MEDICINE": "PEDS-EM",
+    "D+N": "DERM-NF",
+    "C+N": "CARDS-NF",
 }
 
-NIGHT_FLOAT_ROTATIONS: set[str] = {"NF", "PEDNF", "LDNF"}
+NIGHT_FLOAT_ROTATIONS: set[str] = {
+    "NF",
+    "PEDNF",
+    "LDNF",
+    "NF-CARDIO",
+    "NF-FMIT-PG",
+    "NF-DERM-PG",
+    "CARDS-NF",
+    "DERM-NF",
+}
 LEC_EXEMPT_ROTATIONS: set[str] = {
     "NF",
     "PEDNF",
     "LDNF",
+    "NF-CARDIO",
+    "NF-FMIT-PG",
+    "NF-DERM-PG",
+    "CARDS-NF",
+    "DERM-NF",
     "TDY",
     "HILO",
     "OKI",
@@ -40,6 +56,11 @@ INTERN_CONTINUITY_EXEMPT_ROTATIONS: set[str] = {
     "NF",
     "PEDNF",
     "LDNF",
+    "NF-CARDIO",
+    "NF-FMIT-PG",
+    "NF-DERM-PG",
+    "CARDS-NF",
+    "DERM-NF",
     "TDY",
     "HILO",
     "OKI",
@@ -72,6 +93,11 @@ SATURDAY_OFF_ROTATIONS: set[str] = {
     "TDY",
     "JAPAN",
     "PEDS-EM",
+    "NF-CARDIO",
+    "NF-FMIT-PG",
+    "NF-DERM-PG",
+    "CARDS-NF",
+    "DERM-NF",
 }
 
 # Rotation types that require translation to activity codes
@@ -80,6 +106,24 @@ ROTATION_TO_ACTIVITY: dict[str, str] = {
     "FMC": "fm_clinic",
     "JAPAN": "TDY",
     "PEDS-EM": "PEM",
+}
+
+# Half-block NF combined rotations: abbreviation → specialty activity code.
+# NF-first: Night Float days 1-14, specialty days 16-28.
+NF_COMBINED_ACTIVITY_MAP: dict[str, str] = {
+    "NF-CARDIO": "CARDS",
+    "NF-FMIT-PG": "FMIT",
+    "NF-DERM-PG": "DERM",
+}
+
+# Mirror (specialty-first) combined rotations: specialty days 1-14, NF days 16-28.
+# These pair with NF-first templates to ensure continuous NF coverage.
+# Codes use "-NF" suffix (not "+N") because canonical_rotation_code rewrites
+# D+N → DERM-NF and C+N → CARDS-NF to prevent the "+" split in
+# _resolve_rotation_code_for_date.
+REVERSE_NF_COMBINED_MAP: dict[str, str] = {
+    "CARDS-NF": "CARDS",
+    "DERM-NF": "DERM",
 }
 
 

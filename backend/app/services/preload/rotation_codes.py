@@ -7,13 +7,15 @@ preload services.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from .constants import (
     INTERN_CONTINUITY_EXEMPT_ROTATIONS,
     KAP_ROTATIONS,
     LEC_EXEMPT_ROTATIONS,
+    NF_COMBINED_ACTIVITY_MAP,
     OFFSITE_ROTATIONS,
+    REVERSE_NF_COMBINED_MAP,
     ROTATION_TO_ACTIVITY,
     SATURDAY_OFF_ROTATIONS,
 )
@@ -196,6 +198,54 @@ def get_rotation_preload_codes(
         and not has_time_off_patterns
     ):
         return ("W", "W")
+
+    if rotation_code in NF_COMBINED_ACTIVITY_MAP:
+        dow = current_date.weekday()
+        mid_block_date = block_start + timedelta(days=14)
+
+        if dow == 2:  # Wednesday — handled by weekly_patterns (LEC)
+            return (None, None)
+
+        if current_date == mid_block_date:
+            # Day 15: Post-call recovery
+            return ("recovery", "recovery")
+
+        if dow == 6:  # Sunday — off for both halves
+            return ("W", "W")
+
+        # Saturday already handled by SATURDAY_OFF_ROTATIONS above
+
+        if current_date < mid_block_date:
+            # First half: Night Float — sleep AM, work PM
+            return ("OFF", "NF")
+        else:
+            # Second half: Specialty — full day
+            specialty = NF_COMBINED_ACTIVITY_MAP[rotation_code]
+            return (specialty, specialty)
+
+    if rotation_code in REVERSE_NF_COMBINED_MAP:
+        dow = current_date.weekday()
+        mid_block_date = block_start + timedelta(days=14)
+
+        if dow == 2:  # Wednesday — handled by weekly_patterns (LEC)
+            return (None, None)
+
+        if current_date == mid_block_date:
+            # Day 15: Transition day
+            return ("recovery", "recovery")
+
+        if dow == 6:  # Sunday — off for both halves
+            return ("W", "W")
+
+        # Saturday already handled by SATURDAY_OFF_ROTATIONS above
+
+        specialty = REVERSE_NF_COMBINED_MAP[rotation_code]
+        if current_date < mid_block_date:
+            # First half: Specialty — full day
+            return (specialty, specialty)
+        else:
+            # Second half: Night Float — sleep AM, work PM
+            return ("OFF", "NF")
 
     if rotation_code in OFFSITE_ROTATIONS:
         if rotation_code in {"HILO", "OKI"}:
