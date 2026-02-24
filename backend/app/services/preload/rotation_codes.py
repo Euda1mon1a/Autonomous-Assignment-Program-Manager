@@ -200,6 +200,8 @@ def get_rotation_preload_codes(
     if rotation_code in OFFSITE_ROTATIONS:
         if rotation_code in {"HILO", "OKI"}:
             return get_hilo_codes(current_date, block_start)
+        if rotation_code == "PEDS-EM":
+            return ("PEM", "PEM")
         return ("TDY", "TDY")
 
     if rotation_code in KAP_ROTATIONS:

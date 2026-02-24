@@ -19,10 +19,23 @@ ROTATION_ALIASES: dict[str, str] = {
     "KAPIOLANI": "KAP",
     "KAPIOLANI L AND D": "KAP",
     "OKINAWA": "OKI",
+    "JAPAN OFF-SITE": "JAPAN",
+    "JAPAN OFF-SITE ROTATION": "JAPAN",
+    "PEDS EM": "PEDS-EM",
+    "PEDIATRIC EMERGENCY MEDICINE": "PEDS-EM",
 }
 
 NIGHT_FLOAT_ROTATIONS: set[str] = {"NF", "PEDNF", "LDNF"}
-LEC_EXEMPT_ROTATIONS: set[str] = {"NF", "PEDNF", "LDNF", "TDY", "HILO", "OKI"}
+LEC_EXEMPT_ROTATIONS: set[str] = {
+    "NF",
+    "PEDNF",
+    "LDNF",
+    "TDY",
+    "HILO",
+    "OKI",
+    "JAPAN",
+    "PEDS-EM",
+}
 INTERN_CONTINUITY_EXEMPT_ROTATIONS: set[str] = {
     "NF",
     "PEDNF",
@@ -31,8 +44,10 @@ INTERN_CONTINUITY_EXEMPT_ROTATIONS: set[str] = {
     "HILO",
     "OKI",
     "KAP",
+    "JAPAN",
+    "PEDS-EM",
 }
-OFFSITE_ROTATIONS: set[str] = {"TDY", "HILO", "OKI"}
+OFFSITE_ROTATIONS: set[str] = {"TDY", "HILO", "OKI", "JAPAN", "PEDS-EM"}
 KAP_ROTATIONS: set[str] = {"KAP"}
 CLINIC_PATTERN_CODES: set[str] = {"C", "C-I", "C-N", "FM_CLINIC"}
 
@@ -55,12 +70,16 @@ SATURDAY_OFF_ROTATIONS: set[str] = {
     "HILO",
     "OKI",
     "TDY",
+    "JAPAN",
+    "PEDS-EM",
 }
 
 # Rotation types that require translation to activity codes
 ROTATION_TO_ACTIVITY: dict[str, str] = {
     "HILO": "TDY",
     "FMC": "fm_clinic",
+    "JAPAN": "TDY",
+    "PEDS-EM": "PEM",
 }
 
 
@@ -75,4 +94,8 @@ def canonical_rotation_code(raw_code: str | None) -> str:
         return "OKI"
     if code.startswith("KAPI"):
         return "KAP"
+    if code.startswith("JAPAN"):
+        return "JAPAN"
+    if code.startswith("PEDS-EM") or code.startswith("PEDS EM"):
+        return "PEDS-EM"
     return ROTATION_ALIASES.get(code, code)
