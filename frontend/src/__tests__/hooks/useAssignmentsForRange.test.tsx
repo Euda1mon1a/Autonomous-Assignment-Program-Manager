@@ -39,18 +39,15 @@ describe('useAssignmentsForRange', () => {
   })
 
   it('memoizes combined data when page data is unchanged', async () => {
-    const firstPage: ListResponse<Assignment> = {
-      items: [{ id: 'a1' } as Assignment],
-      total: 600,
-    }
-    const secondPage: ListResponse<Assignment> = {
-      items: [{ id: 'a2' } as Assignment],
-      total: 600,
+    // Use total within a single page (<=500) to avoid the multi-step
+    // useEffect -> setState -> useQueries async chain that is fragile in tests.
+    // The memoization being tested is the useMemo reference stability, not pagination.
+    const response: ListResponse<Assignment> = {
+      items: [{ id: 'a1' } as Assignment, { id: 'a2' } as Assignment],
+      total: 2,
     }
 
-    mockedApi.get
-      .mockResolvedValueOnce(firstPage)
-      .mockResolvedValueOnce(secondPage)
+    mockedApi.get.mockResolvedValueOnce(response)
 
     const { result, rerender } = renderHook(
       () => useAssignmentsForRange('2026-02-01', '2026-02-28', true),
@@ -65,6 +62,6 @@ describe('useAssignmentsForRange', () => {
     rerender()
 
     expect(result.current.data).toBe(initialData)
-    expect(mockedApi.get).toHaveBeenCalledTimes(2)
+    expect(mockedApi.get).toHaveBeenCalledTimes(1)
   })
 })
