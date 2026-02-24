@@ -83,8 +83,7 @@ export function useDebounce<T>(value: T, delay: number = 300): T {
  * <input onChange={(e) => debouncedCallback(e.target.value)} />
  * ```
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useDebouncedCallback<T extends (...args: any[]) => void>(
+export function useDebouncedCallback<T extends (...args: unknown[]) => void>(
   callback: T,
   delay: number = 300
 ): {

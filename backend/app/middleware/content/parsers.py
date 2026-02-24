@@ -15,6 +15,7 @@ Each parser handles conversion from format-specific bytes to Python objects.
 import json
 import logging
 from abc import ABC, abstractmethod
+from types import ModuleType
 from typing import Any
 from urllib.parse import parse_qs
 
@@ -161,7 +162,7 @@ class XMLParser(Parser):
         except Exception as e:
             raise ParsingError(f"Invalid XML: {e}") from e
 
-    def _element_to_dict(self, element) -> dict:
+    def _element_to_dict(self, element: Any) -> Any:
         """
         Convert XML element to dictionary.
 
@@ -171,7 +172,7 @@ class XMLParser(Parser):
         Returns:
             Dictionary representation
         """
-        result = {}
+        result: dict[str, Any] = {}
 
         # Add element text if present
         if element.text and element.text.strip():
@@ -183,7 +184,7 @@ class XMLParser(Parser):
                 return element.text.strip()
 
                 # Process children
-        children = {}
+        children: dict[str, Any] = {}
         for child in element:
             child_data = self._element_to_dict(child)
             tag = child.tag
@@ -215,6 +216,8 @@ class YAMLParser(Parser):
 
     def __init__(self) -> None:
         """Initialize YAML parser."""
+        self._yaml: ModuleType | None = None
+        self._available = False
         # Try to import PyYAML
         try:
             import yaml
@@ -337,7 +340,7 @@ class FormDataParser(Parser):
         """Form parser is always available."""
         return True
 
-    def parse(self, data: bytes) -> dict:
+    def parse(self, data: bytes) -> dict[str, str | list[str]]:
         """
         Parse form data to dictionary.
 
@@ -356,7 +359,7 @@ class FormDataParser(Parser):
             parsed = parse_qs(query_string, keep_blank_values=True)
 
             # Convert single-value lists to strings
-            result = {}
+            result: dict[str, str | list[str]] = {}
             for key, value in parsed.items():
                 if len(value) == 1:
                     result[key] = value[0]

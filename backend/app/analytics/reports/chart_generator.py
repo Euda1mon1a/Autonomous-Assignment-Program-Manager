@@ -286,7 +286,7 @@ class ChartGenerator:
 
         # Draw pie slices
         colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"]
-        start_angle = -90  # Start at top
+        start_angle = -90.0  # Start at top
 
         for idx, (label, pct) in enumerate(zip(labels, percentages)):
             color = colors[idx % len(colors)]
@@ -319,7 +319,7 @@ class ChartGenerator:
                 ]
             )
 
-            start_angle: float = end_angle
+            start_angle = float(end_angle)
 
         svg_lines.append("</svg>")
         svg_content = "\n".join(svg_lines)

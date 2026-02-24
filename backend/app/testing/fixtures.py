@@ -10,6 +10,7 @@ Provides reusable fixtures for:
 """
 
 from collections.abc import Generator
+from typing import Callable
 
 import pytest
 
@@ -63,7 +64,7 @@ def recorded_requests(
 
 
 @pytest.fixture
-def reset_mock_state(mock_server: MockAPIServer):
+def reset_mock_state(mock_server: MockAPIServer) -> Generator[None, None, None]:
     """
     Reset mock server state before test.
 
@@ -82,7 +83,9 @@ def reset_mock_state(mock_server: MockAPIServer):
 
 
 @pytest.fixture
-def with_delay(mock_server: MockAPIServer):
+def with_delay(
+    mock_server: MockAPIServer,
+) -> Generator[Callable[[int], None], None, None]:
     """
     Configure mock server to simulate response delays.
 
@@ -112,7 +115,9 @@ def with_delay(mock_server: MockAPIServer):
 
 
 @pytest.fixture
-def with_errors(mock_server: MockAPIServer):
+def with_errors(
+    mock_server: MockAPIServer,
+) -> Generator[Callable[[Exception, str | None, str | None], None], None, None]:
     """
     Configure mock server to simulate errors.
 
@@ -131,7 +136,9 @@ def with_errors(mock_server: MockAPIServer):
     """
 
     def configure_errors(
-        error: Exception, method: str = None, path_pattern: str = None
+        error: Exception,
+        method: str | None = None,
+        path_pattern: str | None = None,
     ) -> None:
         """Configure error injection."""
         mock_server.simulate_errors(error, method=method, path_pattern=path_pattern)
@@ -140,7 +147,7 @@ def with_errors(mock_server: MockAPIServer):
 
 
 @pytest.fixture
-def mock_people_endpoint(mock_server: MockAPIServer):
+def mock_people_endpoint(mock_server: MockAPIServer) -> Generator[None, None, None]:
     """
     Pre-configured mock for /api/v1/people endpoint.
 
@@ -178,7 +185,9 @@ def mock_people_endpoint(mock_server: MockAPIServer):
 
 
 @pytest.fixture
-def mock_assignments_endpoint(mock_server: MockAPIServer):
+def mock_assignments_endpoint(
+    mock_server: MockAPIServer,
+) -> Generator[None, None, None]:
     """
     Pre-configured mock for /api/v1/assignments endpoint.
 
@@ -209,7 +218,9 @@ def mock_assignments_endpoint(mock_server: MockAPIServer):
 
 
 @pytest.fixture
-def mock_schedule_endpoint(mock_server: MockAPIServer):
+def mock_schedule_endpoint(
+    mock_server: MockAPIServer,
+) -> Generator[None, None, None]:
     """
     Pre-configured mock for schedule generation endpoint.
 
@@ -237,7 +248,9 @@ def mock_schedule_endpoint(mock_server: MockAPIServer):
 
 
 @pytest.fixture
-def mock_acgme_validation_endpoint(mock_server: MockAPIServer):
+def mock_acgme_validation_endpoint(
+    mock_server: MockAPIServer,
+) -> Generator[None, None, None]:
     """
     Pre-configured mock for ACGME validation endpoint.
 
@@ -268,7 +281,9 @@ def mock_acgme_validation_endpoint(mock_server: MockAPIServer):
 
 
 @pytest.fixture
-def mock_swap_request_endpoint(mock_server: MockAPIServer):
+def mock_swap_request_endpoint(
+    mock_server: MockAPIServer,
+) -> Generator[None, None, None]:
     """
     Pre-configured mock for swap request endpoints.
 
@@ -315,7 +330,9 @@ def mock_swap_request_endpoint(mock_server: MockAPIServer):
 
 
 @pytest.fixture
-def mock_resilience_endpoint(mock_server: MockAPIServer):
+def mock_resilience_endpoint(
+    mock_server: MockAPIServer,
+) -> Generator[None, None, None]:
     """
     Pre-configured mock for resilience health check endpoint.
 
@@ -348,7 +365,7 @@ def mock_resilience_endpoint(mock_server: MockAPIServer):
 
 
 @pytest.fixture
-def mock_auth_endpoint(mock_server: MockAPIServer):
+def mock_auth_endpoint(mock_server: MockAPIServer) -> Generator[None, None, None]:
     """
     Pre-configured mock for authentication endpoints.
 

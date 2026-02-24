@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timezone, UTC
 
 from sqlalchemy import Column, DateTime, Index, String
+from sqlalchemy.orm import Session
 
 from app.db.base import Base
 from app.db.types import GUID
@@ -44,11 +45,11 @@ class TokenBlacklist(Base):
 
     __table_args__ = (Index("idx_blacklist_jti_expires", "jti", "expires_at"),)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<TokenBlacklist(jti='{self.jti}', reason='{self.reason}')>"
 
     @classmethod
-    def is_blacklisted(cls, db, jti: str) -> bool:
+    def is_blacklisted(cls, db: Session, jti: str) -> bool:
         """
         Check if a token (by jti) is blacklisted.
 
@@ -62,7 +63,7 @@ class TokenBlacklist(Base):
         return db.query(cls).filter(cls.jti == jti).first() is not None
 
     @classmethod
-    def cleanup_expired(cls, db) -> int:
+    def cleanup_expired(cls, db: Session) -> int:
         """
         Remove expired tokens from the blacklist.
 

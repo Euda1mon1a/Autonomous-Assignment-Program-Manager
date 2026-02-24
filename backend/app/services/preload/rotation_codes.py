@@ -111,7 +111,8 @@ def get_rotation_codes(
     dow = current_date.weekday()
 
     code_raw = rotation_type.value if hasattr(rotation_type, "value") else rotation_type
-    code_upper = (code_raw or "").strip().upper()
+    code_str = str(code_raw) if code_raw is not None else ""
+    code_upper = code_str.strip().upper()
 
     person_type = getattr(person, "type", None)
     pgy_level = (
@@ -164,8 +165,9 @@ def get_rotation_codes(
             return ("OFF", "PedNF")
         return ("OFF", "PedNF")
 
-    mapped = ROTATION_TO_ACTIVITY.get(code_upper, code_raw)
-    return (mapped, mapped)
+    mapped = ROTATION_TO_ACTIVITY.get(code_upper, code_str)
+    mapped_str = str(mapped) if mapped is not None else ""
+    return (mapped_str, mapped_str)
 
 
 def get_rotation_preload_codes(

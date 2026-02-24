@@ -21,6 +21,8 @@ import re
 import secrets
 import string
 from abc import ABC, abstractmethod
+from collections.abc import Callable
+from typing import TypeAlias, cast
 
 
 class BaseMasker(ABC):
@@ -53,6 +55,9 @@ class BaseMasker(ABC):
             NotImplementedError: If masking is not reversible
         """
         raise NotImplementedError("This masking strategy is not reversible")
+
+
+MaskerFactoryType: TypeAlias = type[BaseMasker] | Callable[[], BaseMasker]
 
 
 class RedactionMasker(BaseMasker):
@@ -425,7 +430,7 @@ class MaskerFactory:
         masked_value = masker.mask("john@example.com")
     """
 
-    DEFAULT_MASKERS = {
+    DEFAULT_MASKERS: dict[str, MaskerFactoryType] = {
         "email": EmailMasker,
         "phone": PhoneMasker,
         "ssn": SSNMasker,
@@ -445,9 +450,9 @@ class MaskerFactory:
         Args:
             custom_maskers: Custom masker mappings to override defaults
         """
-        self.maskers = self.DEFAULT_MASKERS.copy()
+        self.maskers: dict[str, MaskerFactoryType] = self.DEFAULT_MASKERS.copy()
         if custom_maskers:
-            self.maskers.update(custom_maskers)
+            self.maskers.update(cast(dict[str, MaskerFactoryType], custom_maskers))
 
     def get_masker(self, pii_type: str, **kwargs) -> BaseMasker:
         """
@@ -466,4 +471,4 @@ class MaskerFactory:
         if callable(masker_class) and not isinstance(masker_class, type):
             return masker_class()
 
-        return masker_class(**kwargs)
+        return cast(type[BaseMasker], masker_class)(**kwargs)

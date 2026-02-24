@@ -77,6 +77,7 @@ class PseudonymizationStrategy(AnonymizationStrategy):
         """
         self.use_encryption = use_encryption
 
+        self.cipher: Fernet | None
         if use_encryption:
             if encryption_key:
                 self.key = encryption_key
@@ -94,7 +95,7 @@ class PseudonymizationStrategy(AnonymizationStrategy):
         """Pseudonymization is reversible."""
         return True
 
-    def apply(self, data: Any, fields: list[str] | None = None, **kwargs) -> Any:
+    def apply(self, data: Any, fields: list[str] | None = None, **kwargs: Any) -> Any:
         """
         Apply pseudonymization to data.
 
@@ -211,11 +212,11 @@ class KAnonymityStrategy(AnonymizationStrategy):
 
     def apply(
         self,
-        data: list[dict],
-        quasi_identifiers: list[str],
+        data: Any,
+        quasi_identifiers: list[str] | None = None,
         sensitive_attributes: list[str] | None = None,
-        **kwargs,
-    ) -> list[dict]:
+        **kwargs: Any,
+    ) -> Any:
         """
         Apply k-anonymity to dataset.
 
@@ -227,6 +228,8 @@ class KAnonymityStrategy(AnonymizationStrategy):
         Returns:
             K-anonymized dataset
         """
+        if quasi_identifiers is None:
+            raise TypeError("quasi_identifiers is required")
         if not data:
             return []
 
@@ -332,11 +335,11 @@ class KAnonymityStrategy(AnonymizationStrategy):
 
         elif isinstance(sample, (date, datetime)):
             # Date: return year or year-month
-            years = set(
-                v.year if isinstance(v, (date, datetime)) else None for v in values
-            )
+            years = {v.year for v in values if isinstance(v, (date, datetime))}
+            if not years:
+                return "*"
             if len(years) == 1:
-                return f"{list(years)[0]}"
+                return f"{next(iter(years))}"
             return f"{min(years)}-{max(years)}"
 
         elif isinstance(sample, str):
@@ -417,11 +420,11 @@ class LDiversityStrategy(AnonymizationStrategy):
 
     def apply(
         self,
-        data: list[dict],
-        quasi_identifiers: list[str],
-        sensitive_attribute: str,
-        **kwargs,
-    ) -> list[dict]:
+        data: Any,
+        quasi_identifiers: list[str] | None = None,
+        sensitive_attribute: str | None = None,
+        **kwargs: Any,
+    ) -> Any:
         """
         Apply l-diversity to dataset.
 
@@ -434,6 +437,10 @@ class LDiversityStrategy(AnonymizationStrategy):
             L-diverse dataset
         """
         # First apply k-anonymity
+        if quasi_identifiers is None:
+            raise TypeError("quasi_identifiers is required")
+        if sensitive_attribute is None:
+            raise TypeError("sensitive_attribute is required")
         k_anon = KAnonymityStrategy(k=self.l)
         k_anonymized = k_anon.apply(
             data,
@@ -576,8 +583,11 @@ class DataSuppressionStrategy(AnonymizationStrategy):
         return False
 
     def apply(
-        self, data: list[dict], quasi_identifiers: list[str], **kwargs
-    ) -> list[dict]:
+        self,
+        data: Any,
+        quasi_identifiers: list[str] | None = None,
+        **kwargs: Any,
+    ) -> Any:
         """
         Apply suppression to remove outliers.
 
@@ -588,6 +598,8 @@ class DataSuppressionStrategy(AnonymizationStrategy):
         Returns:
             Dataset with outliers removed
         """
+        if quasi_identifiers is None:
+            raise TypeError("quasi_identifiers is required")
         if not data:
             return []
 

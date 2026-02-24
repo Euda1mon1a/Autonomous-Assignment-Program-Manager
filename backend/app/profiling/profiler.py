@@ -382,10 +382,11 @@ def profile_sync(
                 result = func(*args, **kwargs)
 
                 # Store profiler in function metadata
-            profilers = getattr(wrapper, "_profilers", None)
+            wrapper_obj = cast(Any, wrapper)
+            profilers = getattr(wrapper_obj, "_profilers", None)
             if profilers is None:
                 profilers = []
-                wrapper._profilers = profilers
+                wrapper_obj._profilers = profilers
             cast(list[ProfilerContext], profilers).append(profiler)
 
             return result
@@ -429,10 +430,11 @@ def profile_async(
                 result = await func(*args, **kwargs)
 
                 # Store profiler in function metadata
-            profilers = getattr(wrapper, "_profilers", None)
+            wrapper_obj = cast(Any, wrapper)
+            profilers = getattr(wrapper_obj, "_profilers", None)
             if profilers is None:
                 profilers = []
-                wrapper._profilers = profilers
+                wrapper_obj._profilers = profilers
             cast(list[ProfilerContext], profilers).append(profiler)
 
             return result

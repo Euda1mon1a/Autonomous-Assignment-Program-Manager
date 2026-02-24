@@ -77,7 +77,11 @@ async def retry_async(
                 raise last_exception
 
 
-def async_cache(ttl: int):
+def async_cache(
+    ttl: int,
+) -> Callable[
+    [Callable[..., Coroutine[Any, Any, T]]], Callable[..., Coroutine[Any, Any, T]]
+]:
     """
     Decorator to cache async function results with time-to-live.
 

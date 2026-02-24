@@ -31,7 +31,7 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, UTC
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -361,7 +361,10 @@ class LocalArchiveStorage(ArchiveStorageBackend):
                 )
 
                 # Sort by created_at descending
-            archives.sort(key=lambda x: x["created_at"], reverse=True)
+            archives.sort(
+                key=lambda x: cast(str, x["created_at"]),
+                reverse=True,
+            )
             return archives
 
         except Exception as e:
