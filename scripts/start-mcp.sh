@@ -18,4 +18,6 @@ fi
 cd "${ROOT_DIR}/mcp-server"
 PYTHONPATH="${ROOT_DIR}/mcp-server/src:${ROOT_DIR}/backend" \
 API_BASE_URL="${API_BASE_URL:-http://127.0.0.1:8000}" \
+API_USERNAME="${API_USERNAME:-admin}" \
+API_PASSWORD="${API_PASSWORD:?API_PASSWORD must be set for MCP server}" \
 exec "${MCP_PYTHON}" -m scheduler_mcp.server --transport http --host 127.0.0.1 --port 8080

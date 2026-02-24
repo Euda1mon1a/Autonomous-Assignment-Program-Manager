@@ -48,6 +48,17 @@
 - [ ] Log into Codex CLI (`codex auth` — OAuth browser flow)
 - [ ] Build budget-aware cron manager for Opus-consuming jobs
 
+## Laptop Cleanup (2026-02-22)
+
+- [ ] Push `post-restore-setup` branch (10 unpushed commits, no remote tracking — incident docs, PII fixes, ML pipeline, constraint calibration, MCP watchdog)
+- [ ] Add `rf_enrichment.json` to `scripts/sdr/.gitignore` (or commit if intentional)
+- [ ] Add `*.db-shm` and `*.db-wal` to `workspace/ha-ml/.gitignore`
+- [ ] Delete stale AAPM copies once verified redundant:
+  - `Autonomous-Assignment-Program-Manager-1/` (dirty `.vscode/settings.json`)
+  - `Autonomous-Assignment-Program-Manager-archived-20251220/` (3 loose Excel files + `1cd/`)
+  - `Autonomous-Assignment-Program-Manager.corrupted/` (8 modified hook scripts)
+  - `Documents/Autonomous-Assignment-Program-Manager/` (dirty Dockerfile + package-lock.json)
+
 ## OPSEC Debt (Cannot Fix — Existing Migrations)
 
 Alembic migrations contain real faculty names in SQL queries (`20260114_faculty_constraints.py`, `20260114_sm_constraints.py`, `20260114_half_day_tables.py`). Cannot edit existing migrations per Hard Boundary rules. Future migrations should use UUID lookups instead of name-based queries.

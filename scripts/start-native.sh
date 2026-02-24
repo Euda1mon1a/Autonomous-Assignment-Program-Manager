@@ -327,6 +327,8 @@ start_service "frontend" "$PROJECT_ROOT/frontend" \
 # 5. MCP server
 export PYTHONPATH="${PROJECT_ROOT}/mcp-server/src"
 export API_BASE_URL="http://localhost:8000"
+export API_USERNAME="${API_USERNAME:-admin}"
+export API_PASSWORD="${API_PASSWORD:?API_PASSWORD must be set for MCP server}"
 
 start_service "mcp" "$PROJECT_ROOT/mcp-server/src" \
     python -m scheduler_mcp.server --host 127.0.0.1 --port 8080
