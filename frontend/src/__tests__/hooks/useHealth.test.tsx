@@ -11,10 +11,14 @@ import {
   useHealthLive,
   useHealthReady,
   useHealthDetailed,
+  useHealthDashboard,
+  useHealthDeep,
   useServiceHealth,
   type HealthLiveResponse,
   type HealthReadyResponse,
   type HealthDetailedResponse,
+  type HealthDashboardResponse,
+  type HealthDeepResponse,
   type ServiceHealth,
 } from '@/hooks/useHealth'
 
@@ -89,6 +93,74 @@ const mockServiceHealth: ServiceHealth = {
   latencyMs: 5,
   message: 'PostgreSQL connection active',
   last_checked: '2026-02-05T12:00:00Z',
+}
+
+const mockDashboardResponse: HealthDashboardResponse = {
+  overallStatus: 'healthy',
+  timestamp: '2026-02-05T12:00:00Z',
+  uptimeSeconds: 86400,
+  version: '1.2.3',
+  environment: 'test',
+  summary: {
+    totalServices: 3,
+    healthyCount: 3,
+    degradedCount: 0,
+    unhealthyCount: 0,
+    avgResponseTimeMs: 12,
+  },
+  metrics: {
+    historyEnabled: true,
+    historySize: 10,
+    uptimePercentage: 99.9,
+  },
+  services: {
+    database: {
+      name: 'database',
+      status: 'healthy',
+      responseTimeMs: 8,
+      lastCheck: '2026-02-05T12:00:00Z',
+    },
+    redis: {
+      name: 'redis',
+      status: 'healthy',
+      responseTimeMs: 4,
+      lastCheck: '2026-02-05T12:00:00Z',
+    },
+    celery: {
+      name: 'celery',
+      status: 'healthy',
+      responseTimeMs: 20,
+      lastCheck: '2026-02-05T12:00:00Z',
+    },
+  },
+  alerts: [],
+}
+
+const mockDeepResponse: HealthDeepResponse = {
+  status: 'healthy',
+  timestamp: '2026-02-05T12:00:00Z',
+  service: 'residency-scheduler-api',
+  version: '1.2.3',
+  checks: {
+    database: {
+      connected: true,
+      status: 'ok',
+      responseTimeMs: 12,
+      timestamp: '2026-02-05T12:00:00Z',
+      error: null,
+      warning: null,
+      details: null,
+    },
+    redis: {
+      connected: true,
+      status: 'ok',
+      responseTimeMs: 4,
+      timestamp: '2026-02-05T12:00:00Z',
+      error: null,
+      warning: null,
+      details: null,
+    },
+  },
 }
 
 // Create a fresh QueryClient for each test
@@ -395,6 +467,53 @@ describe('useHealthDetailed', () => {
     })
 
     expect(result.current.data).toBeDefined()
+  })
+})
+
+describe('useHealthDashboard', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should fetch dashboard health summary', async () => {
+    mockedApi.get.mockResolvedValueOnce(mockDashboardResponse)
+
+    const { result } = renderHook(
+      () => useHealthDashboard(),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(result.current.data?.overallStatus).toBe('healthy')
+    expect(result.current.data?.summary.totalServices).toBe(3)
+    expect(result.current.data?.services.database.status).toBe('healthy')
+    expect(mockedApi.get).toHaveBeenCalledWith('/health/dashboard')
+  })
+})
+
+describe('useHealthDeep', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('should fetch deep health checks', async () => {
+    mockedApi.get.mockResolvedValueOnce(mockDeepResponse)
+
+    const { result } = renderHook(
+      () => useHealthDeep(),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(result.current.data?.checks.database.connected).toBe(true)
+    expect(result.current.data?.checks.redis.responseTimeMs).toBe(4)
+    expect(mockedApi.get).toHaveBeenCalledWith('/health/deep')
   })
 })
 

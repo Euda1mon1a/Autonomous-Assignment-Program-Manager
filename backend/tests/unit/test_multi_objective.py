@@ -932,6 +932,7 @@ class TestMultiObjectiveIntegration:
 
     def test_full_optimization_workflow(self, three_objective_config):
         """Test complete optimization workflow."""
+        np.random.seed(42)
         # Create MOEA/D
         config = MOEADConfig(n_weight_vectors=20, max_generations=5)
         moead = MOEADAlgorithm(three_objective_config, config)
