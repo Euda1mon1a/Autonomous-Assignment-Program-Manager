@@ -110,6 +110,7 @@ from app.models.notification import (
 from app.models.oauth2_authorization_code import OAuth2AuthorizationCode
 from app.models.oauth2_client import PKCEClient
 from app.models.person import Person, ScreenerRole
+from app.models.person_academic_year import PersonAcademicYear
 from app.models.procedure import Procedure
 from app.models.procedure_credential import ProcedureCredential
 from app.models.resilience import (  # Tier 2 models; Tier 3 models; Tier 1 models
@@ -416,4 +417,6 @@ __all__ = [
     "WellnessLeaderboardSnapshot",
     "HopfieldPosition",
     "AchievementType",
+    # Person Academic Year model (AY-scoped PGY levels)
+    "PersonAcademicYear",
 ]

@@ -1,0 +1,333 @@
+# Faculty Scheduling Fix Roadmap
+
+> **Status:** Planned (not started)
+> **Created:** 2026-02-25
+> **Depends on:** Gemini WP-2/3/4/8/9 completion
+> **Prereqs:** `FACULTY_SCHEDULING_SPECIFICATION.md`, `annual-workbook-architecture.md`, `excel-stateful-roundtrip-roadmap.md`
+
+---
+
+## Background
+
+A comprehensive audit of the faculty scheduling pipeline (DB models → preloads → constraints → solver → JSON → Excel) identified 6 gaps. An expert architectural review provided solutions for all 6. This roadmap documents the fix plan across 3 phases.
+
+The existing pipeline correctly separates `_load_fmit_call` (Friday/Saturday mandatory) from `_load_faculty_call` (cascading post-call), which is the right decoupling for three conflicting paradigms: **ACGME supervision** (hard rules), **inpatient service weeks** (rolling 7-day cadences), and **human equity** (soft rules). The fixes below preserve this architecture.
+
+### Gaps Identified
+
+| # | Gap | Severity | Phase |
+|---|-----|----------|-------|
+| 1 | Solver amnesia — call equity resets to 0 each block | High | 1 |
+| 2 | ORM CHECK constraint stale vs DB migration | Low | 2 |
+| 3 | `DeptChiefWednesdayPreference` implemented but not registered | Medium | 2 |
+| 4 | FMIT/call constraints disabled by default, no `profile` mechanism | Medium | 2 |
+| 5 | 12 faculty rows — roster may exceed template limit | Medium | 3 |
+| 6 | Cross-block FMIT invisible on per-block Excel sheets | High | 3 |
+
+---
+
+## Phase 1: Longitudinal Call Equity (Fixes Gap #1)
+
+### Problem
+
+Equity constraints (`SundayCallEquity` w=10, `WeekdayCallEquity` w=5, `HolidayCallEquity` w=7) start from 0 every block. `call_counts` in `solvers.py:2088` is a local dict that dies after each run. Faculty who took 4 Sunday calls in Block 9 are treated identically to someone who took 0 in Block 10.
+
+### Solution
+
+Shift objective from minimizing the **local max** to minimizing the **global YTD max** by hydrating history from `call_assignments` table.
+
+### Step 1A: Add `prior_calls` to SchedulingContext
+
+**File:** `backend/app/scheduling/constraints/base.py` (~line 259, after resilience fields)
+
+```python
+prior_calls: dict[UUID, dict[str, int]] = field(default_factory=dict)
+# Structure: {faculty_id: {"sunday": N, "weekday": N}}
+```
+
+### Step 1B: Hydrate YTD from `call_assignments` in Engine
+
+**File:** `backend/app/scheduling/engine.py` (before `_build_context()` call, ~line 975)
+
+Query `call_assignments` dynamically — do NOT use stale `people.sunday_call_count` columns (prone to drift if a coordinator edits Excel manually):
+
+```sql
+SELECT person_id,
+  COUNT(*) FILTER (WHERE is_weekend = true AND extract(dow from date) = 0) AS ytd_sundays,
+  COUNT(*) FILTER (WHERE is_weekend = false AND extract(dow from date) IN (1,2,3,4)) AS ytd_weekdays
+FROM call_assignments
+WHERE date >= :ay_start AND date < :block_start AND call_type = 'overnight'
+GROUP BY person_id
+```
+
+Pass result into `SchedulingContext(prior_calls=...)` at line 988.
+
+### Step 1C: Inject History Constants into CP-SAT Expressions
+
+**File:** `backend/app/scheduling/constraints/call_equity.py`
+
+CP-SAT linear expressions natively combine integer constants with BoolVar sums — no auxiliary variables needed.
+
+In `SundayCallEquityConstraint.add_to_cpsat()` (~line 87):
+
+```python
+max_global_sunday = model.NewIntVar(0, 52, "max_ytd_sunday")
+
+for f_i in eligible_faculty:
+    history = context.prior_calls.get(f_i.id, {}).get("sunday", 0)
+    current_block_vars = [variables["call_assignments"][(f_i, b_i, "overnight")]
+                          for b_i in sunday_block_indices]
+    # Solver bounds the COMBINED total — forces assignments to lowest-history faculty
+    model.Add(history + sum(current_block_vars) <= max_global_sunday)
+
+objective += max_global_sunday * 10  # weight preserved
+```
+
+Same pattern for `WeekdayCallEquityConstraint` and `HolidayCallEquityConstraint`.
+
+### Step 1D: Tests
+
+- **Unit:** Mock `prior_calls` in SchedulingContext, verify solver assigns calls to lowest-history faculty
+- **Integration:** Create `CallAssignment` records for Blocks 1–9, run Block 10 solve, assert equity across YTD totals
+- **Edge:** Empty `prior_calls` (Block 1 of year) — behavior must match current per-block equity
+
+---
+
+## Phase 2: Code Gap Fixes (Fixes Gaps #2–4)
+
+### 2A: ORM CHECK Constraint Mismatch (Gap #2)
+
+**Problem:** ORM model at `call_assignment.py:52-55` declares `call_type IN ('sunday', 'weekday', 'holiday', 'backup')`. DB migration (`001_initial_schema.py:156`) has `IN ('overnight', 'weekend', 'backup')`. Code writes `'overnight'`. No runtime INSERT failure (PG uses migration CHECK), but ORM metadata is stale.
+
+**File:** `backend/app/models/call_assignment.py`
+
+```python
+# Before (stale):
+CheckConstraint("call_type IN ('sunday', 'weekday', 'holiday', 'backup')", name="check_call_type")
+
+# After (matches migration):
+CheckConstraint("call_type IN ('overnight', 'weekend', 'backup')", name="check_call_type")
+```
+
+No migration needed — metadata-only alignment.
+
+### 2B: Register DeptChiefWednesdayPreferenceConstraint (Gap #3)
+
+**Problem:** Fully implemented at `call_equity.py:1456-1575` (CP-SAT + PuLP) and already imported in `manager.py:64`, but NOT added in `create_default()`.
+
+**File:** `backend/app/scheduling/constraints/manager.py`
+
+Add to `create_default()` (disabled by default, enabled via profile):
+
+```python
+# After the TuesdayCallPreference/CallNightBeforeLeave block (~line 427):
+manager.add(DeptChiefWednesdayPreferenceConstraint(weight=1.0))
+manager.disable("DeptChiefWednesdayPreference")
+```
+
+### 2C: Add `profile` Parameter to `create_default()` (Gap #4)
+
+**Problem:** FMIT constraints (`FMITWeekBlocking`, `FMITMandatoryCall`) and `OvernightCallGeneration` are added but disabled by default (lines 364–388). Callers must manually enable them. No caller currently passes parameters — all 8 call sites use `create_default()` with no args.
+
+**File:** `backend/app/scheduling/constraints/manager.py`
+
+```python
+@classmethod
+def create_default(cls, profile: str = "resident") -> "ConstraintManager":
+    manager = cls()
+    # ... existing constraint registration (unchanged) ...
+
+    if profile == "faculty":
+        manager.enable("FMITWeekBlocking")
+        manager.enable("FMITMandatoryCall")
+        manager.enable("OvernightCallGeneration")
+        manager.enable("DeptChiefWednesdayPreference")
+
+    return manager
+```
+
+**Also update** `ConstraintService.get_manager_for_config()` dispatch map at `constraint_service.py:569`:
+
+```python
+config_map = {
+    "default": ConstraintManager.create_default,
+    "faculty": lambda: ConstraintManager.create_default(profile="faculty"),
+    "minimal": ConstraintManager.create_minimal,
+    "strict": ConstraintManager.create_strict,
+    "resilience": lambda: ConstraintManager.create_resilience_aware(tier=2),
+}
+```
+
+**Backward compatibility:** Default `"resident"` profile preserves current behavior for all 8 callers:
+`engine.py:117`, `solvers.py:135`, `anderson_localization.py:309`, `generator.py:133`, `constraint_service.py:163`, `constraint_service.py:576`
+
+### Phase 2 Tests
+
+- `create_default(profile="faculty")` returns manager with FMIT + call constraints enabled
+- `create_default()` (no args) keeps existing disabled state — zero behavioral change
+- ORM CHECK values match migration CHECK values
+
+---
+
+## Phase 3: Annual Workbook — 15-Sheet Design with YTD_SUMMARY (Fixes Gaps #5–6)
+
+### Problem
+
+Per-block Excel sheets cannot display cross-block FMIT weeks or longitudinal equity. A Block 10 sheet showing 5 FMIT half-days from a week that started in Block 9 looks inequitable without the full picture. The template also caps at 12 faculty rows.
+
+### Solution
+
+15-sheet annual workbook: Sheet 0 = `YTD_SUMMARY`, Sheets 1–14 = Blocks 0–13. Expand template to 50 pre-formatted rows with unused rows hidden.
+
+### Existing Foundation (Already Implemented)
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| `export_year_xlsx()` | Done | `canonical_schedule_export_service.py:88-159` |
+| API route | Done | `export.py:268` — GET `/schedule/year/xlsx` |
+| `_copy_worksheet()` | Done | `canonical_schedule_export_service.py:161-196` |
+| Phantom columns (stub blocks) | Done | `canonical_schedule_export_service.py:198-217` |
+| `__SYS_META__` + `__REF__` | Done | WP-1 metadata (committed `d70a1444`) |
+| Parent/child batch import | Done | `import_staging.py:112-157`, `import_tasks.py` |
+| Longitudinal validator | Done | `longitudinal_validator.py` (NF caps + clinic mins) |
+| Architecture doc | Done | `annual-workbook-architecture.md` (354 lines) |
+| Template file | **Missing** | `backend/data/BlockTemplate2_Official.xlsx` not on disk |
+
+### 3A: Expand Template to 50 Pre-Formatted Faculty Rows (Gap #5)
+
+**Problem:** Current template has 12 faculty rows (31–42). Roster may exceed 12 active faculty.
+
+**Approach:** Expand master template to 50 faculty rows (31–80). During export, **hide** unused rows. Do NOT use `openpyxl.insert_rows()` — it corrupts merged cells and `SUMPRODUCT` formulas.
+
+```python
+active_count = len(data["faculty"])
+last_populated = 30 + active_count
+for row_idx in range(last_populated + 1, 81):
+    ws.row_dimensions[row_idx].hidden = True
+```
+
+Summary formulas move to Row 81 (was 43). `%CVf` moves to Row 82 (was 44).
+
+**Files to update:**
+- `backend/data/BlockTemplate2_Official.xlsx` — expand or create with 50 faculty rows
+- `backend/app/services/xml_to_xlsx_converter.py`:
+  - Faculty row range: 31→80 (was 31→42)
+  - Totals row: 81 (was 43)
+  - `%CVf` row: 82 (was 44)
+  - Summary column formula ranges: `BJ31:BJ80` etc.
+  - `_fill_call_row()`: update CALL formula range
+
+### 3B: Add YTD_SUMMARY Sheet (Gap #6)
+
+New sheet injected as Sheet 0 of the annual workbook. Lists all faculty with live formulas aggregating data across 14 block sheets.
+
+**Why SUMIF, not 3D references:** Coordinators may sort faculty alphabetically on individual block sheets. SUMIF matches by name (Column E) so the math survives sorting.
+
+**Cross-block FMIT formula (the key insight):**
+
+```excel
+=(
+  SUMIF('Block 0'!$E$31:$E$80, $A2, 'Block 0'!BQ$31:BQ$80) +
+  SUMIF('Block 1'!$E$31:$E$80, $A2, 'Block 1'!BQ$31:BQ$80) +
+  ... [through Block 13]
+) / 14
+```
+
+**Why `/14`:** 1 FMIT week = exactly 14 half-days. Faculty C works Apr 4–10 spanning Blocks 10+11: Block 10 counts 10 half-days, Block 11 counts 4. Sum = 14, ÷ 14 = `1.0 FMIT Weeks`. Zero Python cross-block logic — Excel does it natively and reactively as coordinators edit grids.
+
+**YTD_SUMMARY columns:**
+
+| Col | Header | Formula Pattern |
+|-----|--------|----------------|
+| A | Faculty Name | Static (from roster) |
+| B | YTD Clinic (C+SM) | SUMIF across 14 blocks, col 62 |
+| C | YTD CC | SUMIF across 14 blocks, col 63 |
+| D | YTD CV | SUMIF across 14 blocks, col 64 |
+| E | YTD Total Clinic | =B+C+D |
+| F | YTD AT (AT+PCAT+DO) | SUMIF across 14 blocks, col 66 |
+| G | YTD Admin | SUMIF across 14 blocks, col 67 |
+| H | YTD Leave | SUMIF across 14 blocks, col 68 |
+| I | YTD FMIT Weeks | SUMIF col 69 / 14 |
+| J | YTD Call Nights | SUMIF across 14 blocks, col 70 |
+
+**File:** `backend/app/services/canonical_schedule_export_service.py` — add `_build_ytd_summary_sheet()`, call from `export_year_xlsx()`.
+
+### 3C: Template Creation
+
+`backend/data/` directory and `BlockTemplate2_Official.xlsx` do not exist on disk. Structure is defined in `docs/scheduling/BlockTemplate2_Structure.xml`.
+
+Options:
+1. Generate template programmatically from the XML structure file
+2. Create manually in Excel with 50 faculty rows pre-formatted
+3. Both: generate baseline, manually polish formatting
+
+### Phase 3 Tests
+
+- `_build_ytd_summary_sheet()` generates correct SUMIF formulas
+- Row hiding works for 5, 12, 30, 50 active faculty
+- Export 3-block year workbook, verify YTD FMIT formula resolves correctly
+- Single-block export regression — unchanged behavior
+
+---
+
+## Dependency Graph
+
+```
+Phase 2A (ORM fix) ─────────── standalone
+Phase 2B (register constraint) ─ standalone
+Phase 2C (profile param) ─────── depends on 2B
+Phase 2D (tests) ─────────────── depends on 2A-C
+
+Phase 1A (prior_calls field) ── standalone
+Phase 1B (hydrate YTD) ──────── depends on 1A
+Phase 1C (CP-SAT injection) ─── depends on 1A, 1B
+Phase 1D (tests) ─────────────── depends on 1A-C
+
+Phase 3A (50 rows) ───────────── standalone (template)
+Phase 3B (YTD_SUMMARY) ──────── depends on 3A (row numbers)
+Phase 3C (template creation) ── parallel with 3A
+Phase 3D (tests) ─────────────── depends on 3A-C
+```
+
+**Recommended order:** Phase 2 → Phase 1 → Phase 3
+
+Phase 2 is pure fix work (small, low-risk). Phase 1 changes solver behavior (medium risk, needs careful testing). Phase 3 is additive feature work (template + new sheet).
+
+---
+
+## Critical Files
+
+| File | Phase | Change |
+|------|-------|--------|
+| `backend/app/scheduling/constraints/base.py` | 1A | Add `prior_calls` field to SchedulingContext |
+| `backend/app/scheduling/engine.py` | 1B | Hydrate YTD query + inject into context |
+| `backend/app/scheduling/constraints/call_equity.py` | 1C | Modify CP-SAT objective expressions |
+| `backend/app/models/call_assignment.py` | 2A | Fix CHECK constraint values |
+| `backend/app/scheduling/constraints/manager.py` | 2B, 2C | Register constraint + add `profile` param |
+| `backend/app/services/constraint_service.py` | 2C | Update dispatch map |
+| `backend/app/services/xml_to_xlsx_converter.py` | 3A | Update row refs for 50-row layout |
+| `backend/app/services/canonical_schedule_export_service.py` | 3B | Add `_build_ytd_summary_sheet()` |
+| `backend/data/BlockTemplate2_Official.xlsx` | 3C | Create template |
+
+---
+
+## Verification
+
+```bash
+# Phase 2 — Code gap fixes
+cd backend
+.venv/bin/python -m pytest tests/scheduling/ -x -q -k "constraint_manager or call_assignment"
+.venv/bin/python -c "from app.models.call_assignment import CallAssignment; print(CallAssignment.__table_args__)"
+
+# Phase 1 — Longitudinal equity
+.venv/bin/python -m pytest tests/scheduling/ -x -q -k "call_equity or prior_calls"
+
+# Phase 3 — Annual workbook
+.venv/bin/python -m pytest tests/services/test_canonical_schedule_export.py -x -q
+.venv/bin/python -m pytest tests/services/ -x -q -k "ytd_summary or annual"
+
+# Full regression
+.venv/bin/python -m pytest tests/ -x -q --ignore=tests/scheduling/test_fair_call_optimizer.py
+```
+
+> **Note:** `test_fair_call_optimizer.py` has a pre-existing ortools `CpSolverStatus` attribute error — ignore until ortools version is updated.

@@ -21,6 +21,7 @@ from datetime import date, datetime, timedelta, UTC
 from io import BytesIO
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 from defusedxml import ElementTree
 
 from openpyxl import Workbook, load_workbook
