@@ -280,6 +280,20 @@ class XMLToXlsxConverter:
         stats["call_nights_input"] = len(call_rows)
         self._apply_presentation_profile(sheet, block_start, block_end)
         self.last_conversion_stats = stats
+
+        # Spatial UUID Anchoring (Phase 2)
+        if self.use_block_template2:
+            self._write_anchor_sheet(wb, data)
+
+        # Strict UI Contracts (Phase 3)
+        if self.use_block_template2:
+            self._add_data_validation(sheet, block_start, block_end)
+
+        # Stateful Overlays (Phase 4)
+        if self.use_block_template2:
+            self._add_dynamic_cf(sheet, block_start, block_end)
+            self._add_leave_formula_column(sheet, block_start, block_end)
+
         if self.include_qa_sheet and self.use_block_template2:
             self._write_export_qa_sheet(wb, data, stats)
         if self.use_block_template2:
@@ -614,6 +628,139 @@ class XMLToXlsxConverter:
             ("I", 10),
         ):
             qa.column_dimensions[col].width = width
+
+    def _write_anchor_sheet(self, wb: Workbook, data: dict[str, Any]) -> None:
+        """Create a veryHidden sheet __ANCHORS__ with UUIDs and row hashes."""
+        if "__ANCHORS__" in wb.sheetnames:
+            del wb["__ANCHORS__"]
+        ws = wb.create_sheet("__ANCHORS__")
+        ws.sheet_state = "veryHidden"
+
+        # Headers
+        ws.cell(row=1, column=1, value="person_id")
+        ws.cell(row=1, column=2, value="block_assignment_id")
+        ws.cell(row=1, column=3, value="row_hash")
+
+        from app.services.excel_metadata import compute_row_hash
+
+        all_people = (data.get("residents", []) or []) + (data.get("faculty", []) or [])
+        for person in all_people:
+            name = person.get("name", "")
+            person_id = person.get("id")
+            if not person_id or not name:
+                continue
+
+            row = self.row_mappings.get(name.replace("*", "").strip())
+            if not row:
+                continue
+
+            # Compute hash for Phase 2 O(1) change detection
+            rotation1 = person.get("rotation1")
+            rotation2 = person.get("rotation2")
+            days_codes = []
+            for day in person.get("days", []):
+                days_codes.append(day.get("am"))
+                days_codes.append(day.get("pm"))
+
+            row_hash = compute_row_hash(
+                UUID(person_id), rotation1, rotation2, days_codes
+            )
+
+            # Write to anchor sheet at matching row (Spatial Anchoring)
+            ws.cell(row=row, column=1, value=str(person_id))
+            ws.cell(row=row, column=2, value=str(person.get("block_assignment_id", "")))
+            ws.cell(row=row, column=3, value=row_hash)
+
+    def _add_data_validation(self, sheet, block_start: date, block_end: date) -> None:
+        """Add Excel DataValidation dropdowns referencing __REF__ Named Ranges.
+
+        Note: The Named Ranges (ValidRotations, ValidActivities) are created globally
+        in canonical_schedule_export_service.py. The dropdowns are applied here.
+        """
+        from openpyxl.worksheet.datavalidation import DataValidation
+
+        # Rotation columns: dropdown from ValidRotations named range
+        rot_dv = DataValidation(
+            type="list", formula1="ValidRotations", allow_blank=True
+        )
+        sheet.add_data_validation(rot_dv)
+
+        # Activity columns: dropdown from ValidActivities named range
+        act_dv = DataValidation(
+            type="list", formula1="ValidActivities", allow_blank=True
+        )
+        sheet.add_data_validation(act_dv)
+
+        schedule_start_col = COL_SCHEDULE_START
+        total_days = (block_end - block_start).days + 1
+        schedule_end_col = schedule_start_col + (total_days * COLS_PER_DAY) - 1
+
+        # Apply to all mapped resident/faculty rows
+        target_rows = sorted(set(self.row_mappings.values()))
+        if not target_rows:
+            return
+
+        for row in target_rows:
+            # Rotation columns (A and B)
+            rot_dv.add(sheet.cell(row=row, column=BT2_COL_ROTATION1))
+            rot_dv.add(sheet.cell(row=row, column=BT2_COL_ROTATION2))
+
+            # Schedule columns (F through schedule end)
+            for col in range(schedule_start_col, schedule_end_col + 1):
+                act_dv.add(sheet.cell(row=row, column=col))
+
+    def _add_dynamic_cf(self, sheet, block_start: date, block_end: date) -> None:
+        """Add dynamic conditional formatting rules based on tamc_color_scheme."""
+        from openpyxl.formatting.rule import CellIsRule
+        from openpyxl.styles import Font, PatternFill
+
+        if not self.color_scheme:
+            return
+
+        schedule_start_col = COL_SCHEDULE_START
+        total_days = (block_end - block_start).days + 1
+        schedule_end_col = schedule_start_col + (total_days * COLS_PER_DAY) - 1
+
+        # Standard grid range for Block Template 2
+        min_row = 9
+        max_row = 69
+        grid_range = f"{get_column_letter(schedule_start_col)}{min_row}:{get_column_letter(schedule_end_col)}{max_row}"
+
+        # Add rules for each code in scheme
+        for code, bg_color in self.color_scheme._code_colors.items():
+            fg_color = self.color_scheme._font_colors.get(code, "000000")
+
+            rule = CellIsRule(
+                operator="equal",
+                formula=[f'"{code}"'],
+                fill=PatternFill(start_color=bg_color, fill_type="solid"),
+                font=Font(color=fg_color),
+            )
+            sheet.conditional_formatting.add(grid_range, rule)
+
+    def _add_leave_formula_column(
+        self, sheet, block_start: date, block_end: date
+    ) -> None:
+        """Add a column that auto-calculates leave days from the grid."""
+        # Standard summary position: Column BS (71)
+        leave_col = 71
+        sheet.cell(row=8, column=leave_col, value="LV Days")
+
+        schedule_start_col_letter = get_column_letter(COL_SCHEDULE_START)
+
+        # Calculate end column dynamically based on block length
+        actual_days = (block_end - block_start).days + 1
+        schedule_end_col_letter = get_column_letter(
+            COL_SCHEDULE_START + (actual_days * COLS_PER_DAY) - 1
+        )
+
+        for row in range(9, 70):
+            # Formula: count LV codes and divide by 2 (AM/PM slots)
+            sheet.cell(
+                row=row,
+                column=leave_col,
+                value=f'=COUNTIF({schedule_start_col_letter}{row}:{schedule_end_col_letter}{row}, "LV")/2',
+            )
 
     def _prune_empty_sheets(self, wb: Workbook, keep: set[str]) -> None:
         """Remove placeholder sheets that contain no data."""

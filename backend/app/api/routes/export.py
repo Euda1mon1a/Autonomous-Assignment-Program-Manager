@@ -263,3 +263,46 @@ async def export_schedule_xlsx(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+@router.get("/schedule/year/xlsx")
+async def export_schedule_year_xlsx(
+    academic_year: int = Query(..., description="Target academic year (e.g. 2025)"),
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
+):
+    """
+    Export all 14 blocks for an academic year into a single canonical Block Template2 Excel format workbook. Requires admin role.
+
+    This generates an Excel file containing sheets for blocks 0-13,
+    filled from half_day_assignments (descriptive truth), with cross-sheet validation metadata.
+
+    Args:
+        academic_year: Target academic year (e.g. 2025)
+
+    Returns:
+        Excel file (.xlsx) download
+    """
+    try:
+        exporter = CanonicalScheduleExportService(db)
+        xlsx_bytes = exporter.export_year_xlsx(
+            academic_year=academic_year,
+            include_faculty=True,
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception:
+        logger.exception("Yearly Excel export failed")
+        raise HTTPException(
+            status_code=500, detail="An error occurred generating the Excel file"
+        )
+
+    # Generate filename
+    filename = f"schedule_ay{academic_year}_{academic_year + 1}.xlsx"
+
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
