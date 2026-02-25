@@ -131,7 +131,7 @@ NOTE: This script requires Microsoft Excel to be installed on macOS. If Excel is
 
 - All scripts assume the dev server is running at `http://localhost:3000`
 - All scripts assume the backend API is running at `http://localhost:8000`
-- Test credentials: `admin@test.mil` / `coordinator@test.mil` with password `TestPassword123!`
+- Test credentials: `admin` / `admin123` (Note: prompt scripts reference `admin@test.mil` / `TestPassword123!` but actual dev env uses `admin` / `admin123`)
 - GIF recordings are saved to the current working directory
 - Console error checking uses `read_console_messages` with pattern filtering to avoid noise
 - The `data-testid` attributes referenced here match those added in Phase 0 of the E2E testing roadmap

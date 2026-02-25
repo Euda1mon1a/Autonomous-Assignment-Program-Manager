@@ -1,7 +1,25 @@
 # Human TODO
 
 > Tasks that require human action (external accounts, manual configuration, etc.)
-> **Open items: ~25 | Archived: 31** (cleaned 2026-02-10)
+> **Open items: ~26 | Archived: 31** (cleaned 2026-02-10)
+
+---
+
+## Native Excel Formatting Check — Visual QA Script 4 (2026-02-25)
+
+**Priority:** Low
+**Status:** Blocked (needs non-empty export data)
+
+**Context:** Chrome MCP Visual QA Script 4 (`docs/prompts/CHROME_MCP_VISUAL_QA.md`) verifies conditional formatting renders correctly when an exported `.xlsx` is opened in macOS Excel/Numbers. Browser agents cannot launch native desktop apps or screenshot them.
+
+**Steps (human):**
+1. Ensure Export tab has data (Phase C of `docs/prompts/E2E_UNBLOCK_AND_EXPORT_WIRING.md`)
+2. Export a block schedule as `.xlsx` from `/hub/import-export`
+3. Open the downloaded file in Microsoft Excel or Numbers
+4. Verify: colored cells, header rows, conditional formatting, data validation dropdowns
+5. Screenshot and save as `mac_excel_formatting_check.png` in project root
+
+**Unblocked when:** Export tab is wired to real data (Phase C complete).
 
 ---
 
