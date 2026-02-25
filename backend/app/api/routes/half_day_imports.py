@@ -26,6 +26,23 @@ logger = get_logger(__name__)
 
 
 @router.post(
+    "/seed",
+    summary="Seed database state for half-day import E2E tests",
+    description="TESTING ONLY: Ensures the database is in the correct state to run E2E import tests.",
+)
+async def seed_half_day_import_test_state(
+    db=Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+) -> dict[str, str]:
+    # TODO: Implement actual database seeding logic here.
+    # Needs to:
+    # 1. Create/ensure the specific test users exist
+    # 2. Clear out any conflicting block 10 assignments
+    # 3. Create baseline rotations/activities if missing
+    return {"message": "Seed endpoint stub ready. Full seeding logic pending."}
+
+
+@router.post(
     "/stage",
     response_model=HalfDayImportStageResponse,
     summary="Stage a Block Template2 schedule for diff",
