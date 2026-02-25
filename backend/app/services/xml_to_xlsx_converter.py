@@ -461,7 +461,7 @@ class XMLToXlsxConverter:
         for idx, header in enumerate(row30_headers):
             sheet.cell(row=30, column=62 + idx).value = header
 
-        for row in range(31, 43):
+        for row in range(31, 81):
             sheet.cell(
                 row=row, column=62
             ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"C","SM"}}))'
@@ -481,17 +481,17 @@ class XMLToXlsxConverter:
                 f'=COUNTIF(F4:BI4, "{call_name}")' if call_name else None
             )
 
-        sheet.cell(row=43, column=62).value = "=SUM(BJ31:BJ42)"
-        sheet.cell(row=43, column=63).value = "=SUM(BK31:BK42)"
-        sheet.cell(row=43, column=64).value = "=SUM(BL31:BL42)"
-        sheet.cell(row=43, column=65).value = "=SUM(BM31:BM42)"
-        sheet.cell(row=43, column=66).value = "=SUM(BN31:BN42)"
-        sheet.cell(row=43, column=67).value = "=SUM(BO31:BO42)"
-        sheet.cell(row=43, column=68).value = "=SUM(BP31:BP42)"
-        sheet.cell(row=43, column=69).value = "=SUM(BQ31:BQ42)"
-        sheet.cell(row=43, column=70).value = "=SUM(BR31:BR42)"
-        sheet.cell(row=44, column=62).value = "%CVf"
-        sheet.cell(row=44, column=64).value = "=BL43/(BJ43+BK43+BL43)*100"
+        sheet.cell(row=81, column=62).value = "=SUM(BJ31:BJ80)"
+        sheet.cell(row=81, column=63).value = "=SUM(BK31:BK80)"
+        sheet.cell(row=81, column=64).value = "=SUM(BL31:BL80)"
+        sheet.cell(row=81, column=65).value = "=SUM(BM31:BM80)"
+        sheet.cell(row=81, column=66).value = "=SUM(BN31:BN80)"
+        sheet.cell(row=81, column=67).value = "=SUM(BO31:BO80)"
+        sheet.cell(row=81, column=68).value = "=SUM(BP31:BP80)"
+        sheet.cell(row=81, column=69).value = "=SUM(BQ31:BQ80)"
+        sheet.cell(row=81, column=70).value = "=SUM(BR31:BR80)"
+        sheet.cell(row=82, column=62).value = "%CVf"
+        sheet.cell(row=82, column=64).value = "=BL81/(BJ81+BK81+BL81)*100"
 
     def _call_last_name_token(self, raw_name: Any) -> str:
         if not raw_name:

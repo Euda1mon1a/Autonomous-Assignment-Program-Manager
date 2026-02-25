@@ -972,6 +972,48 @@ class SchedulingEngine:
         else:
             resident_template_map: dict[UUID, set[UUID]] = {}
 
+        prior_calls: dict[UUID, dict[str, int]] = {}
+        if academic_year is not None and self.start_date:
+            from sqlalchemy import select, func, and_, extract
+            from app.models.call_assignment import CallAssignment
+
+            ay_start = date(academic_year, 7, 1)
+            stmt = (
+                select(
+                    CallAssignment.person_id,
+                    func.count()
+                    .filter(
+                        and_(
+                            CallAssignment.is_weekend == True,
+                            extract("dow", CallAssignment.date) == 0,
+                        )
+                    )
+                    .label("ytd_sundays"),
+                    func.count()
+                    .filter(
+                        and_(
+                            CallAssignment.is_weekend == False,
+                            extract("dow", CallAssignment.date).in_([1, 2, 3, 4]),
+                        )
+                    )
+                    .label("ytd_weekdays"),
+                )
+                .where(
+                    and_(
+                        CallAssignment.date >= ay_start,
+                        CallAssignment.date < self.start_date,
+                        CallAssignment.call_type == "overnight",
+                    )
+                )
+                .group_by(CallAssignment.person_id)
+            )
+            rows = self.db.execute(stmt).all()
+            for row in rows:
+                prior_calls[cast(UUID, row.person_id)] = {
+                    "sunday": row.ytd_sundays or 0,
+                    "weekday": row.ytd_weekdays or 0,
+                }
+
         context = SchedulingContext(
             residents=residents,
             faculty=faculty,
@@ -991,6 +1033,7 @@ class SchedulingEngine:
             protected_patterns=protected_patterns,
             faculty_schedule_preferences=faculty_preferences,
             resident_template_map=resident_template_map,
+            prior_calls=prior_calls,
         )
 
         # Enable activity requirement constraint if we have data

@@ -142,8 +142,22 @@ class CanonicalScheduleExportService:
             # Apply phantom columns for stub blocks (0 and 13)
             self._apply_phantom_columns(ws, block)
 
+            # Hide unused faculty rows for cleaner presentation
+            # Base template has 50 faculty rows starting at row 31
+            active_faculty_count = len(data.get("faculty", []))
+            last_populated_row = 30 + active_faculty_count
+            for row_idx in range(last_populated_row + 1, 81):
+                ws.row_dimensions[row_idx].hidden = True
+
             block_map[sheet_title] = str(block.id)
             temp_wb.close()
+
+        # Build YTD Summary sheet as the first sheet
+        summary_ws = wb.create_sheet(title="YTD_SUMMARY", index=0)
+        self._build_ytd_summary_sheet(summary_ws, blocks, data.get("faculty", []))
+
+        # Ensure YTD_SUMMARY is active
+        wb.active = summary_ws
 
         # Save current workbook to bytes
         buffer = io.BytesIO()
@@ -215,6 +229,66 @@ class CanonicalScheduleExportService:
 
         ws.protection.sheet = True
         ws.protection.password = None  # Visual lock only
+
+    def _build_ytd_summary_sheet(
+        self, ws, blocks: list[AcademicBlock], faculty: list[dict[str, Any]]
+    ) -> None:
+        """Build YTD_SUMMARY sheet using dynamic cross-sheet SUMIF formulas."""
+        headers = [
+            "Faculty Name",
+            "YTD Clinic (C+SM)",
+            "YTD CC",
+            "YTD CV",
+            "YTD Total Clinic",
+            "YTD AT (AT+PCAT+DO)",
+            "YTD Admin",
+            "YTD Leave",
+            "YTD FMIT Weeks",
+            "YTD Call Nights",
+        ]
+
+        # Write headers
+        for col_idx, header in enumerate(headers, start=1):
+            cell = ws.cell(row=1, column=col_idx, value=header)
+            cell.font = copy(cell.font)  # Will apply bold formatting in real use
+
+        block_names = [f"'Block {b.block_number}'" for b in blocks]
+
+        # Write faculty rows
+        for row_idx, f in enumerate(faculty, start=2):
+            name = f.get("name", "")
+            ws.cell(row=row_idx, column=1, value=name)
+
+            if not name:
+                continue
+
+            # Helper to generate cross-sheet SUMIF
+            def cross_sheet_sumif(col_letter: str, current_row: int = row_idx) -> str:
+                # e.g., SUMIF('Block 0'!$E$31:$E$80, $A2, 'Block 0'!BJ$31:BJ$80) + ...
+                terms = [
+                    f"SUMIF({b}!$E$31:$E$80, $A{current_row}, {b}!{col_letter}$31:{col_letter}$80)"
+                    for b in block_names
+                ]
+                return f"=({'+'.join(terms)})"
+
+            # B: YTD Clinic (C+SM) -> BJ
+            ws.cell(row=row_idx, column=2, value=cross_sheet_sumif("BJ"))
+            # C: YTD CC -> BK
+            ws.cell(row=row_idx, column=3, value=cross_sheet_sumif("BK"))
+            # D: YTD CV -> BL
+            ws.cell(row=row_idx, column=4, value=cross_sheet_sumif("BL"))
+            # E: YTD Total Clinic -> B+C+D
+            ws.cell(row=row_idx, column=5, value=f"=B{row_idx}+C{row_idx}+D{row_idx}")
+            # F: YTD AT (AT+PCAT+DO) -> BN
+            ws.cell(row=row_idx, column=6, value=cross_sheet_sumif("BN"))
+            # G: YTD Admin -> BO
+            ws.cell(row=row_idx, column=7, value=cross_sheet_sumif("BO"))
+            # H: YTD Leave -> BP
+            ws.cell(row=row_idx, column=8, value=cross_sheet_sumif("BP"))
+            # I: YTD FMIT Weeks -> BQ / 14
+            ws.cell(row=row_idx, column=9, value=f"{cross_sheet_sumif('BQ')}/14")
+            # J: YTD Call Nights -> BR
+            ws.cell(row=row_idx, column=10, value=cross_sheet_sumif("BR"))
 
     def _export_json_data(
         self,

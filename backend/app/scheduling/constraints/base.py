@@ -257,6 +257,10 @@ class SchedulingContext:
     # Target utilization for buffer constraint (default 80%)
     target_utilization: float = 0.80
 
+    # Longitudinal call equity history (Phase 1)
+    # Structure: {faculty_id: {"sunday": N, "weekday": N}}
+    prior_calls: dict[UUID, dict[str, int]] = field(default_factory=dict)
+
     # =========================================================================
     # Resident → Rotation Template Mapping (from BlockAssignment)
     # =========================================================================

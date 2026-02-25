@@ -322,7 +322,7 @@ class ConstraintManager:
         )
 
     @classmethod
-    def create_default(cls) -> "ConstraintManager":
+    def create_default(cls, profile: str = "resident") -> "ConstraintManager":
         """Create manager with default ACGME constraints."""
         manager = cls()
 
@@ -426,6 +426,9 @@ class ConstraintManager:
         manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
         manager.add(CallNightBeforeLeaveConstraint(weight=2.0))
 
+        manager.add(DeptChiefWednesdayPreferenceConstraint(weight=1.0))
+        manager.disable("DeptChiefWednesdayPreference")
+
         # Tier 1: Resilience-aware soft constraints (ENABLED by default)
         # These provide critical protection against cascade failures
         manager.add(HubProtectionConstraint(weight=15.0))
@@ -440,6 +443,12 @@ class ConstraintManager:
         manager.disable("PreferenceTrail")
         # Disabled: Tier 2 N-1 vulnerability - aggressive protection
         manager.disable("N1Vulnerability")
+
+        if profile == "faculty":
+            manager.enable("FMITWeekBlocking")
+            manager.enable("FMITMandatoryCall")
+            manager.enable("OvernightCallGeneration")
+            manager.enable("DeptChiefWednesdayPreference")
 
         return manager
 

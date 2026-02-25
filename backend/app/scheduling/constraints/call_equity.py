@@ -123,9 +123,15 @@ class SundayCallEquityConstraint(SoftConstraint):
             return
 
         # Create max count variable and minimize it
-        max_sunday = model.NewIntVar(0, len(sunday_blocks), "max_sunday_calls")
+        max_sunday = model.NewIntVar(0, len(sunday_blocks) + 52, "max_ytd_sunday_calls")
         for f_i, vars_list in faculty_sunday_counts.items():
-            model.Add(sum(vars_list) <= max_sunday)
+            faculty_uuid = call_eligible_faculty[f_i].id
+            history = (
+                getattr(context, "prior_calls", {})
+                .get(faculty_uuid, {})
+                .get("sunday", 0)
+            )
+            model.Add(history + sum(vars_list) <= max_sunday)
 
         # Add to objective (minimize max)
         objective_vars = variables.get("objective_terms", [])
@@ -307,9 +313,17 @@ class HolidayCallEquityConstraint(SoftConstraint):
         if not faculty_holiday_counts:
             return
 
-        max_holiday = model.NewIntVar(0, len(holiday_blocks), "max_holiday_calls")
+        max_holiday = model.NewIntVar(
+            0, len(holiday_blocks) + 20, "max_ytd_holiday_calls"
+        )
         for f_i, vars_list in faculty_holiday_counts.items():
-            model.Add(sum(vars_list) <= max_holiday)
+            faculty_uuid = call_eligible_faculty[f_i].id
+            # Holidays aren't distinguished from weekdays/sundays in prior_calls yet,
+            # so we'll just track the delta for this run. If true holiday history is
+            # needed, it would require a new field in prior_calls.
+            # We'll use 0 for now to maintain consistency with the other equity methods.
+            history = 0
+            model.Add(history + sum(vars_list) <= max_holiday)
 
         objective_vars = variables.get("objective_terms", [])
         objective_vars.append((max_holiday, int(self.weight)))
@@ -504,9 +518,17 @@ class WeekdayCallEquityConstraint(SoftConstraint):
             return
 
         # Minimize max weekday calls
-        max_weekday = model.NewIntVar(0, len(weekday_blocks), "max_weekday_calls")
+        max_weekday = model.NewIntVar(
+            0, len(weekday_blocks) + 260, "max_ytd_weekday_calls"
+        )
         for f_i, vars_list in faculty_weekday_counts.items():
-            model.Add(sum(vars_list) <= max_weekday)
+            faculty_uuid = call_eligible_faculty[f_i].id
+            history = (
+                getattr(context, "prior_calls", {})
+                .get(faculty_uuid, {})
+                .get("weekday", 0)
+            )
+            model.Add(history + sum(vars_list) <= max_weekday)
 
         objective_vars = variables.get("objective_terms", [])
         objective_vars.append((max_weekday, int(self.weight)))

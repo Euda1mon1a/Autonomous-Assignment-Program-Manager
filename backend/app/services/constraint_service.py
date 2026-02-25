@@ -568,6 +568,7 @@ class ConstraintService:
         """
         config_map = {
             "default": ConstraintManager.create_default,
+            "faculty": lambda: ConstraintManager.create_default(profile="faculty"),
             "minimal": ConstraintManager.create_minimal,
             "strict": ConstraintManager.create_strict,
             "resilience": lambda: ConstraintManager.create_resilience_aware(tier=2),
