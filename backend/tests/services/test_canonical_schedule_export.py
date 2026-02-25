@@ -55,7 +55,7 @@ class TestCanonicalScheduleExportService:
             patch.object(
                 service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
-            patch.object(service, "_stamp_metadata", return_value=b"xlsx_with_meta"),
+            patch.object(service, "_inject_metadata", return_value=b"xlsx_with_meta"),
             patch("pathlib.Path.exists", return_value=True),
         ):
             result = service.export_block_xlsx(block_number=10, academic_year=2025)
@@ -99,7 +99,7 @@ class TestCanonicalScheduleExportService:
             patch.object(
                 service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
-            patch.object(service, "_stamp_metadata", return_value=b"xlsx_with_meta"),
+            patch.object(service, "_inject_metadata", return_value=b"xlsx_with_meta"),
             patch("pathlib.Path.exists", return_value=True),
         ):
             mock_conv.return_value.convert_from_json.return_value = b"xlsx"
@@ -137,7 +137,7 @@ class TestCanonicalScheduleExportService:
             patch.object(
                 service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
-            patch.object(service, "_stamp_metadata", return_value=b"xlsx_with_meta"),
+            patch.object(service, "_inject_metadata", return_value=b"xlsx_with_meta"),
             patch("pathlib.Path.exists", return_value=True),
         ):
             service.export_block_xlsx(
@@ -178,7 +178,7 @@ class TestCanonicalScheduleExportService:
             patch.object(
                 service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
-            patch.object(service, "_stamp_metadata", return_value=b"xlsx_with_meta"),
+            patch.object(service, "_inject_metadata", return_value=b"xlsx_with_meta"),
             patch("pathlib.Path.exists", return_value=True),
         ):
             service.export_block_xlsx(
@@ -225,10 +225,10 @@ class TestTemplatePaths:
 
 
 class TestPhase1Metadata:
-    """Tests for Phase 1 metadata stamping (_stamp_metadata)."""
+    """Tests for Phase 1 metadata stamping (_inject_metadata)."""
 
     def _make_blank_xlsx(self) -> bytes:
-        """Create a minimal valid XLSX for _stamp_metadata to load."""
+        """Create a minimal valid XLSX for _inject_metadata to load."""
         wb = Workbook()
         ws = wb.active
         ws.title = "Schedule"
@@ -237,15 +237,15 @@ class TestPhase1Metadata:
         wb.save(buf)
         return buf.getvalue()
 
-    def test_stamp_metadata_adds_sys_meta(self):
-        """_stamp_metadata() should add __SYS_META__ sheet."""
+    def test_inject_metadata_adds_sys_meta(self):
+        """_inject_metadata() should add __SYS_META__ sheet."""
         mock_db = MagicMock()
         mock_db.query.return_value.distinct.return_value.all.return_value = []
 
         service = CanonicalScheduleExportService(mock_db)
         xlsx_bytes = self._make_blank_xlsx()
 
-        result = service._stamp_metadata(
+        result = service._inject_metadata(
             xlsx_bytes, academic_year=2026, block_number=10
         )
 
@@ -261,8 +261,8 @@ class TestPhase1Metadata:
         assert meta.export_version == 1
         wb.close()
 
-    def test_stamp_metadata_adds_ref_sheet(self):
-        """_stamp_metadata() should add __REF__ sheet with rotation/activity codes."""
+    def test_inject_metadata_adds_ref_sheet(self):
+        """_inject_metadata() should add __REF__ sheet with rotation/activity codes."""
         mock_db = MagicMock()
 
         # First call returns rotation codes, second returns activity codes
@@ -279,7 +279,7 @@ class TestPhase1Metadata:
         service = CanonicalScheduleExportService(mock_db)
         xlsx_bytes = self._make_blank_xlsx()
 
-        result = service._stamp_metadata(
+        result = service._inject_metadata(
             xlsx_bytes, academic_year=2026, block_number=10
         )
 
@@ -293,7 +293,7 @@ class TestPhase1Metadata:
         assert sorted(ref["activities"]) == ["CLI", "LV", "OR"]
         wb.close()
 
-    def test_stamp_metadata_sys_meta_is_veryhidden(self):
+    def test_inject_metadata_sys_meta_is_veryhidden(self):
         """Metadata sheets should be veryHidden."""
         mock_db = MagicMock()
         mock_db.query.return_value.distinct.return_value.all.return_value = []
@@ -301,7 +301,9 @@ class TestPhase1Metadata:
         service = CanonicalScheduleExportService(mock_db)
         xlsx_bytes = self._make_blank_xlsx()
 
-        result = service._stamp_metadata(xlsx_bytes, academic_year=2026, block_number=5)
+        result = service._inject_metadata(
+            xlsx_bytes, academic_year=2026, block_number=5
+        )
 
         from openpyxl import load_workbook
 
@@ -313,10 +315,10 @@ class TestPhase1Metadata:
     @patch("app.services.canonical_schedule_export_service.get_block_dates")
     @patch("app.services.canonical_schedule_export_service.HalfDayJSONExporter")
     @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
-    def test_export_calls_stamp_metadata(
+    def test_export_calls_inject_metadata(
         self, mock_converter_class, mock_exporter_class, mock_get_block_dates
     ):
-        """export_block_xlsx() should call _stamp_metadata with correct args."""
+        """export_block_xlsx() should call _inject_metadata with correct args."""
         mock_db = MagicMock()
 
         mock_block_dates = MagicMock()
@@ -341,13 +343,13 @@ class TestPhase1Metadata:
                 service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
             patch.object(
-                service, "_stamp_metadata", return_value=b"stamped"
+                service, "_inject_metadata", return_value=b"stamped"
             ) as mock_stamp,
             patch("pathlib.Path.exists", return_value=True),
         ):
             result = service.export_block_xlsx(block_number=10, academic_year=2025)
 
         mock_stamp.assert_called_once_with(
-            b"raw_xlsx", academic_year=2025, block_number=10
+            b"raw_xlsx", academic_year=2025, block_number=10, output_path=None
         )
         assert result == b"stamped"
