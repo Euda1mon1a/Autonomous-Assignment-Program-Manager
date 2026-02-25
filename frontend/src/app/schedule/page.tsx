@@ -13,6 +13,7 @@ import { WeekView } from '@/components/schedule/WeekView'
 import { DayView } from '@/components/schedule/DayView'
 import { BlockAnnualView } from '@/components/schedule/BlockAnnualView'
 import { BlockWeekView } from '@/components/schedule/BlockWeekView'
+import { CopyGrid } from '@/components/schedule/CopyGrid'
 import { MultiSelectPersonFilter } from '@/components/schedule/MultiSelectPersonFilter'
 import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
 import { BlockAssignmentImportModal } from '@/components/admin/BlockAssignmentImportModal'
@@ -262,7 +263,7 @@ export default function SchedulePage() {
                 />
 
                 {/* Person Filter - show for block-annual, block, and block-week views */}
-                {['block-annual', 'block', 'block-week'].includes(currentView) && (
+                {['block-annual', 'block', 'block-week', 'copy-grid'].includes(currentView) && (
                   <MultiSelectPersonFilter
                     selectedPersonIds={selectedPersonIds}
                     onSelectionChange={setSelectedPersonIds}
@@ -272,7 +273,7 @@ export default function SchedulePage() {
                 )}
 
                 {/* Import/Export buttons - admin/coordinator only, block views only */}
-                {canManageAssignments && ['block-annual', 'block', 'block-week'].includes(currentView) && (
+                {canManageAssignments && ['block-annual', 'block', 'block-week', 'copy-grid'].includes(currentView) && (
                   <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-300">
                     <button
                       onClick={() => setShowImportModal(true)}
@@ -328,7 +329,7 @@ export default function SchedulePage() {
             </div>
 
             {/* Navigation row - for block and block-week views */}
-            {['block', 'block-week'].includes(currentView) && (
+            {['block', 'block-week', 'copy-grid'].includes(currentView) && (
               <BlockNavigation
                 startDate={dateRange.start}
                 endDate={dateRange.end}
@@ -383,6 +384,13 @@ export default function SchedulePage() {
               personFilter={selectedPersonIds}
             />
           )}
+          {currentView === 'copy-grid' && (
+            <CopyGrid
+              startDate={dateRange.start}
+              endDate={dateRange.end}
+              personFilter={selectedPersonIds}
+            />
+          )}
           {currentView === 'month' && (
             <MonthView
               currentDate={currentDate}
@@ -415,7 +423,7 @@ export default function SchedulePage() {
         </div>
 
         {/* Footer - only show for standard views, block-week and annual views have their own */}
-        {!['block-annual', 'block-week', 'resident-year', 'faculty-inpatient'].includes(currentView) && (
+        {!['block-annual', 'block-week', 'copy-grid', 'resident-year', 'faculty-inpatient'].includes(currentView) && (
           <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-2">
             <div className="flex items-center justify-between text-xs text-gray-500">
               <span>

@@ -2,12 +2,13 @@
 
 import React, { useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Calendar, CalendarDays, LayoutGrid, Columns, Users, GraduationCap, CalendarClock } from 'lucide-react'
+import { Calendar, CalendarDays, LayoutGrid, Columns, Users, GraduationCap, CalendarClock, ClipboardCopy } from 'lucide-react'
 
 export type ScheduleView =
   | 'block-annual'
   | 'block'
   | 'block-week'
+  | 'copy-grid'
   | 'day'
   | 'week'
   | 'month'
@@ -51,6 +52,13 @@ const viewOptions: {
     label: 'Block Week',
     shortLabel: 'Week',
     icon: <Columns className="w-4 h-4" aria-hidden="true" />,
+    group: 'block-views',
+  },
+  {
+    value: 'copy-grid',
+    label: 'Copy Grid',
+    shortLabel: 'Copy',
+    icon: <ClipboardCopy className="w-4 h-4" aria-hidden="true" />,
     group: 'block-views',
   },
   {
@@ -206,6 +214,7 @@ function isValidView(view: string): view is ScheduleView {
     'block-annual',
     'block',
     'block-week',
+    'copy-grid',
     'day',
     'week',
     'month',

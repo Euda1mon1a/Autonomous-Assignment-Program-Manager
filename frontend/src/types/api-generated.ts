@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-02-17T05:03:47Z
+ * Generated at: 2026-02-25T08:25:10Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -5190,7 +5190,17 @@ export interface paths {
         get: operations["list_half_day_assignments_api_v1_half_day_assignments_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Clear Half Day Assignments
+         * @description Clear half-day assignments for a date range by source.
+         *
+         *     Only solver and template sources can be cleared. Preload and manual
+         *     assignments are always preserved to protect human overrides and
+         *     pre-loaded obligations (FMIT, call, absences).
+         *
+         *     Requires scheduler role (admin or coordinator).
+         */
+        delete: operations["clear_half_day_assignments_api_v1_half_day_assignments_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -17830,6 +17840,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/schedules/drafts/{draft_id}/approve-break-glass": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve break-glass for lock window
+         * @description Approve a break-glass request when a draft touches the lock window. Must be called before publish. Requires Coordinator or Admin role.
+         */
+        post: operations["approve_break_glass_api_v1_schedules_drafts__draft_id__approve_break_glass_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/schedules/drafts/{draft_id}/publish": {
         parameters: {
             query?: never;
@@ -22971,14 +23001,12 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
+            /** Template Id */
+            templateId: string | null;
             /** Success */
             success: boolean;
-            /** Assignment Id */
-            assignmentId?: string | null;
             /** Error */
             error?: string | null;
-            /** Warnings */
-            warnings?: string[];
         };
         /**
          * BatchOperationStatus
@@ -23392,7 +23420,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__batch__BatchOperationResult"][];
             /**
              * Errors
              * @description Global errors
@@ -23539,7 +23567,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -23758,7 +23786,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -24432,7 +24460,7 @@ export interface components {
             /** Residents With Leave */
             residentsWithLeave: number;
             /** Coverage Gaps */
-            coverageGaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
+            coverageGaps: components["schemas"]["CoverageGap"][];
             /** Leave Conflicts */
             leaveConflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -24808,6 +24836,47 @@ export interface components {
              * @description Related entity type
              */
             relatedEntityType?: string | null;
+        };
+        /**
+         * BreakGlassApprovalRequest
+         * @description Request schema for break-glass approval of a lock window violation.
+         */
+        BreakGlassApprovalRequest: {
+            /**
+             * Reason
+             * @description Reason for break-glass approval (minimum 10 characters)
+             */
+            reason: string;
+        };
+        /**
+         * BreakGlassApprovalResponse
+         * @description Response schema for break-glass approval.
+         */
+        BreakGlassApprovalResponse: {
+            /**
+             * Draft Id
+             * Format: uuid
+             */
+            draftId: string;
+            /**
+             * Approved At
+             * Format: date-time
+             */
+            approvedAt: string;
+            /**
+             * Approved By Id
+             * Format: uuid
+             */
+            approvedById: string;
+            /** Approval Reason */
+            approvalReason: string;
+            /** Lock Date At Approval */
+            lockDateAtApproval?: string | null;
+            /**
+             * Message
+             * @default Break-glass approval granted
+             */
+            message: string;
         };
         /**
          * BreakerHealthMetrics
@@ -27117,35 +27186,23 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
+         * @description Identified coverage gap.
          */
         CoverageGap: {
             /**
-             * Date
-             * Format: date
-             * @description Date of the gap
+             * Rotation Template Id
+             * Format: uuid
              */
-            date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
-            timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
+            rotationTemplateId: string;
+            /** Rotation Name */
+            rotationName: string;
+            /** Required Coverage */
+            requiredCoverage: number;
+            /** Assigned Coverage */
+            assignedCoverage: number;
+            /** Gap */
+            gap: number;
+            /** Severity */
             severity: string;
         };
         /**
@@ -27225,7 +27282,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["CoverageGap"][];
+            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -29975,10 +30032,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Export file formats.
+         * @description Supported export formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        ExportFormat: "csv" | "xlsx";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -30006,7 +30063,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__models__export_job__ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -30305,7 +30362,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["ExportFormat"] | null;
+            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
             deliveryMethod?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             emailRecipients?: string[] | null;
@@ -37754,6 +37811,10 @@ export interface components {
         /**
          * PublishRequest
          * @description Request schema for publishing a draft.
+         *
+         *     Break-glass approval must be obtained separately via the
+         *     POST .../approve-break-glass endpoint before publish when the
+         *     draft touches the lock window.
          */
         PublishRequest: {
             /**
@@ -37761,11 +37822,6 @@ export interface components {
              * @description Required for Tier 1 if unacknowledged flags exist
              */
             overrideComment?: string | null;
-            /**
-             * Break Glass Reason
-             * @description Required when publishing drafts that touch the lock window
-             */
-            breakGlassReason?: string | null;
             /**
              * Validate Acgme
              * @description If True, validate ACGME compliance after publish
@@ -38252,6 +38308,7 @@ export interface components {
             queueName: string;
             /**
              * Confirm
+             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
@@ -47804,6 +47861,12 @@ export interface components {
             gapSize: number;
         };
         /**
+         * ExportFormat
+         * @description Export file formats.
+         * @enum {string}
+         */
+        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        /**
          * ConflictSummary
          * @description Summary statistics for a set of conflicts.
          *
@@ -47894,6 +47957,25 @@ export interface components {
             latestDate?: string | null;
         };
         /**
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
+         */
+        app__schemas__batch__BatchOperationResult: {
+            /**
+             * Index
+             * @description Index of the operation in the batch
+             */
+            index: number;
+            /** Success */
+            success: boolean;
+            /** Assignment Id */
+            assignmentId?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Warnings */
+            warnings?: string[];
+        };
+        /**
          * BlockListResponse
          * @description Schema for list of blocks.
          */
@@ -47909,33 +47991,6 @@ export interface components {
              */
             total: number;
         };
-        /**
-         * CoverageGap
-         * @description Identified coverage gap.
-         */
-        app__schemas__block_assignment__CoverageGap: {
-            /**
-             * Rotation Template Id
-             * Format: uuid
-             */
-            rotationTemplateId: string;
-            /** Rotation Name */
-            rotationName: string;
-            /** Required Coverage */
-            requiredCoverage: number;
-            /** Assigned Coverage */
-            assignedCoverage: number;
-            /** Gap */
-            gap: number;
-            /** Severity */
-            severity: string;
-        };
-        /**
-         * ExportFormat
-         * @description Supported export formats.
-         * @enum {string}
-         */
-        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
         /**
          * PersonSummary
          * @description Minimal person info for certification reports.
@@ -47978,6 +48033,19 @@ export interface components {
              * @description Alternative suggestions
              */
             suggestions?: string[];
+        };
+        /**
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
+         */
+        app__schemas__jobs__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
+            /**
+             * Confirm
+             * @default false
+             */
+            confirm: boolean;
         };
         /**
          * SuggestionResponse
@@ -48034,20 +48102,6 @@ export interface components {
             type: string;
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
-         */
-        app__schemas__queue__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
-            /**
-             * Confirm
-             * @description Must be true to confirm purge
-             * @default false
-             */
-            confirm: boolean;
-        };
-        /**
          * QueuePurgeResponse
          * @description Response after purging a queue.
          */
@@ -48060,21 +48114,37 @@ export interface components {
             timestamp: string;
         };
         /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
+         * CoverageGap
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
          */
-        app__schemas__rotation_template__BatchOperationResult: {
+        app__schemas__visualization__CoverageGap: {
             /**
-             * Index
-             * @description Index of the operation in the batch
+             * Date
+             * Format: date
+             * @description Date of the gap
              */
-            index: number;
-            /** Template Id */
-            templateId: string | null;
-            /** Success */
-            success: boolean;
-            /** Error */
-            error?: string | null;
+            date: string;
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
+            timeOfDay: string;
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
+            severity: string;
         };
     };
     responses: never;
@@ -54419,6 +54489,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HalfDayAssignmentListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_half_day_assignments_api_v1_half_day_assignments_delete: {
+        parameters: {
+            query: {
+                /** @description Start date (inclusive) */
+                start_date: string;
+                /** @description End date (inclusive) */
+                end_date: string;
+                /** @description Comma-separated sources to clear (solver,template). Preload and manual are always preserved. */
+                sources?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -68541,7 +68647,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -68908,7 +69014,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -70094,6 +70200,41 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_break_glass_api_v1_schedules_drafts__draft_id__approve_break_glass_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BreakGlassApprovalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BreakGlassApprovalResponse"];
                 };
             };
             /** @description Validation Error */
