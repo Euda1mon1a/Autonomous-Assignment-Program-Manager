@@ -419,8 +419,8 @@ Updated after fix pass (2026-02-25). Strikethrough = completed.
 7. ~~Fix `write_ref_sheet()` DefinedName API~~ (FIXED — Fix pass. `.append()` → `.add()` for openpyxl 3.1.5 `DefinedNameDict`)
 8. ~~Fix longitudinal validator indentation~~ (FIXED — Codex)
 9. ~~Fix NF code substring matching → exact match~~ (FIXED — Codex)
-10. Phase 3 DataValidation ordering — **FUTURE WORK** (`_add_data_validation()` doesn't exist yet. Phase 3 is not implemented.)
-11. `_copy_worksheet()` enrichments — **FUTURE WORK** (CF, DV, Comments don't exist yet in per-block export. Only needed when Phase 3/4 enrichments are implemented.)
+10. ~~Phase 3 DataValidation ordering~~ (FIXED — Reordered correctly in `_add_data_validation` and invoked from converter)
+11. ~~`_copy_worksheet()` enrichments~~ (FIXED — `_copy_worksheet` now copies CF, DV, Comments, cell dimensions, and merged cells)
 
 ### Phase 3: Missing Infrastructure
 
@@ -434,8 +434,8 @@ Updated after fix pass (2026-02-25). Strikethrough = completed.
 
 These are future features, not bugs. They should be implemented in separate PRs:
 
-17. Write per-block `__ANCHORS__{N}__` sheets in year export
-18. Add year-level export API endpoint
+17. ~~Write per-block `__ANCHORS__{N}__` sheets in year export~~ (FIXED — WP-2. Added anchor sheet generation during export)
+18. ~~Add year-level export API endpoint~~ (FIXED — WP-9. Added `/schedule/year/xlsx` endpoint)
 19. Implement row hash skip optimization (Phase 2 import)
 20. ~~Fix engine supervision to use AY-scoped PGY~~ (FIXED — WP-5. `_get_pgy_level()` helper queries `PersonAcademicYear`, falls back to `Person.pgy_level`. All 3 usage sites updated.)
 21. ~~Add LV import → absence record creation (Track C Step 3)~~ (FIXED — WP-6. `create_absences_from_lv_assignments()` groups LV codes into contiguous date ranges, checks for overlaps, creates Absence records.)
