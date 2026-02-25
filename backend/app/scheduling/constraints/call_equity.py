@@ -179,14 +179,19 @@ class SundayCallEquityConstraint(SoftConstraint):
                     sunday_vars.append(call_vars[f_i, b_i, "overnight"])
 
             if sunday_vars:
-                faculty_counts.append(pulp.lpSum(sunday_vars))
+                history = (
+                    getattr(context, "prior_calls", {})
+                    .get(faculty.id, {})
+                    .get("sunday", 0)
+                )
+                faculty_counts.append(history + pulp.lpSum(sunday_vars))
 
         # Minimize variance through auxiliary constraints
         # (PuLP doesn't handle quadratic well, so we minimize max)
         if faculty_counts:
             max_calls = pulp.LpVariable("max_sunday_calls", lowBound=0, cat="Integer")
-            for count in faculty_counts:
-                model += count <= max_calls, f"sunday_max_{len(faculty_counts)}"
+            for i, count in enumerate(faculty_counts):
+                model += count <= max_calls, f"sunday_max_{i}"
 
             # Add to objective
             if "objective" in variables:
@@ -365,12 +370,14 @@ class HolidayCallEquityConstraint(SoftConstraint):
                 if (f_i, b_i, "overnight") in call_vars:
                     holiday_vars.append(call_vars[f_i, b_i, "overnight"])
             if holiday_vars:
-                faculty_counts.append(pulp.lpSum(holiday_vars))
+                # Holiday history not yet tracked in prior_calls (see CP-SAT counterpart)
+                history = 0
+                faculty_counts.append(history + pulp.lpSum(holiday_vars))
 
         if faculty_counts:
             max_calls = pulp.LpVariable("max_holiday_calls", lowBound=0, cat="Integer")
-            for count in faculty_counts:
-                model += count <= max_calls, f"holiday_max_{len(faculty_counts)}"
+            for i, count in enumerate(faculty_counts):
+                model += count <= max_calls, f"holiday_max_{i}"
             if "objective" in variables:
                 variables["objective"] += self.weight * max_calls
 
@@ -574,7 +581,12 @@ class WeekdayCallEquityConstraint(SoftConstraint):
                     weekday_vars.append(call_vars[f_i, b_i, "overnight"])
 
             if weekday_vars:
-                faculty_counts.append(pulp.lpSum(weekday_vars))
+                history = (
+                    getattr(context, "prior_calls", {})
+                    .get(faculty.id, {})
+                    .get("weekday", 0)
+                )
+                faculty_counts.append(history + pulp.lpSum(weekday_vars))
 
         if faculty_counts:
             max_calls = pulp.LpVariable("max_weekday_calls", lowBound=0, cat="Integer")

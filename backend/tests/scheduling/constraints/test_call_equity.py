@@ -1224,3 +1224,356 @@ class TestConstraintResultProperties:
         # mean = (3+1)/2 = 2, variance = ((3-2)^2 + (1-2)^2)/2 = 1.0
         expected_penalty = 1.0 * 10.0
         assert abs(result.penalty - expected_penalty) < 1e-10
+
+
+# ---------------------------------------------------------------------------
+# Longitudinal Equity (Phase 1) — prior_calls history injection
+# ---------------------------------------------------------------------------
+
+
+def _make_context_with_prior_calls(
+    faculty: list[MockPerson],
+    blocks: list[MockBlock],
+    prior_calls: dict,
+) -> SchedulingContext:
+    """Build a SchedulingContext with prior_calls set."""
+    ctx = _make_context(faculty=faculty, blocks=blocks)
+    ctx.prior_calls = prior_calls
+    return ctx
+
+
+class TestLongitudinalEquityCPSAT:
+    """Verify CP-SAT constraints inject prior_calls history."""
+
+    def test_sunday_cpsat_prior_calls_raises_max(self):
+        """Faculty with prior Sunday calls should raise the max variable bound."""
+        from ortools.sat.python import cp_model
+
+        c = SundayCallEquityConstraint(weight=10.0)
+        faculty = [MockPerson(id=FACULTY_IDS[i]) for i in range(2)]
+        # 2 Sundays
+        blocks = _blocks_for_week(0) + _blocks_for_week(1)
+        sunday_blocks = [b for b in blocks if b.date.weekday() == 6]
+
+        # Faculty 0 has 5 prior Sunday calls, faculty 1 has 0
+        prior = {FACULTY_IDS[0]: {"sunday": 5}, FACULTY_IDS[1]: {"sunday": 0}}
+        ctx = _make_context_with_prior_calls(faculty, blocks, prior)
+
+        model = cp_model.CpModel()
+        call_vars = {}
+        faculty_idx = {f.id: i for i, f in enumerate(faculty)}
+        for f in faculty:
+            f_i = faculty_idx[f.id]
+            for b in sunday_blocks:
+                b_i = ctx.block_idx[b.id]
+                var = model.NewBoolVar(f"call_{f_i}_{b_i}")
+                call_vars[f_i, b_i, "overnight"] = var
+
+        # Each Sunday must have exactly 1 faculty assigned
+        for b in sunday_blocks:
+            b_i = ctx.block_idx[b.id]
+            model.AddExactlyOne(
+                [call_vars[faculty_idx[f.id], b_i, "overnight"] for f in faculty]
+            )
+
+        variables = {"call_assignments": call_vars, "objective_terms": []}
+        ctx.call_eligible_faculty = faculty
+        ctx.call_eligible_faculty_idx = faculty_idx
+
+        c.add_to_cpsat(model, variables, ctx)
+
+        # Minimize max
+        obj_terms = variables["objective_terms"]
+        assert len(obj_terms) == 1
+        max_var, weight = obj_terms[0]
+        model.Minimize(max_var)
+
+        solver = cp_model.CpSolver()
+        status = solver.Solve(model)
+        assert status == cp_model.OPTIMAL
+
+        # Faculty 1 (no history) should get both Sundays to compensate
+        f0_calls = sum(
+            solver.Value(call_vars[0, ctx.block_idx[b.id], "overnight"])
+            for b in sunday_blocks
+        )
+        f1_calls = sum(
+            solver.Value(call_vars[1, ctx.block_idx[b.id], "overnight"])
+            for b in sunday_blocks
+        )
+        assert f0_calls == 0, "Faculty with 5 prior calls should get 0 new"
+        assert f1_calls == 2, "Faculty with 0 prior calls should get both"
+
+    def test_weekday_cpsat_prior_calls_raises_max(self):
+        """Faculty with prior weekday calls should get fewer new assignments."""
+        from ortools.sat.python import cp_model
+
+        c = WeekdayCallEquityConstraint(weight=10.0)
+        faculty = [MockPerson(id=FACULTY_IDS[i]) for i in range(2)]
+        blocks = _blocks_for_week(0)
+        weekday_blocks = [b for b in blocks if b.date.weekday() in (0, 1, 2, 3)]
+
+        prior = {FACULTY_IDS[0]: {"weekday": 10}, FACULTY_IDS[1]: {"weekday": 0}}
+        ctx = _make_context_with_prior_calls(faculty, blocks, prior)
+
+        model = cp_model.CpModel()
+        call_vars = {}
+        faculty_idx = {f.id: i for i, f in enumerate(faculty)}
+        for f in faculty:
+            f_i = faculty_idx[f.id]
+            for b in weekday_blocks:
+                b_i = ctx.block_idx[b.id]
+                var = model.NewBoolVar(f"call_{f_i}_{b_i}")
+                call_vars[f_i, b_i, "overnight"] = var
+
+        for b in weekday_blocks:
+            b_i = ctx.block_idx[b.id]
+            model.AddExactlyOne(
+                [call_vars[faculty_idx[f.id], b_i, "overnight"] for f in faculty]
+            )
+
+        variables = {"call_assignments": call_vars, "objective_terms": []}
+        ctx.call_eligible_faculty = faculty
+        ctx.call_eligible_faculty_idx = faculty_idx
+
+        c.add_to_cpsat(model, variables, ctx)
+
+        obj_terms = variables["objective_terms"]
+        max_var, _ = obj_terms[0]
+        model.Minimize(max_var)
+
+        solver = cp_model.CpSolver()
+        status = solver.Solve(model)
+        assert status == cp_model.OPTIMAL
+
+        f0_calls = sum(
+            solver.Value(call_vars[0, ctx.block_idx[b.id], "overnight"])
+            for b in weekday_blocks
+        )
+        f1_calls = sum(
+            solver.Value(call_vars[1, ctx.block_idx[b.id], "overnight"])
+            for b in weekday_blocks
+        )
+        # Faculty 1 should get all 4 weekday calls (0+4=4 < 10+0=10)
+        assert f0_calls == 0
+        assert f1_calls == 4
+
+    def test_cpsat_empty_prior_calls_equal_distribution(self):
+        """Empty prior_calls should produce equal distribution (regression guard)."""
+        from ortools.sat.python import cp_model
+
+        c = SundayCallEquityConstraint(weight=10.0)
+        faculty = [MockPerson(id=FACULTY_IDS[i]) for i in range(2)]
+        blocks = _blocks_for_week(0) + _blocks_for_week(1)
+        sunday_blocks = [b for b in blocks if b.date.weekday() == 6]
+
+        # No prior calls
+        ctx = _make_context_with_prior_calls(faculty, blocks, {})
+
+        model = cp_model.CpModel()
+        call_vars = {}
+        faculty_idx = {f.id: i for i, f in enumerate(faculty)}
+        for f in faculty:
+            f_i = faculty_idx[f.id]
+            for b in sunday_blocks:
+                b_i = ctx.block_idx[b.id]
+                var = model.NewBoolVar(f"call_{f_i}_{b_i}")
+                call_vars[f_i, b_i, "overnight"] = var
+
+        for b in sunday_blocks:
+            b_i = ctx.block_idx[b.id]
+            model.AddExactlyOne(
+                [call_vars[faculty_idx[f.id], b_i, "overnight"] for f in faculty]
+            )
+
+        variables = {"call_assignments": call_vars, "objective_terms": []}
+        ctx.call_eligible_faculty = faculty
+        ctx.call_eligible_faculty_idx = faculty_idx
+
+        c.add_to_cpsat(model, variables, ctx)
+
+        obj_terms = variables["objective_terms"]
+        max_var, _ = obj_terms[0]
+        model.Minimize(max_var)
+
+        solver = cp_model.CpSolver()
+        status = solver.Solve(model)
+        assert status == cp_model.OPTIMAL
+
+        f0_calls = sum(
+            solver.Value(call_vars[0, ctx.block_idx[b.id], "overnight"])
+            for b in sunday_blocks
+        )
+        f1_calls = sum(
+            solver.Value(call_vars[1, ctx.block_idx[b.id], "overnight"])
+            for b in sunday_blocks
+        )
+        # Equal distribution: each gets 1
+        assert f0_calls == 1
+        assert f1_calls == 1
+
+
+class TestLongitudinalEquityPuLP:
+    """Verify PuLP constraints inject prior_calls history."""
+
+    def test_sunday_pulp_prior_calls_in_constraint(self):
+        """PuLP constraint expressions should include history constants."""
+        import pulp
+
+        c = SundayCallEquityConstraint(weight=10.0)
+        faculty = [MockPerson(id=FACULTY_IDS[i]) for i in range(2)]
+        blocks = _blocks_for_week(0) + _blocks_for_week(1)
+        sunday_blocks = [b for b in blocks if b.date.weekday() == 6]
+
+        prior = {FACULTY_IDS[0]: {"sunday": 5}, FACULTY_IDS[1]: {"sunday": 0}}
+        ctx = _make_context_with_prior_calls(faculty, blocks, prior)
+
+        model = pulp.LpProblem("test_sunday", pulp.LpMinimize)
+        call_vars = {}
+        faculty_idx = {f.id: i for i, f in enumerate(faculty)}
+        for f in faculty:
+            f_i = faculty_idx[f.id]
+            for b in sunday_blocks:
+                b_i = ctx.block_idx[b.id]
+                call_vars[f_i, b_i, "overnight"] = pulp.LpVariable(
+                    f"call_{f_i}_{b_i}", cat="Binary"
+                )
+
+        for b in sunday_blocks:
+            b_i = ctx.block_idx[b.id]
+            model += (
+                pulp.lpSum(
+                    [call_vars[faculty_idx[f.id], b_i, "overnight"] for f in faculty]
+                )
+                == 1
+            )
+
+        objective = pulp.LpVariable("obj_base", 0)
+        variables = {"call_assignments": call_vars, "objective": objective}
+        ctx.call_eligible_faculty = faculty
+        ctx.call_eligible_faculty_idx = faculty_idx
+
+        c.add_to_pulp(model, variables, ctx)
+        model += variables["objective"]
+
+        status = model.solve(pulp.PULP_CBC_CMD(msg=0))
+        assert status == pulp.constants.LpStatusOptimal
+
+        f0_calls = sum(
+            pulp.value(call_vars[0, ctx.block_idx[b.id], "overnight"])
+            for b in sunday_blocks
+        )
+        f1_calls = sum(
+            pulp.value(call_vars[1, ctx.block_idx[b.id], "overnight"])
+            for b in sunday_blocks
+        )
+        # Faculty 1 should get both Sundays (0+2=2 vs 5+0=5)
+        assert f0_calls == 0, "Faculty with 5 prior calls should get 0 new"
+        assert f1_calls == 2, "Faculty with 0 prior calls should get both"
+
+    def test_weekday_pulp_prior_calls_in_constraint(self):
+        """PuLP weekday equity should include prior_calls history."""
+        import pulp
+
+        c = WeekdayCallEquityConstraint(weight=10.0)
+        faculty = [MockPerson(id=FACULTY_IDS[i]) for i in range(2)]
+        blocks = _blocks_for_week(0)
+        weekday_blocks = [b for b in blocks if b.date.weekday() in (0, 1, 2, 3)]
+
+        prior = {FACULTY_IDS[0]: {"weekday": 10}, FACULTY_IDS[1]: {"weekday": 0}}
+        ctx = _make_context_with_prior_calls(faculty, blocks, prior)
+
+        model = pulp.LpProblem("test_weekday", pulp.LpMinimize)
+        call_vars = {}
+        faculty_idx = {f.id: i for i, f in enumerate(faculty)}
+        for f in faculty:
+            f_i = faculty_idx[f.id]
+            for b in weekday_blocks:
+                b_i = ctx.block_idx[b.id]
+                call_vars[f_i, b_i, "overnight"] = pulp.LpVariable(
+                    f"call_{f_i}_{b_i}", cat="Binary"
+                )
+
+        for b in weekday_blocks:
+            b_i = ctx.block_idx[b.id]
+            model += (
+                pulp.lpSum(
+                    [call_vars[faculty_idx[f.id], b_i, "overnight"] for f in faculty]
+                )
+                == 1
+            )
+
+        objective = pulp.LpVariable("obj_base", 0)
+        variables = {"call_assignments": call_vars, "objective": objective}
+        ctx.call_eligible_faculty = faculty
+        ctx.call_eligible_faculty_idx = faculty_idx
+
+        c.add_to_pulp(model, variables, ctx)
+        model += variables["objective"]
+
+        status = model.solve(pulp.PULP_CBC_CMD(msg=0))
+        assert status == pulp.constants.LpStatusOptimal
+
+        f0_calls = sum(
+            pulp.value(call_vars[0, ctx.block_idx[b.id], "overnight"])
+            for b in weekday_blocks
+        )
+        f1_calls = sum(
+            pulp.value(call_vars[1, ctx.block_idx[b.id], "overnight"])
+            for b in weekday_blocks
+        )
+        assert f0_calls == 0
+        assert f1_calls == 4
+
+    def test_pulp_empty_prior_calls_equal_distribution(self):
+        """Empty prior_calls should not change per-block distribution."""
+        import pulp
+
+        c = SundayCallEquityConstraint(weight=10.0)
+        faculty = [MockPerson(id=FACULTY_IDS[i]) for i in range(2)]
+        blocks = _blocks_for_week(0) + _blocks_for_week(1)
+        sunday_blocks = [b for b in blocks if b.date.weekday() == 6]
+
+        ctx = _make_context_with_prior_calls(faculty, blocks, {})
+
+        model = pulp.LpProblem("test_empty", pulp.LpMinimize)
+        call_vars = {}
+        faculty_idx = {f.id: i for i, f in enumerate(faculty)}
+        for f in faculty:
+            f_i = faculty_idx[f.id]
+            for b in sunday_blocks:
+                b_i = ctx.block_idx[b.id]
+                call_vars[f_i, b_i, "overnight"] = pulp.LpVariable(
+                    f"call_{f_i}_{b_i}", cat="Binary"
+                )
+
+        for b in sunday_blocks:
+            b_i = ctx.block_idx[b.id]
+            model += (
+                pulp.lpSum(
+                    [call_vars[faculty_idx[f.id], b_i, "overnight"] for f in faculty]
+                )
+                == 1
+            )
+
+        objective = pulp.LpVariable("obj_base", 0)
+        variables = {"call_assignments": call_vars, "objective": objective}
+        ctx.call_eligible_faculty = faculty
+        ctx.call_eligible_faculty_idx = faculty_idx
+
+        c.add_to_pulp(model, variables, ctx)
+        model += variables["objective"]
+
+        status = model.solve(pulp.PULP_CBC_CMD(msg=0))
+        assert status == pulp.constants.LpStatusOptimal
+
+        f0_calls = sum(
+            pulp.value(call_vars[0, ctx.block_idx[b.id], "overnight"])
+            for b in sunday_blocks
+        )
+        f1_calls = sum(
+            pulp.value(call_vars[1, ctx.block_idx[b.id], "overnight"])
+            for b in sunday_blocks
+        )
+        assert f0_calls == 1
+        assert f1_calls == 1
