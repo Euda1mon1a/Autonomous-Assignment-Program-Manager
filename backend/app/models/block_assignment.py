@@ -76,10 +76,6 @@ class BlockAssignment(Base):
         nullable=True,
     )
 
-    # Leave tracking
-    has_leave = Column(Boolean, default=False, nullable=False)
-    leave_days = Column(Integer, default=0, nullable=False)
-
     # Assignment metadata
     assignment_reason = Column(String(50), nullable=False, default="balanced")
     notes = Column(Text)
@@ -121,10 +117,6 @@ class BlockAssignment(Base):
             name="check_block_number_range",
         ),
         CheckConstraint(
-            "leave_days >= 0",
-            name="check_leave_days_positive",
-        ),
-        CheckConstraint(
             "assignment_reason IN ('leave_eligible_match', 'coverage_priority', "
             "'balanced', 'manual', 'specialty_match')",
             name="check_assignment_reason",
@@ -148,3 +140,68 @@ class BlockAssignment(Base):
         if self.rotation_template:
             return self.rotation_template.leave_eligible
         return True  # Assume eligible if no template assigned
+
+    from sqlalchemy.ext.hybrid import hybrid_property
+    from sqlalchemy import select, func, and_
+
+    @hybrid_property
+    def leave_days(self) -> int:
+        """Calculate leave days dynamically from absences."""
+        if (
+            getattr(self, "academic_block", None) is None
+            or getattr(self, "resident", None) is None
+        ):
+            return 0
+
+        # Check if absences relationship is loaded
+        if "absences" not in self.resident.__dict__:
+            return 0
+
+        leave = 0
+        for a in self.resident.absences:
+            if getattr(a, "start_date", None) and getattr(a, "end_date", None):
+                if (
+                    a.start_date <= self.academic_block.end_date
+                    and a.end_date >= self.academic_block.start_date
+                ):
+                    overlap_start = max(a.start_date, self.academic_block.start_date)
+                    overlap_end = min(a.end_date, self.academic_block.end_date)
+                    leave += (overlap_end - overlap_start).days + 1
+        return leave
+
+    @leave_days.expression
+    def leave_days(cls):
+        from app.models.absence import Absence
+        from app.models.academic_block import AcademicBlock
+
+        return (
+            select(
+                func.coalesce(
+                    func.sum(
+                        func.least(Absence.end_date, AcademicBlock.end_date)
+                        - func.greatest(Absence.start_date, AcademicBlock.start_date)
+                        + 1
+                    ),
+                    0,
+                )
+            )
+            .where(
+                and_(
+                    Absence.person_id == cls.resident_id,
+                    AcademicBlock.id == cls.academic_block_id,
+                    Absence.start_date <= AcademicBlock.end_date,
+                    Absence.end_date >= AcademicBlock.start_date,
+                )
+            )
+            .correlate(cls)
+            .scalar_subquery()
+        )
+
+    @hybrid_property
+    def has_leave(self) -> bool:
+        """Boolean flag indicating if any leave exists."""
+        return self.leave_days > 0
+
+    @has_leave.expression
+    def has_leave(cls):
+        return cls.leave_days > 0
