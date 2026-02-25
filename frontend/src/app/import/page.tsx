@@ -57,6 +57,7 @@ export default function ImportPage() {
                 type="file"
                 accept=".xlsx,.xls"
                 className="hidden"
+                data-testid="import-file-input"
                 onChange={handleFileUpload}
                 disabled={stageImportMutation.isPending}
               />
@@ -84,6 +85,7 @@ export default function ImportPage() {
             </p>
             <button
               onClick={() => router.push("/import/half-day")}
+              data-testid="import-halfday-link"
               className="inline-flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium transition-colors"
             >
               Start half-day import

@@ -161,8 +161,11 @@ class HalfDayImportService:
         self._load_person_map()
 
         for slot in parsed_slots:
-            normalized_name = self._normalize_person_name(slot.person_name)
-            person_id = self._person_map.get(normalized_name)
+            if slot.person_id:
+                person_id = slot.person_id
+            else:
+                normalized_name = self._normalize_person_name(slot.person_name)
+                person_id = self._person_map.get(normalized_name)
             excel_code = self._normalize_excel_code(slot.raw_value, slot.time_of_day)
 
             validation_errors = []
@@ -225,8 +228,11 @@ class HalfDayImportService:
         for slot in parsed_slots:
             slot_warnings: list[str] = []
             slot_errors: list[str] = []
-            normalized_name = self._normalize_person_name(slot.person_name)
-            person_id = self._person_map.get(normalized_name)
+            if slot.person_id:
+                person_id = slot.person_id
+            else:
+                normalized_name = self._normalize_person_name(slot.person_name)
+                person_id = self._person_map.get(normalized_name)
             if not person_id:
                 slot_warnings.append("Person not found in database")
 
@@ -882,6 +888,21 @@ class HalfDayImportService:
                 f"does not match block {start_date} to {end_date}"
             )
 
+        # Read Phase 2 anchors if present
+        anchor_map: dict[int, dict[str, str]] = {}
+        if "__ANCHORS__" in wb.sheetnames:
+            anchors_ws = wb["__ANCHORS__"]
+            for row in range(2, anchors_ws.max_row + 1):
+                p_id = anchors_ws.cell(row=row, column=1).value
+                ba_id = anchors_ws.cell(row=row, column=2).value
+                r_hash = anchors_ws.cell(row=row, column=3).value
+                if p_id:
+                    anchor_map[row] = {
+                        "person_id": str(p_id),
+                        "block_assignment_id": str(ba_id) if ba_id else "",
+                        "row_hash": str(r_hash) if r_hash else "",
+                    }
+
         slots: list[ParsedSlot] = []
         for row_idx in range(DATA_START_ROW, DATA_END_ROW + 1):
             name_cell = ws.cell(row=row_idx, column=NAME_COL)
@@ -889,6 +910,36 @@ class HalfDayImportService:
             if not name_val:
                 continue
             person_name = str(name_val).replace("*", "").strip()
+
+            anchor = anchor_map.get(row_idx, {})
+            person_id_str = anchor.get("person_id")
+            try:
+                person_id = UUID(person_id_str) if person_id_str else None
+            except ValueError:
+                logger.warning(
+                    f"Invalid UUID in __ANCHORS__ row {row_idx}: {person_id_str!r}"
+                )
+                person_id = None
+
+            # Phase 2: compute hash to skip unchanged rows
+            if person_id and anchor.get("row_hash"):
+                rot1_val = self._clean_cell_value(ws.cell(row=row_idx, column=1).value)
+                rot2_val = self._clean_cell_value(ws.cell(row=row_idx, column=2).value)
+                days_codes = []
+                for col, _ in date_cols:
+                    am = self._clean_cell_value(ws.cell(row=row_idx, column=col).value)
+                    pm = self._clean_cell_value(
+                        ws.cell(row=row_idx, column=col + 1).value
+                    )
+                    days_codes.extend([am, pm])
+
+                from app.services.excel_metadata import compute_row_hash
+
+                current_hash = compute_row_hash(
+                    person_id, rot1_val, rot2_val, days_codes
+                )
+                if current_hash == anchor["row_hash"]:
+                    continue  # Unchanged row
 
             for col, slot_date in date_cols:
                 am_val = ws.cell(row=row_idx, column=col).value
@@ -900,7 +951,7 @@ class HalfDayImportService:
                 slots.append(
                     ParsedSlot(
                         person_name=person_name,
-                        person_id=None,
+                        person_id=person_id,
                         assignment_date=slot_date,
                         time_of_day="AM",
                         raw_value=am_raw,
@@ -913,7 +964,7 @@ class HalfDayImportService:
                 slots.append(
                     ParsedSlot(
                         person_name=person_name,
-                        person_id=None,
+                        person_id=person_id,
                         assignment_date=slot_date,
                         time_of_day="PM",
                         raw_value=pm_raw,

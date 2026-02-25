@@ -1,4 +1,5 @@
-import { test as base } from './database.fixture';
+import { test as base, DatabaseHelper } from './database.fixture';
+import type { HalfDaySeededData } from './database.fixture';
 import { APIRequestContext } from '@playwright/test';
 
 /**
@@ -19,6 +20,14 @@ export type ScheduleScenario = {
   blockIds: string[];
   rotationIds: string[];
   assignmentIds: string[];
+};
+
+export type HalfDayScheduleScenario = {
+  blockNumber: number;
+  academicYear: number;
+  personNames: string[];
+  dates: string[];
+  expectedActivityCodes: string[];
 };
 
 export type ScheduleContext = {
@@ -405,6 +414,35 @@ export class ScheduleHelper {
       blockIds: blocks,
       rotationIds: [rotationId],
       assignmentIds: assignments,
+    };
+  }
+
+  /**
+   * Create a half-day schedule scenario with seeded assignments
+   *
+   * Uses DatabaseHelper.seedHalfDayAssignments() to create deterministic
+   * half-day data for a specific block/year. Returns the scenario data
+   * needed for assertion in round-trip and import tests.
+   */
+  async createHalfDaySchedule(
+    blockNumber: number,
+    academicYear: number,
+    residentCount: number = 5
+  ): Promise<HalfDayScheduleScenario> {
+    // Create a temporary DatabaseHelper for seeding
+    const dbHelper = new DatabaseHelper(this.apiContext, this.baseURL);
+    const seededData: HalfDaySeededData = await dbHelper.seedHalfDayAssignments(
+      blockNumber,
+      academicYear,
+      residentCount
+    );
+
+    return {
+      blockNumber: seededData.blockNumber,
+      academicYear: seededData.academicYear,
+      personNames: seededData.personNames,
+      dates: seededData.dates,
+      expectedActivityCodes: seededData.activityCodes,
     };
   }
 }

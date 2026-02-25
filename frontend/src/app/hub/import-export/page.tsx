@@ -1293,6 +1293,7 @@ export default function ImportExportHub() {
                 return (
                   <button
                     key={tab.id}
+                    data-testid={`hub-tab-${tab.id}`}
                     role="tab"
                     aria-selected={isActive}
                     aria-controls={`panel-${tab.id}`}

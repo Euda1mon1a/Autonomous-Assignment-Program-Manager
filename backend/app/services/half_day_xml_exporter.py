@@ -30,7 +30,6 @@ from app.models.call_assignment import CallAssignment
 from app.models.half_day_assignment import HalfDayAssignment
 from app.models.person import Person
 from app.models.schedule_override import ScheduleOverride
-from app.models.activity import Activity, ActivityCategory
 
 logger = get_logger(__name__)
 
@@ -335,6 +334,7 @@ class HalfDayXMLExporter:
 
         return {
             p.id: {
+                "id": str(p.id),
                 "name": p.name,
                 "pgy": p.pgy_level if p.type == "resident" else None,
                 "type": p.type,
@@ -398,6 +398,7 @@ class HalfDayXMLExporter:
                 )
 
             rotation_map[ba.resident_id] = {
+                "id": str(ba.id),
                 "rotation1": rotation1,
                 "rotation2": rotation2,
             }

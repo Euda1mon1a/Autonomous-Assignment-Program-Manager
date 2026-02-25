@@ -17,9 +17,11 @@ Advanced cross-disciplinary concepts from cutting-edge research:
 from app.resilience.exotic.metastability import MetastabilityDetector
 from app.resilience.exotic.spin_glass import SpinGlassModel
 from app.resilience.exotic.catastrophe import CatastropheTheory
+from app.resilience.exotic.foam_topology import FoamTopologyScheduler
 
 __all__ = [
     "MetastabilityDetector",
     "SpinGlassModel",
     "CatastropheTheory",
+    "FoamTopologyScheduler",
 ]

@@ -6,6 +6,7 @@ import { BurnoutDashboard } from "./components/BurnoutDashboard";
 import { N1Analysis } from "./components/N1Analysis";
 import { ResilienceMetrics } from "./components/ResilienceMetrics";
 import { UtilizationChart } from "./components/UtilizationChart";
+import { NaturalSwapsPanel } from "./components/NaturalSwapsPanel";
 
 /**
  * ResilienceHub - Main resilience dashboard orchestrator
@@ -106,6 +107,13 @@ export function ResilienceHub() {
               {/* Self-contained, fetches own data via useVulnerabilityReport */}
               <N1Analysis />
             </div>
+          </div>
+        </div>
+
+        {/* Secondary Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[350px]">
+          <div className="lg:col-span-1 h-full">
+            <NaturalSwapsPanel />
           </div>
         </div>
 

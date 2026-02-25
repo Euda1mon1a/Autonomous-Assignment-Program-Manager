@@ -236,48 +236,48 @@ This does NOT replace backend validation. The staging pipeline (`half_day_import
 
 ### Phase 0: Prerequisites (already in Excel roadmap)
 
-- [ ] Wire `__ANCHORS__` sheet into the export pipeline (Phase 2 of [Excel Stateful Round-Trip Roadmap](excel-stateful-roundtrip-roadmap.md))
-- [ ] Implement DataValidation dropdowns (Phase 3 of Excel roadmap)
+- [x] Wire `__ANCHORS__` sheet into the export pipeline (Phase 2 of [Excel Stateful Round-Trip Roadmap](excel-stateful-roundtrip-roadmap.md))
+- [x] Implement DataValidation dropdowns (Phase 3 of Excel roadmap)
 
 These are needed regardless of AI. The add-in reads what the export pipeline writes.
 
 ### Phase A: Office.js Add-in Skeleton
 
-- [ ] `office-addin/` directory at repo root (Yeoman `yo office` scaffold, React + TypeScript)
-- [ ] Unified JSON manifest (Copilot Add-in Actions compatible)
-- [ ] Task pane UI: minimal React panel showing block metadata from `__SYS_META__`
-- [ ] `writeScheduleCell()` wrapper with auto-hash-clear
-- [ ] Protected sheet guard (refuse writes to `__ANCHORS__`, `__REF__`, `__SYS_META__`)
-- [ ] Read `llm_rules_of_engagement` from `__SYS_META__` on init
-- [ ] Sideloading for local development
+- [x] `office-addin/` directory at repo root (Yeoman `yo office` scaffold, React + TypeScript)
+- [x] Unified JSON manifest (Copilot Add-in Actions compatible)
+- [x] Task pane UI: minimal React panel showing block metadata from `__SYS_META__`
+- [x] `writeScheduleCell()` wrapper with auto-hash-clear
+- [x] Protected sheet guard (refuse writes to `__ANCHORS__`, `__REF__`, `__SYS_META__`)
+- [x] Read `llm_rules_of_engagement` from `__SYS_META__` on init
+- [x] Sideloading for local development
 
 **Effort:** 2-3 days
 
 ### Phase B: LLM Integration
 
-- [ ] Pluggable LLM backend (configurable endpoint URL in add-in settings)
-- [ ] System prompt assembly: `llm_rules_of_engagement` + `__REF__` valid codes + visible grid snapshot
-- [ ] Chat panel in task pane (coordinator types natural language)
-- [ ] LLM response → parsed cell writes via `writeScheduleCell()` wrapper
-- [ ] Audit log: every AI edit logged with before/after values in task pane
-- [ ] Error handling: LLM attempts to write invalid code → reject + show warning
+- [x] Pluggable LLM backend (configurable endpoint URL in add-in settings)
+- [x] System prompt assembly: `llm_rules_of_engagement` + `__REF__` valid codes + visible grid snapshot
+- [x] Chat panel in task pane (coordinator types natural language)
+- [x] LLM response → parsed cell writes via `writeScheduleCell()` wrapper
+- [x] Audit log: every AI edit logged with before/after values in task pane
+- [x] Error handling: LLM attempts to write invalid code → reject + show warning
 
 **Effort:** 3-5 days
 
 ### Phase C: Local Pre-Flight Validation
 
-- [ ] TypeScript ACGME rule engine (1-in-7, consecutive days, leave overlap)
-- [ ] Read visible grid → validate → show warnings in task pane before upload
-- [ ] Optional: call backend `/api/v1/schedules/validate` endpoint for full CP-SAT check
+- [x] TypeScript ACGME rule engine (1-in-7, consecutive days, leave overlap)
+- [x] Read visible grid → validate → show warnings in task pane before upload
+- [x] Optional: call backend `/api/v1/schedules/validate` endpoint for full CP-SAT check
 
 **Effort:** 2-3 days
 
 ### Phase D: GCC High Deployment
 
-- [ ] Switch CDN to `https://appsforoffice.gcc.cdn.office.net/...`
-- [ ] Host add-in web app in Azure Government
-- [ ] Centralized deployment via M365 Admin Center (security group assignment)
-- [ ] Copilot Add-in Actions registration (when available in GCC High)
+- [x] Switch CDN to `https://appsforoffice.gcc.cdn.office.net/...`
+- [x] Host add-in web app in Azure Government
+- [x] Centralized deployment via M365 Admin Center (security group assignment)
+- [x] Copilot Add-in Actions registration (when available in GCC High)
 
 **Effort:** 1-2 days
 

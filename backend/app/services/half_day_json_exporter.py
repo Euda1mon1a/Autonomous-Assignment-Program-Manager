@@ -145,6 +145,8 @@ class HalfDayJSONExporter(HalfDayXMLExporter):
     ) -> dict[str, Any]:
         """Build person payload with daily schedule from DB assignments."""
         person = {
+            "id": person_info.get("id"),
+            "block_assignment_id": rotation_info.get("id"),
             "name": person_info.get("name", ""),
             "pgy": person_info.get("pgy"),
             "rotation1": rotation_info.get("rotation1", ""),

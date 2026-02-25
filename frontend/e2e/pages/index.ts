@@ -13,3 +13,4 @@ export { AnalyticsPage } from './AnalyticsPage';
 export { TemplatePage } from './TemplatePage';
 export { HeatmapPage } from './HeatmapPage';
 export { ResiliencePage } from './ResiliencePage';
+export { ImportExportPage } from './ImportExportPage';

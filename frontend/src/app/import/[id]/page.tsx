@@ -77,6 +77,7 @@ export default function BatchReviewPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-white">Import Review</h1>
               <span
+                data-testid="batch-status-badge"
                 className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
                         ${
                           isStaged
@@ -119,6 +120,7 @@ export default function BatchReviewPage() {
           {isStaged && (
             <div className="flex gap-3">
               <button
+                data-testid="batch-cancel-btn"
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition-colors"
                 onClick={() => router.push("/import")}
               >
@@ -127,6 +129,7 @@ export default function BatchReviewPage() {
               <button
                 onClick={handleApply}
                 disabled={isApplying}
+                data-testid="batch-apply-btn"
                 className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-medium transition-colors shadow-lg shadow-green-900/20 flex items-center gap-2"
               >
                 {isApplying ? (
@@ -142,7 +145,7 @@ export default function BatchReviewPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-4 gap-4">
-          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4" data-testid="batch-stat-new">
             <div className="text-slate-500 text-xs uppercase font-medium">
               New Assignments
             </div>
@@ -150,7 +153,7 @@ export default function BatchReviewPage() {
               {preview.newCount}
             </div>
           </div>
-          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4" data-testid="batch-stat-updates">
             <div className="text-slate-500 text-xs uppercase font-medium">
               Updates
             </div>
@@ -158,7 +161,7 @@ export default function BatchReviewPage() {
               {preview.updateCount}
             </div>
           </div>
-          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4" data-testid="batch-stat-conflicts">
             <div className="text-slate-500 text-xs uppercase font-medium">
               Conflicts
             </div>
@@ -172,7 +175,7 @@ export default function BatchReviewPage() {
               {preview.conflictCount}
             </div>
           </div>
-          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4" data-testid="batch-stat-violations">
             <div className="text-slate-500 text-xs uppercase font-medium">
               Violations
             </div>

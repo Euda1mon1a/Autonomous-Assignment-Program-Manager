@@ -794,3 +794,46 @@ export function useStigmergyPatterns(
     ...options,
   });
 }
+
+// ============================================================================
+// Foam Topology Hooks (Tier 5: Natural Swaps)
+// ============================================================================
+
+export interface FoamSwapRecommendation {
+  residentA: string;
+  residentB: string;
+  blockA: string;
+  blockB: string;
+  energyImprovement: number;
+  constraintMargin: number;
+  naturalScore: number;
+}
+
+export interface NaturalSwapsResponse {
+  analyzedAt: string;
+  scheduleId: string;
+  recommendations: FoamSwapRecommendation[];
+  source: string;
+}
+
+export function useNaturalSwaps(
+  scheduleId: string,
+  n: number = 5,
+  options?: Omit<
+    UseQueryOptions<NaturalSwapsResponse, ApiError>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery<NaturalSwapsResponse, ApiError>({
+    queryKey: ["resilience", "natural-swaps", scheduleId, n],
+    queryFn: async () => {
+      const response = await get<NaturalSwapsResponse>(
+        `/foam-topology/${scheduleId}/natural-swaps?n=${n}`
+      );
+      return response;
+    },
+    enabled: !!scheduleId,
+    staleTime: 60 * 1000,
+    ...options,
+  });
+}

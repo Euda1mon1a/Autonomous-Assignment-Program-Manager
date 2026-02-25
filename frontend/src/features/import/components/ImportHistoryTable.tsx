@@ -80,7 +80,7 @@ export function ImportHistoryTable({
 
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50">
-      <table className="w-full text-left text-sm">
+      <table className="w-full text-left text-sm" data-testid="import-history-table">
         <thead className="bg-slate-800/50 text-slate-400 uppercase text-xs">
           <tr>
             <th className="px-6 py-4 font-medium">Date</th>
@@ -95,6 +95,7 @@ export function ImportHistoryTable({
           {batches.map((batch) => (
             <tr
               key={batch.id}
+              data-testid={`import-batch-row-${batch.id}`}
               className="hover:bg-slate-800/30 transition-colors"
             >
               <td className="px-6 py-4 whitespace-nowrap text-slate-300">
@@ -132,6 +133,7 @@ export function ImportHistoryTable({
                   {batch.status === ImportBatchStatus.STAGED && (
                     <button
                       onClick={() => router.push(`/import/${batch.id}`)}
+                      data-testid={`import-review-btn-${batch.id}`}
                       className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1"
                     >
                       Review
@@ -141,6 +143,7 @@ export function ImportHistoryTable({
                   {batch.status === ImportBatchStatus.APPLIED && (
                     <button
                       onClick={() => onRollback(batch.id)}
+                      data-testid={`import-rollback-btn-${batch.id}`}
                       className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md text-xs font-medium transition-colors border border-slate-700 hover:border-slate-600 flex items-center gap-1"
                     >
                       <RotateCcw className="w-3 h-3" />

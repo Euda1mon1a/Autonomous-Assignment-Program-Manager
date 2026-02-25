@@ -266,6 +266,7 @@ export function ExportPanel({
                   ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
                 role="radio"
+                data-testid={`export-format-${format}`}
                 aria-checked={isSelected}
                 aria-label={`Export as ${FormatLabels[format]}: ${FormatDescriptions[format]}`}
               >
@@ -349,6 +350,7 @@ export function ExportPanel({
         <button
           onClick={() => handleExport(selectedFormat)}
           disabled={isDisabled || isExporting}
+          data-testid="export-submit-btn"
           className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label={`Export as ${FormatLabels[selectedFormat]}`}
         >

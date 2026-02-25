@@ -66,6 +66,7 @@ from .resilience import (
     GetEarlyWarningsTool,
     GetUtilizationTool,
     RunN1AnalysisTool,
+    GetNaturalSwapsTool,
 )
 
 # Analytics tools
@@ -197,6 +198,7 @@ __all__ = [
     "RunN1AnalysisTool",
     "GetBurnoutRtTool",
     "GetEarlyWarningsTool",
+    "GetNaturalSwapsTool",
     # Analytics Tools
     "CoverageMetricsTool",
     "WorkloadDistributionTool",

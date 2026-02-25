@@ -20,6 +20,9 @@ class ExportMetadata:
     block_number: int | None = None  # Optional for year-level
     export_version: int = 1
     block_map: dict[str, str] | None = None  # sheet_name -> block_uuid
+    llm_rules_of_engagement: str | None = (
+        None  # AI agent instructions embedded in the workbook
+    )
 
     def to_json(self) -> str:
         """Convert metadata to JSON string."""

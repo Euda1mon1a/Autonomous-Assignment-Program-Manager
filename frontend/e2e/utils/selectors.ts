@@ -194,6 +194,68 @@ export const selectors = {
     dragPreview: '[data-testid="drag-preview"]',
   },
 
+  // Import / Export
+  importExport: {
+    // Hub page tabs
+    hubTabStaged: '[data-testid="hub-tab-staged"]',
+    hubTabBlock: '[data-testid="hub-tab-block"]',
+    hubTabFmit: '[data-testid="hub-tab-fmit"]',
+    hubTabExport: '[data-testid="hub-tab-export"]',
+
+    // Import main page
+    fileInput: '[data-testid="import-file-input"]',
+    halfDayLink: '[data-testid="import-halfday-link"]',
+    historyTable: '[data-testid="import-history-table"]',
+
+    // Half-day import - upload step
+    hdFileInput: '[data-testid="hd-file-input"]',
+    hdBlockNumber: '[data-testid="hd-block-number"]',
+    hdAcademicYear: '[data-testid="hd-academic-year"]',
+    hdNotes: '[data-testid="hd-notes"]',
+    hdStageBtn: '[data-testid="hd-stage-btn"]',
+
+    // Half-day import - preview step
+    hdFilterDiffType: '[data-testid="hd-filter-difftype"]',
+    hdFilterActivity: '[data-testid="hd-filter-activity"]',
+    hdFilterErrors: '[data-testid="hd-filter-errors"]',
+    hdFilterPerson: '[data-testid="hd-filter-person"]',
+    hdSelectPageBtn: '[data-testid="hd-select-page-btn"]',
+    hdClearSelectionBtn: '[data-testid="hd-clear-selection-btn"]',
+    hdDiffTable: '[data-testid="hd-diff-table"]',
+    hdMetricTotal: '[data-testid="hd-metric-total"]',
+    hdMetricChanged: '[data-testid="hd-metric-changed"]',
+    hdMetricAddedRemoved: '[data-testid="hd-metric-added-removed"]',
+    hdMetricHours: '[data-testid="hd-metric-hours"]',
+    hdPaginationPrev: '[data-testid="hd-pagination-prev"]',
+    hdPaginationNext: '[data-testid="hd-pagination-next"]',
+    hdPaginationInfo: '[data-testid="hd-pagination-info"]',
+    hdDraftNotes: '[data-testid="hd-draft-notes"]',
+    hdCreateDraftBtn: '[data-testid="hd-create-draft-btn"]',
+
+    // Half-day import - draft step
+    hdDraftAdded: '[data-testid="hd-draft-added"]',
+    hdDraftModified: '[data-testid="hd-draft-modified"]',
+    hdDraftRemoved: '[data-testid="hd-draft-removed"]',
+    hdDraftFailed: '[data-testid="hd-draft-failed"]',
+    hdViewDraftBtn: '[data-testid="hd-view-draft-btn"]',
+    hdBackToPreviewBtn: '[data-testid="hd-back-to-preview-btn"]',
+
+    // Batch review page
+    batchStatusBadge: '[data-testid="batch-status-badge"]',
+    batchApplyBtn: '[data-testid="batch-apply-btn"]',
+    batchCancelBtn: '[data-testid="batch-cancel-btn"]',
+    batchStatNew: '[data-testid="batch-stat-new"]',
+    batchStatUpdates: '[data-testid="batch-stat-updates"]',
+    batchStatConflicts: '[data-testid="batch-stat-conflicts"]',
+    batchStatViolations: '[data-testid="batch-stat-violations"]',
+
+    // Export panel
+    exportFormatCsv: '[data-testid="export-format-csv"]',
+    exportFormatXlsx: '[data-testid="export-format-xlsx"]',
+    exportFormatJson: '[data-testid="export-format-json"]',
+    exportSubmitBtn: '[data-testid="export-submit-btn"]',
+  },
+
   // Calendar specific
   calendar: {
     month: '[data-testid="calendar-month"]',

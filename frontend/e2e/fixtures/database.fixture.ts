@@ -12,6 +12,22 @@ export type DatabaseContext = {
   db: DatabaseHelper;
 };
 
+export type HalfDayAssignment = {
+  personName: string;
+  date: string;
+  amActivity: string;
+  pmActivity: string;
+};
+
+export type HalfDaySeededData = {
+  blockNumber: number;
+  academicYear: number;
+  personNames: string[];
+  dates: string[];
+  activityCodes: string[];
+  assignments: HalfDayAssignment[];
+};
+
 export class DatabaseHelper {
   private apiContext: APIRequestContext;
   private baseURL: string;
@@ -287,20 +303,107 @@ export class DatabaseHelper {
   }
 
   /**
+   * Seed half-day assignments for a block
+   *
+   * Creates deterministic half_day_assignments via the staging API.
+   * Returns person names, dates, and activity codes used for assertion.
+   */
+  async seedHalfDayAssignments(
+    blockNumber: number,
+    academicYear: number,
+    residentCount: number = 5
+  ): Promise<HalfDaySeededData> {
+    // First ensure we have residents
+    const residentIds = this.getCreatedIds('residents');
+    const residents = residentIds.length >= residentCount
+      ? residentIds.slice(0, residentCount)
+      : await this.seedResidents(residentCount);
+
+    // Activity codes used for seeding (deterministic)
+    const activityCodes = ['C', 'NF', 'FMIT-PG', 'LV-AM', 'ADMIN'];
+
+    // Create half-day assignments via API
+    const assignments: HalfDayAssignment[] = [];
+    const personNames: string[] = [];
+    const dates: string[] = [];
+
+    // Generate dates for the block (28 days starting from block start)
+    const blockStartMonth = ((blockNumber - 1) % 13); // 0-indexed month offset
+    const startDate = new Date(academicYear, 6 + blockStartMonth, 1); // July = month 6
+
+    for (let day = 0; day < 28; day++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + day);
+      const dateStr = date.toISOString().split('T')[0];
+      if (!dates.includes(dateStr)) dates.push(dateStr);
+    }
+
+    for (let i = 0; i < residents.length; i++) {
+      const personName = `PGY${(i % 3) + 1} Resident${i + 1}`;
+      personNames.push(personName);
+
+      // Assign deterministic activities for each date slot
+      for (let day = 0; day < Math.min(dates.length, 14); day++) {
+        const amActivity = activityCodes[i % activityCodes.length];
+        const pmActivity = activityCodes[(i + 1) % activityCodes.length];
+
+        assignments.push({
+          personName,
+          date: dates[day],
+          amActivity,
+          pmActivity,
+        });
+      }
+    }
+
+    // Stage via API
+    const response = await this.apiContext.post(
+      `${this.baseURL}/api/v1/import/half-day/seed`,
+      {
+        data: {
+          blockNumber,
+          academicYear,
+          assignments,
+        },
+      }
+    );
+
+    // Track for cleanup
+    if (response.ok()) {
+      const data = await response.json();
+      if (data.batchId) {
+        const existing = this.createdEntities.get('importBatches') || [];
+        existing.push(data.batchId);
+        this.createdEntities.set('importBatches', existing);
+      }
+    }
+
+    return {
+      blockNumber,
+      academicYear,
+      personNames,
+      dates,
+      activityCodes,
+      assignments,
+    };
+  }
+
+  /**
    * Clean up all created entities
    */
   async cleanup(): Promise<void> {
-    // Clean up in reverse order of creation
-    const cleanupOrder = ['assignments', 'blocks', 'rotations', 'residents', 'faculty', 'users'];
+    const cleanupOrder = ['importBatches', 'assignments', 'blocks', 'rotations', 'residents', 'faculty', 'users'];
 
     for (const entityType of cleanupOrder) {
       const ids = this.createdEntities.get(entityType) || [];
 
       for (const id of ids) {
         try {
-          await this.apiContext.delete(`${this.baseURL}/api/v1/${entityType}/${id}`);
+          const endpoint = entityType === 'importBatches'
+            ? `${this.baseURL}/api/v1/import/batches/${id}`
+            : `${this.baseURL}/api/v1/${entityType}/${id}`;
+          await this.apiContext.delete(endpoint);
         } catch (error) {
-          // Ignore errors during cleanup
           console.warn(`Failed to delete ${entityType}/${id}:`, error);
         }
       }

@@ -839,7 +839,7 @@ FastAPI TestClient has undocumented behavior differences between versioned and n
 
 **Effort:** 4-8 hours
 
-### 33. Office.js AI-Navigable Excel Add-in (NEW - Feb 2026)
+### 33. Office.js AI-Navigable Excel Add-in (DONE - Feb 2026)
 **Added:** 2026-02-25
 **Roadmap:** [`docs/architecture/OFFICEJS_AI_ROADMAP.md`](architecture/OFFICEJS_AI_ROADMAP.md)
 **Depends on:** Excel Stateful Round-Trip Phase 2 (UUID Anchoring)
@@ -849,10 +849,10 @@ Office.js add-in that reads the veryHidden metadata sheets (`__SYS_META__`, `__R
 | Component | Status |
 |-----------|--------|
 | `__SYS_META__` + `__REF__` sheets | LIVE (excel_metadata.py) |
-| `__ANCHORS__` sheet (UUID + hash) | Code exists, not wired into export |
-| Office.js add-in skeleton | NOT STARTED |
-| LLM integration (pluggable backend) | NOT STARTED |
-| GCC High deployment | NOT STARTED |
+| `__ANCHORS__` sheet (UUID + hash) | DONE (wired into export) |
+| Office.js add-in skeleton | DONE (Phase A) |
+| LLM integration (pluggable backend) | DONE (Phase B) |
+| GCC High deployment | DEFERRED / DOCUMENTED (Phase D) |
 
 **Key Risk:** No offline mode — add-in requires internet. openpyxl + AppleScript pipelines remain primary for disconnected ops.
 
@@ -861,8 +861,8 @@ Office.js add-in that reads the veryHidden metadata sheets (`__SYS_META__`, `__R
 2. Protected sheet guard refuses writes to `__ANCHORS__`/`__REF__`/`__SYS_META__`
 3. Pluggable LLM backend — local/on-prem/GCC High only for CUI data
 
-**Files (future):**
-- `office-addin/` — New directory (Yeoman scaffold)
+**Files:**
+- `office-addin/` — React scaffolding, `manifest.json`, and TypeScript validator
 - `backend/app/services/excel_metadata.py` — Add `llm_rules_of_engagement` to ExportMetadata
 
 **Effort:** Phase A (skeleton): 2-3 days. Phase B (LLM): 3-5 days. Phase C (validation): 2-3 days. Phase D (GCC High): 1-2 days.

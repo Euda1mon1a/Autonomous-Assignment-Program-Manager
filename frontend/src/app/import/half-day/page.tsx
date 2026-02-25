@@ -434,6 +434,7 @@ export default function HalfDayImportPage() {
                     <input
                       type="file"
                       accept=".xlsx,.xls"
+                      data-testid="hd-file-input"
                       onChange={(event) =>
                         setFile(event.target.files?.[0] ?? null)
                       }
@@ -449,6 +450,7 @@ export default function HalfDayImportPage() {
                         min={1}
                         max={26}
                         value={blockNumber}
+                        data-testid="hd-block-number"
                         onChange={(event) => setBlockNumber(event.target.value)}
                         className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -459,6 +461,7 @@ export default function HalfDayImportPage() {
                         type="number"
                         min={2000}
                         value={academicYear}
+                        data-testid="hd-academic-year"
                         onChange={(event) =>
                           setAcademicYear(event.target.value)
                         }
@@ -471,6 +474,7 @@ export default function HalfDayImportPage() {
                     Notes (optional)
                     <textarea
                       value={notes}
+                      data-testid="hd-notes"
                       onChange={(event) => setNotes(event.target.value)}
                       className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[90px]"
                       placeholder="Block 10 Template2 import"
@@ -482,6 +486,7 @@ export default function HalfDayImportPage() {
                   <button
                     onClick={handleStage}
                     disabled={stageMutation.isPending}
+                    data-testid="hd-stage-btn"
                     className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-60"
                   >
                     {stageMutation.isPending ? (
@@ -538,12 +543,14 @@ export default function HalfDayImportPage() {
                     <div className="flex items-center gap-2">
                       <button
                         className="px-3 py-2 rounded-lg border border-slate-700 text-slate-200 text-xs hover:border-slate-500"
+                        data-testid="hd-select-page-btn"
                         onClick={handleSelectPage}
                       >
                         Select page
                       </button>
                       <button
                         className="px-3 py-2 rounded-lg border border-slate-700 text-slate-400 text-xs hover:border-slate-500"
+                        data-testid="hd-clear-selection-btn"
                         onClick={handleClearSelection}
                       >
                         Clear selection
@@ -590,7 +597,7 @@ export default function HalfDayImportPage() {
                   )}
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3">
+                    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3" data-testid="hd-metric-total">
                       <div className="text-xs uppercase text-slate-500">
                         Total slots
                       </div>
@@ -598,7 +605,7 @@ export default function HalfDayImportPage() {
                         {metrics?.totalSlots ?? 0}
                       </div>
                     </div>
-                    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3">
+                    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3" data-testid="hd-metric-changed">
                       <div className="text-xs uppercase text-slate-500">
                         Changed slots
                       </div>
@@ -606,7 +613,7 @@ export default function HalfDayImportPage() {
                         {metrics?.changedSlots ?? 0}
                       </div>
                     </div>
-                    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3">
+                    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3" data-testid="hd-metric-added-removed">
                       <div className="text-xs uppercase text-slate-500">
                         Added / Removed
                       </div>
@@ -614,7 +621,7 @@ export default function HalfDayImportPage() {
                         {(metrics?.added ?? 0) + (metrics?.removed ?? 0)}
                       </div>
                     </div>
-                    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3">
+                    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3" data-testid="hd-metric-hours">
                       <div className="text-xs uppercase text-slate-500">
                         Manual hours
                       </div>
@@ -634,6 +641,7 @@ export default function HalfDayImportPage() {
                         Diff type
                         <select
                           value={diffTypeFilter}
+                          data-testid="hd-filter-difftype"
                           onChange={(event) =>
                             setDiffTypeFilter(
                               event.target.value as "all" | HalfDayDiffType
@@ -652,6 +660,7 @@ export default function HalfDayImportPage() {
                         Activity code
                         <input
                           value={activityCodeFilter}
+                          data-testid="hd-filter-activity"
                           onChange={(event) =>
                             setActivityCodeFilter(event.target.value)
                           }
@@ -663,6 +672,7 @@ export default function HalfDayImportPage() {
                         Errors
                         <select
                           value={errorFilter}
+                          data-testid="hd-filter-errors"
                           onChange={(event) =>
                             setErrorFilter(
                               event.target.value as "all" | "with" | "without"
@@ -681,6 +691,7 @@ export default function HalfDayImportPage() {
                         Person ID
                         <input
                           value={personIdFilter}
+                          data-testid="hd-filter-person"
                           onChange={(event) =>
                             setPersonIdFilter(event.target.value)
                           }
@@ -692,7 +703,7 @@ export default function HalfDayImportPage() {
                   </div>
 
                   <div className="overflow-hidden rounded-xl border border-slate-800">
-                    <table className="w-full text-left text-sm">
+                    <table className="w-full text-left text-sm" data-testid="hd-diff-table">
                       <thead className="bg-slate-900 text-slate-400 text-xs uppercase">
                         <tr>
                           <th className="px-4 py-3">Select</th>
@@ -731,16 +742,18 @@ export default function HalfDayImportPage() {
                     <div className="flex items-center gap-3">
                       <button
                         className="px-3 py-1.5 border border-slate-700 rounded-lg text-slate-300 disabled:opacity-50"
+                        data-testid="hd-pagination-prev"
                         disabled={page <= 1}
                         onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                       >
                         Previous
                       </button>
-                      <span>
+                      <span data-testid="hd-pagination-info">
                         Page {page} of {totalPages}
                       </span>
                       <button
                         className="px-3 py-1.5 border border-slate-700 rounded-lg text-slate-300 disabled:opacity-50"
+                        data-testid="hd-pagination-next"
                         disabled={page >= totalPages}
                         onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                       >
@@ -763,6 +776,7 @@ export default function HalfDayImportPage() {
                     Draft notes (optional)
                     <textarea
                       value={draftNotes}
+                      data-testid="hd-draft-notes"
                       onChange={(event) => setDraftNotes(event.target.value)}
                       className="mt-2 w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 min-h-[90px]"
                     />
@@ -771,6 +785,7 @@ export default function HalfDayImportPage() {
                   <button
                     onClick={handleCreateDraft}
                     disabled={draftMutation.isPending}
+                    data-testid="hd-create-draft-btn"
                     className="w-full inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-60"
                   >
                     {draftMutation.isPending ? (
@@ -809,19 +824,19 @@ export default function HalfDayImportPage() {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4">
+                  <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4" data-testid="hd-draft-added">
                     <div className="text-xs uppercase text-slate-500">Added</div>
                     <div className="text-lg font-semibold text-emerald-300">
                       {draftResult.added}
                     </div>
                   </div>
-                  <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4">
+                  <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4" data-testid="hd-draft-modified">
                     <div className="text-xs uppercase text-slate-500">Modified</div>
                     <div className="text-lg font-semibold text-blue-300">
                       {draftResult.modified}
                     </div>
                   </div>
-                  <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4">
+                  <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4" data-testid="hd-draft-removed">
                     <div className="text-xs uppercase text-slate-500">Removed</div>
                     <div className="text-lg font-semibold text-red-300">
                       {draftResult.removed}
@@ -833,7 +848,7 @@ export default function HalfDayImportPage() {
                       {draftResult.skipped}
                     </div>
                   </div>
-                  <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4">
+                  <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4" data-testid="hd-draft-failed">
                     <div className="text-xs uppercase text-slate-500">Failed</div>
                     <div className="text-lg font-semibold text-red-300">
                       {draftResult.failed}
@@ -862,12 +877,14 @@ export default function HalfDayImportPage() {
                     router.push(`/admin/schedule-drafts/${draftResult.draftId}`)
                   }
                   disabled={!draftResult.draftId}
+                  data-testid="hd-view-draft-btn"
                   className="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-60"
                 >
                   View draft
                 </button>
                 <button
                   onClick={() => setStep("preview")}
+                  data-testid="hd-back-to-preview-btn"
                   className="w-full inline-flex items-center justify-center gap-2 border border-slate-700 text-slate-300 px-4 py-2 rounded-lg font-medium hover:border-slate-500"
                 >
                   Back to preview

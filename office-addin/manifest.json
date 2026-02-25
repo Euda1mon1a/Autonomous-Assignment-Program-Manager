@@ -1,0 +1,71 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/office-js/v1.1/manifest.schema.json",
+  "id": "12345678-1234-1234-1234-123456789012",
+  "version": "1.0.0",
+  "name": "AAPM AI Schedule Assistant",
+  "description": "Office.js Add-in for AI-assisted TAMC schedule editing",
+  "extensions": [
+    {
+      "requirements": {
+        "scopes": [
+          "workbook"
+        ]
+      },
+      "capabilities": [
+        {
+          "name": "Workbook",
+          "type": "officeAddin"
+        }
+      ],
+      "runtimes": [
+        {
+          "id": "TaskPaneRuntime",
+          "type": "general",
+          "code": {
+            "page": "https://localhost:3000/index.html"
+          },
+          "lifetime": "short",
+          "actions": [
+            {
+              "id": "showTaskpane",
+              "type": "executeFunction",
+              "view": {
+                "id": "TaskpaneView",
+                "type": "taskpane"
+              }
+            }
+          ]
+        }
+      ],
+      "ribbons": [
+        {
+          "targets": [
+            {
+              "id": "Microsoft.Excel.Ribbon"
+            }
+          ],
+          "tabs": [
+            {
+              "id": "AAPMTab",
+              "label": "AAPM",
+              "groups": [
+                {
+                  "id": "AAPMGroup",
+                  "label": "AI Assistant",
+                  "controls": [
+                    {
+                      "id": "ShowTaskpaneButton",
+                      "type": "button",
+                      "label": "Show Assistant",
+                      "actionId": "showTaskpane"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -63,6 +63,10 @@ from app.resilience.exotic import (
     SpinGlassModel,
     CatastropheTheory,
 )
+from app.resilience.exotic.foam_topology import (
+    FoamTopologyScheduler,
+    SwapRecommendation,
+)
 
 # Import composite resilience modules
 from app.resilience.unified_critical_index import (
@@ -1984,7 +1988,7 @@ async def get_unified_critical_index(
         logger.error(f"Error calculating unified critical index: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error calculating unified critical index: {str(e)}",
+            detail="An internal error occurred while calculating the unified critical index.",
         )
 
 
@@ -2144,7 +2148,7 @@ async def calculate_recovery_distance(
         logger.error(f"Error calculating recovery distance: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error calculating recovery distance: {str(e)}",
+            detail="An internal error occurred while calculating recovery distance.",
         )
 
 
@@ -2342,7 +2346,7 @@ async def assess_creep_fatigue(
         logger.error(f"Error assessing creep fatigue: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error assessing creep fatigue: {str(e)}",
+            detail="An internal error occurred while assessing creep fatigue.",
         )
 
 
@@ -2485,7 +2489,7 @@ async def analyze_transcription_factors(
         logger.error(f"Error analyzing transcription factors: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error analyzing transcription factors: {str(e)}",
+            detail="An internal error occurred while analyzing transcription factors.",
         )
 
 
@@ -2729,5 +2733,99 @@ async def detect_hopfield_spurious_attractors(
         is_current_state_spurious=is_current_spurious,
         interpretation=interpretation,
         recommendations=recommendations,
+        source="backend",
+    )
+
+
+# =============================================================================
+# Foam Topology Endpoints
+# =============================================================================
+
+
+class FoamSwapRecommendationResponse(BaseModel):
+    resident_a: UUID
+    resident_b: UUID
+    block_a: UUID
+    block_b: UUID
+    energy_improvement: float
+    constraint_margin: float
+    natural_score: float
+
+
+class NaturalSwapsResponse(BaseModel):
+    analyzed_at: str
+    schedule_id: UUID | None
+    recommendations: list[FoamSwapRecommendationResponse]
+    source: str = "backend"
+
+
+@router.get(
+    "/foam-topology/{schedule_id}/natural-swaps", response_model=NaturalSwapsResponse
+)
+@require_feature_flag("exotic_resilience_enabled")
+async def get_natural_swaps(
+    schedule_id: UUID,
+    n: int = 5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> NaturalSwapsResponse:
+    """
+    Find natural swap opportunities using Foam Topology dynamics.
+    """
+    logger.info(f"Finding natural swaps for schedule: {schedule_id}")
+
+    # Fetch assignments
+    query = select(Assignment).where(Assignment.schedule_id == schedule_id)
+    result = db.execute(query)
+    assignments = list(result.scalars().all())
+
+    if not assignments:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No assignments found for this schedule",
+        )
+
+    formatted_assignments = []
+    for a in assignments:
+        # Use fallback 1.0 for missing workload since real schedules might not have it cleanly
+        workload = 1.0
+        if hasattr(a, "workload_hours") and a.workload_hours:
+            workload = float(a.workload_hours) / 40.0  # simple normalization
+
+        formatted_assignments.append(
+            {
+                "id": a.id,
+                "person_id": a.person_id,
+                "block_id": a.block_id,
+                "workload": workload,
+            }
+        )
+
+    scheduler = FoamTopologyScheduler()
+    # Assuming empty constraints list for now (to be extended when constraints are queried properly)
+    scheduler.initialize_from_schedule(formatted_assignments, constraints=[])
+
+    # Evolve briefly to establish baseline pressures
+    scheduler.evolve(steps=5)
+
+    swaps = scheduler.find_optimal_swaps(n=n)
+
+    swap_responses = [
+        FoamSwapRecommendationResponse(
+            resident_a=s.resident_a,
+            resident_b=s.resident_b,
+            block_a=s.block_a,
+            block_b=s.block_b,
+            energy_improvement=s.energy_improvement,
+            constraint_margin=s.constraint_margin,
+            natural_score=s.natural_score,
+        )
+        for s in swaps
+    ]
+
+    return NaturalSwapsResponse(
+        analyzed_at=datetime.now().isoformat(),
+        schedule_id=schedule_id,
+        recommendations=swap_responses,
         source="backend",
     )
