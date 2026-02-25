@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
 from app.db.transaction import transactional
+from app.models.absence import Absence
 from app.models.activity import Activity, ActivityCategory
 from app.models.half_day_assignment import HalfDayAssignment
 from app.models.import_staging import (
@@ -36,6 +37,7 @@ from app.schemas.half_day_import import (
     HalfDayDiffMetrics,
     HalfDayDiffType,
 )
+from app.services.excel_metadata import read_sys_meta
 from app.services.schedule_draft_service import ScheduleDraftService
 from app.utils.academic_blocks import get_block_dates, get_block_number_for_date
 
@@ -367,6 +369,16 @@ class HalfDayImportService:
             )
         metrics.manual_half_days = metrics.changed_slots
         metrics.manual_hours = float(metrics.manual_half_days * 4)
+
+        # Create Absence records from LV assignments (Track C)
+        staged_list = (
+            self.db.query(ImportStagedAssignment)
+            .filter(ImportStagedAssignment.batch_id == batch.id)
+            .all()
+        )
+        lv_absences = self.create_absences_from_lv_assignments(staged_list, batch.id)
+        if lv_absences:
+            warnings.append(f"Created {lv_absences} absence record(s) from LV codes")
 
         self.db.commit()
         return batch, metrics, warnings
@@ -820,6 +832,24 @@ class HalfDayImportService:
         wb = load_workbook(io.BytesIO(file_bytes), data_only=True)
         ws = wb.active
 
+        # Read Phase 1 metadata if present (non-blocking: legacy files lack it)
+        meta = read_sys_meta(wb)
+        if meta:
+            logger.info(
+                "Import metadata: academic_year=%s, block_number=%s, "
+                "export_version=%d, export_timestamp=%s",
+                meta.academic_year,
+                meta.block_number,
+                meta.export_version,
+                meta.export_timestamp,
+            )
+            expected_block = get_block_number_for_date(start_date)
+            if meta.block_number is not None and meta.block_number != expected_block:
+                warnings.append(
+                    f"Metadata block_number={meta.block_number} differs from "
+                    f"expected block {expected_block} (date {start_date})"
+                )
+
         # Build date columns from row 3
         date_cols: list[tuple[int, date]] = []
         col = SCHEDULE_START_COL
@@ -958,3 +988,80 @@ class HalfDayImportService:
             cleaned = value.strip()
             return cleaned or None
         return str(value).strip()
+
+    @staticmethod
+    def _dates_to_ranges(sorted_dates: list[date]) -> list[tuple[date, date]]:
+        """Group sorted dates into contiguous (start, end) ranges."""
+        if not sorted_dates:
+            return []
+        ranges: list[tuple[date, date]] = []
+        start = sorted_dates[0]
+        prev = start
+        for d in sorted_dates[1:]:
+            if (d - prev).days <= 1:
+                prev = d
+            else:
+                ranges.append((start, prev))
+                start = d
+                prev = d
+        ranges.append((start, prev))
+        return ranges
+
+    def create_absences_from_lv_assignments(
+        self,
+        staged_assignments: list[ImportStagedAssignment],
+        batch_id: UUID,
+    ) -> int:
+        """Create Absence records from staged LV assignments.
+
+        Groups LV half-days by person into contiguous date ranges,
+        checks for existing absences, creates new ones where missing.
+
+        Returns:
+            Number of Absence records created.
+        """
+        from datetime import timedelta
+
+        lv_by_person: dict[UUID, set[date]] = {}
+        for sa in staged_assignments:
+            code = (sa.rotation_name or "").upper()
+            if code.startswith("LV") and sa.matched_person_id:
+                lv_by_person.setdefault(sa.matched_person_id, set()).add(
+                    sa.assignment_date
+                )
+
+        created = 0
+        for person_id, lv_dates in lv_by_person.items():
+            ranges = self._dates_to_ranges(sorted(lv_dates))
+            for start, end in ranges:
+                # Check for existing overlapping absence
+                existing = (
+                    self.db.query(Absence)
+                    .filter(
+                        Absence.person_id == person_id,
+                        Absence.start_date <= end,
+                        Absence.end_date >= start,
+                    )
+                    .first()
+                )
+                if not existing:
+                    absence = Absence(
+                        person_id=person_id,
+                        start_date=start,
+                        end_date=end,
+                        absence_type="vacation",
+                        status="approved",
+                        is_away_from_program=True,
+                        notes=f"Auto-created from Excel import (batch {batch_id})",
+                    )
+                    self.db.add(absence)
+                    created += 1
+
+        if created:
+            self.db.flush()
+            logger.info(
+                "Created %d absence records from LV codes (batch %s)",
+                created,
+                batch_id,
+            )
+        return created

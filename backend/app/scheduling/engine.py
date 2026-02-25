@@ -70,7 +70,11 @@ from app.services.sync_preload_service import SyncPreloadService
 from app.scheduling.activity_solver import CPSATActivitySolver
 from app.services.schedule_draft_service import ScheduleDraftService
 from app.models.schedule_draft import DraftSourceType
-from app.utils.academic_blocks import get_block_number_for_date
+from app.models.person_academic_year import PersonAcademicYear
+from app.utils.academic_blocks import (
+    get_academic_year_for_date,
+    get_block_number_for_date,
+)
 
 
 class SchedulingEngine:
@@ -118,6 +122,26 @@ class SchedulingEngine:
             db=db,
             config=resilience_config or ResilienceConfig(),
         )
+
+        # Build AY-scoped PGY lookup for correct historical PGY levels
+        self._pgy_by_person: dict[UUID, int | None] = {}
+        try:
+            academic_year = get_academic_year_for_date(self.start_date)
+            ay_records = (
+                self.db.query(PersonAcademicYear)
+                .filter(PersonAcademicYear.academic_year == academic_year)
+                .all()
+            )
+            self._pgy_by_person = {r.person_id: r.pgy_level for r in ay_records}
+        except Exception:
+            pass  # Table may not exist yet — fall back to Person.pgy_level
+
+    def _get_pgy_level(self, person: Person) -> int:
+        """Get PGY level using AY-scoped record, falling back to Person.pgy_level."""
+        ay_pgy = self._pgy_by_person.get(person.id)
+        if ay_pgy is not None:
+            return ay_pgy
+        return getattr(person, "pgy_level", 0) or 0
 
     def generate(
         self,
@@ -2639,7 +2663,9 @@ class SchedulingEngine:
             ]
 
             # Calculate required faculty using ACGME ratios
-            pgy1_count = sum(1 for r in residents_in_block if r.pgy_level == 1)
+            pgy1_count = sum(
+                1 for r in residents_in_block if self._get_pgy_level(r) == 1
+            )
             other_count = len(residents_in_block) - pgy1_count
 
             # Calculate supervision using fractional load approach
@@ -3057,9 +3083,7 @@ class SchedulingEngine:
         c_activity_id = self._get_activity_id_by_code("fm_clinic")
 
         # Get all people with clinic assignments (faculty + PGY-2/3 residents)
-        eligible_resident_ids = [
-            r.id for r in residents if getattr(r, "pgy_level", 0) >= 2
-        ]
+        eligible_resident_ids = [r.id for r in residents if self._get_pgy_level(r) >= 2]
 
         # Get faculty with clinic assignments
         faculty_ids = (
@@ -3104,7 +3128,7 @@ class SchedulingEngine:
             by_person[a.person_id].append(a)
 
         # Build priority key: faculty=100, PGY-3=3, PGY-2=2
-        resident_pgy = {r.id: getattr(r, "pgy_level", 0) for r in residents}
+        resident_pgy = {r.id: self._get_pgy_level(r) for r in residents}
 
         def priority(pid):
             if pid in faculty_id_set:

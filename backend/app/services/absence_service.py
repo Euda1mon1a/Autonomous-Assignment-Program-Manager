@@ -1,5 +1,6 @@
 """Absence service for business logic."""
 
+import logging
 from collections import defaultdict
 from datetime import date
 from uuid import UUID
@@ -17,6 +18,8 @@ from app.schemas.absence import (
     AbsenceValidationError,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class AbsenceService:
     """Service for absence business logic."""
@@ -29,6 +32,24 @@ class AbsenceService:
         """
         self.db = db
         self.absence_repo = AbsenceRepository(db)
+
+    def _refresh_leave_preloads(
+        self, person_id: UUID, start_date: date, end_date: date
+    ) -> None:
+        """Trigger preload refresh for leave date range (best-effort)."""
+        try:
+            from app.services.sync_preload_service import SyncPreloadService
+
+            sps = SyncPreloadService(self.db)
+            sps.refresh_leave_preloads(person_id, start_date, end_date)
+        except Exception:
+            logger.warning(
+                "Failed to refresh leave preloads for person %s (%s to %s)",
+                person_id,
+                start_date,
+                end_date,
+                exc_info=True,
+            )
 
     def get_absence(self, absence_id: UUID) -> Absence | None:
         """Get a single absence by ID.
@@ -124,6 +145,8 @@ class AbsenceService:
         self.absence_repo.commit()
         self.absence_repo.refresh(absence)
 
+        self._refresh_leave_preloads(person_id, start_date, end_date)
+
         return {"absence": absence, "error": None}
 
     def update_absence(self, absence_id: UUID, update_data: dict) -> dict:
@@ -149,9 +172,17 @@ class AbsenceService:
                 "error": "start_date must be on or before end_date",
             }
 
+        old_start = absence.start_date
+        old_end = absence.end_date
+
         absence = self.absence_repo.update(absence, update_data)
         self.absence_repo.commit()
         self.absence_repo.refresh(absence)
+
+        # Refresh preloads for the union of old and new date ranges
+        refresh_start = min(old_start, absence.start_date)
+        refresh_end = max(old_end, absence.end_date)
+        self._refresh_leave_preloads(absence.person_id, refresh_start, refresh_end)
 
         return {"absence": absence, "error": None}
 
@@ -169,8 +200,15 @@ class AbsenceService:
         if not absence:
             return {"success": False, "error": "Absence not found"}
 
+        person_id = absence.person_id
+        start_date = absence.start_date
+        end_date = absence.end_date
+
         self.absence_repo.delete(absence)
         self.absence_repo.commit()
+
+        self._refresh_leave_preloads(person_id, start_date, end_date)
+
         return {"success": True, "error": None}
 
     def is_person_absent(self, person_id: UUID, on_date: date) -> bool:

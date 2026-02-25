@@ -9,12 +9,22 @@ Pipeline:
 
 from __future__ import annotations
 
-from datetime import date
+import io
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
+
+from openpyxl import load_workbook
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
+from app.models.activity import Activity
+from app.models.rotation_template import RotationTemplate
+from app.services.excel_metadata import (
+    ExportMetadata,
+    write_ref_sheet,
+    write_sys_meta_sheet,
+)
 from app.services.half_day_json_exporter import HalfDayJSONExporter
 from app.services.json_to_xlsx_converter import JSONToXlsxConverter
 from app.utils.academic_blocks import get_block_dates
@@ -59,7 +69,13 @@ class CanonicalScheduleExportService:
             preserve_template_identity_fields=preserve_template_identity_fields,
             presentation_profile=presentation_profile,
         )
-        return converter.convert_from_json(data, output_path)
+        xlsx_bytes = converter.convert_from_json(data, output_path)
+
+        # Stamp Phase 1 metadata onto the workbook
+        xlsx_bytes = self._stamp_metadata(
+            xlsx_bytes, academic_year=academic_year, block_number=block_number
+        )
+        return xlsx_bytes
 
     def _export_json_data(
         self,
@@ -76,6 +92,36 @@ class CanonicalScheduleExportService:
             include_call=True,
             include_overrides=include_overrides,
         )
+
+    def _stamp_metadata(
+        self,
+        xlsx_bytes: bytes,
+        academic_year: int,
+        block_number: int,
+    ) -> bytes:
+        """Add __SYS_META__ and __REF__ sheets to exported workbook."""
+        wb = load_workbook(io.BytesIO(xlsx_bytes))
+
+        rotation_codes = [
+            r[0]
+            for r in self.db.query(RotationTemplate.abbreviation).distinct().all()
+            if r[0]
+        ]
+        activity_codes = [
+            a[0] for a in self.db.query(Activity.code).distinct().all() if a[0]
+        ]
+
+        meta = ExportMetadata(
+            academic_year=academic_year,
+            block_number=block_number,
+            export_timestamp=datetime.now(UTC).isoformat(),
+        )
+        write_sys_meta_sheet(wb, meta)
+        write_ref_sheet(wb, rotation_codes, activity_codes)
+
+        buf = io.BytesIO()
+        wb.save(buf)
+        return buf.getvalue()
 
     def _data_dir(self) -> Path:
         # backend/app/services -> backend

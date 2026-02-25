@@ -3,15 +3,18 @@
 These tests use mocking to avoid JSONB/SQLite compatibility issues.
 """
 
+import io
 from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from openpyxl import Workbook
 
 from app.services.canonical_schedule_export_service import (
     CanonicalScheduleExportService,
 )
+from app.services.excel_metadata import read_ref_codes, read_sys_meta
 
 
 class TestCanonicalScheduleExportService:
@@ -44,7 +47,7 @@ class TestCanonicalScheduleExportService:
 
         service = CanonicalScheduleExportService(mock_db)
 
-        # Mock template paths
+        # Mock template paths + stamp_metadata (avoids loading fake bytes as xlsx)
         with (
             patch.object(
                 service, "_template_path", return_value=Path("/fake/template.xlsx")
@@ -52,6 +55,7 @@ class TestCanonicalScheduleExportService:
             patch.object(
                 service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
+            patch.object(service, "_stamp_metadata", return_value=b"xlsx_with_meta"),
             patch("pathlib.Path.exists", return_value=True),
         ):
             result = service.export_block_xlsx(block_number=10, academic_year=2025)
@@ -95,6 +99,7 @@ class TestCanonicalScheduleExportService:
             patch.object(
                 service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
+            patch.object(service, "_stamp_metadata", return_value=b"xlsx_with_meta"),
             patch("pathlib.Path.exists", return_value=True),
         ):
             mock_conv.return_value.convert_from_json.return_value = b"xlsx"
@@ -132,6 +137,7 @@ class TestCanonicalScheduleExportService:
             patch.object(
                 service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
+            patch.object(service, "_stamp_metadata", return_value=b"xlsx_with_meta"),
             patch("pathlib.Path.exists", return_value=True),
         ):
             service.export_block_xlsx(
@@ -172,6 +178,7 @@ class TestCanonicalScheduleExportService:
             patch.object(
                 service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
+            patch.object(service, "_stamp_metadata", return_value=b"xlsx_with_meta"),
             patch("pathlib.Path.exists", return_value=True),
         ):
             service.export_block_xlsx(
@@ -215,3 +222,132 @@ class TestTemplatePaths:
         with patch.object(service, "_data_dir", return_value=Path("/nonexistent")):
             with pytest.raises(FileNotFoundError):
                 service._structure_path()
+
+
+class TestPhase1Metadata:
+    """Tests for Phase 1 metadata stamping (_stamp_metadata)."""
+
+    def _make_blank_xlsx(self) -> bytes:
+        """Create a minimal valid XLSX for _stamp_metadata to load."""
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Schedule"
+        ws.cell(row=1, column=1, value="test")
+        buf = io.BytesIO()
+        wb.save(buf)
+        return buf.getvalue()
+
+    def test_stamp_metadata_adds_sys_meta(self):
+        """_stamp_metadata() should add __SYS_META__ sheet."""
+        mock_db = MagicMock()
+        mock_db.query.return_value.distinct.return_value.all.return_value = []
+
+        service = CanonicalScheduleExportService(mock_db)
+        xlsx_bytes = self._make_blank_xlsx()
+
+        result = service._stamp_metadata(
+            xlsx_bytes, academic_year=2026, block_number=10
+        )
+
+        from openpyxl import load_workbook
+
+        wb = load_workbook(io.BytesIO(result))
+        assert "__SYS_META__" in wb.sheetnames
+
+        meta = read_sys_meta(wb)
+        assert meta is not None
+        assert meta.academic_year == 2026
+        assert meta.block_number == 10
+        assert meta.export_version == 1
+        wb.close()
+
+    def test_stamp_metadata_adds_ref_sheet(self):
+        """_stamp_metadata() should add __REF__ sheet with rotation/activity codes."""
+        mock_db = MagicMock()
+
+        # First call returns rotation codes, second returns activity codes
+        rot_query = MagicMock()
+        rot_query.distinct.return_value.all.return_value = [
+            ("SURG",),
+            ("MED",),
+            ("PEDS",),
+        ]
+        act_query = MagicMock()
+        act_query.distinct.return_value.all.return_value = [("CLI",), ("OR",), ("LV",)]
+        mock_db.query.side_effect = [rot_query, act_query]
+
+        service = CanonicalScheduleExportService(mock_db)
+        xlsx_bytes = self._make_blank_xlsx()
+
+        result = service._stamp_metadata(
+            xlsx_bytes, academic_year=2026, block_number=10
+        )
+
+        from openpyxl import load_workbook
+
+        wb = load_workbook(io.BytesIO(result))
+        assert "__REF__" in wb.sheetnames
+
+        ref = read_ref_codes(wb)
+        assert sorted(ref["rotations"]) == ["MED", "PEDS", "SURG"]
+        assert sorted(ref["activities"]) == ["CLI", "LV", "OR"]
+        wb.close()
+
+    def test_stamp_metadata_sys_meta_is_veryhidden(self):
+        """Metadata sheets should be veryHidden."""
+        mock_db = MagicMock()
+        mock_db.query.return_value.distinct.return_value.all.return_value = []
+
+        service = CanonicalScheduleExportService(mock_db)
+        xlsx_bytes = self._make_blank_xlsx()
+
+        result = service._stamp_metadata(xlsx_bytes, academic_year=2026, block_number=5)
+
+        from openpyxl import load_workbook
+
+        wb = load_workbook(io.BytesIO(result))
+        assert wb["__SYS_META__"].sheet_state == "veryHidden"
+        assert wb["__REF__"].sheet_state == "veryHidden"
+        wb.close()
+
+    @patch("app.services.canonical_schedule_export_service.get_block_dates")
+    @patch("app.services.canonical_schedule_export_service.HalfDayJSONExporter")
+    @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
+    def test_export_calls_stamp_metadata(
+        self, mock_converter_class, mock_exporter_class, mock_get_block_dates
+    ):
+        """export_block_xlsx() should call _stamp_metadata with correct args."""
+        mock_db = MagicMock()
+
+        mock_block_dates = MagicMock()
+        mock_block_dates.start_date = date(2026, 3, 12)
+        mock_block_dates.end_date = date(2026, 4, 8)
+        mock_get_block_dates.return_value = mock_block_dates
+
+        mock_exporter = MagicMock()
+        mock_exporter.export.return_value = {"residents": []}
+        mock_exporter_class.return_value = mock_exporter
+
+        mock_converter = MagicMock()
+        mock_converter.convert_from_json.return_value = b"raw_xlsx"
+        mock_converter_class.return_value = mock_converter
+
+        service = CanonicalScheduleExportService(mock_db)
+        with (
+            patch.object(
+                service, "_template_path", return_value=Path("/fake/template.xlsx")
+            ),
+            patch.object(
+                service, "_structure_path", return_value=Path("/fake/structure.xml")
+            ),
+            patch.object(
+                service, "_stamp_metadata", return_value=b"stamped"
+            ) as mock_stamp,
+            patch("pathlib.Path.exists", return_value=True),
+        ):
+            result = service.export_block_xlsx(block_number=10, academic_year=2025)
+
+        mock_stamp.assert_called_once_with(
+            b"raw_xlsx", academic_year=2025, block_number=10
+        )
+        assert result == b"stamped"

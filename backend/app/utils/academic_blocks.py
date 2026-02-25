@@ -147,6 +147,11 @@ def get_block_dates(block_number: int, academic_year: int) -> BlockDates:
     )
 
 
+def get_academic_year_for_date(d: date) -> int:
+    """Return academic year for a given date. AY starts July 1."""
+    return d.year if d.month >= 7 else d.year - 1
+
+
 def get_block_number_for_date(target_date: date) -> tuple[int, int]:
     """
     Calculate which academic block a date falls within.

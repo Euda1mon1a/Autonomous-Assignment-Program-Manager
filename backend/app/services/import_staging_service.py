@@ -50,6 +50,7 @@ from app.models.import_staging import (
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.scheduling.validator import ACGMEValidator
+from app.services.excel_metadata import read_sys_meta
 
 logger = logging.getLogger(__name__)
 
@@ -227,6 +228,22 @@ class ImportStagingService:
             await self._load_person_cache()
             await self._load_rotation_cache()
 
+            # Read Phase 1 metadata if present (e.g. academic_year)
+            metadata_ay = None
+            try:
+                meta_wb = load_workbook(io.BytesIO(file_bytes), data_only=True)
+                meta = read_sys_meta(meta_wb)
+                if meta:
+                    metadata_ay = meta.academic_year
+                    logger.info(
+                        "Import batch metadata: academic_year=%s, block=%s",
+                        meta.academic_year,
+                        meta.block_number,
+                    )
+                meta_wb.close()
+            except Exception:
+                pass  # Legacy files may not have metadata — non-blocking
+
             # Create batch record
             batch = ImportBatch(
                 id=uuid4(),
@@ -242,6 +259,7 @@ class ImportStagingService:
                 target_end_date=target_end_date,
                 notes=notes,
                 row_count=len(parsed_rows),
+                academic_year=metadata_ay,
             )
 
             self.db.add(batch)

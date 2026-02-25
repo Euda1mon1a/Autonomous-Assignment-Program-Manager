@@ -186,6 +186,72 @@ class SyncPreloadService:
         logger.info(f"Loaded {count} absence preloads")
         return count
 
+    def refresh_leave_preloads(
+        self, person_id: UUID, start_date: date, end_date: date
+    ) -> int:
+        """Delete LV preloads for person in range, re-create from absences.
+
+        Called after Absence CRUD to keep preloads in sync.
+
+        Returns:
+            Number of new preloads created.
+        """
+        lv_am_id = self._activity_cache.get("LV-AM")
+        lv_pm_id = self._activity_cache.get("LV-PM")
+        lv_ids = [aid for aid in [lv_am_id, lv_pm_id] if aid]
+
+        # Delete existing LV preloads for this person in the date range
+        if lv_ids:
+            (
+                self.session.query(HalfDayAssignment)
+                .filter(
+                    HalfDayAssignment.person_id == person_id,
+                    HalfDayAssignment.date >= start_date,
+                    HalfDayAssignment.date <= end_date,
+                    HalfDayAssignment.activity_id.in_(lv_ids),
+                    HalfDayAssignment.source == AssignmentSource.PRELOAD,
+                )
+                .delete(synchronize_session=False)
+            )
+
+        # Re-create from absences overlapping this range
+        absences = (
+            self.session.query(Absence)
+            .filter(
+                Absence.person_id == person_id,
+                Absence.start_date <= end_date,
+                Absence.end_date >= start_date,
+            )
+            .all()
+        )
+
+        count = 0
+        for absence in absences:
+            if not getattr(absence, "should_block_assignment", True):
+                continue
+            current = max(absence.start_date, start_date)
+            end = min(absence.end_date, end_date)
+            while current <= end:
+                if lv_am_id and self._create_preload(
+                    person_id, current, "AM", lv_am_id
+                ):
+                    count += 1
+                if lv_pm_id and self._create_preload(
+                    person_id, current, "PM", lv_pm_id
+                ):
+                    count += 1
+                current += timedelta(days=1)
+
+        self.session.flush()
+        logger.info(
+            "Refreshed leave preloads for person %s (%s to %s): %d created",
+            person_id,
+            start_date,
+            end_date,
+            count,
+        )
+        return count
+
     def _load_institutional_events(self, start_date: date, end_date: date) -> int:
         stmt = (
             select(InstitutionalEvent)

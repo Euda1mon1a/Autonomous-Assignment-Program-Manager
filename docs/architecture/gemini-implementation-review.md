@@ -437,20 +437,21 @@ These are future features, not bugs. They should be implemented in separate PRs:
 17. Write per-block `__ANCHORS__{N}__` sheets in year export
 18. Add year-level export API endpoint
 19. Implement row hash skip optimization (Phase 2 import)
-20. Fix engine supervision to use AY-scoped PGY (`engine.py` lines 2650, 3069, 3115) — separate PR
-21. Add LV import → absence record creation (Track C Step 3) — separate PR
+20. ~~Fix engine supervision to use AY-scoped PGY~~ (FIXED — WP-5. `_get_pgy_level()` helper queries `PersonAcademicYear`, falls back to `Person.pgy_level`. All 3 usage sites updated.)
+21. ~~Add LV import → absence record creation (Track C Step 3)~~ (FIXED — WP-6. `create_absences_from_lv_assignments()` groups LV codes into contiguous date ranges, checks for overlaps, creates Absence records.)
 22. Implement longitudinal checks 4c (leave continuity) and 4d (1-in-7) — separate PR
-23. `_inject_metadata()` — Phase 1-4 metadata injection is future work
+23. ~~Wire Phase 1 metadata into export/import~~ (FIXED — WP-1. `_stamp_metadata()` adds `__SYS_META__` + `__REF__` sheets on export. Import reads metadata for audit trail + block validation.)
 
 ### Phase 5: Operational Guards
 
+24a. ~~Add absence → preload refresh on CRUD~~ (FIXED — WP-7. `AbsenceService.create/update/delete_absence()` now call `SyncPreloadService.refresh_leave_preloads()` to keep LV preloads in sync.)
 24. ~~Add role authorization to rollover and yearly upload endpoints~~ (FIXED — Codex)
 25. ~~Add file size limit to `stage_yearly_import`~~ (FIXED — Codex)
 26. ~~Fix test file bugs~~ (FIXED — Fix pass. Dict unpacking fix + sorted assertion for write_ref_sheet's sorted output)
 
 ### Phase 6: Tests and Cleanup
 
-27. Write tests for ALL new code (all rounds — CLAUDE.md requirement) — ongoing
+27. ~~Write tests for WP-1/5/6/7~~ (FIXED — 72 tests total: 11 export metadata, 10 engine AY PGY, 12 LV absence creation, 6 absence preload refresh, plus existing)
 28. Fix medium-severity items (N+1 queries, sync export, named range duplication) — ongoing
 29. ~~Remove unused imports~~ (FIXED — Codex)
 30. ~~Replace `typing.List`/`Tuple` with builtins~~ (FIXED — Codex)
