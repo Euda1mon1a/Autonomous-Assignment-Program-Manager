@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-21 (PRs #1187 + #1188 merged, schedule-vision + Phase 7 constraints)
+> **Last Updated:** 2026-02-25 (MEDIUM #33 Office.js AI-Navigable Excel Add-in)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -839,6 +839,36 @@ FastAPI TestClient has undocumented behavior differences between versioned and n
 
 **Effort:** 4-8 hours
 
+### 33. Office.js AI-Navigable Excel Add-in (NEW - Feb 2026)
+**Added:** 2026-02-25
+**Roadmap:** [`docs/architecture/OFFICEJS_AI_ROADMAP.md`](architecture/OFFICEJS_AI_ROADMAP.md)
+**Depends on:** Excel Stateful Round-Trip Phase 2 (UUID Anchoring)
+
+Office.js add-in that reads the veryHidden metadata sheets (`__SYS_META__`, `__REF__`, `__ANCHORS__`) to enable AI-assisted schedule editing inside Excel on macOS.
+
+| Component | Status |
+|-----------|--------|
+| `__SYS_META__` + `__REF__` sheets | LIVE (excel_metadata.py) |
+| `__ANCHORS__` sheet (UUID + hash) | Code exists, not wired into export |
+| Office.js add-in skeleton | NOT STARTED |
+| LLM integration (pluggable backend) | NOT STARTED |
+| GCC High deployment | NOT STARTED |
+
+**Key Risk:** No offline mode — add-in requires internet. openpyxl + AppleScript pipelines remain primary for disconnected ops.
+
+**Three Sandbox Rules:**
+1. `writeScheduleCell()` wrapper auto-clears row hash (LLMs can't MD5)
+2. Protected sheet guard refuses writes to `__ANCHORS__`/`__REF__`/`__SYS_META__`
+3. Pluggable LLM backend — local/on-prem/GCC High only for CUI data
+
+**Files (future):**
+- `office-addin/` — New directory (Yeoman scaffold)
+- `backend/app/services/excel_metadata.py` — Add `llm_rules_of_engagement` to ExportMetadata
+
+**Effort:** Phase A (skeleton): 2-3 days. Phase B (LLM): 3-5 days. Phase C (validation): 2-3 days. Phase D (GCC High): 1-2 days.
+
+**Action:** Complete Excel Phase 2 (wire `__ANCHORS__` into export) first. Then scaffold add-in.
+
 ---
 
 ## LOW (Backlog)
@@ -990,9 +1020,9 @@ done
 |----------|------|----------|
 | **CRITICAL** | 2 | 6 |
 | **HIGH** | 11 | 10 |
-| **MEDIUM** | 16 | 12 |
+| **MEDIUM** | 17 | 12 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **42** | **31** |
+| **TOTAL** | **43** | **31** |
 
 ### Top 5 Actions for Next Session
 
