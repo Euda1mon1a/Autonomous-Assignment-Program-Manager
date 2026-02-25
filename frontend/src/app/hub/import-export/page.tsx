@@ -56,6 +56,7 @@ import {
   useRollbackBatch,
 } from '@/hooks/useImport';
 import { useFmitImport } from '@/hooks/useFmitImport';
+import { useExportData, type ExportDataType, type ExportFilters } from '@/hooks/useExportData';
 import type {
   ResidentRosterItem,
   ParsedFMITWeek,
@@ -1135,10 +1136,20 @@ interface ExportTabProps {
 }
 
 function ExportTab({ userTier: _userTier }: ExportTabProps) {
-  const [exportType, setExportType] = useState<'schedules' | 'people' | 'assignments'>('schedules');
+  const [exportType, setExportType] = useState<ExportDataType>('people');
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 90);
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
 
-  // Mock data - in production, this would come from API queries
-  const exportData: Record<string, unknown>[] = [];
+  // Build filters — schedule endpoint requires dates
+  const filters: ExportFilters | undefined =
+    exportType === 'schedules' ? { startDate, endDate } : undefined;
+
+  const { data: exportData = [], isLoading, isError, error } = useExportData(exportType, filters);
+
   const columns = useMemo(() => {
     switch (exportType) {
       case 'schedules':
@@ -1199,6 +1210,46 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
           </button>
         </div>
       </Card>
+
+      {/* Date Range (schedules only) */}
+      {exportType === 'schedules' && (
+        <Card className="p-6 bg-slate-800/50 border-slate-700">
+          <h3 className="text-lg font-semibold text-white mb-4">Date Range</h3>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex flex-col gap-1">
+              <span className="text-sm text-slate-400">Start Date</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm text-slate-400">End Date</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+              />
+            </label>
+          </div>
+        </Card>
+      )}
+
+      {/* Loading / Error States */}
+      {isLoading && (
+        <div className="flex items-center gap-2 text-slate-400">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Loading export data...</span>
+        </div>
+      )}
+      {isError && (
+        <Alert variant="warning">
+          {error?.message || 'Failed to load export data'}
+        </Alert>
+      )}
 
       {/* Export Panel */}
       <Card className="p-6 bg-slate-800/50 border-slate-700">

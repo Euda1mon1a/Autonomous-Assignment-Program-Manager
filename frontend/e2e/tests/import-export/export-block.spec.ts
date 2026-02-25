@@ -36,9 +36,7 @@ test.describe('Export Block', () => {
   });
 
   test('should download a valid xlsx file when export is triggered', async ({ adminPage }) => {
-    // TODO: This test requires at least one block with assignments seeded in the database.
-    // Remove test.fixme() once seed data is available.
-    test.fixme();
+    test.skip(!process.env.E2E_HAS_SEEDED_DATA, 'Requires seeded database');
 
     // Select xlsx format
     await adminPage.locator(selectors.importExport.exportFormatXlsx).click();
@@ -64,8 +62,7 @@ test.describe('Export Block', () => {
   });
 
   test('should contain __SYS_META__ sheet in exported xlsx', async ({ adminPage }) => {
-    // TODO: This test requires seeded block data. Remove test.fixme() once available.
-    test.fixme();
+    test.skip(!process.env.E2E_HAS_SEEDED_DATA, 'Requires seeded database');
 
     // Select xlsx format and trigger export
     await adminPage.locator(selectors.importExport.exportFormatXlsx).click();
@@ -91,8 +88,7 @@ test.describe('Export Block', () => {
   });
 
   test('should export valid schedule rows from populated block', async ({ adminPage }) => {
-    // TODO: Requires a block with resident assignments. Remove test.fixme() once seeded.
-    test.fixme();
+    test.skip(!process.env.E2E_HAS_SEEDED_DATA, 'Requires seeded database');
 
     await adminPage.locator(selectors.importExport.exportFormatXlsx).click();
 

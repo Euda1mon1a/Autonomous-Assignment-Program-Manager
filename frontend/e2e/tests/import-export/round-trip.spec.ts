@@ -37,12 +37,7 @@ const MUTATE_CELL_REF = 'F9';
 const MUTATE_NEW_VALUE = 'NF'; // Change to Night Float for a clear diff
 
 test.describe('Round-Trip (Golden Test)', () => {
-  // TODO: This entire describe block requires:
-  //   1. A populated block (block 10, AY 2025) with assignments in the DB
-  //   2. Person records matching the xlsx template names
-  //   3. Both backend export and import endpoints running
-  // Remove test.fixme() once all prerequisites are satisfied.
-  test.fixme();
+  test.skip(() => !process.env.E2E_HAS_SEEDED_DATA, 'Requires seeded database with block 10 assignments');
 
   let exportedBuffer: Buffer;
   let mutatedBuffer: Buffer;

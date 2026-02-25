@@ -21,7 +21,8 @@
     "validate": "npm run type-check && npm run lint && npm run test",
     "generate:types": "./scripts/generate-api-types.sh",
     "generate:types:check": "./scripts/generate-api-types.sh --check",
-    "generate:types:file": "openapi-typescript ./openapi.json -o src/types/api-generated.ts"
+    "generate:types:file": "openapi-typescript ./openapi.json -o src/types/api-generated.ts",
+    "generate:test-fixtures": "npx tsx e2e/fixtures/generate-test-xlsx.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

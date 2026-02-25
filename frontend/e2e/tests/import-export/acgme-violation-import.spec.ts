@@ -18,7 +18,6 @@ import { waitForNetworkIdle } from '../../utils/test-helpers';
  *   - Database must have matching person records for the xlsx names
  */
 
-// TODO: Create this fixture file containing a schedule that breaks the 1-in-7 rule
 const TEST_XLSX_PATH = path.join(__dirname, '../../fixtures/test-acgme-violation.xlsx');
 const TEST_BLOCK_NUMBER = '10';
 const TEST_ACADEMIC_YEAR = '2025';
@@ -31,9 +30,7 @@ test.describe('Import ACGME Violation', () => {
   });
 
   test('should stage import and display ACGME warnings', async ({ adminPage }) => {
-    // TODO: Requires test-acgme-violation.xlsx fixture AND backend seed endpoint.
-    // Remove test.fixme() once prerequisites are met.
-    test.fixme();
+    test.skip(!process.env.E2E_HAS_SEEDED_DATA, 'Requires seeded database with matching person records');
 
     // Upload file and fill metadata
     await adminPage.locator(selectors.importExport.hdFileInput).setInputFiles(TEST_XLSX_PATH);

@@ -19,7 +19,6 @@ import { waitForNetworkIdle } from '../../utils/test-helpers';
  *   - Database must have matching person records for the xlsx names
  */
 
-// TODO: Create this fixture file with representative block data
 const TEST_XLSX_PATH = path.join(__dirname, '../../fixtures/test-block10.xlsx');
 const TEST_BLOCK_NUMBER = '10';
 const TEST_ACADEMIC_YEAR = '2025';
@@ -49,8 +48,6 @@ test.describe('Import Stage & Apply', () => {
     });
 
     test('should accept an xlsx file and populate metadata fields', async ({ adminPage }) => {
-      // TODO: Requires test-block10.xlsx fixture file. Remove test.fixme() once created.
-      test.fixme();
 
       // Upload the test fixture
       await adminPage.locator(selectors.importExport.hdFileInput).setInputFiles(TEST_XLSX_PATH);
@@ -87,9 +84,7 @@ test.describe('Import Stage & Apply', () => {
 
   test.describe('Staging & Diff Preview', () => {
     test('should stage import and display diff metrics', async ({ adminPage }) => {
-      // TODO: Requires test-block10.xlsx fixture AND matching person records in DB.
-      // Remove test.fixme() once both prerequisites are met.
-      test.fixme();
+      test.skip(!process.env.E2E_HAS_SEEDED_DATA, 'Requires seeded database with matching person records');
 
       // Upload file and fill metadata
       await adminPage.locator(selectors.importExport.hdFileInput).setInputFiles(TEST_XLSX_PATH);
@@ -120,8 +115,7 @@ test.describe('Import Stage & Apply', () => {
     });
 
     test('should display diff table with filterable rows', async ({ adminPage }) => {
-      // TODO: Requires staged data from prior step. Remove test.fixme() once fixture exists.
-      test.fixme();
+      test.skip(!process.env.E2E_HAS_SEEDED_DATA, 'Requires seeded database with matching person records');
 
       // Upload, fill, and stage
       await adminPage.locator(selectors.importExport.hdFileInput).setInputFiles(TEST_XLSX_PATH);
@@ -147,8 +141,7 @@ test.describe('Import Stage & Apply', () => {
     });
 
     test('should allow selecting diffs and creating a draft', async ({ adminPage }) => {
-      // TODO: Requires staged data. Remove test.fixme() once fixture exists.
-      test.fixme();
+      test.skip(!process.env.E2E_HAS_SEEDED_DATA, 'Requires seeded database with matching person records');
 
       // Upload, fill, and stage
       await adminPage.locator(selectors.importExport.hdFileInput).setInputFiles(TEST_XLSX_PATH);
@@ -195,9 +188,7 @@ test.describe('Import Stage & Apply', () => {
 
   test.describe('Batch Apply', () => {
     test('should navigate to batch review and apply', async ({ adminPage }) => {
-      // TODO: Requires a DRAFT batch to exist (from staging workflow above).
-      // Remove test.fixme() once end-to-end seeding is available.
-      test.fixme();
+      test.skip(!process.env.E2E_HAS_SEEDED_DATA, 'Requires seeded database with draft batch');
 
       // Assume we landed on the draft step — navigate to batch review
       await adminPage.locator(selectors.importExport.hdViewDraftBtn).click();
