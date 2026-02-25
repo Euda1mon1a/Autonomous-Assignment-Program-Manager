@@ -99,6 +99,10 @@ class ImportBatchResponse(BaseModel):
     status: ImportBatchStatus
     conflict_resolution: ConflictResolutionMode
 
+    # Year-level batching
+    academic_year: int | None = None
+    parent_batch_id: UUID | None = None
+
     # Target scope
     target_block: int | None = None
     target_start_date: date | None = None
@@ -136,6 +140,8 @@ class ImportBatchListItem(BaseModel):
     created_at: datetime
     filename: str | None = None
     status: ImportBatchStatus
+    academic_year: int | None = None
+    parent_batch_id: UUID | None = None
     target_block: int | None = None
     target_start_date: date | None = None
     target_end_date: date | None = None

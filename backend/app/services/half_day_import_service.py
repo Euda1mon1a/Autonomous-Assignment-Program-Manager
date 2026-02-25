@@ -97,6 +97,100 @@ class HalfDayImportService:
         self._activity_map: dict[str, str] = {}
         self._person_map: dict[str, UUID] = {}
 
+    def stage_block_sheet(
+        self,
+        wb,
+        sheet_name: str,
+        block_number: int,
+        academic_year: int,
+        batch_id: UUID,
+    ) -> list[str]:
+        """Parse a single sheet from a multi-sheet workbook and stage into an existing batch.
+
+        Used by the yearly workbook Celery task, which creates the batch externally.
+        Extracts the target sheet into a standalone workbook, parses it with
+        _parse_block_template2(), then creates ImportStagedAssignment records.
+
+        Args:
+            wb: An openpyxl Workbook containing multiple sheets.
+            sheet_name: The sheet to extract and parse.
+            block_number: The block number for date range resolution.
+            academic_year: The academic year for date range resolution.
+            batch_id: The pre-created ImportBatch ID to attach staged rows to.
+
+        Returns:
+            List of warning strings from parsing.
+        """
+        # Extract the target sheet into a standalone workbook
+        source_ws = wb[sheet_name]
+        temp_wb = load_workbook(io.BytesIO(b""))  # blank workbook
+        temp_ws = temp_wb.active
+        temp_ws.title = sheet_name
+
+        for row in source_ws.iter_rows():
+            for cell in row:
+                if not isinstance(cell, MergedCell):
+                    temp_ws.cell(row=cell.row, column=cell.column, value=cell.value)
+
+        # Copy merged cell ranges
+        for merge_range in source_ws.merged_cells.ranges:
+            temp_ws.merge_cells(str(merge_range))
+
+        # Serialize to bytes for _parse_block_template2
+        buf = io.BytesIO()
+        temp_wb.save(buf)
+        sheet_bytes = buf.getvalue()
+
+        block_dates = get_block_dates(block_number, academic_year)
+        start_date = block_dates.start_date
+        end_date = block_dates.end_date
+
+        parsed_slots, warnings = self._parse_block_template2(
+            sheet_bytes, start_date, end_date
+        )
+
+        if not parsed_slots:
+            logger.warning(
+                "No slots parsed from sheet '%s' (block %d)", sheet_name, block_number
+            )
+            return warnings
+
+        self._load_activity_map()
+        self._load_person_map()
+
+        for slot in parsed_slots:
+            normalized_name = self._normalize_person_name(slot.person_name)
+            person_id = self._person_map.get(normalized_name)
+            excel_code = self._normalize_excel_code(slot.raw_value, slot.time_of_day)
+
+            validation_errors = []
+            if not person_id:
+                validation_errors.append("Person not found in database")
+            if (
+                excel_code
+                and self._normalize_token(excel_code) not in self._activity_map
+            ):
+                validation_errors.append(f"Unknown activity code '{excel_code}'")
+
+            staged = ImportStagedAssignment(
+                id=uuid4(),
+                batch_id=batch_id,
+                row_number=slot.row_number,
+                sheet_name=sheet_name,
+                person_name=slot.person_name,
+                assignment_date=slot.assignment_date,
+                slot=slot.time_of_day,
+                rotation_name=excel_code,
+                raw_cell_value=slot.raw_value,
+                matched_person_id=person_id,
+                person_match_confidence=100 if person_id else 0,
+                validation_errors=validation_errors if validation_errors else None,
+            )
+            self.db.add(staged)
+
+        self.db.flush()
+        return warnings
+
     def stage_block_template2(
         self,
         file_bytes: bytes,

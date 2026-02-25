@@ -119,6 +119,30 @@ class PersonController:
             # Batch Operations
             # =========================================================================
 
+    def rollover_academic_year(self, current_academic_year: int) -> dict:
+        """Rollover to the next academic year.
+
+        Delegates to PersonService.rollover_academic_year().
+        Raises 400 on validation errors.
+        """
+        result = self.service.rollover_academic_year(current_academic_year)
+
+        if result["error"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["error"],
+            )
+
+        return {
+            "success": True,
+            "advanced": result["advanced"],
+            "graduated": result["graduated"],
+            "message": (
+                f"Rolled over AY {current_academic_year}: "
+                f"{result['advanced']} advanced, {result['graduated']} graduated"
+            ),
+        }
+
     def batch_create_people(
         self, people_data: list[dict], dry_run: bool = False
     ) -> BatchPersonResponse:

@@ -195,6 +195,11 @@ class Person(Base):
         back_populates="person",
         cascade="all, delete-orphan",
     )
+    academic_years = relationship(
+        "PersonAcademicYear",
+        back_populates="person",
+        cascade="all, delete-orphan",
+    )
 
     __table_args__ = (
         CheckConstraint("type IN ('resident', 'faculty')", name="check_person_type"),

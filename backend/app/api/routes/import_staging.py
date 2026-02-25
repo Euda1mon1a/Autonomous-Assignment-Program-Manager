@@ -12,11 +12,13 @@ import batches:
 - DELETE /import/batches/{id} - Reject/delete batch
 """
 
+import base64
 from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 
+from app.auth import require_role
 from app.core.file_security import validate_excel_upload
 from app.core.logging import get_logger
 from app.core.security import get_current_active_user
@@ -209,6 +211,68 @@ async def stage_import(
     }
 
 
+@router.post(
+    "/stage-yearly",
+    status_code=202,
+    summary="Stage a yearly master workbook",
+    description="Upload a 14-sheet master workbook for an entire academic year and process it asynchronously.",
+    dependencies=[Depends(require_role(["ADMIN", "COORDINATOR"]))],
+)
+async def stage_yearly_import(
+    file: UploadFile = File(..., description="14-sheet master workbook (.xlsx)"),
+    academic_year: int = Form(..., ge=2000, description="Target academic year"),
+    conflict_resolution: str = Form(
+        "upsert",
+        description="Conflict resolution mode: replace, merge, or upsert",
+    ),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Stage a 14-sheet master workbook asynchronously.
+
+    Dispatches a Celery task to parse the workbook, create parent/child batches,
+    and perform longitudinal ACGME validation across the entire year.
+    """
+    if not file.filename or not file.filename.endswith(".xlsx"):
+        raise HTTPException(status_code=400, detail="File must be .xlsx")
+
+    content = await file.read()
+
+    # Check file size (25MB limit for 14-sheet yearly workbook)
+    max_size = 25 * 1024 * 1024
+    if len(content) > max_size:
+        raise HTTPException(
+            status_code=413,
+            detail={
+                "error": "File too large. Maximum size is 25MB",
+                "error_code": "FILE_TOO_LARGE",
+            },
+        )
+
+    try:
+        validate_excel_upload(content, file.filename, file.content_type or "")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    from app.tasks.import_tasks import process_yearly_workbook
+
+    encoded_content = base64.b64encode(content).decode("ascii")
+
+    # Dispatch to Celery
+    task = process_yearly_workbook.delay(
+        file_bytes=encoded_content,
+        academic_year=academic_year,
+        user_id=str(current_user.id),
+        conflict_resolution=conflict_resolution,
+    )
+
+    return {
+        "success": True,
+        "task_id": task.id,
+        "message": "Yearly workbook processing started asynchronously",
+    }
+
+
 @router.get(
     "/batches",
     response_model=ImportBatchList,
@@ -270,9 +334,11 @@ async def list_batches(
                 created_at=batch.created_at,
                 filename=batch.filename,
                 status=batch.status,
+                academic_year=batch.academic_year,
                 target_block=batch.target_block,
                 target_start_date=batch.target_start_date,
                 target_end_date=batch.target_end_date,
+                parent_batch_id=batch.parent_batch_id,
                 row_count=batch.row_count,
                 error_count=batch.error_count,
                 counts=counts,
@@ -332,9 +398,11 @@ async def get_batch(
         file_size_bytes=batch.file_size_bytes,
         status=batch.status,
         conflict_resolution=batch.conflict_resolution,
+        academic_year=batch.academic_year,
         target_block=batch.target_block,
         target_start_date=batch.target_start_date,
         target_end_date=batch.target_end_date,
+        parent_batch_id=batch.parent_batch_id,
         notes=batch.notes,
         row_count=batch.row_count,
         error_count=batch.error_count,

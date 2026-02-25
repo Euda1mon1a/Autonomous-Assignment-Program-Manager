@@ -109,6 +109,14 @@ class ImportBatch(Base):
         default=ConflictResolutionMode.UPSERT,
     )
 
+    # Year-level batching (annual workbook support)
+    academic_year = Column(Integer, nullable=True)
+    parent_batch_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("import_batches.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+
     # Target scope
     target_block = Column(Integer, nullable=True)
     target_start_date = Column(Date, nullable=True)
@@ -136,6 +144,17 @@ class ImportBatch(Base):
     created_by = relationship("User", foreign_keys=[created_by_id])
     applied_by = relationship("User", foreign_keys=[applied_by_id])
     rolled_back_by = relationship("User", foreign_keys=[rolled_back_by_id])
+    parent_batch = relationship(
+        "ImportBatch",
+        remote_side="ImportBatch.id",
+        foreign_keys=[parent_batch_id],
+    )
+    child_batches = relationship(
+        "ImportBatch",
+        foreign_keys="ImportBatch.parent_batch_id",
+        cascade="all, delete-orphan",
+        overlaps="parent_batch",
+    )
     staged_assignments = relationship(
         "ImportStagedAssignment",
         back_populates="batch",

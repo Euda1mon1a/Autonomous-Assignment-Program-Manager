@@ -9,6 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
+from app.auth import require_role
 from app.controllers.credential_controller import CredentialController
 from app.controllers.person_controller import PersonController
 from app.core.security import get_current_active_user
@@ -411,3 +412,34 @@ async def batch_delete_people(
     """
     controller = PersonController(db)
     return controller.batch_delete_people(request.person_ids, request.dry_run)
+
+
+@router.post(
+    "/academic-year/rollover",
+    dependencies=[Depends(require_role("ADMIN"))],
+)
+async def rollover_academic_year(
+    current_academic_year: int = Query(
+        ..., description="The academic year to rollover from (e.g. 2025)"
+    ),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> dict:
+    """Rollover to the next academic year.
+
+    Advances PGY levels, marks PGY-3s as graduated, resets call counts
+    by creating new PersonAcademicYear records.
+
+    Args:
+        current_academic_year: The year to rollover from
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        Dict with success status and count of records rolled over.
+
+    Security:
+        Requires authentication
+    """
+    controller = PersonController(db)
+    return controller.rollover_academic_year(current_academic_year)

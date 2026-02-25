@@ -1,12 +1,16 @@
 """Person service for business logic."""
 
+import logging
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.person import Person
+from app.models.person_academic_year import PersonAcademicYear
 from app.repositories.person import PersonRepository
+
+logger = logging.getLogger(__name__)
 
 
 class PersonService:
@@ -247,6 +251,104 @@ class PersonService:
         self.person_repo.refresh(person)
 
         return {"person": person, "error": None}
+
+    def rollover_academic_year(self, current_academic_year: int) -> dict:
+        """Rollover residents to the next academic year.
+
+        For each non-graduated PersonAcademicYear record in the given AY:
+        - PGY-3 residents are marked as graduated (no new record created)
+        - PGY-1 and PGY-2 residents get a new record with PGY+1 for AY+1
+        - Person.pgy_level is updated for backward compatibility
+        - Call counts reset naturally (new AY record starts at 0)
+
+        Args:
+            current_academic_year: The academic year to rollover from.
+
+        Returns:
+            Dict with 'advanced' (count), 'graduated' (count), 'error' (str|None).
+        """
+        next_ay = current_academic_year + 1
+
+        # Check for existing records in the next AY to prevent double-rollover
+        existing_next = (
+            self.db.query(PersonAcademicYear)
+            .filter(PersonAcademicYear.academic_year == next_ay)
+            .first()
+        )
+        if existing_next:
+            return {
+                "advanced": 0,
+                "graduated": 0,
+                "error": f"AY {next_ay} records already exist. Rollover may have already been performed.",
+            }
+
+        current_records = (
+            self.db.query(PersonAcademicYear)
+            .filter(
+                PersonAcademicYear.academic_year == current_academic_year,
+                ~PersonAcademicYear.is_graduated,
+            )
+            .all()
+        )
+
+        if not current_records:
+            return {
+                "advanced": 0,
+                "graduated": 0,
+                "error": f"No active PersonAcademicYear records found for AY {current_academic_year}",
+            }
+
+        advanced = 0
+        graduated = 0
+
+        # Pre-fetch all persons to avoid N+1
+        person_ids = [r.person_id for r in current_records]
+        persons = self.db.query(Person).filter(Person.id.in_(person_ids)).all()
+        person_map = {p.id: p for p in persons}
+
+        for record in current_records:
+            person = person_map.get(record.person_id)
+            if not person:
+                logger.warning("Person %s not found during rollover", record.person_id)
+                continue
+
+            if record.pgy_level and record.pgy_level >= 3:
+                # Graduate PGY-3
+                record.is_graduated = True
+                graduated += 1
+                logger.info(
+                    "Graduated person_id=%s from AY %d",
+                    record.person_id,
+                    current_academic_year,
+                )
+            else:
+                # Advance PGY level
+                new_pgy = (record.pgy_level or 0) + 1
+                new_record = PersonAcademicYear(
+                    person_id=record.person_id,
+                    academic_year=next_ay,
+                    pgy_level=new_pgy,
+                )
+                self.db.add(new_record)
+
+                # Update legacy Person.pgy_level for backward compat
+                if person:
+                    person.pgy_level = new_pgy
+
+                advanced += 1
+
+        self.db.flush()
+        self.db.commit()
+
+        logger.info(
+            "AY rollover %d→%d: %d advanced, %d graduated",
+            current_academic_year,
+            next_ay,
+            advanced,
+            graduated,
+        )
+
+        return {"advanced": advanced, "graduated": graduated, "error": None}
 
     def delete_person(self, person_id: UUID) -> dict:
         """
