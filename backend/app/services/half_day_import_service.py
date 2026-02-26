@@ -231,6 +231,9 @@ class HalfDayImportService:
         if meta and meta.export_timestamp:
             try:
                 export_ts = datetime.fromisoformat(meta.export_timestamp)
+                # Normalize to UTC-aware for safe comparison
+                if export_ts.tzinfo is None:
+                    export_ts = export_ts.replace(tzinfo=UTC)
                 latest_mod = (
                     self.db.query(func.max(HalfDayAssignment.updated_at))
                     .filter(
@@ -239,6 +242,10 @@ class HalfDayImportService:
                     )
                     .scalar()
                 )
+                if latest_mod:
+                    # DB timestamps may be naive — normalize to UTC
+                    if latest_mod.tzinfo is None:
+                        latest_mod = latest_mod.replace(tzinfo=UTC)
                 if latest_mod and latest_mod > export_ts:
                     warnings.append(
                         f"Stale file: schedule was modified at {latest_mod.isoformat()} "

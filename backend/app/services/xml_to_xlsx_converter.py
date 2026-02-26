@@ -226,12 +226,13 @@ class XMLToXlsxConverter:
             if not pid:
                 continue
             if current_row > self._FAT_BAND_RESIDENT_END:
-                logger.warning(
-                    "Resident band overflow at row %d for %s — skipping",
-                    current_row,
-                    res.get("name", "?"),
+                raise ValueError(
+                    f"Resident band overflow: {len(residents_sorted)} residents "
+                    f"exceed {self._FAT_BAND_RESIDENT_END - self._FAT_BAND_RESIDENT_START + 1} "
+                    f"available slots (rows {self._FAT_BAND_RESIDENT_START}-"
+                    f"{self._FAT_BAND_RESIDENT_END}). "
+                    f"First skipped: {res.get('name', '?')}"
                 )
-                continue
             self.row_mappings[pid] = current_row
             pgy = res.get("pgy") or 1
             self.template_mappings[pid] = f"R{pgy}"
@@ -250,12 +251,13 @@ class XMLToXlsxConverter:
             if not pid:
                 continue
             if current_row > self._FAT_BAND_FACULTY_END:
-                logger.warning(
-                    "Faculty band overflow at row %d for %s — skipping",
-                    current_row,
-                    fac.get("name", "?"),
+                raise ValueError(
+                    f"Faculty band overflow: {len(faculty_sorted)} faculty "
+                    f"exceed {self._FAT_BAND_FACULTY_END - self._FAT_BAND_FACULTY_START + 1} "
+                    f"available slots (rows {self._FAT_BAND_FACULTY_START}-"
+                    f"{self._FAT_BAND_FACULTY_END}). "
+                    f"First skipped: {fac.get('name', '?')}"
                 )
-                continue
             self.row_mappings[pid] = current_row
             self.template_mappings[pid] = fac.get("template", "C19")
             used_fac_rows.add(current_row)
