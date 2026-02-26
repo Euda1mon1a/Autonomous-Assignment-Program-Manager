@@ -81,3 +81,14 @@ def test_should_use_lec_respects_exempt_rotations() -> None:
 
     exempt_rotation = RotationTemplate(abbreviation=next(iter(LEC_EXEMPT_ROTATIONS)))
     assert service._should_use_lec(exempt_rotation, wed) is False
+
+
+def test_weekly_patterns_default_activity_uses_rotation_type() -> None:
+    service = BlockAssignmentExpansionService(db=None)  # type: ignore[arg-type]
+
+    rotation = RotationTemplate(rotation_type="inpatient", includes_weekend_work=False)
+    rotation.weekly_patterns = []
+
+    patterns = service._get_weekly_patterns(rotation)
+
+    assert patterns[(1, "AM", None)].activity_type == "inpatient"
