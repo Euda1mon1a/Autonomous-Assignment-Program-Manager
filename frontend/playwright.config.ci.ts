@@ -32,8 +32,8 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'cd ../backend && python -m uvicorn app.main:app --port 8000',
-      url: 'http://localhost:8000/health',
+      command: 'cd ../backend && ALLOW_DEV_SEED=true ENV=test python -m uvicorn app.main:app --port 8000',
+      url: 'http://localhost:8000/api/v1/health',
       reuseExistingServer: true,
       timeout: 30000,
     },

@@ -125,6 +125,9 @@ class XMLToXlsxConverter:
                 freeze panes. "tamc_handjam_v2" aligns output with manual Block 10.
         """
         self.template_path = Path(template_path) if template_path else None
+        self.structure_xml_path = (
+            Path(structure_xml_path) if structure_xml_path else None
+        )
         self.apply_colors = apply_colors
         self.color_scheme = get_color_scheme() if apply_colors else None
         self.use_block_template2 = use_block_template2
@@ -133,11 +136,13 @@ class XMLToXlsxConverter:
         self.preserve_template_identity_fields = preserve_template_identity_fields
         self.presentation_profile = presentation_profile
 
-        # Load row mappings from structure XML if provided
+        # Row mappings: key is person name (legacy XML) or person UUID (dynamic).
+        # Value is always the Excel row number.
         self.row_mappings: dict[str, int] = {}
-        self.pgy_mappings: dict[str, int] = {}  # name → pgy level
-        self.template_mappings: dict[str, str] = {}  # name → template code
+        self.pgy_mappings: dict[str, int] = {}  # key → pgy level
+        self.template_mappings: dict[str, str] = {}  # key → template code
         self.call_row: int = BT2_ROW_STAFF_CALL
+        self.resident_call_row: int = BT2_ROW_RESIDENT_CALL
         self.last_conversion_stats: dict[str, Any] = {}
         if structure_xml_path:
             self._load_structure_xml(Path(structure_xml_path))
@@ -184,6 +189,98 @@ class XMLToXlsxConverter:
 
         logger.info(f"Loaded {len(self.row_mappings)} row mappings from {xml_path}")
 
+    # ─── Fat-Band Dynamic Mapping (UUID-keyed) ─────────────────────────
+    # Resident band: rows 9-30 (22 slots)
+    _FAT_BAND_RESIDENT_START = 9
+    _FAT_BAND_RESIDENT_END = 30
+    # Faculty band: rows 31-80 (50 slots)
+    _FAT_BAND_FACULTY_START = 31
+    _FAT_BAND_FACULTY_END = 80
+
+    def _build_dynamic_mappings(self, data: dict[str, Any], sheet: Any) -> None:
+        """Dynamically assign Excel rows from JSON data, keyed by person UUID.
+
+        Replaces static Structure XML with in-memory row allocation:
+        - Residents sorted by PGY desc (3→2→1), then alphabetically
+        - Faculty sorted alphabetically
+        - Unused rows in the Fat Band are hidden for clean presentation
+        """
+        self.row_mappings = {}
+        self.template_mappings = {}
+        self.pgy_mappings = {}
+
+        # --- Residents (rows 9-30) ---
+        residents = data.get("residents", []) or []
+
+        def _pgy_sort_key(r: dict[str, Any]) -> tuple[int, str]:
+            pgy_val = r.get("pgy")
+            pgy_int = int(pgy_val) if pgy_val else 0
+            return (-pgy_int, r.get("name", ""))
+
+        residents_sorted = sorted(residents, key=_pgy_sort_key)
+
+        used_res_rows: set[int] = set()
+        current_row = self._FAT_BAND_RESIDENT_START
+        for res in residents_sorted:
+            pid = str(res.get("id", ""))
+            if not pid:
+                continue
+            if current_row > self._FAT_BAND_RESIDENT_END:
+                raise ValueError(
+                    f"Resident band overflow: {len(residents_sorted)} residents "
+                    f"exceed {self._FAT_BAND_RESIDENT_END - self._FAT_BAND_RESIDENT_START + 1} "
+                    f"available slots (rows {self._FAT_BAND_RESIDENT_START}-"
+                    f"{self._FAT_BAND_RESIDENT_END}). "
+                    f"First skipped: {res.get('name', '?')}"
+                )
+            self.row_mappings[pid] = current_row
+            pgy = res.get("pgy") or 1
+            self.template_mappings[pid] = f"R{pgy}"
+            self.pgy_mappings[pid] = int(pgy)
+            used_res_rows.add(current_row)
+            current_row += 1
+
+        # --- Faculty (rows 31-80) ---
+        faculty = data.get("faculty", []) or []
+        faculty_sorted = sorted(faculty, key=lambda f: f.get("name", ""))
+
+        used_fac_rows: set[int] = set()
+        current_row = self._FAT_BAND_FACULTY_START
+        for fac in faculty_sorted:
+            pid = str(fac.get("id", ""))
+            if not pid:
+                continue
+            if current_row > self._FAT_BAND_FACULTY_END:
+                raise ValueError(
+                    f"Faculty band overflow: {len(faculty_sorted)} faculty "
+                    f"exceed {self._FAT_BAND_FACULTY_END - self._FAT_BAND_FACULTY_START + 1} "
+                    f"available slots (rows {self._FAT_BAND_FACULTY_START}-"
+                    f"{self._FAT_BAND_FACULTY_END}). "
+                    f"First skipped: {fac.get('name', '?')}"
+                )
+            self.row_mappings[pid] = current_row
+            self.template_mappings[pid] = fac.get("template", "C19")
+            used_fac_rows.add(current_row)
+            current_row += 1
+
+        # --- Hide unused rows for clean presentation ---
+        for r in range(self._FAT_BAND_RESIDENT_START, self._FAT_BAND_RESIDENT_END + 1):
+            if r not in used_res_rows:
+                sheet.row_dimensions[r].hidden = True
+        for r in range(self._FAT_BAND_FACULTY_START, self._FAT_BAND_FACULTY_END + 1):
+            if r not in used_fac_rows:
+                sheet.row_dimensions[r].hidden = True
+
+        logger.info(
+            "Dynamic mappings: %d residents (rows %d-%d), %d faculty (rows %d-%d)",
+            len(used_res_rows),
+            self._FAT_BAND_RESIDENT_START,
+            max(used_res_rows) if used_res_rows else 0,
+            len(used_fac_rows),
+            self._FAT_BAND_FACULTY_START,
+            max(used_fac_rows) if used_fac_rows else 0,
+        )
+
     def convert_from_string(
         self,
         xml_string: str,
@@ -207,8 +304,19 @@ class XMLToXlsxConverter:
         self,
         data: dict[str, Any],
         output_path: Path | str | None = None,
+        export_metadata: Any | None = None,
+        rotation_codes: list[str] | None = None,
+        activity_codes: list[str] | None = None,
     ) -> bytes:
-        """Convert schedule data dict to xlsx."""
+        """Convert schedule data dict to xlsx.
+
+        Args:
+            data: Schedule data dictionary
+            output_path: Optional path to save xlsx
+            export_metadata: Optional ExportMetadata for __SYS_META__ (Phase 1)
+            rotation_codes: Optional rotation codes for __REF__ (Phase 1)
+            activity_codes: Optional activity codes for __REF__ (Phase 1)
+        """
         block_start = self._coerce_date(data.get("block_start"))
         block_end = self._coerce_date(data.get("block_end"))
         if not block_start or not block_end:
@@ -226,9 +334,16 @@ class XMLToXlsxConverter:
                 sheet = wb.active
             logger.info(f"Loaded template from {self.template_path}")
         else:
-            # Create new workbook (ROSETTA validation format)
+            # Create new workbook — BT2 layout if enabled, else ROSETTA
             wb = self._create_new_workbook(block_start, block_end)
             sheet = wb.active
+            if self.use_block_template2:
+                sheet.title = "Block Template2"
+
+        # Dynamic UUID-based row allocation when no structure XML was loaded.
+        # Always rebuild per call so year-export gets fresh mappings per block.
+        if self.use_block_template2 and not self.structure_xml_path:
+            self._build_dynamic_mappings(data, sheet)
 
         # Fill header row (always - helps with readability)
         self._fill_header_row(sheet, block_start, block_end)
@@ -297,6 +412,20 @@ class XMLToXlsxConverter:
 
         if self.include_qa_sheet and self.use_block_template2:
             self._write_export_qa_sheet(wb, data, stats)
+
+        # Phase 1: Phantom Database (__SYS_META__ + __REF__) — single-save
+        # Written here (not in a separate load/save cycle) to avoid stripping
+        # DataValidation, conditional formatting, and veryHidden sheets.
+        if export_metadata is not None:
+            from app.services.excel_metadata import (
+                write_sys_meta_sheet,
+                write_ref_sheet,
+            )
+
+            write_sys_meta_sheet(wb, export_metadata)
+            if rotation_codes is not None and activity_codes is not None:
+                write_ref_sheet(wb, rotation_codes, activity_codes)
+
         if self.use_block_template2:
             self._prune_empty_sheets(wb, keep={"Block Template2", "Export_QA"})
 
@@ -646,16 +775,21 @@ class XMLToXlsxConverter:
 
         all_people = (data.get("residents", []) or []) + (data.get("faculty", []) or [])
         for person in all_people:
-            name = person.get("name", "")
             person_id = person.get("id")
-            if not person_id or not name:
+            if not person_id:
                 continue
 
-            row = self.row_mappings.get(name.replace("*", "").strip())
+            # UUID-based lookup first (dynamic), then name-based (legacy XML)
+            pid_str = str(person_id)
+            row = self.row_mappings.get(pid_str)
+            if not row:
+                name = str(person.get("name", "") or "").replace("*", "").strip()
+                row = self.row_mappings.get(name)
             if not row:
                 continue
 
             # Compute hash for Phase 2 O(1) change detection
+            # compute_row_hash internally normalizes via normalize_for_hash()
             rotation1 = person.get("rotation1")
             rotation2 = person.get("rotation2")
             days_codes = []
@@ -663,9 +797,11 @@ class XMLToXlsxConverter:
                 days_codes.append(day.get("am"))
                 days_codes.append(day.get("pm"))
 
-            row_hash = compute_row_hash(
-                UUID(person_id), rotation1, rotation2, days_codes
-            )
+            try:
+                pid_uuid = UUID(person_id)
+            except (ValueError, AttributeError):
+                pid_uuid = UUID(int=0)  # fallback for non-UUID test IDs
+            row_hash = compute_row_hash(pid_uuid, rotation1, rotation2, days_codes)
 
             # Write to anchor sheet at matching row (Spatial Anchoring)
             ws.cell(row=row, column=1, value=str(person_id))
@@ -1018,6 +1154,81 @@ class XMLToXlsxConverter:
             return f"PGY {pgy}"
         return ""
 
+    def _resolve_row(
+        self, resident: dict[str, Any], index: int, stats: dict[str, Any] | None
+    ) -> int | None:
+        """Resolve the Excel row for a person, trying UUID first then name."""
+        person_id = str(resident.get("id", ""))
+        name = str(resident.get("name", "") or "")
+
+        # 1. UUID-based lookup (dynamic mappings)
+        if person_id and person_id in self.row_mappings:
+            return self.row_mappings[person_id]
+
+        # 2. Name-based lookup (legacy structure XML mappings)
+        if self.row_mappings:
+            normalized = name.replace("*", "").strip()
+            lookup_name = normalized
+
+            if lookup_name not in self.row_mappings and "," in lookup_name:
+                last, first = [part.strip() for part in lookup_name.split(",", 1)]
+                swapped = f"{first} {last}".strip()
+                if swapped in self.row_mappings:
+                    lookup_name = swapped
+
+            row = self.row_mappings.get(lookup_name)
+
+            # Fuzzy match by first name
+            if not row:
+                first_name = lookup_name.split()[0] if lookup_name else ""
+                for mapping_name, mapping_row in self.row_mappings.items():
+                    if mapping_name.startswith(first_name):
+                        row = mapping_row
+                        break
+
+            if row:
+                return row
+
+            if stats is not None:
+                stats["unmapped_names"].append(name)
+            if self.strict_row_mapping:
+                raise ValueError(
+                    f"No row mapping for: {name}. "
+                    "Update BlockTemplate2_Structure.xml or use dynamic mappings."
+                )
+            logger.warning(f"No row mapping for: {name}")
+            return None
+
+        # 3. Sequential fallback (ROSETTA)
+        return index + 2  # Start at row 2 (row 1 is headers)
+
+    def _resolve_template_code(
+        self, resident: dict[str, Any], pgy: Any, is_faculty: bool
+    ) -> str:
+        """Resolve the template code for a person, trying UUID first then name."""
+        person_id = str(resident.get("id", ""))
+
+        # UUID-based lookup
+        if person_id and person_id in self.template_mappings:
+            return self.template_mappings[person_id]
+
+        # Name-based fallback (legacy XML)
+        name = str(resident.get("name", "") or "")
+        normalized = name.replace("*", "").strip()
+        lookup_name = normalized
+        if lookup_name not in self.template_mappings and "," in lookup_name:
+            last, first = [part.strip() for part in lookup_name.split(",", 1)]
+            swapped = f"{first} {last}".strip()
+            if swapped in self.template_mappings:
+                lookup_name = swapped
+
+        template_code = self.template_mappings.get(lookup_name, "")
+        if not template_code and pgy:
+            template_code = f"R{pgy}"
+        elif not template_code and is_faculty:
+            template_code = "C19"
+        return template_code
+
     def _fill_residents(
         self,
         sheet,
@@ -1028,8 +1239,7 @@ class XMLToXlsxConverter:
     ) -> None:
         """Fill resident/faculty rows from schedule dicts.
 
-        If row_mappings loaded from structure XML, uses name → row lookup.
-        Otherwise, uses sequential rows starting at row 2 (ROSETTA format).
+        Row resolution order: UUID (dynamic) → name (legacy XML) → sequential (ROSETTA).
 
         Column layout depends on use_block_template2 flag:
         - Block Template2: Rotation1, Rotation2, Template, Role, Name, Schedule...
@@ -1042,41 +1252,9 @@ class XMLToXlsxConverter:
             name = resident.get("name", "")
             name = str(name) if name is not None else ""
 
-            # Use row mapping if available, else sequential
-            if self.row_mappings:
-                # Normalize name for lookup
-                normalized = name.replace("*", "").strip()
-                lookup_name = normalized
-
-                if lookup_name not in self.row_mappings and "," in lookup_name:
-                    last, first = [part.strip() for part in lookup_name.split(",", 1)]
-                    swapped = f"{first} {last}".strip()
-                    if swapped in self.row_mappings:
-                        lookup_name = swapped
-
-                row = self.row_mappings.get(lookup_name)
-
-                # Try fuzzy match by first name (DB uses "First Last")
-                if not row:
-                    first_name = lookup_name.split()[0] if lookup_name else ""
-                    for mapping_name, mapping_row in self.row_mappings.items():
-                        # Check if first name matches start of mapping
-                        if mapping_name.startswith(first_name):
-                            row = mapping_row
-                            break
-
-                if not row:
-                    if stats is not None:
-                        stats["unmapped_names"].append(name)
-                    if self.strict_row_mapping:
-                        raise ValueError(
-                            f"No row mapping for: {name}. "
-                            "Update BlockTemplate2_Structure.xml."
-                        )
-                    logger.warning(f"No row mapping for: {name}")
-                    continue
-            else:
-                row = i + 2  # Start at row 2 (row 1 is headers)
+            row = self._resolve_row(resident, i, stats)
+            if row is None:
+                continue
 
             if stats is not None:
                 stats["people_written"] += 1
@@ -1086,21 +1264,7 @@ class XMLToXlsxConverter:
             rotation2 = resident.get("rotation2", "") or ""
 
             if self.use_block_template2:
-                # Block Template2 format: Rotation1, Rotation2, Template, Role, Name
-                normalized = name.replace("*", "").strip()
-                lookup_name = normalized
-                if lookup_name not in self.template_mappings and "," in lookup_name:
-                    last, first = [part.strip() for part in lookup_name.split(",", 1)]
-                    swapped = f"{first} {last}".strip()
-                    if swapped in self.template_mappings:
-                        lookup_name = swapped
-
-                template_code = self.template_mappings.get(lookup_name, "")
-                if not template_code and pgy:
-                    template_code = f"R{pgy}"
-                elif not template_code and is_faculty:
-                    template_code = "C19"
-
+                template_code = self._resolve_template_code(resident, pgy, is_faculty)
                 role = self._get_role(pgy, is_faculty)
                 display_name = self._to_last_first(name)
 
@@ -1190,33 +1354,41 @@ class XMLToXlsxConverter:
         block_start: date,
         block_end: date,
     ) -> None:
-        """Fill call row with staff names (single cells, user merges manually).
+        """Fill call rows with staff names, routing faculty→row 4, residents→row 5.
 
         Writes staff name to AM column only (even columns 6, 8, 10, ...).
         User can manually merge AM/PM cells in Excel if desired.
 
-        Row position comes from self.call_row (default 4, from structure XML).
+        Row positions: self.call_row (faculty, default 4),
+                       self.resident_call_row (residents, default 5).
         """
 
-        # Build date -> staff lookup
-        call_lookup: dict[date, str] = {}
+        # Build date -> (staff, target_row) lookup
+        # Faculty go to staff call row (4), residents to resident call row (5)
+        call_lookup: dict[tuple[date, int], str] = {}
         for night in call_rows:
             night_date_val = night.get("date")
             night_date = self._coerce_date(night_date_val)
             if not night_date:
                 continue
             staff_name = night.get("staff", "")
-            if staff_name:
-                call_lookup[night_date] = staff_name
+            if not staff_name:
+                continue
+            person_type = night.get("person_type", "faculty")
+            target_row = (
+                self.resident_call_row if person_type == "resident" else self.call_row
+            )
+            call_lookup[(night_date, target_row)] = staff_name
 
-                # Write to call row, AM column only (col 6, 8, 10, ...)
+        # Write to call rows, AM column only (col 6, 8, 10, ...)
         current = block_start
         col = COL_SCHEDULE_START  # Column 6
         while current <= block_end:
-            staff = call_lookup.get(current, "")
-            if staff:
-                cell = self._get_writable_cell(sheet, row=self.call_row, column=col)
-                cell.value = staff
+            for target_row in (self.call_row, self.resident_call_row):
+                staff = call_lookup.get((current, target_row), "")
+                if staff:
+                    cell = self._get_writable_cell(sheet, row=target_row, column=col)
+                    cell.value = staff
             current += timedelta(days=1)
             col += 2  # Skip PM column (write to AM only)
 

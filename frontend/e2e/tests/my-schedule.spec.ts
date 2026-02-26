@@ -56,7 +56,7 @@ test.describe('My Schedule', () => {
     }
   });
 
-  test('No other residents' data visible', async ({ residentPage }) => {
+  test("No other residents' data visible", async ({ residentPage }) => {
     // Assert there's no resident filter or that we only see our own data
     const filter = residentPage.locator('[data-testid="person-filter"], select[name="personId"]');
 

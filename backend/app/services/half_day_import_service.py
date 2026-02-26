@@ -208,7 +208,52 @@ class HalfDayImportService:
         """Parse Block Template2 Excel, stage diffs, and return metrics."""
         warnings: list[str] = []
 
+        # Phase 1 hard rejection: validate __SYS_META__ before any parsing
+        wb_meta = load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
+        meta = read_sys_meta(wb_meta)
+        wb_meta.close()
+
+        if meta:
+            if meta.block_number is not None and meta.block_number != block_number:
+                raise ValueError(
+                    f"Block mismatch: file is for Block {meta.block_number}, "
+                    f"but you selected Block {block_number}."
+                )
+            if meta.academic_year != academic_year:
+                raise ValueError(
+                    f"Academic year mismatch: file is for AY {meta.academic_year}, "
+                    f"but you selected AY {academic_year}."
+                )
+
         block_dates = get_block_dates(block_number, academic_year)
+
+        # Stale-file detection: warn if DB was modified after file export
+        if meta and meta.export_timestamp:
+            try:
+                export_ts = datetime.fromisoformat(meta.export_timestamp)
+                # Normalize to UTC-aware for safe comparison
+                if export_ts.tzinfo is None:
+                    export_ts = export_ts.replace(tzinfo=UTC)
+                latest_mod = (
+                    self.db.query(func.max(HalfDayAssignment.updated_at))
+                    .filter(
+                        HalfDayAssignment.date >= block_dates.start_date,
+                        HalfDayAssignment.date <= block_dates.end_date,
+                    )
+                    .scalar()
+                )
+                if latest_mod:
+                    # DB timestamps may be naive — normalize to UTC
+                    if latest_mod.tzinfo is None:
+                        latest_mod = latest_mod.replace(tzinfo=UTC)
+                if latest_mod and latest_mod > export_ts:
+                    warnings.append(
+                        f"Stale file: schedule was modified at {latest_mod.isoformat()} "
+                        f"after this file was exported at {meta.export_timestamp}. "
+                        f"Re-export to get the latest data."
+                    )
+            except (ValueError, TypeError):
+                pass  # Malformed timestamp — skip stale check
         start_date = block_dates.start_date
         end_date = block_dates.end_date
 
@@ -838,7 +883,7 @@ class HalfDayImportService:
         wb = load_workbook(io.BytesIO(file_bytes), data_only=True)
         ws = wb.active
 
-        # Read Phase 1 metadata if present (non-blocking: legacy files lack it)
+        # Phase 1 metadata logging (hard rejection already done in stage_block_template2)
         meta = read_sys_meta(wb)
         if meta:
             logger.info(
@@ -849,12 +894,6 @@ class HalfDayImportService:
                 meta.export_version,
                 meta.export_timestamp,
             )
-            expected_block = get_block_number_for_date(start_date)
-            if meta.block_number is not None and meta.block_number != expected_block:
-                warnings.append(
-                    f"Metadata block_number={meta.block_number} differs from "
-                    f"expected block {expected_block} (date {start_date})"
-                )
 
         # Build date columns from row 3
         date_cols: list[tuple[int, date]] = []

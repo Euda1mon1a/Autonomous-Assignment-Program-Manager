@@ -474,12 +474,18 @@ class HalfDayXMLExporter:
         call_rows: list[dict[str, Any]] = []
         for ca in calls:
             name = ca.person.name if ca.person else ""
-            # Use last name for call row (matches template convention)
-            last_name = name.split(",")[0] if "," in name else name
+            # Extract last name — handle both "Last, First" and "First Last" formats
+            if "," in name:
+                last_name = name.split(",")[0].strip()
+            elif name:
+                last_name = name.split()[-1].strip()
+            else:
+                last_name = ""
             call_rows.append(
                 {
                     "date": ca.date,
                     "staff": last_name,
+                    "person_type": ca.person.type if ca.person else "faculty",
                 }
             )
 

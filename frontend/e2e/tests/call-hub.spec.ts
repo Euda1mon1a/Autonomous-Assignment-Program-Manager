@@ -9,7 +9,7 @@ test.describe('Call Hub', () => {
     await adminPage.waitForLoadState('networkidle');
   });
 
-  test('Today's on-call name rendered', async ({ adminPage }) => {
+  test("Today's on-call name rendered", async ({ adminPage }) => {
     const todayOnCall = adminPage.locator(selectors.callHub.todayOnCall);
 
     // Check if the component is rendered
