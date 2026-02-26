@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Residency Scheduler"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     # Logging
     LOG_LEVEL: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL

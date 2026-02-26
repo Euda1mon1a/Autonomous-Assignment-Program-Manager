@@ -24,6 +24,9 @@ jest.mock("../components/BurnoutDashboard", () => ({
 jest.mock("../components/N1Analysis", () => ({
   N1Analysis: () => <div data-testid="n1-component">N1 Analysis</div>,
 }));
+jest.mock("../components/NaturalSwapsPanel", () => ({
+  NaturalSwapsPanel: () => <div data-testid="natural-swaps-component">Natural Swaps</div>,
+}));
 
 describe("ResilienceHub", () => {
   const mockHealthData = {

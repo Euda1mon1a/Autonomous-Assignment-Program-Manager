@@ -1096,6 +1096,28 @@ class ScheduleDraftService:
                     except Exception as e:
                         logger.warning(f"ACGME validation after publish failed: {e}")
 
+                # Activity log for schedule publish audit trail
+                from app.models.activity_log import ActivityActionType, ActivityLog
+
+                activity_entry = ActivityLog.create_entry(
+                    action_type=ActivityActionType.SCHEDULE_PUBLISHED,
+                    user_id=published_by_id,
+                    target_entity="ScheduleDraft",
+                    target_id=str(draft_id),
+                    details={
+                        "published_count": published_count,
+                        "error_count": error_count,
+                        "block_number": draft.target_block,
+                        "start_date": draft.target_start_date.isoformat(),
+                        "end_date": draft.target_end_date.isoformat(),
+                        "source_type": draft.source_type.value
+                        if draft.source_type
+                        else None,
+                        "override_comment": override_comment,
+                    },
+                )
+                self.db.add(activity_entry)
+
                 logger.info(
                     f"Published draft {draft_id}: {published_count} published, "
                     f"{error_count} errors"

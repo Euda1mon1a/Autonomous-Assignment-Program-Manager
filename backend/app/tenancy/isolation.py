@@ -680,8 +680,14 @@ class RowLevelSecurityManager:
         Args:
             tenant_id: Tenant UUID to set
         """
-        await self.session.execute(text(f"SET app.current_tenant_id = '{tenant_id}'"))
-        logger.debug(f"Set session tenant_id to {tenant_id}")
+        # Validate UUID format to prevent SQL injection.
+        # PostgreSQL SET doesn't support bind parameters, so we must
+        # validate the value before interpolation.
+        validated_id = str(UUID(str(tenant_id)))  # Round-trip ensures valid UUID
+        await self.session.execute(
+            text(f"SET app.current_tenant_id = '{validated_id}'")
+        )
+        logger.debug(f"Set session tenant_id to {validated_id}")
 
     async def bypass_rls_for_session(self, bypass: bool = True) -> None:
         """
@@ -702,6 +708,10 @@ class RowLevelSecurityManager:
             table_name: Name of the table
         """
         try:
+            # Validate table name to prevent SQL injection.
+            # ALTER TABLE doesn't support bind parameters.
+            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", table_name):
+                raise ValueError(f"Invalid table name: {table_name}")
             await self.session.execute(
                 text(f"ALTER TABLE {table_name} DISABLE ROW LEVEL SECURITY")
             )

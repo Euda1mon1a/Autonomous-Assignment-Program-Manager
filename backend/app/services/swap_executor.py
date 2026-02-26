@@ -284,7 +284,29 @@ class SwapExecutor:
                 if target_week:
                     self._update_call_cascade(target_week, source_faculty_id)
 
-                    # Transaction auto-commits on success, rolls back on exception
+                    # Activity log for swap audit trail
+                from app.models.activity_log import (
+                    ActivityActionType,
+                    ActivityLog,
+                )
+
+                activity_entry = ActivityLog.create_entry(
+                    action_type=ActivityActionType.SWAP_APPROVED,
+                    user_id=executed_by_id,
+                    target_entity="SwapRecord",
+                    target_id=str(swap_id),
+                    details={
+                        "swap_type": swap_type_enum.value,
+                        "source_faculty_id": str(source_faculty_id),
+                        "target_faculty_id": str(target_faculty_id),
+                        "source_week": source_week.isoformat(),
+                        "target_week": target_week.isoformat() if target_week else None,
+                        "reason": reason,
+                    },
+                )
+                self.db.add(activity_entry)
+
+                # Transaction auto-commits on success, rolls back on exception
 
             logger.info(
                 f"Swap executed successfully: {swap_id} "
@@ -506,6 +528,27 @@ class SwapExecutor:
                 swap_record.rolled_back_at = datetime.now(UTC)
                 swap_record.rolled_back_by_id = rolled_back_by_id
                 swap_record.rollback_reason = reason
+
+                # Activity log for swap rollback audit trail
+                from app.models.activity_log import (
+                    ActivityActionType,
+                    ActivityLog,
+                )
+
+                activity_entry = ActivityLog.create_entry(
+                    action_type=ActivityActionType.SWAP_CANCELLED,
+                    user_id=rolled_back_by_id,
+                    target_entity="SwapRecord",
+                    target_id=str(swap_id),
+                    details={
+                        "action": "rollback",
+                        "reason": reason,
+                        "source_faculty_id": str(swap_record.source_faculty_id),
+                        "target_faculty_id": str(swap_record.target_faculty_id),
+                        "source_week": swap_record.source_week.isoformat(),
+                    },
+                )
+                self.db.add(activity_entry)
 
                 # Transaction auto-commits
 

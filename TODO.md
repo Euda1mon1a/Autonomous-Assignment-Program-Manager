@@ -27,6 +27,13 @@
 - [ ] Create DB migration adding indexes on most-queried columns (check slow query log or EXPLAIN ANALYZE)
 - [ ] Add keyboard navigation tests for schedule grid component
 
+## Batch 4 — Service Integration (Deferred)
+
+- [ ] Wire Pareto optimization into scheduling engine as optional multi-solution mode — behind `use_pareto_frontier=False` flag in `engine.py:generate()`. Requires human review (scheduling engine change).
+- [ ] Wire Agent Matcher into `claude_chat.py` for automatic model tier selection based on task semantics — low-risk routing enhancement
+- [ ] Unquarantine approval chain — implement `require_coordinator_or_above` RBAC dependency (note: route uses non-factory `Depends()` pattern, needs pattern reconciliation with existing `require_admin()` factory)
+- [ ] See `docs/reviews/2026-02-26-service-integration-assessment.md` for full analysis
+
 ## Completed
 
 - [x] Add integration tests for schedule generation pipeline (claude/2026-02-10)

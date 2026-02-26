@@ -788,7 +788,7 @@ async def initiate_fix_it_mode(
         logger.error(f"Error in fix-it mode: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Fix-it mode failed: {str(e)}",
+            detail="Fix-it mode failed. Check server logs for details.",
         )
 
 
@@ -922,7 +922,7 @@ async def approve_task(
         logger.error(f"Error processing approval: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Approval processing failed: {str(e)}",
+            detail="Approval processing failed. Check server logs for details.",
         )
 
 
@@ -978,7 +978,7 @@ async def generate_approval_token(
         logger.error(f"Error generating approval token: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Token generation failed: {str(e)}",
+            detail="Token generation failed. Check server logs for details.",
         )
 
 
@@ -1072,7 +1072,7 @@ async def abort_solver_run(
         logger.error(f"Error aborting solver run {run_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to abort solver: {str(e)}",
+            detail="Failed to abort solver. Check server logs for details.",
         )
 
 
@@ -1117,7 +1117,7 @@ async def get_solver_progress(
         logger.error(f"Error getting progress for {run_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get solver progress: {str(e)}",
+            detail="Failed to get solver progress. Check server logs for details.",
         )
 
 
@@ -1159,5 +1159,5 @@ async def get_active_solvers(
         logger.error(f"Error getting active solvers: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get active solvers: {str(e)}",
+            detail="Failed to get active solvers. Check server logs for details.",
         )
