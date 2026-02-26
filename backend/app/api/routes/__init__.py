@@ -12,6 +12,7 @@ from app.api.routes import (
     # approval_chain,  # QUARANTINED: requires_coordinator_or_above not implemented
     faculty_activities,
     faculty_schedule_preferences,
+    agent_matcher,
     admin_users,
     analytics,
     assignments,
@@ -62,6 +63,7 @@ from app.api.routes import (
     metrics,
     ml,
     oauth2,
+    pareto,
     people,
     portal,
     procedures,
@@ -225,6 +227,8 @@ api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 # )
 api_router.include_router(analytics.router, tags=["analytics"])
 api_router.include_router(fairness.router, tags=["fairness"])
+api_router.include_router(pareto.router, tags=["pareto"])
+api_router.include_router(agent_matcher.router, tags=["agent-matcher"])
 api_router.include_router(db_admin.router, tags=["db-admin"])
 api_router.include_router(dev.router, prefix="/dev", tags=["dev"])
 api_router.include_router(backup.router, tags=["backup"])
