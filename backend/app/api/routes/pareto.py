@@ -72,8 +72,7 @@ def optimize_schedule(
         logger.exception("Pareto optimization failed")
         return ParetoOptimizeResponse(
             success=False,
-            message="Optimization failed",
-            error=str(e),
+            message="Optimization failed. Check server logs for details.",
         )
 
 
@@ -94,17 +93,20 @@ def rank_solutions(
     """Rank solutions by weighted objective values."""
     try:
         service = ParetoOptimizationService(db)
-
-        # The rank endpoint needs existing solutions — for now, return
-        # a stub that indicates the service is available. Full ranking
-        # requires solutions from a prior /optimize call to be passed in.
-        # This endpoint is wired for future state management.
+        ranked = service.rank_solutions(
+            solutions=request.solutions,
+            weights=request.weights,
+            normalization=request.normalization,
+        )
         return SolutionRankResponse(
             success=True,
-            ranked_solutions=[],
+            ranked_solutions=ranked,
             normalization_used=request.normalization,
-            message="Ranking endpoint ready. Submit solutions from /optimize result.",
+            message=f"Ranked {len(ranked)} solutions.",
         )
     except Exception as e:
         logger.exception("Solution ranking failed")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(
+            status_code=500,
+            detail="Solution ranking failed. Check server logs for details.",
+        ) from e

@@ -202,8 +202,8 @@ class ParetoOptimizeResponse(BaseModel):
 class SolutionRankRequest(BaseModel):
     """Request schema for ranking solutions."""
 
-    solution_ids: list[int] = Field(
-        ..., min_length=1, description="List of solution IDs to rank"
+    solutions: list[ParetoSolution] = Field(
+        ..., min_length=1, description="Solutions to rank (from /optimize result)"
     )
     weights: dict[str, float] = Field(
         ..., description="Weights for each objective used in ranking"

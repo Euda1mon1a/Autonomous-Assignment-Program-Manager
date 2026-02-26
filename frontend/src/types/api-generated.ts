@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-02-26T02:32:33Z
+ * Generated at: 2026-02-26T23:24:17Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -23145,14 +23145,12 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
+            /** Person Id */
+            personId?: string | null;
             /** Success */
             success: boolean;
-            /** Assignment Id */
-            assignmentId?: string | null;
             /** Error */
             error?: string | null;
-            /** Warnings */
-            warnings?: string[];
         };
         /**
          * BatchOperationStatus
@@ -23404,7 +23402,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__person__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -23566,7 +23564,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__batch__BatchOperationResult"][];
             /**
              * Errors
              * @description Global errors
@@ -23932,7 +23930,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -24350,24 +24348,19 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Response for listing academic blocks.
+         * @description Schema for list of blocks.
          */
         BlockListResponse: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Items
+             * @description List of block responses
              */
-            blocks: components["schemas"]["BlockSummary"][];
+            items: components["schemas"]["BlockResponse"][];
             /**
-             * Academic Year
-             * @description Academic year
-             */
-            academicYear: string;
-            /**
-             * Total Blocks
+             * Total
              * @description Total number of blocks
              */
-            totalBlocks: number;
+            total: number;
         };
         /**
          * BlockMatrixResponse
@@ -27444,36 +27437,34 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
+         * @description Represents a coverage gap with details.
          */
         CoverageGap: {
+            /** Gap Id */
+            gapId: string;
             /**
              * Date
              * Format: date
-             * @description Date of the gap
              */
             date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
+            /** Time Of Day */
             timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
+            /** Block Id */
+            blockId: string;
+            /** Severity */
             severity: string;
+            /** Days Until */
+            daysUntil: number;
+            /** Affected Area */
+            affectedArea: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            currentAssignments: number;
+            /** Required Assignments */
+            requiredAssignments: number;
+            /** Gap Size */
+            gapSize: number;
         };
         /**
          * CoverageGapsResponse
@@ -27500,7 +27491,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
+            gaps: components["schemas"]["CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -27552,7 +27543,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["CoverageGap"][];
+            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -30302,10 +30293,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Export file formats.
+         * @description Supported export formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        ExportFormat: "csv" | "xlsx";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -30333,7 +30324,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__models__export_job__ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -30632,7 +30623,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["ExportFormat"] | null;
+            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
             deliveryMethod?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             emailRecipients?: string[] | null;
@@ -38628,14 +38619,13 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
         };
         /**
          * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * @description Response to queue purge request.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -41802,7 +41792,7 @@ export interface components {
             /** Components */
             components: components["schemas"]["ScoreComponentResponse"][];
             /** Suggestions */
-            suggestions?: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
+            suggestions?: components["schemas"]["SuggestionResponse"][];
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -43691,24 +43681,25 @@ export interface components {
         };
         /**
          * SuggestionResponse
-         * @description Response schema for autocomplete suggestions.
+         * @description Response for improvement suggestion.
          */
         SuggestionResponse: {
+            /** Type */
+            type: string;
             /**
-             * Suggestions
-             * @description List of suggestions
+             * Priority
+             * @description high, medium, low
              */
-            suggestions: string[];
+            priority: string;
+            /** Description */
+            description: string;
             /**
-             * Query
-             * @description Original query string
+             * Impact
+             * @description Expected improvement
              */
-            query: string;
-            /**
-             * Entity Type
-             * @description Entity type
-             */
-            entityType: string;
+            impact: number;
+            /** Affected Items */
+            affectedItems?: string[];
         };
         /**
          * SurveyFrequencyEnum
@@ -47810,7 +47801,7 @@ export interface components {
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancingSuggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
+            rebalancingSuggestions: components["schemas"]["SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -48165,51 +48156,50 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * CoverageGap
-         * @description Represents a coverage gap with details.
+         * ExportFormat
+         * @description Export file formats.
+         * @enum {string}
          */
-        app__api__routes__fmit_health__CoverageGap: {
-            /** Gap Id */
-            gapId: string;
-            /**
-             * Date
-             * Format: date
-             */
-            date: string;
-            /** Time Of Day */
-            timeOfDay: string;
-            /** Block Id */
-            blockId: string;
-            /** Severity */
-            severity: string;
-            /** Days Until */
-            daysUntil: number;
-            /** Affected Area */
-            affectedArea: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            currentAssignments: number;
-            /** Required Assignments */
-            requiredAssignments: number;
-            /** Gap Size */
-            gapSize: number;
-        };
+        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
-        app__schemas__block__BlockListResponse: {
+        app__schemas__academic_blocks__BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academicYear: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            totalBlocks: number;
+        };
+        /**
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
+         */
+        app__schemas__batch__BatchOperationResult: {
+            /**
+             * Index
+             * @description Index of the operation in the batch
+             */
+            index: number;
+            /** Success */
+            success: boolean;
+            /** Assignment Id */
+            assignmentId?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Warnings */
+            warnings?: string[];
         };
         /**
          * CoverageGap
@@ -48233,12 +48223,6 @@ export interface components {
             severity: string;
         };
         /**
-         * ExportFormat
-         * @description Supported export formats.
-         * @enum {string}
-         */
-        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
-        /**
          * PersonSummary
          * @description Summary of person for manifest display.
          */
@@ -48257,70 +48241,6 @@ export interface components {
             pgyLevel?: number | null;
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
-         */
-        app__schemas__jobs__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
-            /**
-             * Confirm
-             * @default false
-             */
-            confirm: boolean;
-        };
-        /**
-         * QueuePurgeResponse
-         * @description Response to queue purge request.
-         */
-        app__schemas__jobs__QueuePurgeResponse: {
-            /** Queuename */
-            queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
-        };
-        /**
-         * SuggestionResponse
-         * @description Response for improvement suggestion.
-         */
-        app__schemas__ml__SuggestionResponse: {
-            /** Type */
-            type: string;
-            /**
-             * Priority
-             * @description high, medium, low
-             */
-            priority: string;
-            /** Description */
-            description: string;
-            /**
-             * Impact
-             * @description Expected improvement
-             */
-            impact: number;
-            /** Affected Items */
-            affectedItems?: string[];
-        };
-        /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
-         */
-        app__schemas__person__BatchOperationResult: {
-            /**
-             * Index
-             * @description Index of the operation in the batch
-             */
-            index: number;
-            /** Person Id */
-            personId?: string | null;
-            /** Success */
-            success: boolean;
-            /** Error */
-            error?: string | null;
-        };
-        /**
          * PersonSummary
          * @description Minimal person info for embedding in credential responses.
          */
@@ -48334,6 +48254,32 @@ export interface components {
             name: string;
             /** Type */
             type: string;
+        };
+        /**
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
+         */
+        app__schemas__queue__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
+            /**
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /**
+         * QueuePurgeResponse
+         * @description Response after purging a queue.
+         */
+        app__schemas__queue__QueuePurgeResponse: {
+            /** Queuename */
+            queueName: string;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
         };
         /**
          * BatchOperationResult
@@ -48375,6 +48321,60 @@ export interface components {
             errors: number;
             /** Warnings */
             warnings: number;
+        };
+        /**
+         * SuggestionResponse
+         * @description Response schema for autocomplete suggestions.
+         */
+        app__schemas__search__SuggestionResponse: {
+            /**
+             * Suggestions
+             * @description List of suggestions
+             */
+            suggestions: string[];
+            /**
+             * Query
+             * @description Original query string
+             */
+            query: string;
+            /**
+             * Entity Type
+             * @description Entity type
+             */
+            entityType: string;
+        };
+        /**
+         * CoverageGap
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
+         */
+        app__schemas__visualization__CoverageGap: {
+            /**
+             * Date
+             * Format: date
+             * @description Date of the gap
+             */
+            date: string;
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
+            timeOfDay: string;
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
+            severity: string;
         };
     };
     responses: never;
@@ -50653,7 +50653,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -50780,7 +50780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -50846,7 +50846,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -62602,7 +62602,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuggestionResponse"];
+                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -62635,7 +62635,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuggestionResponse"];
+                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -69007,7 +69007,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -69017,7 +69017,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -69374,7 +69374,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -69384,7 +69384,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
