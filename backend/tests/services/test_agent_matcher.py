@@ -61,7 +61,7 @@ class TestAgentMatcher:
     def test_cosine_similarity_identical_vectors(self):
         """Test cosine similarity with identical vectors."""
         matcher = AgentMatcher()
-        vec = np.random.randn(384).astype(np.float32)
+        vec = np.random.default_rng(42).standard_normal(384).astype(np.float32)
 
         similarity = matcher._cosine_similarity(vec, vec)
 
@@ -91,7 +91,7 @@ class TestAgentMatcher:
         """Test cosine similarity with zero vector returns 0."""
         matcher = AgentMatcher()
         vec1 = np.zeros(384, dtype=np.float32)
-        vec2 = np.random.randn(384).astype(np.float32)
+        vec2 = np.random.default_rng(43).standard_normal(384).astype(np.float32)
 
         similarity = matcher._cosine_similarity(vec1, vec2)
 
