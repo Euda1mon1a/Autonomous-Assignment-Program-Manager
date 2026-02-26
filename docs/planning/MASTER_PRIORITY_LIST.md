@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-25 (MEDIUM #33 Office.js AI-Navigable Excel Add-in)
+> **Last Updated:** 2026-02-25 (MEDIUM #34 E2E GUI Testing Refinement Roadmap)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -868,6 +868,36 @@ Office.js add-in that reads the veryHidden metadata sheets (`__SYS_META__`, `__R
 **Effort:** Phase A (skeleton): 2-3 days. Phase B (LLM): 3-5 days. Phase C (validation): 2-3 days. Phase D (GCC High): 1-2 days.
 
 **Action:** Complete Excel Phase 2 (wire `__ANCHORS__` into export) first. Then scaffold add-in.
+
+### 34. E2E GUI Testing Refinement (NEW - Feb 2026)
+**Added:** 2026-02-25
+**Roadmap:** [`docs/roadmaps/E2E_GUI_TESTING_ROADMAP.md`](../roadmaps/E2E_GUI_TESTING_ROADMAP.md)
+**Prompt:** [`docs/prompts/E2E_GUI_TESTING_REFINEMENT.md`](../prompts/E2E_GUI_TESTING_REFINEMENT.md)
+**Source:** Gemini Pro 3.1 extended-thinking analysis + Claude synthesis
+
+580 tests across 34 specs, but 58% of pages (31/53) have zero E2E coverage. Most assertions are shallow (`toBeVisible`). 12 tests blocked by missing seeded data.
+
+| Phase | Focus | Effort |
+|-------|-------|--------|
+| 0 (Unblock) | Dev seed endpoint + globalSetup + refactor rollback | 1 day |
+| 1 (Critical Safety) | `/compliance`, `/daily-manifest`, `/call-hub`, `/conflicts` | 3-5 days |
+| 2 (Mutation Safety) | `/admin/scheduling`, `/admin/block-import`, `/admin/fmit/import` | 3-5 days |
+| 3 (High-Traffic) | `/my-schedule`, `/import/[id]`, `/rotations` | 2-3 days |
+| 4 (Deepen Existing) | Upgrade assertions in 4 existing specs | 2-3 days |
+| 5 (CI Config) | Native macOS CI-ready Playwright config | 1 day |
+
+**Key decisions:**
+- Native-first (Apple Silicon), no Docker
+- Real backend over API mocks
+- Hybrid POM: Page Objects for wizards, direct selectors for dashboards
+- `test.step()` over shared state across tests
+
+**Total effort:** 12-17 days
+
+**Action:**
+1. Implement Phase 0 (dev seed endpoint + global setup) to unblock all 12 blocked tests
+2. Execute Phases 1-2 (critical safety + mutation safety) for highest-ROI coverage
+3. Phase 5 (CI config) can run in parallel with any phase
 
 ---
 

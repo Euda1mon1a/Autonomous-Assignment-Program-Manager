@@ -266,6 +266,31 @@ export const selectors = {
     today: '[data-testid="today-button"]',
     dateCell: '[data-testid="date-cell"]',
   },
+
+  // Daily Manifest
+  dailyManifest: {
+    container: '[data-testid="daily-manifest-container"]',
+    residentCount: '[data-testid="dm-resident-count"]',
+    rotationFilter: '[data-testid="dm-rotation-filter"]',
+    assignmentRow: '[data-testid="dm-assignment-row"]',
+    coverageGapAlert: '[data-testid="dm-coverage-gap-alert"]',
+    datePicker: '[data-testid="dm-date-picker"]',
+  },
+
+  // Call Hub
+  callHub: {
+    todayOnCall: '[data-testid="ch-today-on-call"]',
+    weekView: '[data-testid="ch-week-view"]',
+    assignmentCard: '[data-testid="ch-assignment-card"]',
+    pagerContact: '[data-testid="ch-pager-contact"]',
+  },
+
+  // Conflicts
+  conflicts: {
+    list: '[data-testid="conflicts-list"]',
+    detail: '[data-testid="conflict-detail"]',
+    severityIndicator: '[data-testid="conflict-severity"]',
+  },
 };
 
 /**

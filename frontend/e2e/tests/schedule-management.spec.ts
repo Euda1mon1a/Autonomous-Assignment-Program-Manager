@@ -195,18 +195,29 @@ test.describe('Schedule Management Flows', () => {
   // ==========================================================================
 
   test.describe('Schedule Navigation', () => {
-    test('should navigate through schedule blocks', async ({ page }) => {
+    test('should navigate through schedule blocks and update URL/fetch data', async ({ page }) => {
       await schedulePage.navigate();
       await schedulePage.verifySchedulePage();
 
       // Get initial date
       const initialDate = await schedulePage.getStartDate();
+      const initialUrl = page.url();
+
+      const responsePromise = page.waitForResponse(
+        (response) => response.url().includes('/schedule') && response.status() === 200,
+        { timeout: 15000 }
+      ).catch(() => null);
 
       // Navigate forward
       await schedulePage.goToNextBlock();
       const nextDate = await schedulePage.getStartDate();
+      const nextUrl = page.url();
 
       expect(nextDate).not.toBe(initialDate);
+      expect(nextUrl).not.toBe(initialUrl);
+
+      const response = await responsePromise;
+      expect(response).toBeTruthy();
 
       // Navigate back
       await schedulePage.goToPreviousBlock();
@@ -283,15 +294,60 @@ test.describe('Schedule Management Flows', () => {
   // ==========================================================================
 
   test.describe('Schedule Display', () => {
-    test('should display schedule grid with assignments', async ({ page }) => {
+    test('should display schedule grid with assignment card count matching API response assignments.length', async ({ page }) => {
+      const responsePromise = page.waitForResponse(
+        (response) => response.url().includes('/schedule') && response.status() === 200,
+        { timeout: 30000 }
+      ).catch(() => null);
+
+      await schedulePage.navigate();
+
+      const response = await responsePromise;
+      if (response) {
+        const data = await response.json();
+        const assignments = data.assignments || [];
+
+        // Count cards in DOM
+        const cards = page.locator('[data-testid="assignment-card"], .assignment-card, .fc-event');
+        const cardCount = await cards.count();
+
+        if (assignments.length > 0 && cardCount > 0) {
+          expect(cardCount).toBe(assignments.length);
+        }
+      }
+    });
+
+    test('should filter by person and reduce visible cards to match API filtered count', async ({ page }) => {
       await schedulePage.navigate();
       await page.waitForTimeout(1500);
 
-      // Check if schedule has data
-      const hasData = await schedulePage.hasScheduleData();
+      const personFilter = page.locator('[data-testid="person-filter"], select[name="personId"]');
+      if (await personFilter.isVisible()) {
+        const responsePromise = page.waitForResponse(
+          (response) => response.url().includes('/schedule') && response.status() === 200,
+          { timeout: 15000 }
+        ).catch(() => null);
 
-      // Either has data or shows empty state
-      expect(hasData || true).toBe(true);
+        // Select an option
+        const options = personFilter.locator('option');
+        if (await options.count() > 1) {
+          const value = await options.nth(1).getAttribute('value');
+          if (value) {
+            await personFilter.selectOption(value);
+
+            const response = await responsePromise;
+            if (response) {
+              const data = await response.json();
+              const assignments = data.assignments || [];
+
+              const cards = page.locator('[data-testid="assignment-card"], .assignment-card, .fc-event');
+              const cardCount = await cards.count();
+
+              expect(cardCount).toBe(assignments.length);
+            }
+          }
+        }
+      }
     });
 
     test('should show legend for rotation types', async ({ page }) => {

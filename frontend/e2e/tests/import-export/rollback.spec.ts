@@ -20,23 +20,17 @@ import { waitForNetworkIdle } from '../../utils/test-helpers';
  *   - Database must have matching person records for the xlsx names
  */
 
-// TODO: Create this fixture file with representative block data
 const TEST_XLSX_PATH = path.join(__dirname, '../../fixtures/test-block10.xlsx');
 const TEST_BLOCK_NUMBER = '10';
 const TEST_ACADEMIC_YEAR = '2025';
 
 test.describe('Rollback After Apply', () => {
-  // TODO: This entire describe block requires:
-  //   1. test-block10.xlsx fixture file
-  //   2. Matching person records in the database
-  //   3. Backend rollback endpoint operational
-  // Remove test.fixme() once all prerequisites are satisfied.
-  test.fixme();
+  test.skip(() => !process.env.E2E_HAS_SEEDED_DATA, 'Requires seeded database');
 
-  test.describe('Full Rollback Workflow', () => {
+  test('Full import → apply → rollback workflow', async ({ adminPage, request }) => {
     let batchUrl: string;
 
-    test('should upload, stage, draft, and apply a batch', async ({ adminPage }) => {
+    await test.step('Upload, stage, and create draft', async () => {
       // Navigate to half-day import
       await adminPage.goto('/import/half-day');
       await waitForNetworkIdle(adminPage);
@@ -80,9 +74,11 @@ test.describe('Rollback After Apply', () => {
       await adminPage.locator(selectors.importExport.hdViewDraftBtn).click();
       await adminPage.waitForURL(/\/import\/batch\//, { timeout: 10_000 });
 
-      // Capture the batch URL for subsequent tests
+      // Capture the batch URL for subsequent steps
       batchUrl = adminPage.url();
+    });
 
+    await test.step('Apply batch', async () => {
       // Apply the batch
       const [applyResponse] = await Promise.all([
         adminPage.waitForResponse(
@@ -98,39 +94,7 @@ test.describe('Rollback After Apply', () => {
       await expect(statusBadge).toContainText(/applied/i, { timeout: 10_000 });
     });
 
-    test('should display rollback controls on applied batch', async ({ adminPage }) => {
-      // Navigate to the batch detail page
-      expect(batchUrl).toBeTruthy();
-      await adminPage.goto(batchUrl);
-      await waitForNetworkIdle(adminPage);
-
-      // Verify the batch is in APPLIED state
-      const statusBadge = adminPage.locator(selectors.importExport.batchStatusBadge);
-      await expect(statusBadge).toContainText(/applied/i);
-
-      // A rollback mechanism should exist. This could be:
-      //   - A dedicated rollback button
-      //   - A cancel/revert button
-      //   - A menu option
-      // Look for common patterns:
-      const rollbackBtn = adminPage.locator(
-        'button:has-text("Rollback"), button:has-text("Revert"), button:has-text("Undo")',
-      );
-      const cancelBtn = adminPage.locator(selectors.importExport.batchCancelBtn);
-
-      const hasRollback = await rollbackBtn.isVisible().catch(() => false);
-      const hasCancel = await cancelBtn.isVisible().catch(() => false);
-
-      // At least one rollback/cancel mechanism should be available
-      expect(hasRollback || hasCancel).toBe(true);
-    });
-
-    test('should rollback an applied batch and update status', async ({ adminPage }) => {
-      // Navigate to the batch detail
-      expect(batchUrl).toBeTruthy();
-      await adminPage.goto(batchUrl);
-      await waitForNetworkIdle(adminPage);
-
+    await test.step('Rollback and verify status', async () => {
       // Trigger rollback — try the rollback button first, fall back to cancel
       const rollbackBtn = adminPage.locator(
         'button:has-text("Rollback"), button:has-text("Revert"), button:has-text("Undo")',
@@ -160,56 +124,40 @@ test.describe('Rollback After Apply', () => {
       });
     });
 
-    test('should verify assignments were reverted via API', async ({ adminPage }) => {
+    await test.step('Verify assignments reverted via API', async () => {
       const apiBaseUrl = process.env.PLAYWRIGHT_API_URL || 'http://localhost:8000';
-      const apiContext = adminPage.context().request;
 
       // Query assignments for the block we imported and rolled back
-      const assignmentsResponse = await apiContext.get(
+      const assignmentsResponse = await request.get(
         `${apiBaseUrl}/api/v1/half-day/assignments?block_number=${TEST_BLOCK_NUMBER}&academic_year=${TEST_ACADEMIC_YEAR}`,
       );
       expect(assignmentsResponse.ok()).toBe(true);
 
       const assignments = await assignmentsResponse.json();
-
-      // After rollback, the assignments should revert to their pre-import state.
-      // The exact assertion depends on whether the block was empty before import
-      // or had prior assignments.
-      //
-      // Minimum verification: the API responds successfully, indicating the
-      // rollback did not corrupt the data.
       expect(assignments).toBeTruthy();
 
-      // Optionally verify the batch detail endpoint reflects rollback
       if (batchUrl) {
         // Extract batch ID from URL (e.g., /import/batch/123 -> 123)
-        const batchIdMatch = batchUrl.match(/\/batch\/(\d+)/);
+        const batchIdMatch = batchUrl.match(/\/batch\/([a-zA-Z0-9-]+)/);
         if (batchIdMatch) {
           const batchId = batchIdMatch[1];
-          const batchResponse = await apiContext.get(
+          const batchResponse = await request.get(
             `${apiBaseUrl}/api/v1/half-day/batches/${batchId}`,
           );
           expect(batchResponse.ok()).toBe(true);
 
           const batchData = await batchResponse.json();
           // Status should reflect rollback
-          const status = batchData.status || batchData.batchStatus; // @enum-ok
-          expect(status).toMatch(/rolled_back|cancelled/); // @enum-ok
+          const status = batchData.status || batchData.batchStatus;
+          expect(status).toMatch(/rolled_back|cancelled/i);
         }
       }
     });
   });
 
-  // --------------------------------------------------------------------------
   // Edge Cases
-  // --------------------------------------------------------------------------
-
   test.describe('Rollback Edge Cases', () => {
     test('should not allow rollback on a draft (unapplied) batch', async ({ adminPage }) => {
-      // TODO: Requires a batch in DRAFT state. This test verifies that
-      // rollback controls are NOT shown for unapplied batches.
-      test.fixme();
-
       // Navigate to a draft batch page
       await adminPage.goto('/import/half-day');
       await waitForNetworkIdle(adminPage);
@@ -253,9 +201,7 @@ test.describe('Rollback After Apply', () => {
     });
 
     test('should not allow double rollback', async ({ adminPage }) => {
-      // TODO: Requires a batch that has already been rolled back.
-      // Verify that the rollback button is not available after first rollback.
-      test.fixme();
+      test.fixme(true, 'Requires a batch that has already been rolled back.');
 
       // Navigate to a rolled-back batch
       // (In a real test, we would use the batchUrl from a prior rollback)

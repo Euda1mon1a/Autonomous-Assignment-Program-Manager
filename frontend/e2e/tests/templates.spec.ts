@@ -409,7 +409,7 @@ test.describe('Templates Library', () => {
   // ==========================================================================
 
   test.describe('Template Creation', () => {
-    test('should open create template modal', async ({ page }) => {
+    test('should open create template modal and create a new template', async ({ page }) => {
       await loginPage.loginAsAdmin();
       await templatePage.navigate();
 
@@ -423,6 +423,30 @@ test.describe('Templates Library', () => {
       const hasModal = await templatePage.isVisible(modal);
 
       expect(hasModal).toBe(true);
+
+      const hasNameField = await templatePage.isVisible(
+        page.locator('input[name*="name" i], input[placeholder*="name" i]')
+      );
+
+      if (hasNameField) {
+        const testTemplateName = `Test Template ${Date.now()}`;
+        await page.locator('input[name*="name" i], input[placeholder*="name" i]').fill(testTemplateName);
+
+        const savePromise = page.waitForResponse(r => r.url().includes('/templates') && r.request().method() === 'POST' && [200, 201].includes(r.status()), { timeout: 15000 }).catch(() => null);
+
+        const saveButton = page.getByRole('button', { name: /Save|Create/i });
+        if (await templatePage.isVisible(saveButton)) {
+          await saveButton.click();
+        }
+
+        const saveRes = await savePromise;
+        if (saveRes) {
+          await page.waitForTimeout(1000);
+          // Verify it appears in the list
+          const hasTemplate = await page.getByText(testTemplateName).isVisible().catch(() => false);
+          expect(hasTemplate).toBe(true);
+        }
+      }
     });
 
     test('should display template form fields', async ({ page }) => {
@@ -598,6 +622,46 @@ test.describe('Templates Library', () => {
   // ==========================================================================
 
   test.describe('Template Actions', () => {
+    test('should edit a template and verify changes', async ({ page }) => {
+      await loginPage.loginAsAdmin();
+      await templatePage.navigate();
+
+      await page.waitForTimeout(1500);
+
+      const count = await templatePage.getTemplateCount();
+
+      if (count > 0) {
+        const firstCard = templatePage.getTemplateCards().first();
+        const editButton = firstCard.locator('button').filter({ hasText: /Edit|Modify/i }).first();
+
+        if (await templatePage.isVisible(editButton)) {
+          await editButton.click();
+          await page.waitForTimeout(1000);
+
+          // Find name field and edit it
+          const nameField = page.locator('input[name*="name" i], input[placeholder*="name" i]');
+          if (await templatePage.isVisible(nameField)) {
+            const newName = `Edited Template ${Date.now()}`;
+            await nameField.fill(newName);
+
+            const savePromise = page.waitForResponse(r => r.url().includes('/templates') && ['PUT', 'PATCH'].includes(r.request().method()) && r.status() === 200, { timeout: 15000 }).catch(() => null);
+
+            const saveButton = page.getByRole('button', { name: /Save|Update/i });
+            await saveButton.click();
+
+            const saveRes = await savePromise;
+            if (saveRes) {
+              await page.waitForTimeout(1000);
+
+              // Verify the new name is visible on the page
+              const hasNewName = await page.getByText(newName).isVisible().catch(() => false);
+              expect(hasNewName).toBe(true);
+            }
+          }
+        }
+      }
+    });
+
     test('should display action buttons on template cards', async ({ page }) => {
       await loginPage.loginAsAdmin();
       await templatePage.navigate();
@@ -645,7 +709,7 @@ test.describe('Templates Library', () => {
       expect(page.url()).toBeTruthy();
     });
 
-    test('should confirm delete action', async ({ page }) => {
+    test('should confirm delete action and verify removal', async ({ page }) => {
       await loginPage.loginAsAdmin();
       await templatePage.navigate();
 
@@ -654,8 +718,13 @@ test.describe('Templates Library', () => {
       const count = await templatePage.getTemplateCount();
 
       if (count > 0) {
-        // Look for delete button
-        const deleteButton = page.getByRole('button', { name: /Delete/i }).first();
+        // Find a specific template we might delete (we'll look at the first one)
+        const firstCard = templatePage.getTemplateCards().first();
+        const templateTitle = await firstCard.locator('h3').innerText().catch(() => '');
+
+        // Look for delete button on the first card
+        const deleteButton = firstCard.locator('button').filter({ hasText: /Delete|Remove/i }).first();
+
         if (await templatePage.isVisible(deleteButton)) {
           await deleteButton.click();
           await page.waitForTimeout(500);
@@ -665,13 +734,21 @@ test.describe('Templates Library', () => {
           const hasDialog = await templatePage.isVisible(confirmDialog);
 
           if (hasDialog) {
-            // Cancel the delete
-            const cancelButton = page.getByRole('button', { name: /Cancel/i }).last();
-            await cancelButton.click();
-            await page.waitForTimeout(500);
-          }
+            const deletePromise = page.waitForResponse(r => r.url().includes('/templates') && r.request().method() === 'DELETE', { timeout: 15000 }).catch(() => null);
+            // Confirm the delete
+            const confirmButton = page.getByRole('button', { name: /Confirm|Delete/i }).last();
+            await confirmButton.click();
 
-          expect(page.url()).toBeTruthy();
+            const deleteRes = await deletePromise;
+            if (deleteRes) {
+              await page.waitForTimeout(1000);
+              // Verify removal from list
+              if (templateTitle) {
+                const stillExists = await page.getByText(templateTitle).isVisible().catch(() => false);
+                expect(stillExists).toBe(false);
+              }
+            }
+          }
         }
       }
     });

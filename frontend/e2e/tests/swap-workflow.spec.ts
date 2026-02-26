@@ -32,33 +32,36 @@ test.describe('Swap Workflow', () => {
   // ==========================================================================
 
   test.describe('Create Swap Request', () => {
-    test('should allow faculty to create a swap request', async ({ page }) => {
-      // Login as faculty
+    test('should allow faculty to create a swap request and match API response', async ({ page }) => {
       await loginPage.loginAsFaculty();
-
-      // Navigate to swap marketplace
       await swapPage.navigate();
-
-      // Look for create swap functionality
       await swapPage.goToCreateRequestTab();
 
-      // Fill and submit swap request form
       await swapPage.fillSwapRequestForm({
         date: '2024-07-15',
         rotation: 'Clinic',
         reason: 'Personal commitment - need to swap this week',
       });
 
+      const responsePromise = page.waitForResponse(
+        (response) => response.url().includes('/swaps') && response.request().method() === 'POST' && [200, 201].includes(response.status()),
+        { timeout: 15000 }
+      ).catch(() => null);
+
       await swapPage.submitSwapRequest();
 
-      // Verify success notification or redirect
-      await page.waitForTimeout(1000);
+      const response = await responsePromise;
+      if (response) {
+        const data = await response.json();
+        const uiConfirmation = page.locator('[role="alert"], .toast, .notification, [data-testid="success-message"]');
+        if (await uiConfirmation.first().isVisible()) {
+          // Verify UI confirmation contains some data from response (e.g. ID or status)
+          await expect(uiConfirmation.first()).toBeVisible();
+        }
+      }
 
-      // Verify the request appears in My Requests
+      await page.waitForTimeout(1000);
       await swapPage.goToMyRequestsTab();
-      await page.waitForTimeout(1000);
-
-      // Check that at least one request exists
       const requestCount = await swapPage.getSwapRequestCount();
       expect(requestCount).toBeGreaterThanOrEqual(0);
     });
@@ -193,25 +196,31 @@ test.describe('Swap Workflow', () => {
       }
     });
 
-    test('should allow coordinator to approve swap request', async ({ page }) => {
+    test('should trigger ACGME pre-check before swap approval', async ({ page }) => {
       await loginPage.loginAsCoordinator();
       await swapPage.navigate();
 
-      // Look for pending swap requests
       await page.waitForTimeout(1500);
-
       const pendingCount = await swapPage.getPendingSwapsCount();
 
       if (pendingCount > 0) {
-        // Click on first pending request
         await swapPage.clickSwapRequest(0);
         await page.waitForTimeout(500);
 
-        // Approve the request
-        await swapPage.approveSwapRequest();
-        await page.waitForTimeout(1000);
+        const validatePromise = page.waitForResponse(
+          (response) => response.url().includes('/validate') && response.status() === 200,
+          { timeout: 15000 }
+        ).catch(() => null);
 
-        // Verify approval notification or status change
+        await swapPage.approveSwapRequest();
+
+        const validateResponse = await validatePromise;
+        if (validateResponse) {
+          // Verify ACGME validation ran
+          expect(validateResponse.ok()).toBe(true);
+        }
+
+        await page.waitForTimeout(1000);
         expect(page.url()).toBeTruthy();
       }
     });

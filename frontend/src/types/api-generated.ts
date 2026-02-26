@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-02-25T21:54:02Z
+ * Generated at: 2026-02-26T02:32:33Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -12094,6 +12094,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dev/seed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Seed Database
+         * @description Seed the database with deterministic test data.
+         *     Only available when ENV=test or ALLOW_DEV_SEED=true.
+         */
+        post: operations["seed_database_api_v1_dev_seed_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/backup/snapshot": {
         parameters: {
             query?: never;
@@ -23124,12 +23145,14 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
-            /** Template Id */
-            templateId: string | null;
             /** Success */
             success: boolean;
+            /** Assignment Id */
+            assignmentId?: string | null;
             /** Error */
             error?: string | null;
+            /** Warnings */
+            warnings?: string[];
         };
         /**
          * BatchOperationStatus
@@ -23543,7 +23566,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__batch__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Errors
              * @description Global errors
@@ -23690,7 +23713,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -24327,19 +24350,24 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
         BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academicYear: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            totalBlocks: number;
         };
         /**
          * BlockMatrixResponse
@@ -27416,34 +27444,36 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap with details.
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
          */
         CoverageGap: {
-            /** Gap Id */
-            gapId: string;
             /**
              * Date
              * Format: date
+             * @description Date of the gap
              */
             date: string;
-            /** Time Of Day */
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
             timeOfDay: string;
-            /** Block Id */
-            blockId: string;
-            /** Severity */
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
             severity: string;
-            /** Days Until */
-            daysUntil: number;
-            /** Affected Area */
-            affectedArea: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            currentAssignments: number;
-            /** Required Assignments */
-            requiredAssignments: number;
-            /** Gap Size */
-            gapSize: number;
         };
         /**
          * CoverageGapsResponse
@@ -27470,7 +27500,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["CoverageGap"][];
+            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -27522,7 +27552,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
+            gaps?: components["schemas"]["CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -38598,13 +38628,14 @@ export interface components {
             queueName: string;
             /**
              * Confirm
+             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
         };
         /**
          * QueuePurgeResponse
-         * @description Response to queue purge request.
+         * @description Response after purging a queue.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -41771,7 +41802,7 @@ export interface components {
             /** Components */
             components: components["schemas"]["ScoreComponentResponse"][];
             /** Suggestions */
-            suggestions?: components["schemas"]["SuggestionResponse"][];
+            suggestions?: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -42141,6 +42172,21 @@ export interface components {
             entity?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** SeedResponse */
+        SeedResponse: {
+            /** Status */
+            status: string;
+            /** Scenario */
+            scenario: string;
+            /** Residents Created */
+            residentsCreated: number;
+            /** Faculty Created */
+            facultyCreated: number;
+            /** Activities Created */
+            activitiesCreated: number;
+            /** Assignments Created */
+            assignmentsCreated: number;
         };
         /**
          * SessionListResponse
@@ -43645,25 +43691,24 @@ export interface components {
         };
         /**
          * SuggestionResponse
-         * @description Response for improvement suggestion.
+         * @description Response schema for autocomplete suggestions.
          */
         SuggestionResponse: {
-            /** Type */
-            type: string;
             /**
-             * Priority
-             * @description high, medium, low
+             * Suggestions
+             * @description List of suggestions
              */
-            priority: string;
-            /** Description */
-            description: string;
+            suggestions: string[];
             /**
-             * Impact
-             * @description Expected improvement
+             * Query
+             * @description Original query string
              */
-            impact: number;
-            /** Affected Items */
-            affectedItems?: string[];
+            query: string;
+            /**
+             * Entity Type
+             * @description Entity type
+             */
+            entityType: string;
         };
         /**
          * SurveyFrequencyEnum
@@ -47765,7 +47810,7 @@ export interface components {
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancingSuggestions: components["schemas"]["SuggestionResponse"][];
+            rebalancingSuggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -48120,44 +48165,51 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * BlockListResponse
-         * @description Response for listing academic blocks.
+         * CoverageGap
+         * @description Represents a coverage gap with details.
          */
-        app__schemas__academic_blocks__BlockListResponse: {
+        app__api__routes__fmit_health__CoverageGap: {
+            /** Gap Id */
+            gapId: string;
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Date
+             * Format: date
              */
-            blocks: components["schemas"]["BlockSummary"][];
-            /**
-             * Academic Year
-             * @description Academic year
-             */
-            academicYear: string;
-            /**
-             * Total Blocks
-             * @description Total number of blocks
-             */
-            totalBlocks: number;
+            date: string;
+            /** Time Of Day */
+            timeOfDay: string;
+            /** Block Id */
+            blockId: string;
+            /** Severity */
+            severity: string;
+            /** Days Until */
+            daysUntil: number;
+            /** Affected Area */
+            affectedArea: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            currentAssignments: number;
+            /** Required Assignments */
+            requiredAssignments: number;
+            /** Gap Size */
+            gapSize: number;
         };
         /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
+         * BlockListResponse
+         * @description Schema for list of blocks.
          */
-        app__schemas__batch__BatchOperationResult: {
+        app__schemas__block__BlockListResponse: {
             /**
-             * Index
-             * @description Index of the operation in the batch
+             * Items
+             * @description List of block responses
              */
-            index: number;
-            /** Success */
-            success: boolean;
-            /** Assignment Id */
-            assignmentId?: string | null;
-            /** Error */
-            error?: string | null;
-            /** Warnings */
-            warnings?: string[];
+            items: components["schemas"]["BlockResponse"][];
+            /**
+             * Total
+             * @description Total number of blocks
+             */
+            total: number;
         };
         /**
          * CoverageGap
@@ -48205,6 +48257,53 @@ export interface components {
             pgyLevel?: number | null;
         };
         /**
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
+         */
+        app__schemas__jobs__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
+            /**
+             * Confirm
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /**
+         * QueuePurgeResponse
+         * @description Response to queue purge request.
+         */
+        app__schemas__jobs__QueuePurgeResponse: {
+            /** Queuename */
+            queueName: string;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
+        };
+        /**
+         * SuggestionResponse
+         * @description Response for improvement suggestion.
+         */
+        app__schemas__ml__SuggestionResponse: {
+            /** Type */
+            type: string;
+            /**
+             * Priority
+             * @description high, medium, low
+             */
+            priority: string;
+            /** Description */
+            description: string;
+            /**
+             * Impact
+             * @description Expected improvement
+             */
+            impact: number;
+            /** Affected Items */
+            affectedItems?: string[];
+        };
+        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
@@ -48237,30 +48336,21 @@ export interface components {
             type: string;
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
          */
-        app__schemas__queue__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
+        app__schemas__rotation_template__BatchOperationResult: {
             /**
-             * Confirm
-             * @description Must be true to confirm purge
-             * @default false
+             * Index
+             * @description Index of the operation in the batch
              */
-            confirm: boolean;
-        };
-        /**
-         * QueuePurgeResponse
-         * @description Response after purging a queue.
-         */
-        app__schemas__queue__QueuePurgeResponse: {
-            /** Queuename */
-            queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
+            index: number;
+            /** Template Id */
+            templateId: string | null;
+            /** Success */
+            success: boolean;
+            /** Error */
+            error?: string | null;
         };
         /**
          * ConflictCheckResponse
@@ -48285,60 +48375,6 @@ export interface components {
             errors: number;
             /** Warnings */
             warnings: number;
-        };
-        /**
-         * SuggestionResponse
-         * @description Response schema for autocomplete suggestions.
-         */
-        app__schemas__search__SuggestionResponse: {
-            /**
-             * Suggestions
-             * @description List of suggestions
-             */
-            suggestions: string[];
-            /**
-             * Query
-             * @description Original query string
-             */
-            query: string;
-            /**
-             * Entity Type
-             * @description Entity type
-             */
-            entityType: string;
-        };
-        /**
-         * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
-         */
-        app__schemas__visualization__CoverageGap: {
-            /**
-             * Date
-             * Format: date
-             * @description Date of the gap
-             */
-            date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
-            timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
-            severity: string;
         };
     };
     responses: never;
@@ -50617,7 +50653,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -50744,7 +50780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -50810,7 +50846,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -62566,7 +62602,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -62599,7 +62635,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64153,6 +64189,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VacuumResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    seed_database_api_v1_dev_seed_post: {
+        parameters: {
+            query?: {
+                scenario?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeedResponse"];
                 };
             };
             /** @description Validation Error */
@@ -68940,7 +69007,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -68950,7 +69017,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -69307,7 +69374,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -69317,7 +69384,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */

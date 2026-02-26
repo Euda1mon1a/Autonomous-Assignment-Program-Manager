@@ -16,6 +16,7 @@
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:e2e:ci": "npx playwright test --config=playwright.config.ci.ts",
     "audit": "npm audit",
     "audit:fix": "npm audit fix",
     "validate": "npm run type-check && npm run lint && npm run test",

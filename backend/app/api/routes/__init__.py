@@ -34,6 +34,7 @@ from app.api.routes import (
     credentials,
     daily_manifest,
     db_admin,
+    dev,
     docs,
     enums,
     exotic_resilience,
@@ -225,6 +226,7 @@ api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 api_router.include_router(analytics.router, tags=["analytics"])
 api_router.include_router(fairness.router, tags=["fairness"])
 api_router.include_router(db_admin.router, tags=["db-admin"])
+api_router.include_router(dev.router, prefix="/dev", tags=["dev"])
 api_router.include_router(backup.router, tags=["backup"])
 api_router.include_router(
     visualization.router, prefix="/visualization", tags=["visualization"]
