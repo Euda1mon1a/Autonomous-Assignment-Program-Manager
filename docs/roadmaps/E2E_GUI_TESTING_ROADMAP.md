@@ -4,7 +4,7 @@
 > **Source:** Gemini Pro 3.1 extended-thinking analysis of full test suite + Claude synthesis
 > **Prompt:** `docs/prompts/E2E_GUI_TESTING_REFINEMENT.md`
 > **Master Priority List:** Item #34
-> **Status:** PLANNING
+> **Status:** PHASES 0-3 COMPLETE (Gemini), Phase 4.0 next
 
 ---
 
@@ -12,14 +12,25 @@
 
 | Metric | Value |
 |--------|-------|
-| Spec files | 34 (44 including root-level duplicates) |
-| Test cases | ~580-700 |
-| Skipped (`test.skip`) | 9 (need seeded DB) |
-| Blocked (`test.fixme`) | 3 (rollback.spec.ts) |
-| Pages with coverage | 13 of 53 (25%) |
-| Pages without coverage | 31 (58%) — including 20+ admin pages |
-| Assertion depth | Mostly shallow (`toBeVisible`) |
-| Infrastructure | Mature (fixtures, POM, selectors, helpers, xlsx utils) |
+| Spec files | 44 |
+| Test cases | ~700+ |
+| Skipped (`test.skip`) | 19 (gated by `E2E_HAS_SEEDED_DATA` — unblocked by globalSetup) |
+| Blocked (`test.fixme`) | 1 (double-rollback edge case) |
+| Pages with coverage | 23 of 53 (43%) |
+| Pages without coverage | 21 — mostly admin/dev tools (deferred) |
+| Assertion depth | Mixed — new Phase 1-3 specs use API interception; 4 legacy specs still shallow |
+| Infrastructure | Mature (fixtures, POM, selectors, helpers, xlsx utils, dev seed, globalSetup) |
+
+### Phase Completion (2026-02-25)
+
+| Phase | Status | Commits |
+|-------|--------|---------|
+| 0: Unblock | DONE | `24b3c429` dev seed + globalSetup |
+| 1: Critical Safety | DONE | `678b817c` compliance, daily-manifest, call-hub, conflicts |
+| 2: Mutation Safety | DONE | `678b817c` admin/scheduling, admin/block-import, admin/fmit-import |
+| 3: High-Traffic | DONE | `678b817c` my-schedule, batch-detail, rotations |
+| 4: Deepen Existing | TODO | Auth fixture migration + assertion upgrades |
+| 5: CI Config | DONE | `678b817c` + `bbd104d6` (fix) |
 
 **Key Insight:** 580 tests creates a false sense of security when most assert visibility rather than functional correctness. A schedule could silently corrupt and every test passes.
 
@@ -239,7 +250,42 @@ Replace `test.fixme()` with `test.skip(() => !process.env.E2E_HAS_SEEDED_DATA)`.
 
 ## Phase 4: Deepen Existing Tests (2-3 days)
 
-**Goal:** Upgrade shallow `toBeVisible` assertions in existing specs to meaningful DOM↔API assertions.
+**Goal:** Migrate 4 pre-existing specs to auth fixture, then upgrade assertions.
+
+### 4.0. Auth Fixture Migration (prerequisite for 4a-4d)
+
+These 4 specs use the **old pattern** (raw `{ page }` + manual `LoginPage.loginAsAdmin()`) instead of the auth fixture (`{ adminPage }` from `e2e/fixtures/auth.fixture`). They must be migrated before assertion upgrades.
+
+| Spec | Lines | Roles Used | Complexity |
+|------|-------|------------|------------|
+| `resilience-hub.spec.ts` | 1159 | admin, coordinator, faculty | HIGH — 40+ tests, each calls `loginPage.loginAsAdmin()` |
+| `schedule-management.spec.ts` | 735 | admin only | MEDIUM — straightforward `page` → `adminPage` swap |
+| `swap-workflow.spec.ts` | 480 | faculty, coordinator, resident, admin | HIGH — multi-browser context in integration test |
+| `templates.spec.ts` | 850 | admin, coordinator, faculty | MEDIUM — multi-role but each in isolated describe |
+
+**Migration pattern:**
+```diff
+- import { test, expect } from '@playwright/test';
+- import { LoginPage, ResiliencePage } from '../pages';
++ import { test, expect } from '../fixtures/auth.fixture';
+
+  test.describe('Resilience Hub', () => {
+-   let loginPage: LoginPage;
+-   test.beforeEach(async ({ page }) => {
+-     loginPage = new LoginPage(page);
+-     await loginPage.clearStorage();
+-   });
+-   test('example', async ({ page }) => {
+-     await loginPage.loginAsAdmin();
+-     await page.goto('/resilience');
++   test('example', async ({ adminPage }) => {
++     await adminPage.goto('/resilience');
+```
+
+**Also fix while migrating:**
+- Remove 38× `waitForTimeout(1500)` in resilience-hub.spec.ts — replace with `waitForLoadState('networkidle')` or `waitForSelector`
+- Remove `expect(hasX || true).toBe(true)` no-op assertions in schedule-management.spec.ts (6 occurrences) — either assert meaningfully or delete the test
+- `swap-workflow.spec.ts` multi-context test (line 378): keep `browser.newContext()` for coordinator but use `facultyPage` fixture for the originating role
 
 ### 4a. `resilience-hub.spec.ts` (67 tests)
 - [ ] Defense level badge text matches API `defense_level` value
