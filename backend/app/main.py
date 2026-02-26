@@ -494,9 +494,10 @@ async def resilience_health():
             ],
         }
     except Exception as e:
+        logger.error("Resilience health check failed: %s", e)
         return {
             "status": "degraded",
-            "error": str(e),
+            "error": "Resilience system check failed. See server logs.",
         }
 
 
@@ -526,7 +527,8 @@ async def cache_health():
             "default_ttl_seconds": stats["default_ttl"],
         }
     except Exception as e:
+        logger.error("Cache health check failed: %s", e)
         return {
             "status": "error",
-            "error": str(e),
+            "error": "Cache system check failed. See server logs.",
         }
