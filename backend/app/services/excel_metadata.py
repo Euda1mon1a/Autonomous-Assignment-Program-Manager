@@ -131,6 +131,22 @@ def read_ref_codes(wb: Workbook) -> dict[str, list[str]]:
     return res
 
 
+def normalize_for_hash(val: Any) -> str:
+    """Aggressively normalize cell values for symmetric export/import hashes.
+
+    Excel may coerce types (e.g. "1.0" for integer 1), add trailing spaces,
+    or change case. This ensures the same logical value hashes identically
+    regardless of whether it comes from JSON export or Excel cell read.
+    """
+    if val is None or str(val).strip() == "":
+        return ""
+    s = str(val).strip().upper()
+    # Excel renders integer-like floats as "1.0" — normalize to "1"
+    if s.endswith(".0"):
+        s = s[:-2]
+    return s
+
+
 def compute_row_hash(
     person_id: UUID,
     rotation1: str | None,
@@ -140,7 +156,12 @@ def compute_row_hash(
     """
     Compute MD5 hash of row content for change detection.
 
-    Used to skip unchanged rows during import.
+    Used to skip unchanged rows during import. Uses normalize_for_hash()
+    to ensure symmetric hashing between export (JSON strings) and import
+    (Excel cell values subject to type coercion).
     """
-    data = f"{person_id}|{rotation1 or ''}|{rotation2 or ''}|{'|'.join(d or '' for d in days)}"
+    nr1 = normalize_for_hash(rotation1)
+    nr2 = normalize_for_hash(rotation2)
+    nd = "|".join(normalize_for_hash(d) for d in days)
+    data = f"{person_id}|{nr1}|{nr2}|{nd}"
     return hashlib.md5(data.encode()).hexdigest()  # nosec B324 — not for security

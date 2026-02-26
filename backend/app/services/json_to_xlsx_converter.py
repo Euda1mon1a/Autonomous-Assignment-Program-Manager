@@ -21,12 +21,14 @@ class JSONToXlsxConverter(XMLToXlsxConverter):
         self,
         json_input: str | bytes | dict[str, Any],
         output_path: Path | str | None = None,
+        **kwargs: Any,
     ) -> bytes:
         """Convert JSON schedule to xlsx.
 
         Args:
             json_input: JSON string/bytes or schedule dict
             output_path: Optional path to save xlsx
+            **kwargs: Passed to convert_from_data (export_metadata, rotation_codes, etc.)
 
         Returns:
             xlsx bytes (openpyxl workbook)
@@ -39,4 +41,4 @@ class JSONToXlsxConverter(XMLToXlsxConverter):
         else:
             data = json_input
 
-        return self.convert_from_data(data, output_path=output_path)
+        return self.convert_from_data(data, output_path=output_path, **kwargs)

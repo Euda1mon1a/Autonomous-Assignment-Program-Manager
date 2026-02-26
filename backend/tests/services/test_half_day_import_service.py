@@ -1,7 +1,11 @@
 """Tests for half-day import staging draft creation."""
 
+import io
 from datetime import date
 from uuid import uuid4
+
+import pytest
+from openpyxl import Workbook
 
 from app.models.activity import Activity, ActivityCategory
 from app.models.half_day_assignment import HalfDayAssignment
@@ -13,6 +17,7 @@ from app.models.import_staging import (
 from app.models.person import Person
 from app.models.schedule_draft import DraftAssignmentChangeType, ScheduleDraftAssignment
 from app.schemas.half_day_import import HalfDayDiffType
+from app.services.excel_metadata import ExportMetadata, write_sys_meta_sheet
 from app.services.half_day_import_service import HalfDayImportService
 
 
@@ -207,3 +212,56 @@ def test_create_draft_from_batch_validation_errors(db):
     assert result.success is False
     assert result.error_code == "ROW_FAILURE"
     assert result.failed_ids == [staged.id]
+
+
+# --- Phase 1 hard rejection tests ---
+
+
+def _make_xlsx_with_meta(
+    block_number: int | None = None,
+    academic_year: int = 2026,
+) -> bytes:
+    """Create a minimal XLSX with __SYS_META__ for Phase 1 rejection tests."""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Block Template2"
+    # Write minimal structure: date row 3 col 6 + name col 5 row 9
+    ws.cell(row=3, column=6, value="")
+    ws.cell(row=9, column=5, value="Test Resident")
+
+    meta = ExportMetadata(
+        academic_year=academic_year,
+        block_number=block_number,
+        export_timestamp="2026-02-25T10:00:00Z",
+    )
+    write_sys_meta_sheet(wb, meta)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def test_stage_block_template2_rejects_wrong_block(db):
+    """Phase 1: file for Block 5 should be rejected when importing as Block 10."""
+    xlsx_bytes = _make_xlsx_with_meta(block_number=5, academic_year=2026)
+
+    service = HalfDayImportService(db)
+    with pytest.raises(ValueError, match="Block mismatch"):
+        service.stage_block_template2(
+            file_bytes=xlsx_bytes,
+            block_number=10,
+            academic_year=2026,
+        )
+
+
+def test_stage_block_template2_rejects_wrong_academic_year(db):
+    """Phase 1: file for AY 2025 should be rejected when importing as AY 2026."""
+    xlsx_bytes = _make_xlsx_with_meta(block_number=10, academic_year=2025)
+
+    service = HalfDayImportService(db)
+    with pytest.raises(ValueError, match="Academic year mismatch"):
+        service.stage_block_template2(
+            file_bytes=xlsx_bytes,
+            block_number=10,
+            academic_year=2026,
+        )

@@ -65,25 +65,55 @@ class CanonicalScheduleExportService:
             include_overrides=include_overrides,
         )
 
-        converter = JSONToXlsxConverter(
-            template_path=self._template_path(),
-            structure_xml_path=self._structure_path(),
-            use_block_template2=True,
-            apply_colors=True,
-            strict_row_mapping=True,
-            include_qa_sheet=include_qa_sheet,
-            preserve_template_identity_fields=preserve_template_identity_fields,
-            presentation_profile=presentation_profile,
-        )
-        xlsx_bytes = converter.convert_from_json(data)
+        # Query ref codes for Phase 1 __REF__ sheet (single-save pattern)
+        rotation_codes = [
+            r[0]
+            for r in self.db.query(RotationTemplate.abbreviation).distinct().all()
+            if r[0]
+        ]
+        activity_codes = [
+            a[0] for a in self.db.query(Activity.code).distinct().all() if a[0]
+        ]
 
-        # Stamp Phase 1 metadata onto the workbook
-        return self._inject_metadata(
-            xlsx_bytes,
+        meta = ExportMetadata(
             academic_year=academic_year,
             block_number=block_number,
-            output_path=output_path,
+            export_timestamp=datetime.now(UTC).isoformat(),
         )
+
+        template_path = self._template_path()
+        structure_path = self._structure_path()
+
+        # When no structure XML exists, dynamic UUID-based mappings are used
+        # and identity fields (rotations, template, role, name) must be written
+        # by the converter — can't preserve what doesn't exist in the template.
+        # Only preserve identity fields when BOTH template AND structure XML exist
+        # (i.e., using a hand-jam template with pre-filled names).
+        effective_preserve = (
+            preserve_template_identity_fields and structure_path is not None
+        )
+
+        converter = JSONToXlsxConverter(
+            template_path=template_path,
+            structure_xml_path=structure_path,
+            use_block_template2=True,
+            apply_colors=True,
+            strict_row_mapping=structure_path is not None,
+            include_qa_sheet=include_qa_sheet,
+            preserve_template_identity_fields=effective_preserve,
+            presentation_profile=presentation_profile,
+        )
+        xlsx_bytes = converter.convert_from_json(
+            data,
+            export_metadata=meta,
+            rotation_codes=rotation_codes,
+            activity_codes=activity_codes,
+        )
+
+        if output_path:
+            Path(output_path).write_bytes(xlsx_bytes)
+
+        return xlsx_bytes
 
     def export_year_xlsx(
         self,
@@ -107,14 +137,18 @@ class CanonicalScheduleExportService:
             raise ValueError(f"No academic blocks found for year {academic_year}")
 
         block_map = {}
+        template_path = self._template_path()
+        structure_path = self._structure_path()
+        effective_preserve = structure_path is not None
+
         converter = JSONToXlsxConverter(
-            template_path=self._template_path(),
-            structure_xml_path=self._structure_path(),
+            template_path=template_path,
+            structure_xml_path=structure_path,
             use_block_template2=True,
             apply_colors=True,
-            strict_row_mapping=True,
+            strict_row_mapping=structure_path is not None,
             include_qa_sheet=False,  # Single QA sheet for 14 blocks is messy
-            preserve_template_identity_fields=True,
+            preserve_template_identity_fields=effective_preserve,
             presentation_profile="tamc_handjam_v2",
         )
 
@@ -159,18 +193,32 @@ class CanonicalScheduleExportService:
         # Ensure YTD_SUMMARY is active
         wb.active = summary_ws
 
-        # Save current workbook to bytes
-        buffer = io.BytesIO()
-        wb.save(buffer)
-        wb_bytes = buffer.getvalue()
-
-        # Inject shared system metadata and reference data using helper
-        return self._inject_metadata(
-            wb_bytes,
+        # Phase 1 metadata — single-save (write directly to wb before save)
+        rotation_codes = [
+            r[0]
+            for r in self.db.query(RotationTemplate.abbreviation).distinct().all()
+            if r[0]
+        ]
+        activity_codes = [
+            a[0] for a in self.db.query(Activity.code).distinct().all() if a[0]
+        ]
+        meta = ExportMetadata(
             academic_year=academic_year,
-            output_path=output_path,
+            export_timestamp=datetime.now(UTC).isoformat(),
             block_map=block_map,
         )
+        write_sys_meta_sheet(wb, meta)
+        write_ref_sheet(wb, rotation_codes, activity_codes)
+
+        # Save to bytes (single save — no double load/save cycle)
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        xlsx_bytes = buffer.getvalue()
+
+        if output_path:
+            Path(output_path).write_bytes(xlsx_bytes)
+
+        return xlsx_bytes
 
     def _copy_worksheet(self, source, target) -> None:
         """Deep copy worksheet content and styles between workbooks."""
@@ -349,20 +397,23 @@ class CanonicalScheduleExportService:
         # backend/app/services -> backend
         return Path(__file__).resolve().parents[2] / "data"
 
-    def _template_path(self) -> Path:
+    def _template_path(self) -> Path | None:
         template = self._data_dir() / "BlockTemplate2_Official.xlsx"
         if not template.exists():
-            raise FileNotFoundError(
-                f"Canonical template missing: {template}. "
-                "Place the formatted Block Template2 XLSX in backend/data."
+            logger.warning(
+                "Canonical template missing: %s — export will generate BT2 layout "
+                "programmatically (no pre-formatted styling).",
+                template,
             )
+            return None
         return template
 
-    def _structure_path(self) -> Path:
+    def _structure_path(self) -> Path | None:
         structure = self._data_dir() / "BlockTemplate2_Structure.xml"
         if not structure.exists():
-            raise FileNotFoundError(
-                f"Structure XML missing: {structure}. "
-                "Expected BlockTemplate2_Structure.xml in backend/data."
+            logger.info(
+                "Structure XML not found at %s — using dynamic UUID-based row mappings.",
+                structure,
             )
+            return None
         return structure
