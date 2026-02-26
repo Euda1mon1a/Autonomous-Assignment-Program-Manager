@@ -90,7 +90,9 @@ class CanonicalScheduleExportService:
         # Only preserve identity fields when BOTH template AND structure XML exist
         # (i.e., using a hand-jam template with pre-filled names).
         effective_preserve = (
-            preserve_template_identity_fields and structure_path is not None
+            preserve_template_identity_fields
+            and structure_path is not None
+            and template_path is not None
         )
 
         converter = JSONToXlsxConverter(
@@ -139,7 +141,7 @@ class CanonicalScheduleExportService:
         block_map = {}
         template_path = self._template_path()
         structure_path = self._structure_path()
-        effective_preserve = structure_path is not None
+        effective_preserve = structure_path is not None and template_path is not None
 
         converter = JSONToXlsxConverter(
             template_path=template_path,

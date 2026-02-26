@@ -125,6 +125,9 @@ class XMLToXlsxConverter:
                 freeze panes. "tamc_handjam_v2" aligns output with manual Block 10.
         """
         self.template_path = Path(template_path) if template_path else None
+        self.structure_xml_path = (
+            Path(structure_xml_path) if structure_xml_path else None
+        )
         self.apply_colors = apply_colors
         self.color_scheme = get_color_scheme() if apply_colors else None
         self.use_block_template2 = use_block_template2
@@ -335,8 +338,9 @@ class XMLToXlsxConverter:
             if self.use_block_template2:
                 sheet.title = "Block Template2"
 
-        # Dynamic UUID-based row allocation when no structure XML was loaded
-        if self.use_block_template2 and not self.row_mappings:
+        # Dynamic UUID-based row allocation when no structure XML was loaded.
+        # Always rebuild per call so year-export gets fresh mappings per block.
+        if self.use_block_template2 and not self.structure_xml_path:
             self._build_dynamic_mappings(data, sheet)
 
         # Fill header row (always - helps with readability)
