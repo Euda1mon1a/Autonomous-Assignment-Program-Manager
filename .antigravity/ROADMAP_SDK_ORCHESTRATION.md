@@ -1,7 +1,9 @@
-# SDK Orchestration Roadmap: From Comet to Production
+# SDK Orchestration Roadmap: From Comet to Production (ARCHIVED)
 
+> **Status:** SUPERSEDED — Native CLI orchestration (Claude Code + Codex CLI + Gemini CLI) replaced SDK approach. See [`docs/architecture/PAI2_TRI_AGENT_SWARM.md`](../docs/architecture/PAI2_TRI_AGENT_SWARM.md)
 > **Created:** 2025-12-25
-> **Goal:** Replace browser-based Signal Transduction with resilient SDK orchestration
+> **Archived:** 2026-02-26
+> **Original Goal:** Replace browser-based Signal Transduction with resilient SDK orchestration
 > **Timeline:** Phases, not dates (you decide pacing)
 
 ---

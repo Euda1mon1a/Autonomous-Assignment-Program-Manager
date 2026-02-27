@@ -1,24 +1,25 @@
 # Claude Code Model Context Reference
 
-> **Last Updated:** 2025-12-30
+> **Last Updated:** 2026-02-26
 > **Purpose:** Quick reference for model selection when spawning agents in Claude Code CLI
 
 ---
 
 ## Context Window Limits
 
-All Claude 4.5 models share the same standard context window:
+All Claude 4.5/4.6 models share the same standard context window:
 
-| Model | Standard Context | Extended Context | Max Output |
-|-------|------------------|------------------|------------|
-| **Claude Haiku 4.5** | 200K tokens | N/A | 64K tokens |
-| **Claude Sonnet 4.5** | 200K tokens | 1M tokens (beta) | 64K tokens |
-| **Claude Opus 4.5** | 200K tokens | N/A | 64K tokens |
+| Model | ID | Standard Context | Extended Context | Max Output |
+|-------|----|------------------|------------------|------------|
+| **Claude Haiku 4.5** | `claude-haiku-4-5-20251001` | 200K tokens | N/A | 64K tokens |
+| **Claude Sonnet 4.6** | `claude-sonnet-4-6` | 200K tokens | 1M tokens (beta) | 64K tokens |
+| **Claude Opus 4.6** | `claude-opus-4-6` | 200K tokens | N/A | 64K tokens |
 
 **Key Facts:**
 - All models have **200K token standard context**
-- Only **Sonnet 4.5** can access extended 1M context (beta, requires special header)
+- Only **Sonnet 4.6** can access extended 1M context (beta, requires special header: `anthropic-beta: context-1m-2025-08-07`, API Tier 4+)
 - All models can output up to **64K tokens** per response
+- Sonnet 4.5 (`claude-sonnet-4-5-20250929`) still available but 4.6 is current
 
 ---
 
@@ -31,8 +32,8 @@ While context limits are identical, **consumption rates differ significantly** b
 | Model | Input Cost | Output Cost | Relative Cost |
 |-------|------------|-------------|---------------|
 | Haiku 4.5 | $1/1M tokens | $5/1M tokens | 1x (baseline) |
-| Sonnet 4.5 | $3/1M tokens | $15/1M tokens | 3x |
-| Opus 4.5 | Higher | Higher | ~10x+ |
+| Sonnet 4.6 | $3/1M tokens | $15/1M tokens | 3x |
+| Opus 4.6 | $15/1M tokens | $75/1M tokens | 15x |
 
 ### Consumption Patterns
 
@@ -59,7 +60,7 @@ Actual Billed:      3,500 output tokens
 
 ### Opus Effort Parameter
 
-Only Opus 4.5 supports the `effort` parameter to control reasoning depth:
+Opus 4.6 supports the `effort` parameter to control reasoning depth:
 
 | Effort Level | Token Usage | Performance |
 |--------------|-------------|-------------|
@@ -113,8 +114,8 @@ When using the `Task` tool to spawn agents, specify the model:
 | Value | Behavior |
 |-------|----------|
 | `haiku` | Use Claude Haiku 4.5 |
-| `sonnet` | Use Claude Sonnet 4.5 (default) |
-| `opus` | Use Claude Opus 4.5 |
+| `sonnet` | Use Claude Sonnet 4.6 (default) |
+| `opus` | Use Claude Opus 4.6 |
 | (omitted) | Inherits from parent or defaults to Sonnet |
 
 ### Special Model Aliases
@@ -162,8 +163,8 @@ For complex tasks requiring multiple agents:
 
 ## Summary
 
-| Aspect | Haiku | Sonnet | Opus |
-|--------|-------|--------|------|
+| Aspect | Haiku 4.5 | Sonnet 4.6 | Opus 4.6 |
+|--------|-----------|------------|----------|
 | Context limit | 200K | 200K (1M beta) | 200K |
 | Token consumption | Low | Medium | High |
 | Speed | Fastest | Fast | Slowest |

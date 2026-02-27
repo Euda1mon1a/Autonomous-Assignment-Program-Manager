@@ -1,8 +1,9 @@
-# Auto Triggers Configuration (FUTURE - NOT ACTIVATED)
+# Auto Triggers Configuration (PARTIALLY SUPERSEDED)
 
-> **Status:** PLANNED - Do not enable until Manager View (B) is stable
-> **Target:** After Manager View achieves reliable orchestration
+> **Status:** PARTIALLY SUPERSEDED — Automated triggers are now implemented via Codex App automations (15 nightly at 01:00-02:00 HST). See `docs/development/CODEX_APP_AUTOMATIONS_0100.md`. The Antigravity-specific webhook triggers described here were never activated.
+> **Original Target:** After Manager View achieves reliable orchestration
 > **Last Updated:** 2025-12-22
+> **Archived:** 2026-02-26
 
 ---
 

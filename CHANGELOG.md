@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **Note (Feb 26, 2026):** The items below span v1.0.2 (Build Hardening) and v1.0.3 (Reliability & Operations), which are recorded in `docs/planning/ROADMAP.md` as merged to main. Consider cutting a tagged release to move these out of [Unreleased].
+
 ### Added
 
 #### Phase 7: Block-Level Constraint Granularity Fix (Feb 20, 2026)
