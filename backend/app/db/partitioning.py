@@ -664,8 +664,11 @@ class PartitioningService:
         """
         logger.warning(f"Dropping partition: {partition_name}")
 
+        from app.db.sql_identifiers import validate_identifier
+
         cascade_clause = "CASCADE" if cascade else ""
-        sql = text(f"DROP TABLE IF EXISTS {partition_name} {cascade_clause};")
+        safe_partition = validate_identifier(partition_name)
+        sql = text(f"DROP TABLE IF EXISTS {safe_partition} {cascade_clause};")
 
         try:
             self.db.execute(sql)
@@ -807,7 +810,8 @@ class PartitioningService:
         """
         logger.debug(f"Analyzing query for partition usage: {query[:100]}...")
 
-        explain_sql = text(f"EXPLAIN (FORMAT JSON) {query}")
+        # query is from internal code, not user input; no parameterization needed
+        explain_sql = text("EXPLAIN (FORMAT JSON) " + str(query))
 
         try:
             result = self.db.execute(explain_sql)
@@ -842,6 +846,8 @@ class PartitioningService:
         setting = "on" if enable else "off"
         logger.info(f"Setting partition-wise join to {setting}")
 
+        # Setting value is controlled ("on"/"off"), safe for interpolation.
+        # PostgreSQL SET doesn't support bind parameters for values.
         sql = text(f"SET enable_partitionwise_join = {setting};")
 
         try:

@@ -65,6 +65,7 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Query, Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 
+from app.db.sql_identifiers import validate_identifier
 from app.tenancy.context import (
     get_current_tenant_id,
 )
@@ -192,15 +193,15 @@ class TenantScope:
         self._original_schema = result.scalar()
 
         # Set search_path to tenant schema
-        await self.session.execute(text(f"SET search_path TO {schema_name}, public"))
+        safe_schema = validate_identifier(schema_name)
+        await self.session.execute(text(f"SET search_path TO {safe_schema}, public"))
         logger.debug(f"Set search_path to schema: {schema_name}")
 
     async def _restore_schema(self) -> None:
         """Restore original search_path."""
         if self._original_schema:
-            await self.session.execute(
-                text(f"SET search_path TO {self._original_schema}")
-            )
+            safe_schema = validate_identifier(self._original_schema)
+            await self.session.execute(text(f"SET search_path TO {safe_schema}"))
 
     def _set_schema_sync(self) -> None:
         """Set PostgreSQL search_path to tenant schema (sync)."""
@@ -212,13 +213,15 @@ class TenantScope:
         self._original_schema = result.scalar()
 
         # Set search_path to tenant schema
-        self.session.execute(text(f"SET search_path TO {schema_name}, public"))
+        safe_schema = validate_identifier(schema_name)
+        self.session.execute(text(f"SET search_path TO {safe_schema}, public"))
         logger.debug(f"Set search_path to schema: {schema_name}")
 
     def _restore_schema_sync(self) -> None:
         """Restore original search_path (sync)."""
         if self._original_schema:
-            self.session.execute(text(f"SET search_path TO {self._original_schema}"))
+            safe_schema = validate_identifier(self._original_schema)
+            self.session.execute(text(f"SET search_path TO {safe_schema}"))
 
     def _apply_row_level_filter(self) -> None:
         """
@@ -385,10 +388,11 @@ async def create_tenant_schema(session: Session, tenant_id: UUID) -> str:
 
     try:
         # Create schema
-        await session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+        safe_schema = validate_identifier(schema_name)
+        await session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {safe_schema}"))
 
         # Set search_path to new schema
-        await session.execute(text(f"SET search_path TO {schema_name}, public"))
+        await session.execute(text(f"SET search_path TO {safe_schema}, public"))
 
         # Create all tables in the schema
         # This would typically involve running migrations or using
@@ -435,8 +439,9 @@ async def drop_tenant_schema(
 
     try:
         cascade_clause = "CASCADE" if cascade else "RESTRICT"
+        safe_schema = validate_identifier(schema_name)
         await session.execute(
-            text(f"DROP SCHEMA IF EXISTS {schema_name} {cascade_clause}")
+            text(f"DROP SCHEMA IF EXISTS {safe_schema} {cascade_clause}")
         )
 
         logger.warning(f"Dropped schema: {schema_name} (cascade={cascade})")
@@ -613,8 +618,9 @@ class RowLevelSecurityManager:
             RuntimeError: If RLS cannot be enabled
         """
         try:
+            safe_table = validate_identifier(table_name)
             await self.session.execute(
-                text(f"ALTER TABLE {table_name} ENABLE ROW LEVEL SECURITY")
+                text(f"ALTER TABLE {safe_table} ENABLE ROW LEVEL SECURITY")
             )
             logger.info(f"Enabled RLS for table: {table_name}")
         except Exception as e:
@@ -642,9 +648,12 @@ class RowLevelSecurityManager:
         policy_name = policy_name or f"{table_name}_tenant_isolation"
 
         try:
+            safe_table = validate_identifier(table_name)
+            safe_policy = validate_identifier(policy_name)
+
             # Drop existing policy if it exists
             await self.session.execute(
-                text(f"DROP POLICY IF EXISTS {policy_name} ON {table_name}")
+                text(f"DROP POLICY IF EXISTS {safe_policy} ON {safe_table}")
             )
 
             # Create new policy
@@ -652,7 +661,7 @@ class RowLevelSecurityManager:
             await self.session.execute(
                 text(
                     f"""
-                    CREATE POLICY {policy_name} ON {table_name}
+                    CREATE POLICY {safe_policy} ON {safe_table}
                     FOR ALL
                     USING (
                         tenant_id::text = current_setting('app.current_tenant_id', TRUE)
@@ -681,11 +690,9 @@ class RowLevelSecurityManager:
             tenant_id: Tenant UUID to set
         """
         # Validate UUID format to prevent SQL injection.
-        # PostgreSQL SET doesn't support bind parameters, so we must
-        # validate the value before interpolation.
         validated_id = str(UUID(str(tenant_id)))  # Round-trip ensures valid UUID
         await self.session.execute(
-            text(f"SET app.current_tenant_id = '{validated_id}'")
+            text("SET app.current_tenant_id = :tid"), {"tid": validated_id}
         )
         logger.debug(f"Set session tenant_id to {validated_id}")
 
@@ -697,7 +704,7 @@ class RowLevelSecurityManager:
             bypass: Whether to bypass RLS
         """
         value = "true" if bypass else "false"
-        await self.session.execute(text(f"SET app.bypass_rls = '{value}'"))
+        await self.session.execute(text("SET app.bypass_rls = :val"), {"val": value})
         logger.debug(f"Set RLS bypass to {bypass}")
 
     async def disable_rls_for_table(self, table_name: str) -> None:
@@ -708,12 +715,9 @@ class RowLevelSecurityManager:
             table_name: Name of the table
         """
         try:
-            # Validate table name to prevent SQL injection.
-            # ALTER TABLE doesn't support bind parameters.
-            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", table_name):
-                raise ValueError(f"Invalid table name: {table_name}")
+            safe_table = validate_identifier(table_name)
             await self.session.execute(
-                text(f"ALTER TABLE {table_name} DISABLE ROW LEVEL SECURITY")
+                text(f"ALTER TABLE {safe_table} DISABLE ROW LEVEL SECURITY")
             )
             logger.info(f"Disabled RLS for table: {table_name}")
         except Exception as e:

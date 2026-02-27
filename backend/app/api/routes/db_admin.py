@@ -564,12 +564,10 @@ async def vacuum_table(
     try:
         from sqlalchemy import text
 
-        # Validate table name to prevent SQL injection
-        if not table_name.replace("_", "").isalnum():
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid table name",
-            )
+        from app.db.sql_identifiers import validate_identifier
+
+        # Validate and quote table name to prevent SQL injection
+        safe_table = validate_identifier(table_name)
 
         # Check if table exists
         check_query = text(
@@ -594,9 +592,9 @@ async def vacuum_table(
 
         # Run VACUUM
         if analyze:
-            vacuum_query = text(f"VACUUM ANALYZE {table_name}")
+            vacuum_query = text(f"VACUUM ANALYZE {safe_table}")
         else:
-            vacuum_query = text(f"VACUUM {table_name}")
+            vacuum_query = text(f"VACUUM {safe_table}")
 
         # Execute with autocommit
         connection = db.connection()
