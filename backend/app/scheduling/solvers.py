@@ -738,7 +738,7 @@ class CPSATSolver(BaseSolver):
         self,
         constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
-        num_workers: int = 4,
+        num_workers: int = 0,  # 0 = auto-detect all cores
         task_id: str | None = None,
         redis_client=None,
     ) -> None:
@@ -899,6 +899,10 @@ class CPSATSolver(BaseSolver):
             f_i = context.faculty_idx[faculty.id]
             for block in workday_blocks:
                 if (faculty.id, block.id) in locked_blocks:
+                    continue
+                # Skip blocks where faculty is unavailable (mirrors resident filtering)
+                block_avail = availability.get(faculty.id, {}).get(block.id)
+                if block_avail and not block_avail.get("available", True):
                     continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
@@ -1193,26 +1197,20 @@ class CPSATSolver(BaseSolver):
                 else:
                     date_pm_block[block.date] = block
 
-            for (f_i_call, b_i_call, call_type), call_var in call.items():
-                # Get the call date from the block
-                call_block = None
-                for block in context.blocks:
-                    if context.block_idx[block.id] == b_i_call:
-                        call_block = block
-                        break
+            # Pre-build reverse lookups for O(1) access (avoids O(N*B) inner loops)
+            block_by_idx = {context.block_idx[b.id]: b for b in context.blocks}
+            faculty_id_by_call_idx = {
+                call_idx[fac.id]: fac.id for fac in call_eligible if fac.id in call_idx
+            }
 
+            for (f_i_call, b_i_call, call_type), call_var in call.items():
+                call_block = block_by_idx.get(b_i_call)
                 if not call_block:
                     continue
 
                 next_day = call_block.date + timedelta(days=1)
 
-                # Find matching faculty index in main faculty list
-                faculty_id = None
-                for fac in call_eligible:
-                    if call_idx.get(fac.id) == f_i_call:
-                        faculty_id = fac.id
-                        break
-
+                faculty_id = faculty_id_by_call_idx.get(f_i_call)
                 if not faculty_id or faculty_id not in context.faculty_idx:
                     continue
 
@@ -1377,6 +1375,47 @@ class CPSATSolver(BaseSolver):
         model.Maximize(objective_expr)
 
         # ==================================================
+        # SOLUTION HINTING (warm start)
+        # Provide a greedy initial solution so the solver starts with a
+        # feasible bound and prunes the search space faster.
+        # ==================================================
+        hinted_resident_blocks: set[tuple[int, int]] = set()
+        hinted_vars: set[int] = set()  # Track var IDs already hinted
+        hint_count = 0
+
+        # Priority 1: hint existing (locked) assignments
+        for assignment in existing_assignments:
+            if assignment.person_id in context.resident_idx:
+                r_i = context.resident_idx[assignment.person_id]
+                if assignment.block_id in context.block_idx:
+                    b_i = context.block_idx[assignment.block_id]
+                    if (
+                        assignment.rotation_template_id
+                        and assignment.rotation_template_id in template_idx
+                    ):
+                        t_i = template_idx[assignment.rotation_template_id]
+                        if (r_i, b_i, t_i) in x:
+                            model.AddHint(x[r_i, b_i, t_i], 1)
+                            hinted_resident_blocks.add((r_i, b_i))
+                            hinted_vars.add(id(x[r_i, b_i, t_i]))
+                            hint_count += 1
+
+        # Priority 2: greedy fill — for each unhinted (resident, block),
+        # hint the first available template to 1, rest to 0.
+        # Skip vars already hinted in Priority 1 to avoid overriding.
+        for (r_i, b_i, t_i), var in x.items():
+            if id(var) in hinted_vars:
+                continue  # Already hinted to 1 in Priority 1
+            if (r_i, b_i) not in hinted_resident_blocks:
+                model.AddHint(var, 1)
+                hinted_resident_blocks.add((r_i, b_i))
+                hint_count += 1
+            else:
+                model.AddHint(var, 0)
+
+        logger.info(f"Solution hints: {hint_count} vars hinted to 1")
+
+        # ==================================================
         # PRE-SOLVE DEBUGGING
         # ==================================================
         proto = model.Proto()
@@ -1452,6 +1491,14 @@ class CPSATSolver(BaseSolver):
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = self.timeout_seconds
         solver.parameters.num_search_workers = self.num_workers
+        # Disable symmetry detection — residents/faculty have heterogeneous
+        # PGY levels, templates, and availability so few symmetries exist.
+        # Saves O(n^2) presolve overhead.
+        solver.parameters.symmetry_level = 0
+        # Minimal linearization — constraints are already linear or use
+        # AddAbsEquality; deeper levels add overhead for no benefit.
+        solver.parameters.linearization_level = 1
+        solver.parameters.log_search_progress = True
 
         # Create progress callback if Redis client is available
         callback = None
