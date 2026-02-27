@@ -696,7 +696,8 @@ class RowLevelSecurityManager:
         # Validate UUID format to prevent SQL injection.
         validated_id = str(UUID(str(tenant_id)))  # Round-trip ensures valid UUID
         await self.session.execute(
-            text("SET app.current_tenant_id = :tid"), {"tid": validated_id}
+            text("SELECT set_config('app.current_tenant_id', :tid, false)"),
+            {"tid": validated_id},
         )
         logger.debug(f"Set session tenant_id to {validated_id}")
 
@@ -708,7 +709,9 @@ class RowLevelSecurityManager:
             bypass: Whether to bypass RLS
         """
         value = "true" if bypass else "false"
-        await self.session.execute(text("SET app.bypass_rls = :val"), {"val": value})
+        await self.session.execute(
+            text("SELECT set_config('app.bypass_rls', :val, false)"), {"val": value}
+        )
         logger.debug(f"Set RLS bypass to {bypass}")
 
     async def disable_rls_for_table(self, table_name: str) -> None:

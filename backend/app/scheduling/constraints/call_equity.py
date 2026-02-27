@@ -151,7 +151,9 @@ class SundayCallEquityConstraint(SoftConstraint):
         # and compute dev = F * (h_i + c_i) - (total_history + sum(all_vars))
 
         objective_vars = variables.get("objective_terms", [])
-        max_possible = (max(all_history) + len(sunday_blocks)) * F + total_history
+        max_possible = (
+            max(all_history, default=0) + len(sunday_blocks)
+        ) * F + total_history
         for f_i, vars_list in faculty_sunday_counts.items():
             faculty_uuid = call_eligible_faculty[f_i].id
             history = (
@@ -577,7 +579,9 @@ class WeekdayCallEquityConstraint(SoftConstraint):
         total_history = sum(all_history)
 
         objective_vars = variables.get("objective_terms", [])
-        max_possible = (max(all_history) + len(weekday_blocks)) * F + total_history
+        max_possible = (
+            max(all_history, default=0) + len(weekday_blocks)
+        ) * F + total_history
         for f_i, vars_list in faculty_weekday_counts.items():
             faculty_uuid = call_eligible_faculty[f_i].id
             history = (
