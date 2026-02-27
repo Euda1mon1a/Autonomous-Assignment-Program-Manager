@@ -309,9 +309,18 @@ The `Person` model keeps its `pgy_level` field for backward compatibility but de
 
 ---
 
-## Track C: Leave Event-Sourcing
+## Track C: Leave Single-Source-of-Truth (Absence → Preload Sync)
 
 **Priority: MEDIUM — prevents orphaned preloads and audit trail gaps**
+
+> **Architectural Decision (Feb 26, 2026 — Gemini 3 Pro tiebreaker):** Two independent research sessions (annual-leap + full-codebase) produced conflicting designs for cross-block absence handling. Gemini Pro 3.1 adjudicated:
+>
+> - **Option A wins (single record, projected per-block).** Splitting a real-world leave event at block boundaries is an anti-pattern ("domain leakage"). A 10-day vacation crossing blocks is ONE Absence record; the solver clips dates in Python.
+> - **Application-level service logic, NOT triggers.** PostgreSQL triggers are hostile to async SQLAlchemy 2.0 — trigger-created rows bypass the ORM identity map, causing stale reads. Use Unit of Work pattern with PG15 `MERGE` in Python instead.
+> - **Triggers OK for audit only.** Append-only `absence_audit_log` can use triggers since audit data is rarely read back in the same request context.
+> - **Migration path:** Add `absence_id` FK to `half_day_assignments` → backfill from existing LV preloads → add CHECK constraint → refactor import pipeline.
+>
+> Title changed from "Leave Event-Sourcing" to reflect that this is NOT event sourcing (per annual-leap Section 4: "hybrid stamped + audit log" model).
 
 **Goal:** Make the `absences` table the single source of truth for leave. Eliminate stale derived state.
 
@@ -413,9 +422,32 @@ for person_id, lv_dates in leave_dates_by_person.items():
 
 ### Migration Strategy
 
-1. Add `@hybrid_property` methods that compute from absences (backward compatible — both columns and properties work)
+**Phase 1 — Schema (Alembic):**
+1. Add `absence_id` FK (nullable) and `preload_source` column to `half_day_assignments`
+2. Add `@hybrid_property` methods on `block_assignment` that compute from absences (backward compatible)
+
+**Phase 2 — Data backfill (Alembic data migration):**
+1. Query all `HalfDayAssignment` rows where `activity_code IN ('LV-AM', 'LV-PM')` and `absence_id IS NULL`
+2. Group contiguous dates per person into `(start_date, end_date)` ranges (reuse `_dates_to_ranges()` logic from `half_day_import_service.py:562`)
+3. Bulk insert `Absence` records for collapsed ranges
+4. Bulk update `half_day_assignments` to link `absence_id` to newly created `Absence.id`s
+
+**Phase 3 — Enforce integrity:**
+1. Add CHECK constraint: `activity_code NOT IN ('LV-AM', 'LV-PM') OR absence_id IS NOT NULL`
 2. Migrate all consumers from column reads to property reads
-3. Drop columns in a separate migration once verified
+3. Drop `has_leave`/`leave_days` columns in a separate migration once verified
+
+**Context builder query (solver integration):**
+```python
+# Two date ranges overlap if: (Start_A <= End_B) AND (End_A >= Start_B)
+stmt = select(Absence).where(
+    and_(
+        Absence.start_date <= block_end,
+        Absence.end_date >= block_start,
+        Absence.status.in_(["approved", "pending"])
+    )
+).order_by(Absence.person_id, Absence.start_date)
+```
 
 ---
 
