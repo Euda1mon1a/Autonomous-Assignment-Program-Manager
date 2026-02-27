@@ -10,9 +10,14 @@
  */
 
 import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
-import { SolverVisualization } from '@/features/voxel-schedule';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+
+const SolverVisualization = dynamic(
+  () => import('@/features/voxel-schedule').then(m => m.SolverVisualization),
+  { ssr: false }
+);
 
 function SolverVizContent() {
   const params = useSearchParams();

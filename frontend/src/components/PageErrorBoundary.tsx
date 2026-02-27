@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 
 interface PageErrorBoundaryProps {
@@ -88,20 +89,20 @@ export function PageErrorBoundary({
             <RefreshCw className="w-4 h-4" />
             Try Again
           </button>
-          <a
+          <Link
             href={backPath}
             className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-900"
           >
             <ArrowLeft className="w-4 h-4" />
             Go Back
-          </a>
-          <a
+          </Link>
+          <Link
             href="/"
             className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-900"
           >
             <Home className="w-4 h-4" />
             Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>
