@@ -240,9 +240,15 @@ class XMLToXlsxConverter:
             used_res_rows.add(current_row)
             current_row += 1
 
-        # --- Faculty (rows 31-80) ---
+        # --- Faculty (rows 31-80) --- core first, adjunct below, alphabetical within
         faculty = data.get("faculty", []) or []
-        faculty_sorted = sorted(faculty, key=lambda f: f.get("name", ""))
+        faculty_sorted = sorted(
+            faculty,
+            key=lambda f: (
+                1 if f.get("faculty_role") == "adjunct" else 0,
+                f.get("name", ""),
+            ),
+        )
 
         used_fac_rows: set[int] = set()
         current_row = self._FAT_BAND_FACULTY_START
@@ -571,9 +577,9 @@ class XMLToXlsxConverter:
         sheet.cell(row=29, column=64).value = "=SUM(BL9:BL26)"
         sheet.cell(row=29, column=65).value = "=SUM(BM9:BM26)"
         sheet.cell(row=29, column=66).value = "=SUM(BN9:BN28)"
-        sheet.cell(row=29, column=67).value = "=SUM(BP9:BP28)"
-        sheet.cell(row=29, column=68).value = "=SUM(BQ9:BQ28)"
-        sheet.cell(row=29, column=69).value = "=SUM(BR9:BR28)"
+        sheet.cell(row=29, column=67).value = "=SUM(BO9:BO28)"
+        sheet.cell(row=29, column=68).value = "=SUM(BP9:BP28)"
+        sheet.cell(row=29, column=69).value = "=SUM(BQ9:BQ28)"
         sheet.cell(row=29, column=70).value = None
 
         row30_headers = [

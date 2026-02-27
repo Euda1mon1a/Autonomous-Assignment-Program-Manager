@@ -82,9 +82,7 @@
     <font_color_group name="theme_dark" display_name="Theme:1 - Standard body text" hex_color="theme:1" actual_rgb="FF000000">
       <code value="W" description="Weekend" sample_count="2423"/>
       <code value="FMIT" description="FMIT working" sample_count="330"/>
-      <code value="LEC" description="Lecture" sample_count="266"/>
       <code value="LV" description="Leave" sample_count="201"/>
-      <code value="GME" description="GME admin" sample_count="177"/>
       <code value="C" description="Clinic" sample_count="119"/>
       <code value="AT" description="Attending Time" sample_count="115"/>
     </font_color_group>
@@ -93,6 +91,8 @@
       <code value="TNG" description="Training (on black)" sample_count="81"/>
       <code value="MM" description="M&amp;M (on black)" sample_count="19"/>
       <code value="FED" description="Federal holiday" sample_count="10"/>
+      <code value="LEC" description="Lecture (on black fill)" sample_count="266"/>
+      <code value="GME" description="GME admin (on black fill)" sample_count="177"/>
     </font_color_group>
     <font_color_group name="black" display_name="Black - Default text" hex_color="FF000000" actual_rgb="FF000000">
       <code value="R1" description="Row labels" sample_count="125"/>

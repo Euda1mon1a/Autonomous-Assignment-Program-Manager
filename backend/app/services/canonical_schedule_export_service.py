@@ -252,6 +252,10 @@ class CanonicalScheduleExportService:
         for col, dim in source.column_dimensions.items():
             target.column_dimensions[col] = copy(dim)
 
+        # Copy row dimensions (preserves hidden state from converter)
+        for row_idx, dim in source.row_dimensions.items():
+            target.row_dimensions[row_idx] = copy(dim)
+
         # Copy merged cells
         for merged_range in source.merged_cells.ranges:
             target.merge_cells(str(merged_range))
@@ -404,6 +408,9 @@ class CanonicalScheduleExportService:
 
         return cells
 
+    # Faculty excluded from export (placeholders and removed staff)
+    _EXCLUDED_FACULTY_NAMES: set[str] = {"Kate Bohringer"}
+
     def _export_json_data(
         self,
         start_date: date,
@@ -411,14 +418,71 @@ class CanonicalScheduleExportService:
         include_faculty: bool,
         include_overrides: bool,
     ) -> dict[str, Any]:
+        from datetime import timedelta
+
+        from app.models.person import Person
+
         exporter = HalfDayJSONExporter(self.db)
-        return exporter.export(
+        data = exporter.export(
             block_start=start_date,
             block_end=end_date,
             include_faculty=include_faculty,
             include_call=True,
             include_overrides=include_overrides,
         )
+
+        # Filter out placeholder and excluded faculty
+        if data.get("faculty"):
+            data["faculty"] = [
+                f
+                for f in data["faculty"]
+                if not f.get("name", "").startswith("Dr. Faculty-")
+                and f.get("name", "") not in self._EXCLUDED_FACULTY_NAMES
+            ]
+
+        # Filter placeholder names from call assignments
+        if data.get("call", {}).get("nights"):
+            data["call"]["nights"] = [
+                n
+                for n in data["call"]["nights"]
+                if not n.get("staff", "").startswith("Faculty-")
+            ]
+
+        # Ensure adjunct faculty appear even without assignments (blank rows)
+        if include_faculty:
+            existing_names = {f.get("name") for f in data.get("faculty", [])}
+            adjunct_people = (
+                self.db.query(Person)
+                .filter(Person.type == "faculty", Person.faculty_role == "adjunct")
+                .all()
+            )
+            for p in adjunct_people:
+                if p.name not in existing_names:
+                    days = []
+                    current = start_date
+                    while current <= end_date:
+                        days.append(
+                            {
+                                "date": current.isoformat(),
+                                "weekday": current.strftime("%a"),
+                                "am": None,
+                                "pm": None,
+                            }
+                        )
+                        current = current + timedelta(days=1)
+                    data.setdefault("faculty", []).append(
+                        {
+                            "id": str(p.id),
+                            "name": p.name,
+                            "pgy": None,
+                            "faculty_role": "adjunct",
+                            "rotation1": "",
+                            "rotation2": "",
+                            "days": days,
+                        }
+                    )
+
+        return data
 
     def _inject_metadata(
         self,
