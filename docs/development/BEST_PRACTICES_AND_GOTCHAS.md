@@ -1015,6 +1015,14 @@ The hydration loop maps: `"weekend" -> "sunday"`, `"overnight" -> "weekday"`, `"
 | Multiple TODO/priority files | Contradictions, unclear source of truth | Single MASTER_PRIORITY_LIST.md |
 | Session scratchpads referencing other scratchpads | Broken links when files move/delete | Reference committed docs or inline the info |
 
+### Dependency Security (Feb 26, 2026 — Gemini Full-Stack Review)
+
+Gemini 3 Pro's independent scan found 5 npm vulnerabilities across 1,186 frontend dependencies:
+- **High:** `next` (DoS via insecure deserialization), `axios` (`__proto__` DoS in mergeConfig), `minimatch` (ReDoS)
+- **Moderate:** `undici`, `ajv`
+
+**Remediation:** Run `cd frontend && npm audit fix` periodically. Check `npm audit` output before releases.
+
 ---
 
 ## 13. CI/CD in the Vibecoding Age

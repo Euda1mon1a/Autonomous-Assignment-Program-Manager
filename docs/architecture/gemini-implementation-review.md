@@ -473,3 +473,41 @@ These are future features, not bugs. They should be implemented in separate PRs:
 | G4 | `max()` ValueError on empty sequence in equity constraints | Low | **FIXED** (PR #1201) — Added `default=0` parameter |
 
 **Note:** Gemini made direct file edits (advise-only mode was requested). Changes were stashed, reviewed, and incorporated into the fix branch alongside Codex feedback fixes.
+
+---
+
+# Round 4: Independent Full-Stack Review (Feb 26, 2026)
+
+> **Reviewer:** Gemini 3 Pro (independent codebase scan, not roadmap-driven)
+> **Scope:** Excel pipeline, API contracts, load testing, dependency security, UI/UX, test coverage
+
+## Findings Summary
+
+| # | Area | Status | Details |
+|---|------|--------|---------|
+| R4-1 | Excel Pipeline & Data Integrity | Confirmed Robust | `ClinicScheduleImporter` dynamic coordinate mapping, fuzzy matching (`SLOT_TYPE_MAPPING`), conflict detection (double-booking, specialty unavailable). E2E tests (`TestXLSXImportWorkflowE2E`) cover merged cells, transposed layouts, duplicates, Unicode. |
+| R4-2 | API Contract & OpenAPI | Confirmed Compliant | All routes use `response_model=` directive. Pydantic V2 auto-validates inbound/outbound payloads against OpenAPI spec. |
+| R4-3 | Load Testing (Baseline) | Validated | 20 VUs over ~14 min, 28,450+ requests. P95=490ms, P50=220ms, 0.5% error rate. CRUD ~150ms; schedule generation 6-15s (CP-SAT complexity). See `load-tests/BASELINE_RESULTS.md`. |
+| R4-4 | Dependency Security | **ACTION REQUIRED** | 5 npm vulnerabilities across 1,186 dependencies (details below) |
+| R4-5 | UI/UX Error Handling | Confirmed Best-Practice | `SectionErrorBoundary` + `PageErrorBoundary` prevent white-screens. Backend uses `logger.error(..., exc_info=True)` for full stack traces. |
+| R4-6 | Test Coverage | Blocked by Config | Secret validation in `config.py` prevents test run without `DEBUG=true` or strong auto-generated secrets. See GEMINI.md for workaround. |
+
+## R4-4: npm Dependency Vulnerabilities
+
+| Package | Severity | Vulnerability | Fix |
+|---------|----------|---------------|-----|
+| `next` | High | DoS via insecure deserialization | Upgrade to `15.5.10+` or `16.x` |
+| `axios` | High | DoS via `__proto__` key in `mergeConfig` | Upgrade to `>=1.13.4` |
+| `minimatch` | High | ReDoS via combinatorial backtracking | Update transitive dependency |
+| `undici` | Moderate | Various | Update transitive dependency |
+| `ajv` | Moderate | Various | Update transitive dependency |
+
+**Remediation:** `cd frontend && npm audit fix` then commit lockfile.
+
+## R4-6: Test Runner Configuration for External Agents
+
+Gemini's test run was blocked by `backend/app/core/config.py` secret validators. When `DEBUG=false` (default), `validate_secrets()` raises `ValueError` for weak/default credentials during `Settings()` initialization, which occurs at `conftest.py` import time via `from app.main import app`.
+
+**Root cause chain:** `conftest.py` -> `from app.main import app` -> `Settings()` -> `validate_secrets()` -> `ValueError`
+
+**Solution:** Set `DEBUG=true` before running pytest. This relaxes validators to warnings. Test instructions added to `GEMINI.md`.

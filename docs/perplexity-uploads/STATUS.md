@@ -60,6 +60,12 @@ Sessions 1-6 results are embedded in `full-codebase/prior_research_results.md` s
 - Finding 3.3.1: 8 untested scheduling edge cases
 - Finding 4.5: YTD_SUMMARY hardcoded column positions
 
+## External Reviews
+
+| Reviewer | Date | Scope | Key Findings | Reference |
+|----------|------|-------|--------------|-----------|
+| Gemini 3 Pro (full-stack) | Feb 26, 2026 | Excel pipeline, API contracts, load testing, dependency security, UI/UX, test coverage | Excel pipeline robust, 5 npm vulns (3 high), test runner blocked by secret validation | `docs/architecture/gemini-implementation-review.md` Round 4 |
+
 ## What to Do When Results Come Back
 
 1. Save output to `started/{session-name}/RESULTS.md`
