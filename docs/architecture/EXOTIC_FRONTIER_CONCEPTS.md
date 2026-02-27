@@ -5,10 +5,10 @@
 
 ---
 
-> **Status**: Production-ready
+> **Status**: ARCHIVED — The 10 exotic modules (~21,000 lines) were removed in PR #1198 (Feb 2026) as dead scaffolding. Concepts retained here for reference.
 > **Version**: 1.0
 > **Created**: 2025-12-29
-> **Total Implementations**: 10 modules, ~21,000 lines of code
+> **Removed**: PR #1198 (2026-02-26) — 27,598 lines of unused infrastructure removed
 
 ---
 

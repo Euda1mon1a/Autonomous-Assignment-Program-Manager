@@ -1,8 +1,9 @@
-# Hybrid Model Orchestration (FUTURE - CONCEPT ONLY)
+# Hybrid Model Orchestration (ARCHIVED)
 
-> **Status:** CONCEPT - For future evaluation
+> **Status:** SUPERSEDED — See [`docs/architecture/PAI2_TRI_AGENT_SWARM.md`](../docs/architecture/PAI2_TRI_AGENT_SWARM.md) for the production tri-agent architecture (Opus 4.6 + Codex 5.3 + Gemini 3 Pro)
 > **Created:** 2025-12-26
-> **Prerequisite:** Qwen Code installed and validated independently
+> **Archived:** 2026-02-26
+> **Original Prerequisite:** Qwen Code installed and validated independently
 
 ---
 

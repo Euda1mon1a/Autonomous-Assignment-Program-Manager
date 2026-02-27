@@ -5,7 +5,7 @@
 
 ## Human Summary
 
-You now have `15` active Codex App automations in a staggered `01:00-02:00` local window.
+You now have `15` registered Codex App automations in a staggered `01:00-02:00` local window (this doc). Additional automations exist in the Codex App and CLI — see `docs/architecture/PAI2_TRI_AGENT_SWARM.md` Section 9 (Overnight Playbooks) for the broader orchestration picture.
 This keeps one nightly block while reducing launch contention.
 
 ## Where They Live

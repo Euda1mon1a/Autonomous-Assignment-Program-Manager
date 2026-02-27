@@ -1,12 +1,27 @@
 # MCP Server Setup for Claude Code IDE
 
-> **Updated:** 2025-12-29
+> **Updated:** 2026-02-26
 
 ## Overview
 
 This document describes the Model Context Protocol (MCP) server integration for the Residency Scheduler application with Claude Code IDE.
 
-## Quick Start (Docker - Recommended)
+## Quick Start (Native macOS — Recommended)
+
+```bash
+# 1. Start the MCP server natively (no Docker needed)
+cd mcp-server && uvicorn scheduler_mcp.server:app --port 8080
+
+# 2. Register with Claude Code (one-time)
+claude mcp add --transport http --scope local residency-scheduler http://127.0.0.1:8080/mcp
+
+# 3. Verify connection
+# Use /mcp in Claude Code to check status
+```
+
+> **Note:** Docker is still supported but native macOS is the primary development setup as of Feb 2026. All core services (PostgreSQL, Redis, MCP server) run natively on Apple Silicon.
+
+## Quick Start (Docker — Alternative)
 
 ```bash
 # 1. Start all services

@@ -99,7 +99,9 @@ The current release includes:
 
 ---
 
-## Upcoming: v1.1.0 (Q1 2026)
+## Upcoming: v1.1.0 (Target: Q2 2026)
+
+> **Note (Feb 26, 2026):** Q1 2026 was consumed by the Realization Sprint (PRs #1099-#1108), quality hardening (v1.0.2-v1.0.3), Perplexity research sessions (8 sessions), PII incident recovery, dead scaffolding removal (PR #1198, 27,598 lines), call equity YTD (PR #1199), SQL injection hardening (PRs #1197, #1200, #1201), and PAI² Tri-Agent Swarm architecture (PR #1205). Email notifications and the items below are deferred to Q2.
 
 ### Email Notifications
 

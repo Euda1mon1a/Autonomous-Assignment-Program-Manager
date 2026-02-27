@@ -1,8 +1,10 @@
 # PAI Agent Spawning Guide
 
-> **Last Updated:** 2026-01-16
-> **Feature Branch:** `feat/mcp-agent-spawning`
-> **Status:** Active
+> **Last Updated:** 2026-02-26
+> **Status:** PAI v1 — Retained as reference. For new work, prefer **Claude Code Agent Teams** (native Task tool with `team_name` parameter) or the **PAI² Tri-Agent Swarm** ([`docs/architecture/PAI2_TRI_AGENT_SWARM.md`](../architecture/PAI2_TRI_AGENT_SWARM.md))
+> **Original Branch:** `feat/mcp-agent-spawning`
+
+> **Note (Feb 2026):** PAI v1 identity cards and spawn chains have been archived to `.claude/archive/`. The MCP `spawn_agent_tool` still works but the primary orchestration pattern is now native Agent Teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) for multi-agent coordination and the PAI² Tri-Agent Swarm for cross-model orchestration (Opus 4.6 + Codex 5.3 + Gemini 3 Pro).
 
 ---
 

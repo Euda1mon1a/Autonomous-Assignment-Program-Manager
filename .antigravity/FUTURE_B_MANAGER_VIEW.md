@@ -1,8 +1,9 @@
-# Manager View Configuration (FUTURE - NOT ACTIVATED)
+# Manager View Configuration (ARCHIVED)
 
-> **Status:** PLANNED - Do not enable until Autopilot (A) is stable
-> **Target:** After Autopilot achieves 95%+ reliability
+> **Status:** SUPERSEDED — Parallel agent orchestration is now handled by Claude Code Agent Teams (native `Task` tool with `team_name`) and PAI² Tri-Agent Swarm. See [`docs/architecture/PAI2_TRI_AGENT_SWARM.md`](../docs/architecture/PAI2_TRI_AGENT_SWARM.md)
+> **Original Target:** After Autopilot achieves 95%+ reliability
 > **Last Updated:** 2025-12-22
+> **Archived:** 2026-02-26
 
 ---
 

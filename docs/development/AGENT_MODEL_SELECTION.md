@@ -13,7 +13,7 @@ This document describes the vector-based agent model selection system that enabl
 | Model | Model ID | Cost (per M tokens) | Latency | Use Case |
 |-------|----------|---------------------|---------|----------|
 | **Haiku 4.5** | `claude-haiku-4-5-20251001` | $0.25 / $1.25 in/out | Fast | Simple tasks, metadata updates, delegation auditing |
-| **Sonnet 4.5** | `claude-sonnet-4-5-20250929` | $3 / $15 in/out | Medium | Code generation, testing, analysis |
+| **Sonnet 4.6** | `claude-sonnet-4-6` | $3 / $15 in/out | Medium | Code generation, testing, analysis |
 | **Opus 4.6** | `claude-opus-4-6` | $5 / $25 in/out | Slower | Architecture, coordination, multi-agent synthesis |
 
 ### New Opus 4.6 Capabilities
@@ -131,7 +131,7 @@ Google's open-source terminal agent with the largest context window available (1
 | System | Model | Speed | Context | SWE-Bench | Cost | Best For |
 |--------|-------|-------|---------|-----------|------|----------|
 | Claude Code | Opus 4.6 | Medium | 200K (1M beta) | — | $$$ | Orchestration, architecture, complex reasoning |
-| Claude Code | Sonnet 4.5 | Fast | 200K | — | $$ | Code gen, reviews, tactical work |
+| Claude Code | Sonnet 4.6 | Fast | 200K | — | $$ | Code gen, reviews, tactical work |
 | Claude Code | Haiku 4.5 | Fastest | 200K | — | $ | Simple execution, lookups |
 | Codex CLI | 5.3-Codex | Standard | 192K | — | Pro sub | Nightly automations, multi-file tasks |
 | Codex CLI | 5.3-Spark | 1000+ tok/s | 128K | — | Pro sub | Interactive pairing, quick fixes |

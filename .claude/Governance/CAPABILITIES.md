@@ -5,7 +5,7 @@
 
 ---
 
-## MCP Tools (34 Core + 50 Armory)
+## MCP Tools (97+ Total)
 
 All tools prefixed with `mcp__residency-scheduler__`
 
