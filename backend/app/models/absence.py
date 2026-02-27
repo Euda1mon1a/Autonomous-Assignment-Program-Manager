@@ -131,7 +131,7 @@ class Absence(Base):
         ),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Absence(person_id='{self.person_id}', type='{self.absence_type}')>"
 
     @property

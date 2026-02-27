@@ -55,7 +55,7 @@ class Block(Base):
         CheckConstraint("time_of_day IN ('AM', 'PM')", name="check_time_of_day"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Block(date='{self.date}', time='{self.time_of_day}')>"
 
     @property
