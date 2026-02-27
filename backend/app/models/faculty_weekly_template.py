@@ -47,7 +47,7 @@ class FacultyWeeklyTemplate(Base):
 
     Attributes:
         person_id: FK to faculty member this template belongs to
-        day_of_week: 0=Sunday, 1=Monday, ..., 6=Saturday
+        day_of_week: 0=Monday, 1=Tuesday, ..., 6=Sunday (Matches Python date.weekday())
         time_of_day: "AM" or "PM"
         week_number: Week 1-4 within block (NULL = same pattern all weeks)
         activity_id: FK to Activity table (NULL = unassigned slot)

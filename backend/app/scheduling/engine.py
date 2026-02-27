@@ -3306,12 +3306,12 @@ class SchedulingEngine:
         # Exclude adjunct faculty — they are hand-jammed by the coordinator,
         # not auto-scheduled by the solver. Mirrors _get_call_eligible_faculty().
         adjunct_ids = set(
-            self.db.query(Person.id)
+            row[0]
+            for row in self.db.query(Person.id)
             .filter(
                 Person.type == "faculty",
                 Person.faculty_role == FacultyRole.ADJUNCT.value,
             )
-            .scalars()
             .all()
         )
 
