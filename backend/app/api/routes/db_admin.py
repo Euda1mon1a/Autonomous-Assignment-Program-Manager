@@ -567,7 +567,13 @@ async def vacuum_table(
         from app.db.sql_identifiers import validate_identifier
 
         # Validate and quote table name to prevent SQL injection
-        safe_table = validate_identifier(table_name)
+        try:
+            safe_table = validate_identifier(table_name)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid table name: '{table_name}'",
+            )
 
         # Check if table exists
         check_query = text(

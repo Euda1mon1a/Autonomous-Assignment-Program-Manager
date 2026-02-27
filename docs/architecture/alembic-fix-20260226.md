@@ -7,7 +7,7 @@ DB alembic_version was stuck at orphaned revision 'a399bc3fb338' (deleted migrat
 ## Fix Applied
 1. pg_dump backup created at backend/backup_20260226_pre_alembic.dump
 2. Stamped DB to 20260219_add_gt_tables (last known-good, game_theory tables existed)
-3. Fixed table ownership (aaronmontgomerymini → scheduler) for all public tables
+3. Fixed table ownership to the service role for all public tables
 4. Applied 5 pending migrations to head (8b9cea518229)
 
 ## Verification

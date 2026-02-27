@@ -24,3 +24,32 @@ def validate_identifier(name: str) -> str:
             "Must match [a-zA-Z_][a-zA-Z0-9_]{{0,62}}."
         )
     return f'"{name}"'
+
+
+# PostgreSQL special search_path variables
+_SEARCH_PATH_SPECIALS = frozenset({'"$user"', "$user", "public"})
+
+
+def validate_search_path(search_path: str) -> str:
+    """Validate a PostgreSQL search_path value (comma-separated schemas).
+
+    SHOW search_path returns values like '"$user", public' which contain
+    multiple schemas. Each component is validated individually.
+
+    Returns the validated search_path string safe for SET search_path TO.
+    """
+    parts = [p.strip() for p in search_path.split(",")]
+    safe_parts = []
+    for part in parts:
+        if not part:
+            continue
+        if part in _SEARCH_PATH_SPECIALS:
+            safe_parts.append(part)
+        elif _IDENTIFIER_RE.match(part):
+            safe_parts.append(f'"{part}"')
+        else:
+            raise ValueError(
+                f"Invalid search_path component: {part!r}. "
+                "Must be a valid identifier or a special variable."
+            )
+    return ", ".join(safe_parts)

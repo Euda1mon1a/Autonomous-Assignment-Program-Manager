@@ -200,8 +200,10 @@ class TenantScope:
     async def _restore_schema(self) -> None:
         """Restore original search_path."""
         if self._original_schema:
-            safe_schema = validate_identifier(self._original_schema)
-            await self.session.execute(text(f"SET search_path TO {safe_schema}"))
+            from app.db.sql_identifiers import validate_search_path
+
+            safe_path = validate_search_path(self._original_schema)
+            await self.session.execute(text(f"SET search_path TO {safe_path}"))  # noqa: S608 — search_path validated
 
     def _set_schema_sync(self) -> None:
         """Set PostgreSQL search_path to tenant schema (sync)."""
@@ -220,8 +222,10 @@ class TenantScope:
     def _restore_schema_sync(self) -> None:
         """Restore original search_path (sync)."""
         if self._original_schema:
-            safe_schema = validate_identifier(self._original_schema)
-            self.session.execute(text(f"SET search_path TO {safe_schema}"))
+            from app.db.sql_identifiers import validate_search_path
+
+            safe_path = validate_search_path(self._original_schema)
+            self.session.execute(text(f"SET search_path TO {safe_path}"))  # noqa: S608 — search_path validated
 
     def _apply_row_level_filter(self) -> None:
         """
