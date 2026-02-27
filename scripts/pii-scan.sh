@@ -46,12 +46,14 @@ echo "Running PII/OPSEC/PERSEC scan..."
 
 # Check for SSN patterns (most critical - fails commit)
 # Excludes test directories which use mock SSNs like 123-45-6789 for PII sanitization tests
+# Excludes perplexity-uploads which contain source code copies with test SSN patterns
 echo -n "Checking for SSN patterns... "
 SSNS=$(grep -rn --include="*.py" --include="*.ts" --include="*.tsx" --include="*.json" \
   -E '\b\d{3}-\d{2}-\d{4}\b' \
   --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv --exclude-dir=.venv \
   --exclude-dir=__pycache__ --exclude-dir=htmlcov \
   --exclude-dir=tests --exclude-dir=__tests__ \
+  --exclude-dir=perplexity-uploads \
   . 2>/dev/null || true)
 
 if [ -n "$SSNS" ]; then
@@ -207,7 +209,7 @@ fi
 if [ -n "$STAGED_FILES" ]; then
   NAME_MATCHES=""
   for file in $STAGED_FILES; do
-    if [[ "$file" =~ \.(md|txt|json|xml|csv)$ ]] && [ -f "$file" ] && [[ ! "$file" =~ \.claude/archive/ ]]; then
+    if [[ "$file" =~ \.(md|txt|json|xml|csv)$ ]] && [ -f "$file" ] && [[ ! "$file" =~ \.claude/archive/ ]] && [[ ! "$file" =~ perplexity-uploads/ ]]; then
       MATCHES=$(grep -nE "\b($KNOWN_NAMES)\b" "$file" 2>/dev/null || true)
       if [ -n "$MATCHES" ]; then
         NAME_MATCHES="${NAME_MATCHES}${file}:

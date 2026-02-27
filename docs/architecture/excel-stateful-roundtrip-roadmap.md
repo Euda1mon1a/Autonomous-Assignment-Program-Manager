@@ -240,6 +240,8 @@ These are database model changes independent of the Excel pipeline. They address
 
 **Priority: HIGH — must ship before July 1 graduation rollover**
 
+> **Audit Finding (Feb 26, 2026 — CORRECTED):** The Perplexity audit (Finding 4.1) incorrectly claimed the `PersonAcademicYear` migration was "created then dropped." Investigation shows migration `20260224_person_ay.py` exists and was NEVER dropped. The real issue: the Alembic chain has a branching divergence (two heads) after `20260219_add_gt_tables`, so migrations through `20260224_person_ay` haven't been applied to the running DB. The model at `backend/app/models/person_academic_year.py` is ready — just needs the Alembic heads merged and pending migrations applied. 67+ files reference `Person.pgy_level` directly and must be updated. July 1 deadline is ~16 weeks away; no rollover logic, PGY advancement automation, or call count reset mechanism exists. See `docs/perplexity-uploads/started/full-codebase/RESULTS.md`, Finding 4.1 (note: audit's "dropped" conclusion is incorrect).
+
 **Goal:** Separate immutable person identity from time-varying academic state so that historical schedules remain mathematically accurate after PGY advancement.
 
 ### Current Problem

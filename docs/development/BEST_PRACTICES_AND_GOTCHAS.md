@@ -499,6 +499,25 @@ def test_query_bus_execute():
 | Integration | Yes | No | Medium |
 | E2E | Yes | Yes | Slow |
 
+### Scheduling Edge Cases with Zero Test Coverage (Audit Finding 3.3.1, Feb 2026)
+
+The full-codebase audit identified 8 scheduling edge case categories with **zero** test mentions. These are known coverage gaps:
+
+| Edge Case | Risk | Test Approach |
+|-----------|------|---------------|
+| `block_boundary` | Day 28→Day 1 transition creates impossible schedules | Set up assignment at block end, verify solver handles next block start |
+| `pgy_transition` | PGY level changes mid-year break constraint assumptions | Simulate July 1 PGY advance, verify constraints use correct level |
+| `leave_spanning` | Leave crossing block boundaries double-counted or missed | Create absence spanning two blocks, verify single date range |
+| `cross_block` | 1-in-7 violations at block seams invisible | Create 6-day run ending Block N, verify Block N+1 flags it |
+| `half_day_boundary` | AM/PM assignment split creates half-day gaps | Test AM-only and PM-only assignments at block transitions |
+| `concurrent_leave` | Multiple residents on leave depletes coverage | Put 3+ residents on leave same week, verify coverage check fires |
+| `vacation_carryover` | Unused vacation from prior block not tracked | Verify YTD leave tracking across blocks |
+| `duty_hour_violation` | 80-hour rule checked within block only, not across boundaries | Create 79-hour block ending + 5-hour block start, verify violation |
+
+**Well-tested areas (for reference):** weekend (838 mentions), holiday (579), max_consecutive (110), moonlighting (56), one_in_seven (35), call_equity (32).
+
+See `docs/perplexity-uploads/started/full-codebase/RESULTS.md`, Finding 3.3.1.
+
 ---
 
 ## 6. Git Workflow Recovery
@@ -954,6 +973,25 @@ The solver will pull a faculty member to VAS supervision (cost 8) rather than le
 | `start, end = get_block_dates(...)` | Returns dataclass, not tuple - TypeError | `dates = get_block_dates(...); dates.start_date` |
 | `not column` in SQLAlchemy filter | Returns Python bool, not SQL expression | Use `~column` for SQLAlchemy NOT |
 | `db.query(Model).filter(...)` | SQLAlchemy 1.x sync pattern | `await db.execute(select(Model).where(...))` |
+| String interpolation into `text()` SQL | SQL injection — 20 vectors found in audit (Feb 2026) | Validate with table name whitelist before interpolation |
+
+**SQL Injection via `text()` — Known Affected Files (Audit Finding 5.2.1):**
+
+9 files contain f-string interpolation into SQLAlchemy `text()` calls (20 total instances). Most have `# nosec B608` comments acknowledging the risk but no fix:
+
+| File | Count | Pattern |
+|------|-------|---------|
+| `backup.py` | 3 | Table name in TRUNCATE, SELECT COUNT |
+| `db_admin.py` | 2 | VACUUM ANALYZE with table name |
+| `backup/strategies.py` | 3 | SELECT FROM with table name |
+| `partitioning.py` | 3 | DROP TABLE, EXPLAIN, SET |
+| `pool/health.py` | 2 | SET statement_timeout |
+| `query_optimizer.py` | 1 | EXPLAIN with statement |
+| `health/checks/database.py` | 1 | SELECT FROM with table name |
+| `tenancy/isolation.py` | 3 | SET search_path |
+| `cli/maintenance_commands.py` | 1 | REINDEX TABLE |
+
+**Fix pattern:** Validate table names against a whitelist before any dynamic SQL. See `docs/perplexity-uploads/started/full-codebase/RESULTS.md`, Finding 5.2.1.
 
 ### Git Workflow
 
