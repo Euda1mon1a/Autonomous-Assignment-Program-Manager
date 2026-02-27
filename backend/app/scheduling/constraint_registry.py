@@ -35,11 +35,12 @@ Example:
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TypeVar
 
 from app.scheduling.constraints.base import Constraint, ConstraintType
 
 logger = logging.getLogger(__name__)
+TConstraint = TypeVar("TConstraint", bound=type[Constraint])
 
 
 @dataclass
@@ -124,7 +125,7 @@ class ConstraintRegistry:
         constraint_types: list[ConstraintType] | None = None,
         author: str = "",
         since_version: str = "",
-    ) -> Callable:
+    ) -> Callable[[TConstraint], TConstraint]:
         """
         Decorator for registering constraints.
 
@@ -153,7 +154,7 @@ class ConstraintRegistry:
             ...     ...
         """
 
-        def decorator(constraint_class: type) -> type:
+        def decorator(constraint_class: TConstraint) -> TConstraint:
             # Create metadata
             metadata = ConstraintMetadata(
                 name=name,

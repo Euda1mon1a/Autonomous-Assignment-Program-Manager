@@ -57,6 +57,7 @@ import {
 } from '@/hooks/useImport';
 import { useFmitImport } from '@/hooks/useFmitImport';
 import { useExportData, type ExportDataType, type ExportFilters } from '@/hooks/useExportData';
+import { formatLocalDate } from '@/lib/date-utils';
 import type {
   ResidentRosterItem,
   ParsedFMITWeek,
@@ -1140,9 +1141,9 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 90);
-    return d.toISOString().split('T')[0];
+    return formatLocalDate(d);
   });
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => formatLocalDate(new Date()));
 
   // Build filters — schedule endpoint requires dates
   const filters: ExportFilters | undefined =

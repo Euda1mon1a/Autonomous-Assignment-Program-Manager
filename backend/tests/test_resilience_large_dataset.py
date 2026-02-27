@@ -273,7 +273,7 @@ class TestLargeDatasetScenarios:
         import random
 
         faculty_ids = [uuid4() for _ in range(50)]
-        random.shuffle(faculty_ids)
+        random.Random(42).shuffle(faculty_ids)
 
         for fid in faculty_ids:
             person = Person(

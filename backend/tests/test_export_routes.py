@@ -7,6 +7,7 @@ CSV, JSON, and Excel formats for people, absences, and schedules.
 import csv
 import io
 from datetime import date, timedelta
+from unittest.mock import patch
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -680,6 +681,47 @@ class TestExportScheduleXLSXEndpoint:
         assert response.status_code in [200, 400, 500, 504]
 
 
+class TestExportScheduleYearXLSXEndpoint:
+    """Tests for GET /api/export/schedule/year/xlsx endpoint."""
+
+    def test_export_year_xlsx_success(self, authed_client: TestClient):
+        """Test exporting schedule year as Excel file."""
+        with patch(
+            "app.api.routes.export.CanonicalScheduleExportService.export_year_xlsx",
+            return_value=b"year_xlsx",
+        ) as mock_export:
+            response = authed_client.get(
+                "/api/v1/export/schedule/year/xlsx",
+                params={"academic_year": 2025},
+            )
+
+        assert response.status_code == 200
+        assert (
+            response.headers["content-type"]
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        assert "schedule_ay2025_2026.xlsx" in response.headers["content-disposition"]
+        assert response.content == b"year_xlsx"
+        assert mock_export.call_args.kwargs == {
+            "academic_year": 2025,
+            "include_faculty": True,
+        }
+
+    def test_export_year_xlsx_invalid_year(self, authed_client: TestClient):
+        """Test yearly XLSX export with invalid academic year."""
+        with patch(
+            "app.api.routes.export.CanonicalScheduleExportService.export_year_xlsx",
+            side_effect=ValueError("No academic blocks found for year 2025"),
+        ):
+            response = authed_client.get(
+                "/api/v1/export/schedule/year/xlsx",
+                params={"academic_year": 2025},
+            )
+
+        assert response.status_code == 400
+        assert "No academic blocks found for year 2025" in response.json()["detail"]
+
+
 class TestExportAuthenticationAndAuthorization:
     """Tests for authentication and authorization on export endpoints."""
 
@@ -722,6 +764,15 @@ class TestExportAuthenticationAndAuthorization:
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
             },
+        )
+
+        assert response.status_code in [200, 401, 403]
+
+    def test_export_year_xlsx_requires_admin(self, client: TestClient):
+        """Test that yearly XLSX export requires admin role."""
+        response = client.get(
+            "/api/v1/export/schedule/year/xlsx",
+            params={"academic_year": 2025},
         )
 
         assert response.status_code in [200, 401, 403]

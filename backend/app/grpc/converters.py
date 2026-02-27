@@ -26,7 +26,7 @@ Usage:
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -92,7 +92,7 @@ def timestamp_to_datetime(ts: Timestamp | None) -> datetime | None:
     """
     if ts is None or not ts.seconds:
         return None
-    return ts.ToDatetime()  # type: ignore[no-any-return]
+    return cast(datetime, ts.ToDatetime())
 
 
 def pydantic_to_dict(obj: Any, exclude_none: bool = True) -> dict[Any, Any]:
@@ -108,10 +108,10 @@ def pydantic_to_dict(obj: Any, exclude_none: bool = True) -> dict[Any, Any]:
     """
     if hasattr(obj, "model_dump"):
         # Pydantic v2
-        return obj.model_dump(exclude_none=exclude_none)  # type: ignore[no-any-return]
+        return cast(dict[Any, Any], obj.model_dump(exclude_none=exclude_none))
     elif hasattr(obj, "dict"):
         # Pydantic v1
-        return obj.dict(exclude_none=exclude_none)  # type: ignore[no-any-return]
+        return cast(dict[Any, Any], obj.dict(exclude_none=exclude_none))
     else:
         raise TypeError(f"Object {obj} is not a Pydantic model")
 

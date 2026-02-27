@@ -7,6 +7,7 @@ import io
 from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 import pytest
 from openpyxl import Workbook
@@ -30,6 +31,16 @@ def _mock_db_with_codes():
 
 class TestCanonicalScheduleExportService:
     """Tests for CanonicalScheduleExportService."""
+
+    def _make_template_bytes(self) -> bytes:
+        """Create a minimal Block Template2 workbook for export_year_xlsx."""
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Block Template2"
+        ws.cell(row=1, column=1, value="ok")
+        buf = io.BytesIO()
+        wb.save(buf)
+        return buf.getvalue()
 
     @patch("app.services.canonical_schedule_export_service.get_block_dates")
     @patch("app.services.canonical_schedule_export_service.HalfDayJSONExporter")
@@ -240,6 +251,70 @@ class TestCanonicalScheduleExportService:
         assert call_kwargs["rotation_codes"] is not None
         assert call_kwargs["activity_codes"] is not None
         assert result == b"raw_xlsx"
+
+    def test_export_year_xlsx_raises_when_no_blocks(self):
+        """export_year_xlsx() should raise if no academic blocks found."""
+        mock_db = MagicMock()
+        mock_db.execute.return_value.scalars.return_value.all.return_value = []
+
+        service = CanonicalScheduleExportService(mock_db)
+
+        with pytest.raises(ValueError, match="No academic blocks found"):
+            service.export_year_xlsx(academic_year=2026)
+
+    @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
+    def test_export_year_xlsx_calls_inject_metadata_with_block_map(
+        self, mock_converter_class
+    ):
+        """export_year_xlsx() should build block_map and call _inject_metadata."""
+        mock_db = MagicMock()
+        block_one = MagicMock()
+        block_one.block_number = 1
+        block_one.start_date = date(2026, 7, 1)
+        block_one.end_date = date(2026, 7, 28)
+        block_one.id = uuid4()
+
+        block_two = MagicMock()
+        block_two.block_number = 13
+        block_two.start_date = date(2027, 6, 3)
+        block_two.end_date = date(2027, 6, 30)
+        block_two.id = uuid4()
+
+        mock_db.execute.return_value.scalars.return_value.all.return_value = [
+            block_one,
+            block_two,
+        ]
+
+        mock_converter = MagicMock()
+        mock_converter.convert_from_json.return_value = self._make_template_bytes()
+        mock_converter_class.return_value = mock_converter
+
+        service = CanonicalScheduleExportService(mock_db)
+        with (
+            patch.object(service, "_export_json_data", return_value={"faculty": []}),
+            patch.object(service, "_copy_worksheet"),
+            patch.object(service, "_apply_phantom_columns"),
+            patch.object(service, "_build_ytd_summary_sheet"),
+            patch.object(
+                service, "_template_path", return_value=Path("/fake/template.xlsx")
+            ),
+            patch.object(
+                service, "_structure_path", return_value=Path("/fake/structure.xml")
+            ),
+            patch.object(
+                service, "_inject_metadata", return_value=b"year_xlsx"
+            ) as mock_inject,
+        ):
+            result = service.export_year_xlsx(academic_year=2026)
+
+        assert result == b"year_xlsx"
+        assert mock_converter_class.call_args.kwargs["include_qa_sheet"] is False
+        expected_block_map = {
+            "Block 1": str(block_one.id),
+            "Block 13": str(block_two.id),
+        }
+        assert mock_inject.call_args.kwargs["academic_year"] == 2026
+        assert mock_inject.call_args.kwargs["block_map"] == expected_block_map
 
 
 class TestTemplatePaths:
