@@ -1,0 +1,29 @@
+# Large concatenated source bundles uploaded to Perplexity (copies of repo source)
+started/full-codebase/backend_source.py
+started/full-codebase/frontend_wiring.ts
+started/full-codebase/backend_tests.py
+started/full-codebase/architecture_docs.md
+started/full-codebase/migrations.py
+started/full-codebase/prior_research_results.md
+# Source file copies in other session folders
+started/*/components/
+started/*/resilience/
+started/*/schedule/
+started/*/core/
+started/*/frontend/
+started/*/routes/
+started/*/scheduling/
+started/*/schemas/
+started/*/services/
+started/*/templates/
+started/*/testing/
+started/*/constraints/
+started/*/models/
+started/*/docs/
+started/*/exotic/
+started/*/research/
+started/*/solver/
+started/*/thermodynamics/
+started/*/middleware/
+started/*/migrations/
+started/*/repositories/

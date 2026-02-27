@@ -311,6 +311,18 @@ async def run_longitudinal_validation(parent_batch_id: UUID) -> list[ValidationE
 
 ---
 
+## Audit Warnings (Feb 26, 2026)
+
+The full-codebase Perplexity audit (session #8) identified risks relevant to this architecture:
+
+- **Finding 4.5 — Hardcoded column positions:** Any YTD_SUMMARY formulas that reference block sheet columns by position (e.g., col 62 for Clinic, col 69 for FMIT) will silently break if the block sheet template layout changes. Recommendation: either compute column positions dynamically from the template structure at export time, or use Excel named ranges that survive column insertions.
+- **Finding 4.1 — PersonAcademicYear migration not applied (Alembic chain branching):** The migration `20260224_person_ay.py` exists and was never dropped — the Perplexity audit incorrectly claimed it was. The real issue is the Alembic chain has a branching divergence (two heads) after `20260219_add_gt_tables`, so the migration hasn't been applied to the running DB. Annual workbook features that depend on PGY-scoped queries (NF caps per PGY, clinic minimums by year) cannot work until the Alembic heads are merged and pending migrations applied.
+- **Finding 1.1.1 — Schema drift:** 51 SQLAlchemy models lack migrations. Before building the Celery pipeline (Section 3), verify that `import_batches`, `import_staged_assignments`, and related tables actually exist in the database.
+
+See `docs/perplexity-uploads/started/full-codebase/RESULTS.md` for full audit.
+
+---
+
 ## 5. File Changes Summary
 
 | File | Action | Details |

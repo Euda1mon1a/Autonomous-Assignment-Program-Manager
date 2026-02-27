@@ -2,8 +2,11 @@
 
 > **Status:** Planned (not started)
 > **Created:** 2026-02-25
+> **Updated:** 2026-02-26 — cross-referenced with full-codebase Perplexity audit results
 > **Depends on:** Gemini WP-2/3/4/8/9 completion
 > **Prereqs:** `FACULTY_SCHEDULING_SPECIFICATION.md`, `annual-workbook-architecture.md`, `excel-stateful-roundtrip-roadmap.md`
+>
+> **Audit Confirmation (Feb 26, 2026):** Full-codebase Perplexity Computer audit (session #8, 39MB upload) independently confirmed Gap #1 as the highest-priority scheduling bug. Finding 4.2: `build_scheduling_context()` never populates `prior_calls` — the constraint code correctly reads via `getattr(context, "prior_calls", {})` but always receives an empty dict. YTD call equity is silently a no-op. See `docs/perplexity-uploads/started/full-codebase/RESULTS.md` for full findings. Implementation status for Gemini-authored code: see `docs/architecture/gemini-implementation-review.md`.
 
 ---
 
@@ -218,6 +221,8 @@ Summary formulas move to Row 81 (was 43). `%CVf` moves to Row 82 (was 44).
   - `_fill_call_row()`: update CALL formula range
 
 ### 3B: Add YTD_SUMMARY Sheet (Gap #6)
+
+> **Audit Warning (Finding 4.5):** The column numbers referenced below (cols 62–70) are positional offsets into BlockTemplate2_Official.xlsx. Any change to the block sheet layout (inserting/removing columns, reordering) silently breaks all SUMIF formulas. The audit recommends either computing column positions dynamically at runtime or using Excel named ranges instead of positional references.
 
 New sheet injected as Sheet 0 of the annual workbook. Lists all faculty with live formulas aggregating data across 14 block sheets.
 
