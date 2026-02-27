@@ -37,62 +37,63 @@ Equity constraints (`SundayCallEquity` w=10, `WeekdayCallEquity` w=5, `HolidayCa
 
 ### Solution
 
-Shift objective from minimizing the **local max** to minimizing the **global YTD max** by hydrating history from `call_assignments` table.
+> **Gemini 3 Pro Analysis (Feb 26, 2026):** Gemini read engine.py (170KB) end-to-end and identified that `_build_context()` at **line 737-770** has EXISTING prior_calls hydration logic, but it's broken — uses `extract("dow")` and filters on `call_type == "overnight"`, silently dropping all Sunday/Weekend history. Additionally, `call_equity.py` uses a **Min-Max (Chebyshev norm)** formulation that is fundamentally incompatible with the additive MAD history model. Both must be replaced.
 
-### Step 1A: Add `prior_calls` to SchedulingContext
+Shift objective from minimizing the **local max** (Chebyshev norm) to minimizing **Mean Absolute Deviation (MAD)** via `AddAbsEquality`, with additive gamma=1 history model.
 
-**File:** `backend/app/scheduling/constraints/base.py` (~line 259, after resilience fields)
+### Step 1A: `prior_calls` Already Exists in SchedulingContext
 
-```python
-prior_calls: dict[UUID, dict[str, int]] = field(default_factory=dict)
-# Structure: {faculty_id: {"sunday": N, "weekday": N}}
-```
+**File:** `backend/app/scheduling/constraints/base.py` (line 262)
 
-### Step 1B: Hydrate YTD from `call_assignments` in Engine
+Already defined: `prior_calls: dict[UUID, dict[str, int]] = field(default_factory=dict)`. No change needed.
 
-**File:** `backend/app/scheduling/engine.py` (before `_build_context()` call, ~line 975)
+### Step 1B: Replace Broken Hydration in Engine
 
-Query `call_assignments` dynamically — do NOT use stale `people.sunday_call_count` columns (prone to drift if a coordinator edits Excel manually):
+**File:** `backend/app/scheduling/engine.py` — replace lines 737-770 in `_build_context()`
 
-```sql
-SELECT person_id,
-  COUNT(*) FILTER (WHERE is_weekend = true AND extract(dow from date) = 0) AS ytd_sundays,
-  COUNT(*) FILTER (WHERE is_weekend = false AND extract(dow from date) IN (1,2,3,4)) AS ytd_weekdays
-FROM call_assignments
-WHERE date >= :ay_start AND date < :block_start AND call_type = 'overnight'
-GROUP BY person_id
-```
-
-Pass result into `SchedulingContext(prior_calls=...)` at line 988.
-
-### Step 1C: Inject History Constants into CP-SAT Expressions
-
-**File:** `backend/app/scheduling/constraints/call_equity.py`
-
-CP-SAT linear expressions natively combine integer constants with BoolVar sums — no auxiliary variables needed.
-
-In `SundayCallEquityConstraint.add_to_cpsat()` (~line 87):
+The existing code uses `extract("dow")` and `call_type == "overnight"` filter, which silently drops all Sunday/Weekend history. Replace with the `GROUP BY` SQL pattern from annual-leap Section 3:
 
 ```python
-max_global_sunday = model.NewIntVar(0, 52, "max_ytd_sunday")
-
-for f_i in eligible_faculty:
-    history = context.prior_calls.get(f_i.id, {}).get("sunday", 0)
-    current_block_vars = [variables["call_assignments"][(f_i, b_i, "overnight")]
-                          for b_i in sunday_block_indices]
-    # Solver bounds the COMBINED total — forces assignments to lowest-history faculty
-    model.Add(history + sum(current_block_vars) <= max_global_sunday)
-
-objective += max_global_sunday * 10  # weight preserved
+# Query call_assignments for YTD totals (ay_start through block_start)
+stmt = (
+    select(CallAssignment.person_id, CallAssignment.call_type, func.count().label("ytd_count"))
+    .where(and_(
+        CallAssignment.date >= ay_start,
+        CallAssignment.date < self.start_date,
+        CallAssignment.call_type.in_(["weekend", "overnight", "holiday"])
+    ))
+    .group_by(CallAssignment.person_id, CallAssignment.call_type)
+)
+# Map: "weekend" → "sunday", "overnight" → "weekday", "holiday" → "holiday"
 ```
 
-Same pattern for `WeekdayCallEquityConstraint` and `HolidayCallEquityConstraint`.
+### Step 1C: Replace Min-Max with MAD in call_equity.py
 
-### Step 1D: Tests
+**File:** `backend/app/scheduling/constraints/call_equity.py` — replace `SundayCallEquityConstraint.add_to_cpsat()` (line 120+) and `WeekdayCallEquityConstraint.add_to_cpsat()` (lines 309-322)
+
+**Why restructuring is required:** The existing Min-Max formulation (`model.Add(history + sum(vars_list) <= max_sunday)`) stops caring about balancing anyone below the max threshold. If one faculty member has YTD total of 15, the solver ignores equity for everyone below 15.
+
+**MAD formulation via `AddAbsEquality`:** Multiply by F (faculty count) to avoid fractional integers in CP-SAT:
+```python
+# For each faculty: dev = F * (history + current) - total_calls
+# abs_dev = |dev|
+# Minimize sum of abs_dev * weight
+model.AddAbsEquality(abs_dev, dev)  # (target, source)
+objective_vars.append((abs_dev, int(self.weight)))
+```
+
+### Step 1D: Post-Solve Write-Back to PersonAcademicYear
+
+**File:** `backend/app/scheduling/engine.py` — new method `_sync_academic_year_call_counts()` + call after PCAT/DO integrity checks (line ~440)
+
+**Idempotent design:** Do NOT increment `+1` — recalculate YTD totals from `call_assignments` source of truth each time. Safe against block re-generation, rollbacks, and manual DB edits.
+
+### Step 1E: Tests
 
 - **Unit:** Mock `prior_calls` in SchedulingContext, verify solver assigns calls to lowest-history faculty
 - **Integration:** Create `CallAssignment` records for Blocks 1–9, run Block 10 solve, assert equity across YTD totals
-- **Edge:** Empty `prior_calls` (Block 1 of year) — behavior must match current per-block equity
+- **Edge:** Empty `prior_calls` (Block 1 of year) — MAD formulation gracefully degrades to single-block equity optimizer (no special branching needed, mathematically verified by Gemini)
+- **Regression:** Verify `_sync_academic_year_call_counts()` is idempotent — run twice, assert same result
 
 ---
 
