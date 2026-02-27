@@ -1,7 +1,7 @@
 # Best Practices & Gotchas
 
 > **Purpose:** Prevent common bugs and headaches. Read this before starting work.
-> **Last Updated:** 2026-02-10
+> **Last Updated:** 2026-02-26
 
 ---
 
@@ -973,25 +973,25 @@ The solver will pull a faculty member to VAS supervision (cost 8) rather than le
 | `start, end = get_block_dates(...)` | Returns dataclass, not tuple - TypeError | `dates = get_block_dates(...); dates.start_date` |
 | `not column` in SQLAlchemy filter | Returns Python bool, not SQL expression | Use `~column` for SQLAlchemy NOT |
 | `db.query(Model).filter(...)` | SQLAlchemy 1.x sync pattern | `await db.execute(select(Model).where(...))` |
-| String interpolation into `text()` SQL | SQL injection — 20 vectors found in audit (Feb 2026) | Validate with table name whitelist before interpolation |
+| String interpolation into `text()` SQL | SQL injection — ~~20 vectors found~~ **FIXED** (Feb 26, PRs #1197, #1200, #1201) | Use `validate_identifier()` / `validate_search_path()` from `backend/app/db/sql_identifiers.py` |
 
-**SQL Injection via `text()` — Known Affected Files (Audit Finding 5.2.1):**
+**SQL Injection via `text()` — FIXED (Feb 26, 2026, PRs #1197, #1200, #1201):**
 
-9 files contain f-string interpolation into SQLAlchemy `text()` calls (20 total instances). Most have `# nosec B608` comments acknowledging the risk but no fix:
+24 SQL injection vectors fixed. All dynamic SQL identifiers now pass through `validate_identifier()` (single identifiers) or `validate_search_path()` (multi-schema search paths) from `backend/app/db/sql_identifiers.py`. Dead code containing additional vectors removed in PR #1198 (27,598 lines of scaffolding deleted).
 
-| File | Count | Pattern |
-|------|-------|---------|
-| `backup.py` | 3 | Table name in TRUNCATE, SELECT COUNT |
-| `db_admin.py` | 2 | VACUUM ANALYZE with table name |
-| `backup/strategies.py` | 3 | SELECT FROM with table name |
-| `partitioning.py` | 3 | DROP TABLE, EXPLAIN, SET |
-| `pool/health.py` | 2 | SET statement_timeout |
-| `query_optimizer.py` | 1 | EXPLAIN with statement |
-| `health/checks/database.py` | 1 | SELECT FROM with table name |
-| `tenancy/isolation.py` | 3 | SET search_path |
-| `cli/maintenance_commands.py` | 1 | REINDEX TABLE |
+**Usage pattern:** See `backend/app/db/sql_identifiers.py` for `validate_identifier()` and `validate_search_path()`. Both validate via regex and return double-quoted identifiers safe for interpolation into DDL statements (VACUUM, SET search_path, etc.) where bind parameters are not supported.
 
-**Fix pattern:** Validate table names against a whitelist before any dynamic SQL. See `docs/perplexity-uploads/started/full-codebase/RESULTS.md`, Finding 5.2.1.
+**For asyncpg session variables**, use `set_config()` with bind parameters instead of `SET` statements. See `backend/app/tenancy/isolation.py` for the pattern.
+
+### Call Equity — MAD Formulation (Feb 26, 2026, PRs #1199, #1201, #1202)
+
+**MAD (Mean Absolute Deviation) replaced Min-Max** in `call_equity.py`. The old Chebyshev norm stopped caring about anyone below the max threshold. MAD via `AddAbsEquality` balances all faculty.
+
+**FMIT Weekend Split Gotcha:** FMIT Saturday overnight calls must count toward **sunday** equity, not weekday. The `is_weekend` column on `CallAssignment` is used in a SQLAlchemy CASE expression to reclassify before GROUP BY. See `backend/app/scheduling/engine.py` (two locations: `_build_context()` and `_sync_academic_year_call_counts()`).
+
+The hydration loop maps: `"weekend" -> "sunday"`, `"overnight" -> "weekday"`, `"holiday" -> "holiday"`.
+
+**Post-solve write-back** (`_sync_academic_year_call_counts()`) is idempotent — recalculates from `call_assignments` source of truth. Never increments +1. Safe against re-generation.
 
 ### Git Workflow
 
@@ -1014,6 +1014,14 @@ The solver will pull a faculty member to VAS supervision (cost 8) rather than le
 |----------------|--------------|-------------------|
 | Multiple TODO/priority files | Contradictions, unclear source of truth | Single MASTER_PRIORITY_LIST.md |
 | Session scratchpads referencing other scratchpads | Broken links when files move/delete | Reference committed docs or inline the info |
+
+### Dependency Security (Feb 26, 2026 — Gemini Full-Stack Review)
+
+Gemini 3 Pro's independent scan found 5 npm vulnerabilities across 1,186 frontend dependencies:
+- **High:** `next` (DoS via insecure deserialization), `axios` (`__proto__` DoS in mergeConfig), `minimatch` (ReDoS)
+- **Moderate:** `undici`, `ajv`
+
+**Remediation:** Run `cd frontend && npm audit fix` periodically. Check `npm audit` output before releases.
 
 ---
 

@@ -81,3 +81,59 @@ See `CLAUDE.md` for full project rules, API type contracts, and security require
 - **Agent tasks:** `TODO.md` (root) — prioritized batches for autonomous work
 - **Human tasks:** `HUMAN_TODO.md` (root) — requires human action (accounts, config, decisions)
 - **Do NOT create separate task lists** — all agents share the same `TODO.md`
+
+---
+
+## Running Tests
+
+The backend config validates secrets at import time (`backend/app/core/config.py`). Tests require either `DEBUG=true` (relaxes validation to warnings) or strong auto-generated secrets.
+
+### Quick Test Run (SQLite in-memory, no PostgreSQL needed)
+
+Set env vars then run pytest from `backend/`:
+
+    export DEBUG=true
+    cd backend && pytest -v --tb=short
+
+The conftest will auto-select SQLite in-memory when no database URL is set.
+
+### Full Test Run (against PostgreSQL)
+
+Generate strong secrets first, then export them before running pytest:
+
+    export DEBUG=true
+    python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
+    # Copy output and set as your DB password and Redis password env vars
+    cd backend && pytest -v --tb=short
+
+See `backend/.env.example` for all required env var names.
+
+### Unit Tests Only (no DB, no Redis)
+
+    export DEBUG=true
+    cd backend && pytest tests/test_call_equity_ytd.py tests/constraints/ -v --noconftest
+
+### Frontend Tests
+
+```bash
+cd frontend && npm test
+```
+
+### Why DEBUG=true Is Required
+
+`conftest.py` imports `from app.main import app`, which initializes `Settings()`. The `validate_secrets()` validator in `config.py` raises `ValueError` for weak/default credentials when `DEBUG=false`. Setting `DEBUG=true` relaxes validators to warnings only.
+
+**NEVER use `DEBUG=true` in production.** This is safe ONLY for local test runs.
+
+### Test Markers
+
+- `@pytest.mark.requires_db` — needs PostgreSQL
+- `@pytest.mark.integration` — integration tests
+- `@pytest.mark.acgme` — ACGME compliance tests
+- `@pytest.mark.slow` — long-running tests
+
+### Notes
+
+- `--noconftest` skips `conftest.py` entirely (useful for pure unit tests without DB/app fixtures)
+- SQLite in-memory automatically skips pgvector and JSONB columns (see `conftest.py` line 72-82)
+- Coverage threshold is 70% (`pytest.ini` `fail_under` setting)
