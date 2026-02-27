@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+import threading
 import types
 from unittest.mock import MagicMock
 from uuid import UUID, uuid4
@@ -55,6 +56,7 @@ from app.tenancy.isolation import (  # noqa: E402
     get_tenant_schema,
     validate_schema_name,
 )
+import app.tenancy.isolation as isolation_module  # noqa: E402
 
 
 def _run(coro):
@@ -349,3 +351,157 @@ class TestTenantConnectionPoolManagerInit:
         mgr = TenantConnectionPoolManager(database_url="postgresql://u:p@localhost/db")
         stats = mgr.get_pool_stats(uuid4())
         assert stats == {"error": "No pool exists"}
+
+
+def _install_pool_manager_fakes(monkeypatch):
+    """Patch engine/session factory constructors used by pool manager."""
+    engines: list[MagicMock] = []
+    session_factories: list[MagicMock] = []
+    constructor_lock = threading.Lock()
+
+    def fake_create_engine(*_args, **kwargs):
+        engine = MagicMock()
+        engine.pool = MagicMock()
+        engine.pool.size.return_value = kwargs.get("pool_size", 5)
+        engine.pool.checkedout.return_value = 0
+        engine.pool.overflow.return_value = 0
+        with constructor_lock:
+            engines.append(engine)
+        return engine
+
+    def fake_sessionmaker(*_args, **kwargs):
+        factory = MagicMock()
+        factory.kw = {"bind": kwargs["bind"]}
+        factory.return_value = MagicMock(name="tenant_session")
+        with constructor_lock:
+            session_factories.append(factory)
+        return factory
+
+    monkeypatch.setattr(isolation_module, "create_engine", fake_create_engine)
+    monkeypatch.setattr(isolation_module, "sessionmaker", fake_sessionmaker)
+    return engines, session_factories
+
+
+class TestTenantConnectionPoolManagerThreadSafety:
+    def test_create_tenant_pool_concurrent_single_tenant_returns_one_pool(
+        self, monkeypatch
+    ):
+        mgr = TenantConnectionPoolManager(database_url="postgresql://u:p@localhost/db")
+        tenant_id = uuid4()
+        engines, session_factories = _install_pool_manager_fakes(monkeypatch)
+
+        thread_count = 16
+        start_barrier = threading.Barrier(thread_count)
+        result_lock = threading.Lock()
+        returned_pools = []
+        errors = []
+
+        def worker():
+            try:
+                start_barrier.wait()
+                pool = mgr.create_tenant_pool(tenant_id)
+                with result_lock:
+                    returned_pools.append(pool)
+            except Exception as exc:  # pragma: no cover - should never happen
+                with result_lock:
+                    errors.append(exc)
+
+        threads = [threading.Thread(target=worker) for _ in range(thread_count)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=5)
+
+        assert all(not thread.is_alive() for thread in threads)
+        assert errors == []
+        assert len(returned_pools) == thread_count
+        assert len({id(pool) for pool in returned_pools}) == 1
+        assert len(engines) == 1
+        assert len(session_factories) == 1
+        assert mgr._pools[tenant_id] is returned_pools[0]
+        assert mgr._pool_configs[tenant_id]["pool_size"] == 5
+        assert mgr._pool_configs[tenant_id]["max_overflow"] == 10
+
+    def test_dispose_tenant_pool_concurrent_single_tenant_disposes_once(
+        self, monkeypatch
+    ):
+        mgr = TenantConnectionPoolManager(database_url="postgresql://u:p@localhost/db")
+        tenant_id = uuid4()
+        engines, _ = _install_pool_manager_fakes(monkeypatch)
+        mgr.create_tenant_pool(tenant_id)
+        engine = engines[0]
+
+        thread_count = 16
+        start_barrier = threading.Barrier(thread_count)
+        errors = []
+        error_lock = threading.Lock()
+
+        def worker():
+            try:
+                start_barrier.wait()
+                mgr.dispose_tenant_pool(tenant_id)
+            except Exception as exc:  # pragma: no cover - should never happen
+                with error_lock:
+                    errors.append(exc)
+
+        threads = [threading.Thread(target=worker) for _ in range(thread_count)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=5)
+
+        assert all(not thread.is_alive() for thread in threads)
+        assert errors == []
+        assert engine.dispose.call_count == 1
+        assert tenant_id not in mgr._pools
+        assert tenant_id not in mgr._pool_configs
+
+    def test_create_and_dispose_tenant_pool_concurrent_access_is_consistent(
+        self, monkeypatch
+    ):
+        mgr = TenantConnectionPoolManager(database_url="postgresql://u:p@localhost/db")
+        tenant_id = uuid4()
+        _install_pool_manager_fakes(monkeypatch)
+
+        thread_count = 12
+        start_barrier = threading.Barrier(thread_count)
+        errors = []
+        error_lock = threading.Lock()
+
+        def creator():
+            try:
+                start_barrier.wait()
+                for _ in range(100):
+                    mgr.create_tenant_pool(tenant_id)
+            except Exception as exc:  # pragma: no cover - should never happen
+                with error_lock:
+                    errors.append(exc)
+
+        def disposer():
+            try:
+                start_barrier.wait()
+                for _ in range(100):
+                    mgr.dispose_tenant_pool(tenant_id)
+            except Exception as exc:  # pragma: no cover - should never happen
+                with error_lock:
+                    errors.append(exc)
+
+        threads = []
+        for _ in range(thread_count // 2):
+            threads.append(threading.Thread(target=creator))
+            threads.append(threading.Thread(target=disposer))
+
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=10)
+
+        assert all(not thread.is_alive() for thread in threads)
+        assert errors == []
+        assert set(mgr._pools) == set(mgr._pool_configs)
+
+        if tenant_id in mgr._pools:
+            session = mgr.get_tenant_session(tenant_id)
+            assert session is not None
+        else:
+            assert mgr.get_pool_stats(tenant_id) == {"error": "No pool exists"}

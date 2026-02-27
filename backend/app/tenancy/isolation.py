@@ -56,6 +56,7 @@ import hashlib
 import logging
 import re
 import secrets
+import threading
 from datetime import datetime, UTC
 from typing import Any, TypeVar
 from uuid import UUID
@@ -930,6 +931,7 @@ class TenantConnectionPoolManager:
         self.default_pool_size = default_pool_size
         self._pools: dict[UUID, sessionmaker] = {}
         self._pool_configs: dict[UUID, dict[str, Any]] = {}
+        self._lock = threading.Lock()
 
     def create_tenant_pool(
         self,
@@ -952,42 +954,45 @@ class TenantConnectionPoolManager:
         Returns:
             SQLAlchemy sessionmaker for this tenant
         """
-        if tenant_id in self._pools:
-            logger.warning(f"Pool already exists for tenant {tenant_id}")
-            return self._pools[tenant_id]
+        with self._lock:
+            if tenant_id in self._pools:
+                logger.warning(f"Pool already exists for tenant {tenant_id}")
+                return self._pools[tenant_id]
 
-        pool_size = pool_size or self.default_pool_size
-        max_overflow = max_overflow or (pool_size * 2)
+            pool_size = pool_size or self.default_pool_size
+            max_overflow = max_overflow or (pool_size * 2)
 
-        # Create engine with dedicated pool
-        engine = create_engine(
-            self.database_url,
-            poolclass=QueuePool,
-            pool_size=pool_size,
-            max_overflow=max_overflow,
-            pool_timeout=pool_timeout,
-            pool_recycle=pool_recycle,
-            pool_pre_ping=True,
-        )
+            # Create engine with dedicated pool
+            engine = create_engine(
+                self.database_url,
+                poolclass=QueuePool,
+                pool_size=pool_size,
+                max_overflow=max_overflow,
+                pool_timeout=pool_timeout,
+                pool_recycle=pool_recycle,
+                pool_pre_ping=True,
+            )
 
-        # Create sessionmaker
-        session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+            # Create sessionmaker
+            session_factory = sessionmaker(
+                autocommit=False, autoflush=False, bind=engine
+            )
 
-        # Store pool
-        self._pools[tenant_id] = session_factory
-        self._pool_configs[tenant_id] = {
-            "pool_size": pool_size,
-            "max_overflow": max_overflow,
-            "pool_timeout": pool_timeout,
-            "pool_recycle": pool_recycle,
-        }
+            # Store pool
+            self._pools[tenant_id] = session_factory
+            self._pool_configs[tenant_id] = {
+                "pool_size": pool_size,
+                "max_overflow": max_overflow,
+                "pool_timeout": pool_timeout,
+                "pool_recycle": pool_recycle,
+            }
 
-        logger.info(
-            f"Created connection pool for tenant {tenant_id}: "
-            f"size={pool_size}, max_overflow={max_overflow}"
-        )
+            logger.info(
+                f"Created connection pool for tenant {tenant_id}: "
+                f"size={pool_size}, max_overflow={max_overflow}"
+            )
 
-        return session_factory
+            return session_factory
 
     def get_tenant_session(self, tenant_id: UUID) -> Session:
         """
@@ -1002,10 +1007,11 @@ class TenantConnectionPoolManager:
         Raises:
             RuntimeError: If no pool exists for tenant
         """
-        if tenant_id not in self._pools:
-            raise RuntimeError(f"No connection pool for tenant {tenant_id}")
+        with self._lock:
+            if tenant_id not in self._pools:
+                raise RuntimeError(f"No connection pool for tenant {tenant_id}")
 
-        return self._pools[tenant_id]()
+            return self._pools[tenant_id]()
 
     def get_pool_stats(self, tenant_id: UUID) -> dict[str, Any]:
         """
@@ -1017,20 +1023,21 @@ class TenantConnectionPoolManager:
         Returns:
             Dictionary with pool statistics
         """
-        if tenant_id not in self._pools:
-            return {"error": "No pool exists"}
+        with self._lock:
+            if tenant_id not in self._pools:
+                return {"error": "No pool exists"}
 
-        session_factory = self._pools[tenant_id]
-        engine = session_factory.kw["bind"]
-        pool_obj = engine.pool
+            session_factory = self._pools[tenant_id]
+            engine = session_factory.kw["bind"]
+            pool_obj = engine.pool
 
-        return {
-            "tenant_id": str(tenant_id),
-            "pool_size": pool_obj.size(),
-            "checked_out": pool_obj.checkedout(),
-            "overflow": pool_obj.overflow(),
-            "config": self._pool_configs.get(tenant_id, {}),
-        }
+            return {
+                "tenant_id": str(tenant_id),
+                "pool_size": pool_obj.size(),
+                "checked_out": pool_obj.checkedout(),
+                "overflow": pool_obj.overflow(),
+                "config": self._pool_configs.get(tenant_id, {}),
+            }
 
     def dispose_tenant_pool(self, tenant_id: UUID) -> None:
         """
@@ -1042,20 +1049,21 @@ class TenantConnectionPoolManager:
         Args:
             tenant_id: Tenant UUID
         """
-        if tenant_id not in self._pools:
-            logger.warning(f"No pool to dispose for tenant {tenant_id}")
-            return
+        with self._lock:
+            if tenant_id not in self._pools:
+                logger.warning(f"No pool to dispose for tenant {tenant_id}")
+                return
 
             # Get engine and dispose
-        session_factory = self._pools[tenant_id]
-        engine = session_factory.kw["bind"]
-        engine.dispose()
+            session_factory = self._pools[tenant_id]
+            engine = session_factory.kw["bind"]
+            engine.dispose()
 
-        # Remove from tracking
-        del self._pools[tenant_id]
-        del self._pool_configs[tenant_id]
+            # Remove from tracking
+            del self._pools[tenant_id]
+            del self._pool_configs[tenant_id]
 
-        logger.info(f"Disposed connection pool for tenant {tenant_id}")
+            logger.info(f"Disposed connection pool for tenant {tenant_id}")
 
         # =============================================================================
         # Resource Quota Enforcement
