@@ -354,13 +354,13 @@ jobs:
       - name: Check for uncommitted type changes
         working-directory: frontend
         run: |
-          if git diff --exit-code src/types/generated-api.ts; then
+          if git diff --exit-code src/types/api-generated.ts; then
             echo "API types are in sync!"
           else
             echo "::error::API types are out of sync! Run 'npm run generate:types' and commit the changes."
             echo ""
             echo "The following changes were detected:"
-            git diff src/types/generated-api.ts
+            git diff src/types/api-generated.ts
             exit 1
           fi
 

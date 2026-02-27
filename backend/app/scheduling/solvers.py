@@ -1380,6 +1380,7 @@ class CPSATSolver(BaseSolver):
         # feasible bound and prunes the search space faster.
         # ==================================================
         hinted_resident_blocks: set[tuple[int, int]] = set()
+        hinted_vars: set[int] = set()  # Track var IDs already hinted
         hint_count = 0
 
         # Priority 1: hint existing (locked) assignments
@@ -1396,11 +1397,15 @@ class CPSATSolver(BaseSolver):
                         if (r_i, b_i, t_i) in x:
                             model.AddHint(x[r_i, b_i, t_i], 1)
                             hinted_resident_blocks.add((r_i, b_i))
+                            hinted_vars.add(id(x[r_i, b_i, t_i]))
                             hint_count += 1
 
         # Priority 2: greedy fill — for each unhinted (resident, block),
-        # hint the first available template to 1, rest to 0
+        # hint the first available template to 1, rest to 0.
+        # Skip vars already hinted in Priority 1 to avoid overriding.
         for (r_i, b_i, t_i), var in x.items():
+            if id(var) in hinted_vars:
+                continue  # Already hinted to 1 in Priority 1
             if (r_i, b_i) not in hinted_resident_blocks:
                 model.AddHint(var, 1)
                 hinted_resident_blocks.add((r_i, b_i))

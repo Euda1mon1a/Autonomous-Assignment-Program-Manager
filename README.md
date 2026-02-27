@@ -216,7 +216,7 @@ See [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) for complete documen
 ### Frontend
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Next.js | 14.2.35 | React framework with App Router |
+| Next.js | 15.5.12 | React framework with App Router |
 | React | 18.2.0 | UI component library |
 | TypeScript | 5.0+ | Type-safe JavaScript |
 | TailwindCSS | 3.4.1 | Utility-first CSS framework |
