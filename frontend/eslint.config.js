@@ -62,6 +62,8 @@ const eslintConfig = [
       "coverage/**",
       "*.config.js",
       "*.config.mjs",
+      "src/types/api-generated.ts",
+      "src/types/api-generated-check.ts",
     ],
   },
 ];
