@@ -107,8 +107,6 @@ from app.models.notification import (
     NotificationPreferenceRecord,
     ScheduledNotificationRecord,
 )
-from app.models.oauth2_authorization_code import OAuth2AuthorizationCode
-from app.models.oauth2_client import PKCEClient
 from app.models.person import Person, ScreenerRole
 from app.models.person_academic_year import PersonAcademicYear
 from app.models.procedure import Procedure
@@ -382,9 +380,6 @@ __all__ = [
     "InstitutionalEventType",
     "ResidentCallPreload",
     "ResidentCallType",
-    # PKCE Auth models
-    "PKCEClient",
-    "OAuth2AuthorizationCode",
     # Schema Version models
     "SchemaVersion",
     "SchemaChangeEvent",

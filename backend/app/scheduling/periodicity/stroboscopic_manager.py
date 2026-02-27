@@ -52,8 +52,28 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.distributed.locks import DistributedLock
-from app.events.event_bus import EventBus
-from app.events.event_types import BaseEvent, EventMetadata, EventType
+
+try:
+    from app.events.event_bus import EventBus
+    from app.events.event_types import BaseEvent, EventMetadata, EventType
+except ImportError:
+
+    @dataclass
+    class BaseEvent:  # type: ignore[no-redef]
+        """Stub for removed events module."""
+
+        aggregate_id: str = ""
+        metadata: Any = None
+
+    @dataclass
+    class EventMetadata:  # type: ignore[no-redef]
+        """Stub for removed events module."""
+
+        event_type: str = ""
+        event_version: int = 1
+
+    EventBus = None  # type: ignore[assignment,misc]
+    EventType = None  # type: ignore[assignment,misc]
 
 logger = logging.getLogger(__name__)
 

@@ -62,7 +62,6 @@ from app.api.routes import (
     me_dashboard,
     metrics,
     ml,
-    oauth2,
     pareto,
     people,
     portal,
@@ -158,7 +157,6 @@ api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(
     impersonation.router, prefix="/auth", tags=["auth", "impersonation"]
 )
-api_router.include_router(oauth2.router, prefix="/oauth2", tags=["oauth2"])
 api_router.include_router(
     admin_users.router, prefix="/admin/users", tags=["admin-users"]
 )
