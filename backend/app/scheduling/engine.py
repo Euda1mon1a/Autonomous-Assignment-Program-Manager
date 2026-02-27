@@ -620,6 +620,11 @@ class SchedulingEngine:
                                     f"PCAT/DO integrity check passed "
                                     f"({len(call_assignments)} calls verified)"
                                 )
+
+                    # Step 6.6.2: Sync YTD call counts to PersonAcademicYear
+                    if academic_year is not None:
+                        self._sync_academic_year_call_counts(academic_year)
+
                 elif solver_result.call_assignments:
                     logger.info(
                         f"Skipping {len(solver_result.call_assignments)} call assignments "
@@ -974,45 +979,35 @@ class SchedulingEngine:
 
         prior_calls: dict[UUID, dict[str, int]] = {}
         if academic_year is not None and self.start_date:
-            from sqlalchemy import select, func, and_, extract
-            from app.models.call_assignment import CallAssignment
-
             ay_start = date(academic_year, 7, 1)
+            # Query call_assignments for YTD totals grouped by call_type.
+            # Maps: "weekend" → "sunday", "overnight" → "weekday",
+            #        "holiday" → "holiday"
             stmt = (
                 select(
                     CallAssignment.person_id,
-                    func.count()
-                    .filter(
-                        and_(
-                            CallAssignment.is_weekend == True,
-                            extract("dow", CallAssignment.date) == 0,
-                        )
-                    )
-                    .label("ytd_sundays"),
-                    func.count()
-                    .filter(
-                        and_(
-                            CallAssignment.is_weekend == False,
-                            extract("dow", CallAssignment.date).in_([1, 2, 3, 4]),
-                        )
-                    )
-                    .label("ytd_weekdays"),
+                    CallAssignment.call_type,
+                    func.count().label("ytd_count"),
                 )
                 .where(
-                    and_(
-                        CallAssignment.date >= ay_start,
-                        CallAssignment.date < self.start_date,
-                        CallAssignment.call_type == "overnight",
-                    )
+                    CallAssignment.date >= ay_start,
+                    CallAssignment.date < self.start_date,
+                    CallAssignment.call_type.in_(["weekend", "overnight", "holiday"]),
                 )
-                .group_by(CallAssignment.person_id)
+                .group_by(CallAssignment.person_id, CallAssignment.call_type)
             )
             rows = self.db.execute(stmt).all()
+            call_type_map = {
+                "weekend": "sunday",
+                "overnight": "weekday",
+                "holiday": "holiday",
+            }
             for row in rows:
-                prior_calls[cast(UUID, row.person_id)] = {
-                    "sunday": row.ytd_sundays or 0,
-                    "weekday": row.ytd_weekdays or 0,
-                }
+                pid = cast(UUID, row.person_id)
+                key = call_type_map.get(row.call_type, row.call_type)
+                if pid not in prior_calls:
+                    prior_calls[pid] = {}
+                prior_calls[pid][key] = row.ytd_count or 0
 
         context = SchedulingContext(
             residents=residents,
@@ -1644,6 +1639,65 @@ class SchedulingEngine:
             logger.info(f"Synced {count} PCAT/DO slots to match new call assignments")
 
         return count
+
+    def _sync_academic_year_call_counts(self, academic_year: int) -> None:
+        """Recalculate and persist YTD call counts to PersonAcademicYear.
+
+        IDEMPOTENT: Always recalculates from call_assignments source of truth.
+        Never increments — safe against block re-generation and rollbacks.
+        """
+        ay_start = date(academic_year, 7, 1)
+        ay_end = date(academic_year + 1, 6, 30)
+
+        # Aggregate all call counts for the full AY range
+        stmt = (
+            select(
+                CallAssignment.person_id,
+                CallAssignment.call_type,
+                func.count().label("total"),
+            )
+            .where(
+                CallAssignment.date >= ay_start,
+                CallAssignment.date <= ay_end,
+                CallAssignment.call_type.in_(["weekend", "overnight", "holiday"]),
+            )
+            .group_by(CallAssignment.person_id, CallAssignment.call_type)
+        )
+        rows = self.db.execute(stmt).all()
+
+        # Build lookup: {person_id: {sunday: N, weekday: N}}
+        counts: dict[UUID, dict[str, int]] = {}
+        call_type_map = {
+            "weekend": "sunday",
+            "overnight": "weekday",
+        }
+        for row in rows:
+            pid = cast(UUID, row.person_id)
+            if pid not in counts:
+                counts[pid] = {"sunday": 0, "weekday": 0}
+            key = call_type_map.get(row.call_type)
+            if key:
+                counts[pid][key] = row.total or 0
+
+        # Update PersonAcademicYear records
+        pay_records = (
+            self.db.query(PersonAcademicYear)
+            .filter(PersonAcademicYear.academic_year == academic_year)
+            .all()
+        )
+        updated = 0
+        for pay in pay_records:
+            pid = cast(UUID, pay.person_id)
+            person_counts = counts.get(pid, {"sunday": 0, "weekday": 0})
+            pay.sunday_call_count = person_counts.get("sunday", 0)
+            pay.weekday_call_count = person_counts.get("weekday", 0)
+            updated += 1
+
+        self.db.flush()
+        logger.info(
+            f"Synced YTD call counts for AY {academic_year}: "
+            f"{updated} PersonAcademicYear records updated"
+        )
 
     def _validate_pcat_do_integrity(
         self,
