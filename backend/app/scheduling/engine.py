@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, case, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import get_settings
@@ -980,13 +980,23 @@ class SchedulingEngine:
         prior_calls: dict[UUID, dict[str, int]] = {}
         if academic_year is not None and self.start_date:
             ay_start = date(academic_year, 7, 1)
-            # Query call_assignments for YTD totals grouped by call_type.
-            # Maps: "weekend" → "sunday", "overnight" → "weekday",
-            #        "holiday" → "holiday"
+            # Query call_assignments for YTD totals grouped by effective type.
+            # FMIT weekend calls (call_type="overnight", is_weekend=True) must
+            # count as "sunday" equity, not "weekday". Use CASE to reclassify.
+            effective_type = case(
+                (
+                    and_(
+                        CallAssignment.call_type == "overnight",
+                        CallAssignment.is_weekend == True,  # noqa: E712
+                    ),
+                    "weekend",
+                ),
+                else_=CallAssignment.call_type,
+            ).label("effective_type")
             stmt = (
                 select(
                     CallAssignment.person_id,
-                    CallAssignment.call_type,
+                    effective_type,
                     func.count().label("ytd_count"),
                 )
                 .where(
@@ -994,7 +1004,7 @@ class SchedulingEngine:
                     CallAssignment.date < self.start_date,
                     CallAssignment.call_type.in_(["weekend", "overnight", "holiday"]),
                 )
-                .group_by(CallAssignment.person_id, CallAssignment.call_type)
+                .group_by(CallAssignment.person_id, effective_type)
             )
             rows = self.db.execute(stmt).all()
             call_type_map = {
@@ -1004,7 +1014,7 @@ class SchedulingEngine:
             }
             for row in rows:
                 pid = cast(UUID, row.person_id)
-                key = call_type_map.get(row.call_type, row.call_type)
+                key = call_type_map.get(row.effective_type, row.effective_type)
                 if pid not in prior_calls:
                     prior_calls[pid] = {}
                 prior_calls[pid][key] = row.ytd_count or 0
@@ -1649,11 +1659,23 @@ class SchedulingEngine:
         ay_start = date(academic_year, 7, 1)
         ay_end = date(academic_year + 1, 6, 30)
 
-        # Aggregate all call counts for the full AY range
+        # Aggregate all call counts for the full AY range.
+        # FMIT weekend calls (call_type="overnight", is_weekend=True) must
+        # count as "sunday" equity, not "weekday". Use CASE to reclassify.
+        effective_type = case(
+            (
+                and_(
+                    CallAssignment.call_type == "overnight",
+                    CallAssignment.is_weekend == True,  # noqa: E712
+                ),
+                "weekend",
+            ),
+            else_=CallAssignment.call_type,
+        ).label("effective_type")
         stmt = (
             select(
                 CallAssignment.person_id,
-                CallAssignment.call_type,
+                effective_type,
                 func.count().label("total"),
             )
             .where(
@@ -1661,7 +1683,7 @@ class SchedulingEngine:
                 CallAssignment.date <= ay_end,
                 CallAssignment.call_type.in_(["weekend", "overnight", "holiday"]),
             )
-            .group_by(CallAssignment.person_id, CallAssignment.call_type)
+            .group_by(CallAssignment.person_id, effective_type)
         )
         rows = self.db.execute(stmt).all()
 
@@ -1675,7 +1697,7 @@ class SchedulingEngine:
             pid = cast(UUID, row.person_id)
             if pid not in counts:
                 counts[pid] = {"sunday": 0, "weekday": 0}
-            key = call_type_map.get(row.call_type)
+            key = call_type_map.get(row.effective_type)
             if key:
                 counts[pid][key] = row.total or 0
 

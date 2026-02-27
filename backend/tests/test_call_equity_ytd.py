@@ -311,15 +311,15 @@ class TestSyncAcademicYearCallCounts:
         # Mock DB session
         mock_db = MagicMock()
 
-        # Simulate query results
+        # Simulate query results (now returns effective_type from CASE expr)
         mock_row = MagicMock()
         mock_row.person_id = person_id
-        mock_row.call_type = "weekend"
+        mock_row.effective_type = "weekend"
         mock_row.total = 5
 
         mock_row2 = MagicMock()
         mock_row2.person_id = person_id
-        mock_row2.call_type = "overnight"
+        mock_row2.effective_type = "overnight"
         mock_row2.total = 12
 
         mock_db.execute.return_value.all.return_value = [mock_row, mock_row2]
@@ -403,20 +403,55 @@ class TestPriorCallsHydration:
         }
 
         # Simulate the hydration loop from _build_context
-        rows = [
-            MagicMock(person_id=uuid4(), call_type="weekend", ytd_count=3),
-            MagicMock(person_id=None, call_type="overnight", ytd_count=8),
-        ]
-        # Fix: use same person_id for first row
+        # Rows now use effective_type (from CASE expression)
         pid = uuid4()
-        rows[0].person_id = pid
-        rows[1].person_id = pid
+        rows = [
+            MagicMock(person_id=pid, effective_type="weekend", ytd_count=3),
+            MagicMock(person_id=pid, effective_type="overnight", ytd_count=8),
+        ]
 
         prior_calls: dict[UUID, dict[str, int]] = {}
         for row in rows:
-            key = call_type_map.get(row.call_type, row.call_type)
+            key = call_type_map.get(row.effective_type, row.effective_type)
             if row.person_id not in prior_calls:
                 prior_calls[row.person_id] = {}
             prior_calls[row.person_id][key] = row.ytd_count or 0
 
         assert prior_calls[pid] == {"sunday": 3, "weekday": 8}
+
+    def test_fmit_weekend_calls_split_from_weekday(self):
+        """FMIT Sat calls (overnight + is_weekend=True) must count as sunday, not weekday.
+
+        The CASE expression reclassifies overnight+is_weekend as "weekend",
+        so the hydration loop maps them to "sunday" equity, not "weekday".
+        """
+        call_type_map = {
+            "weekend": "sunday",
+            "overnight": "weekday",
+            "holiday": "holiday",
+        }
+
+        pid = uuid4()
+        # After the CASE expression:
+        # - 4 Mon-Thu overnight (is_weekend=False) → effective_type="overnight"
+        # - 2 FMIT Saturday (is_weekend=True) → effective_type="weekend"
+        # - 3 Sunday (call_type="weekend") → effective_type="weekend"
+        # GROUP BY collapses the two "weekend" sources:
+        rows = [
+            MagicMock(person_id=pid, effective_type="overnight", ytd_count=4),
+            MagicMock(
+                person_id=pid, effective_type="weekend", ytd_count=5
+            ),  # 2 FMIT Sat + 3 Sunday
+        ]
+
+        prior_calls: dict[UUID, dict[str, int]] = {}
+        for row in rows:
+            key = call_type_map.get(row.effective_type, row.effective_type)
+            if row.person_id not in prior_calls:
+                prior_calls[row.person_id] = {}
+            prior_calls[row.person_id][key] = row.ytd_count or 0
+
+        # Weekday should be 4 (Mon-Thu only), NOT 6 (which included FMIT Sat)
+        assert prior_calls[pid]["weekday"] == 4
+        # Sunday should be 5 (3 actual Sunday + 2 FMIT Saturday)
+        assert prior_calls[pid]["sunday"] == 5
