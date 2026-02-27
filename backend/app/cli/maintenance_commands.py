@@ -316,9 +316,12 @@ def reindex() -> None:
         )
         tables = [row[0] for row in result]
 
+        from app.db.sql_identifiers import validate_identifier
+
         with click.progressbar(tables, label="Reindexing tables") as bar:
             for table in bar:
-                db.execute(text(f"REINDEX TABLE {table}"))
+                safe_table = validate_identifier(table)
+                db.execute(text(f"REINDEX TABLE {safe_table}"))
 
         click.echo("✓ Indexes rebuilt successfully")
 

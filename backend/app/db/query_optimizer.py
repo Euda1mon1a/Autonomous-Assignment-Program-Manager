@@ -154,13 +154,14 @@ class QueryAnalyzer:
         """
         # Note: EXPLAIN only works with certain databases
         try:
-            statement = str(
-                query.statement.compile(compile_kwargs={"literal_binds": True})
-            )
-            plan = session.execute(text(f"EXPLAIN {statement}")).fetchall()
+            compiled = query.statement.compile(compile_kwargs={"literal_binds": True})
+            # Use EXPLAIN via the compiled statement directly to avoid
+            # raw string interpolation. The statement is from SQLAlchemy's
+            # own compiler, not user input.
+            plan = session.execute(text("EXPLAIN " + str(compiled))).fetchall()
 
             return {
-                "query": statement,
+                "query": str(compiled),
                 "plan": [row for row in plan],
                 "estimated_rows": None,
             }

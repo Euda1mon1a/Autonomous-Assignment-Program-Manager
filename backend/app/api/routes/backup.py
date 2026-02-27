@@ -153,9 +153,12 @@ async def create_snapshot(
 
     try:
         # Get row count
-        # Table name validated against allowlist.
+        # Table name validated against allowlist above.
+        from app.db.sql_identifiers import validate_identifier
+
+        safe_table = validate_identifier(request.table)
         count_result = db.execute(
-            text(f"SELECT COUNT(*) FROM {request.table}")  # nosec B608
+            text(f"SELECT COUNT(*) FROM {safe_table}")  # nosec B608 - validated
         ).scalar()
 
         # Generate snapshot ID
@@ -418,7 +421,10 @@ async def restore_snapshot(
 
             # First truncate the table
             # Table name validated against allowlist.
-            db.execute(text(f"TRUNCATE TABLE {table_name} CASCADE"))  # nosec B608
+            from app.db.sql_identifiers import validate_identifier
+
+            safe_table_name = validate_identifier(table_name)
+            db.execute(text(f"TRUNCATE TABLE {safe_table_name} CASCADE"))
             db.commit()
 
             # Then restore from snapshot
@@ -453,9 +459,9 @@ async def restore_snapshot(
                 )
 
             # Count restored rows
-            # Table name validated against allowlist.
+            # Table name validated against allowlist above.
             row_count = db.execute(
-                text(f"SELECT COUNT(*) FROM {table_name}")  # nosec B608
+                text(f"SELECT COUNT(*) FROM {safe_table_name}")  # nosec B608 - validated
             ).scalar()
 
             logger.warning(

@@ -108,8 +108,11 @@ class BackupStrategy(ABC):
             int: Number of rows in table
         """
         try:
-            # Table name derived from database metadata.
-            query = text(f"SELECT COUNT(*) FROM {table}")  # nosec B608
+            from app.db.sql_identifiers import validate_identifier
+
+            # Table name derived from database metadata; validate for safety.
+            safe_table = validate_identifier(table)
+            query = text(f"SELECT COUNT(*) FROM {safe_table}")  # nosec B608 - validated
             result = db.execute(query)
             count = result.scalar()
             return count or 0
@@ -254,8 +257,10 @@ class FullBackupStrategy(BackupStrategy):
             dict: Table data with all rows
         """
         # Get all rows
-        # Table name derived from database metadata.
-        query = text(f"SELECT * FROM {table}")  # nosec B608
+        from app.db.sql_identifiers import validate_identifier
+
+        safe_table = validate_identifier(table)
+        query = text(f"SELECT * FROM {safe_table}")  # nosec B608 - validated
         result = db.execute(query)
 
         # Convert rows to dictionaries
@@ -423,19 +428,24 @@ class IncrementalBackupStrategy(BackupStrategy):
 
         if timestamp_column:
             # Query rows changed since last backup
-            # Table/column names derived from database metadata.
+            from app.db.sql_identifiers import validate_identifier
+
+            safe_table = validate_identifier(table)
+            safe_col = validate_identifier(timestamp_column)
             query = text(
-                f"SELECT *\n"  # nosec B608
-                f"FROM {table}\n"
-                f"WHERE {timestamp_column} > :since\n"
-                f"ORDER BY {timestamp_column}\n"
+                f"SELECT *\n"  # nosec B608 - identifiers validated
+                f"FROM {safe_table}\n"
+                f"WHERE {safe_col} > :since\n"
+                f"ORDER BY {safe_col}\n"
             )
             result = db.execute(query, {"since": since})
         else:
             # No timestamp column - include all rows as a safety measure
             logger.warning(f"Table {table} has no timestamp column, including all rows")
-            # Table name derived from database metadata.
-            query = text(f"SELECT * FROM {table}")  # nosec B608
+            from app.db.sql_identifiers import validate_identifier
+
+            safe_table = validate_identifier(table)
+            query = text(f"SELECT * FROM {safe_table}")  # nosec B608 - validated
             result = db.execute(query)
 
         # Convert rows to dictionaries

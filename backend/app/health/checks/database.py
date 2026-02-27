@@ -188,10 +188,13 @@ class DatabaseHealthCheck:
         accessible = []
         checked = len(core_tables)
 
+        from app.db.sql_identifiers import validate_identifier
+
         for table_name in core_tables:
             try:
                 # Try to query table (with limit to avoid loading data)
-                query = text(f"SELECT 1 FROM {table_name} LIMIT 1")  # nosec B608
+                safe_table = validate_identifier(table_name)
+                query = text(f"SELECT 1 FROM {safe_table} LIMIT 1")  # nosec B608 - validated
                 db.execute(query)
                 accessible.append(table_name)
 

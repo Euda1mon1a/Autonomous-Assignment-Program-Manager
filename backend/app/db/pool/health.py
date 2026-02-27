@@ -247,11 +247,13 @@ class ConnectionValidator:
         """
         try:
             # Set statement timeout
-            session.execute(text(f"SET statement_timeout = {timeout_seconds * 1000}"))
+            timeout_ms = int(timeout_seconds * 1000)
+            session.execute(text("SET statement_timeout = :ms"), {"ms": timeout_ms})
 
             # Try a query that should timeout
             # pg_sleep is a PostgreSQL function that sleeps for N seconds
-            session.execute(text(f"SELECT pg_sleep({timeout_seconds + 1})"))
+            sleep_secs = int(timeout_seconds + 1)
+            session.execute(text("SELECT pg_sleep(:secs)"), {"secs": sleep_secs})
 
             # If we get here, timeout didn't work
             return False
