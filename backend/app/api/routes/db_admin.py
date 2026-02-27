@@ -593,7 +593,8 @@ async def vacuum_table(
                 detail=f"Table '{table_name}' not found",
             )
 
-        # VACUUM cannot run in a transaction, so we need to commit first
+        # VACUUM cannot run in a transaction.
+        # We commit any pending changes on the session, then open a dedicated autocommit connection.
         db.commit()
 
         # Run VACUUM
@@ -603,8 +604,12 @@ async def vacuum_table(
             vacuum_query = text(f"VACUUM {safe_table}")
 
         # Execute with autocommit
-        connection = db.connection()
-        connection.execute(vacuum_query)
+        with (
+            db.get_bind()
+            .connect()
+            .execution_options(isolation_level="AUTOCOMMIT") as connection
+        ):
+            connection.execute(vacuum_query)
 
         logger.info(
             f"VACUUM{'ANALYZE' if analyze else ''} completed for table {table_name}"

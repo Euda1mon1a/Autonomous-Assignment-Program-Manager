@@ -26,8 +26,13 @@ def validate_identifier(name: str) -> str:
     return f'"{name}"'
 
 
-# PostgreSQL special search_path variables
-_SEARCH_PATH_SPECIALS = frozenset({'"$user"', "$user", "public"})
+# PostgreSQL special search_path variables (passed through as-is)
+_SEARCH_PATH_SPECIALS = frozenset(
+    {'"$user"', "$user", "public", "pg_temp", "pg_catalog"}
+)
+
+# Matches a double-quoted identifier: "schema_name" or "MySchema"
+_QUOTED_IDENTIFIER_RE = re.compile(r'^"([^"]+)"$')
 
 
 def validate_search_path(search_path: str) -> str:
@@ -35,6 +40,8 @@ def validate_search_path(search_path: str) -> str:
 
     SHOW search_path returns values like '"$user", public' which contain
     multiple schemas. Each component is validated individually.
+    Handles: unquoted identifiers, quoted identifiers, and special variables
+    ($user, public, pg_temp, pg_catalog).
 
     Returns the validated search_path string safe for SET search_path TO.
     """
@@ -46,7 +53,15 @@ def validate_search_path(search_path: str) -> str:
         if part in _SEARCH_PATH_SPECIALS:
             safe_parts.append(part)
         elif _IDENTIFIER_RE.match(part):
+            # Unquoted valid identifier — quote it for safety
             safe_parts.append(f'"{part}"')
+        elif _QUOTED_IDENTIFIER_RE.match(part):
+            # Already double-quoted identifier (e.g. "MySchema") — validate inner
+            inner = _QUOTED_IDENTIFIER_RE.match(part).group(1)
+            if _IDENTIFIER_RE.match(inner):
+                safe_parts.append(f'"{inner}"')
+            else:
+                raise ValueError(f"Invalid quoted identifier in search_path: {part!r}.")
         else:
             raise ValueError(
                 f"Invalid search_path component: {part!r}. "

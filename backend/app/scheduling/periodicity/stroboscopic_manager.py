@@ -53,27 +53,25 @@ from sqlalchemy.future import select
 
 from app.distributed.locks import DistributedLock
 
-try:
-    from app.events.event_bus import EventBus
-    from app.events.event_types import BaseEvent, EventMetadata, EventType
-except ImportError:
+# Event types removed (app.events.* deleted in dead-code-cleanup).
+# Self-contained stubs for checkpoint event publishing.
 
-    @dataclass
-    class BaseEvent:  # type: ignore[no-redef]
-        """Stub for removed events module."""
 
-        aggregate_id: str = ""
-        metadata: Any = None
+@dataclass
+class BaseEvent:
+    """Minimal event base for checkpoint notifications."""
 
-    @dataclass
-    class EventMetadata:  # type: ignore[no-redef]
-        """Stub for removed events module."""
+    aggregate_id: str = ""
+    metadata: Any = None
 
-        event_type: str = ""
-        event_version: int = 1
 
-    EventBus = None  # type: ignore[assignment,misc]
-    EventType = None  # type: ignore[assignment,misc]
+@dataclass
+class EventMetadata:
+    """Minimal event metadata."""
+
+    event_type: str = ""
+    event_version: int = 1
+
 
 logger = logging.getLogger(__name__)
 
@@ -266,8 +264,8 @@ class StroboscopicScheduleManager:
     def __init__(
         self,
         db: AsyncSession,
-        event_bus: EventBus,
-        redis_client: redis.Redis,
+        event_bus: Any = None,
+        redis_client: redis.Redis | None = None,
         schedule_id: str | None = None,
     ) -> None:
         """
@@ -275,7 +273,7 @@ class StroboscopicScheduleManager:
 
         Args:
             db: Async database session
-            event_bus: Event bus for publishing checkpoint events
+            event_bus: Optional event bus for publishing checkpoint events
             redis_client: Redis client for distributed locking
             schedule_id: Optional schedule ID (generates UUID if not provided)
         """
@@ -581,7 +579,8 @@ class StroboscopicScheduleManager:
                 acgme_compliant=new_authoritative.acgme_compliant,
             )
 
-            await self.event_bus.publish(checkpoint_event)
+            if self.event_bus is not None:
+                await self.event_bus.publish(checkpoint_event)
 
             logger.debug(
                 f"Published checkpoint event for state {new_authoritative.state_id}"
@@ -732,8 +731,8 @@ class StroboscopicScheduleManager:
 
 async def create_stroboscopic_manager(
     db: AsyncSession,
-    event_bus: EventBus,
-    redis_client: redis.Redis,
+    event_bus: Any = None,
+    redis_client: redis.Redis | None = None,
     schedule_id: str | None = None,
     initialize_empty: bool = True,
 ) -> StroboscopicScheduleManager:
@@ -742,7 +741,7 @@ async def create_stroboscopic_manager(
 
     Args:
         db: Async database session
-        event_bus: Event bus instance
+        event_bus: Optional event bus instance
         redis_client: Redis client instance
         schedule_id: Optional schedule ID
         initialize_empty: Whether to initialize with empty state
