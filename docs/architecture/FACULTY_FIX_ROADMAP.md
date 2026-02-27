@@ -1,12 +1,14 @@
 # Faculty Scheduling Fix Roadmap
 
-> **Status:** Planned (not started)
+> **Status:** Phase 1 COMPLETED, Phases 2-3 planned
 > **Created:** 2026-02-25
-> **Updated:** 2026-02-26 — cross-referenced with full-codebase Perplexity audit results
-> **Depends on:** Gemini WP-2/3/4/8/9 completion
+> **Updated:** 2026-02-26 — Phase 1 completed (PRs #1199, #1201, #1202)
+> **Depends on:** Gemini WP-2/3/4/8/9 completion (Phases 2-3)
 > **Prereqs:** `FACULTY_SCHEDULING_SPECIFICATION.md`, `annual-workbook-architecture.md`, `excel-stateful-roundtrip-roadmap.md`
 >
 > **Audit Confirmation (Feb 26, 2026):** Full-codebase Perplexity Computer audit (session #8, 39MB upload) independently confirmed Gap #1 as the highest-priority scheduling bug. Finding 4.2: `build_scheduling_context()` never populates `prior_calls` — the constraint code correctly reads via `getattr(context, "prior_calls", {})` but always receives an empty dict. YTD call equity is silently a no-op. See `docs/perplexity-uploads/started/full-codebase/RESULTS.md` for full findings. Implementation status for Gemini-authored code: see `docs/architecture/gemini-implementation-review.md`.
+>
+> **Phase 1 Completion (Feb 26, 2026):** All 5 steps implemented and merged via Mac Mini overnight sprint + Codex/Gemini fix passes. MAD replaces Min-Max. `prior_calls` hydrated from `call_assignments` via GROUP BY. FMIT weekend calls correctly split from weekday equity via `is_weekend` CASE expression. 9 unit tests passing.
 
 ---
 
@@ -20,7 +22,7 @@ The existing pipeline correctly separates `_load_fmit_call` (Friday/Saturday man
 
 | # | Gap | Severity | Phase |
 |---|-----|----------|-------|
-| 1 | Solver amnesia — call equity resets to 0 each block | High | 1 |
+| 1 | ~~Solver amnesia — call equity resets to 0 each block~~ | ~~High~~ | ~~1~~ DONE |
 | 2 | ORM CHECK constraint stale vs DB migration | Low | 2 |
 | 3 | `DeptChiefWednesdayPreference` implemented but not registered | Medium | 2 |
 | 4 | FMIT/call constraints disabled by default, no `profile` mechanism | Medium | 2 |
@@ -29,7 +31,11 @@ The existing pipeline correctly separates `_load_fmit_call` (Friday/Saturday man
 
 ---
 
-## Phase 1: Longitudinal Call Equity (Fixes Gap #1)
+## Phase 1: Longitudinal Call Equity (Fixes Gap #1) — COMPLETED
+
+> **Completed:** 2026-02-26
+> **PRs:** #1199 (MAD + prior_calls + sync), #1201 (max default=0 safety), #1202 (FMIT weekend split)
+> **Tests:** 9/9 passing in `backend/tests/test_call_equity_ytd.py`
 
 ### Problem
 
@@ -88,12 +94,14 @@ objective_vars.append((abs_dev, int(self.weight)))
 
 **Idempotent design:** Do NOT increment `+1` — recalculate YTD totals from `call_assignments` source of truth each time. Safe against block re-generation, rollbacks, and manual DB edits.
 
-### Step 1E: Tests
+### Step 1E: Tests — COMPLETED
 
-- **Unit:** Mock `prior_calls` in SchedulingContext, verify solver assigns calls to lowest-history faculty
-- **Integration:** Create `CallAssignment` records for Blocks 1–9, run Block 10 solve, assert equity across YTD totals
-- **Edge:** Empty `prior_calls` (Block 1 of year) — MAD formulation gracefully degrades to single-block equity optimizer (no special branching needed, mathematically verified by Gemini)
-- **Regression:** Verify `_sync_academic_year_call_counts()` is idempotent — run twice, assert same result
+All 9 tests passing in `backend/tests/test_call_equity_ytd.py`:
+
+- **TestSundayCallEquityMAD (3 tests):** MAD creates abs_dev vars, deviation with prior history, empty prior_calls degrades to single-block equity
+- **TestWeekdayCallEquityMAD (1 test):** Creates deviation variables for Mon-Thu
+- **TestSyncAcademicYearCallCounts (2 tests):** Idempotent sync, handles no-call scenario
+- **TestPriorCallsHydration (3 tests):** Call type mapping, accumulation by person, FMIT weekend split (overnight+is_weekend=True maps to sunday, not weekday)
 
 ---
 

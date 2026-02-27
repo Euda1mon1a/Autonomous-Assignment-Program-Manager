@@ -3,8 +3,9 @@
 > **Reviewed:** 2026-02-24
 > **Reviewer:** Claude Opus 4.6
 > **Branch:** `fix/block12-null-activities` (uncommitted changes)
-> **Status:** Needs fix pass before commit
+> **Status:** 28/31 items fixed. Remaining: #19 (row hash skip), #22 (longitudinal 4c/4d), #28 (N+1 queries)
 > **Scope:** Round 1 (Phases 1–4, Tracks A/C) + Round 2 (Annual Workbook)
+> **Updated:** 2026-02-26 — Gemini code review findings integrated into PRs #1200, #1201 (VACUUM autocommit, set_config, max default=0)
 
 ---
 
@@ -456,3 +457,19 @@ These are future features, not bugs. They should be implemented in separate PRs:
 29. ~~Remove unused imports~~ (FIXED — Codex)
 30. ~~Replace `typing.List`/`Tuple` with builtins~~ (FIXED — Codex)
 31. ~~Run lint on all modified files~~ (FIXED — Fix pass. All ruff checks pass)
+
+---
+
+# Gemini Direct Code Review (Feb 26, 2026)
+
+> Gemini 3 Pro reviewed the codebase directly (not via roadmap) and identified 4 findings.
+> Integrated into PRs #1200 and #1201.
+
+| # | Finding | Severity | Resolution |
+|---|---------|----------|------------|
+| G1 | VACUUM runs inside transaction block | High | **FIXED** (PR #1201) — Uses `get_bind().connect().execution_options(isolation_level="AUTOCOMMIT")` |
+| G2 | `SET` statements fail under asyncpg | High | **FIXED** (PR #1201) — Replaced with `set_config()` parameterized calls |
+| G3 | TenantConnectionPoolManager race condition | Low | Advisory only — noted but not yet addressed (low-traffic path) |
+| G4 | `max()` ValueError on empty sequence in equity constraints | Low | **FIXED** (PR #1201) — Added `default=0` parameter |
+
+**Note:** Gemini made direct file edits (advise-only mode was requested). Changes were stashed, reviewed, and incorporated into the fix branch alongside Codex feedback fixes.

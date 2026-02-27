@@ -41,6 +41,25 @@ Where they agree: high confidence. Where they disagree: investigate. Where one f
 
 Sessions 1-6 results are embedded in `full-codebase/prior_research_results.md` so session 8 builds on them rather than re-deriving.
 
+## Resolved Findings (Feb 26, 2026 Sprint)
+
+7 PRs merged (#1196–#1202) addressing findings from sessions 7 and 8:
+
+| Finding | Session | Status | Resolution |
+|---------|---------|--------|------------|
+| 4.2: `prior_calls` never hydrated | #8 | **FIXED** (PR #1199) | GROUP BY query in `_build_context()` with CASE expression for `effective_type` |
+| 5.2.1: 20 SQL injection vectors | #8 | **FIXED** (PRs #1197, #1200, #1201) | `validate_identifier()` + `validate_search_path()` in `sql_identifiers.py` |
+| Dead scaffolding modules | #8 (1.1.1) | **FIXED** (PR #1198) | 27,598 lines removed (~19 modules: CQRS, event sourcing, SAML, sharding, etc.) |
+| Call equity Min-Max incompatible | #7 | **FIXED** (PR #1199) | MAD via `AddAbsEquality`, F-multiplied integers for CP-SAT |
+| FMIT weekend calls misclassified | Codex review | **FIXED** (PR #1202) | `is_weekend` CASE expression reclassifies overnight+weekend as sunday equity |
+| Alembic chain divergence | #8 (4.1) | **FIXED** (PR #1196) | Heads merged, chain linearized |
+| Stroboscopic ImportError fallback | Codex review | **FIXED** (PR #1201) | Removed broken fallback, event_bus made optional |
+
+**Still open from session 8:**
+- Finding 1.1.1: Remaining unmigrated models (after ~19 dead modules removed)
+- Finding 3.3.1: 8 untested scheduling edge cases
+- Finding 4.5: YTD_SUMMARY hardcoded column positions
+
 ## What to Do When Results Come Back
 
 1. Save output to `started/{session-name}/RESULTS.md`
