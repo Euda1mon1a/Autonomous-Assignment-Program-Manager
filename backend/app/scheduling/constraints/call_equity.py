@@ -122,8 +122,17 @@ class SundayCallEquityConstraint(SoftConstraint):
         if not faculty_sunday_counts:
             return
 
-        # Create max count variable and minimize it
-        max_sunday = model.NewIntVar(0, len(sunday_blocks) + 52, "max_ytd_sunday_calls")
+        # MAD (Mean Absolute Deviation) formulation via AddAbsEquality.
+        # For each faculty: dev = F * (history + current) - total_calls
+        # Minimize sum of |dev| * weight.
+        # Multiply by F to keep integer domain in CP-SAT.
+        F = len(faculty_sunday_counts)
+        if F == 0:
+            return
+
+        # total_calls = sum of all (history + current) across faculty
+        all_history = []
+        all_vars = []
         for f_i, vars_list in faculty_sunday_counts.items():
             faculty_uuid = call_eligible_faculty[f_i].id
             history = (
@@ -131,11 +140,34 @@ class SundayCallEquityConstraint(SoftConstraint):
                 .get(faculty_uuid, {})
                 .get("sunday", 0)
             )
-            model.Add(history + sum(vars_list) <= max_sunday)
+            all_history.append(history)
+            all_vars.extend(vars_list)
 
-        # Add to objective (minimize max)
+        total_history = sum(all_history)
+        # total_calls_var represents F * total across all faculty
+        # Each faculty's dev = F * (history_i + current_i) - total_calls
+        # But total_calls includes current block vars which are decision vars,
+        # so we build it as: total_history + sum(all_current_vars)
+        # and compute dev = F * (h_i + c_i) - (total_history + sum(all_vars))
+
         objective_vars = variables.get("objective_terms", [])
-        objective_vars.append((max_sunday, int(self.weight)))
+        max_possible = (max(all_history) + len(sunday_blocks)) * F + total_history
+        for f_i, vars_list in faculty_sunday_counts.items():
+            faculty_uuid = call_eligible_faculty[f_i].id
+            history = (
+                getattr(context, "prior_calls", {})
+                .get(faculty_uuid, {})
+                .get("sunday", 0)
+            )
+            # dev = F * (history + sum(vars_list)) - (total_history + sum(all_vars))
+            dev = model.NewIntVar(-max_possible, max_possible, f"sun_dev_{f_i}")
+            model.Add(
+                dev == F * (history + sum(vars_list)) - total_history - sum(all_vars)
+            )
+            abs_dev = model.NewIntVar(0, max_possible, f"sun_abs_dev_{f_i}")
+            model.AddAbsEquality(abs_dev, dev)
+            objective_vars.append((abs_dev, int(self.weight)))
+
         variables["objective_terms"] = objective_vars
 
     def add_to_pulp(
@@ -524,10 +556,14 @@ class WeekdayCallEquityConstraint(SoftConstraint):
         if not faculty_weekday_counts:
             return
 
-        # Minimize max weekday calls
-        max_weekday = model.NewIntVar(
-            0, len(weekday_blocks) + 260, "max_ytd_weekday_calls"
-        )
+        # MAD (Mean Absolute Deviation) formulation via AddAbsEquality.
+        # dev = F * (history + current) - total_calls; minimize |dev|
+        F = len(faculty_weekday_counts)
+        if F == 0:
+            return
+
+        all_history = []
+        all_vars = []
         for f_i, vars_list in faculty_weekday_counts.items():
             faculty_uuid = call_eligible_faculty[f_i].id
             history = (
@@ -535,10 +571,28 @@ class WeekdayCallEquityConstraint(SoftConstraint):
                 .get(faculty_uuid, {})
                 .get("weekday", 0)
             )
-            model.Add(history + sum(vars_list) <= max_weekday)
+            all_history.append(history)
+            all_vars.extend(vars_list)
+
+        total_history = sum(all_history)
 
         objective_vars = variables.get("objective_terms", [])
-        objective_vars.append((max_weekday, int(self.weight)))
+        max_possible = (max(all_history) + len(weekday_blocks)) * F + total_history
+        for f_i, vars_list in faculty_weekday_counts.items():
+            faculty_uuid = call_eligible_faculty[f_i].id
+            history = (
+                getattr(context, "prior_calls", {})
+                .get(faculty_uuid, {})
+                .get("weekday", 0)
+            )
+            dev = model.NewIntVar(-max_possible, max_possible, f"wkday_dev_{f_i}")
+            model.Add(
+                dev == F * (history + sum(vars_list)) - total_history - sum(all_vars)
+            )
+            abs_dev = model.NewIntVar(0, max_possible, f"wkday_abs_dev_{f_i}")
+            model.AddAbsEquality(abs_dev, dev)
+            objective_vars.append((abs_dev, int(self.weight)))
+
         variables["objective_terms"] = objective_vars
 
     def add_to_pulp(
