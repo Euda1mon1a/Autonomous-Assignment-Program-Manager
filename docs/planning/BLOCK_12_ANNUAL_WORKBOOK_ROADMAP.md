@@ -69,9 +69,11 @@ These PRs landed in the last 48 hours and directly affect the solve/export pipel
 
 ---
 
-## Remediation Status (Verified Feb 27, 2026)
+## Remediation Status (Verified Feb 27, 2026 — DB-confirmed)
 
 Cross-reference: `docs/planning/OPUS_BLOCK_12_REMEDIATION_PLAN.md` (Gemini-sourced), plan file `nested-gliding-feather.md` (Opus-sourced).
+
+**DB verification (Feb 27, PG17):** All 16 residents have 56 HDAs. All 14 faculty have 56 HDAs. NBN constraints are valid (`min=0, max=40`). Kate Bohringer and Derrick Thiel removed from scope — neither are Block 12 participants.
 
 ### Work Stream A: Export Pipeline Fixes
 
@@ -86,10 +88,11 @@ Cross-reference: `docs/planning/OPUS_BLOCK_12_REMEDIATION_PLAN.md` (Gemini-sourc
 
 | Item | Description | Status | Notes |
 |------|-------------|--------|-------|
-| B1 | NBN `min_halfdays > max_halfdays` | **NOT DONE** | No migration or fix exists. Model has no CHECK constraint. |
-| B2 | FMIT-PGY3 rotation requirements | **NOT DONE** | NF combo reqs were created (`20260224`) then removed (`20260225`) because preloader handles NF combined. FMIT-PGY3 still has 0 rows — data completeness issue, not root cause. |
-| B3 | Faculty weekly templates (4 core faculty) | **PARTIAL** | Model + API + coverage report exist. No seed data for the 4 missing faculty. |
+| B1 | NBN `min_halfdays > max_halfdays` | **NON-ISSUE** | DB query confirms NBN has `min=0, max=40` across all 7 requirement rows. Documented paradox does not exist in live DB. |
+| B2 | FMIT-PGY3 rotation requirements | **UNNECESSARY** | Preloader-handled. NF combo reqs created (`20260224`) then removed (`20260225`). |
+| B3 | Faculty weekly templates | **DONE** | 13/14 faculty have 14 templates each. Only Bohringer (not Block 12 participant) has 0. Removed from scope. |
 | B4 | aSM activity code | **DONE** | `sync_preload_service.py:834-860`: `_load_sm_preloads()` loads aSM for Wed AM. |
+| B5 | Orphaned activity UUID | **NEW** | 8 template rows reference `9fd0dca9-...` which doesn't exist in `activities` table. Data integrity issue. |
 
 ### Work Stream C: Logic Fixes
 
@@ -105,26 +108,38 @@ Cross-reference: `docs/planning/OPUS_BLOCK_12_REMEDIATION_PLAN.md` (Gemini-sourc
 | D1 | Preloader | **DONE** | `load_all_preloads()` — 10 preload types, 26 methods |
 | D2 | Export pipeline | **DONE** | `export_year_xlsx()` — 14-sheet workbook with metadata |
 | D3 | Solver | **DONE** | CP-SAT optimized (PR #1207) |
-| D4 | Actual Block 12 regeneration | **NOT DONE** | Pipeline ready but B1+B3 need fixing first |
+| D4 | Actual Block 12 regeneration | **DONE** | 16 residents × 56 HDAs + 14 faculty × 56 HDAs confirmed in DB |
 
 ### Work Stream E: Documentation
 
 | Item | Description | Status | Notes |
 |------|-------------|--------|-------|
-| E1 | MASTER_PRIORITY_LIST updates | **DONE** | MEDIUM #35 + LOW #36-39 added |
+| E1 | MASTER_PRIORITY_LIST updates | **DONE** | MEDIUM #35 + LOW #36-39 + HIGH #40 added |
 | E2 | Roadmap sections 11j + 11k | **DONE** | Constraint triage P1-P5 + deferred `prefer_full_days` |
 
 ### Constraint Status
 
 **16 enabled** (physical impossibilities + soft/hybrid + tier-1 resilience). **32 disabled** (18 policy hard + 14 optional/tier-2). All policy hard constraints disabled in `ConstraintManager.create_default()` to prevent INFEASIBLE on preloaded data conflicts. See section 11j for P1-P5 re-enablement plan.
 
-### Critical Path to Block 12
+### Block 12 Data Quality Issues (DB-verified)
+
+Pipeline ran successfully — all persons have 56 HDAs. But spatial analysis reveals quality issues:
+
+| Issue | Severity | Detail |
+|-------|----------|--------|
+| **All faculty work weekends** | HIGH | 12/14 faculty have 16 non-W weekend HDAs (100% of weekends). `WeekendWork` constraint disabled. |
+| **1 faculty on leave** | INFO | Only activities: LV-AM, LV-PM (on leave entire block — correct) |
+| **Low solver involvement** | INFO | 13/16 residents are 100% preloaded. 3 have solver fills (41, 51, 48, 39 solved slots). |
+| **Orphaned activity UUID** | LOW | 8 `faculty_weekly_templates` rows reference non-existent activity `9fd0dca9-...` |
+
+### Critical Path (Updated)
 
 ```
-Fix B1 (NBN min>max) ──┐
-Fix B3 (seed templates)─┤──→ D4 (purge → preload → solve → export) ──→ P1-P5 (re-enable constraints)
-                        │
-B2 is unnecessary ──────┘   (FMIT-PGY3 is preloader-handled)
+B1-B4: DONE ──────────────────┐
+D4: Block 12 generated ───────┤──→ Quality fixes via schedule_grid view
+                              │      ├── Re-enable WeekendWork constraint (P1)
+All residents: 56 HDAs ───────┤      ├── Verify faculty activity diversity
+All faculty: 56 HDAs ─────────┘      └── Fix orphaned activity UUID
 ```
 
 ---
