@@ -3324,11 +3324,13 @@ class SchedulingEngine:
         from app.models.faculty_weekly_template import FacultyWeeklyTemplate
 
         # Map solver categories to template activity codes that belong in each
+        # These sets classify template activity codes into the solver's binary
+        # C/AT model.  Retained for future constraint registration and capacity
+        # tracking; no longer gate the write-back (templates are authoritative).
         _SOLVER_CLINIC_CODES = {
             "cv",
             "fm_clinic",
             "sm_clinic",
-            "dfm",
             "c40",
             "hlc",
             "rad",
@@ -3341,6 +3343,7 @@ class SchedulingEngine:
             "lec",
             "pi",
             "dep",
+            "dfm",  # Dept Family Medicine — administrative, not clinic
         }
 
         # Build template lookup: (person_id, py_weekday, time_of_day) → activity_code
@@ -3370,6 +3373,10 @@ class SchedulingEngine:
         for pid, dow, tod, code in template_rows:
             template_lookup[(pid, dow, tod)] = code
 
+        # Post-call/rest codes that must never appear as template overrides
+        # for normal C/AT slots — they are event-driven, not weekly-pattern.
+        _POSTCALL_CODES = {"pcat", "do", "off"}
+
         def _resolve_template_activity(
             faculty_id: UUID,
             slot_date: date,
@@ -3378,23 +3385,30 @@ class SchedulingEngine:
         ) -> str:
             """Resolve solver coarse type to specific template activity code.
 
-            If the template has a code matching the solver's category (C→clinic,
-            AT→admin), use it.  Otherwise fall back to the generic mapping.
+            Only applies to C (clinic) and AT (supervise) solver types — these
+            are the coarse categories that templates refine into specific codes
+            (e.g., C → cv, fm_clinic; AT → gme, dfm).
+
+            PCAT, DO, and OFF have specific post-call/rest semantics that must
+            not be overridden by templates.  Additionally, if a template
+            erroneously contains a post-call code (pcat, do, off), we ignore
+            it for C/AT slots to prevent corrupting call-chain semantics.
+
+            NOTE: FacultyWeeklyTemplateConstraint is not yet registered, so the
+            solver doesn't respect templates during optimization.  Once registered,
+            cross-category conflicts (solver=C, template=admin) will decrease.
             """
+            # Only override C and AT — PCAT, DO, OFF have specific semantics
+            if solver_type not in ("C", "AT"):
+                return solver_type
+
             # Template day_of_week uses Python weekday convention (0=Mon, 6=Sun)
-            # despite model docstring claiming PG DOW — confirmed by
-            # call_equity.py:877 and activity_solver.py:1019 which compare
-            # pref.day_of_week directly against date.weekday().
             py_wd = slot_date.weekday()  # 0=Mon ... 6=Sun
 
             tpl_code = template_lookup.get((faculty_id, py_wd, time_of_day))
-            if tpl_code:
-                tpl_lower = tpl_code.lower()
-                if solver_type == "C" and tpl_lower in _SOLVER_CLINIC_CODES:
-                    return tpl_code  # Use template's specific clinic code
-                if solver_type == "AT" and tpl_lower in _SOLVER_ADMIN_CODES:
-                    return tpl_code  # Use template's specific admin code
-            # Fall back to generic mapping
+            if tpl_code and tpl_code.lower() not in _POSTCALL_CODES:
+                return tpl_code  # Template is authoritative
+            # No template for this slot (or template is post-call) — use solver type
             return solver_type
 
         # Track existing locked slots to avoid overwriting

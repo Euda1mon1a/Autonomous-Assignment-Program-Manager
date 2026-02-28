@@ -24,9 +24,9 @@
 2. **Personnel cleanup** — Removed 4 non-core faculty (1 with 0 templates, 3 near all-GME)
 
 ### Known Quality Issues (Solver-Side)
-1. **Faculty solver ignores templates** — `FacultyWeeklyTemplateConstraint` not registered in `manager.py`. Cross-category mismatches remain (~100 slots where solver chose C but template wants AT, or vice versa). Within-category specificity now handled by template-aware write-back.
+1. **Faculty solver ignores templates** — `FacultyWeeklyTemplateConstraint` not registered in `manager.py`. ~~Cross-category mismatches remain (~100 slots where solver chose C but template wants AT, or vice versa).~~ **FIXED at write-back level:** templates are now authoritative — the write-back uses the coordinator's template code regardless of solver category. Solver still doesn't constrain on templates during optimization (deferred C2).
 2. ~~**Faculty work Sat/Sun**~~ — **FIXED.** Root cause: `activity_solver.py` overwrote weekend "OFF" codes with clinical activities when `include_faculty_slots=True`. Added faculty weekend exclusion filter. Weekend uses standard Sat+Sun (`weekday() >= 5`). Weekend violations: 60 → 0.
-3. ~~**Solver activity model too coarse**~~ — **PARTIALLY FIXED.** Write-back at `engine.py` now template-aware: loads `faculty_weekly_templates`, resolves C→CV/sm_clinic/dfm, AT→gme/lec/SIM. 103 HDAs updated (56 Friday restorations + 47 template refinements). Cross-category mismatches (solver category vs template category) ~100 — requires FacultyWeeklyTemplateConstraint integration.
+3. ~~**Solver activity model too coarse**~~ — **FIXED.** Write-back at `engine.py` now template-authoritative: templates always win over solver category. DFM moved from `_SOLVER_CLINIC_CODES` to `_SOLVER_ADMIN_CODES` (was misclassified as clinic). Cross-category mismatches eliminated — all ~100 previously generic "C"/"AT" codes now resolve to specific template activities. 17 regression tests in `test_resolve_template_activity.py`.
 4. **Alembic stamp mismatch** — DB at `9bcfa50205e4`, not in migration files
 5. ~~**DOW convention mismatch**~~ — **FIXED (P0).** All runtime bugs patched (constraint, frontend `isWeekend`/`DAY_LABELS`), all 9 docstrings corrected, disambiguation constants added, 67 regression tests. See `docs/architecture/DOW_CONVENTION_BUG.md`.
 
@@ -226,11 +226,13 @@ The CP-SAT solver uses a **coarse 4-type faculty activity model**:
 | `fac_do[f_i, b_i]` | Day Off post-call (DO) | All days, linked to call |
 | *(none set)* | OFF | Default |
 
-**The write-back** (`engine.py:3370`) maps these to activity codes: C→fm_clinic, AT→at. It does NOT consult faculty weekly templates for specific activity selection (CV vs fm_clinic vs sm_clinic).
+**The write-back** (`engine.py:3370`) is now **template-authoritative**: it loads `faculty_weekly_templates` and uses the coordinator's specific activity code directly, regardless of what the solver chose (C or AT). The solver's coarse category is only used as fallback when no template exists.
+
+**Key fix (Feb 28):** DFM was previously misclassified in `_SOLVER_CLINIC_CODES` (engine.py) despite being `activity_category = "administrative"` in the DB and `ADMIN_ACTIVITY_CODES` in activity_solver.py. Moved to `_SOLVER_ADMIN_CODES`. More importantly, the write-back no longer gates template resolution on solver category agreement — templates always win.
 
 **Templates have ~15 activity types** (CV, fm_clinic, sm_clinic, at, gme, SIM, dfm, lec, etc.) which map to the 4 solver types. The solver decides *clinic vs supervise*, not *which specific clinic*.
 
-**Implication for zeroing:** Faculty solver slots will always show generic codes (fm_clinic, at, gme). To match Excel exactly, the write-back needs to be template-aware: look up the faculty's weekly template for that day/slot and use the template's specific activity code instead of the generic one.
+**Remaining:** The solver itself doesn't constrain on templates during optimization — `FacultyWeeklyTemplateConstraint` registration is deferred (C2). The write-back mask ensures correct DB output despite solver-template disagreements.
 
 ---
 
