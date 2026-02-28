@@ -232,7 +232,30 @@ class Activity(Base):
 
     @property
     def is_supervision(self) -> bool:
-        """Check if this is a supervision activity (AT, PCAT)."""
-        code = (self.code or "").strip().lower()
-        abbrev = (self.display_abbreviation or "").strip().upper()
-        return code in {"at", "pcat"} or abbrev in {"AT", "PCAT"}
+        """Check if this activity provides supervision (AT, PCAT, DO, SM_CLINIC).
+
+        Uses the ``provides_supervision`` DB field as the single source of truth.
+        """
+        return bool(self.provides_supervision)
+
+    @property
+    def is_solver_clinic(self) -> bool:
+        """True if this is a clinic activity in the solver's binary C/AT model.
+
+        Corresponds to ``fac_clinic`` solver variables. Represents patient-
+        generating work that counts toward physical capacity (max 6/slot).
+        """
+        return bool(self.counts_toward_physical_capacity)
+
+    @property
+    def is_solver_admin(self) -> bool:
+        """True if this is an admin/supervision/educational activity.
+
+        Corresponds to ``fac_supervise`` solver variables. Includes AT, GME,
+        DFM, LEC, SIM — anything that is NOT patient-generating clinic work
+        and is NOT time off.
+        """
+        return (
+            not self.counts_toward_physical_capacity
+            and self.activity_category != ActivityCategory.TIME_OFF.value
+        )
