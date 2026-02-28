@@ -2,8 +2,9 @@
 
 Validates that:
 1. DFM is correctly classified as admin (not clinic)
-2. Templates are authoritative — solver category doesn't gate resolution
+2. Templates are authoritative for C/AT — solver category doesn't gate resolution
 3. Solver type is used as fallback when no template exists
+4. PCAT, DO, OFF pass through unchanged (not overridden by templates)
 """
 
 from datetime import date
@@ -47,6 +48,9 @@ def _make_resolve_fn(template_lookup: dict):
         time_of_day,
         solver_type,
     ) -> str:
+        # Only override C and AT — PCAT, DO, OFF have specific semantics
+        if solver_type not in ("C", "AT"):
+            return solver_type
         py_wd = slot_date.weekday()
         tpl_code = template_lookup.get((faculty_id, py_wd, time_of_day))
         if tpl_code:
@@ -185,3 +189,62 @@ class TestResolveTemplateActivity:
         lookup = {(faculty_id, 4, "AM"): "dfm"}
         resolve = _make_resolve_fn(lookup)
         assert resolve(faculty_id, friday, "AM", "C") == "dfm"
+
+
+# ---------------------------------------------------------------------------
+# PCAT / DO / OFF pass-through tests (Codex P1 fix)
+# ---------------------------------------------------------------------------
+
+
+class TestSolverTypePassThrough:
+    """Verify that PCAT, DO, and OFF are never overridden by templates.
+
+    These solver types have specific post-call rest semantics:
+    - PCAT = Post-Call Attending (AM after overnight call)
+    - DO = Day Off post-call (PM after PCAT AM)
+    - OFF = No assignment (default)
+
+    Templates must not replace these — doing so would corrupt post-call
+    rest tracking and ACGME duty hour compliance.
+    """
+
+    @pytest.fixture()
+    def faculty_id(self):
+        return uuid4()
+
+    @pytest.fixture()
+    def monday(self):
+        return date(2026, 5, 11)
+
+    def test_pcat_not_overridden_by_template(self, faculty_id, monday):
+        """PCAT must pass through even when a template exists for this slot."""
+        lookup = {(faculty_id, 0, "AM"): "cv"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "PCAT") == "PCAT"
+
+    def test_do_not_overridden_by_template(self, faculty_id, monday):
+        """DO must pass through even when a template exists for this slot."""
+        lookup = {(faculty_id, 0, "PM"): "gme"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "PM", "DO") == "DO"
+
+    def test_off_not_overridden_by_template(self, faculty_id, monday):
+        """OFF must pass through even when a template exists for this slot."""
+        lookup = {(faculty_id, 0, "AM"): "cv"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "OFF") == "OFF"
+
+    def test_pcat_without_template(self, faculty_id, monday):
+        """PCAT passes through when no template exists."""
+        resolve = _make_resolve_fn({})
+        assert resolve(faculty_id, monday, "AM", "PCAT") == "PCAT"
+
+    def test_do_without_template(self, faculty_id, monday):
+        """DO passes through when no template exists."""
+        resolve = _make_resolve_fn({})
+        assert resolve(faculty_id, monday, "PM", "DO") == "DO"
+
+    def test_off_without_template(self, faculty_id, monday):
+        """OFF passes through when no template exists."""
+        resolve = _make_resolve_fn({})
+        assert resolve(faculty_id, monday, "AM", "OFF") == "OFF"

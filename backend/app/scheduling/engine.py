@@ -3381,14 +3381,21 @@ class SchedulingEngine:
         ) -> str:
             """Resolve solver coarse type to specific template activity code.
 
-            The template is authoritative — if the coordinator's weekly template
-            specifies an activity for this slot, use it.  The solver's coarse
-            C/AT category is only used as fallback when no template exists.
+            Only applies to C (clinic) and AT (supervise) solver types — these
+            are the coarse categories that templates refine into specific codes
+            (e.g., C → cv, fm_clinic; AT → gme, dfm).
+
+            PCAT, DO, and OFF have specific post-call/rest semantics that must
+            not be overridden by templates.
 
             NOTE: FacultyWeeklyTemplateConstraint is not yet registered, so the
             solver doesn't respect templates during optimization.  Once registered,
             cross-category conflicts (solver=C, template=admin) will decrease.
             """
+            # Only override C and AT — PCAT, DO, OFF have specific semantics
+            if solver_type not in ("C", "AT"):
+                return solver_type
+
             # Template day_of_week uses Python weekday convention (0=Mon, 6=Sun)
             py_wd = slot_date.weekday()  # 0=Mon ... 6=Sun
 
