@@ -10,14 +10,14 @@ Also sets provides_supervision = true for sm_clinic (Sports Medicine faculty
 provide supervision during clinic) and DO (Direct Observation is supervision).
 
 Revision ID: 20260228_fix_capacity_flags
-Revises: 9bcfa50205e4
+Revises: 20260227_sched_grid
 """
 
 import sqlalchemy as sa
 from alembic import op
 
 revision = "20260228_fix_capacity_flags"
-down_revision = "9bcfa50205e4"
+down_revision = "20260227_sched_grid"
 branch_labels = None
 depends_on = None
 
