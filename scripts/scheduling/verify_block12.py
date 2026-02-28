@@ -789,6 +789,7 @@ def check_call_chain_integrity(conn) -> CheckResult:
         FROM call_assignments ca
         JOIN people p ON ca.person_id = p.id
         WHERE ca.date >= %s AND ca.date <= %s
+          AND ca.call_type = 'overnight'
         ORDER BY p.name, ca.date
     """,
         (BLOCK_START, BLOCK_END),
