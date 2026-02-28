@@ -123,55 +123,13 @@ CheckConstraint("call_type IN ('overnight', 'weekend', 'backup')", name="check_c
 
 No migration needed — metadata-only alignment.
 
-### 2B: Register DeptChiefWednesdayPreferenceConstraint (Gap #3)
+### 2B: Register DeptChiefWednesdayPreferenceConstraint (Gap #3) — COMPLETED
 
-**Problem:** Fully implemented at `call_equity.py:1456-1575` (CP-SAT + PuLP) and already imported in `manager.py:64`, but NOT added in `create_default()`.
+**Status:** ✅ Done. Constraint is registered at `manager.py:456`, disabled by default, enabled when `profile == "faculty"` (line 478). Class at `call_equity.py:1548`.
 
-**File:** `backend/app/scheduling/constraints/manager.py`
+### 2C: Add `profile` Parameter to `create_default()` (Gap #4) — COMPLETED
 
-Add to `create_default()` (disabled by default, enabled via profile):
-
-```python
-# After the TuesdayCallPreference/CallNightBeforeLeave block (~line 427):
-manager.add(DeptChiefWednesdayPreferenceConstraint(weight=1.0))
-manager.disable("DeptChiefWednesdayPreference")
-```
-
-### 2C: Add `profile` Parameter to `create_default()` (Gap #4)
-
-**Problem:** FMIT constraints (`FMITWeekBlocking`, `FMITMandatoryCall`) and `OvernightCallGeneration` are added but disabled by default (lines 364–388). Callers must manually enable them. No caller currently passes parameters — all 8 call sites use `create_default()` with no args.
-
-**File:** `backend/app/scheduling/constraints/manager.py`
-
-```python
-@classmethod
-def create_default(cls, profile: str = "resident") -> "ConstraintManager":
-    manager = cls()
-    # ... existing constraint registration (unchanged) ...
-
-    if profile == "faculty":
-        manager.enable("FMITWeekBlocking")
-        manager.enable("FMITMandatoryCall")
-        manager.enable("OvernightCallGeneration")
-        manager.enable("DeptChiefWednesdayPreference")
-
-    return manager
-```
-
-**Also update** `ConstraintService.get_manager_for_config()` dispatch map at `constraint_service.py:569`:
-
-```python
-config_map = {
-    "default": ConstraintManager.create_default,
-    "faculty": lambda: ConstraintManager.create_default(profile="faculty"),
-    "minimal": ConstraintManager.create_minimal,
-    "strict": ConstraintManager.create_strict,
-    "resilience": lambda: ConstraintManager.create_resilience_aware(tier=2),
-}
-```
-
-**Backward compatibility:** Default `"resident"` profile preserves current behavior for all 8 callers:
-`engine.py:117`, `solvers.py:135`, `anderson_localization.py:309`, `generator.py:133`, `constraint_service.py:163`, `constraint_service.py:576`
+**Status:** ✅ Done. `create_default(cls, profile: str = "resident")` at `manager.py:325`. Faculty profile enables `FMITWeekBlocking`, `FMITMandatoryCall`, `OvernightCallGeneration`, `DeptChiefWednesdayPreference` (lines 474-478). Default `"resident"` profile preserves existing behavior for all callers.
 
 ### 2D: DOW Convention Fix — COMPLETED (Feb 27, 2026)
 
@@ -192,13 +150,22 @@ config_map = {
 
 **Reference:** `docs/architecture/DOW_CONVENTION_BUG.md` (marked FIXED with full file list and test commands).
 
+### Phase 2 Status Summary
+
+| Item | Status |
+|------|--------|
+| 2A: ORM CHECK alignment | **OPEN** — neither model nor migration has CHECK constraints (gap, not mismatch) |
+| 2B: DeptChiefWednesday registration | **DONE** — registered, disabled by default, enabled for faculty profile |
+| 2C: `profile` parameter | **DONE** — `create_default(profile="resident"\|"faculty")` implemented |
+| 2D: DOW convention fix | **DONE** — PR #1210 (15 files, 67 tests) |
+
 ### Phase 2 Tests
 
-- `create_default(profile="faculty")` returns manager with FMIT + call constraints enabled
-- `create_default()` (no args) keeps existing disabled state — zero behavioral change
-- ORM CHECK values match migration CHECK values
-- `FacultyWeeklyTemplate.__repr__()` shows correct day name for DOW=4 → "Fri" (not "Thu")
-- `FacultyWeeklyTemplate.is_weekend` returns True for DOW=5,6 (Sat, Sun), False for DOW=0 (Mon)
+- ✅ `create_default(profile="faculty")` returns manager with FMIT + call constraints enabled
+- ✅ `create_default()` (no args) keeps existing disabled state — zero behavioral change
+- ⏳ ORM CHECK values match migration CHECK values — neither has CHECK constraints yet
+- ✅ `FacultyWeeklyTemplate.__repr__()` shows correct day name for DOW=4 → "Fri" (not "Thu")
+- ✅ `FacultyWeeklyTemplate.is_weekend` returns True for DOW=5,6 (Sat, Sun), False for DOW=0 (Mon)
 
 ---
 
