@@ -327,29 +327,38 @@ def check_weekend_handling(conn) -> CheckResult:
                 abbrev, wknd_work, sec_abbrev, sec_wknd = rot_info
 
                 # Determine which rotation is active based on date vs mid-block
-                active_rotations = [abbrev]
+                # Only use the active rotation's weekend-work flag
                 if sec_abbrev and r["date"] >= mid_block_secondary:
-                    active_rotations.append(sec_abbrev)
+                    active_rot, active_wknd = sec_abbrev, sec_wknd
+                else:
+                    active_rot, active_wknd = abbrev, wknd_work
 
-                for rot in active_rotations:
-                    allowed.add(rot.lower())
-                    mapped = ROTATION_TO_ACTIVITY.get(rot)
+                # Offsite rotations (TDY/HILO/JAPAN etc.) always work weekends
+                # regardless of includes_weekend_work flag — resident is deployed
+                if active_rot in OFFSITE_ROTATIONS:
+                    allowed.add(active_rot.lower())
+                    mapped = ROTATION_TO_ACTIVITY.get(active_rot)
                     if mapped:
                         allowed.add(mapped.lower())
-                    if rot in OFFSITE_ROTATIONS:
-                        allowed.add("tdy")
-                        allowed.add("pem")
-                    if rot in NF_FIRST_MAP:
+                    allowed.add("tdy")
+                    allowed.add("pem")
+                # Other rotations: only allow rotation codes if includes_weekend_work
+                elif active_wknd:
+                    allowed.add(active_rot.lower())
+                    mapped = ROTATION_TO_ACTIVITY.get(active_rot)
+                    if mapped:
+                        allowed.add(mapped.lower())
+                    if active_rot in NF_FIRST_MAP:
                         allowed.add("nf")
-                        allowed.add(NF_FIRST_MAP[rot].lower())
-                    if rot in SPEC_FIRST_MAP:
+                        allowed.add(NF_FIRST_MAP[active_rot].lower())
+                    if active_rot in SPEC_FIRST_MAP:
                         allowed.add("nf")
-                        allowed.add(SPEC_FIRST_MAP[rot].lower())
-                    if rot in NIGHT_FLOAT_ROTATIONS:
+                        allowed.add(SPEC_FIRST_MAP[active_rot].lower())
+                    if active_rot in NIGHT_FLOAT_ROTATIONS:
                         allowed.add("nf")
                         allowed.add("pednf")
                         allowed.add("ldnf")
-                    if rot in {"PEDW"}:
+                    if active_rot in {"PEDW"}:
                         allowed.add("pedw")
 
         for slot, code in [("AM", r["am_code"]), ("PM", r["pm_code"])]:
@@ -748,7 +757,7 @@ def check_absence_alignment(conn) -> CheckResult:
                 am, pm = codes
                 am_ok = am and am.lower() in acceptable_leave
                 pm_ok = pm and pm.lower() in acceptable_leave
-                if not (am_ok or pm_ok):
+                if not (am_ok and pm_ok):
                     violations.append(
                         f"{a['name']}: {d} absence ({a['absence_type']}) "
                         f"but codes={am}/{pm}"
@@ -859,16 +868,28 @@ def check_source_consistency(conn) -> CheckResult:
     rot_rows = _q(
         conn,
         """
-        SELECT ba.resident_id, rt.abbreviation, rt.rotation_type
+        SELECT ba.resident_id, rt.abbreviation as primary_abbrev,
+               rt2.abbreviation as secondary_abbrev
         FROM block_assignments ba
         JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
+        LEFT JOIN rotation_templates rt2 ON ba.secondary_rotation_template_id = rt2.id
         WHERE ba.block_number = %s AND ba.academic_year = %s
     """,
         (BLOCK_NUMBER, ACADEMIC_YEAR),
     )
     inpatient_residents = set()
     for r in rot_rows:
-        if r["abbreviation"] in PRELOADED_ROTATIONS:
+        primary = (
+            _canonical_rotation(r["primary_abbrev"]) if r["primary_abbrev"] else None
+        )
+        secondary = (
+            _canonical_rotation(r["secondary_abbrev"])
+            if r["secondary_abbrev"]
+            else None
+        )
+        if primary in PRELOADED_ROTATIONS or (
+            secondary and secondary in PRELOADED_ROTATIONS
+        ):
             inpatient_residents.add(r["resident_id"])
 
     # Get resident grid with sources
