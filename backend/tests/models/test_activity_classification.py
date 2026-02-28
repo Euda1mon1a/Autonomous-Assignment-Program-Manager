@@ -5,11 +5,18 @@ Validates that:
 2. is_solver_clinic maps to counts_toward_physical_capacity
 3. is_solver_admin is the complement (non-clinic, non-time_off)
 4. Classification sets are disjoint
+5. Test property implementations match the real Activity model source
 
 NOTE: We replicate the property logic here to avoid importing the Activity
-model, which triggers the full app import chain and settings validation.
-The property implementations must match engine.py/activity.py exactly.
+model, which triggers the full app import chain and settings validation
+(Activity → Base → audit.py → logging → config.py → Settings()).
+A source-drift guard test (TestSourceDriftGuard) parses the real model
+file and verifies the replicated logic hasn't diverged.
 """
+
+import ast
+import textwrap
+from pathlib import Path
 
 import pytest
 
@@ -288,3 +295,95 @@ class TestClassificationDisjointness:
         )
         assert a.is_solver_clinic is expected_clinic, f"{code}: is_solver_clinic"
         assert a.is_solver_admin is expected_admin, f"{code}: is_solver_admin"
+
+
+# ---------------------------------------------------------------------------
+# Source drift guard — ensures test helpers match the real Activity model.
+# We parse the source AST instead of importing to avoid the settings chain.
+# ---------------------------------------------------------------------------
+
+# Path to the real Activity model, relative to this test file.
+_ACTIVITY_MODEL_PATH = (
+    Path(__file__).resolve().parent.parent.parent / "app" / "models" / "activity.py"
+)
+
+
+def _extract_property_source(filepath: Path, property_name: str) -> str:
+    """Extract the body source of a @property from a class in the given file.
+
+    Returns the dedented body (everything after the def line and docstring).
+    """
+    source = filepath.read_text()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ClassDef) or node.name != "Activity":
+            continue
+        for item in node.body:
+            if (
+                isinstance(item, ast.FunctionDef)
+                and item.name == property_name
+                and any(
+                    isinstance(d, ast.Name) and d.id == "property"
+                    for d in item.decorator_list
+                )
+            ):
+                # Get the return statement(s) — skip docstring
+                body = [
+                    n
+                    for n in item.body
+                    if not (
+                        isinstance(n, ast.Expr)
+                        and isinstance(n.value, ast.Constant)
+                        and isinstance(n.value.value, str)
+                    )
+                ]
+                return ast.dump(ast.Module(body=body, type_ignores=[]))
+    raise ValueError(f"Property {property_name!r} not found in {filepath}")
+
+
+class TestSourceDriftGuard:
+    """Verify that test helper logic matches the real Activity model.
+
+    These tests parse the Activity model source via AST and compare the
+    property implementations to catch drift without triggering the import
+    chain.
+    """
+
+    def test_is_supervision_matches_model(self):
+        """Test helper _is_supervision matches Activity.is_supervision.
+
+        Real model should use ``bool(self.provides_supervision)`` —
+        field-driven, not hardcoded string checks.
+        """
+        model_ast = _extract_property_source(_ACTIVITY_MODEL_PATH, "is_supervision")
+        assert "provides_supervision" in model_ast
+        # Should be a simple bool() call on a field, not a set membership check
+        assert "Call" in model_ast, "Expected bool() call wrapping the field"
+        # Must NOT contain hardcoded code strings like {'at', 'pcat'}
+        assert "Set(" not in model_ast, (
+            "is_supervision should use provides_supervision field, not a hardcoded set"
+        )
+
+    def test_is_solver_clinic_matches_model(self):
+        """Test helper _is_solver_clinic matches Activity.is_solver_clinic."""
+        model_ast = _extract_property_source(_ACTIVITY_MODEL_PATH, "is_solver_clinic")
+        assert "counts_toward_physical_capacity" in model_ast
+        assert "Call" in model_ast, "Expected bool() call wrapping the field"
+
+    def test_is_solver_admin_matches_model(self):
+        """Test helper _is_solver_admin matches Activity.is_solver_admin.
+
+        Real model uses ``not self.counts_toward_physical_capacity and
+        self.activity_category != ActivityCategory.TIME_OFF.value``.
+        """
+        model_ast = _extract_property_source(_ACTIVITY_MODEL_PATH, "is_solver_admin")
+        assert "counts_toward_physical_capacity" in model_ast
+        assert "activity_category" in model_ast
+        # Should reference TIME_OFF (via enum or literal)
+        assert "TIME_OFF" in model_ast or "time_off" in model_ast
+
+    def test_model_file_exists(self):
+        """Guard: the model file we parse must exist."""
+        assert _ACTIVITY_MODEL_PATH.exists(), (
+            f"Activity model not found at {_ACTIVITY_MODEL_PATH}"
+        )

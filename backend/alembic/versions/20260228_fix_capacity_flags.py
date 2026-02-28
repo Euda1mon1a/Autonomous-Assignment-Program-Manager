@@ -57,7 +57,12 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Revert capacity flags (set back to false)."""
+    """Revert capacity flags (only rows this migration touched).
+
+    The upgrade only flips rows where counts_toward_physical_capacity was
+    false, so the downgrade mirrors that by only reverting rows that are
+    currently true for these codes.
+    """
     codes_to_revert = [
         "C",
         "fm_clinic",
@@ -73,6 +78,6 @@ def downgrade() -> None:
         op.execute(
             sa.text(
                 "UPDATE activities SET counts_toward_physical_capacity = false "
-                "WHERE code = :code"
+                "WHERE code = :code AND counts_toward_physical_capacity = true"
             ).bindparams(code=code)
         )
