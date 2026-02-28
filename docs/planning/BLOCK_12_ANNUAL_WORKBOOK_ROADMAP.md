@@ -1023,4 +1023,20 @@ To convert hard constraints to true soft constraints in CP-SAT:
 
 This is a significant refactor (~15 constraint files, ~30 `model.Add()` sites) and should be its own focused PR after the Block 12 export is validated.
 
+### 11k: Future Work — Faculty Full-Day Preference (Deferred)
+
+**Feature:** `prefer_full_days` boolean on `Person` model — when true, solver groups AM+PM clinic slots on the same day instead of scattering them across the week.
+
+**Why deferred:** Attempted by Gemini CLI (commits `68f69d92`, `d4b9cc1a`, both reverted) before basics were locked in. Migration had broken `down_revision` pointing to a deleted migration (`be2e66649140`). The feature is valid but depends on:
+1. Constraint refactoring (section 11j) — hard→soft conversion must be complete first
+2. `FacultyPrimaryDutyClinicConstraint` re-enabled and working
+3. WeekendWork + ClinicCapacity constraints validated (P1/P2 fixes)
+
+**Implementation sketch (from Gemini spec, saved to `/tmp/gemini_full_day_preference.patch`):**
+- Add `prefer_full_days` Boolean column to `people` table (default=true)
+- In `FacultyPrimaryDutyClinicConstraint.add_to_cpsat()`: create indicator variable `is_full_day` per day, add soft bonus when AM+PM match
+- Weight: ~100 (faculty preference tier)
+
+**Prerequisite:** Lock in P1-P5 fixes from section 11j first.
+
 **Execution order:** DB fixes (B1-B4) → purge Block 12 HDAs → preloader → solver → export
