@@ -69,6 +69,66 @@ These PRs landed in the last 48 hours and directly affect the solve/export pipel
 
 ---
 
+## Remediation Status (Verified Feb 27, 2026)
+
+Cross-reference: `docs/planning/OPUS_BLOCK_12_REMEDIATION_PLAN.md` (Gemini-sourced), plan file `nested-gliding-feather.md` (Opus-sourced).
+
+### Work Stream A: Export Pipeline Fixes
+
+| Item | Description | Status | Evidence |
+|------|-------------|--------|----------|
+| A1 | LEC/GME black-on-black fonts | **DONE** | `TAMC_Color_Scheme_Reference.xml` lines 94-95: both in `white` font group |
+| A2 | Tally formula off-by-one | **DONE** | `xml_to_xlsx_converter.py:579-582`: BO/BP/BQ sum rows 9-28 correctly |
+| A3 | Placeholder Faculty- names | **DONE** | `canonical_schedule_export_service.py:439,448`: filters `Faculty-*` and `Dr. Faculty-*` |
+| A4 | Row dimensions copy | **DONE** | `canonical_schedule_export_service.py:256-257`: `row_dimensions` copied in `_copy_worksheet()` |
+
+### Work Stream B: Database Corrections
+
+| Item | Description | Status | Notes |
+|------|-------------|--------|-------|
+| B1 | NBN `min_halfdays > max_halfdays` | **NOT DONE** | No migration or fix exists. Model has no CHECK constraint. |
+| B2 | FMIT-PGY3 rotation requirements | **NOT DONE** | NF combo reqs were created (`20260224`) then removed (`20260225`) because preloader handles NF combined. FMIT-PGY3 still has 0 rows — data completeness issue, not root cause. |
+| B3 | Faculty weekly templates (4 core faculty) | **PARTIAL** | Model + API + coverage report exist. No seed data for the 4 missing faculty. |
+| B4 | aSM activity code | **DONE** | `sync_preload_service.py:834-860`: `_load_sm_preloads()` loads aSM for Wed AM. |
+
+### Work Stream C: Logic Fixes
+
+| Item | Description | Status | Notes |
+|------|-------------|--------|-------|
+| C1 | Adjunct exclusion from solver | **DONE** | 3 filter points: `engine.py:949-951`, `engine.py:3306-3354`, `activity_solver.py:1099,3442-3476` |
+| C2 | FacultyWeeklyTemplateConstraint | **NOT REGISTERED** | 488-line constraint class exists at `constraints/faculty_weekly_template.py` but NOT imported in `manager.py`. Deferred to future PR. |
+
+### Work Stream D: Regeneration Infrastructure
+
+| Item | Description | Status | Notes |
+|------|-------------|--------|-------|
+| D1 | Preloader | **DONE** | `load_all_preloads()` — 10 preload types, 26 methods |
+| D2 | Export pipeline | **DONE** | `export_year_xlsx()` — 14-sheet workbook with metadata |
+| D3 | Solver | **DONE** | CP-SAT optimized (PR #1207) |
+| D4 | Actual Block 12 regeneration | **NOT DONE** | Pipeline ready but B1+B3 need fixing first |
+
+### Work Stream E: Documentation
+
+| Item | Description | Status | Notes |
+|------|-------------|--------|-------|
+| E1 | MASTER_PRIORITY_LIST updates | **DONE** | MEDIUM #35 + LOW #36-39 added |
+| E2 | Roadmap sections 11j + 11k | **DONE** | Constraint triage P1-P5 + deferred `prefer_full_days` |
+
+### Constraint Status
+
+**16 enabled** (physical impossibilities + soft/hybrid + tier-1 resilience). **32 disabled** (18 policy hard + 14 optional/tier-2). All policy hard constraints disabled in `ConstraintManager.create_default()` to prevent INFEASIBLE on preloaded data conflicts. See section 11j for P1-P5 re-enablement plan.
+
+### Critical Path to Block 12
+
+```
+Fix B1 (NBN min>max) ──┐
+Fix B3 (seed templates)─┤──→ D4 (purge → preload → solve → export) ──→ P1-P5 (re-enable constraints)
+                        │
+B2 is unnecessary ──────┘   (FMIT-PGY3 is preloader-handled)
+```
+
+---
+
 ## Pipeline Reference (Corrected)
 
 ### Engine Entry Point
@@ -911,10 +971,10 @@ After the initial Block 12 solve + export (commit `e937e7fa`), a visual review o
 |---------------|--------------|-------------|
 | Never duplicate export in Node.js | Already doing this | No action |
 | Named ranges in fat template | Good long-term, LOW priority | Added as future consideration |
-| Deterministic generation (stable sort keys) | Useful for baseline fingerprinting | **LOW #32 in Master Priority List** |
-| Template version validation (SHA256 sentinel) | Cheap insurance (~10 lines) | **LOW #31 in Master Priority List** |
-| Export contract formalization (Pydantic schema) | Future-proofing | **LOW #33 in Master Priority List** |
-| Hand-jam reconciliation loop | Most ambitious, deferred | **LOW #34 in Master Priority List** |
+| Deterministic generation (stable sort keys) | Useful for baseline fingerprinting | **LOW #37 in Master Priority List** |
+| Template version validation (SHA256 sentinel) | Cheap insurance (~10 lines) | **LOW #36 in Master Priority List** |
+| Export contract formalization (Pydantic schema) | Future-proofing | **LOW #38 in Master Priority List** |
+| Hand-jam reconciliation loop | Most ambitious, deferred | **LOW #39 in Master Priority List** |
 
 **Key council consensus:** Architecture is correct and exceeds recommendations. Sequential openpyxl generation → Office.js auditing is the right pattern. Python exporter is single source of truth — never build a parallel Node.js/ExcelJS path.
 
@@ -1040,3 +1100,176 @@ This is a significant refactor (~15 constraint files, ~30 `model.Add()` sites) a
 **Prerequisite:** Lock in P1-P5 fixes from section 11j first.
 
 **Execution order:** DB fixes (B1-B4) → purge Block 12 HDAs → preloader → solver → export
+
+### 11l: Closed-Loop Validation Pipeline (Feb 27, 2026)
+
+**Problem:** The generated schedule is "almost always wrong" on the first attempt. Manually opening the XLSX to check is slow and error-prone. We need automated iteration: generate → validate → diagnose → fix → regenerate until it passes.
+
+**Key insight: The XLSX is not just presentation — it's spatial truth.** The grid layout (days as columns, people as rows) reveals patterns that row-based DB queries miss:
+- "Every faculty member works every weekend" is invisible as individual DB rows but immediately obvious in the grid
+- Coverage gaps show as empty cells in specific day columns
+- All-GME faculty show as monotone rows (no activity diversity)
+- Double-bookings show as conflicting codes in the same cell
+
+**Two validation layers required:**
+
+#### Layer 1: DB-Level Validation (Fast, After Solve)
+
+Already implemented — run without generating XLSX:
+
+| Check | Tool | Pass Criteria |
+|-------|------|---------------|
+| Solver status | `engine.generate()` return | `status != "failed"` |
+| Resident HDA count | `BlockQualityReportService.get_resident_distribution()` | Each: 50-56 HDAs |
+| Adjunct HDA count | SQL query filtered on `faculty_role='adjunct'` | Exactly 0 |
+| ACGME 80-hour | `ACGMEValidator._check_80_hour_rule()` | 0 violations |
+| ACGME 1-in-7 | `ACGMEValidator._check_1_in_7_rule()` | 0 violations |
+| NF 1-in-7 | `BlockQualityReport.Section D` | PASS per NF resident |
+| Post-call PCAT/DO | `BlockQualityReport.Section D` | 0 gaps |
+| Call coverage | `get_call_coverage()` | Sun-Thu covered |
+| Supervision ratios | `ACGMEValidator._check_supervision_ratios()` | 0 violations |
+| Utilization level | `_check_post_generation_resilience()` | < 90% |
+
+#### Layer 1.5: `schedule_grid` View (Spatial DB Validation — No XLSX Needed)
+
+The "spatial" problem (weekend work, activity diversity, coverage gaps) is actually a **query shape** problem. A pivot view on `half_day_assignments` gives the exact same grid as the XLSX, queryable with SQL:
+
+```sql
+CREATE VIEW schedule_grid AS
+SELECT
+    p.id AS person_id,
+    p.name,
+    p.person_type,
+    p.faculty_role,
+    hda.date,
+    EXTRACT(DOW FROM hda.date) AS day_of_week,  -- 0=Sun, 6=Sat
+    MAX(CASE WHEN hda.time_of_day = 'AM' THEN a.code END) AS am_code,
+    MAX(CASE WHEN hda.time_of_day = 'PM' THEN a.code END) AS pm_code,
+    MAX(CASE WHEN hda.time_of_day = 'AM' THEN hda.source END) AS am_source,
+    MAX(CASE WHEN hda.time_of_day = 'PM' THEN hda.source END) AS pm_source
+FROM half_day_assignments hda
+JOIN people p ON hda.person_id = p.id
+LEFT JOIN activities a ON hda.activity_id = a.id
+GROUP BY p.id, p.name, p.person_type, p.faculty_role, hda.date;
+```
+
+**Spatial checks become SQL queries:**
+
+| Check | Query | Pass Criteria |
+|-------|-------|---------------|
+| Weekend workers | `SELECT name FROM schedule_grid WHERE day_of_week IN (0,6) AND (am_code IS NOT NULL OR pm_code IS NOT NULL) AND person_type='faculty' GROUP BY name` | 0 rows (no faculty working weekends) |
+| All-GME faculty | `SELECT name FROM schedule_grid WHERE person_type='faculty' GROUP BY name HAVING COUNT(DISTINCT am_code) = 1` | 0 core faculty with only 1 activity code |
+| Coverage gaps | `SELECT date FROM schedule_grid WHERE person_type='faculty' GROUP BY date HAVING COUNT(*) < 3` | 0 understaffed days |
+| Adjunct HDAs | `SELECT name FROM schedule_grid WHERE faculty_role='adjunct'` | 0 rows |
+| Resident 56-slot check | `SELECT name, COUNT(*)*1 FROM schedule_grid WHERE person_type='resident' GROUP BY name` | Each: 25-28 distinct dates (= 50-56 half-days) |
+
+**Why this is better than openpyxl for Layer 1.5:**
+- No XLSX generation needed (faster iteration loop)
+- SQL is composable — add new checks without writing Python parsers
+- Same data, same layout, but queryable and indexable
+- Works in the DB validation pass before export is even triggered
+
+**Implementation:** Alembic migration to create the view, or create at runtime via `CREATE VIEW IF NOT EXISTS`. The view is read-only and costs nothing when not queried (no materialization overhead unless you `CREATE MATERIALIZED VIEW`).
+
+#### Layer 2: XLSX Round-Trip Validation (Export Pipeline Fidelity)
+
+Layer 1.5 validates the **schedule data**. Layer 2 validates the **export pipeline** — does the XLSX faithfully represent what's in the DB?
+
+**Approach:** Export XLSX → parse with openpyxl → load into a `xlsx_reconciliation` temp table → diff against `schedule_grid` view.
+
+```sql
+-- After loading XLSX parse results into xlsx_reconciliation:
+SELECT sg.name, sg.date, sg.am_code AS db_am, xr.am_code AS xlsx_am
+FROM schedule_grid sg
+FULL OUTER JOIN xlsx_reconciliation xr
+  ON sg.person_id = xr.person_id AND sg.date = xr.date
+WHERE sg.am_code IS DISTINCT FROM xr.am_code
+   OR sg.pm_code IS DISTINCT FROM xr.pm_code;
+```
+
+Any rows returned = export pipeline bug (wrong mapping, dropped entry, formula error).
+
+**Additional XLSX-specific checks (can't be done from DB):**
+
+| Check | Method | Pass Criteria |
+|-------|--------|---------------|
+| No black-on-black cells | openpyxl: compare font.color vs fill.color | 0 unreadable cells |
+| No placeholder names | Check row 4 cells | 0 "Faculty-*" strings |
+| Tally formulas intact | Read formula cells | SUM range covers rows 9-28 |
+| Hidden rows preserved | Check `row_dimensions[i].hidden` | Rows 25-30 hidden |
+
+**Implementation:** `scripts/ops/validate_xlsx.py` — parses XLSX, loads grid into temp table, diffs against `schedule_grid` view, checks formatting. Returns JSON pass/fail report.
+
+#### The Iteration Loop
+
+```
+Phase 1: Get to "correct" (finite fix space)
+┌──────────────────────────────────────────────────────┐
+│ for iteration in range(MAX_ITERATIONS):              │
+│   1. Purge Block 12 HDAs                             │
+│   2. Run preloader                                   │
+│   3. Run solver                                      │
+│   4. Run DB validation (Layer 1)                     │
+│   5. If Layer 1 fails → diagnose + fix → continue    │
+│   6. Export XLSX                                     │
+│   7. Run XLSX validation (Layer 2)                   │
+│   8. If Layer 2 fails → diagnose + fix → continue    │
+│   9. ALL PASS → done                                 │
+└──────────────────────────────────────────────────────┘
+
+Phase 2: Get to "optimal" (continuous weight space)
+┌──────────────────────────────────────────────────────┐
+│ Pareto sweep: vary soft constraint weights           │
+│ Measure: MAD equity + coverage + TTFI                │
+│ Find Pareto frontier (minimize equity variance       │
+│   without dropping coverage below 98%)               │
+│ This is the Tri-Agent Swarm weight tuning workflow   │
+└──────────────────────────────────────────────────────┘
+```
+
+**Phase 1 vs Phase 2 — why they're different:**
+
+| | Phase 1 (Correctness) | Phase 2 (Optimality) |
+|---|---|---|
+| **What changes** | Data fixes, constraint enable/disable | Soft constraint weights |
+| **Fix space** | Finite, enumerable (~50 known fixes) | Continuous (weight ranges) |
+| **Diagnosis** | Pattern-matching failure → known fix | Statistical (Pareto analysis) |
+| **Iteration count** | 3-5 (deterministic) | 50-100 (stochastic) |
+| **LLM role** | Read report → prescribe fix | Analyze JSONL → find frontier |
+| **Automation** | Single script, single agent | Tri-agent swarm (Gemini+Opus+Codex) |
+
+**Phase 1 fix space (enumerable):**
+
+| Failure Pattern | Diagnosis | Fix |
+|-----------------|-----------|-----|
+| INFEASIBLE | Binary search constraint isolation (`isolate_infeasible_constraint.py`) | Disable blocking constraint |
+| Resident < 50 HDAs | Missing preloader handler or broken rotation requirements | Fix data or add handler |
+| Faculty all-GME (no diversity) | Missing weekly template | Seed template rows |
+| Adjuncts have HDAs | Exclusion filter missing | Already fixed (C1) |
+| Weekend work for all faculty | `WeekendWork` constraint disabled | Re-enable (P1) |
+| Clinic over-scheduled | `ClinicCapacity` constraint disabled | Re-enable (P2) |
+| NBN min > max | Data quality | SQL update (B1) |
+| Call gaps | Missing call assignments | Generate or manual entry (P5) |
+
+**Scripts to build:**
+
+| Script | Purpose | Input | Output |
+|--------|---------|-------|--------|
+| `scripts/ops/validate_schedule.py` | Layer 1 DB validation | block_number, academic_year | JSON pass/fail report |
+| `scripts/ops/validate_xlsx.py` | Layer 2 XLSX spatial validation | XLSX file path | JSON pass/fail report |
+| `scripts/ops/block_pipeline.py` | Full pipeline: backup → purge → preload → solve → validate → export | block_number, academic_year | XLSX + validation reports |
+
+**Automation targets:**
+- `block_pipeline.py` can run as a Codex automation (nightly)
+- Layer 1+2 validation reports are machine-readable JSON
+- An LLM agent reads failure reports and prescribes fixes from the known fix table
+- The XLSX export only fires when Layer 1 passes — Layer 2 validates the export itself
+
+**Cross-reference:**
+- Existing debug scripts: `scripts/debug/isolate_infeasible_constraint.py`, `scripts/debug/test_selective_constraints.py`
+- Existing ops scripts: `scripts/ops/block_regen.py`, `scripts/ops/block_export.py`
+- Tri-agent swarm architecture: `docs/architecture/PAI2_TRI_AGENT_SWARM.md`
+- Antigravity IDE config: `.antigravity/` (auto-triggers superseded by Codex automations)
+- Perplexity sessions: `docs/perplexity-uploads/STATUS.md` (8/8 complete, findings catalogued)
+
+**Prerequisite:** Phase 1 iteration loop requires B1 (NBN fix) + B3 (faculty templates) before the first run can produce meaningful results. Those are one-time data fixes, not iterative.
