@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-27 PM (P0 DOW convention fix: 15 files, 67 tests; zeroing sprint fixes)
+> **Last Updated:** 2026-02-27 PM (staleness audit: #3.1/#3.5/#7/#8/#14 updated, P0 DOW fix, zeroing sprint)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -145,7 +145,7 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 3. Update MCP/API tooling to mirror direct Docker behavior.
 
 ### 3.1. CP-SAT Infeasible With 98% Preassigned (NEW - Feb 2026)
-**Status:** Active - blocks regeneration
+**Status:** Fix implemented — verification pending
 **Report:** [`docs/reports/cpsat-call-preload-and-schema-drift-20260205.md`](reports/cpsat-call-preload-and-schema-drift-20260205.md)
 
 **Symptom:** CP-SAT returns **INFEASIBLE** for 2026-03-12 → 2026-04-08.
@@ -173,18 +173,21 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 3. If needed, introduce **soft** preservation with high penalty or clear stale solver output before solve.
 
 ### 3.5. DB Schema Drift (NEW - Feb 2026)
-**Status:** Alembic head sync **FAIL** per stack health audit (2026-02-19)
+**Status:** Partially resolved — needs re-audit
 
-**Symptoms:**
-- Missing tables in DB (models exist): `calendar_subscriptions`, `export_jobs`, `export_job_executions`, `oauth2_authorization_codes`, `pkce_clients`, `schema_change_events`, `schema_versions`, `state_machine_instances`, `state_machine_transitions`, `webhooks`, `webhook_deliveries`, `webhook_dead_letters`.
-- Extra tables in DB: Continuum version tables (`*_version`, `transaction`) and legacy tables (`schedule_versions`, `schedule_diffs`, `metric_snapshots`, `chaos_experiments`, `faculty_activity_permissions`).
-- **Feb 19 audit:** DB current revision = `20260205_add_credential_flag_type`, head = `20260218_drafts_ver_tbl`. Two new migrations merged since (composite query indexes + AI budget tables) which extend the chain further.
+**Update (Feb 27):** Many "missing tables" (`calendar_subscriptions`, `export_jobs`, `oauth2_authorization_codes`, `pkce_clients`, `schema_change_events`, `schema_versions`, `state_machine_instances`, `state_machine_transitions`, `webhooks`, `webhook_deliveries`, `webhook_dead_letters`) corresponded to dead scaffolding code **removed in PR #1198** (27,598 lines). These are no longer expected in DB.
+
+**Current state:**
+- Migration head has advanced well beyond `20260218_drafts_ver_tbl` to `20260227_*` migrations (schedule_grid view, adjunct role, etc.).
+- Alembic chain was merged in PR #1196 (no more divergent heads).
+- Extra tables in DB: Continuum version tables (`*_version`, `transaction`) and legacy tables remain but cause no active issues.
+- DB stamp needs verification: run `alembic current` to confirm position vs `alembic heads`.
 
 **Action:**
-1. Run `alembic upgrade head` on live DB to sync all pending migrations.
-2. Confirm which missing tables are **intentional/optional** vs required.
-3. Add migrations for required tables.
-4. **Do not prune** tables unless they cause active issues.
+1. Run `alembic current` + `alembic heads` to verify chain is linear and DB is at head.
+2. If behind, run `alembic upgrade head`.
+3. ~~Confirm which missing tables are required~~ — most were dead code, removed in PR #1198.
+4. **Do not prune** extra tables unless they cause active issues.
 
 ### 4. Block 10 Schedule Generation - PARTIAL (Activity Solver OK)
 **Status:** CP-SAT ✅ | Activity Solver ✅ | Backend Export ⚠️ (partial) | Frontend Export ✅
@@ -313,7 +316,7 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 
 | Hook | Issue | Scope | Progress |
 |------|-------|-------|----------|
-| **mypy** | 4,347 type errors | 742 files | 41.5% fixed (3,079 errors) |
+| **mypy** | 4,194 type errors | 492 files | 43.5% fixed (3,232 errors) |
 | **bandit** | 0 high severity, config in pyproject.toml | Merged (Sessions 154-155) | ✅ Complete |
 | **Modron March** | FairnessAuditResponse location | Type in wrong file | ✅ Fixed (PR #838) |
 
@@ -323,10 +326,10 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 | 137 R1 | 7,426 | 6,880 | 546 | 7.3% |
 | 137 R2 | 6,880 | 6,440 | 440 | 6.4% |
 | 139 | 6,678 | 6,443 | 235 | 3.5% |
-| Feb 2026 | 6,443 | 4,347 | 2,096 | 28.2% |
-| **Total** | 7,426 | 4,347 | **3,079** | **41.5%** |
+| Feb 2026 | 6,443 | 4,194 | 2,249 | 30.3% |
+| **Total** | 7,426 | 4,194 | **3,232** | **43.5%** |
 
-**Feb 19 audit note:** mypy baseline=4390, current=4347, delta=-43 (within tolerance). Cumulative reduction from 7,426 → 4,347 = 41.5% fixed.
+**Feb 27 audit:** mypy current=4,194 errors in 492 files (down from 4,347/742). Cumulative reduction from 7,426 → 4,194 = 43.5% fixed.
 
 **Ref:** [`docs/scratchpad/session-139-mypy-parallel-fixes.md`](scratchpad/session-139-mypy-parallel-fixes.md)
 
@@ -345,30 +348,40 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 
 **✅ Resolved sub-items:** bandit added to requirements.txt (PR #839), Modron March fixed (PR #838)
 
-### 8. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
-Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
+### 8. Orphan Framework Code (~5.8K LOC remaining) - PARTIALLY CLEANED
+**Updated:** 2026-02-27 (staleness audit)
+
+PR #1198 removed **27,598 lines** of dead scaffolding (~19 modules including CQRS, event sourcing, SAML, OAuth2 PKCE, sharding, partitioning, deployment managers, outbox, key management).
+
+**Removed (PR #1198):**
+
+| Module | LOC Removed | Status |
+|--------|-------------|--------|
+| **CQRS** (`backend/app/cqrs/`) | 4,248 | ✅ Deleted |
+| **Deployment** (`backend/app/deployment/`) | 2,773 | ✅ Deleted |
+
+**Still present (~5,815 lines):**
 
 | Module | LOC | Quality | Recommendation |
 |--------|-----|---------|----------------|
-| **CQRS** (`backend/app/cqrs/`) | 4,248 | Full impl, 1 test file | **ROADMAP** - Keep for multi-facility scaling |
-| **Saga** (`backend/app/saga/`) | 2,142 | Full impl with compensation | **EVALUATE** - Useful for swap workflows |
-| **EventBus** (`backend/app/eventbus/`) | 1,385 | Generic Redis pub/sub | **INVESTIGATE** - External integrations |
-| **Deployment** (`backend/app/deployment/`) | 2,773 | Blue-green + canary | **EVALUATE** - Zero-downtime deploys |
-| **gRPC** (`backend/app/grpc/`) | 1,775 | Full server, JWT auth | **EVALUATE** - MCP/external integrations |
+| **Saga** (`backend/app/saga/`) | ~1,474 | Full impl with compensation | **EVALUATE** - Useful for swap workflows |
+| **EventBus** (`backend/app/eventbus/`) | ~1,315 | Generic Redis pub/sub | **EVALUATE** - External integrations |
+| **gRPC** (`backend/app/grpc/`) | ~1,740 | Full server, JWT auth | **EVALUATE** - MCP/external integrations |
+| **Mesh** (`backend/app/mesh/`) | ~1,286 | Service mesh impl | **EVALUATE** - Multi-service topology |
 
-**Decision:** Keep all modules on roadmap. Integrate as features require.
+**Decision:** Remaining modules on roadmap. Integrate as features require or remove if unused by production.
 
 ### 14. Admin GUI Backend Gaps (NEW - Session 156)
 **Added:** 2026-02-01
-**Updated:** 2026-02-19 — Admin service status dashboard merged (PR #1174)
+**Updated:** 2026-02-27 — staleness audit: swap + leave approval workflows are implemented
 **Source:** Backend/DB GUI readiness assessment
 
-Backend is **90% ready** (90 routes, 63 models, comprehensive CRUD). These gaps block full admin GUI:
+Backend is **95% ready** (90 routes, 63 models, comprehensive CRUD). One gap remains:
 
 | Gap | Impact | Effort | Status |
 |-----|--------|--------|--------|
-| **Swap approval workflow** | Swaps execute immediately; no approve/deny stage | 4-6h | ⏳ Pending |
-| **Leave approval workflow** | Leave created; no approval/denial flow | 4-6h | ⏳ Pending |
+| **Swap approval workflow** | Full state machine: PENDING→APPROVED→EXECUTED | — | ✅ Done (`swap.py` routes + `swap_request_service.py`) |
+| **Leave approval workflow** | Full flow: request→approve/reject + conflict detection | — | ✅ Done (`leave.py` routes + `absence_service.py`) |
 | **Dashboard aggregate endpoints** | No summary widgets (counts, trends) | 2-4h | ✅ Done (PR #804) |
 | **Cascading delete warnings** | No endpoint warns about dependent records | 2-3h | ✅ Done (PR #804) |
 | **Field-level change tracking** | Activity log tracks actions, not field diffs | 4-6h | ⏳ Pending |
@@ -391,13 +404,11 @@ Backend is **90% ready** (90 routes, 63 models, comprehensive CRUD). These gaps 
 - Leave types: free text (no enum)
 
 **Action:**
-1. Implement swap approval workflow (new `swap_status` state machine)
-2. Implement leave approval workflow (new `leave_status` state machine)
+1. ~~Implement swap approval workflow~~ — ✅ Done (full state machine in `swap_request_service.py`)
+2. ~~Implement leave approval workflow~~ — ✅ Done (request/approve/reject in `leave.py` routes)
 3. Add field-level change tracking (audit diffs per update)
 
 **Files to modify:**
-- `backend/app/services/swap_service.py` (approval workflow)
-- `backend/app/services/absence_service.py` (leave approval workflow)
 - `backend/app/services/activity_log_service.py` (field-level diff capture)
 
 ### 15. K2.5 Swarm MCP Integration (NEW - Session Phase 8)
@@ -1142,6 +1153,21 @@ After coordinators hand-jam the exported workbook in Excel, there's no pathway t
 | 🔧 Fixed | engine.py | Adjunct faculty excluded from solver HDA generation |
 
 **Source:** Block 12 workbook audit (Claude for Excel + Perplexity council + Gemini 3 Pro tiebreaker)
+
+### Session 2026-02-27 Staleness Audit
+
+| Change | Item | Reason |
+|--------|------|--------|
+| 📝 Updated | #3.1 | Status → "Fix implemented — verification pending" (code is on main) |
+| 📝 Updated | #3.5 | Many "missing tables" were dead code removed in PR #1198; head now at 20260227+ |
+| 📝 Updated | #7 | Mypy 4,347 → 4,194 errors (492 files, 43.5% fixed) |
+| 📝 Updated | #8 | CQRS + Deployment removed (PR #1198); ~5,815 LOC remain (Saga, EventBus, gRPC, Mesh) |
+| ✅ Done | #14 Swap approval | Full workflow exists: routes + `SwapRequestService` state machine |
+| ✅ Done | #14 Leave approval | Full workflow exists: request/approve/reject + conflict detection |
+| ✅ Done | Faculty 2B | `DeptChiefWednesdayPreference` registered, disabled by default, faculty-profile enabled |
+| ✅ Done | Faculty 2C | `create_default(profile="resident"\|"faculty")` parameter implemented |
+
+**Source:** Codebase audit via 2 parallel agents (cross-referencing priority list vs actual code state)
 
 ### Session 2026-02-27 PM Updates (Zeroing Sprint + P0 DOW Fix)
 
