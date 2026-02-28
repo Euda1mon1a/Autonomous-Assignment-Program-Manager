@@ -1,6 +1,6 @@
 # Block 12 Remediation Plan (Solver & Preloader Data Starvation)
 
-**Context:** ~~The Block 12 export is rendering correctly, but the data is incomplete.~~ **RESOLVED.** DB verification (Feb 27, PG17) confirms all 16 residents and all 14 faculty have 56 HDAs each. Data generation is complete. Remaining work is **quality** refinement (weekend work, activity diversity) via constraint re-enablement.
+**Context:** ~~The Block 12 export is rendering correctly, but the data is incomplete.~~ **RESOLVED.** DB verification (Feb 27, PG17) confirms all 16 residents and 10 core faculty have 56 HDAs each. Data generation is complete. Remaining work is **quality** refinement via zeroing (DB↔Excel alignment) and solver constraint integration.
 
 **Goal:** ~~Fix the upstream data requirements so the solver can successfully generate a complete 56-slot schedule for every active resident and core faculty member, while explicitly excluding adjuncts.~~ **ACHIEVED.** Focus shifts to quality: re-enable disabled constraints iteratively.
 
@@ -44,8 +44,8 @@
 
 **Status:** Pipeline ran successfully. DB contains complete Block 12 data:
 - 16 residents × 56 HDAs (13 fully preloaded, 3 with solver fills)
-- 14 faculty × 56 HDAs
-- Adjunct faculty not yet in DB (`20260227_add_adjunct` migration unapplied)
+- 10 core faculty × 56 HDAs (reduced from 14: removed 4 non-core faculty with 0 templates or near-all-GME)
+- Adjuncts deferred until core functionality locked in
 
 ---
 
@@ -53,21 +53,31 @@
 
 **Status:** Data exists but has quality issues revealed by spatial analysis.
 
-### 1. Faculty Weekend Work — `NOT DONE` (HIGH)
-*   **Issue:** 12/14 faculty have 16 non-W weekend HDAs (100% of weekends). `WeekendWork` constraint is disabled.
-*   **Fix:** Re-enable `WeekendWork` in P1 constraint batch (see roadmap section 11j).
+### 1. Faculty Weekend Work — `FIXED` (HIGH)
+*   **Issue:** Faculty working Sat/Sun. Root cause: `CPSATActivitySolver` in `activity_solver.py` overwrote weekend "OFF" codes with clinical activities when `include_faculty_slots=True`. No weekend exclusion filter existed for faculty slots.
+*   **Fix:** Added faculty weekend exclusion filter in `activity_solver.py` (~line 394) that skips faculty slots on Sat+Sun (`weekday() >= 5`). Standard civilian weekend convention (Sat+Sun). Engine `is_weekend` flag unchanged.
+*   **DOW Convention Clarification:** `FacultyWeeklyTemplate.day_of_week` uses **Python weekday (0=Mon, 6=Sun)** despite model docstring claiming PG DOW (0=Sun). All consuming code (`call_equity.py:877`, `activity_solver.py:1019`) uses Python convention. Docstring is incorrect — data is correct.
+*   **Result:** Weekend violations reduced from 60 → 0
 
-### 2. Faculty Activity Diversity — `NEEDS REVIEW`
-*   **Issue:** Some faculty may have generic all-GME/AT schedules vs. template-driven variety.
-*   **Validation:** Use `schedule_grid` view to check `COUNT(DISTINCT activity_code)` per faculty.
+### 2. Faculty Activity Diversity — `PARTIALLY FIXED` (HIGH)
+*   **Issue:** Solver activity model too coarse. 4 types (C, AT, PCAT, DO) → write-back maps C→fm_clinic, AT→at generically. Templates have ~15 specific activity types (CV, sm_clinic, SIM, dfm, etc.) that are ignored.
+*   **Root cause:** `FacultyWeeklyTemplateConstraint` not registered in `manager.py`. Even if registered, constraint's `add_to_cpsat()` expects `faculty_activities[f_i, b_i, tod, a_i]` variable structure that doesn't exist — solver uses separate `fac_clinic[f_i, b_i]` / `fac_supervise[f_i, b_i]` dicts.
+*   **Fix (two-part):**
+    1. **Write-back (DONE)**: `_persist_faculty_half_day_from_solver()` now template-aware — loads `faculty_weekly_templates` using **Python weekday convention (0=Mon)**. Resolves solver C→template-specific clinic code (CV, sm_clinic, dfm), solver AT→template-specific admin code (gme, lec, SIM). 103 HDAs updated (56 Friday restorations + 47 within-category refinements).
+    2. **Solver (DEFERRED)**: Cross-category mismatches (solver says C but template wants AT, or vice versa) ~100 violations. ~27 are FMIT rotation overrides (expected — FMIT assignment trumps weekly template). Requires FacultyWeeklyTemplateConstraint integration as soft preference.
 
-### 3. Orphaned Activity UUID — `NOT DONE` (LOW)
-*   **Issue:** 8 `faculty_weekly_templates` rows reference activity UUID `9fd0dca9-f260-478d-80b1-c9ea5d78b6d0` which does not exist in `activities` table.
-*   **Fix:** Either insert the missing activity or update the template rows to reference the correct activity.
+### 3. Orphaned Activity UUID — `FIXED`
+*   **Issue:** ~~8 rows~~ 5 `faculty_weekly_templates` rows referenced wrong FMIT UUID `9fd0dca9-...`.
+*   **Fix:** Updated to correct FMIT UUID `bd9c66b3-ad3c-2d6d-1a3d-1fa7bc8960a9`.
 
-### 4. Apply Adjunct Migration — `NOT DONE` (MEDIUM)
-*   **Issue:** `20260227_add_adjunct_role.py` exists but DB head is `9bcfa50205e4`. Adjunct faculty need to be classified.
-*   **Fix:** Run `alembic upgrade head` after verifying migration chain.
+### 4. Apply Adjunct Migration — `DEFERRED`
+*   **Decision:** Adjuncts deferred until core scheduling locked in. Removed non-essential faculty from DB.
+
+### 5. Zeroing Validation — `IN PROGRESS`
+*   **Approach:** Export DB grid → compare against coordinator's Excel cell-by-cell → isolate DB (solver) vs export (XLSX) issues.
+*   **Export:** `/tmp/Block12_Schedule_Grid_Zeroing.xlsx` (3 sheets: Raw Codes, Numeric Codes 1-9, Legend)
+*   **Tool:** Claude for Excel compares numeric grid against coordinator workbook.
+*   **See:** `docs/planning/SCHEDULE_GRID_ZEROING_PLAN.md` for full methodology.
 
 ---
 
@@ -77,3 +87,5 @@
 *   **Engine vs Faculty Templates:** The solver's engine dynamically falls back to generating generic HDAs if a faculty member has no `faculty_weekly_templates`. The engine uses `person.faculty_role` heavily (e.g. `'adjunct'`). Adjunct exclusion is now implemented (Phase 2.1 DONE).
 *   **Soft vs Hard Constraints:** In `rotation_activity_requirements`, `min_halfdays` acts as a HARD constraint. If a resident takes vacation, a high `min_halfdays` will result in `INFEASIBLE`. Keep `min_halfdays` at `0` and use `target_halfdays` with a high `priority`.
 *   **32 of 48 constraints disabled:** All policy hard constraints are disabled in `ConstraintManager.create_default()` to prevent INFEASIBLE. See `BLOCK_12_ANNUAL_WORKBOOK_ROADMAP.md` section 11j for the P1-P5 re-enablement plan.
+*   **Solver activity model architecture (`solvers.py:968-1073`):** Faculty half-day decisions use 4 binary variables per slot: `fac_clinic`, `fac_supervise`, `fac_pcat`, `fac_do`. At most one active per slot (mutual exclusion constraint). Clinic/supervise only on workdays; PCAT/DO linked bidirectionally to overnight call assignments. Write-back in `engine.py:3370` maps C→activity code via `_get_activity_id_by_code()`. The `variables` dict exposes both index-keyed (`fac_clinic[f_i, b_i]`) and UUID-keyed (`faculty_clinic[(uuid, date, tod)]`) views for constraint wiring.
+*   **Faculty fill around residents:** Faculty clinic slots (`fac_clinic`) are constrained by supervision ratio (ACGME: 1 faculty per 2 PGY-1 or 4 PGY-2/3 in clinic) and weekly clinic limits (`min_clinic_halfdays_per_week`, `max_clinic_halfdays_per_week` from Person model). Faculty MUST be solver-generated, not preloaded.

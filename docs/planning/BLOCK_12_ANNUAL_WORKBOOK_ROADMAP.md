@@ -65,7 +65,9 @@ These PRs landed in the last 48 hours and directly affect the solve/export pipel
 |----------|----------------|
 | `docs/architecture/ENGINE_ASSIGNMENT_FLOW.md` | Preserve-then-solve flow, 6 loader types, occupied_slots filtering, LangGraph pipeline, prior_calls hydration |
 | `docs/architecture/CALL_CONSTRAINTS.md` | Call coverage (Sun-Thu), MAD equity formulation, FMIT weekend split, variable structure |
-| `docs/architecture/FACULTY_FIX_ROADMAP.md` | Phase 1 complete (MAD, prior_calls, FMIT split). Phase 2-3 pending. |
+| `docs/architecture/FACULTY_FIX_ROADMAP.md` | Phase 1 complete (MAD, prior_calls, FMIT split). Phase 2D (DOW) complete. Phase 3 pending. |
+| `docs/architecture/DOW_CONVENTION_BUG.md` | **FIXED.** DOW convention mismatch fully resolved: runtime bugs patched, all docstrings corrected, 67 regression tests added. |
+| `docs/planning/SCHEDULE_GRID_ZEROING_PLAN.md` | Row-by-row DB↔Excel alignment methodology, zeroing validator, `schedule_grid` SQL view |
 
 ---
 
@@ -121,25 +123,48 @@ Cross-reference: `docs/planning/OPUS_BLOCK_12_REMEDIATION_PLAN.md` (Gemini-sourc
 
 **16 enabled** (physical impossibilities + soft/hybrid + tier-1 resilience). **32 disabled** (18 policy hard + 14 optional/tier-2). All policy hard constraints disabled in `ConstraintManager.create_default()` to prevent INFEASIBLE on preloaded data conflicts. See section 11j for P1-P5 re-enablement plan.
 
-### Block 12 Data Quality Issues (DB-verified)
+### Block 12 Data Quality Issues (DB-verified, Updated Feb 27 PM)
 
-Pipeline ran successfully — all persons have 56 HDAs. But spatial analysis reveals quality issues:
+Pipeline ran successfully — all persons have 56 HDAs. Spatial analysis via `schedule_grid` SQL view + zeroing validator revealed and fixed quality issues:
 
-| Issue | Severity | Detail |
-|-------|----------|--------|
-| **All faculty work weekends** | HIGH | 12/14 faculty have 16 non-W weekend HDAs (100% of weekends). `WeekendWork` constraint disabled. |
-| **1 faculty on leave** | INFO | Only activities: LV-AM, LV-PM (on leave entire block — correct) |
-| **Low solver involvement** | INFO | 13/16 residents are 100% preloaded. 3 have solver fills (41, 51, 48, 39 solved slots). |
-| **Orphaned activity UUID** | LOW | 8 `faculty_weekly_templates` rows reference non-existent activity `9fd0dca9-...` |
+| Issue | Severity | Status | Detail |
+|-------|----------|--------|--------|
+| ~~**All faculty work weekends**~~ | ~~HIGH~~ | **FIXED** | Root cause: `activity_solver.py` overwrote weekend "OFF" with clinical codes. Added faculty weekend exclusion filter. Weekend violations: 60 → 0. |
+| **Cross-category template mismatches** | MEDIUM | **KNOWN** | ~100 slots where solver chose C (clinic) but template wants AT (admin), or vice versa. Requires `FacultyWeeklyTemplateConstraint` integration (deferred). ~27 are FMIT overrides (expected). |
+| ~~**Solver activity model too coarse**~~ | ~~HIGH~~ | **PARTIALLY FIXED** | Template-aware write-back in `engine.py:3324-3440` resolves solver C→CV/sm_clinic/dfm, AT→gme/lec/SIM within category. 103 HDAs updated. |
+| ~~**DOW convention mismatch**~~ | ~~P0~~ | **FIXED** | `FacultyWeeklyTemplate.day_of_week` uses Python weekday (0=Mon). All runtime bugs patched (constraint, frontend `isWeekend`/`DAY_LABELS`), all 9 docstrings corrected, disambiguation constants added, 67 regression tests. See `docs/architecture/DOW_CONVENTION_BUG.md`. |
+| ~~**Orphaned activity UUID**~~ | ~~LOW~~ | **FIXED** | 5 `faculty_weekly_templates` rows updated from `9fd0dca9-...` → correct FMIT UUID. |
+| **1 faculty on leave** | INFO | Expected | 1 FM faculty on leave: only LV-AM, LV-PM entire block (correct). |
+| **Low solver involvement** | INFO | Expected | 13/16 residents are 100% preloaded. 3 have solver fills. |
+
+### Zeroing Validation Results (Feb 27 PM)
+
+Full validator report via `/tmp/zeroing_validator_v2.py`:
+
+| Check | Result |
+|-------|--------|
+| Weekend Work (Sat/Sun) | **PASS** — 0 violations |
+| Faculty Template Alignment | 150 mismatches (27 FMIT overrides expected, 100 cross-category, 4 refinable) |
+| NULL Activity Gaps | **PASS** — 0 gaps |
+| Coverage (56 HDAs each) | **PASS** — 26 people × 56 HDAs |
+| Faculty Code Diversity | **PASS** — 6-13 distinct codes per faculty |
+| Workday Distribution | **PASS** — Fridays have proper work codes |
+| Resident Rotation Alignment | **PASS** — all rotations correctly mapped |
+
+**Exports:** `/tmp/Block12_Schedule_Grid_Zeroing.xlsx` (4 sheets), `/tmp/block12_full_grid.csv` (1456 rows)
+
+**See:** `docs/planning/SCHEDULE_GRID_ZEROING_PLAN.md` for full methodology, `docs/architecture/DOW_CONVENTION_BUG.md` for DOW issue scope.
 
 ### Critical Path (Updated)
 
 ```
 B1-B4: DONE ──────────────────┐
-D4: Block 12 generated ───────┤──→ Quality fixes via schedule_grid view
-                              │      ├── Re-enable WeekendWork constraint (P1)
-All residents: 56 HDAs ───────┤      ├── Verify faculty activity diversity
-All faculty: 56 HDAs ─────────┘      └── Fix orphaned activity UUID
+D4: Block 12 generated ───────┤
+All residents: 56 HDAs ───────┤──→ Quality fixes DONE
+All faculty: 56 HDAs ─────────┤      ├── Weekend violations: FIXED (0)
+Weekend fix: DONE ────────────┤      ├── Template-aware write-back: DONE (103 HDAs)
+DOW convention fix: DONE ─────┘      ├── DOW model docstrings: FIXED
+                                     └── Cross-category mismatches: DEFERRED (~100, needs FacultyWeeklyTemplateConstraint)
 ```
 
 ---
@@ -1172,7 +1197,7 @@ GROUP BY p.id, p.name, p.person_type, p.faculty_role, hda.date;
 
 | Check | Query | Pass Criteria |
 |-------|-------|---------------|
-| Weekend workers | `SELECT name FROM schedule_grid WHERE day_of_week IN (0,6) AND (am_code IS NOT NULL OR pm_code IS NOT NULL) AND person_type='faculty' GROUP BY name` | 0 rows (no faculty working weekends) |
+| Weekend workers | `SELECT name FROM schedule_grid WHERE day_of_week IN (0,6) AND am_code NOT IN ('W','off','LV-AM','LV-PM','FMIT','pcat','do') AND person_type='faculty' GROUP BY name` | 0 rows (no faculty working weekends). Note: `day_of_week` here is PG `EXTRACT(DOW)` (0=Sun, 6=Sat), NOT Python weekday. |
 | All-GME faculty | `SELECT name FROM schedule_grid WHERE person_type='faculty' GROUP BY name HAVING COUNT(DISTINCT am_code) = 1` | 0 core faculty with only 1 activity code |
 | Coverage gaps | `SELECT date FROM schedule_grid WHERE person_type='faculty' GROUP BY date HAVING COUNT(*) < 3` | 0 understaffed days |
 | Adjunct HDAs | `SELECT name FROM schedule_grid WHERE faculty_role='adjunct'` | 0 rows |
@@ -1261,7 +1286,7 @@ Phase 2: Get to "optimal" (continuous weight space)
 | Resident < 50 HDAs | Missing preloader handler or broken rotation requirements | Fix data or add handler |
 | Faculty all-GME (no diversity) | Missing weekly template | Seed template rows |
 | Adjuncts have HDAs | Exclusion filter missing | Already fixed (C1) |
-| Weekend work for all faculty | `WeekendWork` constraint disabled | Re-enable (P1) |
+| ~~Weekend work for all faculty~~ | ~~`WeekendWork` constraint disabled~~ | **FIXED** — activity_solver faculty weekend exclusion filter (11m) |
 | Clinic over-scheduled | `ClinicCapacity` constraint disabled | Re-enable (P2) |
 | NBN min > max | Data quality | SQL update (B1) |
 | Call gaps | Missing call assignments | Generate or manual entry (P5) |
@@ -1288,3 +1313,49 @@ Phase 2: Get to "optimal" (continuous weight space)
 - Perplexity sessions: `docs/perplexity-uploads/STATUS.md` (8/8 complete, findings catalogued)
 
 **Prerequisite:** Phase 1 iteration loop requires B1 (NBN fix) + B3 (faculty templates) before the first run can produce meaningful results. Those are one-time data fixes, not iterative.
+
+---
+
+### 11m: DOW Convention Discovery + Zeroing Data Fixes (Feb 27, 2026 PM)
+
+**Discovery:** `FacultyWeeklyTemplate.day_of_week` stores Python weekday (0=Mon, 6=Sun) but the model docstring, column comment, `__repr__()`, `day_name`, and `is_weekend` all used PG DOW (0=Sun, 6=Sat). This caused:
+- `__repr__()` displayed "Thu" when the data was for Friday (DOW=4)
+- `is_weekend` flagged Monday (DOW=0) as weekend instead of Saturday (DOW=5)
+- Template-aware write-back in engine.py initially used PG DOW conversion `(py_wd + 1) % 7` — shifted all template lookups by one day
+
+**Root cause:** Model created with PG DOW in docstring (migration `20260109_faculty_weekly.py:66`). All code that seeds/consumes data uses Python `weekday()`. FMIT call patterns (Fri-Sat overnight) may have inspired the PG DOW assumption. Faculty schedules are independent of block schedules, creating cross-pollination of conventions.
+
+**Evidence:** `call_equity.py:877` and `activity_solver.py:1019` both compare `pref.day_of_week` directly with `date.weekday()` (Python convention). DOW=4 in DB = Friday activities. DOW=5,6 = "W" (weekend).
+
+**Fixes applied:**
+
+| Fix | Files | Detail |
+|-----|-------|--------|
+| Model docstrings + properties | `faculty_weekly_template.py`, `faculty_weekly_override.py` | `__repr__`, `day_name`, `is_weekend` corrected |
+| Engine template lookup | `engine.py:3334-3357, 3373-3377` | Comments + `_resolve_template_activity()` uses `slot_date.weekday()` directly |
+| 56 Friday faculty HDAs | DB `half_day_assignments` | Restored from incorrect "W" → template-specific codes (at, gme, dfm, sm_clinic, FMIT) |
+| 47 within-category refinements | DB `half_day_assignments` | Re-applied with correct Python DOW |
+| Faculty weekend exclusion | `activity_solver.py:~394` | Filter prevents solver from assigning clinical activities on Sat/Sun for faculty |
+
+**P0 fix session (Feb 27 PM):** All deferred items resolved:
+- **Backend constraint:** Deleted `_python_weekday_to_pattern()`, fixed 3 call sites in `add_to_cpsat()`, `add_to_pulp()`, `validate()`
+- **Frontend:** Fixed `isWeekend()` (was flagging Monday as weekend), `DAY_LABELS`, `DAY_LABELS_SHORT` (0→Monday)
+- **Docstrings:** All 9 files corrected (schemas, services, constraints, scripts)
+- **Constants:** `PYTHON_WEEKDAY_SATURDAY=5`/`PYTHON_WEEKDAY_SUNDAY=6` in `faculty_weekly_template.py`; `PG_DOW_SUNDAY=0`/`PG_DOW_SATURDAY=6` in `weekly_pattern.py`
+- **Tests:** 29 new regression tests + 38 existing tests fixed (67 total passing)
+
+**Remaining:** `block_assignment_expansion_service.py:713` uses `isoweekday() % 7` (PG DOW). Self-contained — does NOT interact with faculty templates. Tracked as LOW #42 in `MASTER_PRIORITY_LIST.md`.
+
+**Post-fix validation (zeroing validator v2):**
+
+| Check | Result |
+|-------|--------|
+| Weekend Work (Sat/Sun) | PASS — 0 violations |
+| Faculty Template Alignment | 150 mismatches (27 FMIT overrides expected, ~100 cross-category, 4 refinable) |
+| NULL Activity Gaps | PASS — 0 gaps |
+| Coverage (56 HDAs each) | PASS — 26 people × 56 HDAs |
+| Faculty Code Diversity | PASS — 6-13 distinct codes per faculty |
+| Workday Distribution | PASS — Fridays have proper work codes |
+| Resident Rotation Alignment | PASS — all rotations correctly mapped |
+
+**Remaining:** ~100 cross-category solver mismatches (solver chose C when template says AT, or vice versa). Requires `FacultyWeeklyTemplateConstraint` integration — tracked at C2 (DEFERRED) and in `FACULTY_FIX_ROADMAP.md` Phase 2.

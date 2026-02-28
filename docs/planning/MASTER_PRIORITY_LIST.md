@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-27 (HIGH #40: closed-loop validation pipeline; MEDIUM #35, LOW #36-39: Block 12 audit + Perplexity council findings)
+> **Last Updated:** 2026-02-27 PM (P0 DOW convention fix: 15 files, 67 tests; zeroing sprint fixes)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -1142,6 +1142,19 @@ After coordinators hand-jam the exported workbook in Excel, there's no pathway t
 | 🔧 Fixed | engine.py | Adjunct faculty excluded from solver HDA generation |
 
 **Source:** Block 12 workbook audit (Claude for Excel + Perplexity council + Gemini 3 Pro tiebreaker)
+
+### Session 2026-02-27 PM Updates (Zeroing Sprint + P0 DOW Fix)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Fixed | **P0 #41** | **DOW convention mismatch — FULLY FIXED.** Deleted `_python_weekday_to_pattern()`, fixed 3 constraint call sites, frontend `isWeekend()`/`DAY_LABELS`/`DAY_LABELS_SHORT`, 9 docstrings, disambiguation constants. 15 files changed, 67 tests (29 new + 38 existing fixed). See `docs/architecture/DOW_CONVENTION_BUG.md` |
+| ➕ Added | LOW #42 | `block_assignment_expansion_service.py:713` uses `isoweekday() % 7` (PG DOW) — potential runtime bug if interacting with faculty templates |
+| 🔧 Fixed | Faculty weekend | Activity solver faculty weekend exclusion filter added. Weekend violations: 60 → 0 |
+| 🔧 Fixed | Template write-back | `engine.py` now template-aware: resolves solver C/AT → template-specific codes. 103 HDAs updated |
+| 🔧 Fixed | DOW models | `faculty_weekly_template.py` + `faculty_weekly_override.py` — `__repr__`, `day_name`, `is_weekend` corrected from PG DOW to Python weekday |
+| 🔧 Fixed | Orphaned UUID | 5 `faculty_weekly_templates` rows updated from wrong FMIT UUID to correct one |
+
+**Source:** Block 12 zeroing sprint (schedule_grid view validation, template-aware write-back, DOW convention discovery + P0 fix)
 
 ### Session 2026-02-21 Updates
 

@@ -173,11 +173,32 @@ config_map = {
 **Backward compatibility:** Default `"resident"` profile preserves current behavior for all 8 callers:
 `engine.py:117`, `solvers.py:135`, `anderson_localization.py:309`, `generator.py:133`, `constraint_service.py:163`, `constraint_service.py:576`
 
+### 2D: DOW Convention Fix — COMPLETED (Feb 27, 2026)
+
+**Problem:** `FacultyWeeklyTemplate.day_of_week` stores Python weekday (0=Mon, 6=Sun) but model docstrings, column comments, schemas, service docstrings, and constraint code all assumed PG DOW (0=Sun, 6=Sat). This caused runtime bugs (constraint off-by-one, frontend weekend misdetection) and wrong documentation across 9+ files.
+
+**All fixes applied:**
+
+| Category | Files Changed | Detail |
+|----------|---------------|--------|
+| Backend constraint (RUNTIME) | `constraints/faculty_weekly_template.py` | Deleted `_python_weekday_to_pattern()`, fixed 3 call sites |
+| Frontend (RUNTIME) | `types/faculty-activity.ts` | `isWeekend()` fixed (was flagging Monday), `DAY_LABELS`/`DAY_LABELS_SHORT` remapped 0→Monday |
+| Docstrings (9 files) | schemas, services, constraints, scripts | All corrected to state correct convention |
+| Constants | `faculty_weekly_template.py`, `weekly_pattern.py` | `PYTHON_WEEKDAY_*` and `PG_DOW_*` disambiguation constants |
+| Tests (29 new) | 3 new test files | `test_faculty_weekly_template_dow.py`, `test_dow_conventions.py`, `faculty-activity-dow.test.ts` |
+| Existing tests (38 fixed) | `test_faculty_weekly_template_constraint.py` | Removed deleted-method tests, fixed validate test DOW values |
+
+**Investigated:** `block_assignment_expansion_service.py:713` uses `isoweekday() % 7` (PG DOW). Confirmed self-contained — does NOT interact with faculty templates. Tracked as LOW #42.
+
+**Reference:** `docs/architecture/DOW_CONVENTION_BUG.md` (marked FIXED with full file list and test commands).
+
 ### Phase 2 Tests
 
 - `create_default(profile="faculty")` returns manager with FMIT + call constraints enabled
 - `create_default()` (no args) keeps existing disabled state — zero behavioral change
 - ORM CHECK values match migration CHECK values
+- `FacultyWeeklyTemplate.__repr__()` shows correct day name for DOW=4 → "Fri" (not "Thu")
+- `FacultyWeeklyTemplate.is_weekend` returns True for DOW=5,6 (Sat, Sun), False for DOW=0 (Mon)
 
 ---
 

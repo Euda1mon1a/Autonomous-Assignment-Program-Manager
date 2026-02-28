@@ -12,17 +12,36 @@
 - `schedule_grid` SQL view created in PG17 (also Alembic migration at `20260227_schedule_grid_view.py`)
 - View pivots `half_day_assignments` into `person × date` with AM/PM columns
 - Block 12 dates: **2026-05-07 (Thu) → 2026-06-03 (Wed)** = 28 days = 56 half-day slots
+- Pivoted Excel export: `/tmp/Block12_Schedule_Grid_Zeroing.xlsx` (3 sheets: Raw Codes, Numeric Codes, Legend)
 
 ### Block 12 Data (DONE)
-- 16 real residents × 56 HDAs each ✓
-- 14 faculty × 56 HDAs each ✓
-- Adjunct faculty not yet in DB (migration unapplied)
+- 16 residents × 56 HDAs each ✓
+- 10 core faculty × 56 HDAs each ✓ (reduced from 14 → removed 4 non-core faculty)
+- Adjuncts deferred until core functionality locked in
 
-### Known Quality Issues
-1. **All faculty work weekends** — WeekendWork constraint disabled
-2. **Several faculty near all-GME** — FacultyWeeklyTemplateConstraint not registered
-3. **Orphaned activity UUID** — 8 template rows → `9fd0dca9-...` (should be FMIT, wrong UUID)
+### Data Fixes Applied
+1. **Orphaned activity UUID** — FIXED. 5 `faculty_weekly_templates` rows updated from `9fd0dca9-...` → correct FMIT UUID `bd9c66b3-...`
+2. **Personnel cleanup** — Removed 4 non-core faculty (1 with 0 templates, 3 near all-GME)
+
+### Known Quality Issues (Solver-Side)
+1. **Faculty solver ignores templates** — `FacultyWeeklyTemplateConstraint` not registered in `manager.py`. Cross-category mismatches remain (~100 slots where solver chose C but template wants AT, or vice versa). Within-category specificity now handled by template-aware write-back.
+2. ~~**Faculty work Sat/Sun**~~ — **FIXED.** Root cause: `activity_solver.py` overwrote weekend "OFF" codes with clinical activities when `include_faculty_slots=True`. Added faculty weekend exclusion filter. Weekend uses standard Sat+Sun (`weekday() >= 5`). Weekend violations: 60 → 0.
+3. ~~**Solver activity model too coarse**~~ — **PARTIALLY FIXED.** Write-back at `engine.py` now template-aware: loads `faculty_weekly_templates`, resolves C→CV/sm_clinic/dfm, AT→gme/lec/SIM. 103 HDAs updated (56 Friday restorations + 47 template refinements). Cross-category mismatches (solver category vs template category) ~100 — requires FacultyWeeklyTemplateConstraint integration.
 4. **Alembic stamp mismatch** — DB at `9bcfa50205e4`, not in migration files
+5. ~~**DOW convention mismatch**~~ — **FIXED (P0).** All runtime bugs patched (constraint, frontend `isWeekend`/`DAY_LABELS`), all 9 docstrings corrected, disambiguation constants added, 67 regression tests. See `docs/architecture/DOW_CONVENTION_BUG.md`.
+
+### Numeric Code Legend
+| Code | Meaning | Activities |
+|------|---------|-----------|
+| 1 | Clinic | fm_clinic, CV, sm_clinic, C40, HLC, RAD |
+| 2 | AT/Admin | at, gme, SIM, dfm |
+| 3 | PCAT | pcat (post-call AM) |
+| 4 | DO | do (post-call PM) |
+| 5 | Leave | LV-AM, LV-PM |
+| 6 | FMIT | FMIT inpatient teaching |
+| 7 | Off/Weekend | W, off |
+| 8 | Conference | lec, ADV, C, C-I |
+| 9 | Rotation | NBN, NF, PedNF, PedW, DERM, CARDS, LDNF, PEM, TDY |
 
 ---
 
@@ -64,7 +83,7 @@ WHERE ba.block_number = 12 AND ba.academic_year = 2025
 ORDER BY p.pgy_level, p.name;
 ```
 
-### Step 3: Faculty Grid (14 people × 28 days)
+### Step 3: Faculty Grid (10 people × 28 days)
 
 For each faculty member, verify:
 1. **Template alignment** — solver-generated codes match `faculty_weekly_templates`
@@ -106,19 +125,30 @@ For each person, identify:
 - **Unexpected sources**: solver where preload expected, or vice versa
 - **Coverage gaps**: NULL am_code or pm_code
 
-### Step 5: Fix Enumeration
+### Step 5: Isolate DB vs Export Issues
+
+**Key insight:** If the grid CSV/XLSX matches the coordinator's Excel, the export pipeline is correct and all issues are solver/preloader (DB-side). If they differ, isolate whether it's a DB issue or an export rendering issue.
+
+| Where Mismatch Found | Root Cause Layer | Fix |
+|----------------------|-----------------|-----|
+| DB grid ≠ Excel AND DB grid is wrong | Solver/preloader | Fix preloader handler or solver constraint, re-run |
+| DB grid ≠ Excel AND DB grid is right | Export pipeline | Fix `xml_to_xlsx_converter.py` or `canonical_schedule_export_service.py` |
+| DB grid = Excel (both wrong) | Upstream data | Fix `block_assignments`, `faculty_weekly_templates`, or `absences` |
+| DB grid = Excel (both right) | DONE | Move to next person |
+
+### Step 6: Fix Enumeration
 
 Each delta maps to a fix category:
 | Delta Type | Fix |
 |-----------|-----|
-| Faculty actual ≠ template | Register FacultyWeeklyTemplateConstraint + re-solve |
-| Faculty weekend ≠ W | Re-enable WeekendWork + re-solve |
+| Faculty actual ≠ template | Solver activity model too coarse → template-aware write-back |
+| Faculty work Fri/Sat | Add weekend blocking at `fac_clinic`/`fac_supervise` level in solver |
 | Resident code ≠ rotation | Preloader handler bug → fix handler → re-preload |
 | Missing HDA | Preloader gap → add handler → re-preload |
 | Wrong source | Engine routing issue → fix source assignment |
 | Leave mismatch | Absence table gap → sync absences |
 
-### Step 6: Iterate
+### Step 7: Iterate
 
 After fixing each variable:
 1. Re-run preloader (if preload issue)
@@ -134,12 +164,22 @@ After fixing each variable:
 Per TAMC Family Medicine scheduling convention:
 - **Block starts Thursday** (not Monday)
 - **Week = Thu–Wed** (7 days)
-- **Weekend = Fri + Sat** (military schedule, not civilian Sat+Sun)
-- **Sunday is a regular workday** for clinical rotations
+- **Weekend = Sat + Sun** (standard civilian weekend)
+- **Faculty FMIT call runs Fri–Thu** (24-hour overnight pattern, not aligned to blocks)
 
-This is critical for interpreting the grid. A faculty member working on Sunday is NORMAL. Working on Friday/Saturday is the issue.
+Weekend check: `weekday() >= 5` (Python: 5=Sat, 6=Sun) is correct.
 
-**Correction needed:** The `WeekendWork` constraint and `schedule_grid` queries need to check `day_of_week IN (5, 6)` (Fri/Sat), NOT `(0, 6)` (Sun/Sat).
+## DOW Convention Mismatch — RESOLVED
+
+**Status: FIXED (P0, Feb 27 2026).** All runtime bugs and documentation corrected.
+
+See `docs/architecture/DOW_CONVENTION_BUG.md` for full details including:
+- Runtime fixes: backend constraint (`_python_weekday_to_pattern` deleted), frontend `isWeekend()`/`DAY_LABELS`
+- Documentation fixes: 9 files corrected
+- Disambiguation constants: `PYTHON_WEEKDAY_*` and `PG_DOW_*`
+- Regression tests: 67 tests (29 new + 38 existing fixed)
+
+**Remaining LOW #42:** `block_assignment_expansion_service.py:713` uses `isoweekday() % 7` (PG DOW). Confirmed self-contained, does not interact with faculty templates.
 
 ---
 
@@ -174,11 +214,46 @@ ORDER BY person_type, name;
 
 ---
 
+## Faculty Solver Architecture (Key Finding)
+
+The CP-SAT solver uses a **coarse 4-type faculty activity model**:
+
+| Solver Variable | Activity Type | When Created |
+|----------------|--------------|-------------|
+| `fac_clinic[f_i, b_i]` | Clinic (C) | Workdays only |
+| `fac_supervise[f_i, b_i]` | Attending/Supervision (AT) | Workdays only |
+| `fac_pcat[f_i, b_i]` | Post-Call Attending (PCAT) | All days, linked to call |
+| `fac_do[f_i, b_i]` | Day Off post-call (DO) | All days, linked to call |
+| *(none set)* | OFF | Default |
+
+**The write-back** (`engine.py:3370`) maps these to activity codes: C→fm_clinic, AT→at. It does NOT consult faculty weekly templates for specific activity selection (CV vs fm_clinic vs sm_clinic).
+
+**Templates have ~15 activity types** (CV, fm_clinic, sm_clinic, at, gme, SIM, dfm, lec, etc.) which map to the 4 solver types. The solver decides *clinic vs supervise*, not *which specific clinic*.
+
+**Implication for zeroing:** Faculty solver slots will always show generic codes (fm_clinic, at, gme). To match Excel exactly, the write-back needs to be template-aware: look up the faculty's weekly template for that day/slot and use the template's specific activity code instead of the generic one.
+
+---
+
+## Zeroing Exports
+
+| File | Format | Content |
+|------|--------|---------|
+| `/tmp/block12_pivoted_grid.csv` | CSV | 26 rows × 59 cols, raw activity codes |
+| `/tmp/Block12_Schedule_Grid_Zeroing.xlsx` | XLSX | 3 sheets: Raw Codes, Numeric Codes (1-9), Legend |
+
+Open in Excel → compare against coordinator's Block 12 workbook → Claude for Excel identifies cell-by-cell deltas.
+
+---
+
 ## Files
 
 | File | Purpose |
 |------|---------|
 | `backend/alembic/versions/20260227_schedule_grid_view.py` | Alembic migration for view |
+| `backend/app/scheduling/solvers.py:968-1073` | Faculty activity variables + constraint wiring |
+| `backend/app/scheduling/engine.py:3281-3415` | Faculty HDA write-back from solver |
+| `backend/app/scheduling/constraints/faculty_weekly_template.py` | Template constraint (not registered) |
+| `backend/app/scheduling/constraints/manager.py:324-480` | Constraint registration |
 | `docs/planning/SCHEDULE_GRID_ZEROING_PLAN.md` | This file |
 | `docs/planning/BLOCK_12_ANNUAL_WORKBOOK_ROADMAP.md` | Parent roadmap (section 11l) |
 | `docs/planning/OPUS_BLOCK_12_REMEDIATION_PLAN.md` | Phase 4 quality refinement |

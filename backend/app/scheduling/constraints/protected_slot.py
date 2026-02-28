@@ -89,14 +89,13 @@ class ProtectedSlotConstraint(HardConstraint):
         if not hasattr(block, "date") or not hasattr(block, "time_of_day"):
             return False
 
-        # Check day of week (0=Monday through 6=Sunday in Python, pattern may use 0=Sunday)
-        block_dow = block.date.weekday()  # Python: 0=Monday
+        # Check day of week
+        block_dow = block.date.weekday()  # Python: 0=Monday, 6=Sunday
         pattern_dow = pattern.get("day_of_week")
 
-        # Convert if pattern uses Sunday=0 convention
-        # Our weekly_pattern uses: 0=Sunday, 1=Monday, ..., 6=Saturday
-        # Python weekday() uses: 0=Monday, ..., 6=Sunday
-        # Convert pattern to Python convention
+        # weekly_patterns use PG EXTRACT(DOW) convention: 0=Sunday, 6=Saturday
+        # (WARNING: faculty_weekly_templates use Python weekday: 0=Monday, 6=Sunday)
+        # Convert PG DOW pattern to Python weekday convention
         if pattern_dow == 0:
             pattern_dow_python = 6  # Sunday
         else:

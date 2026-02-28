@@ -126,7 +126,7 @@ class FacultyWeeklyTemplateConstraint(SoftConstraint):
         Args:
             person_id: Faculty member UUID
             block_date: Date of the block
-            day_of_week: Day of week (0=Sunday, 6=Saturday)
+            day_of_week: Day of week (0=Monday, 6=Sunday — Python weekday convention)
             time_of_day: "AM" or "PM"
             week_number: Week number within block (1-4)
 
@@ -173,21 +173,6 @@ class FacultyWeeklyTemplateConstraint(SoftConstraint):
         self._effective_cache[cache_key] = result
         return result
 
-    def _python_weekday_to_pattern(self, python_weekday: int) -> int:
-        """
-        Convert Python weekday to pattern convention.
-
-        Python: 0=Monday, 6=Sunday
-        Pattern: 0=Sunday, 6=Saturday
-
-        Args:
-            python_weekday: Python weekday (0-6)
-
-        Returns:
-            Pattern day of week (0-6)
-        """
-        return (python_weekday + 1) % 7
-
     def add_to_cpsat(
         self,
         model: Any,
@@ -226,8 +211,8 @@ class FacultyWeeklyTemplateConstraint(SoftConstraint):
                 if b_i is None:
                     continue
 
-                # Convert Python weekday to pattern convention
-                pattern_dow = self._python_weekday_to_pattern(block.date.weekday())
+                # day_of_week uses Python weekday (0=Mon, 6=Sun) — same as templates
+                py_weekday = block.date.weekday()
 
                 # Get week number within block
                 week_number = self._get_week_number(block.date, context.start_date)
@@ -237,7 +222,7 @@ class FacultyWeeklyTemplateConstraint(SoftConstraint):
                     effective = self._get_effective_slot(
                         faculty.id,
                         block.date,
-                        pattern_dow,
+                        py_weekday,
                         time_of_day,
                         week_number,
                     )
@@ -322,14 +307,14 @@ class FacultyWeeklyTemplateConstraint(SoftConstraint):
                 if b_i is None:
                     continue
 
-                pattern_dow = self._python_weekday_to_pattern(block.date.weekday())
+                py_weekday = block.date.weekday()  # 0=Mon, 6=Sun — matches templates
                 week_number = self._get_week_number(block.date, context.start_date)
 
                 for time_of_day in ["AM", "PM"]:
                     effective = self._get_effective_slot(
                         faculty.id,
                         block.date,
-                        pattern_dow,
+                        py_weekday,
                         time_of_day,
                         week_number,
                     )
@@ -406,14 +391,14 @@ class FacultyWeeklyTemplateConstraint(SoftConstraint):
         # Check templates against assignments
         for faculty in context.faculty:
             for block in context.blocks:
-                pattern_dow = self._python_weekday_to_pattern(block.date.weekday())
+                py_weekday = block.date.weekday()  # 0=Mon, 6=Sun — matches templates
                 week_number = self._get_week_number(block.date, context.start_date)
 
                 for time_of_day in ["AM", "PM"]:
                     effective = self._get_effective_slot(
                         faculty.id,
                         block.date,
-                        pattern_dow,
+                        py_weekday,
                         time_of_day,
                         week_number,
                     )

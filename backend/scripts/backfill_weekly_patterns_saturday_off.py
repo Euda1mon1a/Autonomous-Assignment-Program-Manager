@@ -23,7 +23,7 @@ from app.models.activity import Activity
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
 
-SATURDAY_DOW = 6  # 0=Sunday, 6=Saturday
+SATURDAY_DOW = 6  # PG DOW convention: 0=Sunday, 6=Saturday
 TIME_OF_DAY = ("AM", "PM")
 
 TARGET_ABBREVS = {"ICU", "NICU", "LAD", "LND", "LD", "L&D"}
