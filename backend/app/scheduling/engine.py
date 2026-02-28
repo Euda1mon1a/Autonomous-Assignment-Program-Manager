@@ -3373,6 +3373,10 @@ class SchedulingEngine:
         for pid, dow, tod, code in template_rows:
             template_lookup[(pid, dow, tod)] = code
 
+        # Post-call/rest codes that must never appear as template overrides
+        # for normal C/AT slots — they are event-driven, not weekly-pattern.
+        _POSTCALL_CODES = {"pcat", "do", "off"}
+
         def _resolve_template_activity(
             faculty_id: UUID,
             slot_date: date,
@@ -3386,7 +3390,9 @@ class SchedulingEngine:
             (e.g., C → cv, fm_clinic; AT → gme, dfm).
 
             PCAT, DO, and OFF have specific post-call/rest semantics that must
-            not be overridden by templates.
+            not be overridden by templates.  Additionally, if a template
+            erroneously contains a post-call code (pcat, do, off), we ignore
+            it for C/AT slots to prevent corrupting call-chain semantics.
 
             NOTE: FacultyWeeklyTemplateConstraint is not yet registered, so the
             solver doesn't respect templates during optimization.  Once registered,
@@ -3400,9 +3406,9 @@ class SchedulingEngine:
             py_wd = slot_date.weekday()  # 0=Mon ... 6=Sun
 
             tpl_code = template_lookup.get((faculty_id, py_wd, time_of_day))
-            if tpl_code:
+            if tpl_code and tpl_code.lower() not in _POSTCALL_CODES:
                 return tpl_code  # Template is authoritative
-            # No template for this slot — use solver's generic type
+            # No template for this slot (or template is post-call) — use solver type
             return solver_type
 
         # Track existing locked slots to avoid overwriting

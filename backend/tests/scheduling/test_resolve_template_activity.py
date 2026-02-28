@@ -39,6 +39,9 @@ _SOLVER_ADMIN_CODES = {
 }
 
 
+_POSTCALL_CODES = {"pcat", "do", "off"}
+
+
 def _make_resolve_fn(template_lookup: dict):
     """Build a standalone _resolve_template_activity matching engine.py logic."""
 
@@ -53,7 +56,7 @@ def _make_resolve_fn(template_lookup: dict):
             return solver_type
         py_wd = slot_date.weekday()
         tpl_code = template_lookup.get((faculty_id, py_wd, time_of_day))
-        if tpl_code:
+        if tpl_code and tpl_code.lower() not in _POSTCALL_CODES:
             return tpl_code  # Template is authoritative
         return solver_type
 
@@ -248,3 +251,60 @@ class TestSolverTypePassThrough:
         """OFF passes through when no template exists."""
         resolve = _make_resolve_fn({})
         assert resolve(faculty_id, monday, "AM", "OFF") == "OFF"
+
+
+# ---------------------------------------------------------------------------
+# Post-call template guard tests (Codex P1 fix #2)
+# ---------------------------------------------------------------------------
+
+
+class TestPostCallTemplateGuard:
+    """Verify that post-call codes in templates don't corrupt C/AT slots.
+
+    If a coordinator accidentally puts pcat/do/off in a weekly template,
+    the resolver must ignore it for C/AT solver types and fall back to the
+    generic solver type. Otherwise, normal clinic/supervision slots would
+    be written as post-call activities without an actual call event.
+    """
+
+    @pytest.fixture()
+    def faculty_id(self):
+        return uuid4()
+
+    @pytest.fixture()
+    def monday(self):
+        return date(2026, 5, 11)
+
+    def test_template_pcat_ignored_for_solver_c(self, faculty_id, monday):
+        """Template=pcat, solver=C → falls back to C (not pcat)."""
+        lookup = {(faculty_id, 0, "AM"): "pcat"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "C") == "C"
+
+    def test_template_do_ignored_for_solver_c(self, faculty_id, monday):
+        """Template=do, solver=C → falls back to C."""
+        lookup = {(faculty_id, 0, "AM"): "do"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "C") == "C"
+
+    def test_template_off_ignored_for_solver_at(self, faculty_id, monday):
+        """Template=off, solver=AT → falls back to AT."""
+        lookup = {(faculty_id, 0, "AM"): "off"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "AT") == "AT"
+
+    def test_template_pcat_ignored_for_solver_at(self, faculty_id, monday):
+        """Template=pcat, solver=AT → falls back to AT."""
+        lookup = {(faculty_id, 0, "PM"): "pcat"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "PM", "AT") == "AT"
+
+    def test_valid_template_still_works_alongside_guard(self, faculty_id, monday):
+        """Valid template codes (cv, gme) are not affected by the guard."""
+        lookup = {
+            (faculty_id, 0, "AM"): "cv",
+            (faculty_id, 0, "PM"): "gme",
+        }
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "C") == "cv"
+        assert resolve(faculty_id, monday, "PM", "AT") == "gme"
