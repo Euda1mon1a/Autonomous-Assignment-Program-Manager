@@ -241,7 +241,7 @@ class FacultyClinicCapConstraint(SoftConstraint):
         )
 
 
-class FacultySupervisionConstraint(HardConstraint):
+class FacultySupervisionConstraint(SoftConstraint):
     """
     Ensure ACGME AT (Attending Time) coverage for residents in clinic.
 

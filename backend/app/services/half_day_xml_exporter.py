@@ -338,6 +338,7 @@ class HalfDayXMLExporter:
                 "name": p.name,
                 "pgy": p.pgy_level if p.type == "resident" else None,
                 "type": p.type,
+                "faculty_role": getattr(p, "faculty_role", None),
             }
             for p in people
         }

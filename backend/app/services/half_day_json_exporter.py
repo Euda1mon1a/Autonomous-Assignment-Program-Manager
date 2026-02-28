@@ -149,6 +149,7 @@ class HalfDayJSONExporter(HalfDayXMLExporter):
             "block_assignment_id": rotation_info.get("id"),
             "name": person_info.get("name", ""),
             "pgy": person_info.get("pgy"),
+            "faculty_role": person_info.get("faculty_role"),
             "rotation1": rotation_info.get("rotation1", ""),
             "rotation2": rotation_info.get("rotation2", ""),
             "days": [],
@@ -158,13 +159,28 @@ class HalfDayJSONExporter(HalfDayXMLExporter):
         for a in assignments:
             assignment_index[(a.date, a.time_of_day)] = a
 
+        # Adjunct faculty get blank rows for manual input — skip gap fill
+        is_adjunct = person_info.get("faculty_role") == "adjunct"
+
         current = block_start
         while current <= block_end:
-            am_assignment = assignment_index.get((current, "AM"))
-            pm_assignment = assignment_index.get((current, "PM"))
+            if is_adjunct:
+                # Adjunct faculty get blank rows for manual coordinator input
+                am_code = None
+                pm_code = None
+            else:
+                am_assignment = assignment_index.get((current, "AM"))
+                pm_assignment = assignment_index.get((current, "PM"))
 
-            am_code = self._get_activity_code(am_assignment)
-            pm_code = self._get_activity_code(pm_assignment)
+                am_code = self._get_activity_code(am_assignment)
+                pm_code = self._get_activity_code(pm_assignment)
+
+                # Fill empty cells: weekends → W, weekdays → OFF
+                dow = current.weekday()
+                if not am_code:
+                    am_code = "W" if dow >= 5 else "OFF"
+                if not pm_code:
+                    pm_code = "W" if dow >= 5 else "OFF"
 
             person["days"].append(
                 {

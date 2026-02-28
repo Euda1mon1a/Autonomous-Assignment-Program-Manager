@@ -11,6 +11,9 @@ ROTATION_ALIASES: dict[str, str] = {
     "PEDS NF": "PEDNF",
     "PEDS NIGHT FLOAT": "PEDNF",
     "PEDIATRICS NIGHT FLOAT": "PEDNF",
+    "NF-PEDS-PG": "PEDNF",
+    "NF-PEDS-PGY": "PEDNF",
+    "NF-LD": "LDNF",
     "L&D NIGHT FLOAT": "LDNF",
     "L AND D NIGHT FLOAT": "LDNF",
     "KAPI": "KAP",
@@ -142,4 +145,10 @@ def canonical_rotation_code(raw_code: str | None) -> str:
         return "JAPAN"
     if code.startswith("PEDS-EM") or code.startswith("PEDS EM"):
         return "PEDS-EM"
+    if code.startswith("FMIT-PGY") or code.startswith("FMIT-R"):
+        return "FMIT"
+    if code.startswith("PEDS-WARD"):
+        return "PEDW"
+    if code.startswith("NF-PEDS"):
+        return "PEDNF"
     return ROTATION_ALIASES.get(code, code)

@@ -25,6 +25,7 @@ from app.models.activity import Activity
 from app.models.rotation_template import RotationTemplate
 from app.services.excel_metadata import (
     ExportMetadata,
+    write_baseline_sheet,
     write_ref_sheet,
     write_sys_meta_sheet,
 )
@@ -185,6 +186,11 @@ class CanonicalScheduleExportService:
             for row_idx in range(last_populated_row + 1, 81):
                 ws.row_dimensions[row_idx].hidden = True
 
+            # Collect baseline cell data for hand-jam tracking
+            baseline_cells = self._collect_baseline_data(ws, data)
+            if baseline_cells:
+                write_baseline_sheet(wb, sheet_title, baseline_cells)
+
             block_map[sheet_title] = str(block.id)
             temp_wb.close()
 
@@ -246,6 +252,10 @@ class CanonicalScheduleExportService:
         for col, dim in source.column_dimensions.items():
             target.column_dimensions[col] = copy(dim)
 
+        # Copy row dimensions (preserves hidden state from converter)
+        for row_idx, dim in source.row_dimensions.items():
+            target.row_dimensions[row_idx] = copy(dim)
+
         # Copy merged cells
         for merged_range in source.merged_cells.ranges:
             target.merge_cells(str(merged_range))
@@ -278,7 +288,7 @@ class CanonicalScheduleExportService:
                     cell.value = None
 
         ws.protection.sheet = True
-        ws.protection.password = None  # Visual lock only
+        # No password — visual lock only (prevents accidental edits)
 
     def _build_ytd_summary_sheet(
         self, ws, blocks: list[AcademicBlock], faculty: list[dict[str, Any]]
@@ -298,9 +308,12 @@ class CanonicalScheduleExportService:
         ]
 
         # Write headers
+        from openpyxl.styles import Font
+
+        bold_font = Font(bold=True)
         for col_idx, header in enumerate(headers, start=1):
             cell = ws.cell(row=1, column=col_idx, value=header)
-            cell.font = copy(cell.font)  # Will apply bold formatting in real use
+            cell.font = bold_font
 
         block_names = [f"'Block {b.block_number}'" for b in blocks]
 
@@ -340,6 +353,64 @@ class CanonicalScheduleExportService:
             # J: YTD Call Nights -> BR
             ws.cell(row=row_idx, column=10, value=cross_sheet_sumif("BR"))
 
+    def _collect_baseline_data(self, ws, data: dict[str, Any]) -> list[dict[str, Any]]:
+        """Extract cell data from a block sheet for baseline fingerprinting.
+
+        Scans the data region (rows 9-69, cols F onward) and records every
+        non-empty cell with its reference, value, and source from the JSON data.
+        """
+        from openpyxl.utils import get_column_letter
+
+        cells: list[dict[str, Any]] = []
+
+        # BT2 layout: data starts row 9, name col E (5), schedule cols start F (6)
+        # 28 days × 2 slots (AM/PM) = 56 columns of schedule data
+        DATA_START_ROW = 9
+        DATA_END_ROW = 69  # Max possible (residents + faculty)
+        SCHEDULE_START_COL = 6
+        SCHEDULE_END_COL = SCHEDULE_START_COL + 56  # 28 days × 2 slots
+
+        # Build person-name -> source lookup from JSON data
+        source_by_person: dict[str, str] = {}
+        for person_list_key in ("residents", "faculty"):
+            for person in data.get(person_list_key, []):
+                name = person.get("name", "")
+                source_by_person[name] = person.get("source", "solver")
+
+        for row in range(DATA_START_ROW, DATA_END_ROW + 1):
+            person_name = ws.cell(row=row, column=5).value  # Column E = name
+            if not person_name:
+                continue
+
+            # Compute row hash from all schedule cells in this row
+            day_values = []
+            for col in range(SCHEDULE_START_COL, SCHEDULE_END_COL):
+                day_values.append(ws.cell(row=row, column=col).value)
+
+            rotation1 = ws.cell(row=row, column=3).value  # Column C
+            rotation2 = ws.cell(row=row, column=4).value  # Column D
+            row_hash = ""  # Will be populated if person_id available
+
+            person_source = source_by_person.get(str(person_name), "solver")
+
+            for col in range(SCHEDULE_START_COL, SCHEDULE_END_COL):
+                val = ws.cell(row=row, column=col).value
+                if val is not None and str(val).strip():
+                    col_letter = get_column_letter(col)
+                    cells.append(
+                        {
+                            "cell_ref": f"{col_letter}{row}",
+                            "value": str(val),
+                            "row_hash": row_hash,
+                            "source": person_source,
+                        }
+                    )
+
+        return cells
+
+    # Faculty excluded from export (placeholders and removed staff)
+    _EXCLUDED_FACULTY_NAMES: set[str] = {"Kate Bohringer"}
+
     def _export_json_data(
         self,
         start_date: date,
@@ -347,14 +418,71 @@ class CanonicalScheduleExportService:
         include_faculty: bool,
         include_overrides: bool,
     ) -> dict[str, Any]:
+        from datetime import timedelta
+
+        from app.models.person import Person
+
         exporter = HalfDayJSONExporter(self.db)
-        return exporter.export(
+        data = exporter.export(
             block_start=start_date,
             block_end=end_date,
             include_faculty=include_faculty,
             include_call=True,
             include_overrides=include_overrides,
         )
+
+        # Filter out placeholder and excluded faculty
+        if data.get("faculty"):
+            data["faculty"] = [
+                f
+                for f in data["faculty"]
+                if not f.get("name", "").startswith("Dr. Faculty-")
+                and f.get("name", "") not in self._EXCLUDED_FACULTY_NAMES
+            ]
+
+        # Filter placeholder names from call assignments
+        if data.get("call", {}).get("nights"):
+            data["call"]["nights"] = [
+                n
+                for n in data["call"]["nights"]
+                if not n.get("staff", "").startswith("Faculty-")
+            ]
+
+        # Ensure adjunct faculty appear even without assignments (blank rows)
+        if include_faculty:
+            existing_names = {f.get("name") for f in data.get("faculty", [])}
+            adjunct_people = (
+                self.db.query(Person)
+                .filter(Person.type == "faculty", Person.faculty_role == "adjunct")
+                .all()
+            )
+            for p in adjunct_people:
+                if p.name not in existing_names:
+                    days = []
+                    current = start_date
+                    while current <= end_date:
+                        days.append(
+                            {
+                                "date": current.isoformat(),
+                                "weekday": current.strftime("%a"),
+                                "am": None,
+                                "pm": None,
+                            }
+                        )
+                        current = current + timedelta(days=1)
+                    data.setdefault("faculty", []).append(
+                        {
+                            "id": str(p.id),
+                            "name": p.name,
+                            "pgy": None,
+                            "faculty_role": "adjunct",
+                            "rotation1": "",
+                            "rotation2": "",
+                            "days": days,
+                        }
+                    )
+
+        return data
 
     def _inject_metadata(
         self,

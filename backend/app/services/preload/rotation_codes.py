@@ -203,8 +203,8 @@ def get_rotation_preload_codes(
         dow = current_date.weekday()
         mid_block_date = block_start + timedelta(days=14)
 
-        if dow == 2:  # Wednesday — handled by weekly_patterns (LEC)
-            return (None, None)
+        if dow == 2:  # Wednesday — LEC/ADV handled by last-Wed check above
+            return ("OFF", "LEC")
 
         if current_date == mid_block_date:
             # Day 15: Post-call recovery
@@ -227,8 +227,8 @@ def get_rotation_preload_codes(
         dow = current_date.weekday()
         mid_block_date = block_start + timedelta(days=14)
 
-        if dow == 2:  # Wednesday — handled by weekly_patterns (LEC)
-            return (None, None)
+        if dow == 2:  # Wednesday — LEC/ADV handled by last-Wed check above
+            return ("OFF", "LEC")
 
         if current_date == mid_block_date:
             # Day 15: Transition day
@@ -262,6 +262,29 @@ def get_rotation_preload_codes(
 
     if rotation_code in ("NF", "PEDNF"):
         return get_nf_codes(rotation_code, current_date)
+
+    # FMIT (inpatient, full-day): weekdays work, weekends off
+    if rotation_code == "FMIT":
+        dow = current_date.weekday()
+        if dow >= 5:  # Weekend
+            return ("W", "W")
+        return ("FMIT", "FMIT")
+
+    # NBN / Newborn Nursery (inpatient, full-day): weekdays work, weekends off
+    if rotation_code == "NBN":
+        dow = current_date.weekday()
+        if dow >= 5:  # Weekend
+            return ("W", "W")
+        return ("NBN", "NBN")
+
+    # PEDW / Pediatrics Ward (inpatient, full-day): weekdays work, Sat off
+    if rotation_code == "PEDW":
+        dow = current_date.weekday()
+        if dow == 5:  # Saturday
+            return ("W", "W")
+        if dow == 6:  # Sunday — inpatient coverage
+            return ("PEDW", "PEDW")
+        return ("PEDW", "PEDW")
 
     # Wednesday protected patterns (intern continuity only for outpatient rotations)
     if current_date.weekday() == 2:  # Wednesday

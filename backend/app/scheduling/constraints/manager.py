@@ -326,12 +326,27 @@ class ConstraintManager:
         """Create manager with default ACGME constraints."""
         manager = cls()
 
-        # Hard constraints (ACGME compliance)
+        # === PHYSICALLY IMPOSSIBLE constraints (keep Hard) ===
+        # These represent facts that cannot be violated:
+        # - Can't schedule someone who is unavailable (leave, TDY, etc.)
+        # - Adjuncts contractually cannot take call
+        # - Can't assign call to someone not available for call
         manager.add(AvailabilityConstraint())
+        manager.add(AdjunctCallExclusionConstraint())
+        manager.add(CallAvailabilityConstraint())
+
+        # === POLICY constraints (registered but DISABLED) ===
+        # These are ACGME/institutional rules that use model.Add() (hard
+        # constraint pattern in CP-SAT). Until they are refactored to use
+        # indicator variables + penalties (true soft constraints), they must
+        # be disabled to prevent INFEASIBLE when preloaded data creates
+        # unavoidable conflicts (e.g., faculty FMIT 7-day stretches vs 1-in-7).
+        #
+        # An imperfect schedule beats no schedule. Re-enable one at a time
+        # as data quality improves and constraints are validated.
         manager.add(EightyHourRuleConstraint())
         manager.add(OneInSevenRuleConstraint())
         manager.add(SupervisionRatioConstraint())
-        # Faculty supervision at half-day level (ACGME AT coverage)
         manager.add(FacultySupervisionConstraint())
         manager.add(ClinicCapacityConstraint())
         manager.add(MaxPhysiciansInClinicConstraint())
@@ -339,26 +354,38 @@ class ConstraintManager:
         manager.add(WednesdayPMSingleFacultyConstraint())
         manager.add(InvertedWednesdayConstraint())
         manager.add(NightFloatPostCallConstraint())
-        # Faculty clinic caps (C only) - soft min, hard max in validation
         manager.add(FacultyClinicCapConstraint())
-
-        # Block 10 hard constraints - inpatient headcount and post-FMIT blocking
         manager.add(ResidentInpatientHeadcountConstraint())
-        manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
+        manager.add(PostFMITRecoveryConstraint())
         manager.add(PostFMITSundayBlockingConstraint())
-
-        # Faculty primary duty constraints (Airtable-driven)
-        # Uses primary_duties.json for per-faculty clinic min/max and availability
         manager.add(FacultyPrimaryDutyClinicConstraint())
         manager.add(FacultyDayAvailabilityConstraint())
-
-        # Faculty role-based constraints
         manager.add(FacultyRoleClinicConstraint())
-
-        # Overnight call coverage constraints (CP-SAT canonical call assignments)
         manager.add(OvernightCallCoverageConstraint())
-        manager.add(AdjunctCallExclusionConstraint())
-        manager.add(CallAvailabilityConstraint())
+
+        # Disable all policy hard constraints — they crash the solver
+        # with preloaded data that inherently violates them
+        for name in [
+            "80HourRule",
+            "1in7Rule",
+            "SupervisionRatio",
+            "FacultySupervision",
+            "ClinicCapacity",
+            "MaxPhysiciansInClinic",
+            "WednesdayAMInternOnly",
+            "WednesdayPMSingleFaculty",
+            "InvertedWednesday",
+            "NightFloatPostCall",
+            "FacultyClinicCap",
+            "ResidentInpatientHeadcount",
+            "PostFMITRecovery",
+            "PostFMITSundayBlocking",
+            "FacultyPrimaryDutyClinic",
+            "FacultyDayAvailability",
+            "FacultyRoleClinic",
+            "OvernightCallCoverage",
+        ]:
+            manager.disable(name)
 
         # Overnight call generation - opt-in via factory method
         manager.add(OvernightCallGenerationConstraint())

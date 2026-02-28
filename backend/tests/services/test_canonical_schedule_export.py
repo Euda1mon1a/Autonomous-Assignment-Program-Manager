@@ -263,10 +263,8 @@ class TestCanonicalScheduleExportService:
             service.export_year_xlsx(academic_year=2026)
 
     @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
-    def test_export_year_xlsx_calls_inject_metadata_with_block_map(
-        self, mock_converter_class
-    ):
-        """export_year_xlsx() should build block_map and call _inject_metadata."""
+    def test_export_year_xlsx_builds_block_map_and_metadata(self, mock_converter_class):
+        """export_year_xlsx() should build block_map and embed inline metadata."""
         mock_db = MagicMock()
         block_one = MagicMock()
         block_one.block_number = 1
@@ -284,6 +282,8 @@ class TestCanonicalScheduleExportService:
             block_one,
             block_two,
         ]
+        # Mock the .query().distinct().all() calls for rotation/activity codes
+        mock_db.query.return_value.distinct.return_value.all.return_value = []
 
         mock_converter = MagicMock()
         mock_converter.convert_from_json.return_value = self._make_template_bytes()
@@ -301,20 +301,27 @@ class TestCanonicalScheduleExportService:
             patch.object(
                 service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
-            patch.object(
-                service, "_inject_metadata", return_value=b"year_xlsx"
-            ) as mock_inject,
         ):
             result = service.export_year_xlsx(academic_year=2026)
 
-        assert result == b"year_xlsx"
+        # Result should be valid xlsx bytes (starts with PK zip header)
+        assert result[:2] == b"PK"
         assert mock_converter_class.call_args.kwargs["include_qa_sheet"] is False
+
+        # Verify metadata was written inline by loading the workbook
+        from openpyxl import load_workbook
+        from app.services.excel_metadata import read_sys_meta
+
+        wb = load_workbook(io.BytesIO(result))
+        meta = read_sys_meta(wb)
+        assert meta is not None
+        assert meta.academic_year == 2026
         expected_block_map = {
             "Block 1": str(block_one.id),
             "Block 13": str(block_two.id),
         }
-        assert mock_inject.call_args.kwargs["academic_year"] == 2026
-        assert mock_inject.call_args.kwargs["block_map"] == expected_block_map
+        assert meta.block_map == expected_block_map
+        wb.close()
 
 
 class TestTemplatePaths:

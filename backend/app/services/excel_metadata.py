@@ -131,6 +131,100 @@ def read_ref_codes(wb: Workbook) -> dict[str, list[str]]:
     return res
 
 
+def write_baseline_sheet(
+    wb: Workbook,
+    sheet_name: str,
+    cell_data: list[dict[str, Any]],
+) -> None:
+    """Write a veryHidden __BASELINE__ sheet with cell fingerprints.
+
+    Each entry records the system-generated value for a data cell so that
+    hand-jammed edits can be detected on reimport.
+
+    Args:
+        wb: Target workbook.
+        sheet_name: Block sheet name (e.g. "Block 12").
+        cell_data: List of dicts with keys: cell_ref, value, row_hash, source.
+    """
+    baseline_name = f"__BASELINE_{sheet_name}__"
+    if baseline_name in wb.sheetnames:
+        del wb[baseline_name]
+    ws = wb.create_sheet(baseline_name)
+    ws.sheet_state = "veryHidden"
+
+    headers = ["cell_ref", "value", "row_hash", "source"]
+    for col, h in enumerate(headers, start=1):
+        ws.cell(row=1, column=col, value=h)
+
+    for i, entry in enumerate(cell_data, start=2):
+        ws.cell(row=i, column=1, value=entry.get("cell_ref", ""))
+        ws.cell(row=i, column=2, value=entry.get("value"))
+        ws.cell(row=i, column=3, value=entry.get("row_hash", ""))
+        ws.cell(row=i, column=4, value=entry.get("source", ""))
+
+
+def read_baseline(wb: Workbook, sheet_name: str) -> dict[str, dict[str, Any]]:
+    """Read baseline data for a block sheet.
+
+    Returns:
+        Dict mapping cell_ref -> {value, row_hash, source}.
+    """
+    baseline_name = f"__BASELINE_{sheet_name}__"
+    if baseline_name not in wb.sheetnames:
+        return {}
+    ws = wb[baseline_name]
+    result: dict[str, dict[str, Any]] = {}
+    row = 2
+    while True:
+        cell_ref = ws.cell(row=row, column=1).value
+        if not cell_ref:
+            break
+        result[str(cell_ref)] = {
+            "value": ws.cell(row=row, column=2).value,
+            "row_hash": ws.cell(row=row, column=3).value,
+            "source": ws.cell(row=row, column=4).value,
+        }
+        row += 1
+    return result
+
+
+def write_overrides_sheet(
+    wb: Workbook,
+    sheet_name: str,
+    overrides: list[dict[str, Any]],
+) -> None:
+    """Write a veryHidden __OVERRIDES__ sheet tracking hand-jammed cells.
+
+    Args:
+        wb: Target workbook.
+        sheet_name: Block sheet name (e.g. "Block 12").
+        overrides: List of dicts with keys: cell_ref, original_value,
+            new_value, person_name, date, time_of_day.
+    """
+    override_name = f"__OVERRIDES_{sheet_name}__"
+    if override_name in wb.sheetnames:
+        del wb[override_name]
+    if not overrides:
+        return  # Don't create empty sheet
+    ws = wb.create_sheet(override_name)
+    ws.sheet_state = "veryHidden"
+
+    headers = [
+        "cell_ref",
+        "original_value",
+        "new_value",
+        "person_name",
+        "date",
+        "time_of_day",
+    ]
+    for col, h in enumerate(headers, start=1):
+        ws.cell(row=1, column=col, value=h)
+
+    for i, entry in enumerate(overrides, start=2):
+        for col, key in enumerate(headers, start=1):
+            ws.cell(row=i, column=col, value=entry.get(key))
+
+
 def normalize_for_hash(val: Any) -> str:
     """Aggressively normalize cell values for symmetric export/import hashes.
 

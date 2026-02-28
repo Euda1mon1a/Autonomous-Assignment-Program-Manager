@@ -37,7 +37,11 @@ from app.schemas.half_day_import import (
     HalfDayDiffMetrics,
     HalfDayDiffType,
 )
-from app.services.excel_metadata import read_sys_meta
+from app.services.excel_metadata import (
+    read_baseline,
+    read_sys_meta,
+    write_overrides_sheet,
+)
 from app.services.schedule_draft_service import ScheduleDraftService
 from app.utils.academic_blocks import get_block_dates, get_block_number_for_date
 
@@ -194,6 +198,19 @@ class HalfDayImportService:
             self.db.add(staged)
 
         self.db.flush()
+
+        # Baseline diff detection: compare reimported cells against __BASELINE__
+        overrides = self._detect_baseline_overrides(
+            wb, sheet_name, source_ws, parsed_slots
+        )
+        if overrides:
+            logger.info(
+                "Detected %d hand-jammed overrides in sheet '%s'",
+                len(overrides),
+                sheet_name,
+            )
+            write_overrides_sheet(wb, sheet_name, overrides)
+
         return warnings
 
     def stage_block_template2(
@@ -1034,6 +1051,62 @@ class HalfDayImportService:
         for person in people:
             normalized = self._normalize_person_name(person.name)
             self._person_map[normalized] = person.id
+
+    def _detect_baseline_overrides(
+        self,
+        wb,
+        sheet_name: str,
+        source_ws,
+        parsed_slots: list[ParsedSlot],
+    ) -> list[dict[str, Any]]:
+        """Compare reimported cells against __BASELINE__ to detect hand-jams.
+
+        Returns list of override dicts for cells that differ from baseline.
+        """
+        from openpyxl.utils import get_column_letter
+
+        baseline = read_baseline(wb, sheet_name)
+        if not baseline:
+            return []
+
+        overrides: list[dict[str, Any]] = []
+
+        for row in range(DATA_START_ROW, DATA_END_ROW + 1):
+            person_name = source_ws.cell(row=row, column=NAME_COL).value
+            if not person_name:
+                continue
+
+            for col in range(SCHEDULE_START_COL, SCHEDULE_START_COL + 56):
+                cell_ref = f"{get_column_letter(col)}{row}"
+                current_value = source_ws.cell(row=row, column=col).value
+
+                if cell_ref in baseline:
+                    bl = baseline[cell_ref]
+                    original = bl.get("value")
+                    # Normalize both for comparison
+                    norm_current = str(current_value).strip() if current_value else ""
+                    norm_original = str(original).strip() if original else ""
+
+                    if norm_current != norm_original:
+                        # Determine time_of_day from column position
+                        slot_offset = col - SCHEDULE_START_COL
+                        time_of_day = "AM" if slot_offset % 2 == 0 else "PM"
+                        day_index = slot_offset // 2
+
+                        overrides.append(
+                            {
+                                "cell_ref": cell_ref,
+                                "original_value": original,
+                                "new_value": str(current_value)
+                                if current_value
+                                else "",
+                                "person_name": str(person_name),
+                                "date": f"day_{day_index + 1}",
+                                "time_of_day": time_of_day,
+                            }
+                        )
+
+        return overrides
 
     def _normalize_excel_code(
         self, raw_value: str | None, time_of_day: str

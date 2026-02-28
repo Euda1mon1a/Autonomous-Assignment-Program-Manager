@@ -3303,6 +3303,18 @@ class SchedulingEngine:
             logger.info("No faculty half-day assignments from solver")
             return 0
 
+        # Exclude adjunct faculty — they are hand-jammed by the coordinator,
+        # not auto-scheduled by the solver. Mirrors _get_call_eligible_faculty().
+        adjunct_ids = set(
+            row[0]
+            for row in self.db.query(Person.id)
+            .filter(
+                Person.type == "faculty",
+                Person.faculty_role == FacultyRole.ADJUNCT.value,
+            )
+            .all()
+        )
+
         # Build block lookup for date/time extraction
         block_by_id = {cast(UUID, b.id): b for b in blocks}
 
@@ -3330,11 +3342,17 @@ class SchedulingEngine:
         updated = 0
         skipped_locked = 0
 
+        skipped_adjunct = 0
         for (
             faculty_id,
             block_id,
             activity_type,
         ) in solver_result.faculty_half_day_assignments:
+            # Skip adjunct faculty (hand-jammed, not solver-scheduled)
+            if faculty_id in adjunct_ids:
+                skipped_adjunct += 1
+                continue
+
             block = block_by_id.get(block_id)
             if not block:
                 logger.warning(f"Block {block_id} not found for faculty assignment")
@@ -3390,7 +3408,8 @@ class SchedulingEngine:
             self.db.flush()
             logger.info(
                 f"Persisted faculty half-day assignments from solver: "
-                f"created={created}, updated={updated}, skipped_locked={skipped_locked}"
+                f"created={created}, updated={updated}, skipped_locked={skipped_locked}, "
+                f"skipped_adjunct={skipped_adjunct}"
             )
 
         return created + updated

@@ -1,0 +1,269 @@
+commit fbee9dd9e4ac37919959dee5c5437bea376f1f66
+Author: Aaron Montgomery <aaronpmontgomery@gmail.com>
+Date:   Fri Feb 27 12:24:09 2026 -1000
+
+    fix(scheduling): align DB day_of_week mapping with python datetime standard and unblock solver
+
+    This commit resolves critical off-by-one bugs in how faculty weekly templates and schedule preferences map to calendar days. The database has been shifted from Sunday=0 to Monday=0 to align perfectly with Python's date.weekday() standard. Additionally, the FacultySupervision constraint has been degraded to a SoftConstraint to prevent the solver from crashing when faculty vacation forces unavoidable supervision gaps. Includes a new script to dynamically generate a Constraints Registry.
+
+diff --git a/backend/alembic/versions/6a876bddd2d5_fix_faculty_template_day_mapping.py b/backend/alembic/versions/6a876bddd2d5_fix_faculty_template_day_mapping.py
+new file mode 100644
+index 00000000..1c9b7fc7
+--- /dev/null
++++ b/backend/alembic/versions/6a876bddd2d5_fix_faculty_template_day_mapping.py
+@@ -0,0 +1,37 @@
++"""fix_faculty_template_day_mapping
++
++Revision ID: 6a876bddd2d5
++Revises: 20260227_add_adjunct
++Create Date: 2026-02-27 12:11:17.437888
++
++"""
++
++from typing import Sequence, Union
++
++from alembic import op
++import sqlalchemy as sa
++
++
++# revision identifiers, used by Alembic.
++revision: str = "6a876bddd2d5"
++down_revision: str | None = "20260227_add_adjunct"
++branch_labels: str | Sequence[str] | None = None
++depends_on: str | Sequence[str] | None = None
++
++
++def upgrade() -> None:
++    # Shift days: Sunday (0) becomes 6. Monday (1) becomes 0, Tuesday (2) becomes 1, etc.
++    op.execute("UPDATE faculty_weekly_templates SET day_of_week = day_of_week - 1")
++    op.execute(
++        "UPDATE faculty_weekly_templates SET day_of_week = 6 WHERE day_of_week = -1"
++    )
++
++
++def downgrade() -> None:
++    # Reverse the shift
++    op.execute(
++        "UPDATE faculty_weekly_templates SET day_of_week = 0 WHERE day_of_week = 6"
++    )
++    op.execute(
++        "UPDATE faculty_weekly_templates SET day_of_week = day_of_week + 1 WHERE day_of_week != 0"
++    )
+diff --git a/backend/alembic/versions/be2e66649140_fix_faculty_schedule_preference_day_.py b/backend/alembic/versions/be2e66649140_fix_faculty_schedule_preference_day_.py
+new file mode 100644
+index 00000000..7fa7b706
+--- /dev/null
++++ b/backend/alembic/versions/be2e66649140_fix_faculty_schedule_preference_day_.py
+@@ -0,0 +1,37 @@
++"""fix_faculty_schedule_preference_day_mapping
++
++Revision ID: be2e66649140
++Revises: 6a876bddd2d5
++Create Date: 2026-02-27 12:20:47.578099
++
++"""
++
++from typing import Sequence, Union
++
++from alembic import op
++import sqlalchemy as sa
++
++
++# revision identifiers, used by Alembic.
++revision: str = "be2e66649140"
++down_revision: str | None = "6a876bddd2d5"
++branch_labels: str | Sequence[str] | None = None
++depends_on: str | Sequence[str] | None = None
++
++
++def upgrade() -> None:
++    # Shift days: Sunday (0) becomes 6. Monday (1) becomes 0, Tuesday (2) becomes 1, etc.
++    op.execute("UPDATE faculty_schedule_preferences SET day_of_week = day_of_week - 1")
++    op.execute(
++        "UPDATE faculty_schedule_preferences SET day_of_week = 6 WHERE day_of_week = -1"
++    )
++
++
++def downgrade() -> None:
++    # Reverse the shift
++    op.execute(
++        "UPDATE faculty_schedule_preferences SET day_of_week = 0 WHERE day_of_week = 6"
++    )
++    op.execute(
++        "UPDATE faculty_schedule_preferences SET day_of_week = day_of_week + 1 WHERE day_of_week != 0"
++    )
+diff --git a/backend/app/models/faculty_weekly_template.py b/backend/app/models/faculty_weekly_template.py
+index 72513f17..d83ee38a 100644
+--- a/backend/app/models/faculty_weekly_template.py
++++ b/backend/app/models/faculty_weekly_template.py
+@@ -47,7 +47,7 @@ class FacultyWeeklyTemplate(Base):
+
+     Attributes:
+         person_id: FK to faculty member this template belongs to
+-        day_of_week: 0=Sunday, 1=Monday, ..., 6=Saturday
++        day_of_week: 0=Monday, 1=Tuesday, ..., 6=Sunday (Matches Python date.weekday())
+         time_of_day: "AM" or "PM"
+         week_number: Week 1-4 within block (NULL = same pattern all weeks)
+         activity_id: FK to Activity table (NULL = unassigned slot)
+diff --git a/backend/app/scheduling/constraints/faculty_clinic.py b/backend/app/scheduling/constraints/faculty_clinic.py
+index b460d4bd..a15b4b62 100644
+--- a/backend/app/scheduling/constraints/faculty_clinic.py
++++ b/backend/app/scheduling/constraints/faculty_clinic.py
+@@ -241,7 +241,7 @@ class FacultyClinicCapConstraint(SoftConstraint):
+         )
+
+
+-class FacultySupervisionConstraint(HardConstraint):
++class FacultySupervisionConstraint(SoftConstraint):
+     """
+     Ensure ACGME AT (Attending Time) coverage for residents in clinic.
+
+diff --git a/backend/app/scheduling/engine.py b/backend/app/scheduling/engine.py
+index 309a6a1e..7577dfb2 100644
+--- a/backend/app/scheduling/engine.py
++++ b/backend/app/scheduling/engine.py
+@@ -3306,12 +3306,12 @@ class SchedulingEngine:
+         # Exclude adjunct faculty — they are hand-jammed by the coordinator,
+         # not auto-scheduled by the solver. Mirrors _get_call_eligible_faculty().
+         adjunct_ids = set(
+-            self.db.query(Person.id)
++            row[0]
++            for row in self.db.query(Person.id)
+             .filter(
+                 Person.type == "faculty",
+                 Person.faculty_role == FacultyRole.ADJUNCT.value,
+             )
+-            .scalars()
+             .all()
+         )
+
+diff --git a/docs/scheduling/CONSTRAINTS_REGISTRY.md b/docs/scheduling/CONSTRAINTS_REGISTRY.md
+new file mode 100644
+index 00000000..467ab292
+--- /dev/null
++++ b/docs/scheduling/CONSTRAINTS_REGISTRY.md
+@@ -0,0 +1,72 @@
++# Scheduling Engine Constraints Registry
++
++This document lists all the constraints available to the CP-SAT scheduling engine.
++
++| Constraint Class | File | Type | Description |
++| --- | --- | --- | --- |
++| `ActivityRequirementConstraint` | `activity_requirement.py` | Soft | Soft constraint enforcing min/max/target halfdays per activity. |
++| `AdjunctCallExclusionConstraint` | `call_coverage.py` | Hard | Prevents adjunct faculty from being auto-assigned overnight call. |
++| `AvailabilityConstraint` | `acgme.py` | Hard | Ensures residents are only assigned to blocks when available. |
++| `CallAvailabilityConstraint` | `call_coverage.py` | Hard | Prevents call assignment when faculty is unavailable. |
++| `CallNightBeforeLeaveConstraint` | `call_equity.py` | Soft | Soft penalty for overnight call the night before a leave/absence. |
++| `CallSpacingConstraint` | `call_equity.py` | Soft | Penalizes back-to-back call weeks for the same faculty. |
++| `ClinicCapacityConstraint` | `capacity.py` | Hard | Ensures clinic capacity limits are respected. |
++| `ConstraintCategory` | `config.py` | Unknown | Constraint categories for organization. |
++| `ConstraintConfigManager` | `config.py` | Unknown | Manages constraint configurations. |
++| `ConstraintConfig` | `config.py` | Unknown | Configuration for a single constraint. |
++| `ConstraintManager` | `manager.py` | Unknown | Manages a collection of constraints for scheduling. |
++| `ConstraintPriorityLevel` | `config.py` | Unknown | Priority levels for constraint application. |
++| `ContinuityConstraint` | `equity.py` | Soft | Encourages schedule continuity - residents staying in same rotation |
++| `CoverageConstraint` | `capacity.py` | Soft | Maximizes block coverage (number of assigned blocks). |
++| `DeptChiefWednesdayPreferenceConstraint` | `call_equity.py` | Soft | Soft preference for Department Chief to take Wednesday call. |
++| `EightyHourRuleConstraint` | `acgme.py` | Hard | ACGME 80-hour rule: Maximum 80 hours per week, strictly calculated |
++| `EquityConstraint` | `equity.py` | Soft | Balances workload across residents. |
++| `FMITContinuityTurfConstraint` | `fmit.py` | Hard | FMIT continuity delivery turf rules based on system load. |
++| `FMITMandatoryCallConstraint` | `fmit.py` | Hard | Ensures FMIT attending covers Friday and Saturday night call. |
++| `FMITResidentClinicDayConstraint` | `inpatient.py` | Hard | Enforces PGY-specific clinic days for FMIT residents. |
++| `FMITStaffingFloorConstraint` | `fmit.py` | Hard | Ensures minimum faculty available before FMIT assignments. |
++| `FMITWeekBlockingConstraint` | `fmit.py` | Hard | Blocks clinic and Sun-Thurs call during FMIT week. |
++| `FacultyCallPreferenceConstraint` | `call_equity.py` | Soft | Soft preferences for faculty call based on day of week. |
++| `FacultyClinicCapConstraint` | `faculty_clinic.py` | Soft | Enforce MIN and MAX clinic sessions per week per faculty. |
++| `FacultyClinicEquitySoftConstraint` | `primary_duty.py` | Soft | Soft constraint that optimizes toward target clinic coverage. |
++| `FacultyDayAvailabilityConstraint` | `primary_duty.py` | Hard | Enforces day-of-week availability based on primary duty configuration. |
++| `FacultyPrimaryDutyClinicConstraint` | `primary_duty.py` | Hard | Enforces clinic half-day requirements based on primary duty configuration. |
++| `FacultyRoleClinicConstraint` | `faculty_role.py` | Hard | Enforces clinic half-day limits for faculty. |
++| `FacultySupervisionConstraint` | `faculty_clinic.py` | Soft | Ensure ACGME AT (Attending Time) coverage for residents in clinic. |
++| `FacultyWeeklyTemplateConstraint` | `faculty_weekly_template.py` | Soft | Enforces faculty weekly activity templates and overrides. |
++| `HalfDayRequirementConstraint` | `halfday_requirement.py` | Soft | Soft constraint that optimizes activity distribution per rotation. |
++| `HolidayCallEquityConstraint` | `call_equity.py` | Soft | Ensures fair distribution of holiday overnight call. |
++| `HubProtectionConstraint` | `resilience.py` | Soft | Protects hub faculty from over-assignment. |
++| `IntegratedWorkloadConstraint` | `integrated_workload.py` | Soft | Ensures fair distribution of total workload across faculty. |
++| `InternContinuityConstraint` | `fm_scheduling.py` | Hard | PGY-1 Wednesday AM = C (continuity clinic). |
++| `InvertedWednesdayConstraint` | `temporal.py` | Hard | Ensures 4th Wednesday has single faculty AM and different faculty PM. |
++| `MaxPhysiciansInClinicConstraint` | `capacity.py` | Hard | Ensures physical space limitations are respected. |
++| `N1VulnerabilityConstraint` | `resilience.py` | Soft | Prevents schedules that create single points of failure. |
++| `NightFloatPostCallConstraint` | `night_float_post_call.py` | Hard | Enforces PC (Post-Call) full day after Night Float ends. |
++| `NightFloatSlotConstraint` | `fm_scheduling.py` | Hard | Night float residents get NF in both AM and PM slots (except days off). |
++| `OneInSevenRuleConstraint` | `acgme.py` | Hard | ACGME 1-in-7 rule: At least one 24-hour period off every 7 days. |
++| `OnePersonPerBlockConstraint` | `capacity.py` | Hard | Ensures at most one primary resident assigned per block. |
++| `OvernightCallCoverageConstraint` | `call_coverage.py` | Hard | Ensures exactly one faculty member is on overnight call each Sun-Thurs night. |
++| `OvernightCallGenerationConstraint` | `overnight_call.py` | Hard | Generates overnight call assignments for Sunday through Thursday nights. |
++| `PostCallAutoAssignmentConstraint` | `post_call.py` | Soft | Automatically assigns PCAT (AM) and DO (PM) after overnight call. |
++| `PostFMITRecoveryConstraint` | `fmit.py` | Hard | Blocks the Friday after FMIT week for recovery. |
++| `PostFMITSundayBlockingConstraint` | `fmit.py` | Soft | Penalizes Sunday call for faculty immediately after FMIT week. |
++| `PreferenceConstraint` | `faculty.py` | Soft | Handles resident preferences for specific rotations, times, or blocks. |
++| `PreferenceTrailConstraint` | `resilience.py` | Soft | Uses stigmergy preference trails for assignment optimization. |
++| `ProtectedSlotConstraint` | `protected_slot.py` | Hard | Enforces protected slots from weekly patterns. |
++| `ResidentAcademicTimeConstraint` | `resident_weekly_clinic.py` | Hard | Protects academic time (Wednesday AM) from clinic assignments. |
++| `ResidentClinicDayPreferenceConstraint` | `resident_weekly_clinic.py` | Soft | Soft constraint that optimizes clinic assignments to allowed days. |
++| `ResidentInpatientHeadcountConstraint` | `inpatient.py` | Hard | Enforces headcount limits for resident inpatient rotations. |
++| `ResidentWeeklyClinicConstraint` | `resident_weekly_clinic.py` | Soft | Penalizes deviation from weekly FM clinic half-day targets for residents. |
++| `SMFacultyClinicConstraint` | `faculty_role.py` | Hard | Ensures Sports Medicine faculty is not assigned to regular clinic. |
++| `SMResidentFacultyAlignmentConstraint` | `sports_medicine.py` | Hard | Ensures SM residents are scheduled with SM faculty. |
++| `SundayCallEquityConstraint` | `call_equity.py` | Soft | Ensures fair distribution of Sunday overnight call. |
++| `SupervisionRatioConstraint` | `acgme.py` | Hard | ACGME supervision ratios: Ensures adequate faculty supervision. |
++| `TuesdayCallPreferenceConstraint` | `call_equity.py` | Soft | Soft preference to avoid PD and APD on Tuesday call. |
++| `UtilizationBufferConstraint` | `resilience.py` | Soft | Maintains capacity buffer to absorb unexpected demand. |
++| `WednesdayAMInternOnlyConstraint` | `temporal.py` | Hard | Ensures Wednesday morning clinic is staffed by interns (PGY-1) only. |
++| `WednesdayPMLecConstraint` | `fm_scheduling.py` | Hard | Wednesday PM = LEC-PM for non-exempt rotations. |
++| `WednesdayPMSingleFacultyConstraint` | `temporal.py` | Hard | Ensures exactly 1 faculty is assigned to clinic on Wednesday PM. |
++| `WeekdayCallEquityConstraint` | `call_equity.py` | Soft | Ensures fair distribution of Mon-Thurs overnight call. |
++| `WeekendWorkConstraint` | `halfday_requirement.py` | Hard | Enforces weekend work configuration per rotation. |
++| `ZoneBoundaryConstraint` | `resilience.py` | Soft | Respects blast radius zone boundaries in scheduling. |
+diff --git a/scripts/generate_constraint_registry.py b/scripts/generate_constraint_registry.py
+new file mode 100644
+index 00000000..ecdea8b4
+--- /dev/null
++++ b/scripts/generate_constraint_registry.py
+@@ -0,0 +1,46 @@
++import inspect
++import importlib
++import os
++from pathlib import Path
++
++os.environ["DEBUG"] = "true"
++
++constraint_dir = Path('backend/app/scheduling/constraints')
++registry = []
++
++for filepath in constraint_dir.glob('*.py'):
++    if filepath.name == '__init__.py' or filepath.name == 'base.py':
++        continue
++
++    module_name = f'app.scheduling.constraints.{filepath.stem}'
++    try:
++        module = importlib.import_module(module_name)
++    except Exception as e:
++        print(f"Failed to import {module_name}: {e}")
++        continue
++
++    for name, obj in inspect.getmembers(module, inspect.isclass):
++        if obj.__module__ == module_name and 'Constraint' in name and name not in ('Constraint', 'HardConstraint', 'SoftConstraint'):
++            bases = [b.__name__ for b in obj.__bases__]
++            constraint_type = 'Hard' if 'HardConstraint' in bases else ('Soft' if 'SoftConstraint' in bases else 'Unknown')
++            doc = ''
++            if obj.__doc__:
++                doc_lines = obj.__doc__.strip().splitlines()
++                if doc_lines:
++                    doc = doc_lines[0].strip()
++            registry.append(f'| `{name}` | `{filepath.name}` | {constraint_type} | {doc} |')
++
++output = []
++output.append('# Scheduling Engine Constraints Registry')
++output.append('')
++output.append('This document lists all the constraints available to the CP-SAT scheduling engine.')
++output.append('')
++output.append('| Constraint Class | File | Type | Description |')
++output.append('| --- | --- | --- | --- |')
++for row in sorted(registry):
++    output.append(row)
++
++output_str = "\n".join(output) + "\n"
++
++with open('docs/scheduling/CONSTRAINTS_REGISTRY.md', 'w') as f:
++    f.write(output_str)
