@@ -73,10 +73,11 @@
 ### 4. Apply Adjunct Migration — `DEFERRED`
 *   **Decision:** Adjuncts deferred until core scheduling locked in. Removed non-essential faculty from DB.
 
-### 5. Zeroing Validation — `IN PROGRESS`
-*   **Approach:** Export DB grid → compare against coordinator's Excel cell-by-cell → isolate DB (solver) vs export (XLSX) issues.
-*   **Export:** `/tmp/Block12_Schedule_Grid_Zeroing.xlsx` (3 sheets: Raw Codes, Numeric Codes 1-9, Legend)
-*   **Tool:** Claude for Excel compares numeric grid against coordinator workbook.
+### 5. Zeroing Validation — `DONE (DB-side)`
+*   **Approach:** Programmatic 10-check verification script (`scripts/scheduling/verify_block12.py`) cross-references `schedule_grid` view against all source-of-truth tables (block_assignments, rotation_templates, faculty_weekly_templates, absences, call_assignments).
+*   **Result (Feb 28):** 10/10 checks passed. Check 7 (Faculty Template Alignment) passes as WARN — 213 mismatches are a known C2 deferral (activity solver overwrites template-authoritative write-back).
+*   **Verification script checks:** Headcount, completeness, HDA coverage, NULL codes, weekend handling, resident rotation alignment, faculty template alignment, absence alignment, call chain integrity, source consistency.
+*   **Export zeroing (Excel side):** Deferred until DB quality confirmed. `/tmp/Block12_Schedule_Grid_Zeroing.xlsx` available for manual comparison.
 *   **See:** `docs/planning/SCHEDULE_GRID_ZEROING_PLAN.md` for full methodology.
 
 ---

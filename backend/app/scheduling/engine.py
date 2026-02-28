@@ -114,7 +114,7 @@ class SchedulingEngine:
         self.assignments: list[Assignment] = []
         self.validator = ACGMEValidator(db)
         self.constraint_manager = (
-            constraint_manager or ConstraintManager.create_default()
+            constraint_manager or ConstraintManager.create_default(profile="faculty")
         )
 
         # Initialize resilience service for health monitoring

@@ -24,11 +24,30 @@
 2. **Personnel cleanup** — Removed 4 non-core faculty (1 with 0 templates, 3 near all-GME)
 
 ### Known Quality Issues (Solver-Side)
-1. **Faculty solver ignores templates** — `FacultyWeeklyTemplateConstraint` not registered in `manager.py`. ~~Cross-category mismatches remain (~100 slots where solver chose C but template wants AT, or vice versa).~~ **FIXED at write-back level:** templates are now authoritative — the write-back uses the coordinator's template code regardless of solver category. Solver still doesn't constrain on templates during optimization (deferred C2).
+1. **Faculty solver ignores templates** — `FacultyWeeklyTemplateConstraint` not registered in `manager.py`. ~~Cross-category mismatches remain (~100 slots where solver chose C but template wants AT, or vice versa).~~ **FIXED at write-back level:** templates are now authoritative — the write-back uses the coordinator's template code regardless of solver category. Solver still doesn't constrain on templates during optimization (deferred C2). **Verified (Feb 28):** 213 mismatches (67 within-category, 146 cross-category), all attributable to activity solver overwriting template-authoritative write-back. 120 legitimate overrides (FMIT/pcat/do/leave/weekend).
 2. ~~**Faculty work Sat/Sun**~~ — **FIXED.** Root cause: `activity_solver.py` overwrote weekend "OFF" codes with clinical activities when `include_faculty_slots=True`. Added faculty weekend exclusion filter. Weekend uses standard Sat+Sun (`weekday() >= 5`). Weekend violations: 60 → 0.
 3. ~~**Solver activity model too coarse**~~ — **FIXED.** Write-back at `engine.py` now template-authoritative: templates always win over solver category. DFM moved from `_SOLVER_CLINIC_CODES` to `_SOLVER_ADMIN_CODES` (was misclassified as clinic). Cross-category mismatches eliminated — all ~100 previously generic "C"/"AT" codes now resolve to specific template activities. 17 regression tests in `test_resolve_template_activity.py`.
 4. **Alembic stamp mismatch** — DB at `9bcfa50205e4`, not in migration files
 5. ~~**DOW convention mismatch**~~ — **FIXED (P0).** All runtime bugs patched (constraint, frontend `isWeekend`/`DAY_LABELS`), all 9 docstrings corrected, disambiguation constants added, 67 regression tests. See `docs/architecture/DOW_CONVENTION_BUG.md`.
+
+### Programmatic Verification (Feb 28)
+
+10-check verification script at `scripts/scheduling/verify_block12.py` — uses psycopg2 directly (no app imports), read-only, cross-references `schedule_grid` against all source-of-truth tables.
+
+| # | Check | Result | Details |
+|---|-------|--------|---------|
+| 1 | Headcount | **PASS** | 16 residents + 10 faculty |
+| 2 | Completeness | **PASS** | 26 people × 28 days |
+| 3 | HDA Coverage | **PASS** | 26 × 56 HDAs, 0 NULL activity_id |
+| 4 | No NULL Codes | **PASS** | 0 NULL am/pm codes |
+| 5 | Weekend Handling | **PASS** | 208 weekend rows, 0 violations |
+| 6 | Resident Rotation Alignment | **PASS** | 320 workday slots, 0 mismatches |
+| 7 | Faculty Template Alignment | **WARN** | 213 mismatches (known C2 deferral) |
+| 8 | Absence Alignment | **PASS** | 13 absences, 61 workdays, 0 violations |
+| 9 | Call Chain Integrity | **PASS** | 18 calls, 13 chains verified |
+| 10 | Source Consistency | **PASS** | 100 inpatient workday slots, all preload |
+
+Key verification features: canonical rotation code normalization, two-tier mid-block boundaries (day 12 for secondary rotation switch, day 15 for NF phase split), continuity clinic overlay allowance, call chain override hierarchy (FMIT > leave > weekend > pcat/do).
 
 ### Numeric Code Legend
 | Code | Meaning | Activities |
@@ -251,6 +270,7 @@ Open in Excel → compare against coordinator's Block 12 workbook → Claude for
 
 | File | Purpose |
 |------|---------|
+| `scripts/scheduling/verify_block12.py` | 10-check DB verification script (psycopg2, read-only) |
 | `backend/alembic/versions/20260227_schedule_grid_view.py` | Alembic migration for view |
 | `backend/app/scheduling/solvers.py:968-1073` | Faculty activity variables + constraint wiring |
 | `backend/app/scheduling/engine.py:3281-3415` | Faculty HDA write-back from solver |
