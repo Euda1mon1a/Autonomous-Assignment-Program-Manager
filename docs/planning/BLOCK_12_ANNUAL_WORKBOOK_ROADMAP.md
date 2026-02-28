@@ -249,7 +249,7 @@ db.close()
 | Source | What | Expected HDAs |
 |--------|------|---------------|
 | Absences (8 records) | LV-AM, LV-PM for each leave day in block | ~80 (varies by overlap days) |
-| FMIT preloads | FMIT activity for FMIT-assigned residents | ~96 (Mayell + Byrnes weeks 1-2 + Wilhelm) |
+| FMIT preloads | FMIT activity for FMIT-assigned residents | ~96 (3 residents: full + wk 1-2 + NF+FMIT) |
 | NF combined half-block | First/second half splits (NF-CARDIO, NF-FMIT-PG, etc.) | ~192 (6 NF combined residents × 2 slots × 16 days each) |
 | Call preloads (PCAT/DO) | Post-call attending time, direct observation | ~10-20 |
 | Day off / weekend | OFF, W codes | ~180 |
@@ -437,10 +437,10 @@ db.close()
 Compare solver output against `docs/analysis/BLOCK_12_ANALYSIS.md`:
 - 16 residents should match the rotation matrix (Section 2)
 - 8 absences should produce leave HDAs (Section 4)
-- FMIT coverage: Mayell (full), Byrnes (wk 1-2), Wilhelm (NF+FMIT) (Section 6)
-- Night Float: Wilhelm, Thomas, Maher (full), Byrnes (wk 3-4) (Section 6)
-- L&D NF: Cataquiz solo (Section 6)
-- Peds NF: Sawyer (full), Sloss (wk 3+) (Section 6)
+- FMIT coverage: 3 residents (full, wk 1-2, NF+FMIT) (Section 6)
+- Night Float: 4 residents (3 full, 1 wk 3-4) (Section 6)
+- L&D NF: 1 resident solo (Section 6)
+- Peds NF: 2 residents (full, wk 3+) (Section 6)
 
 ---
 
@@ -598,8 +598,8 @@ Open in Excel and check:
 | `__BASELINE_Block 12__` exists | VBA: same unhide technique |
 | `__REF__` has code lists | Unhide and verify rotation/activity codes |
 | Phantom columns grayed | Block 0 and Block 13 should have gray locked columns for non-existent days |
-| Absences show as LV | Gigon (May 29–Jun 3), Headid (May 14–18, Jun 2–3), etc. |
-| Colgan shows as deployed | Full block deployment activity |
+| Absences show as LV | PGY-2 resident (May 29–Jun 3), PGY-2 resident (May 14–18, Jun 2–3), etc. |
+| Deployed faculty shows as deployed | Full block deployment activity |
 
 ---
 
@@ -694,33 +694,33 @@ mcp__residency-scheduler__restore_backup_tool(backup_id="...")
 
 | # | Person | Type | Full Range | In-Block Days | Notes |
 |---|--------|------|------------|---------------|-------|
-| 1 | Aaron Montgomery (APD) | vacation | May 7 – May 18 | 12 days (wk 1-2) | 2-week leave, not on FMIT |
-| 2 | Brian Dahl (OIC) | vacation | May 21 – May 25 | 5 days | **Corrected** from May 18-21. FMIT starts May 22. |
-| 3 | Bridget Colgan | deployment | Feb 21 – Jun 30 | **28 days (full block)** | Spans entire AY |
-| 4 | Chelsea Tagawa | vacation | May 26 – May 29 | 4 days | |
-| 5 | Sarah Kinkennon | tdy | May 14 | 1 day | BLS certification. Available for call, HDAs blocked. |
-| 6 | Sarah Kinkennon | tdy | May 21 | 1 day | PALS certification. Available for call, HDAs blocked. |
-| 7 | Sarah Kinkennon | tdy | May 28 | 1 day | BLS certification. Available for call, HDAs blocked. |
-| 8 | Zach McRae | vacation | May 26 – May 29 | 4 days | |
+| 1 | Faculty-APD | vacation | May 7 – May 18 | 12 days (wk 1-2) | 2-week leave, not on FMIT |
+| 2 | Faculty-OIC | vacation | May 21 – May 25 | 5 days | **Corrected** from May 18-21. FMIT starts May 22. |
+| 3 | Faculty-Deployed | deployment | Feb 21 – Jun 30 | **28 days (full block)** | Spans entire AY |
+| 4 | Faculty-SM | vacation | May 26 – May 29 | 4 days | |
+| 5 | Faculty-Core-A | tdy | May 14 | 1 day | BLS certification. Available for call, HDAs blocked. |
+| 6 | Faculty-Core-A | tdy | May 21 | 1 day | PALS certification. Available for call, HDAs blocked. |
+| 7 | Faculty-Core-A | tdy | May 28 | 1 day | BLS certification. Available for call, HDAs blocked. |
+| 8 | Faculty-Core-B | vacation | May 26 – May 29 | 4 days | |
 
 ### Residents (5 entries)
 
 | # | Person | Type | Full Range | In-Block Days | Boundary? |
 |---|--------|------|------------|---------------|-----------|
-| 9 | Alaine Gigon (PGY-2) | vacation | May 29 – Jun 4 | 6 days (May 29–Jun 3) | Spans into Block 13 |
-| 10 | Christian Hernandez (PGY-3) | vacation | May 27 – Jun 2 | 7 days | No |
-| 11 | James Headid (PGY-2) | vacation | May 14 – May 18 | 5 days | No |
-| 12 | James Headid (PGY-2) | vacation | Jun 2 – Jun 7 | 2 days (Jun 2–3) | Spans into Block 13 |
-| 13 | Josh Monsivais (PGY-1) | vacation | May 24 – May 30 | 7 days | No |
+| 9 | Resident-PGY2-A | vacation | May 29 – Jun 4 | 6 days (May 29–Jun 3) | Spans into Block 13 |
+| 10 | Resident-PGY3-A | vacation | May 27 – Jun 2 | 7 days | No |
+| 11 | Resident-PGY2-B | vacation | May 14 – May 18 | 5 days | No |
+| 12 | Resident-PGY2-B | vacation | Jun 2 – Jun 7 | 2 days (Jun 2–3) | Spans into Block 13 |
+| 13 | Resident-PGY1-A | vacation | May 24 – May 30 | 7 days | No |
 
 ### Block 12 Faculty Availability by Week
 
 | Week | Dates | Faculty on Leave/TDY | Available (of 10) |
 |------|-------|----------------------|:-:|
-| 1 | May 7–11 | Montgomery (LV), Colgan (DEP) | **8** |
-| 2 | May 12–18 | Montgomery (LV), Kinkennon (BLS 14th), Colgan (DEP) | **7–8** |
-| 3 | May 19–25 | Dahl (LV 21-25), Kinkennon (PALS 21st), Colgan (DEP) | **7–8** |
-| 4 | May 26–Jun 3 | Tagawa (LV), McRae (LV), Kinkennon (BLS 28th), Colgan (DEP) | **6–7** |
+| 1 | May 7–11 | Faculty-APD (LV), Faculty-Deployed (DEP) | **8** |
+| 2 | May 12–18 | Faculty-APD (LV), Faculty-Core-A (BLS 14th), Faculty-Deployed (DEP) | **7–8** |
+| 3 | May 19–25 | Faculty-OIC (LV 21-25), Faculty-Core-A (PALS 21st), Faculty-Deployed (DEP) | **7–8** |
+| 4 | May 26–Jun 3 | Faculty-SM (LV), Faculty-Core-B (LV), Faculty-Core-A (BLS 28th), Faculty-Deployed (DEP) | **6–7** |
 
 ---
 
@@ -728,22 +728,22 @@ mcp__residency-scheduler__restore_backup_tool(backup_id="...")
 
 | Resident | PGY | Rotation | Secondary | NF Combined? |
 |----------|-----|----------|-----------|:------------:|
-| Alaine Gigon | 2 | FMC | — | No |
-| Cam Mayell | 3 | FMIT-PGY3 | — | No |
-| Christian Hernandez | 3 | PEDS-EM | — | No |
-| Clara Wilhelm | 1 | NF-FMIT-PG | — | Yes |
-| Clay Petrie | 3 | HILO-PGY3 | — | No (off-site) |
-| Colin Travis | 1 | MSK-SEL | — | No |
-| Devin Thomas | 2 | NF-CARDIO | — | Yes |
-| Felipe Cataquiz | 2 | NF-LD | — | Yes |
-| Jae You | 3 | JAPAN | — | No (off-site) |
-| James Headid | 2 | ELEC | — | No |
-| Josh Monsivais | 1 | NBN | — | No |
-| Katie Byrnes | 1 | FMIT-PGY2 | NF | Yes |
-| Meleigh Sloss | 1 | PEDS-WARD- | NF-PEDS-PG | Yes |
-| Nick Maher | 2 | D+N | — | Yes (alias for DERM-NF) |
-| Scott Cook | 2 | ELEC | — | No |
-| Tessa Sawyer | 1 | NF-PEDS-PG | — | Yes |
+| R-PGY2-A | 2 | FMC | — | No |
+| R-PGY3-B | 3 | FMIT-PGY3 | — | No |
+| R-PGY3-C | 3 | PEDS-EM | — | No |
+| R-PGY1-D | 1 | NF-FMIT-PG | — | Yes |
+| R-PGY3-E | 3 | HILO-PGY3 | — | No (off-site) |
+| R-PGY1-F | 1 | MSK-SEL | — | No |
+| R-PGY2-G | 2 | NF-CARDIO | — | Yes |
+| R-PGY2-H | 2 | NF-LD | — | Yes |
+| R-PGY3-I | 3 | JAPAN | — | No (off-site) |
+| R-PGY2-J | 2 | ELEC | — | No |
+| R-PGY1-K | 1 | NBN | — | No |
+| R-PGY1-L | 1 | FMIT-PGY2 | NF | Yes |
+| R-PGY1-M | 1 | PEDS-WARD- | NF-PEDS-PG | Yes |
+| R-PGY2-N | 2 | D+N | — | Yes (alias for DERM-NF) |
+| R-PGY2-O | 2 | ELEC | — | No |
+| R-PGY1-P | 1 | NF-PEDS-PG | — | Yes |
 
 ---
 
@@ -755,29 +755,29 @@ mcp__residency-scheduler__restore_backup_tool(backup_id="...")
 
 | # | Action | Person | Details |
 |---|--------|--------|---------|
-| 1 | **UPDATE** | Brian Dahl | Block 12 leave dates corrected: May 18-21 → **May 21-25** |
-| 2 | INSERT | Zach McRae | vacation May 26-29 (Block 12) |
-| 3 | INSERT | Aaron Montgomery | vacation May 7-18 (Block 12, 2 weeks) |
-| 4 | INSERT | Sarah Kinkennon | tdy May 14 (BLS certification) |
-| 5 | INSERT | Sarah Kinkennon | tdy May 21 (PALS certification) |
-| 6 | INSERT | Sarah Kinkennon | tdy May 28 (BLS certification) |
-| 7 | INSERT | Cam Mayell | vacation Apr 9 (Block 11, single day) |
-| 8 | INSERT | Cam Mayell | vacation Apr 18 (Block 11, single day) |
-| 9 | INSERT | Laura Connolly | vacation Jul 24-Aug 6 (Block 1-2) |
-| 10 | INSERT | Laura Connolly | vacation Nov 29-Dec 5 (Block 6) |
-| 11 | INSERT | Amber Evans | vacation Aug 1-5 (Block 2) |
+| 1 | **UPDATE** | Faculty-OIC | Block 12 leave dates corrected: May 18-21 → **May 21-25** |
+| 2 | INSERT | Faculty-Core-B | vacation May 26-29 (Block 12) |
+| 3 | INSERT | Faculty-APD | vacation May 7-18 (Block 12, 2 weeks) |
+| 4 | INSERT | Faculty-Core-A | tdy May 14 (BLS certification) |
+| 5 | INSERT | Faculty-Core-A | tdy May 21 (PALS certification) |
+| 6 | INSERT | Faculty-Core-A | tdy May 28 (BLS certification) |
+| 7 | INSERT | R-PGY3-B | vacation Apr 9 (Block 11, single day) |
+| 8 | INSERT | R-PGY3-B | vacation Apr 18 (Block 11, single day) |
+| 9 | INSERT | Resident-Q | vacation Jul 24-Aug 6 (Block 1-2) |
+| 10 | INSERT | Resident-Q | vacation Nov 29-Dec 5 (Block 6) |
+| 11 | INSERT | Resident-R | vacation Aug 1-5 (Block 2) |
 
 ### All Residents Verified Complete
 
-Every resident leave entry from the coordinator's spreadsheet was diffed against the `absences` table. All PGY-1/2/3 leaves matched except the 5 inserts above (Mayell B11, Connolly B1+B6, Evans B2).
+Every resident leave entry from the coordinator's spreadsheet was diffed against the `absences` table. All PGY-1/2/3 leaves matched except the 5 inserts above (R-PGY3-B B11, Resident-Q B1+B6, Resident-R B2).
 
 ### Decisions Made
 
 | Question | Answer |
 |----------|--------|
-| Montgomery leave window | May 7-18 (Block 12 wk 1-2). Not on FMIT — faculty don't have rotations. |
-| Jae You "Last week AY 26-27 Block 2" | Out of scope — next academic year. Skipped. |
-| Kinkennon BLS/PALS absence_type | `tdy` — `training` not in CHECK constraint. `is_away_from_program=false` (still available for call). |
+| Faculty-APD leave window | May 7-18 (Block 12 wk 1-2). Not on FMIT — faculty don't have rotations. |
+| R-PGY3-I "Last week AY 26-27 Block 2" | Out of scope — next academic year. Skipped. |
+| Faculty-Core-A BLS/PALS absence_type | `tdy` — `training` not in CHECK constraint. `is_away_from_program=false` (still available for call). |
 
 ### CHECK Constraint for `absence_type`
 
@@ -832,17 +832,17 @@ After the initial Block 12 solve + export (commit `e937e7fa`), a visual review o
 | Change | Detail |
 |--------|--------|
 | CHECK constraint updated | Added `'adjunct'` to `ck_people_check_faculty_role` |
-| 3 faculty → adjunct | Lisa Gomes (Clinical Psych), Anne Lamoureux (Clinical Psy), Collette Ching (Clinical Pharmacist — new INSERT) |
-| 4 faculty → core (backfill) | Van Brunt, Thiel, Napierala, Samblanet (were NULL) |
-| Kate Bohringer | Left as NULL, filtered at export time |
+| 3 faculty → adjunct | 3 non-physician faculty (Clinical Psych ×2, Clinical Pharmacist — new INSERT) |
+| 4 faculty → core (backfill) | 4 core faculty with NULL role (were NULL) |
+| 1 faculty → NULL | Left as NULL, filtered at export time |
 
 ### 11b: Faculty Filtering at Export
 
 **File:** `canonical_schedule_export_service.py` → `_export_json_data()`
 
 - 13 placeholder faculty (`Dr. Faculty-A` through `Dr. Faculty-M`) removed at export
-- Kate Bohringer removed at export
-- Adjunct faculty (Gomes, Lamoureux, Ching) **kept** for manual input
+- 1 NULL-role faculty removed at export
+- Adjunct faculty (3 non-physician) **kept** for manual input
 - Result: 17 faculty in workbook (14 core + 3 adjunct)
 
 ### 11c: Faculty Grouping (Core First, Adjunct Below)
@@ -870,10 +870,10 @@ After the initial Block 12 solve + export (commit `e937e7fa`), a visual review o
 - Prefix matching in `canonical_rotation_code()`: `FMIT-PGY*→FMIT`, `PEDS-WARD-*→PEDW`, `NF-PEDS-*→PEDNF`
 
 **File:** `rotation_codes.py` → `get_rotation_preload_codes()`
-- **Wednesday fix:** NF combined rotations now return `("OFF","LEC")` instead of `(None,None)` — closes 6-slot gap for Wilhelm, Thomas, Maher
-- **FMIT handler:** weekdays `("FMIT","FMIT")`, weekends `("W","W")` — fixes Mayell (17→56), Byrnes partial
-- **NBN handler:** weekdays `("NBN","NBN")`, weekends `("W","W")` — fixes Monsivais (24→56)
-- **PEDW handler:** weekdays `("PEDW","PEDW")`, Saturday `("W","W")` — fixes Sloss partial
+- **Wednesday fix:** NF combined rotations now return `("OFF","LEC")` instead of `(None,None)` — closes 6-slot gap for 3 NF-combined residents
+- **FMIT handler:** weekdays `("FMIT","FMIT")`, weekends `("W","W")` — fixes FMIT residents (17→56, partial)
+- **NBN handler:** weekdays `("NBN","NBN")`, weekends `("W","W")` — fixes NBN resident (24→56)
+- **PEDW handler:** weekdays `("PEDW","PEDW")`, Saturday `("W","W")` — fixes PEDW resident partial
 
 ### 11f: AI Assistant Prompts
 
@@ -928,9 +928,9 @@ After the initial Block 12 solve + export (commit `e937e7fa`), a visual review o
 
 | Status | Count | Residents |
 |--------|------:|-----------|
-| Full (56/56) | 7 | Headid, Gigon, Travis, Cook (solver), Hernandez, Petrie, You (preload) |
-| Near-full (50/56) | 3 | Thomas (NF-CARDIO), Maher (D+N), Wilhelm (NF-FMIT-PG) — 6 transition slots missing |
-| Severely incomplete | 6 | Cataquiz (5), Sawyer (13), Sloss (14), Mayell (17), Monsivais (24), Byrnes (40) |
+| Full (56/56) | 7 | R-PGY2-J, R-PGY2-A, R-PGY1-F, R-PGY2-O (solver), R-PGY3-C, R-PGY3-E, R-PGY3-I (preload) |
+| Near-full (50/56) | 3 | R-PGY2-G (NF-CARDIO), R-PGY2-N (D+N), R-PGY1-D (NF-FMIT-PG) — 6 transition slots missing |
+| Severely incomplete | 6 | R-PGY2-H (5), R-PGY1-P (13), R-PGY1-M (14), R-PGY3-B (17), R-PGY1-K (24), R-PGY1-L (40) |
 
 **Key insight:** All rotation handlers already exist in `rotation_codes.py` (FMIT:266, NBN:273, PEDW:280, LDNF:260, NF:263, NF-combined:202). The `canonical_rotation_code()` normalizer covers all Block 12 codes. The primary fix is simply **re-running the preloader** — no new code needed for resident gaps.
 
@@ -956,5 +956,71 @@ After the initial Block 12 solve + export (commit `e937e7fa`), a visual review o
 | NF-combined needs rotation_activity_requirements | Wrong — preloader handles these, not solver |
 | NF_COMBINED_ACTIVITY_MAP missing entries | Wrong — all mappings exist in constants.py |
 | PEDS-WARD needs new handling | Wrong — PEDW handler exists at rotation_codes.py:280 |
+
+### 11j: Solver Constraint Triage + Excel Cross-Validation (Feb 27, PM)
+
+**Problem:** After DB corrections and preloader re-run, the CP-SAT solver returned INFEASIBLE. Root cause: 15 hard constraints using `model.Add()` in CP-SAT — when preloaded data inherently violates them (e.g., faculty FMIT 7-day stretches vs 1-in-7 rule), the solver crashes and returns an empty payload, wiping all faculty schedules.
+
+**Chain of failures (Gemini CLI session):**
+1. Solver hit INFEASIBLE on `OneInSevenRuleConstraint` — 116 preloaded violations from faculty FMIT 7-day stretches
+2. Gemini tried: zeroing all `min_halfdays`, disabling supervision, binary search across 15 hard constraints
+3. Found `1in7Rule` as the blocker, disabled it, solver succeeded
+4. Then Gemini added day_of_week migrations + `prefer_full_days` column that scrambled data
+5. Multiple re-exports overwrote the good version
+
+**Resolution (commit `9ecaccdc`):**
+- Reverted Gemini's day_of_week migrations (quarantined as patch in `docs/archived/patches/`)
+- Kept two valid changes: `FacultySupervision` Hard->Soft, adjunct query fix
+- Disabled ALL policy hard constraints in `ConstraintManager.create_default()`
+- Only 3 physically-impossible constraints remain enabled: `Availability`, `AdjunctCallExclusion`, `CallAvailability`
+- Solver now returns OPTIMAL in <1s
+
+**Constraint classification (new architecture):**
+
+| Category | Constraints | Status |
+|----------|-------------|--------|
+| **Physical (enabled)** | Availability, AdjunctCallExclusion, CallAvailability | Hard — cannot be violated |
+| **ACGME (disabled)** | 80HourRule, 1in7Rule, SupervisionRatio, FacultySupervision | Need refactor to indicator+penalty pattern |
+| **Operational (disabled)** | ClinicCapacity, MaxPhysiciansInClinic, WeekendWork, NightFloatPostCall, FacultyClinicCap, ResidentInpatientHeadcount, PostFMITRecovery, PostFMITSundayBlocking | Need refactor to indicator+penalty pattern |
+| **Faculty (disabled)** | FacultyPrimaryDutyClinic, FacultyDayAvailability, FacultyRoleClinic | Need refactor to indicator+penalty pattern |
+| **Call (disabled)** | OvernightCallCoverage | Need refactor to indicator+penalty pattern |
+| **Soft (always active)** | Coverage, Equity, Continuity, FacultyClinicEquity, call equity suite, resilience suite | Already use penalty/objective pattern |
+
+**Excel cross-validation findings (Claude add-in for Excel, Turn 1):**
+
+| Issue | Observed in Excel | DB Root Cause |
+|-------|-------------------|---------------|
+| All 13 faculty work every weekend | Zero W/OFF on Sat/Sun for any faculty | `WeekendWork` constraint disabled — solver fills all slots |
+| Staff Call shows 1 name/night | Excel column shows first faculty only | DB has 46 call_assignments with multi-faculty per night (up to 4 on 5/17) |
+| Resident Call row empty | All cells blank | 0 resident call_assignments in DB for Block 12 |
+| 3 Staff Call date gaps | 5/7, 5/11, 5/25 uncovered | No call_assignments for those dates |
+| 1 faculty in DB but not in Excel | 12 call assignments in DB | May be filtered as adjunct or not in export person list |
+| SM faculty: zero C/CV | Only AT (39) + SM (8) | May be correct for SM-only faculty role |
+| 1 resident: heavy LV front-load | LV first 3 weeks, then mixed | Correct — matches absence records |
+
+**Priority fixes for next solver run:**
+
+| Priority | Fix | Impact |
+|----------|-----|--------|
+| **P1** | Re-enable `WeekendWork` constraint only | Gives faculty weekends off |
+| **P2** | Re-enable `ClinicCapacity` | Prevents over-scheduling clinic rooms |
+| **P3** | Re-enable `FacultyDayAvailability` | Respects faculty availability preferences |
+| **P4** | Investigate multi-call-per-night in export | Export currently drops all but first name |
+| **P5** | Add resident call generation or manual entry | Resident Call row is empty |
+
+**Constraint refactoring roadmap (future PR):**
+
+To convert hard constraints to true soft constraints in CP-SAT:
+1. Replace `model.Add(expr)` with indicator variable pattern:
+   ```python
+   indicator = model.NewBoolVar(f"satisfied_{constraint_name}_{i}")
+   model.Add(expr).OnlyEnforceIf(indicator)
+   penalty_vars.append((weight, indicator.Not()))
+   ```
+2. Add penalty sum to objective: `model.Minimize(sum(w * v for w, v in penalty_vars))`
+3. Weight hierarchy: ACGME (1000) > Operational (500) > Faculty preference (100)
+4. Test each constraint individually before batch-enabling
+
+This is a significant refactor (~15 constraint files, ~30 `model.Add()` sites) and should be its own focused PR after the Block 12 export is validated.
 
 **Execution order:** DB fixes (B1-B4) → purge Block 12 HDAs → preloader → solver → export
