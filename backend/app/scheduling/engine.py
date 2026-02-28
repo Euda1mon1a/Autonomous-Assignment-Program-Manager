@@ -3324,11 +3324,13 @@ class SchedulingEngine:
         from app.models.faculty_weekly_template import FacultyWeeklyTemplate
 
         # Map solver categories to template activity codes that belong in each
+        # These sets classify template activity codes into the solver's binary
+        # C/AT model.  Retained for future constraint registration and capacity
+        # tracking; no longer gate the write-back (templates are authoritative).
         _SOLVER_CLINIC_CODES = {
             "cv",
             "fm_clinic",
             "sm_clinic",
-            "dfm",
             "c40",
             "hlc",
             "rad",
@@ -3341,6 +3343,7 @@ class SchedulingEngine:
             "lec",
             "pi",
             "dep",
+            "dfm",  # Dept Family Medicine — administrative, not clinic
         }
 
         # Build template lookup: (person_id, py_weekday, time_of_day) → activity_code
@@ -3378,23 +3381,21 @@ class SchedulingEngine:
         ) -> str:
             """Resolve solver coarse type to specific template activity code.
 
-            If the template has a code matching the solver's category (C→clinic,
-            AT→admin), use it.  Otherwise fall back to the generic mapping.
+            The template is authoritative — if the coordinator's weekly template
+            specifies an activity for this slot, use it.  The solver's coarse
+            C/AT category is only used as fallback when no template exists.
+
+            NOTE: FacultyWeeklyTemplateConstraint is not yet registered, so the
+            solver doesn't respect templates during optimization.  Once registered,
+            cross-category conflicts (solver=C, template=admin) will decrease.
             """
             # Template day_of_week uses Python weekday convention (0=Mon, 6=Sun)
-            # despite model docstring claiming PG DOW — confirmed by
-            # call_equity.py:877 and activity_solver.py:1019 which compare
-            # pref.day_of_week directly against date.weekday().
             py_wd = slot_date.weekday()  # 0=Mon ... 6=Sun
 
             tpl_code = template_lookup.get((faculty_id, py_wd, time_of_day))
             if tpl_code:
-                tpl_lower = tpl_code.lower()
-                if solver_type == "C" and tpl_lower in _SOLVER_CLINIC_CODES:
-                    return tpl_code  # Use template's specific clinic code
-                if solver_type == "AT" and tpl_lower in _SOLVER_ADMIN_CODES:
-                    return tpl_code  # Use template's specific admin code
-            # Fall back to generic mapping
+                return tpl_code  # Template is authoritative
+            # No template for this slot — use solver's generic type
             return solver_type
 
         # Track existing locked slots to avoid overwriting
