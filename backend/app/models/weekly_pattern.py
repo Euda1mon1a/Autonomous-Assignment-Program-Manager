@@ -37,7 +37,9 @@ class WeeklyPattern(Base):
     Each X is one WeeklyPattern record.
 
     Attributes:
-        day_of_week: 0=Sunday, 1=Monday, ..., 6=Saturday
+        day_of_week: 0=Sunday, 1=Monday, ..., 6=Saturday (PG EXTRACT(DOW) convention)
+            WARNING: faculty_weekly_templates uses Python weekday (0=Monday, 6=Sunday).
+            See docs/architecture/DOW_CONVENTION_BUG.md for full reference.
         time_of_day: "AM" or "PM"
         activity_type: DEPRECATED - Legacy string field (fm_clinic, specialty, etc.)
         activity_id: FK to Activity table (new normalized reference)
@@ -59,6 +61,12 @@ class WeeklyPattern(Base):
             Optional reference to another template for complex patterns.
     """
 
+    # Day-of-week convention: PG EXTRACT(DOW) (0=Sunday, 6=Saturday)
+    # WARNING: faculty_weekly_templates uses Python weekday convention (0=Monday, 6=Sunday)
+    # See docs/architecture/DOW_CONVENTION_BUG.md for full reference
+    PG_DOW_SUNDAY = 0
+    PG_DOW_SATURDAY = 6
+
     __tablename__ = "weekly_patterns"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -75,7 +83,7 @@ class WeeklyPattern(Base):
     day_of_week = Column(
         Integer,
         nullable=False,
-        comment="0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday",
+        comment="PG DOW: 0=Sunday, 1=Monday, ..., 6=Saturday (NOT Python weekday — see DOW_CONVENTION_BUG.md)",
     )
 
     time_of_day = Column(
@@ -188,4 +196,4 @@ class WeeklyPattern(Base):
     @property
     def is_weekend(self) -> bool:
         """Check if this slot is on a weekend."""
-        return self.day_of_week in (0, 6)  # Sunday or Saturday
+        return self.day_of_week in (0, 6)  # PG DOW: 0=Sunday, 6=Saturday

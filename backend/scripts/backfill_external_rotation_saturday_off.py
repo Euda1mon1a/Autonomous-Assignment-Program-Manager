@@ -19,7 +19,7 @@ from app.models.activity import Activity  # noqa: E402
 from app.models.rotation_template import RotationTemplate  # noqa: E402
 from app.models.weekly_pattern import WeeklyPattern  # noqa: E402
 
-SATURDAY_DOW = 6  # 0=Sunday, 6=Saturday
+SATURDAY_DOW = 6  # PG DOW convention: 0=Sunday, 6=Saturday
 TARGET_ABBREVIATIONS = {"ICU", "NICU", "LAD", "LND", "LD", "L&D"}
 TARGET_DISPLAY_ABBREVIATIONS = {"ICU", "NICU", "LND", "LD", "L&D"}
 TARGET_NAMES = {

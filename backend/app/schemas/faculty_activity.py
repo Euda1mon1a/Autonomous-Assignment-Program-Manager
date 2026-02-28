@@ -23,7 +23,9 @@ from app.schemas.activity import ActivityResponse
 class FacultyTemplateSlotBase(BaseModel):
     """Base schema for a faculty template slot."""
 
-    day_of_week: int = Field(..., ge=0, le=6, description="0=Sunday, 6=Saturday")
+    day_of_week: int = Field(
+        ..., ge=0, le=6, description="0=Monday, 6=Sunday (Python weekday)"
+    )
     time_of_day: Literal["AM", "PM"] = Field(..., description="AM or PM")
     week_number: int | None = Field(
         None, ge=1, le=4, description="Week 1-4, or null for all weeks"
@@ -82,7 +84,9 @@ class FacultyOverrideBase(BaseModel):
     """Base schema for a faculty override."""
 
     effective_date: date = Field(..., description="Monday of the week")
-    day_of_week: int = Field(..., ge=0, le=6, description="0=Sunday, 6=Saturday")
+    day_of_week: int = Field(
+        ..., ge=0, le=6, description="0=Monday, 6=Sunday (Python weekday)"
+    )
     time_of_day: Literal["AM", "PM"] = Field(..., description="AM or PM")
     activity_id: UUID | None = Field(None, description="Activity UUID or null to clear")
     is_locked: bool = Field(False, description="HARD constraint for this week")

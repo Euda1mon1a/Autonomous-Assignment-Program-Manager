@@ -21,7 +21,12 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 class WeeklyPatternBase(BaseModel):
     """Base schema for weekly pattern slots."""
 
-    day_of_week: int = Field(..., ge=0, le=6, description="0=Sunday, 6=Saturday")
+    day_of_week: int = Field(
+        ...,
+        ge=0,
+        le=6,
+        description="PG DOW: 0=Sunday, 6=Saturday (weekly_patterns convention)",
+    )
     time_of_day: Literal["AM", "PM"]
     activity_id: UUID | None = Field(
         None,
@@ -428,7 +433,12 @@ class HalfDayRequirementResponse(HalfDayRequirementBase):
 class BatchPatternSlot(BaseModel):
     """Single slot definition for batch pattern updates."""
 
-    day_of_week: int = Field(..., ge=0, le=6, description="0=Sunday, 6=Saturday")
+    day_of_week: int = Field(
+        ...,
+        ge=0,
+        le=6,
+        description="PG DOW: 0=Sunday, 6=Saturday (weekly_patterns convention)",
+    )
     time_of_day: Literal["AM", "PM"]
     linked_template_id: UUID | None = Field(
         None, description="Template to assign to this slot (null to clear)"

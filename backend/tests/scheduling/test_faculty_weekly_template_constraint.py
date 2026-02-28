@@ -167,32 +167,10 @@ class TestGetWeekNumber:
         assert c._get_week_number(date(2025, 3, 31), date(2025, 3, 3)) == 1
 
 
-# ==================== _python_weekday_to_pattern Tests ====================
-
-
-class TestPythonWeekdayToPattern:
-    """Test weekday conversion: Python (0=Monday) -> Pattern (0=Sunday)."""
-
-    def test_monday(self):
-        c = FacultyWeeklyTemplateConstraint()
-        assert c._python_weekday_to_pattern(0) == 1  # Monday
-
-    def test_tuesday(self):
-        c = FacultyWeeklyTemplateConstraint()
-        assert c._python_weekday_to_pattern(1) == 2
-
-    def test_wednesday(self):
-        c = FacultyWeeklyTemplateConstraint()
-        assert c._python_weekday_to_pattern(2) == 3
-
-    def test_saturday(self):
-        c = FacultyWeeklyTemplateConstraint()
-        assert c._python_weekday_to_pattern(5) == 6
-
-    def test_sunday(self):
-        c = FacultyWeeklyTemplateConstraint()
-        # Python 6 (Sunday) -> Pattern 0 (Sunday)
-        assert c._python_weekday_to_pattern(6) == 0
+# ==================== DOW Convention Tests ====================
+# _python_weekday_to_pattern was REMOVED — templates use Python weekday directly.
+# See docs/architecture/DOW_CONVENTION_BUG.md and
+# tests/scheduling/constraints/test_faculty_weekly_template_dow.py for full coverage.
 
 
 # ==================== _get_effective_slot Tests ====================
@@ -346,9 +324,9 @@ class TestFacultyWeeklyTemplateValidate:
         act = _activity(name="GME")
         mon = _block(block_date=date(2025, 3, 3))
 
-        # Pattern day_of_week=1 (Monday) in pattern convention
+        # day_of_week=0 (Monday) in Python weekday convention
         slot = {
-            "day_of_week": 1,
+            "day_of_week": 0,
             "time_of_day": "AM",
             "week_number": None,
             "activity_id": act.id,
@@ -369,7 +347,7 @@ class TestFacultyWeeklyTemplateValidate:
         mon = _block(block_date=date(2025, 3, 3))
 
         slot = {
-            "day_of_week": 1,
+            "day_of_week": 0,  # Monday = Python weekday 0
             "time_of_day": "AM",
             "week_number": None,
             "activity_id": gme.id,
@@ -393,7 +371,7 @@ class TestFacultyWeeklyTemplateValidate:
         mon = _block(block_date=date(2025, 3, 3))
 
         slot = {
-            "day_of_week": 1,
+            "day_of_week": 0,  # Monday = Python weekday 0
             "time_of_day": "AM",
             "week_number": None,
             "activity_id": gme.id,
@@ -414,7 +392,7 @@ class TestFacultyWeeklyTemplateValidate:
         mon = _block(block_date=date(2025, 3, 3))
 
         slot = {
-            "day_of_week": 1,
+            "day_of_week": 0,  # Monday = Python weekday 0
             "time_of_day": "AM",
             "week_number": None,
             "activity_id": None,
@@ -434,7 +412,7 @@ class TestFacultyWeeklyTemplateValidate:
         mon = _block(block_date=date(2025, 3, 3))
 
         slot = {
-            "day_of_week": 1,
+            "day_of_week": 0,  # Monday = Python weekday 0
             "time_of_day": "AM",
             "week_number": None,
             "activity_id": None,
@@ -454,7 +432,7 @@ class TestFacultyWeeklyTemplateValidate:
         tue = _block(block_date=date(2025, 3, 4))
 
         slot = {
-            "day_of_week": 2,  # Tuesday in pattern convention
+            "day_of_week": 1,  # Tuesday = Python weekday 1
             "time_of_day": "PM",
             "week_number": None,
             "activity_id": clinic.id,
@@ -478,7 +456,7 @@ class TestFacultyWeeklyTemplateValidate:
         tue = _block(block_date=date(2025, 3, 4))
 
         slot = {
-            "day_of_week": 2,
+            "day_of_week": 1,  # Tuesday = Python weekday 1
             "time_of_day": "PM",
             "week_number": None,
             "activity_id": clinic.id,
@@ -500,7 +478,7 @@ class TestFacultyWeeklyTemplateValidate:
         mon = _block(block_date=date(2025, 3, 3))
 
         slot = {
-            "day_of_week": 1,
+            "day_of_week": 0,  # Monday = Python weekday 0
             "time_of_day": "AM",
             "week_number": None,
             "activity_id": gme.id,
@@ -527,7 +505,7 @@ class TestFacultyWeeklyTemplateValidate:
 
         # Default template says GME (locked)
         template_slot = {
-            "day_of_week": 1,
+            "day_of_week": 0,  # Monday = Python weekday 0
             "time_of_day": "AM",
             "week_number": None,
             "activity_id": gme.id,
@@ -535,7 +513,7 @@ class TestFacultyWeeklyTemplateValidate:
         }
         # Override says Clinic (locked) for this week
         override_slot = {
-            "day_of_week": 1,
+            "day_of_week": 0,  # Monday = Python weekday 0
             "time_of_day": "AM",
             "activity_id": clinic.id,
             "is_locked": True,
@@ -560,7 +538,7 @@ class TestFacultyWeeklyTemplateValidate:
         mon = _block(block_date=date(2025, 3, 3))
 
         slot = {
-            "day_of_week": 1,
+            "day_of_week": 0,  # Monday = Python weekday 0
             "time_of_day": "AM",
             "week_number": None,
             "activity_id": gme.id,
@@ -596,7 +574,7 @@ class TestFacultyWeeklyTemplateValidate:
 
         # Week 2-specific template
         slot = {
-            "day_of_week": 1,
+            "day_of_week": 0,  # Monday = Python weekday 0
             "time_of_day": "AM",
             "week_number": 2,
             "activity_id": act.id,

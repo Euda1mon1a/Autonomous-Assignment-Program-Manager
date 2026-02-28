@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-27 (MEDIUM #35, LOW #30-33: Block 12 audit + Perplexity council findings)
+> **Last Updated:** 2026-02-27 PM (P0 DOW convention fix: 15 files, 67 tests; zeroing sprint fixes)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -578,6 +578,25 @@ All local branches deleted, remote refs pruned.
 - `docs/development/MCP_SETUP.md` — Setup + troubleshooting
 - `docs/development/MCP_IDE_INTEGRATION.md` — IDE config
 
+### 40. Closed-Loop Validation Pipeline (NEW - Feb 2026)
+**Priority:** HIGH
+**Roadmap:** `docs/planning/BLOCK_12_ANNUAL_WORKBOOK_ROADMAP.md` section 11l
+
+Automated generate → validate → diagnose → fix → regenerate loop. Two validation layers:
+
+**Layer 1 (DB):** Post-solve checks using existing infrastructure (`ACGMEValidator`, `BlockQualityReportService`). Checks: resident HDA counts (50-56), adjunct exclusion (0 HDAs), ACGME compliance (80-hr, 1-in-7), supervision ratios, call coverage, solver feasibility.
+
+**Layer 2 (XLSX):** Spatial validation via `openpyxl` on the exported workbook. Catches patterns invisible to row-based DB queries: weekend work for all faculty (grid shows Sat/Sun columns populated), activity monotony (all-GME rows), coverage gaps (empty cells), readability (black-on-black).
+
+**Why XLSX validation matters:** The DB says "person X has an HDA on Saturday" — just a row. The XLSX grid shows "every faculty member works every weekend" — an obvious policy violation. WeekendWork constraint being disabled is invisible in DB counts but immediately visible in the grid.
+
+**Scripts needed:**
+- `scripts/ops/validate_schedule.py` — Layer 1 DB validation → JSON report
+- `scripts/ops/validate_xlsx.py` — Layer 2 XLSX spatial validation → JSON report
+- `scripts/ops/block_pipeline.py` — Full loop: backup → purge → preload → solve → validate L1 → export → validate L2
+
+**Phase 1 (correctness):** Deterministic, 3-5 iterations, single agent, finite fix space (~50 known failure→fix patterns). **Phase 2 (optimality):** Stochastic, 50-100 iterations, Pareto weight sweep, tri-agent swarm.
+
 ---
 
 ## MEDIUM (Plan for Sprint)
@@ -1036,26 +1055,26 @@ for dir in ~/.codex/worktrees/*/Autonomous-Assignment-Program-Manager; do
 done
 ```
 
-### 30. TAMC Color Scheme Template Versioning (NEW - Feb 2026)
+### 36. TAMC Color Scheme Template Versioning (NEW - Feb 2026)
 **Added:** 2026-02-27
 **Source:** Perplexity council review
 **File:** `docs/scheduling/TAMC_Color_Scheme_Reference.xml`
 
 Add `<meta>` block with version hash, source workbook SHA, extraction date, and diff from previous version. Currently version bumps are manual and undocumented.
 
-### 31. Deterministic Export Generation (NEW - Feb 2026)
+### 37. Deterministic Export Generation (NEW - Feb 2026)
 **Added:** 2026-02-27
 **Source:** Perplexity council review
 
 Generate SHA-256 fingerprint of each exported workbook for baseline comparison. Enables diff-based regression detection across re-exports.
 
-### 32. Export Contract Documentation (NEW - Feb 2026)
+### 38. Export Contract Documentation (NEW - Feb 2026)
 **Added:** 2026-02-27
 **Source:** Perplexity council review
 
 Document the exact mapping from DB tables → JSON intermediate → Excel cells. Currently only discoverable by reading `half_day_json_exporter.py` + `xml_to_xlsx_converter.py` + `canonical_schedule_export_service.py`.
 
-### 33. Hand-Jam Reconciliation Workflow (NEW - Feb 2026)
+### 39. Hand-Jam Reconciliation Workflow (NEW - Feb 2026)
 **Added:** 2026-02-27
 **Source:** Perplexity council review
 
@@ -1114,14 +1133,28 @@ After coordinators hand-jam the exported workbook in Excel, there's no pathway t
 | Change | Item | Reason |
 |--------|------|--------|
 | ➕ Added | MEDIUM #35 | REF sheet case-sensitivity bug (15 missing uppercase activity codes) |
-| ➕ Added | LOW #30 | TAMC color scheme template versioning |
-| ➕ Added | LOW #31 | Deterministic export generation (hash fingerprinting) |
-| ➕ Added | LOW #32 | Export contract documentation |
-| ➕ Added | LOW #33 | Hand-jam reconciliation workflow |
+| ➕ Added | LOW #36 | TAMC color scheme template versioning |
+| ➕ Added | LOW #37 | Deterministic export generation (hash fingerprinting) |
+| ➕ Added | LOW #38 | Export contract documentation |
+| ➕ Added | LOW #39 | Hand-jam reconciliation workflow |
+| ➕ Added | HIGH #40 | Closed-loop validation pipeline (automated generate → validate → fix → retry) |
 | 🔧 Fixed | TAMC XML | LEC + GME moved from theme_dark → white font group (black-on-black fix) |
 | 🔧 Fixed | engine.py | Adjunct faculty excluded from solver HDA generation |
 
 **Source:** Block 12 workbook audit (Claude for Excel + Perplexity council + Gemini 3 Pro tiebreaker)
+
+### Session 2026-02-27 PM Updates (Zeroing Sprint + P0 DOW Fix)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Fixed | **P0 #41** | **DOW convention mismatch — FULLY FIXED.** Deleted `_python_weekday_to_pattern()`, fixed 3 constraint call sites, frontend `isWeekend()`/`DAY_LABELS`/`DAY_LABELS_SHORT`, 9 docstrings, disambiguation constants. 15 files changed, 67 tests (29 new + 38 existing fixed). See `docs/architecture/DOW_CONVENTION_BUG.md` |
+| ➕ Added | LOW #42 | `block_assignment_expansion_service.py:713` uses `isoweekday() % 7` (PG DOW) — potential runtime bug if interacting with faculty templates |
+| 🔧 Fixed | Faculty weekend | Activity solver faculty weekend exclusion filter added. Weekend violations: 60 → 0 |
+| 🔧 Fixed | Template write-back | `engine.py` now template-aware: resolves solver C/AT → template-specific codes. 103 HDAs updated |
+| 🔧 Fixed | DOW models | `faculty_weekly_template.py` + `faculty_weekly_override.py` — `__repr__`, `day_name`, `is_weekend` corrected from PG DOW to Python weekday |
+| 🔧 Fixed | Orphaned UUID | 5 `faculty_weekly_templates` rows updated from wrong FMIT UUID to correct one |
+
+**Source:** Block 12 zeroing sprint (schedule_grid view validation, template-aware write-back, DOW convention discovery + P0 fix)
 
 ### Session 2026-02-21 Updates
 

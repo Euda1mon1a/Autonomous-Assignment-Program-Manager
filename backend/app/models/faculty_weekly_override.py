@@ -46,7 +46,7 @@ class FacultyWeeklyOverride(Base):
     Attributes:
         person_id: FK to faculty member
         effective_date: Monday of the week this override applies to
-        day_of_week: 0=Sunday, 1=Monday, ..., 6=Saturday
+        day_of_week: 0=Monday, 1=Tuesday, ..., 6=Sunday (Python weekday convention)
         time_of_day: "AM" or "PM"
         activity_id: FK to Activity (NULL = clear/empty slot)
         is_locked: HARD constraint for this specific week
@@ -97,7 +97,7 @@ class FacultyWeeklyOverride(Base):
     day_of_week = Column(
         Integer,
         nullable=False,
-        comment="0=Sunday, 1=Monday, ..., 6=Saturday",
+        comment="0=Monday, 1=Tuesday, ..., 6=Sunday (Python weekday convention)",
     )
 
     time_of_day = Column(
@@ -165,7 +165,7 @@ class FacultyWeeklyOverride(Base):
     )
 
     def __repr__(self) -> str:
-        days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         activity_str = self.activity.code if self.activity else "empty"
         locked_str = " [LOCKED]" if self.is_locked else ""
         return f"<FacultyWeeklyOverride {self.effective_date} {days[self.day_of_week]} {self.time_of_day}: {activity_str}{locked_str}>"
@@ -174,20 +174,20 @@ class FacultyWeeklyOverride(Base):
     def day_name(self) -> str:
         """Return human-readable day name."""
         days = [
-            "Sunday",
             "Monday",
             "Tuesday",
             "Wednesday",
             "Thursday",
             "Friday",
             "Saturday",
+            "Sunday",
         ]
         return days[self.day_of_week]
 
     @property
     def is_weekend(self) -> bool:
-        """Check if this slot is on a weekend."""
-        return self.day_of_week in (0, 6)  # Sunday or Saturday
+        """Check if this slot is on a weekend (Sat=5, Sun=6)."""
+        return self.day_of_week >= 5  # Saturday or Sunday
 
     @property
     def slot_key(self) -> str:

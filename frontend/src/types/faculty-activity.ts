@@ -55,35 +55,38 @@ export const FACULTY_ROLES: FacultyRole[] = [
 export type TimeOfDay = 'AM' | 'PM';
 
 /**
- * Days of the week.
- * 0 = Sunday, 6 = Saturday
+ * Days of the week (Python weekday convention).
+ * 0 = Monday, 6 = Sunday
+ *
+ * WARNING: weekly-pattern.ts uses PG EXTRACT(DOW) convention (0=Sunday, 6=Saturday).
+ * See docs/architecture/DOW_CONVENTION_BUG.md for full reference.
  */
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 /**
- * Day labels for display.
+ * Day labels for display (Python weekday: 0=Monday).
  */
 export const DAY_LABELS: Record<DayOfWeek, string> = {
-  0: 'Sunday',
-  1: 'Monday',
-  2: 'Tuesday',
-  3: 'Wednesday',
-  4: 'Thursday',
-  5: 'Friday',
-  6: 'Saturday',
+  0: 'Monday',
+  1: 'Tuesday',
+  2: 'Wednesday',
+  3: 'Thursday',
+  4: 'Friday',
+  5: 'Saturday',
+  6: 'Sunday',
 };
 
 /**
- * Short day labels for grid display.
+ * Short day labels for grid display (Python weekday: 0=Mon).
  */
 export const DAY_LABELS_SHORT: Record<DayOfWeek, string> = {
-  0: 'Sun',
-  1: 'Mon',
-  2: 'Tue',
-  3: 'Wed',
-  4: 'Thu',
-  5: 'Fri',
-  6: 'Sat',
+  0: 'Mon',
+  1: 'Tue',
+  2: 'Wed',
+  3: 'Thu',
+  4: 'Fri',
+  5: 'Sat',
+  6: 'Sun',
 };
 
 // ============================================================================
@@ -368,7 +371,7 @@ export function slotsToMap<T extends { dayOfWeek: DayOfWeek; timeOfDay: TimeOfDa
  * Checks if a day is a weekend.
  */
 export function isWeekend(dayOfWeek: DayOfWeek): boolean {
-  return dayOfWeek === 0 || dayOfWeek === 6;
+  return dayOfWeek >= 5; // Python weekday: 5=Saturday, 6=Sunday
 }
 
 /**

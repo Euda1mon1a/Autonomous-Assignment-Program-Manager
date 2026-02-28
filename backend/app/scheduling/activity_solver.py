@@ -391,6 +391,24 @@ class CPSATActivitySolver:
                 for slot in slots
                 if not (slot.person and slot.person.type == "faculty")
             ]
+        else:
+            # When including faculty, exclude weekend slots (Sat/Sun)
+            # for faculty. Faculty should have W (Weekend) on weekends.
+            pre_filter = len(slots)
+            slots = [
+                slot
+                for slot in slots
+                if not (
+                    slot.person
+                    and slot.person.type == "faculty"
+                    and slot.date.weekday() >= 5  # Sat=5, Sun=6
+                )
+            ]
+            excluded = pre_filter - len(slots)
+            if excluded:
+                logger.info(
+                    f"Excluded {excluded} faculty weekend slots from activity solver"
+                )
         if not slots:
             logger.info("No outpatient slots to assign after filtering")
             return {

@@ -34,6 +34,13 @@ if TYPE_CHECKING:
     from app.models.person import Person
 
 
+# Day-of-week convention: Python weekday (0=Monday, 6=Sunday)
+# WARNING: weekly_patterns uses PG EXTRACT(DOW) convention (0=Sunday, 6=Saturday)
+# See docs/architecture/DOW_CONVENTION_BUG.md for full reference
+PYTHON_WEEKDAY_SATURDAY = 5
+PYTHON_WEEKDAY_SUNDAY = 6
+
+
 class FacultyWeeklyTemplate(Base):
     """
     A single slot in a 7x2 weekly grid for a faculty member's default pattern.
@@ -47,7 +54,7 @@ class FacultyWeeklyTemplate(Base):
 
     Attributes:
         person_id: FK to faculty member this template belongs to
-        day_of_week: 0=Sunday, 1=Monday, ..., 6=Saturday
+        day_of_week: 0=Monday, 1=Tuesday, ..., 6=Sunday (Python weekday convention)
         time_of_day: "AM" or "PM"
         week_number: Week 1-4 within block (NULL = same pattern all weeks)
         activity_id: FK to Activity table (NULL = unassigned slot)
@@ -88,7 +95,7 @@ class FacultyWeeklyTemplate(Base):
     day_of_week = Column(
         Integer,
         nullable=False,
-        comment="0=Sunday, 1=Monday, ..., 6=Saturday",
+        comment="0=Monday, 1=Tuesday, ..., 6=Sunday (Python weekday convention)",
     )
 
     time_of_day = Column(
@@ -161,7 +168,7 @@ class FacultyWeeklyTemplate(Base):
     )
 
     def __repr__(self) -> str:
-        days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         week_str = f"W{self.week_number}" if self.week_number else "All"
         activity_str = self.activity.code if self.activity else "empty"
         locked_str = " [LOCKED]" if self.is_locked else ""
@@ -171,20 +178,20 @@ class FacultyWeeklyTemplate(Base):
     def day_name(self) -> str:
         """Return human-readable day name."""
         days = [
-            "Sunday",
             "Monday",
             "Tuesday",
             "Wednesday",
             "Thursday",
             "Friday",
             "Saturday",
+            "Sunday",
         ]
         return days[self.day_of_week]
 
     @property
     def is_weekend(self) -> bool:
-        """Check if this slot is on a weekend."""
-        return self.day_of_week in (0, 6)  # Sunday or Saturday
+        """Check if this slot is on a weekend (Sat=5, Sun=6)."""
+        return self.day_of_week >= 5  # Saturday or Sunday
 
     @property
     def slot_key(self) -> str:

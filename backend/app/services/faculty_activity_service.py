@@ -129,7 +129,7 @@ class FacultyActivityService:
 
         Args:
             person_id: Faculty member's ID
-            day_of_week: 0-6 (Sunday-Saturday)
+            day_of_week: 0-6 (Monday-Sunday, Python weekday)
             time_of_day: "AM" or "PM"
             week_number: Week 1-4 or None for all-weeks pattern
 
@@ -169,7 +169,7 @@ class FacultyActivityService:
 
         Args:
             person_id: Faculty member's ID
-            day_of_week: 0-6 (Sunday-Saturday)
+            day_of_week: 0-6 (Monday-Sunday, Python weekday)
             time_of_day: "AM" or "PM"
             week_number: Week 1-4 or None for all weeks
             activity_id: Activity UUID or None to clear
@@ -325,7 +325,7 @@ class FacultyActivityService:
         Args:
             person_id: Faculty member's ID
             week_start: Monday of the week
-            day_of_week: 0-6 (Sunday-Saturday)
+            day_of_week: 0-6 (Monday-Sunday, Python weekday)
             time_of_day: "AM" or "PM"
 
         Returns:
@@ -361,7 +361,7 @@ class FacultyActivityService:
         Args:
             person_id: Faculty member's ID
             week_start: Monday of the week
-            day_of_week: 0-6 (Sunday-Saturday)
+            day_of_week: 0-6 (Monday-Sunday, Python weekday)
             time_of_day: "AM" or "PM"
             activity_id: Activity UUID or None to clear
             is_locked: Hard constraint flag

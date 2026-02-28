@@ -3318,6 +3318,85 @@ class SchedulingEngine:
         # Build block lookup for date/time extraction
         block_by_id = {cast(UUID, b.id): b for b in blocks}
 
+        # Load faculty weekly templates for template-aware activity resolution.
+        # The solver outputs coarse types (C, AT) — we resolve to the specific
+        # activity code from the faculty's weekly template (CV, sm_clinic, dfm, etc.)
+        from app.models.faculty_weekly_template import FacultyWeeklyTemplate
+
+        # Map solver categories to template activity codes that belong in each
+        _SOLVER_CLINIC_CODES = {
+            "cv",
+            "fm_clinic",
+            "sm_clinic",
+            "dfm",
+            "c40",
+            "hlc",
+            "rad",
+            "asm",
+        }
+        _SOLVER_ADMIN_CODES = {
+            "at",
+            "gme",
+            "sim",
+            "lec",
+            "pi",
+            "dep",
+        }
+
+        # Build template lookup: (person_id, py_weekday, time_of_day) → activity_code
+        # py_weekday: 0=Monday, 1=Tuesday, ..., 6=Sunday (Python weekday convention)
+        faculty_ids_set = {
+            fid
+            for fid, _, _ in solver_result.faculty_half_day_assignments
+            if fid not in adjunct_ids
+        }
+        template_rows = (
+            self.db.query(
+                FacultyWeeklyTemplate.person_id,
+                FacultyWeeklyTemplate.day_of_week,
+                FacultyWeeklyTemplate.time_of_day,
+                Activity.code,
+            )
+            .join(Activity, FacultyWeeklyTemplate.activity_id == Activity.id)
+            .filter(
+                FacultyWeeklyTemplate.person_id.in_(faculty_ids_set),
+                FacultyWeeklyTemplate.week_number.is_(None),  # Default pattern
+            )
+            .all()
+        )
+        # Key: (person_id, py_weekday, time_of_day) → activity_code
+        # Note: day_of_week in DB uses Python weekday convention (0=Mon, 6=Sun)
+        template_lookup: dict[tuple[UUID, int, str], str] = {}
+        for pid, dow, tod, code in template_rows:
+            template_lookup[(pid, dow, tod)] = code
+
+        def _resolve_template_activity(
+            faculty_id: UUID,
+            slot_date: date,
+            time_of_day: str,
+            solver_type: str,
+        ) -> str:
+            """Resolve solver coarse type to specific template activity code.
+
+            If the template has a code matching the solver's category (C→clinic,
+            AT→admin), use it.  Otherwise fall back to the generic mapping.
+            """
+            # Template day_of_week uses Python weekday convention (0=Mon, 6=Sun)
+            # despite model docstring claiming PG DOW — confirmed by
+            # call_equity.py:877 and activity_solver.py:1019 which compare
+            # pref.day_of_week directly against date.weekday().
+            py_wd = slot_date.weekday()  # 0=Mon ... 6=Sun
+
+            tpl_code = template_lookup.get((faculty_id, py_wd, time_of_day))
+            if tpl_code:
+                tpl_lower = tpl_code.lower()
+                if solver_type == "C" and tpl_lower in _SOLVER_CLINIC_CODES:
+                    return tpl_code  # Use template's specific clinic code
+                if solver_type == "AT" and tpl_lower in _SOLVER_ADMIN_CODES:
+                    return tpl_code  # Use template's specific admin code
+            # Fall back to generic mapping
+            return solver_type
+
         # Track existing locked slots to avoid overwriting
         existing_locked: set[tuple[UUID, date, str]] = set()
         locked_query = (
@@ -3365,12 +3444,22 @@ class SchedulingEngine:
                 skipped_locked += 1
                 continue
 
-            # Get activity ID for this activity type
+            # Get activity ID — template-aware for C/AT types
+            resolved_code = _resolve_template_activity(
+                faculty_id, block.date, block.time_of_day, activity_type
+            )
             try:
-                activity_id = self._get_activity_id_by_code(activity_type)
+                activity_id = self._get_activity_id_by_code(resolved_code)
             except ActivityNotFoundError:
-                logger.warning(f"Activity code '{activity_type}' not found, using OFF")
-                activity_id = self._get_off_activity_id()
+                # Fall back to generic solver type, then OFF
+                try:
+                    activity_id = self._get_activity_id_by_code(activity_type)
+                except ActivityNotFoundError:
+                    logger.warning(
+                        f"Activity code '{resolved_code}'/'{activity_type}' "
+                        f"not found, using OFF"
+                    )
+                    activity_id = self._get_off_activity_id()
 
             # Check for existing row (solver/template source)
             existing = (
