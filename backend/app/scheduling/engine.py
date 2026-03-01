@@ -1671,11 +1671,15 @@ class SchedulingEngine:
                         existing.source == AssignmentSource.PRELOAD.value
                         and call_activity_id
                         and existing.activity_id == call_activity_id
+                        and next_day <= self.end_date
                     ):
                         # Stale CALL preload from previous generation — the call
                         # date moved, so this CALL will be cleaned up by stale
                         # cleanup in _sync_call_to_half_day.  Overwrite with
                         # PCAT/DO now to prevent validation gap.
+                        # Scoped to current block range: cross-block CALL
+                        # preloads belong to another block's generation and
+                        # must not be touched (Codex P1 #1216).
                         existing.activity_id = cast(UUID, activity.id)
                         # source stays 'preload'
                         count += 1
