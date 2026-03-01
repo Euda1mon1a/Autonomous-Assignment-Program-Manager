@@ -308,6 +308,171 @@ def test_removes_stale_call_hdas(db):
     assert remaining[0].person_id == faculty_b.id
 
 
+def test_pcat_do_overwrites_stale_call_preload(db):
+    """Stale CALL preload on next-day PM should be overwritten by DO.
+
+    Scenario: Previous generation had a call on May 11 (CALL HDA on May 11 PM
+    with source='preload'). New generation has a call on May 10 instead.
+    The sync should overwrite the stale May 11 PM CALL with DO, not skip it.
+
+    This was the root cause of the Block 12 regeneration PCAT/DO integrity
+    failure: stale CALL preloads blocked DO creation, then got cleaned up by
+    _sync_call_to_half_day, leaving nothing for the validation fallback.
+    """
+    call_activity = _create_call_activity(db)
+    faculty = _create_faculty(db)
+
+    # Create PCAT and DO activities
+    pcat_activity = Activity(
+        id=uuid4(),
+        name="PCAT",
+        code="pcat",
+        display_abbreviation="PCAT",
+        activity_category=ActivityCategory.CLINICAL.value,
+        is_protected=True,
+        counts_toward_physical_capacity=False,
+    )
+    do_activity = Activity(
+        id=uuid4(),
+        name="DO",
+        code="do",
+        display_abbreviation="DO",
+        activity_category=ActivityCategory.CLINICAL.value,
+        is_protected=True,
+        counts_toward_physical_capacity=False,
+    )
+    db.add_all([pcat_activity, do_activity])
+    db.flush()
+
+    # Stale CALL preload from previous generation on May 11 PM
+    stale_call_hda = HalfDayAssignment(
+        person_id=faculty.id,
+        date=date(2026, 5, 11),  # Monday
+        time_of_day="PM",
+        activity_id=call_activity.id,
+        source=AssignmentSource.PRELOAD.value,
+    )
+    db.add(stale_call_hda)
+    db.flush()
+
+    # New generation: call on May 10 (Sunday) → needs DO on May 11 PM
+    ca = CallAssignment(
+        date=date(2026, 5, 10),
+        person_id=faculty.id,
+        call_type="overnight",
+        is_weekend=True,
+    )
+    db.add(ca)
+    db.flush()
+
+    engine = _make_engine(db)
+    count = engine._sync_call_pcat_do_to_half_day([ca])
+
+    # Should create PCAT on May 11 AM + overwrite stale CALL with DO on May 11 PM
+    assert count == 2
+
+    # Verify May 11 PM is now DO, not CALL
+    pm_hda = (
+        db.query(HalfDayAssignment)
+        .filter(
+            HalfDayAssignment.person_id == faculty.id,
+            HalfDayAssignment.date == date(2026, 5, 11),
+            HalfDayAssignment.time_of_day == "PM",
+        )
+        .first()
+    )
+    assert pm_hda is not None
+    assert pm_hda.activity_id == do_activity.id
+    assert pm_hda.source == AssignmentSource.PRELOAD.value
+
+    # Verify May 11 AM is PCAT
+    am_hda = (
+        db.query(HalfDayAssignment)
+        .filter(
+            HalfDayAssignment.person_id == faculty.id,
+            HalfDayAssignment.date == date(2026, 5, 11),
+            HalfDayAssignment.time_of_day == "AM",
+        )
+        .first()
+    )
+    assert am_hda is not None
+    assert am_hda.activity_id == pcat_activity.id
+
+
+def test_pcat_do_preserves_cross_block_call_preload(db):
+    """CALL preloads outside the block date range must NOT be overwritten.
+
+    Scenario: Call on June 3 (last day of block, end_date=June 3) produces
+    DO on June 4 PM (cross-block). If June 4 PM already has a CALL preload
+    from block N+1's generation, it must be preserved — overwriting it would
+    silently remove the next block's CALL coverage.
+    (Codex P1 #1216)
+    """
+    call_activity = _create_call_activity(db)
+    faculty = _create_faculty(db)
+
+    pcat_activity = Activity(
+        id=uuid4(),
+        name="PCAT",
+        code="pcat",
+        display_abbreviation="PCAT",
+        activity_category=ActivityCategory.CLINICAL.value,
+        is_protected=True,
+        counts_toward_physical_capacity=False,
+    )
+    do_activity = Activity(
+        id=uuid4(),
+        name="DO",
+        code="do",
+        display_abbreviation="DO",
+        activity_category=ActivityCategory.CLINICAL.value,
+        is_protected=True,
+        counts_toward_physical_capacity=False,
+    )
+    db.add_all([pcat_activity, do_activity])
+    db.flush()
+
+    # Block N+1 CALL preload on June 4 PM (outside block N range)
+    cross_block_call_hda = HalfDayAssignment(
+        person_id=faculty.id,
+        date=date(2026, 6, 4),  # Outside block N (end_date=June 3)
+        time_of_day="PM",
+        activity_id=call_activity.id,
+        source=AssignmentSource.PRELOAD.value,
+    )
+    db.add(cross_block_call_hda)
+    db.flush()
+
+    # Block N call on June 3 → needs PCAT/DO on June 4 (cross-block)
+    ca = CallAssignment(
+        date=date(2026, 6, 3),
+        person_id=faculty.id,
+        call_type="overnight",
+        is_weekend=False,
+    )
+    db.add(ca)
+    db.flush()
+
+    engine = _make_engine(db)  # end_date = June 3
+    count = engine._sync_call_pcat_do_to_half_day([ca])
+
+    # PCAT on June 4 AM should be created (no conflict)
+    assert count == 1  # Only PCAT AM, NOT DO PM (CALL preserved)
+
+    # June 4 PM must still be CALL (from block N+1), not DO
+    pm_hda = (
+        db.query(HalfDayAssignment)
+        .filter(
+            HalfDayAssignment.person_id == faculty.id,
+            HalfDayAssignment.date == date(2026, 6, 4),
+            HalfDayAssignment.time_of_day == "PM",
+        )
+        .first()
+    )
+    assert pm_hda is not None
+    assert pm_hda.activity_id == call_activity.id  # Still CALL, not DO
+
+
 def test_stale_cleanup_preserves_resident_call_hdas(db):
     """Stale CALL cleanup must NOT delete resident CALL preloads.
 

@@ -124,7 +124,7 @@ Cross-reference: `docs/planning/OPUS_BLOCK_12_REMEDIATION_PLAN.md` (Gemini-sourc
 
 ### Constraint Status
 
-**16 enabled** (physical impossibilities + soft/hybrid + tier-1 resilience). **32 disabled** (18 policy hard + 14 optional/tier-2). All policy hard constraints disabled in `ConstraintManager.create_default()` to prevent INFEASIBLE on preloaded data conflicts. See section 11j for P1-P5 re-enablement plan.
+**41 enabled** after PR #1215 stress test (Feb 28). 17 of 18 previously-disabled policy-hard constraints re-enabled — all passed OPTIMAL individually and together (7.0s). `FacultySupervision` converted from hard to soft with deficit penalty (weight 10,000). Only `WednesdayPMSingleFaculty` remains disabled (needs solver variable refactor). **9 disabled** (1 policy-hard + 8 optional/tier-2). See section 11j for history.
 
 ### Block 12 Data Quality Issues (DB-verified, Updated Feb 27 PM)
 
@@ -1133,10 +1133,11 @@ After the initial Block 12 solve + export (commit `e937e7fa`), a visual review o
 | Category | Constraints | Status |
 |----------|-------------|--------|
 | **Physical (enabled)** | Availability, AdjunctCallExclusion, CallAvailability | Hard — cannot be violated |
-| **ACGME (disabled)** | 80HourRule, 1in7Rule, SupervisionRatio, FacultySupervision | Need refactor to indicator+penalty pattern |
-| **Operational (disabled)** | ClinicCapacity, MaxPhysiciansInClinic, WeekendWork, NightFloatPostCall, FacultyClinicCap, ResidentInpatientHeadcount, PostFMITRecovery, PostFMITSundayBlocking | Need refactor to indicator+penalty pattern |
-| **Faculty (disabled)** | FacultyPrimaryDutyClinic, FacultyDayAvailability, FacultyRoleClinic | Need refactor to indicator+penalty pattern |
-| **Call (disabled)** | OvernightCallCoverage | Need refactor to indicator+penalty pattern |
+| **ACGME (ENABLED, PR #1215)** | 80HourRule, 1in7Rule, SupervisionRatio, FacultySupervision | All OPTIMAL. FacultySupervision converted hard→soft with deficit penalty (weight 10,000). |
+| **Operational (ENABLED, PR #1215)** | ClinicCapacity, MaxPhysiciansInClinic, WeekendWork, NightFloatPostCall, FacultyClinicCap, ResidentInpatientHeadcount, PostFMITRecovery, PostFMITSundayBlocking | All OPTIMAL individually and together (7.0s). |
+| **Faculty (ENABLED, PR #1215)** | FacultyPrimaryDutyClinic, FacultyDayAvailability, FacultyRoleClinic | All OPTIMAL. |
+| **Call (ENABLED, PR #1215)** | OvernightCallCoverage | OPTIMAL. |
+| **Wednesday (1 disabled)** | WednesdayPMSingleFaculty | Needs solver variable refactor (uses `faculty_template_assignments` vars that don't exist). |
 | **Soft (always active)** | Coverage, Equity, Continuity, FacultyClinicEquity, call equity suite, resilience suite | Already use penalty/objective pattern |
 
 **Excel cross-validation findings (Claude add-in for Excel, Turn 1):**
@@ -1151,30 +1152,17 @@ After the initial Block 12 solve + export (commit `e937e7fa`), a visual review o
 | SM faculty: zero C/CV | Only AT (39) + SM (8) | May be correct for SM-only faculty role |
 | 1 resident: heavy LV front-load | LV first 3 weeks, then mixed | Correct — matches absence records |
 
-**Priority fixes for next solver run:**
+**Priority fixes — COMPLETED (PR #1215, Feb 28):**
 
-| Priority | Fix | Impact |
+| Priority | Fix | Status |
 |----------|-----|--------|
-| **P1** | Re-enable `WeekendWork` constraint only | Gives faculty weekends off |
-| **P2** | Re-enable `ClinicCapacity` | Prevents over-scheduling clinic rooms |
-| **P3** | Re-enable `FacultyDayAvailability` | Respects faculty availability preferences |
-| **P4** | Investigate multi-call-per-night in export | Export currently drops all but first name |
-| **P5** | Add resident call generation or manual entry | Resident Call row is empty |
+| **P1** | Re-enable `WeekendWork` constraint | **DONE** — OPTIMAL |
+| **P2** | Re-enable `ClinicCapacity` | **DONE** — OPTIMAL |
+| **P3** | Re-enable `FacultyDayAvailability` | **DONE** — OPTIMAL |
+| **P4** | Investigate multi-call-per-night in export | DEFERRED |
+| **P5** | Add resident call generation or manual entry | DEFERRED |
 
-**Constraint refactoring roadmap (future PR):**
-
-To convert hard constraints to true soft constraints in CP-SAT:
-1. Replace `model.Add(expr)` with indicator variable pattern:
-   ```python
-   indicator = model.NewBoolVar(f"satisfied_{constraint_name}_{i}")
-   model.Add(expr).OnlyEnforceIf(indicator)
-   penalty_vars.append((weight, indicator.Not()))
-   ```
-2. Add penalty sum to objective: `model.Minimize(sum(w * v for w, v in penalty_vars))`
-3. Weight hierarchy: ACGME (1000) > Operational (500) > Faculty preference (100)
-4. Test each constraint individually before batch-enabling
-
-This is a significant refactor (~15 constraint files, ~30 `model.Add()` sites) and should be its own focused PR after the Block 12 export is validated.
+**Constraint re-enablement (PR #1215):** Stress-tested all 18 disabled policy-hard constraints individually against Block 12. 16/17 OPTIMAL, FacultySupervision INFEASIBLE. Converted FacultySupervision to soft with deficit variable + penalty (weight 10,000). All 17 now OPTIMAL individually and together (7.0s, 306 assignments). Also added CALL HDA pipeline sync and Wednesday PM LEC preloader.
 
 ### 11k: Future Work — Faculty Full-Day Preference (Deferred)
 

@@ -699,6 +699,13 @@ class SchedulingEngine:
             if not create_draft:
                 self._backfill_weekend_slots(residents, blocks)
 
+            # Step 7.5a: Backfill empty faculty slots
+            # The solver may leave some faculty slots unassigned (all 4 binary
+            # variables = 0) when constraints restrict all activity types.
+            # Fill weekday gaps with OFF, weekend gaps with W.
+            if not create_draft:
+                self._backfill_faculty_gaps(faculty, blocks)
+
             # Step 7.6: Convert 30% of resident clinic (C) to virtual clinic (CV)
             # PGY-3 first, then PGY-2, no PGY-1
             if not create_draft:
@@ -1599,6 +1606,20 @@ class SchedulingEngine:
             logger.warning("Missing PCAT or DO activity, skipping PCAT/DO sync")
             return 0
 
+        # Cache CALL activity ID so we can detect stale CALL preloads.
+        # When a call date moves between generations (e.g., May 11 → May 10),
+        # the old CALL HDA on May 11 PM has source='preload' which would
+        # normally be preserved.  But the stale CALL cleanup in
+        # _sync_call_to_half_day (Step 6.6a) deletes it AFTER this method,
+        # leaving no DO and no fallback for validation.  By overwriting stale
+        # CALL preloads here, we ensure PCAT/DO always wins.
+        call_activity = (
+            self.db.execute(select(Activity).where(Activity.code == "call"))
+            .scalars()
+            .first()
+        )
+        call_activity_id = call_activity.id if call_activity else None
+
         count = 0
         for call in call_assignments:
             next_day = call.date + timedelta(days=1)
@@ -1645,6 +1666,22 @@ class SchedulingEngine:
                     ):
                         existing.activity_id = cast(UUID, activity.id)
                         existing.source = AssignmentSource.PRELOAD.value
+                        count += 1
+                    elif (
+                        existing.source == AssignmentSource.PRELOAD.value
+                        and call_activity_id
+                        and existing.activity_id == call_activity_id
+                        and next_day <= self.end_date
+                    ):
+                        # Stale CALL preload from previous generation — the call
+                        # date moved, so this CALL will be cleaned up by stale
+                        # cleanup in _sync_call_to_half_day.  Overwrite with
+                        # PCAT/DO now to prevent validation gap.
+                        # Scoped to current block range: cross-block CALL
+                        # preloads belong to another block's generation and
+                        # must not be touched (Codex P1 #1216).
+                        existing.activity_id = cast(UUID, activity.id)
+                        # source stays 'preload'
                         count += 1
                 else:
                     # Insert new
@@ -3313,6 +3350,72 @@ class SchedulingEngine:
             logger.info(
                 f"Backfilled {created} weekend slots with W activity "
                 f"for {len(residents)} residents"
+            )
+
+    def _backfill_faculty_gaps(
+        self,
+        faculty: list[Person],
+        blocks: list[Block],
+    ) -> None:
+        """Fill empty faculty half-day slots.
+
+        The solver may leave some faculty slots unassigned when constraint
+        interactions prevent any valid activity type.  These gaps appear as
+        NULL activity codes in the schedule grid.
+
+        Weekday gaps → OFF (day off), Weekend gaps → W (weekend).
+        Only creates HDAs where none exist (never overwrites).
+        Excludes adjunct faculty (hand-jammed by coordinator).
+        """
+        from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+
+        core_faculty = [
+            f for f in faculty if f.faculty_role != FacultyRole.ADJUNCT.value
+        ]
+        if not core_faculty:
+            return
+
+        off_activity_id = self._get_off_activity_id()
+        w_activity_id = self._get_activity_id_by_code("W")
+
+        # Existing faculty HDAs
+        existing = set(
+            self.db.query(
+                HalfDayAssignment.person_id,
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+            )
+            .filter(
+                HalfDayAssignment.person_id.in_([f.id for f in core_faculty]),
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+            )
+            .all()
+        )
+        existing_keys = {(p, d, t) for p, d, t in existing}
+
+        created = 0
+        for fac in core_faculty:
+            for block in blocks:
+                key = (fac.id, block.date, block.time_of_day)
+                if key not in existing_keys:
+                    activity_id = w_activity_id if block.is_weekend else off_activity_id
+                    self.db.add(
+                        HalfDayAssignment(
+                            person_id=fac.id,
+                            date=block.date,
+                            time_of_day=block.time_of_day,
+                            activity_id=activity_id,
+                            source=AssignmentSource.SOLVER.value,
+                        )
+                    )
+                    created += 1
+
+        if created:
+            self.db.flush()
+            logger.info(
+                f"Backfilled {created} faculty gap slots "
+                f"(OFF weekday / W weekend) for {len(core_faculty)} faculty"
             )
 
     def _backfill_virtual_clinic(
