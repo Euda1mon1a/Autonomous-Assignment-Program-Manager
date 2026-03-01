@@ -1752,10 +1752,11 @@ class SchedulingEngine:
             )
 
             if existing:
-                # CALL overrides ALL sources — solver call_assignments are
-                # authoritative post-solver reality. Preloaded W (weekend),
-                # LEC (Wednesday PM), and solver-written slots all yield to
-                # the actual call assignment.
+                # Skip manual overrides — coordinator curated, treated as locked
+                if existing.source == AssignmentSource.MANUAL.value:
+                    continue
+                # CALL overrides preload/solver/template sources — solver
+                # call_assignments are authoritative post-solver reality.
                 if existing.activity_id != call_activity.id:
                     existing.activity_id = cast(UUID, call_activity.id)
                     existing.source = AssignmentSource.PRELOAD.value

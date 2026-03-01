@@ -21,7 +21,7 @@ Order of Operations (per TAMC skill):
 from datetime import date, timedelta
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -882,11 +882,16 @@ class SyncPreloadService:
         from app.models.person import FacultyRole
 
         # Core faculty only (exclude adjuncts — hand-jammed by coordinator)
+        # Use or_(IS NULL, != adjunct) to handle NULL faculty_role correctly
+        # under SQL three-valued logic
         core_faculty = (
             self.session.query(Person)
             .filter(
                 Person.type == "faculty",
-                Person.faculty_role != FacultyRole.ADJUNCT.value,
+                or_(
+                    Person.faculty_role.is_(None),
+                    Person.faculty_role != FacultyRole.ADJUNCT.value,
+                ),
             )
             .all()
         )
