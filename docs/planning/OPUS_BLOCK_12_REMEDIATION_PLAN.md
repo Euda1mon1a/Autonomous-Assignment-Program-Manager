@@ -97,11 +97,13 @@
 *   **Context:** MAD equity (PR #1199) is implemented. Re-generating with the MAD constraint active will improve distribution.
 *   **Action:** Regenerate Block 12, verify MAD equity produces better balance.
 
-### 8. Zeroing Validation — `DONE (DB + XLSX + Visual)` — Updated Feb 28 Post-CALL-Sync
-*   **DB verification (10-check):** `scripts/scheduling/verify_block12.py` — **10/10 passed**. Check 7 WARN (201 template mismatches, C2 deferral). All call chains verified (5 consecutive-night + 8 FMIT/leave/weekend overrides = expected).
+### 8. Zeroing Validation — `DONE (DB + XLSX + Visual)` — Updated Feb 28 Post-41-Constraint-Regen
+*   **DB verification (10-check):** `scripts/scheduling/verify_block12.py` — **10/10 passed**. Check 7 WARN (186 template mismatches, C2 deferral). 24 calls, 23 chains verified (8 with FMIT/leave/weekend override).
 *   **Export verification (8-check):** `scripts/scheduling/verify_block12_export.py` — **8/8 passed**. 1456 cells compared, **0 true mismatches**.
-*   **XLSX versions:** `/tmp/Block12_Export_v3.0_CALL_Sync.xlsx` (post-CALL-sync, current), `/tmp/Block12_Export_v2.0_WedPM_LEC.xlsx` (post-LEC, archived), `/tmp/Block12_Export_v1.1_Equity_Verification.xlsx` (pre-regen, archived).
-*   **Verification script updates:** Check 5 and 8 now accept `call` on weekends. Check 9 accepts `call` and `lec` as valid DO overrides (consecutive-night calls, Wednesday PM). Check 8 accepts `call`/`pcat`/`do` on absence dates (solver constraint gap, not schedule integrity failure).
+*   **Regeneration:** Block 12 regenerated with all 41 constraints enabled. OPTIMAL in 6.0s, 306 assignments. Two pipeline bugs fixed:
+    1. **Stale CALL preload blocking PCAT/DO**: When a call date moved between generations, old CALL preloads on the next-day PM blocked DO creation, then got cleaned up by stale CALL cleanup, leaving a validation gap. Fix: `_sync_call_pcat_do_to_half_day` now overwrites CALL-activity preloads with DO.
+    2. **Faculty HDA gaps**: Solver left some faculty slots unassigned (all 4 binary variables = 0). Fix: `_backfill_faculty_gaps` fills empty faculty slots with OFF (weekday) or W (weekend).
+*   **XLSX versions:** `/tmp/Block12_Export_Test.xlsx` (post-41-constraint-regen, current).
 *   **See:** `docs/planning/SCHEDULE_GRID_ZEROING_PLAN.md` for full methodology.
 
 ---
@@ -111,6 +113,6 @@
 *   **Preloader over Solver:** The `constants.py` mappings and `rotation_codes.py` handlers now cover ALL Block 12 rotations. The preloader is deterministic; the solver is easily broken by vacation overlap. NF-combined, FMIT, PEDW, LDNF, NF all have working handlers.
 *   **Engine vs Faculty Templates:** The solver's engine dynamically falls back to generating generic HDAs if a faculty member has no `faculty_weekly_templates`. The engine uses `person.faculty_role` heavily (e.g. `'adjunct'`). Adjunct exclusion is now implemented (Phase 2.1 DONE).
 *   **Soft vs Hard Constraints:** In `rotation_activity_requirements`, `min_halfdays` acts as a HARD constraint. If a resident takes vacation, a high `min_halfdays` will result in `INFEASIBLE`. Keep `min_halfdays` at `0` and use `target_halfdays` with a high `priority`.
-*   **32 of 48 constraints disabled:** All policy hard constraints are disabled in `ConstraintManager.create_default()` to prevent INFEASIBLE. See `BLOCK_12_ANNUAL_WORKBOOK_ROADMAP.md` section 11j for the P1-P5 re-enablement plan.
+*   **41 of 50 constraints enabled (PR #1215):** 17 of 18 policy-hard constraints re-enabled after stress test (all OPTIMAL). FacultySupervision converted to soft with deficit penalty. Only WednesdayPMSingleFaculty remains disabled (needs solver variable refactor). 9 disabled total (1 policy-hard + 8 optional/tier-2).
 *   **Solver activity model architecture (`solvers.py:968-1073`):** Faculty half-day decisions use 4 binary variables per slot: `fac_clinic`, `fac_supervise`, `fac_pcat`, `fac_do`. At most one active per slot (mutual exclusion constraint). Clinic/supervise only on workdays; PCAT/DO linked bidirectionally to overnight call assignments. Write-back in `engine.py:3370` maps C→activity code via `_get_activity_id_by_code()`. The `variables` dict exposes both index-keyed (`fac_clinic[f_i, b_i]`) and UUID-keyed (`faculty_clinic[(uuid, date, tod)]`) views for constraint wiring.
 *   **Faculty fill around residents:** Faculty clinic slots (`fac_clinic`) are constrained by supervision ratio (ACGME: 1 faculty per 2 PGY-1 or 4 PGY-2/3 in clinic) and weekly clinic limits (`min_clinic_halfdays_per_week`, `max_clinic_halfdays_per_week` from Person model). Faculty MUST be solver-generated, not preloaded.
