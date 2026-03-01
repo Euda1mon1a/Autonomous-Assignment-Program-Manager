@@ -663,7 +663,7 @@ class SchedulingEngine:
                 and not create_draft
             ):
                 include_faculty_activity_solver = os.getenv(
-                    "ACTIVITY_SOLVER_INCLUDE_FACULTY", "true"
+                    "ACTIVITY_SOLVER_INCLUDE_FACULTY", "false"
                 ).strip().lower() in {"1", "true", "yes", "on"}
                 activity_solver = CPSATActivitySolver(
                     self.db,
@@ -705,6 +705,13 @@ class SchedulingEngine:
             # Fill weekday gaps with OFF, weekend gaps with W.
             if not create_draft:
                 self._backfill_faculty_gaps(faculty, blocks)
+
+            # Step 7.5b: Apply faculty template correction sweep
+            # Corrects solver-source faculty HDAs to match weekly templates.
+            # Safety net — ensures template fidelity even if upstream steps
+            # produce coarse codes (C→sm_clinic, AT→gme, OFF→template activity).
+            if not create_draft:
+                self._apply_faculty_template_correction(faculty)
 
             # Step 7.6: Convert 30% of resident clinic (C) to virtual clinic (CV)
             # PGY-3 first, then PGY-2, no PGY-1
@@ -3417,6 +3424,123 @@ class SchedulingEngine:
                 f"Backfilled {created} faculty gap slots "
                 f"(OFF weekday / W weekend) for {len(core_faculty)} faculty"
             )
+
+    def _apply_faculty_template_correction(
+        self,
+        faculty: list[Person],
+    ) -> int:
+        """Correct solver-source faculty HDAs to match weekly templates.
+
+        After the solver writes coarse activity types (C, AT, OFF) and
+        backfill fills gaps, this sweep ensures faculty HDAs align with
+        their weekly templates (e.g., C→sm_clinic, AT→gme, OFF→cv).
+
+        Only modifies source='solver' HDAs. Never touches preload, manual,
+        post-call codes (CALL, PCAT, DO), or weekends (W).
+        Skips adjunct faculty.
+        """
+        from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+        from app.models.faculty_weekly_template import FacultyWeeklyTemplate
+        from app.models.activity import Activity
+
+        core_faculty = [
+            f for f in faculty if f.faculty_role != FacultyRole.ADJUNCT.value
+        ]
+        if not core_faculty:
+            return 0
+
+        core_ids = [f.id for f in core_faculty]
+
+        # Build template lookup: (person_id, py_weekday, tod) → activity_code
+        template_rows = (
+            self.db.query(
+                FacultyWeeklyTemplate.person_id,
+                FacultyWeeklyTemplate.day_of_week,
+                FacultyWeeklyTemplate.time_of_day,
+                Activity.code,
+            )
+            .join(Activity, FacultyWeeklyTemplate.activity_id == Activity.id)
+            .filter(
+                FacultyWeeklyTemplate.person_id.in_(core_ids),
+                FacultyWeeklyTemplate.week_number.is_(None),
+            )
+            .all()
+        )
+        template_lookup: dict[tuple[UUID, int, str], str] = {}
+        for pid, dow, tod, code in template_rows:
+            template_lookup[(pid, dow, tod)] = code
+
+        if not template_lookup:
+            logger.debug("No faculty templates found — skipping template correction")
+            return 0
+
+        # Post-call/rest codes that must never be overridden
+        _PROTECTED_CODES = {"call", "pcat", "do", "w", "lec"}
+
+        # Query solver-source faculty HDAs with their current activity code
+        solver_hdas = (
+            self.db.query(HalfDayAssignment, Activity.code)
+            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .filter(
+                HalfDayAssignment.person_id.in_(core_ids),
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+                HalfDayAssignment.source == AssignmentSource.SOLVER.value,
+            )
+            .all()
+        )
+
+        corrected = 0
+        skipped_postcall = 0
+        skipped_weekend = 0
+        for hda, current_code in solver_hdas:
+            # Skip weekends
+            if hda.date.weekday() >= 5:
+                skipped_weekend += 1
+                continue
+
+            # Skip protected codes
+            if current_code and current_code.lower() in _PROTECTED_CODES:
+                skipped_postcall += 1
+                continue
+
+            # Look up template
+            tpl_code = template_lookup.get(
+                (hda.person_id, hda.date.weekday(), hda.time_of_day)
+            )
+            if not tpl_code:
+                continue
+
+            # Skip if template is a post-call code
+            if tpl_code.lower() in {"pcat", "do", "off"}:
+                continue
+
+            # Skip if already matching
+            if current_code and current_code.lower() == tpl_code.lower():
+                continue
+
+            # Resolve template activity ID
+            try:
+                new_activity_id = self._get_activity_id_by_code(tpl_code)
+            except ActivityNotFoundError:
+                logger.warning(
+                    f"Template code '{tpl_code}' not found in activities — "
+                    f"keeping '{current_code}' for {hda.person_id} on {hda.date}"
+                )
+                continue
+
+            hda.activity_id = new_activity_id
+            corrected += 1
+
+        if corrected:
+            self.db.flush()
+
+        logger.info(
+            f"Template correction: {corrected} HDAs updated, "
+            f"{skipped_postcall} post-call skipped, "
+            f"{skipped_weekend} weekend skipped"
+        )
+        return corrected
 
     def _backfill_virtual_clinic(
         self,
