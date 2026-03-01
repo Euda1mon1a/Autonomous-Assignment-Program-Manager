@@ -306,3 +306,66 @@ def test_removes_stale_call_hdas(db):
     )
     assert len(remaining) == 1
     assert remaining[0].person_id == faculty_b.id
+
+
+def test_stale_cleanup_preserves_resident_call_hdas(db):
+    """Stale CALL cleanup must NOT delete resident CALL preloads.
+
+    Resident CALL HDAs come from resident_call_preloads (separate source)
+    and have no matching CallAssignment rows. They must survive cleanup.
+    """
+    call_activity = _create_call_activity(db)
+
+    # Create a resident (not faculty)
+    resident = Person(
+        id=uuid4(),
+        name="Test Resident",
+        type="resident",
+    )
+    db.add(resident)
+
+    # Create a faculty member who has the current call
+    faculty = _create_faculty(db, "Faculty with call")
+
+    call_date = date(2026, 5, 14)  # Within block range
+
+    # Resident CALL HDA (from resident_call_preloads, no CallAssignment)
+    resident_call_hda = HalfDayAssignment(
+        person_id=resident.id,
+        date=call_date,
+        time_of_day="PM",
+        activity_id=call_activity.id,
+        source=AssignmentSource.PRELOAD.value,
+    )
+    db.add(resident_call_hda)
+    db.flush()
+
+    # Only faculty has a CallAssignment — resident does not
+    ca = CallAssignment(
+        date=call_date,
+        person_id=faculty.id,
+        call_type="overnight",
+        is_weekend=False,
+    )
+    db.add(ca)
+    db.flush()
+
+    engine = _make_engine(db)
+    count = engine._sync_call_to_half_day([ca])
+
+    # Faculty gets CALL HDA
+    assert count == 1
+
+    # Resident's CALL HDA must still exist (not deleted by stale cleanup)
+    all_call_hdas = (
+        db.query(HalfDayAssignment)
+        .filter(
+            HalfDayAssignment.activity_id == call_activity.id,
+            HalfDayAssignment.time_of_day == "PM",
+        )
+        .all()
+    )
+    assert len(all_call_hdas) == 2  # resident + faculty
+    person_ids = {h.person_id for h in all_call_hdas}
+    assert resident.id in person_ids
+    assert faculty.id in person_ids

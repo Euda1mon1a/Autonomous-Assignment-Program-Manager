@@ -573,23 +573,21 @@ class SchedulingEngine:
                     if call_assignments:
                         self._sync_call_pcat_do_to_half_day(call_assignments)
 
-                        # Step 6.6a: Create CALL HDAs for the call date itself.
-                        # _sync_call_pcat_do_to_half_day creates PCAT/DO for day
-                        # AFTER call but not the CALL HDA on the call date PM.
-                        # The preloader's _load_faculty_call() is skipped during
-                        # regeneration (skip_faculty_call=True), leaving the gap.
-                        # Use ALL calls in range (new + preserved FMIT) so
-                        # preserved calls also get CALL HDAs.
-                        all_block_calls = (
-                            self.db.query(CallAssignment)
-                            .filter(
-                                CallAssignment.date >= self.start_date,
-                                CallAssignment.date <= self.end_date,
-                            )
-                            .all()
+                    # Step 6.6a: Create CALL HDAs for the call date itself.
+                    # Runs unconditionally — even when no NEW calls were created,
+                    # preserved FMIT calls still need CALL HDAs + stale cleanup.
+                    all_block_calls = (
+                        self.db.query(CallAssignment)
+                        .filter(
+                            CallAssignment.date >= self.start_date,
+                            CallAssignment.date <= self.end_date,
                         )
+                        .all()
+                    )
+                    if all_block_calls:
                         self._sync_call_to_half_day(all_block_calls)
 
+                    if call_assignments:
                         # Step 6.6.1: Validate PCAT/DO integrity (catches sync bugs)
                         # This runs automatically after PCAT/DO sync to ensure correctness.
                         # Can be disabled via validate_pcat_do=False once pipeline is stable.
@@ -1702,10 +1700,18 @@ class SchedulingEngine:
             logger.warning("Missing 'call' activity, skipping CALL HDA sync")
             return 0
 
-        # Remove stale CALL preloads that no longer match a CallAssignment.
+        # Remove stale faculty CALL preloads that no longer match a CallAssignment.
         # On regeneration, if a call moves from faculty A → B, A's old CALL
         # HDA would persist as a locked preload row. Clean them up first.
+        # Scoped to faculty only — resident CALL preloads come from
+        # resident_call_preloads (separate source, no CallAssignment rows).
         current_call_keys = {(ca.person_id, ca.date) for ca in call_assignments}
+        faculty_ids = {
+            p.id
+            for p in self.db.execute(select(Person).where(Person.type == "faculty"))
+            .scalars()
+            .all()
+        }
         stale_calls = (
             self.db.execute(
                 select(HalfDayAssignment).where(
@@ -1713,6 +1719,7 @@ class SchedulingEngine:
                     HalfDayAssignment.time_of_day == "PM",
                     HalfDayAssignment.date >= self.start_date,
                     HalfDayAssignment.date <= self.end_date,
+                    HalfDayAssignment.person_id.in_(faculty_ids),
                 )
             )
             .scalars()
@@ -1726,7 +1733,8 @@ class SchedulingEngine:
         if stale_count:
             self.db.flush()
             logger.info(
-                f"Removed {stale_count} stale CALL HDAs (no matching call_assignment)"
+                f"Removed {stale_count} stale faculty CALL HDAs "
+                f"(no matching call_assignment)"
             )
 
         count = 0
