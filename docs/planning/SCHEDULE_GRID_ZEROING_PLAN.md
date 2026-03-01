@@ -49,6 +49,42 @@
 
 Key verification features: canonical rotation code normalization, two-tier mid-block boundaries (day 12 for secondary rotation switch, day 15 for NF phase split), continuity clinic overlay allowance, call chain override hierarchy (FMIT > leave > weekend > pcat/do).
 
+### Export Zeroing Verification (Feb 28)
+
+8-check XLSX↔DB comparison at `scripts/scheduling/verify_block12_export.py` — reads XLSX cells via openpyxl, cross-references against `schedule_grid` view, accounts for `display_abbreviation` transforms.
+
+| # | Check | Result | Details |
+|---|-------|--------|---------|
+| 1 | Headcount | **PASS** | XLSX 16R+10F = DB 16R+10F |
+| 2 | Name matching | **PASS** | 26/26 XLSX names matched to DB |
+| 3 | Cell coverage | **PASS** | All 26 × 56 = 1456 slots populated |
+| 4 | Cell-by-cell codes | **PASS** | 856 exact + 600 display transforms + 0 mismatches |
+| 5 | Metadata sheets | **PASS** | `__SYS_META__` and `__REF__` present |
+| 6 | No empty cells | **PASS** | 0 empty cells in schedule region |
+| 7 | Row ordering | **PASS** | PGY desc + alpha (residents), alpha (faculty) |
+| 8 | Weekend codes | **PASS** | 416 weekend slot checks, all valid |
+
+Display transform breakdown (600 total):
+- `fm_clinic→C` (106), `off→OFF` (100), `gme→GME` (96), `LV-AM/PM→LV` (166)
+- `at→AT` (67), `lec→LEC` (35), `sm_clinic→SM` (8), `recovery→REC` (6)
+- `call→CALL` (6), `pcat→PCAT` (5), `do→DO` (5)
+
+All transforms are `activity.display_abbreviation` lookups — no unexplained mismatches.
+
+### Visual Verification via Claude for Excel (Feb 28)
+
+10-check visual inspection + 5-check equity cross-reference of `/tmp/Block12_Export_v1.1_Equity_Verification.xlsx` (schedule + 4 equity sheets baked in from DB queries):
+
+- **Layout/structure:** 10/10 PASS (sheet name, row bands, hidden rows, name ordering, metadata sheets)
+- **Faculty HDA equity:** All 10 faculty × 56 slots confirmed. One faculty = 56 LV (full-block deployment). Clinic range 0-25.
+- **Faculty call equity:** 15 overnight calls across 8 faculty. 5 produce PCAT+DO next-day. Range 1-4 calls per faculty.
+- **Solver spot-check:** 10/10 cell references matched (C, CV, C40, HLC, RAD — all clinical codes)
+- **Weekend sanity:** Faculty=W, NF=OFF+code, inpatient=rotation code. Zero anomalies.
+
+**New issues discovered:**
+1. **Wednesday PM LEC conflict (HIGH):** Faculty scheduled into clinic on Wednesday PM when residents have LEC (didactic). Wk1: 5 faculty, Wk2: 4, Wk3: 2, Wk4: 3. One faculty in clinic all 4 Wednesdays. **FIXED** via preloader LEC injection.
+2. **CALL tracking gaps (LOW):** CALL codes not in HDA equity admin totals. Two faculty missing from `call_type='overnight'` query despite having CALL/PCAT/DO on schedule. **FIXED** via `_sync_call_to_half_day()`.
+
 ### Numeric Code Legend
 | Code | Meaning | Activities |
 |------|---------|-----------|
@@ -271,6 +307,7 @@ Open in Excel → compare against coordinator's Block 12 workbook → Claude for
 | File | Purpose |
 |------|---------|
 | `scripts/scheduling/verify_block12.py` | 10-check DB verification script (psycopg2, read-only) |
+| `scripts/scheduling/verify_block12_export.py` | 8-check XLSX↔DB cell-by-cell comparison (openpyxl + psycopg2) |
 | `backend/alembic/versions/20260227_schedule_grid_view.py` | Alembic migration for view |
 | `backend/app/scheduling/solvers.py:968-1073` | Faculty activity variables + constraint wiring |
 | `backend/app/scheduling/engine.py:3281-3415` | Faculty HDA write-back from solver |

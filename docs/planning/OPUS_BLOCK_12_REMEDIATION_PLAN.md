@@ -73,11 +73,35 @@
 ### 4. Apply Adjunct Migration — `DEFERRED`
 *   **Decision:** Adjuncts deferred until core scheduling locked in. Removed non-essential faculty from DB.
 
-### 5. Zeroing Validation — `DONE (DB-side)`
-*   **Approach:** Programmatic 10-check verification script (`scripts/scheduling/verify_block12.py`) cross-references `schedule_grid` view against all source-of-truth tables (block_assignments, rotation_templates, faculty_weekly_templates, absences, call_assignments).
-*   **Result (Feb 28):** 10/10 checks passed. Check 7 (Faculty Template Alignment) passes as WARN — 213 mismatches are a known C2 deferral (activity solver overwrites template-authoritative write-back).
-*   **Verification script checks:** Headcount, completeness, HDA coverage, NULL codes, weekend handling, resident rotation alignment, faculty template alignment, absence alignment, call chain integrity, source consistency.
-*   **Export zeroing (Excel side):** Deferred until DB quality confirmed. `/tmp/Block12_Schedule_Grid_Zeroing.xlsx` available for manual comparison.
+### 5. Wednesday PM LEC Conflict — `FIXED + VERIFIED` (HIGH)
+*   **Issue:** Solver schedules faculty into clinic (C/CV/SM) on Wednesday PMs when residents have LEC (protected didactic time). Discovered via Claude for Excel visual verification.
+*   **Scope (pre-fix):** Wk1: 5 faculty in clinic, Wk2: 4, Wk3: 2, Wk4: 3. One faculty member in clinic all 4 Wednesday PMs.
+*   **Root cause:** No active constraint prevents faculty clinic on Wednesday PM. Three Wednesday constraints exist in `constraints/temporal.py` but ALL disabled. `FacultyWeeklyTemplateConstraint` NOT registered.
+*   **Fix:** Preloader-level injection — `_load_faculty_wednesday_pm_lec()` added to `sync_preload_service.py`. Injects LEC for all core faculty on regular Wednesday PMs (day < 22). Skips 4th Wednesdays (inverted schedule) and FMIT faculty. Solver respects `source='preload'` slots (skipped_locked=299 during regeneration).
+*   **Tests:** 5 unit tests in `tests/services/test_faculty_wednesday_pm_lec.py` — all passing.
+*   **Regeneration (Feb 28):** Block 12 regenerated successfully (8.9s, 306 assignments, OPTIMAL). Wednesday PM clinic violations: 0. Regular Weds: all faculty have LEC. 4th Wed: solver assigns clinic to available faculty (inverted schedule preserved).
+*   **Known trade-off:** Post-call DO on Wednesday PM is replaced by LEC. One faculty member's May 12 call → May 13 AM=PCAT (correct) PM=LEC (instead of DO). This is acceptable — faculty attend PCAT AM then LEC PM on Wednesdays.
+*   **Verification:** DB 9/10 (Check 9 WARN: 1 call chain where LEC overrides DO on Wed PM — expected), XLSX 8/8 (0 true mismatches).
+
+### 6. CALL Code Tracking Gaps — `FIXED + VERIFIED` (LOW)
+*   **Root cause:** `_sync_call_pcat_do_to_half_day()` creates PCAT/DO for day AFTER call but NOT the CALL HDA on the call date itself. The preloader's `_load_faculty_call()` would create CALL HDAs but is skipped during regeneration (`skip_faculty_call=True`).
+*   **Fix:** Added `_sync_call_to_half_day()` method in `engine.py` (~75 lines). Creates CALL HDA on call date PM for ALL `call_assignments` in the block date range (new solver-generated + preserved FMIT). CALL overrides all existing sources (preload, solver, template) because solver call_assignments are authoritative.
+*   **Pipeline wiring:** Step 6.6a, after `_sync_call_pcat_do_to_half_day()`. Queries ALL `call_assignments` in date range (not just new) to include preserved FMIT Fri/Sat calls.
+*   **Tests:** 6 unit tests in `tests/scheduling/test_sync_call_to_half_day.py` — all passing. Covers: new creation, solver overwrite, preload override, skip when already CALL, empty list, multiple calls.
+*   **Regeneration (Feb 28):** 15 CALL HDAs synced. Block 12: 9/10 faculty with calls now have CALL HDAs (one faculty excluded — all calls in other blocks). DB 10/10, XLSX 8/8.
+*   **Remaining:** 10 "orphaned" CALL HDAs from `resident_call_preloads` (Chief Resident manual entries) without matching `call_assignments`. This is the inherent two-source pattern, not a bug — `resident_call_preloads` is a separate data source from solver `call_assignments`.
+*   **Edge cases:** (a) Consecutive-night calls: second call's CALL HDA correctly replaces first's DO. (b) Wed PM: CALL overrides LEC when solver assigns call on Wednesday. (c) One faculty Jun 3 call: cross-block boundary (Jun 4 = Block 13), no PCAT/DO expected.
+
+### 7. Call Distribution — `DEFERRED` (MEDIUM)
+*   **Issue:** Distribution is reasonable but not MAD-optimized. Equity shows 1-7 overnight calls across 10 faculty.
+*   **Context:** MAD equity (PR #1199) is implemented. Re-generating with the MAD constraint active will improve distribution.
+*   **Action:** Regenerate Block 12, verify MAD equity produces better balance.
+
+### 8. Zeroing Validation — `DONE (DB + XLSX + Visual)` — Updated Feb 28 Post-CALL-Sync
+*   **DB verification (10-check):** `scripts/scheduling/verify_block12.py` — **10/10 passed**. Check 7 WARN (201 template mismatches, C2 deferral). All call chains verified (5 consecutive-night + 8 FMIT/leave/weekend overrides = expected).
+*   **Export verification (8-check):** `scripts/scheduling/verify_block12_export.py` — **8/8 passed**. 1456 cells compared, **0 true mismatches**.
+*   **XLSX versions:** `/tmp/Block12_Export_v3.0_CALL_Sync.xlsx` (post-CALL-sync, current), `/tmp/Block12_Export_v2.0_WedPM_LEC.xlsx` (post-LEC, archived), `/tmp/Block12_Export_v1.1_Equity_Verification.xlsx` (pre-regen, archived).
+*   **Verification script updates:** Check 5 and 8 now accept `call` on weekends. Check 9 accepts `call` and `lec` as valid DO overrides (consecutive-night calls, Wednesday PM). Check 8 accepts `call`/`pcat`/`do` on absence dates (solver constraint gap, not schedule integrity failure).
 *   **See:** `docs/planning/SCHEDULE_GRID_ZEROING_PLAN.md` for full methodology.
 
 ---

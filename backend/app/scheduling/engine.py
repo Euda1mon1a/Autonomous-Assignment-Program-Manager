@@ -573,6 +573,23 @@ class SchedulingEngine:
                     if call_assignments:
                         self._sync_call_pcat_do_to_half_day(call_assignments)
 
+                        # Step 6.6a: Create CALL HDAs for the call date itself.
+                        # _sync_call_pcat_do_to_half_day creates PCAT/DO for day
+                        # AFTER call but not the CALL HDA on the call date PM.
+                        # The preloader's _load_faculty_call() is skipped during
+                        # regeneration (skip_faculty_call=True), leaving the gap.
+                        # Use ALL calls in range (new + preserved FMIT) so
+                        # preserved calls also get CALL HDAs.
+                        all_block_calls = (
+                            self.db.query(CallAssignment)
+                            .filter(
+                                CallAssignment.date >= self.start_date,
+                                CallAssignment.date <= self.end_date,
+                            )
+                            .all()
+                        )
+                        self._sync_call_to_half_day(all_block_calls)
+
                         # Step 6.6.1: Validate PCAT/DO integrity (catches sync bugs)
                         # This runs automatically after PCAT/DO sync to ensure correctness.
                         # Can be disabled via validate_pcat_do=False once pipeline is stable.
@@ -1647,6 +1664,82 @@ class SchedulingEngine:
         if count:
             self.db.flush()
             logger.info(f"Synced {count} PCAT/DO slots to match new call assignments")
+
+        return count
+
+    def _sync_call_to_half_day(
+        self,
+        call_assignments: list[CallAssignment],
+    ) -> int:
+        """Create CALL HDAs for the call date itself.
+
+        _sync_call_pcat_do_to_half_day() creates PCAT/DO for the day AFTER a
+        call, but never creates a CALL HDA for the call date. The preloader's
+        _load_faculty_call() would normally do this, but it's skipped during
+        regeneration (skip_faculty_call=True) to avoid loading stale data.
+
+        This method fills the gap: for each new CallAssignment, create a CALL
+        HDA on the call date PM slot (overnight call starts PM).
+
+        Args:
+            call_assignments: Newly created CallAssignment records from solver
+
+        Returns:
+            Number of CALL HDAs created/updated
+        """
+        from app.models.activity import Activity
+        from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+
+        if not call_assignments:
+            return 0
+
+        call_activity = (
+            self.db.execute(select(Activity).where(Activity.code == "call"))
+            .scalars()
+            .first()
+        )
+        if not call_activity:
+            logger.warning("Missing 'call' activity, skipping CALL HDA sync")
+            return 0
+
+        count = 0
+        for ca in call_assignments:
+            existing = (
+                self.db.execute(
+                    select(HalfDayAssignment).where(
+                        HalfDayAssignment.person_id == ca.person_id,
+                        HalfDayAssignment.date == ca.date,
+                        HalfDayAssignment.time_of_day == "PM",
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if existing:
+                # CALL overrides ALL sources — solver call_assignments are
+                # authoritative post-solver reality. Preloaded W (weekend),
+                # LEC (Wednesday PM), and solver-written slots all yield to
+                # the actual call assignment.
+                if existing.activity_id != call_activity.id:
+                    existing.activity_id = cast(UUID, call_activity.id)
+                    existing.source = AssignmentSource.PRELOAD.value
+                    count += 1
+            else:
+                self.db.add(
+                    HalfDayAssignment(
+                        person_id=ca.person_id,
+                        date=ca.date,
+                        time_of_day="PM",
+                        activity_id=call_activity.id,
+                        source=AssignmentSource.PRELOAD.value,
+                    )
+                )
+                count += 1
+
+        if count:
+            self.db.flush()
+            logger.info(f"Synced {count} CALL HDAs to match new call assignments")
 
         return count
 

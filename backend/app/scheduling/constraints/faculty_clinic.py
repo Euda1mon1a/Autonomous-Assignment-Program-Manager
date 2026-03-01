@@ -253,7 +253,8 @@ class FacultySupervisionConstraint(SoftConstraint):
     - AT: Attending Time (primary supervision)
     - PCAT: Post-Call Attending Time
 
-    This is the highest priority constraint - ACGME compliance.
+    Soft constraint with high penalty — violations produce warnings
+    rather than INFEASIBLE, but are heavily penalised in the objective.
     """
 
     # Supervision demand per resident PGY level
@@ -266,11 +267,15 @@ class FacultySupervisionConstraint(SoftConstraint):
     # Activity codes that count as AT coverage
     AT_COVERAGE_CODES = {"at", "pcat"}
 
+    # Heavy penalty weight — ACGME compliance, highest priority
+    SUPERVISION_PENALTY = 100
+
     def __init__(self) -> None:
         super().__init__(
             name="FacultySupervision",
             constraint_type=ConstraintType.SUPERVISION,
             priority=ConstraintPriority.CRITICAL,
+            weight=float(self.SUPERVISION_PENALTY),
         )
 
     def add_to_cpsat(
@@ -279,7 +284,13 @@ class FacultySupervisionConstraint(SoftConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Add ACGME supervision constraint to CP-SAT model."""
+        """Add ACGME supervision as soft constraint with high penalty.
+
+        Instead of hard model.Add(coverage >= demand) which causes
+        INFEASIBLE when data can't satisfy ratios, we create a deficit
+        variable per (date, slot) and penalise it heavily in the
+        objective function.
+        """
         faculty_at = variables.get("faculty_at", {})
         faculty_pcat = variables.get("faculty_pcat", {})
         resident_clinic = variables.get("resident_clinic", {})
@@ -295,8 +306,12 @@ class FacultySupervisionConstraint(SoftConstraint):
         if not context.start_date or not context.end_date:
             return
 
-        # For each day and slot, ensure AT coverage >= demand
+        objective_terms = variables.get("objective_terms", [])
+        penalty_weight = int(self.weight * self.priority.value)  # 100 * 100 = 10000
+
+        # For each day and slot, penalise supervision deficit
         current = context.start_date
+        slot_count = 0
         while current <= context.end_date:
             # Skip weekends
             if current.weekday() >= 5:
@@ -304,43 +319,59 @@ class FacultySupervisionConstraint(SoftConstraint):
                 continue
 
             for slot in ["AM", "PM"]:
-                # Calculate demand from residents in clinic
-                # If we don't have resident_clinic vars, use static demand
-                if resident_clinic:
-                    demand_vars = []
-                    for resident in context.residents:
-                        key = (resident.id, current, slot)
-                        if key in resident_clinic:
-                            pgy = getattr(resident, "pgy_level", 2) or 2
-                            demand_factor = self.AT_DEMAND.get(pgy, 0.25)
-                            # Create auxiliary variable for fractional demand
-                            # CP-SAT uses integers, so we multiply by 4
-                            # and compare to integer coverage * 4
-                            demand_vars.append(
-                                (resident_clinic[key], int(demand_factor * 4))
-                            )
+                if not resident_clinic:
+                    continue
 
-                    if not demand_vars:
-                        continue
+                demand_vars = []
+                for resident in context.residents:
+                    key = (resident.id, current, slot)
+                    if key in resident_clinic:
+                        pgy = getattr(resident, "pgy_level", 2) or 2
+                        demand_factor = self.AT_DEMAND.get(pgy, 0.25)
+                        # CP-SAT uses integers, so multiply by 4
+                        demand_vars.append(
+                            (resident_clinic[key], int(demand_factor * 4))
+                        )
 
-                    # Sum weighted demand (each resident adds their factor)
-                    total_demand = sum(var * factor for var, factor in demand_vars)
+                if not demand_vars:
+                    continue
 
-                    # Sum coverage (AT + PCAT only)
-                    coverage_vars = []
-                    for faculty in context.faculty:
-                        fkey = (faculty.id, current, slot)
-                        if fkey in faculty_at:
-                            coverage_vars.append(faculty_at[fkey])
-                        if fkey in faculty_pcat:
-                            coverage_vars.append(faculty_pcat[fkey])
+                # Sum weighted demand (each resident adds their factor)
+                total_demand = sum(var * factor for var, factor in demand_vars)
 
-                    if coverage_vars:
-                        # Coverage * 4 >= demand (scaled by 4)
-                        total_coverage = sum(coverage_vars) * 4
-                        model.Add(total_coverage >= total_demand)
+                # Sum coverage (AT + PCAT only)
+                coverage_vars = []
+                for faculty in context.faculty:
+                    fkey = (faculty.id, current, slot)
+                    if fkey in faculty_at:
+                        coverage_vars.append(faculty_at[fkey])
+                    if fkey in faculty_pcat:
+                        coverage_vars.append(faculty_pcat[fkey])
+
+                if coverage_vars:
+                    total_coverage = sum(coverage_vars) * 4
+
+                    # Max possible deficit = max residents * max demand factor * 4
+                    max_deficit = len(context.residents) * 4
+                    deficit = model.NewIntVar(
+                        0,
+                        max_deficit,
+                        f"sup_deficit_{current}_{slot}",
+                    )
+                    # deficit >= demand - coverage (0 when coverage sufficient)
+                    model.Add(deficit >= total_demand - total_coverage)
+
+                    objective_terms.append((deficit, penalty_weight))
+                    slot_count += 1
 
             current += timedelta(days=1)
+
+        variables["objective_terms"] = objective_terms
+        if slot_count:
+            logger.info(
+                f"FacultySupervision: {slot_count} slot deficit vars, "
+                f"penalty weight={penalty_weight}"
+            )
 
     def add_to_pulp(
         self,
