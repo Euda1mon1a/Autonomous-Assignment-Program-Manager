@@ -1702,6 +1702,33 @@ class SchedulingEngine:
             logger.warning("Missing 'call' activity, skipping CALL HDA sync")
             return 0
 
+        # Remove stale CALL preloads that no longer match a CallAssignment.
+        # On regeneration, if a call moves from faculty A → B, A's old CALL
+        # HDA would persist as a locked preload row. Clean them up first.
+        current_call_keys = {(ca.person_id, ca.date) for ca in call_assignments}
+        stale_calls = (
+            self.db.execute(
+                select(HalfDayAssignment).where(
+                    HalfDayAssignment.activity_id == call_activity.id,
+                    HalfDayAssignment.time_of_day == "PM",
+                    HalfDayAssignment.date >= self.start_date,
+                    HalfDayAssignment.date <= self.end_date,
+                )
+            )
+            .scalars()
+            .all()
+        )
+        stale_count = 0
+        for hda in stale_calls:
+            if (hda.person_id, hda.date) not in current_call_keys:
+                self.db.delete(hda)
+                stale_count += 1
+        if stale_count:
+            self.db.flush()
+            logger.info(
+                f"Removed {stale_count} stale CALL HDAs (no matching call_assignment)"
+            )
+
         count = 0
         for ca in call_assignments:
             existing = (

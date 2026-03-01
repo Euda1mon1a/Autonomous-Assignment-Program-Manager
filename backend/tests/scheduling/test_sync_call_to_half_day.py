@@ -254,3 +254,55 @@ def test_multiple_calls_creates_multiple_hdas(db):
         db.query(HalfDayAssignment).filter(HalfDayAssignment.time_of_day == "PM").all()
     )
     assert len(hdas) == 2
+
+
+def test_removes_stale_call_hdas(db):
+    """Old CALL HDAs without matching call_assignment should be deleted.
+
+    Scenario: faculty A had a call last regen, but this regen assigns
+    the call to faculty B instead. Faculty A's stale CALL HDA must be removed.
+    """
+    call_activity = _create_call_activity(db)
+    faculty_a = _create_faculty(db, "Faculty A (stale)")
+    faculty_b = _create_faculty(db, "Faculty B (current)")
+
+    call_date = date(2026, 5, 14)  # Wednesday, within block range
+
+    # Simulate stale CALL HDA from previous regeneration for faculty A
+    stale_hda = HalfDayAssignment(
+        person_id=faculty_a.id,
+        date=call_date,
+        time_of_day="PM",
+        activity_id=call_activity.id,
+        source=AssignmentSource.PRELOAD.value,
+    )
+    db.add(stale_hda)
+    db.flush()
+
+    # Current regeneration assigns the call to faculty B only
+    ca = CallAssignment(
+        date=call_date,
+        person_id=faculty_b.id,
+        call_type="overnight",
+        is_weekend=False,
+    )
+    db.add(ca)
+    db.flush()
+
+    engine = _make_engine(db)
+    count = engine._sync_call_to_half_day([ca])
+
+    # Faculty B gets a new CALL HDA
+    assert count == 1
+
+    # Faculty A's stale CALL HDA should be gone
+    remaining = (
+        db.query(HalfDayAssignment)
+        .filter(
+            HalfDayAssignment.time_of_day == "PM",
+            HalfDayAssignment.activity_id == call_activity.id,
+        )
+        .all()
+    )
+    assert len(remaining) == 1
+    assert remaining[0].person_id == faculty_b.id
