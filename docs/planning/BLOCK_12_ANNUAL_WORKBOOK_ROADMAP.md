@@ -137,8 +137,12 @@ Pipeline ran successfully — all persons have 56 HDAs. Spatial analysis via `sc
 | ~~**Solver activity model too coarse**~~ | ~~HIGH~~ | **PARTIALLY FIXED** | Template-aware write-back in `engine.py:3324-3440` resolves solver C→CV/sm_clinic/dfm, AT→gme/lec/SIM within category. 103 HDAs updated. |
 | ~~**DOW convention mismatch**~~ | ~~P0~~ | **FIXED** | `FacultyWeeklyTemplate.day_of_week` uses Python weekday (0=Mon). All runtime bugs patched (constraint, frontend `isWeekend`/`DAY_LABELS`), all 9 docstrings corrected, disambiguation constants added, 67 regression tests. See `docs/architecture/DOW_CONVENTION_BUG.md`. |
 | ~~**Orphaned activity UUID**~~ | ~~LOW~~ | **FIXED** | 5 `faculty_weekly_templates` rows updated from `9fd0dca9-...` → correct FMIT UUID. |
-| **1 faculty on leave** | INFO | Expected | 1 FM faculty on leave: only LV-AM, LV-PM entire block (correct). |
-| **Low solver involvement** | INFO | Expected | 13/16 residents are 100% preloaded. 3 have solver fills. |
+| **Wednesday PM LEC conflict** | HIGH | **FIXED** | Solver scheduled faculty into clinic on Wednesday PMs when residents have LEC (didactic). Fixed via preloader LEC injection (`_load_faculty_wednesday_pm_lec()`). |
+| **CALL code not in HDA equity** | LOW | **FIXED** | CALL HDAs now synced via `_sync_call_to_half_day()` in engine pipeline Step 6.6a. |
+| **Two faculty missing from call equity** | LOW | **FIXED** | Two-table sync gap between `call_assignments` and `half_day_assignments`. Fixed by syncing ALL calls in block range. |
+| **Call distribution top-heavy** | MEDIUM | **DEFERRED** | Range 1-4 calls across faculty. MAD equity constraint will rebalance on next regeneration with all constraints enabled. |
+| **1 faculty on leave** | INFO | Expected | One faculty member has 56 leave slots (full-block deployment). All LV confirmed in XLSX. |
+| **Low solver involvement** | INFO | Expected | 12/16 residents are 100% preloaded. 4 have solver fills (39-51 slots each). |
 
 ### Zeroing Validation Results (Updated Feb 28)
 
@@ -157,20 +161,59 @@ Programmatic 10-check verification via `scripts/scheduling/verify_block12.py`:
 | 9 | Call Chain Integrity | **PASS** | 18 calls, 13 chains verified (8 with FMIT/leave/weekend override) |
 | 10 | Source Consistency | **PASS** | 100 inpatient workday slots, all source=preload |
 
-**Exports:** `/tmp/Block12_Schedule_Grid_Zeroing.xlsx` (4 sheets), `/tmp/block12_full_grid.csv` (1456 rows)
+### XLSX Export Verification (Feb 28)
+
+Programmatic 8-check XLSX↔DB comparison via `scripts/scheduling/verify_block12_export.py`:
+
+| # | Check | Result | Details |
+|---|-------|--------|---------|
+| 1 | Headcount | **PASS** | XLSX 16R+10F = DB 16R+10F |
+| 2 | Name matching | **PASS** | 26/26 matched |
+| 3 | Cell coverage | **PASS** | All 1456 cells populated |
+| 4 | Cell-by-cell codes | **PASS** | 856 exact + 600 display transforms + **0 mismatches** |
+| 5 | Metadata sheets | **PASS** | `__SYS_META__` + `__REF__` present |
+| 6 | No empty cells | **PASS** | 0 empty cells |
+| 7 | Row ordering | **PASS** | PGY desc + alpha (residents), alpha (faculty) |
+| 8 | Weekend codes | **PASS** | 416 weekend slots valid |
+
+### Visual Verification (Feb 28 — Claude for Excel)
+
+10-check visual inspection + 5-check equity cross-reference of `/tmp/Block12_Export_v1.1_Equity_Verification.xlsx`:
+
+- Layout, names, codes, weekends, leave, NF patterns, call rows, hidden sheets: **10/10 PASS**
+- Faculty HDA equity vs schedule: **PASS** (all 10 faculty × 56 slots confirmed)
+- Solver detail spot-check: **10/10 cell references matched** (C, CV, C40, HLC, RAD)
+- Weekend sanity: **PASS** (faculty=W, NF=OFF+code, inpatient=rotation)
+- **NEW issues found:** Wednesday PM LEC conflict, CALL tracking gaps, call equity discrepancies (see Data Quality Issues above)
+
+**Exports:** `/tmp/Block12_Schedule_Grid_Zeroing.xlsx` (4 sheets), `/tmp/block12_full_grid.csv` (1456 rows), `/tmp/Block12_Export_v1.1_Equity_Verification.xlsx` (9 sheets: schedule + 4 equity verification)
 
 **See:** `docs/planning/SCHEDULE_GRID_ZEROING_PLAN.md` for full methodology, `docs/architecture/DOW_CONVENTION_BUG.md` for DOW issue scope.
 
-### Critical Path (Updated)
+### Critical Path (Updated Feb 28)
 
 ```
-B1-B4: DONE ──────────────────┐
-D4: Block 12 generated ───────┤
-All residents: 56 HDAs ───────┤──→ Quality fixes DONE
-All faculty: 56 HDAs ─────────┤      ├── Weekend violations: FIXED (0)
-Weekend fix: DONE ────────────┤      ├── Template-aware write-back: DONE (103 HDAs)
-DOW convention fix: DONE ─────┘      ├── DOW model docstrings: FIXED
-                                     └── Cross-category mismatches: DEFERRED (~100, needs FacultyWeeklyTemplateConstraint)
+Steps 0-5: DONE ──────────────┐
+D5: 10/10 verification ───────┤──→ DB quality confirmed
+Quality fixes: DONE ───────────┤      ├── Weekend violations: 0
+Template write-back: DONE ─────┤      ├── Rotation alignment: 0 mismatches
+DOW convention: FIXED ─────────┘      └── Faculty templates: WARN (C2 deferred)
+                                    │
+                              ┌─────┘
+                              ▼
+                        Step 6: __BASELINE__ sheet     ← DONE (code exists)
+                              │
+                        Step 7: __OVERRIDES__ detection ← DONE (code exists)
+                              │
+                        Step 8: Export annual workbook   ← DONE (single-block)
+                              │     1456 cells, 0 mismatches (DB+XLSX+Visual)
+                              │     10/10 visual, 10/10 solver spot-check
+                              │     ⚠ Wed PM LEC conflict (HIGH, new)
+                              │     Full year export: NEXT
+                              │
+                        Step 9: Hand-jam round-trip test
+                              │
+                        Step 10: Tests
 ```
 
 ---
@@ -550,7 +593,9 @@ Compare solver output against `docs/analysis/BLOCK_12_ANALYSIS.md`:
 
 ---
 
-## Step 6: Add `__BASELINE__` Sheet to Export Pipeline
+## Step 6: Add `__BASELINE__` Sheet to Export Pipeline — `DONE`
+
+**Status:** Already implemented in `backend/app/services/excel_metadata.py:134-163` (`write_baseline_sheet()`) and `canonical_schedule_export_service.py:356-409` (`_collect_baseline_data()`). VeryHidden sheet with cell_ref/value/row_hash/source columns.
 
 **Purpose:** Fingerprint every cell the system generated so we can detect hand-jams on reimport.
 
@@ -597,7 +642,9 @@ In `export_year_xlsx()`, after copying each block sheet, collect cell data from 
 
 ---
 
-## Step 7: Add `__OVERRIDES__` Detection to Import Pipeline
+## Step 7: Add `__OVERRIDES__` Detection to Import Pipeline — `DONE`
+
+**Status:** Already implemented in `half_day_import_service.py:1055-1109` (`_detect_baseline_overrides()`) and `excel_metadata.py:191-225` (`write_overrides_sheet()`). Called from `stage_block_sheet()` on reimport.
 
 **Purpose:** On reimport, compare each cell against its baseline. Differences = hand-jams.
 

@@ -13,6 +13,7 @@ Order of Operations (per TAMC skill):
 6. Load resident_call_preloads → CALL, PC
 7. Load faculty_call → CALL, PCAT, DO
 8. Load aSM (Wed AM for SM faculty)
+8b. Load faculty Wednesday PM LEC (protected didactic, skips 4th Wed)
 9. Load conferences (HAFP, USAFP, LEC)
 10. Load protected time (SIM, PI, MM)
 """
@@ -20,7 +21,7 @@ Order of Operations (per TAMC skill):
 from datetime import date, timedelta
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -125,6 +126,7 @@ class SyncPreloadService:
             logger.info("Skipping faculty call PCAT/DO (engine creates from NEW call)")
 
         total += self._load_sm_preloads(start_date, end_date)
+        total += self._load_faculty_wednesday_pm_lec(start_date, end_date)
 
         total += self._load_compound_rotation_weekends(
             block_number, academic_year, start_date, end_date
@@ -857,6 +859,73 @@ class SyncPreloadService:
                 current += timedelta(days=1)
 
         logger.info(f"Loaded {count} SM preloads")
+        return count
+
+    def _load_faculty_wednesday_pm_lec(self, start_date: date, end_date: date) -> int:
+        """Preload LEC for all core faculty on regular Wednesday PMs.
+
+        Wednesday PM is protected didactic time at TAMC — residents have LEC
+        (injected by rotation_codes.py), and faculty should attend LEC/didactic
+        rather than seeing patients. The solver skips preloaded slots, so this
+        prevents faculty from being scheduled into clinic on Wednesday PM.
+
+        Skips 4th Wednesdays (day >= 22) — those use an inverted schedule where
+        one faculty covers clinic. Also skips faculty on FMIT rotation (they
+        follow their own FMIT schedule).
+        """
+        count = 0
+        lec_id = self._activity_cache.get("LEC", required=False)
+        if not lec_id:
+            logger.warning("LEC activity not found — skipping faculty Wed PM preload")
+            return 0
+
+        from app.models.person import FacultyRole
+
+        # Core faculty only (exclude adjuncts — hand-jammed by coordinator)
+        # Use or_(IS NULL, != adjunct) to handle NULL faculty_role correctly
+        # under SQL three-valued logic
+        core_faculty = (
+            self.session.query(Person)
+            .filter(
+                Person.type == "faculty",
+                or_(
+                    Person.faculty_role.is_(None),
+                    Person.faculty_role != FacultyRole.ADJUNCT.value,
+                ),
+            )
+            .all()
+        )
+        if not core_faculty:
+            return 0
+
+        # Build set of faculty on FMIT rotation (they keep their FMIT schedule)
+        fmit_faculty_dates: set[tuple[UUID, date]] = set()
+        fmit_stmt = select(InpatientPreload).where(
+            InpatientPreload.rotation_type == InpatientRotationType.FMIT,
+            InpatientPreload.start_date <= end_date,
+            InpatientPreload.end_date >= start_date,
+        )
+        fmit_preloads = self.session.execute(fmit_stmt).scalars().all()
+        for fp in fmit_preloads:
+            current = max(fp.start_date, start_date)
+            fmit_end = min(fp.end_date, end_date)
+            while current <= fmit_end:
+                fmit_faculty_dates.add((fp.person_id, current))
+                current += timedelta(days=1)
+
+        # Iterate over all dates in range, find regular Wednesdays
+        current = start_date
+        while current <= end_date:
+            if current.weekday() == 2 and current.day < 22:
+                # Regular Wednesday (not 4th) — preload LEC for PM
+                for faculty in core_faculty:
+                    if (faculty.id, current) in fmit_faculty_dates:
+                        continue
+                    if self._create_preload(faculty.id, current, "PM", lec_id):
+                        count += 1
+            current += timedelta(days=1)
+
+        logger.info(f"Loaded {count} faculty Wednesday PM LEC preloads")
         return count
 
     def _load_compound_rotation_weekends(

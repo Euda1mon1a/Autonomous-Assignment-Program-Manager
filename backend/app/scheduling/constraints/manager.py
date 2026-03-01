@@ -363,29 +363,12 @@ class ConstraintManager:
         manager.add(FacultyRoleClinicConstraint())
         manager.add(OvernightCallCoverageConstraint())
 
-        # Disable all policy hard constraints — they crash the solver
-        # with preloaded data that inherently violates them
-        for name in [
-            "80HourRule",
-            "1in7Rule",
-            "SupervisionRatio",
-            "FacultySupervision",
-            "ClinicCapacity",
-            "MaxPhysiciansInClinic",
-            "WednesdayAMInternOnly",
-            "WednesdayPMSingleFaculty",
-            "InvertedWednesday",
-            "NightFloatPostCall",
-            "FacultyClinicCap",
-            "ResidentInpatientHeadcount",
-            "PostFMITRecovery",
-            "PostFMITSundayBlocking",
-            "FacultyPrimaryDutyClinic",
-            "FacultyDayAvailability",
-            "FacultyRoleClinic",
-            "OvernightCallCoverage",
-        ]:
-            manager.disable(name)
+        # Re-enabled after stress test (Feb 28 2026): 16/17 OPTIMAL individually
+        # and all 16 OPTIMAL together (6.8s). FacultySupervision converted to
+        # soft constraint with deficit penalty (was only INFEASIBLE cause).
+        # WednesdayPMSingleFaculty still disabled — needs solver variable refactor
+        # (uses faculty_template_assignments vars that don't exist in current model).
+        manager.disable("WednesdayPMSingleFaculty")
 
         # Overnight call generation - opt-in via factory method
         manager.add(OvernightCallGenerationConstraint())
