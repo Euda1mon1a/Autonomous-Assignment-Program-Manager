@@ -30,7 +30,7 @@
 4. **Alembic stamp mismatch** — DB at `9bcfa50205e4`, not in migration files
 5. ~~**DOW convention mismatch**~~ — **FIXED (P0).** All runtime bugs patched (constraint, frontend `isWeekend`/`DAY_LABELS`), all 9 docstrings corrected, disambiguation constants added, 67 regression tests. See `docs/architecture/DOW_CONVENTION_BUG.md`.
 
-### Programmatic Verification (Feb 28)
+### Programmatic Verification (Updated Mar 1 — Post-PR #1216, 41-Constraint Regen)
 
 10-check verification script at `scripts/scheduling/verify_block12.py` — uses psycopg2 directly (no app imports), read-only, cross-references `schedule_grid` against all source-of-truth tables.
 
@@ -42,14 +42,14 @@
 | 4 | No NULL Codes | **PASS** | 0 NULL am/pm codes |
 | 5 | Weekend Handling | **PASS** | 208 weekend rows, 0 violations |
 | 6 | Resident Rotation Alignment | **PASS** | 320 workday slots, 0 mismatches |
-| 7 | Faculty Template Alignment | **WARN** | 213 mismatches (known C2 deferral) |
+| 7 | Faculty Template Alignment | **WARN** | 186 mismatches (C2 deferral, down from 213 pre-PR #1216) |
 | 8 | Absence Alignment | **PASS** | 13 absences, 61 workdays, 0 violations |
-| 9 | Call Chain Integrity | **PASS** | 18 calls, 13 chains verified |
+| 9 | Call Chain Integrity | **PASS** | 24 calls, 23 chains verified (1 WARN: LEC overrides DO on Wed PM, expected) |
 | 10 | Source Consistency | **PASS** | 100 inpatient workday slots, all preload |
 
 Key verification features: canonical rotation code normalization, two-tier mid-block boundaries (day 12 for secondary rotation switch, day 15 for NF phase split), continuity clinic overlay allowance, call chain override hierarchy (FMIT > leave > weekend > pcat/do).
 
-### Export Zeroing Verification (Feb 28)
+### Export Zeroing Verification (Updated Mar 1 — Post-PR #1216)
 
 8-check XLSX↔DB comparison at `scripts/scheduling/verify_block12_export.py` — reads XLSX cells via openpyxl, cross-references against `schedule_grid` view, accounts for `display_abbreviation` transforms.
 
@@ -59,10 +59,12 @@ Key verification features: canonical rotation code normalization, two-tier mid-b
 | 2 | Name matching | **PASS** | 26/26 XLSX names matched to DB |
 | 3 | Cell coverage | **PASS** | All 26 × 56 = 1456 slots populated |
 | 4 | Cell-by-cell codes | **PASS** | 856 exact + 600 display transforms + 0 mismatches |
-| 5 | Metadata sheets | **PASS** | `__SYS_META__` and `__REF__` present |
+| 5 | Metadata sheets | **PASS** | `__SYS_META__` + `__REF__` present |
 | 6 | No empty cells | **PASS** | 0 empty cells in schedule region |
 | 7 | Row ordering | **PASS** | PGY desc + alpha (residents), alpha (faculty) |
 | 8 | Weekend codes | **PASS** | 416 weekend slot checks, all valid |
+
+**Current XLSX:** `/tmp/Block12_Export_v4.0_41_Constraints.xlsx`
 
 Display transform breakdown (600 total):
 - `fm_clinic→C` (106), `off→OFF` (100), `gme→GME` (96), `LV-AM/PM→LV` (166)
@@ -81,9 +83,11 @@ All transforms are `activity.display_abbreviation` lookups — no unexplained mi
 - **Solver spot-check:** 10/10 cell references matched (C, CV, C40, HLC, RAD — all clinical codes)
 - **Weekend sanity:** Faculty=W, NF=OFF+code, inpatient=rotation code. Zero anomalies.
 
-**New issues discovered:**
-1. **Wednesday PM LEC conflict (HIGH):** Faculty scheduled into clinic on Wednesday PM when residents have LEC (didactic). Wk1: 5 faculty, Wk2: 4, Wk3: 2, Wk4: 3. One faculty in clinic all 4 Wednesdays. **FIXED** via preloader LEC injection.
-2. **CALL tracking gaps (LOW):** CALL codes not in HDA equity admin totals. Two faculty missing from `call_type='overnight'` query despite having CALL/PCAT/DO on schedule. **FIXED** via `_sync_call_to_half_day()`.
+**Issues discovered and resolved:**
+1. **Wednesday PM LEC conflict (HIGH):** Faculty scheduled into clinic on Wednesday PM when residents have LEC (didactic). Wk1: 5 faculty, Wk2: 4, Wk3: 2, Wk4: 3. **FIXED** (PR #1215) via preloader LEC injection (`_load_faculty_wednesday_pm_lec()`). Post-regen: 0 violations.
+2. **CALL tracking gaps (LOW):** CALL codes not in HDA equity admin totals. **FIXED** (PR #1215) via `_sync_call_to_half_day()`. 15 CALL HDAs synced post-regen.
+3. **Stale CALL preload blocking PCAT/DO (HIGH):** When call dates moved between generations, old CALL preloads blocked DO creation. **FIXED** (PR #1216) — stale CALL preload detection + overwrite, scoped to current block range.
+4. **Faculty HDA gaps (MEDIUM):** Solver left 40 faculty slots unassigned (all 4 binary vars = 0). **FIXED** (PR #1216) — `_backfill_faculty_gaps` fills with OFF/W.
 
 ### Numeric Code Legend
 | Code | Meaning | Activities |
