@@ -1,8 +1,8 @@
 # Faculty Scheduling Fix Roadmap
 
-> **Status:** Phase 1 COMPLETED, Phases 2-3 planned
+> **Status:** Phase 1 COMPLETED, Phase 2 COMPLETED, Phase 3 COMPLETED
 > **Created:** 2026-02-25
-> **Updated:** 2026-02-26 — Phase 1 completed (PRs #1199, #1201, #1202)
+> **Updated:** 2026-03-02 — Phase 3 completed (PR #1219). All 3 phases done.
 > **Depends on:** Gemini WP-2/3/4/8/9 completion (Phases 2-3)
 > **Prereqs:** `FACULTY_SCHEDULING_SPECIFICATION.md`, `annual-workbook-architecture.md`, `excel-stateful-roundtrip-roadmap.md`
 >
@@ -154,7 +154,7 @@ No migration needed — metadata-only alignment.
 
 | Item | Status |
 |------|--------|
-| 2A: ORM CHECK alignment | **OPEN** — neither model nor migration has CHECK constraints (gap, not mismatch) |
+| 2A: ORM CHECK alignment | **DONE** — model at `call_assignment.py:52-55` already has correct values `('overnight', 'weekend', 'backup')` |
 | 2B: DeptChiefWednesday registration | **DONE** — registered, disabled by default, enabled for faculty profile |
 | 2C: `profile` parameter | **DONE** — `create_default(profile="resident"\|"faculty")` implemented |
 | 2D: DOW convention fix | **DONE** — PR #1210 (15 files, 67 tests) |
@@ -170,7 +170,10 @@ No migration needed — metadata-only alignment.
 
 ---
 
-## Phase 3: Annual Workbook — 15-Sheet Design with YTD_SUMMARY (Fixes Gaps #5–6)
+## Phase 3: Annual Workbook — 15-Sheet Design with YTD_SUMMARY (Fixes Gaps #5–6) — COMPLETED
+
+> **Completed:** 2026-03-02
+> **PR:** #1219 (faculty union bug fix + 7 YTD_SUMMARY tests)
 
 ### Problem
 
@@ -180,19 +183,25 @@ Per-block Excel sheets cannot display cross-block FMIT weeks or longitudinal equ
 
 15-sheet annual workbook: Sheet 0 = `YTD_SUMMARY`, Sheets 1–14 = Blocks 0–13. Expand template to 50 pre-formatted rows with unused rows hidden.
 
-### Existing Foundation (Already Implemented)
+### Implementation Status (All Complete)
 
 | Component | Status | Location |
 |-----------|--------|----------|
-| `export_year_xlsx()` | Done | `canonical_schedule_export_service.py:88-159` |
+| `export_year_xlsx()` | Done | `canonical_schedule_export_service.py:121-229` |
 | API route | Done | `export.py:268` — GET `/schedule/year/xlsx` |
-| `_copy_worksheet()` | Done | `canonical_schedule_export_service.py:161-196` |
-| Phantom columns (stub blocks) | Done | `canonical_schedule_export_service.py:198-217` |
+| `_copy_worksheet()` | Done | `canonical_schedule_export_service.py:231-270` |
+| Phantom columns (stub blocks) | Done | `canonical_schedule_export_service.py:272-291` |
 | `__SYS_META__` + `__REF__` | Done | WP-1 metadata (committed `d70a1444`) |
 | Parent/child batch import | Done | `import_staging.py:112-157`, `import_tasks.py` |
 | Longitudinal validator | Done | `longitudinal_validator.py` (NF caps + clinic mins) |
 | Architecture doc | Done | `annual-workbook-architecture.md` (354 lines) |
-| Template file | **Missing** | `backend/data/BlockTemplate2_Official.xlsx` not on disk |
+| Template file | Done | `backend/data/BlockTemplate2_Official.xlsx` (16 KB) |
+| 50 faculty rows (31-80) | Done | `xml_to_xlsx_converter.py:197-198` |
+| Row hiding for unused rows | Done | `canonical_schedule_export_service.py:182-187` |
+| Summary formulas BJ-BR | Done | `xml_to_xlsx_converter.py:599-627` |
+| YTD_SUMMARY sheet | Done | `canonical_schedule_export_service.py:293-354` |
+| Faculty union across blocks | Done | PR #1219 — was using last block only |
+| YTD_SUMMARY tests (7) | Done | `test_canonical_schedule_export.py` |
 
 ### 3A: Expand Template to 50 Pre-Formatted Faculty Rows (Gap #5)
 
