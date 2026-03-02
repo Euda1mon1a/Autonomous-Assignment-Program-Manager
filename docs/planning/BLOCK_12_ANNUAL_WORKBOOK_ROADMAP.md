@@ -49,6 +49,17 @@ These PRs landed in the last 48 hours and directly affect the solve/export pipel
 - `validate_identifier()` and `validate_search_path()` for all dynamic SQL
 - Not directly relevant to solve but important for any raw SQL queries
 
+### PR #1217 — Call Equity Tuning + Archetype Enforcement (Mar 2, squash merge)
+
+**Files:** `engine.py`, `overnight_call.py`, `manager.py`, `scripts/archetype-check.py`
+
+- **OvernightCallGenerationConstraint revived** — `resident_idx` bug (always returned None for faculty) fixed to use `call_eligible_faculty_idx`. Rewrote `add_to_cpsat()` to block ineligible faculty's existing solver variables instead of creating duplicate ones.
+- **Availability-normalized prior calls** — YTD call totals scaled by `elapsed_blocks / available_blocks` so deployed faculty aren't penalized. MAD equity now compares call *rates*.
+- **Equity weight rebalance** — Sunday 10→50, Weekday 5→25 to compete with `CLINIC_MIN_PENALTY=200`.
+- **Codex P1 fixes** — `_get_call_eligible_faculty()` changed from "any overlap excludes" to "full-block coverage only". FMIT pair filtering made date-scoped (was person-scoped).
+- **Mind Flayer's Probe** — AST-based pre-commit hook (`scripts/archetype-check.py`) catches constraint anti-patterns. 4 rules (ARCH-001 through ARCH-004). Immediately found a live bug in `integrated_workload.py`.
+- **Post-fix distribution:** Block 12 YTD range 8-11 across 9 available faculty. Deployed faculty correctly at 0.
+
 ### PR #1198 — 27,598 Lines Dead Code Removed (Feb 26)
 
 - Removed: CQRS, event sourcing, SAML, OAuth2 PKCE, sharding, partitioning, outbox, key management
@@ -58,6 +69,26 @@ These PRs landed in the last 48 hours and directly affect the solve/export pipel
 
 - Frontend upgrade — not relevant to backend solve
 - 19 stale docs cleaned up
+
+### PR #1214 — Block 12 DB Verification Script + Faculty Constraints (Feb 28)
+
+- `scripts/scheduling/verify_block12.py` — 10-check DB verification (psycopg2, read-only)
+- Faculty constraint fixes for verification infrastructure
+
+### PR #1215 — Re-enable 17 Constraints + Soft FacultySupervision + CALL/LEC Pipeline (Feb 28)
+
+- 17 of 18 disabled policy-hard constraints re-enabled (all OPTIMAL)
+- `FacultySupervision` converted hard→soft with deficit penalty (weight 10,000)
+- `_sync_call_to_half_day()` — CALL HDA pipeline sync (Step 6.6a)
+- `_load_faculty_wednesday_pm_lec()` — preloader LEC injection for Wed PM
+- 41 of 50 constraints now enabled
+
+### PR #1216 — PCAT/DO Integrity Fix + Faculty HDA Gap Backfill (Mar 1)
+
+- **Stale CALL preload overwrite:** `_sync_call_pcat_do_to_half_day` now detects and overwrites stale CALL preloads from previous generations (scoped to current block range per Codex P1 cross-block guard)
+- **Faculty gap backfill:** `_backfill_faculty_gaps` fills empty faculty slots with OFF (weekday) or W (weekend) — addresses solver leaving all 4 binary vars = 0
+- 10 tests in `test_sync_call_to_half_day.py`, including cross-block preservation test
+- Regeneration: OPTIMAL 6.0s, 306 assignments, DB 10/10, XLSX 8/8
 
 ### Key Architecture References (Updated)
 
@@ -71,13 +102,15 @@ These PRs landed in the last 48 hours and directly affect the solve/export pipel
 
 ---
 
-## Remediation Status (Verified Feb 28, 2026 — DB-confirmed, 10/10 checks passed)
+## Remediation Status (Verified Mar 1, 2026 — DB 10/10, XLSX 8/8, Visual 10/10+5/5)
 
 Cross-reference: `docs/planning/OPUS_BLOCK_12_REMEDIATION_PLAN.md` (Gemini-sourced), plan file `nested-gliding-feather.md` (Opus-sourced).
 
 **DB verification (Feb 27, PG17):** All 16 residents have 56 HDAs. All 10 core faculty have 56 HDAs. NBN constraints are valid (`min=0, max=40`). Kate Bohringer and Derrick Thiel removed from scope — neither are Block 12 participants.
 
-**Programmatic verification (Feb 28):** 10-check verification script (`scripts/scheduling/verify_block12.py`) passes 10/10. Cross-references `schedule_grid` against block_assignments, rotation_templates, faculty_weekly_templates, absences, call_assignments. Check 7 (Faculty Template Alignment) passes as WARN — 213 mismatches are a known C2 deferral (activity solver overwrites template-authoritative write-back).
+**Programmatic verification (post-PR #1216):** 10-check verification script (`scripts/scheduling/verify_block12.py`) passes 10/10. Cross-references `schedule_grid` against block_assignments, rotation_templates, faculty_weekly_templates, absences, call_assignments. Check 7 (Faculty Template Alignment) passes as WARN — 186 mismatches are a known C2 deferral (activity solver overwrites template-authoritative write-back).
+
+**XLSX verification (post-PR #1216):** 8-check XLSX↔DB comparison via `verify_block12_export.py` — 8/8 PASS, 1456 cells, 0 true mismatches. Export: `/tmp/Block12_Export_v4.0_41_Constraints.xlsx`.
 
 ### Work Stream A: Export Pipeline Fixes
 
@@ -144,7 +177,7 @@ Pipeline ran successfully — all persons have 56 HDAs. Spatial analysis via `sc
 | **1 faculty on leave** | INFO | Expected | One faculty member has 56 leave slots (full-block deployment). All LV confirmed in XLSX. |
 | **Low solver involvement** | INFO | Expected | 12/16 residents are 100% preloaded. 4 have solver fills (39-51 slots each). |
 
-### Zeroing Validation Results (Updated Feb 28)
+### Zeroing Validation Results (Updated Mar 1 — Post-PR #1216, 41-Constraint Regen)
 
 Programmatic 10-check verification via `scripts/scheduling/verify_block12.py`:
 
@@ -156,12 +189,12 @@ Programmatic 10-check verification via `scripts/scheduling/verify_block12.py`:
 | 4 | No NULL Codes | **PASS** | 0 NULL am/pm codes |
 | 5 | Weekend Handling | **PASS** | 208 weekend rows, 0 violations |
 | 6 | Resident Rotation Alignment | **PASS** | 320 workday slots, 0 mismatches |
-| 7 | Faculty Template Alignment | **WARN** | 213 mismatches (67 within-category, 146 cross-category, 120 overrides). Known C2 deferral — activity solver overwrites template-authoritative write-back. |
+| 7 | Faculty Template Alignment | **WARN** | 186 mismatches (C2 deferral). Down from 213 pre-PR #1216. |
 | 8 | Absence Alignment | **PASS** | 13 absences, 61 workdays, 0 violations |
-| 9 | Call Chain Integrity | **PASS** | 18 calls, 13 chains verified (8 with FMIT/leave/weekend override) |
+| 9 | Call Chain Integrity | **PASS** | 24 calls, 23 chains verified (8 with FMIT/leave/weekend override). Check 9 WARN: 1 call chain where LEC overrides DO on Wed PM (expected). |
 | 10 | Source Consistency | **PASS** | 100 inpatient workday slots, all source=preload |
 
-### XLSX Export Verification (Feb 28)
+### XLSX Export Verification (Updated Mar 1 — Post-PR #1216)
 
 Programmatic 8-check XLSX↔DB comparison via `scripts/scheduling/verify_block12_export.py`:
 
@@ -175,6 +208,8 @@ Programmatic 8-check XLSX↔DB comparison via `scripts/scheduling/verify_block12
 | 6 | No empty cells | **PASS** | 0 empty cells |
 | 7 | Row ordering | **PASS** | PGY desc + alpha (residents), alpha (faculty) |
 | 8 | Weekend codes | **PASS** | 416 weekend slots valid |
+
+**Current XLSX:** `/tmp/Block12_Export_v4.0_41_Constraints.xlsx` (post-41-constraint regen with PR #1216 pipeline fixes)
 
 ### Visual Verification (Feb 28 — Claude for Excel)
 
@@ -190,14 +225,17 @@ Programmatic 8-check XLSX↔DB comparison via `scripts/scheduling/verify_block12
 
 **See:** `docs/planning/SCHEDULE_GRID_ZEROING_PLAN.md` for full methodology, `docs/architecture/DOW_CONVENTION_BUG.md` for DOW issue scope.
 
-### Critical Path (Updated Feb 28)
+### Critical Path (Updated Mar 1 — Post-PR #1216)
 
 ```
 Steps 0-5: DONE ──────────────┐
-D5: 10/10 verification ───────┤──→ DB quality confirmed
-Quality fixes: DONE ───────────┤      ├── Weekend violations: 0
+D5: 10/10 verification ───────┤──→ DB quality confirmed (41 constraints)
+Quality fixes: ALL DONE ───────┤      ├── Weekend violations: 0
 Template write-back: DONE ─────┤      ├── Rotation alignment: 0 mismatches
-DOW convention: FIXED ─────────┘      └── Faculty templates: WARN (C2 deferred)
+DOW convention: FIXED ─────────┤      ├── Faculty templates: WARN (C2 deferred)
+41 constraints: OPTIMAL ───────┤      ├── Wed PM LEC: FIXED (preloader)
+PR #1215 + #1216: MERGED ──────┘      ├── CALL tracking: FIXED (pipeline sync)
+                                      └── PCAT/DO integrity: FIXED (stale preload)
                                     │
                               ┌─────┘
                               ▼
@@ -207,8 +245,7 @@ DOW convention: FIXED ─────────┘      └── Faculty temp
                               │
                         Step 8: Export annual workbook   ← DONE (single-block)
                               │     1456 cells, 0 mismatches (DB+XLSX+Visual)
-                              │     10/10 visual, 10/10 solver spot-check
-                              │     ⚠ Wed PM LEC conflict (HIGH, new)
+                              │     v4.0 export "much closer to reality"
                               │     Full year export: NEXT
                               │
                         Step 9: Hand-jam round-trip test
@@ -1163,6 +1200,12 @@ After the initial Block 12 solve + export (commit `e937e7fa`), a visual review o
 | **P5** | Add resident call generation or manual entry | DEFERRED |
 
 **Constraint re-enablement (PR #1215):** Stress-tested all 18 disabled policy-hard constraints individually against Block 12. 16/17 OPTIMAL, FacultySupervision INFEASIBLE. Converted FacultySupervision to soft with deficit variable + penalty (weight 10,000). All 17 now OPTIMAL individually and together (7.0s, 306 assignments). Also added CALL HDA pipeline sync and Wednesday PM LEC preloader.
+
+**Pipeline integrity fixes (PR #1216):** Two bugs found during 41-constraint regeneration:
+1. **Stale CALL preload blocking PCAT/DO:** When a call date moved between generations, old CALL preloads on next-day PM blocked DO creation, then got cleaned up by stale CALL cleanup, leaving a validation gap. Fix: `_sync_call_pcat_do_to_half_day` now overwrites stale CALL-source preloads with DO (scoped to current block range per Codex P1 cross-block guard).
+2. **Faculty HDA gaps:** Solver left some faculty slots unassigned (all 4 binary variables = 0 when constraints restricted all types). Fix: `_backfill_faculty_gaps` fills empty faculty slots with OFF (weekday) or W (weekend). Pipeline Step 7.5a.
+
+**Post-PR #1216 regeneration:** Block 12 OPTIMAL in 6.0s, 306 assignments. DB 10/10 (Check 7 WARN: 186 mismatches, C2 deferral). XLSX 8/8 (0 true mismatches). User-verified export "much closer to reality."
 
 ### 11k: Future Work — Faculty Full-Day Preference (Deferred)
 

@@ -158,6 +158,7 @@ No migration needed — metadata-only alignment.
 | 2B: DeptChiefWednesday registration | **DONE** — registered, disabled by default, enabled for faculty profile |
 | 2C: `profile` parameter | **DONE** — `create_default(profile="resident"\|"faculty")` implemented |
 | 2D: DOW convention fix | **DONE** — PR #1210 (15 files, 67 tests) |
+| 2E: Call equity tuning | **DONE** — PR #1217. Equity weights Sunday 10→50, Weekday 5→25 to compete with `CLINIC_MIN_PENALTY=200`. Revived dead `OvernightCallGenerationConstraint` (`resident_idx` bug). Added availability-normalized `prior_calls`. |
 
 ### Phase 2 Tests
 

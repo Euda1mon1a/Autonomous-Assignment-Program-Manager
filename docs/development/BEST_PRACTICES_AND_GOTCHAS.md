@@ -1,7 +1,7 @@
 # Best Practices & Gotchas
 
 > **Purpose:** Prevent common bugs and headaches. Read this before starting work.
-> **Last Updated:** 2026-02-26
+> **Last Updated:** 2026-03-02
 
 ---
 
@@ -21,6 +21,7 @@
 12. [Antipatterns - Things NOT to Do](#12-antipatterns---things-not-to-do)
 13. [CI/CD in the Vibecoding Age](#13-cicd-in-the-vibecoding-age)
 14. [Block Schedule Import Workflow](#14-block-schedule-import-workflow)
+15. [Constraint Archetype Enforcement (Mind Flayer's Probe)](#15-constraint-archetype-enforcement-mind-flayers-probe)
 
 ---
 
@@ -1193,6 +1194,61 @@ Block 11 went through 7 rounds. Key lesson: Codex false positives happen (e.g., 
 - [ ] Linting passes: `ruff check` and `npm run lint`
 - [ ] No `console.log` left in production code
 - [ ] Error handling doesn't leak sensitive info
+
+---
+
+## 15. Constraint Archetype Enforcement (Mind Flayer's Probe)
+
+> **Added:** 2026-03-02, PR #1217
+> **Pre-commit hook:** `scripts/archetype-check.py`
+> **Archetype reference:** `.claude/archetypes/constraint.py`
+
+### Why This Exists
+
+LLM-generated constraint code introduced a dead-code bug where `context.resident_idx.get(faculty_uuid)` was used in a faculty constraint. Faculty UUIDs are never in `resident_idx` — the method always returned `None`, making the entire `OvernightCallGenerationConstraint` inert. The code passed linting, type checking, and even a Codex review. No existing tool catches semantic correctness at this level.
+
+### The 4 Rules
+
+| Rule | Name | Severity | Anti-Pattern |
+|------|------|----------|-------------|
+| ARCH-001 | Phantasm | **error** | `context.resident_idx` in a call-related constraint. Faculty UUIDs aren't in `resident_idx`. |
+| ARCH-002 | Lich's Trap | **error** | `variables["call_assignments"] = {}` — erases solver-created variables. Constraints must READ, not initialize. |
+| ARCH-003 | Doppelganger | **error** | `for x in context.faculty:` in a call constraint. Must use `call_eligible_faculty` (excludes adjuncts). |
+| ARCH-004 | Silent Killer | **warning** | `add_to_cpsat()` with no `logger.info()` call. 0 constraints added = dead code, but invisible without logging. |
+
+### How It Works
+
+The checker uses Python's `ast` module to parse constraint files and classify each class:
+- A class is **call-related** if it has `constraint_type=ConstraintType.CALL` OR accesses `variables["call_assignments"]`
+- ARCH-001/003 only fire on call-related classes, preventing false positives on `protected_slot.py`, `resilience.py`, etc. that correctly use `resident_idx`
+
+### Suppressing False Positives
+
+Add `# @archetype-ok` on the flagged line:
+
+```python
+f_i = context.resident_idx.get(faculty.id)  # @archetype-ok — uses shared variable space
+```
+
+### Before Writing a New Constraint
+
+Read `.claude/archetypes/constraint.py` — it contains annotated `# INVARIANT:` comments showing the correct patterns for:
+- Faculty index lookups
+- Reading solver variables
+- Constraint count logging
+
+### Running Manually
+
+```bash
+# Check all constraint files
+python3 scripts/archetype-check.py
+
+# Check specific file
+python3 scripts/archetype-check.py backend/app/scheduling/constraints/my_constraint.py
+
+# Pre-commit mode (staged files only)
+python3 scripts/archetype-check.py --staged
+```
 
 ---
 
