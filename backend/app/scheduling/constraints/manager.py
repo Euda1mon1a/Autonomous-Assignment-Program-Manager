@@ -426,12 +426,13 @@ class ConstraintManager:
         manager.add(FacultyClinicEquitySoftConstraint(weight=15.0))
 
         # Block 10 soft constraints - call equity (weight hierarchy documented)
-        # Weight order: Sunday (10) > Holiday (7) > CallSpacing (8) > Weekday (5)
+        # Weight order: Sunday (50) > Weekday (25) > CallSpacing (8) > Holiday (7)
+        # Raised to compete with CLINIC_MIN_PENALTY=200 in solver
         # Preferences: Tuesday (2) > FacultyCallPreference (1)
-        manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(SundayCallEquityConstraint(weight=50.0))
         manager.add(HolidayCallEquityConstraint(weight=7.0))
         manager.add(CallSpacingConstraint(weight=8.0))
-        manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(WeekdayCallEquityConstraint(weight=25.0))
         manager.add(FacultyCallPreferenceConstraint(weight=1.0))
         manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
         manager.add(CallNightBeforeLeaveConstraint(weight=2.0))
@@ -479,10 +480,10 @@ class ConstraintManager:
         manager.add(CallAvailabilityConstraint())
 
         # Call equity soft constraints (Block 10 weights)
-        manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(SundayCallEquityConstraint(weight=50.0))
         manager.add(HolidayCallEquityConstraint(weight=7.0))
         manager.add(CallSpacingConstraint(weight=8.0))
-        manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(WeekdayCallEquityConstraint(weight=25.0))
         manager.add(FacultyCallPreferenceConstraint(weight=1.0))
         manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
 
@@ -601,10 +602,10 @@ class ConstraintManager:
         manager.add(FacultyClinicEquitySoftConstraint(weight=15.0))
 
         # Block 10 soft constraints - call equity
-        manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(SundayCallEquityConstraint(weight=50.0))
         manager.add(HolidayCallEquityConstraint(weight=7.0))
         manager.add(CallSpacingConstraint(weight=8.0))
-        manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(WeekdayCallEquityConstraint(weight=25.0))
         manager.add(FacultyCallPreferenceConstraint(weight=1.0))
         manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
 

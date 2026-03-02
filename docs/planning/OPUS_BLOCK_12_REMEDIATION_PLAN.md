@@ -96,14 +96,16 @@
 *   **Remaining:** 10 "orphaned" CALL HDAs from `resident_call_preloads` (Chief Resident manual entries) without matching `call_assignments`. This is the inherent two-source pattern, not a bug — `resident_call_preloads` is a separate data source from solver `call_assignments`.
 *   **Edge cases:** (a) Consecutive-night calls: second call's CALL HDA correctly replaces first's DO. (b) Wed PM: CALL overrides LEC when solver assigns call on Wednesday. (c) One faculty Jun 3 call: cross-block boundary (Jun 4 = Block 13), no PCAT/DO expected.
 
-### 7. Call Distribution — `PARTIALLY FIXED` (MEDIUM)
-*   **Issue:** Distribution is reasonable but not MAD-optimized. Equity shows 1-7 overnight calls across 10 faculty.
-*   **Context:** MAD equity (PR #1199) is implemented. Re-generating with the MAD constraint active will improve distribution.
+### 7. Call Distribution — `FIXED + VERIFIED` (MEDIUM)
+*   **Issue:** Distribution was uneven (0-5 B12 calls per faculty) despite MAD equity constraints.
 *   **Fix (Mar 1 — call eligibility + FMIT absence):** Two bugs fixed:
-    1. **`_get_call_eligible_faculty()` didn't check absences**: Faculty with blocking absences (deployment, mat/pat leave) were still eligible for solver-generated calls. Fixed by querying `absences` table for blocking overlaps and excluding those faculty. Tests: 8 unit tests in `tests/scheduling/test_call_eligibility_absence.py`.
-    2. **FMIT call preservation ignored absences**: `_create_call_assignments_from_result()` preserved FMIT Fri/Sat calls even for deployed faculty (deployed faculty member had 2 FMIT-preserved calls during deployment). Fixed by filtering `fmit_call_pairs` against blocking absences before the preservation step.
-*   **Post-fix (Mar 1):** Deployed faculty 2→0 calls. 26 calls across 8 available faculty (range 2-5). One faculty at 0 calls despite being available — MAD equity decision (11 YTD). MAD tuning deferred.
-*   **Action:** MAD constraint tuning to improve within-block equity balance.
+    1. **`_get_call_eligible_faculty()` didn't check absences**: Fixed by querying `absences` table for blocking overlaps. Tests: 8 unit tests in `tests/scheduling/test_call_eligibility_absence.py`.
+    2. **FMIT call preservation ignored absences**: Fixed by filtering `fmit_call_pairs` against blocking absences.
+*   **Fix (Mar 1 — equity tuning, 3 parts):**
+    1. **`OvernightCallGenerationConstraint` dead code**: `_get_eligible_faculty()` used `context.resident_idx` (faculty UUIDs never in resident_idx → always empty). Fixed to use `context.call_eligible_faculty_idx`. Rewrote `add_to_cpsat()` to block ineligible faculty's existing solver variables instead of creating new ones. Tests: 8 unit tests in `tests/scheduling/test_overnight_call_fmit_blocking.py`.
+    2. **Availability-normalized prior_calls**: Raw YTD totals didn't account for deployment. Added normalization that scales prior_calls by (elapsed_blocks / available_blocks) so deployed faculty aren't penalized. Tests: 7 unit tests in `tests/scheduling/test_prior_calls_normalization.py`.
+    3. **Equity weight rebalance**: Sunday 10→50, Weekday 5→25 to compete with `CLINIC_MIN_PENALTY=200` in solver.
+*   **Post-fix distribution (Mar 1):** Deployed faculty correctly at 0. YTD totals (excluding deployed): range 8-11 calls across 9 available faculty. Block 12: 26 calls, range 2-6 within block but equalized over full academic year.
 
 ### 8. Zeroing Validation — `DONE (DB + XLSX + Visual)` — Updated Feb 28 Post-41-Constraint-Regen
 *   **DB verification (10-check):** `scripts/scheduling/verify_block12.py` — **10/10 passed**. Check 7 WARN (186 template mismatches, C2 deferral). 24 calls, 23 chains verified (8 with FMIT/leave/weekend override).

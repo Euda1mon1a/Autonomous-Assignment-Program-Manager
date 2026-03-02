@@ -73,6 +73,7 @@ from app.models.schedule_draft import DraftSourceType
 from app.models.person_academic_year import PersonAcademicYear
 from app.utils.academic_blocks import (
     get_academic_year_for_date,
+    get_block_dates,
     get_block_number_for_date,
 )
 
@@ -1047,6 +1048,54 @@ class SchedulingEngine:
                 if pid not in prior_calls:
                     prior_calls[pid] = {}
                 prior_calls[pid][key] = row.ytd_count or 0
+
+        # Normalize prior_calls by availability window.
+        # Scale so MAD equity compares call RATES, not raw totals.
+        # Faculty deployed half the year shouldn't be penalized for fewer calls.
+        if (
+            prior_calls
+            and call_eligible
+            and block_number is not None
+            and academic_year is not None
+        ):
+            elapsed_blocks = max(block_number, 1)
+
+            for fac in call_eligible:
+                fid = fac.id
+                if fid not in prior_calls:
+                    continue
+
+                blocked_count = 0
+                for bn in range(1, block_number + 1):
+                    bd = get_block_dates(bn, academic_year)
+                    has_blocking = (
+                        self.db.query(Absence.id)
+                        .filter(
+                            Absence.person_id == fid,
+                            Absence.is_blocking == True,  # noqa: E712
+                            Absence.start_date <= bd.end_date,
+                            Absence.end_date >= bd.start_date,
+                        )
+                        .first()
+                    ) is not None
+                    if has_blocking:
+                        blocked_count += 1
+
+                available = max(elapsed_blocks - blocked_count, 1)
+                if available < elapsed_blocks:
+                    scale = elapsed_blocks / available
+                    for call_type in prior_calls[fid]:
+                        prior_calls[fid][call_type] = int(
+                            round(prior_calls[fid][call_type] * scale)
+                        )
+                    logger.info(
+                        "Call equity normalization: {} available {}/{} blocks, "
+                        "scaled prior_calls by {:.1f}x",
+                        fac.name,
+                        available,
+                        elapsed_blocks,
+                        scale,
+                    )
 
         context = SchedulingContext(
             residents=residents,
