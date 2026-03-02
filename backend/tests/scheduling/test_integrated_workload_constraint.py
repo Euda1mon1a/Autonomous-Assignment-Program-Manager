@@ -374,3 +374,121 @@ class TestCalculateWorkloadReport:
         ctx = _context(faculty=[fac])
         with pytest.raises(TypeError, match="details"):
             calculate_workload_report([], ctx)
+
+
+# ==================== add_to_cpsat Solver Variable Tests ====================
+
+
+class TestAddToCpsat:
+    """Test that add_to_cpsat uses correct index dicts after ARCH-001 fix.
+
+    Before the fix, add_to_cpsat used context.resident_idx for faculty lookups,
+    which always returned None (faculty UUIDs never appear in resident_idx),
+    making the entire method inert dead code.
+    """
+
+    def test_creates_workload_vars_with_correct_indices(self):
+        """With call_eligible_faculty_idx populated, workload vars are created."""
+        from ortools.sat.python import cp_model
+
+        model = cp_model.CpModel()
+
+        fac_a = _person(name="Dr. A", faculty_role="core")
+        fac_b = _person(name="Dr. B", faculty_role="core")
+        block = _block()
+
+        ctx = _context(faculty=[fac_a, fac_b], blocks=[block])
+        # Context builds faculty_idx and block_idx automatically
+        assert fac_a.id in ctx.faculty_idx
+        assert fac_b.id in ctx.faculty_idx
+
+        # Populate call_eligible_faculty_idx (mimics engine.py)
+        ctx.call_eligible_faculty = [fac_a, fac_b]
+        ctx.call_eligible_faculty_idx = {fac_a.id: 0, fac_b.id: 1}
+
+        b_i = ctx.block_idx[block.id]
+
+        # Create call variables matching solver's keying scheme
+        call_a = model.NewBoolVar("call_0_0")
+        call_b = model.NewBoolVar("call_1_0")
+        call_vars = {
+            (0, b_i, "overnight"): call_a,
+            (1, b_i, "overnight"): call_b,
+        }
+
+        variables = {"call_assignments": call_vars, "objective_terms": []}
+
+        constraint = IntegratedWorkloadConstraint()
+        constraint.add_to_cpsat(model, variables, ctx)
+
+        # Verify objective terms were added (constraint is active)
+        assert len(variables["objective_terms"]) == 1, (
+            "Expected 1 objective term (max_workload) but got "
+            f"{len(variables['objective_terms'])}. Constraint may be inert."
+        )
+
+    def test_no_faculty_is_noop(self):
+        """No faculty -> no objective terms added."""
+        from ortools.sat.python import cp_model
+
+        model = cp_model.CpModel()
+        ctx = _context()
+        variables = {"call_assignments": {}, "objective_terms": []}
+
+        constraint = IntegratedWorkloadConstraint()
+        constraint.add_to_cpsat(model, variables, ctx)
+
+        assert len(variables["objective_terms"]) == 0
+
+    def test_titled_faculty_excluded_by_default(self):
+        """PD/APD faculty are excluded from workload balancing by default."""
+        from ortools.sat.python import cp_model
+
+        model = cp_model.CpModel()
+
+        fac_pd = _person(name="Dr. PD", faculty_role="pd")
+        block = _block()
+
+        ctx = _context(faculty=[fac_pd], blocks=[block])
+        ctx.call_eligible_faculty = [fac_pd]
+        ctx.call_eligible_faculty_idx = {fac_pd.id: 0}
+
+        variables = {"call_assignments": {}, "objective_terms": []}
+
+        constraint = IntegratedWorkloadConstraint()
+        constraint.add_to_cpsat(model, variables, ctx)
+
+        # PD is excluded, so no workload vars created
+        assert len(variables["objective_terms"]) == 0
+
+    def test_uses_faculty_assignments_not_resident_assignments(self):
+        """Constraint reads faculty_assignments, not assignments (resident vars)."""
+        from ortools.sat.python import cp_model
+
+        model = cp_model.CpModel()
+
+        fac = _person(name="Dr. A", faculty_role="core")
+        block = _block()
+
+        ctx = _context(faculty=[fac], blocks=[block])
+        ctx.call_eligible_faculty = [fac]
+        ctx.call_eligible_faculty_idx = {fac.id: 0}
+
+        b_i = ctx.block_idx[block.id]
+        fa_i = ctx.faculty_idx[fac.id]
+
+        # Create a faculty_assignment var (keyed by faculty_idx)
+        fac_assign = model.NewBoolVar("fac_assign_0_0")
+
+        variables = {
+            "call_assignments": {},
+            "faculty_assignments": {(fa_i, b_i): fac_assign},
+            "assignments": {},  # resident vars (should NOT be read)
+            "objective_terms": [],
+        }
+
+        constraint = IntegratedWorkloadConstraint()
+        constraint.add_to_cpsat(model, variables, ctx)
+
+        # Constraint should be active because faculty_assignments has data
+        assert len(variables["objective_terms"]) == 1
