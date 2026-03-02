@@ -3533,7 +3533,9 @@ class SchedulingEngine:
         existing_keys = {(p, d, t) for p, d, t in existing}
 
         created = 0
+        gaps_per_faculty: dict[str, int] = {}
         for fac in core_faculty:
+            fac_gaps = 0
             for block in blocks:
                 key = (fac.id, block.date, block.time_of_day)
                 if key not in existing_keys:
@@ -3548,13 +3550,36 @@ class SchedulingEngine:
                         )
                     )
                     created += 1
+                    fac_gaps += 1
+            if fac_gaps > 0:
+                gaps_per_faculty[fac.name] = fac_gaps
 
         if created:
             self.db.flush()
             logger.info(
-                f"Backfilled {created} faculty gap slots "
-                f"(OFF weekday / W weekend) for {len(core_faculty)} faculty"
+                "Backfilled %d faculty gap slots "
+                "(OFF weekday / W weekend) for %d faculty",
+                created,
+                len(core_faculty),
             )
+
+        # ARCH-005: Flag over-constrained faculty (empty feasible set detection)
+        # If a faculty member has gaps in >50% of their slots, constraint
+        # interactions are likely blocking all valid activity types.
+        total_slots = len(blocks)
+        if total_slots > 0:
+            for name, gap_count in gaps_per_faculty.items():
+                gap_pct = gap_count / total_slots * 100
+                if gap_pct > 50:
+                    logger.error(
+                        "ARCH-005: %s has %d/%d slots (%.0f%%) backfilled — "
+                        "constraint interactions may be over-constraining. "
+                        "Review enabled constraints for conflicting rules.",
+                        name,
+                        gap_count,
+                        total_slots,
+                        gap_pct,
+                    )
 
     def _apply_faculty_template_correction(
         self,
