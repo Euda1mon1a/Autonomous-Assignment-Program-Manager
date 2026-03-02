@@ -343,6 +343,27 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 17b: Constraint Archetype Enforcement (Mind Flayer's Probe)
+  # ============================================================================
+
+  # AST-based archetype check for scheduling constraints.
+  # Catches anti-patterns that have caused real bugs:
+  # - ARCH-001: resident_idx in call constraints (dead code)
+  # - ARCH-002: Variable dict initialization (solver owns creation)
+  # - ARCH-003: Wrong faculty source for call constraints
+  # - ARCH-004: Missing constraint count logging (warning only)
+  # Named after the D&D Mind Flayer whose telepathic probe reads code's mind.
+  - repo: local
+    hooks:
+      - id: archetype-check
+        name: "Mind Flayer's Probe (Constraint Archetype Check)"
+        entry: python3 scripts/archetype-check.py --staged
+        language: system
+        pass_filenames: false
+        files: ^backend/app/scheduling/constraints/.*\.py$
+        stages: [pre-commit]
+
+  # ============================================================================
   # PHASE 18: MCP Tool Validation (Session 084 - SCHEDULER Domain)
   # ============================================================================
 

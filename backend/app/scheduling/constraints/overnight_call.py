@@ -98,7 +98,12 @@ class OvernightCallGenerationConstraint(HardConstraint):
         """
         eligible = []
 
-        for faculty in context.faculty:
+        call_eligible = context.call_eligible_faculty or context.faculty
+        call_idx = context.call_eligible_faculty_idx or {
+            fac.id: i for i, fac in enumerate(call_eligible)
+        }
+
+        for faculty in call_eligible:
             # Rule 1: Exclude ADJUNCT faculty
             if (
                 hasattr(faculty, "role_enum")
@@ -108,7 +113,7 @@ class OvernightCallGenerationConstraint(HardConstraint):
             if hasattr(faculty, "faculty_role") and faculty.faculty_role == "adjunct":
                 continue
 
-            f_i = context.resident_idx.get(faculty.id)
+            f_i = call_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -203,63 +208,58 @@ class OvernightCallGenerationConstraint(HardConstraint):
         context: SchedulingContext,
     ) -> None:
         """
-        Add overnight call generation constraints to CP-SAT model.
+        Add per-night FMIT/absence blocking to existing solver call variables.
 
-        Creates decision variables and constraints for call assignments.
+        The solver (solvers.py) creates call BoolVars for ALL call-eligible
+        faculty on ALL Sun-Thu nights. This constraint blocks ineligible
+        faculty (FMIT week, post-FMIT Sunday, absences) by forcing their
+        existing call vars to 0.
         """
-        # Initialize call_assignments dict if not present
-        if "call_assignments" not in variables:
-            variables["call_assignments"] = {}
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return  # No solver-created variables to constrain
 
-        call_vars = variables["call_assignments"]
         fmit_weeks = self._identify_fmit_weeks(context)
 
-        # Get unique dates from blocks
-        dates = sorted(set(b.date for b in context.blocks))
-
-        # Get overnight call nights
-        call_nights = [d for d in dates if is_overnight_call_night(d)]
-
-        if not call_nights:
+        call_eligible = context.call_eligible_faculty or context.faculty
+        if not call_eligible:
             return
 
-        for target_date in call_nights:
+        # Get unique dates from blocks
+        dates_processed = set()
+        blocked_count = 0
+
+        for block in context.blocks:
+            if block.date in dates_processed:
+                continue
+            if not is_overnight_call_night(block.date):
+                continue
+            dates_processed.add(block.date)
+
+            target_date = block.date
+
             # Get eligible faculty for this night
             eligible = self._get_eligible_faculty(context, target_date, fmit_weeks)
+            eligible_f_is = {f_i for _, f_i in eligible}
 
-            if not eligible:
-                logger.warning(
-                    f"No eligible faculty for overnight call on {target_date}"
-                )
-                continue
-
-            # Find block index for this date (use AM block as reference)
+            # Find the b_i used by the solver for this date
             b_i = None
-            for block in context.blocks:
-                if block.date == target_date and block.time_of_day == "AM":
-                    b_i = context.block_idx.get(block.id)
+            for b in context.blocks:
+                if b.date == target_date:
+                    b_i = context.block_idx.get(b.id)
                     break
-
-            if b_i is None:
-                # Try any block on this date if no AM block found
-                for block in context.blocks:
-                    if block.date == target_date:
-                        b_i = context.block_idx.get(block.id)
-                        break
-
             if b_i is None:
                 continue
 
-            # Create decision variables for each eligible faculty
-            night_vars = []
-            for faculty, f_i in eligible:
-                var = model.NewBoolVar(f"call_{f_i}_{target_date}")
-                call_vars[(f_i, b_i, "overnight")] = var
-                night_vars.append(var)
+            # Force ineligible faculty's call vars to 0 for this night
+            for f_i in range(len(call_eligible)):
+                key = (f_i, b_i, "overnight")
+                if f_i not in eligible_f_is and key in call_vars:
+                    model.Add(call_vars[key] == 0)
+                    blocked_count += 1
 
-            # Constraint: Exactly one faculty takes call each night
-            if night_vars:
-                model.Add(sum(night_vars) == 1)
+        if blocked_count:
+            logger.info(f"Blocked {blocked_count} ineligible call slots (FMIT/absence)")
 
     def add_to_pulp(
         self,
@@ -267,58 +267,46 @@ class OvernightCallGenerationConstraint(HardConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Add overnight call generation constraints to PuLP model."""
-        import pulp
-
-        if "call_assignments" not in variables:
-            variables["call_assignments"] = {}
-
-        call_vars = variables["call_assignments"]
-        fmit_weeks = self._identify_fmit_weeks(context)
-
-        dates = sorted(set(b.date for b in context.blocks))
-        call_nights = [d for d in dates if is_overnight_call_night(d)]
-
-        if not call_nights:
+        """Add per-night FMIT/absence blocking to existing PuLP call variables."""
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
             return
 
-        constraint_count = 0
-        for target_date in call_nights:
-            eligible = self._get_eligible_faculty(context, target_date, fmit_weeks)
+        fmit_weeks = self._identify_fmit_weeks(context)
+        call_eligible = context.call_eligible_faculty or context.faculty
+        if not call_eligible:
+            return
 
-            if not eligible:
+        dates_processed = set()
+        blocked_count = 0
+
+        for block in context.blocks:
+            if block.date in dates_processed:
                 continue
+            if not is_overnight_call_night(block.date):
+                continue
+            dates_processed.add(block.date)
+
+            target_date = block.date
+            eligible = self._get_eligible_faculty(context, target_date, fmit_weeks)
+            eligible_f_is = {f_i for _, f_i in eligible}
 
             b_i = None
-            for block in context.blocks:
-                if block.date == target_date and block.time_of_day == "AM":
-                    b_i = context.block_idx.get(block.id)
+            for b in context.blocks:
+                if b.date == target_date:
+                    b_i = context.block_idx.get(b.id)
                     break
-
-            if b_i is None:
-                for block in context.blocks:
-                    if block.date == target_date:
-                        b_i = context.block_idx.get(block.id)
-                        break
-
             if b_i is None:
                 continue
 
-            night_vars = []
-            for faculty, f_i in eligible:
-                var = pulp.LpVariable(
-                    f"call_{f_i}_{target_date}",
-                    cat=pulp.LpBinary,
-                )
-                call_vars[(f_i, b_i, "overnight")] = var
-                night_vars.append(var)
+            for f_i in range(len(call_eligible)):
+                key = (f_i, b_i, "overnight")
+                if f_i not in eligible_f_is and key in call_vars:
+                    model += (call_vars[key] == 0, f"block_call_{f_i}_{target_date}")
+                    blocked_count += 1
 
-            if night_vars:
-                model += (
-                    pulp.lpSum(night_vars) == 1,
-                    f"one_call_per_night_{constraint_count}",
-                )
-                constraint_count += 1
+        if blocked_count:
+            logger.info(f"Blocked {blocked_count} ineligible call slots (FMIT/absence)")
 
     def validate(
         self,

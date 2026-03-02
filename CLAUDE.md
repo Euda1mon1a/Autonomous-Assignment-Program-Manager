@@ -163,6 +163,18 @@ type SwapType = 'oneToOne' | 'absorb';
 
 **Enforcement:** Pre-commit hook `scripts/gorgons-gaze.sh` blocks commits with camelCase enum values. Suppress false positives with `// @enum-ok` or `// @gorgon-ok` comment.
 
+### Constraint Archetype Enforcement (Mind Flayer's Probe)
+
+**Before writing a new scheduling constraint:** Read `.claude/archetypes/constraint.py` for the correct pattern.
+
+Pre-commit hook `scripts/archetype-check.py` uses AST analysis to catch anti-patterns in `backend/app/scheduling/constraints/`:
+- **ARCH-001:** `resident_idx` in call constraints (dead code — returns None for faculty)
+- **ARCH-002:** Initializing `variables["call_assignments"]` (solver owns creation)
+- **ARCH-003:** `context.faculty` in call constraints (should be `call_eligible_faculty`)
+- **ARCH-004:** Missing logging in `add_to_cpsat()` (warning only)
+
+Suppress false positives with `# @archetype-ok` comment.
+
 ### SQLAlchemy Boolean Negation (Beholder Bane)
 
 **Use `~column` not `not column`** for SQLAlchemy boolean filters:

@@ -115,13 +115,12 @@ class TestOvernightCallInit:
 
 class TestGetEligibleFaculty:
     def test_core_faculty_eligible(self):
-        """Faculty must be in resident_idx to be eligible (solver design)."""
+        """Faculty must be in call_eligible_faculty_idx to be eligible."""
         c = OvernightCallGenerationConstraint()
         fac = _person(name="Dr. Core", faculty_role="core")
         b = _block(block_date=date(2025, 3, 3))
         ctx = _context(faculty=[fac], blocks=[b])
-        # _get_eligible_faculty uses resident_idx, not faculty_idx
-        ctx.resident_idx[fac.id] = 0
+        ctx.call_eligible_faculty_idx[fac.id] = 0
         eligible = c._get_eligible_faculty(ctx, date(2025, 3, 3), {})
         assert len(eligible) == 1
         assert eligible[0][0] is fac
@@ -152,8 +151,7 @@ class TestGetEligibleFaculty:
         fac = _person(name="Dr. FMIT")
         b = _block(block_date=date(2025, 3, 17))
         ctx = _context(faculty=[fac], blocks=[b])
-        # _get_eligible_faculty uses resident_idx, not faculty_idx
-        ctx.resident_idx[fac.id] = 0
+        ctx.call_eligible_faculty_idx[fac.id] = 0
         fmit_weeks = {fac.id: [(date(2025, 3, 7), date(2025, 3, 13))]}
         eligible = c._get_eligible_faculty(ctx, date(2025, 3, 17), fmit_weeks)
         assert len(eligible) == 1
@@ -185,8 +183,7 @@ class TestGetEligibleFaculty:
         fac = _person(name="Dr. Here")
         b = _block(block_date=date(2025, 3, 3))
         ctx = _context(faculty=[fac], blocks=[b])
-        # _get_eligible_faculty uses resident_idx, not faculty_idx
-        ctx.resident_idx[fac.id] = 0
+        ctx.call_eligible_faculty_idx[fac.id] = 0
         ctx.availability = {fac.id: {b.id: {"available": True}}}
         eligible = c._get_eligible_faculty(ctx, date(2025, 3, 3), {})
         assert len(eligible) == 1

@@ -73,6 +73,7 @@ from app.models.schedule_draft import DraftSourceType
 from app.models.person_academic_year import PersonAcademicYear
 from app.utils.academic_blocks import (
     get_academic_year_for_date,
+    get_block_dates,
     get_block_number_for_date,
 )
 
@@ -663,7 +664,7 @@ class SchedulingEngine:
                 and not create_draft
             ):
                 include_faculty_activity_solver = os.getenv(
-                    "ACTIVITY_SOLVER_INCLUDE_FACULTY", "true"
+                    "ACTIVITY_SOLVER_INCLUDE_FACULTY", "false"
                 ).strip().lower() in {"1", "true", "yes", "on"}
                 activity_solver = CPSATActivitySolver(
                     self.db,
@@ -705,6 +706,13 @@ class SchedulingEngine:
             # Fill weekday gaps with OFF, weekend gaps with W.
             if not create_draft:
                 self._backfill_faculty_gaps(faculty, blocks)
+
+            # Step 7.5b: Apply faculty template correction sweep
+            # Corrects solver-source faculty HDAs to match weekly templates.
+            # Safety net — ensures template fidelity even if upstream steps
+            # produce coarse codes (C→sm_clinic, AT→gme, OFF→template activity).
+            if not create_draft:
+                self._apply_faculty_template_correction(faculty)
 
             # Step 7.6: Convert 30% of resident clinic (C) to virtual clinic (CV)
             # PGY-3 first, then PGY-2, no PGY-1
@@ -1040,6 +1048,54 @@ class SchedulingEngine:
                 if pid not in prior_calls:
                     prior_calls[pid] = {}
                 prior_calls[pid][key] = row.ytd_count or 0
+
+        # Normalize prior_calls by availability window.
+        # Scale so MAD equity compares call RATES, not raw totals.
+        # Faculty deployed half the year shouldn't be penalized for fewer calls.
+        if (
+            prior_calls
+            and call_eligible
+            and block_number is not None
+            and academic_year is not None
+        ):
+            elapsed_blocks = max(block_number, 1)
+
+            for fac in call_eligible:
+                fid = fac.id
+                if fid not in prior_calls:
+                    continue
+
+                blocked_count = 0
+                for bn in range(1, block_number + 1):
+                    bd = get_block_dates(bn, academic_year)
+                    has_blocking = (
+                        self.db.query(Absence.id)
+                        .filter(
+                            Absence.person_id == fid,
+                            Absence.is_blocking == True,  # noqa: E712
+                            Absence.start_date <= bd.end_date,
+                            Absence.end_date >= bd.start_date,
+                        )
+                        .first()
+                    ) is not None
+                    if has_blocking:
+                        blocked_count += 1
+
+                available = max(elapsed_blocks - blocked_count, 1)
+                if available < elapsed_blocks:
+                    scale = elapsed_blocks / available
+                    for call_type in prior_calls[fid]:
+                        prior_calls[fid][call_type] = int(
+                            round(prior_calls[fid][call_type] * scale)
+                        )
+                    logger.info(
+                        "Call equity normalization: {} available {}/{} blocks, "
+                        "scaled prior_calls by {:.1f}x",
+                        fac.name,
+                        available,
+                        elapsed_blocks,
+                        scale,
+                    )
 
         context = SchedulingContext(
             residents=residents,
@@ -1490,6 +1546,47 @@ class SchedulingEngine:
                 if current.weekday() in (4, 5):
                     fmit_call_pairs.add((cast(UUID, preload.person_id), current))
                 current += timedelta(days=1)
+
+        # Exclude FMIT call pairs where the specific call DATE overlaps a
+        # blocking absence for that faculty member. Date-scoped, not
+        # person-scoped — a short absence should only remove FMIT pairs
+        # on dates it actually covers, not all pairs for that faculty.
+        if fmit_call_pairs:
+            fmit_person_ids = {pid for pid, _ in fmit_call_pairs}
+            blocking_absences = (
+                self.db.query(Absence.person_id, Absence.start_date, Absence.end_date)
+                .filter(
+                    Absence.person_id.in_(fmit_person_ids),
+                    Absence.start_date <= self.end_date,
+                    Absence.end_date >= self.start_date,
+                    Absence.is_blocking == True,  # noqa: E712
+                )
+                .all()
+            )
+            if blocking_absences:
+                # Build per-person absence intervals for date-level checks
+                from collections import defaultdict
+
+                person_absences: dict[UUID, list[tuple[date, date]]] = defaultdict(list)
+                for pid, abs_start, abs_end in blocking_absences:
+                    person_absences[pid].append((abs_start, abs_end))
+
+                before = len(fmit_call_pairs)
+                fmit_call_pairs = {
+                    (pid, d)
+                    for pid, d in fmit_call_pairs
+                    if not any(
+                        abs_start <= d <= abs_end
+                        for abs_start, abs_end in person_absences.get(pid, [])
+                    )
+                }
+                excluded = before - len(fmit_call_pairs)
+                if excluded:
+                    logger.info(
+                        "FMIT call preservation: excluded {} pairs (date-scoped "
+                        "absence overlap)",
+                        excluded,
+                    )
 
         # Clear existing call assignments for this date range to avoid conflicts,
         # but preserve FMIT Fri/Sat call preloads.
@@ -2285,16 +2382,57 @@ class SchedulingEngine:
         """
         Get faculty eligible for solver-generated overnight call.
 
-        Adjunct faculty are excluded because they are manually added to call
-        rather than auto-scheduled by the solver.
+        Excludes:
+        - Adjunct faculty (manually added to call, not solver-scheduled)
+        - Faculty with blocking absences covering the ENTIRE block date range
+          (deployment, TDY spanning the full block). Short absences within
+          the block are handled per-night by OvernightCallGenerationConstraint.
 
         Args:
             faculty: List of all faculty members
 
         Returns:
-            List of faculty eligible for overnight call (excludes adjuncts)
+            List of faculty eligible for overnight call
         """
-        return [f for f in faculty if f.faculty_role != FacultyRole.ADJUNCT.value]
+        core_faculty = [
+            f for f in faculty if f.faculty_role != FacultyRole.ADJUNCT.value
+        ]
+        if not core_faculty:
+            return []
+
+        # Only exclude faculty whose blocking absence covers the ENTIRE block.
+        # Per-night exclusion (partial absences, FMIT weeks) is handled by
+        # OvernightCallGenerationConstraint.add_to_cpsat() which forces
+        # call_vars to 0 on ineligible nights.
+        fully_absent_ids = set(
+            row[0]
+            for row in self.db.query(Absence.person_id)
+            .filter(
+                Absence.person_id.in_([f.id for f in core_faculty]),
+                Absence.start_date <= self.start_date,
+                Absence.end_date >= self.end_date,
+                Absence.is_blocking == True,  # noqa: E712
+            )
+            .all()
+        )
+
+        eligible = [f for f in core_faculty if f.id not in fully_absent_ids]
+
+        if fully_absent_ids:
+            logger.info(
+                f"Call eligibility: {len(fully_absent_ids)} faculty excluded "
+                f"(blocking absence covers entire block), {len(eligible)} eligible"
+            )
+
+        if not eligible:
+            logger.error(
+                "Call eligibility: 0 eligible faculty for block {}-{}. "
+                "Schedule will have no overnight coverage.",
+                self.start_date,
+                self.end_date,
+            )
+
+        return eligible
 
     def _load_fmit_assignments(self) -> list[Assignment]:
         """
@@ -3417,6 +3555,123 @@ class SchedulingEngine:
                 f"Backfilled {created} faculty gap slots "
                 f"(OFF weekday / W weekend) for {len(core_faculty)} faculty"
             )
+
+    def _apply_faculty_template_correction(
+        self,
+        faculty: list[Person],
+    ) -> int:
+        """Correct solver-source faculty HDAs to match weekly templates.
+
+        After the solver writes coarse activity types (C, AT, OFF) and
+        backfill fills gaps, this sweep ensures faculty HDAs align with
+        their weekly templates (e.g., C→sm_clinic, AT→gme, OFF→cv).
+
+        Only modifies source='solver' HDAs. Never touches preload, manual,
+        post-call codes (CALL, PCAT, DO), or weekends (W).
+        Skips adjunct faculty.
+        """
+        from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+        from app.models.faculty_weekly_template import FacultyWeeklyTemplate
+        from app.models.activity import Activity
+
+        core_faculty = [
+            f for f in faculty if f.faculty_role != FacultyRole.ADJUNCT.value
+        ]
+        if not core_faculty:
+            return 0
+
+        core_ids = [f.id for f in core_faculty]
+
+        # Build template lookup: (person_id, py_weekday, tod) → activity_code
+        template_rows = (
+            self.db.query(
+                FacultyWeeklyTemplate.person_id,
+                FacultyWeeklyTemplate.day_of_week,
+                FacultyWeeklyTemplate.time_of_day,
+                Activity.code,
+            )
+            .join(Activity, FacultyWeeklyTemplate.activity_id == Activity.id)
+            .filter(
+                FacultyWeeklyTemplate.person_id.in_(core_ids),
+                FacultyWeeklyTemplate.week_number.is_(None),
+            )
+            .all()
+        )
+        template_lookup: dict[tuple[UUID, int, str], str] = {}
+        for pid, dow, tod, code in template_rows:
+            template_lookup[(pid, dow, tod)] = code
+
+        if not template_lookup:
+            logger.debug("No faculty templates found — skipping template correction")
+            return 0
+
+        # Post-call/rest codes that must never be overridden
+        _PROTECTED_CODES = {"call", "pcat", "do", "w", "lec"}
+
+        # Query solver-source faculty HDAs with their current activity code
+        solver_hdas = (
+            self.db.query(HalfDayAssignment, Activity.code)
+            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .filter(
+                HalfDayAssignment.person_id.in_(core_ids),
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+                HalfDayAssignment.source == AssignmentSource.SOLVER.value,
+            )
+            .all()
+        )
+
+        corrected = 0
+        skipped_postcall = 0
+        skipped_weekend = 0
+        for hda, current_code in solver_hdas:
+            # Skip weekends
+            if hda.date.weekday() >= 5:
+                skipped_weekend += 1
+                continue
+
+            # Skip protected codes
+            if current_code and current_code.lower() in _PROTECTED_CODES:
+                skipped_postcall += 1
+                continue
+
+            # Look up template
+            tpl_code = template_lookup.get(
+                (hda.person_id, hda.date.weekday(), hda.time_of_day)
+            )
+            if not tpl_code:
+                continue
+
+            # Skip if template is a post-call code
+            if tpl_code.lower() in {"pcat", "do", "off"}:
+                continue
+
+            # Skip if already matching
+            if current_code and current_code.lower() == tpl_code.lower():
+                continue
+
+            # Resolve template activity ID
+            try:
+                new_activity_id = self._get_activity_id_by_code(tpl_code)
+            except ActivityNotFoundError:
+                logger.warning(
+                    f"Template code '{tpl_code}' not found in activities — "
+                    f"keeping '{current_code}' for {hda.person_id} on {hda.date}"
+                )
+                continue
+
+            hda.activity_id = new_activity_id
+            corrected += 1
+
+        if corrected:
+            self.db.flush()
+
+        logger.info(
+            f"Template correction: {corrected} HDAs updated, "
+            f"{skipped_postcall} post-call skipped, "
+            f"{skipped_weekend} weekend skipped"
+        )
+        return corrected
 
     def _backfill_virtual_clinic(
         self,

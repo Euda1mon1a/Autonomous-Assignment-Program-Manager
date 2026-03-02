@@ -59,12 +59,16 @@
 *   **DOW Convention Clarification:** `FacultyWeeklyTemplate.day_of_week` uses **Python weekday (0=Mon, 6=Sun)** despite model docstring claiming PG DOW (0=Sun). All consuming code (`call_equity.py:877`, `activity_solver.py:1019`) uses Python convention. Docstring is incorrect — data is correct.
 *   **Result:** Weekend violations reduced from 60 → 0
 
-### 2. Faculty Activity Diversity — `PARTIALLY FIXED` (HIGH)
+### 2. Faculty Activity Diversity — `FIXED + VERIFIED` (HIGH)
 *   **Issue:** Solver activity model too coarse. 4 types (C, AT, PCAT, DO) → write-back maps C→fm_clinic, AT→at generically. Templates have ~15 specific activity types (CV, sm_clinic, SIM, dfm, etc.) that are ignored.
-*   **Root cause:** `FacultyWeeklyTemplateConstraint` not registered in `manager.py`. Even if registered, constraint's `add_to_cpsat()` expects `faculty_activities[f_i, b_i, tod, a_i]` variable structure that doesn't exist — solver uses separate `fac_clinic[f_i, b_i]` / `fac_supervise[f_i, b_i]` dicts.
-*   **Fix (two-part):**
-    1. **Write-back (DONE)**: `_persist_faculty_half_day_from_solver()` now template-aware — loads `faculty_weekly_templates` using **Python weekday convention (0=Mon)**. Resolves solver C→template-specific clinic code (CV, sm_clinic, dfm), solver AT→template-specific admin code (gme, lec, SIM). 103 HDAs updated (56 Friday restorations + 47 within-category refinements).
-    2. **Solver (DEFERRED)**: Cross-category mismatches (solver says C but template wants AT, or vice versa) ~100 violations. ~27 are FMIT rotation overrides (expected — FMIT assignment trumps weekly template). Requires FacultyWeeklyTemplateConstraint integration as soft preference.
+*   **Root cause (original):** `FacultyWeeklyTemplateConstraint` not registered in `manager.py`. Even if registered, constraint's `add_to_cpsat()` expects `faculty_activities[f_i, b_i, tod, a_i]` variable structure that doesn't exist — solver uses separate `fac_clinic[f_i, b_i]` / `fac_supervise[f_i, b_i]` dicts.
+*   **Root cause (dual-write bug, Mar 1):** Step 6.1 (`_persist_faculty_half_day_from_solver`) correctly resolves templates, but Step 6.7 (`CPSATActivitySolver.solve()`) with `ACTIVITY_SOLVER_INCLUDE_FACULTY=true` (default) re-processes faculty slots, **overwriting** template-resolved codes with coarse C/AT.
+*   **Fix (three-part):**
+    1. **Write-back (DONE)**: `_persist_faculty_half_day_from_solver()` now template-aware — loads `faculty_weekly_templates` using **Python weekday convention (0=Mon)**. Resolves solver C→template-specific clinic code (CV, sm_clinic, dfm), solver AT→template-specific admin code (gme, lec, SIM).
+    2. **Activity solver exclusion (DONE, Mar 1)**: Changed `ACTIVITY_SOLVER_INCLUDE_FACULTY` default from `"true"` to `"false"` in `engine.py:665-667`. Faculty HDAs from Step 6.1 are no longer overwritten by Step 6.7.
+    3. **Template correction sweep (DONE, Mar 1)**: New `_apply_faculty_template_correction()` as Step 7.5b — safety-net sweep corrects any remaining solver-source HDAs to match templates. 77 HDAs corrected on Block 12 regen.
+*   **Tests:** 12 unit tests in `tests/scheduling/test_faculty_template_correction.py` — all passing.
+*   **Result:** Template mismatches 186 → 0 true mismatches. Remaining 25 are expected (21 FMIT rotation overrides + 4 CV↔fm_clinic virtual clinic conversions).
 
 ### 3. Orphaned Activity UUID — `FIXED`
 *   **Issue:** ~~8 rows~~ 5 `faculty_weekly_templates` rows referenced wrong FMIT UUID `9fd0dca9-...`.
@@ -92,10 +96,16 @@
 *   **Remaining:** 10 "orphaned" CALL HDAs from `resident_call_preloads` (Chief Resident manual entries) without matching `call_assignments`. This is the inherent two-source pattern, not a bug — `resident_call_preloads` is a separate data source from solver `call_assignments`.
 *   **Edge cases:** (a) Consecutive-night calls: second call's CALL HDA correctly replaces first's DO. (b) Wed PM: CALL overrides LEC when solver assigns call on Wednesday. (c) One faculty Jun 3 call: cross-block boundary (Jun 4 = Block 13), no PCAT/DO expected.
 
-### 7. Call Distribution — `DEFERRED` (MEDIUM)
-*   **Issue:** Distribution is reasonable but not MAD-optimized. Equity shows 1-7 overnight calls across 10 faculty.
-*   **Context:** MAD equity (PR #1199) is implemented. Re-generating with the MAD constraint active will improve distribution.
-*   **Action:** Regenerate Block 12, verify MAD equity produces better balance.
+### 7. Call Distribution — `FIXED + VERIFIED` (MEDIUM)
+*   **Issue:** Distribution was uneven (0-5 B12 calls per faculty) despite MAD equity constraints.
+*   **Fix (Mar 1 — call eligibility + FMIT absence):** Two bugs fixed:
+    1. **`_get_call_eligible_faculty()` didn't check absences**: Fixed by querying `absences` table for blocking overlaps. Tests: 8 unit tests in `tests/scheduling/test_call_eligibility_absence.py`.
+    2. **FMIT call preservation ignored absences**: Fixed by filtering `fmit_call_pairs` against blocking absences.
+*   **Fix (Mar 1 — equity tuning, 3 parts):**
+    1. **`OvernightCallGenerationConstraint` dead code**: `_get_eligible_faculty()` used `context.resident_idx` (faculty UUIDs never in resident_idx → always empty). Fixed to use `context.call_eligible_faculty_idx`. Rewrote `add_to_cpsat()` to block ineligible faculty's existing solver variables instead of creating new ones. Tests: 8 unit tests in `tests/scheduling/test_overnight_call_fmit_blocking.py`.
+    2. **Availability-normalized prior_calls**: Raw YTD totals didn't account for deployment. Added normalization that scales prior_calls by (elapsed_blocks / available_blocks) so deployed faculty aren't penalized. Tests: 7 unit tests in `tests/scheduling/test_prior_calls_normalization.py`.
+    3. **Equity weight rebalance**: Sunday 10→50, Weekday 5→25 to compete with `CLINIC_MIN_PENALTY=200` in solver.
+*   **Post-fix distribution (Mar 1):** Deployed faculty correctly at 0. YTD totals (excluding deployed): range 8-11 calls across 9 available faculty. Block 12: 26 calls, range 2-6 within block but equalized over full academic year.
 
 ### 8. Zeroing Validation — `DONE (DB + XLSX + Visual)` — Updated Feb 28 Post-41-Constraint-Regen
 *   **DB verification (10-check):** `scripts/scheduling/verify_block12.py` — **10/10 passed**. Check 7 WARN (186 template mismatches, C2 deferral). 24 calls, 23 chains verified (8 with FMIT/leave/weekend override).
@@ -103,7 +113,8 @@
 *   **Regeneration:** Block 12 regenerated with all 41 constraints enabled. OPTIMAL in 6.0s, 306 assignments. Two pipeline bugs fixed:
     1. **Stale CALL preload blocking PCAT/DO**: When a call date moved between generations, old CALL preloads on the next-day PM blocked DO creation, then got cleaned up by stale CALL cleanup, leaving a validation gap. Fix: `_sync_call_pcat_do_to_half_day` now overwrites CALL-activity preloads with DO.
     2. **Faculty HDA gaps**: Solver left some faculty slots unassigned (all 4 binary variables = 0). Fix: `_backfill_faculty_gaps` fills empty faculty slots with OFF (weekday) or W (weekend).
-*   **XLSX versions:** `/tmp/Block12_Export_Test.xlsx` (post-41-constraint-regen, current).
+*   **Cross-block guard (Codex P1, PR #1216):** Stale CALL overwrite scoped to `next_day <= self.end_date` — prevents mutating legitimate CALL preloads belonging to adjacent block's generation.
+*   **XLSX versions:** `/tmp/Block12_Export_v4.0_41_Constraints.xlsx` (post-PR #1216, current). User verified: "much closer to reality."
 *   **See:** `docs/planning/SCHEDULE_GRID_ZEROING_PLAN.md` for full methodology.
 
 ---
