@@ -1222,6 +1222,10 @@ The checker uses Python's `ast` module to parse constraint files and classify ea
 - A class is **call-related** if it has `constraint_type=ConstraintType.CALL` OR accesses `variables["call_assignments"]`
 - ARCH-001/003 only fire on call-related classes, preventing false positives on `protected_slot.py`, `resilience.py`, etc. that correctly use `resident_idx`
 
+### Future Rules Under Consideration
+
+**ARCH-005 (Empty Feasible Set):** A constraint that blocks all activity types for a faculty slot forces `_backfill_faculty_gaps` to fill with OFF/W — effectively a silent no-op. Difficult to detect via AST since it's a runtime property. Current mitigation: ARCH-004 logging warnings surface 0-constraint cases. A runtime assertion (post-solve) would be more effective than static analysis for this class of bug.
+
 ### Suppressing False Positives
 
 Add `# @archetype-ok` on the flagged line:
@@ -1236,6 +1240,13 @@ Read `.claude/archetypes/constraint.py` — it contains annotated `# INVARIANT:`
 - Faculty index lookups
 - Reading solver variables
 - Constraint count logging
+
+### PR Checklist for Constraint Changes
+
+When modifying or adding constraints, verify:
+- [ ] `python3 scripts/archetype-check.py` passes with 0 errors
+- [ ] Review ARCH-004 warnings — constraints without logging are harder to debug. Add `logger.info(f"Added {count} constraints")` to `add_to_cpsat()`.
+- [ ] Read `.claude/archetypes/constraint.py` before writing new constraint classes
 
 ### Running Manually
 
