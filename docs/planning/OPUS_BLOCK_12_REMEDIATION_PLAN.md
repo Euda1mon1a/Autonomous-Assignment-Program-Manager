@@ -96,10 +96,14 @@
 *   **Remaining:** 10 "orphaned" CALL HDAs from `resident_call_preloads` (Chief Resident manual entries) without matching `call_assignments`. This is the inherent two-source pattern, not a bug — `resident_call_preloads` is a separate data source from solver `call_assignments`.
 *   **Edge cases:** (a) Consecutive-night calls: second call's CALL HDA correctly replaces first's DO. (b) Wed PM: CALL overrides LEC when solver assigns call on Wednesday. (c) One faculty Jun 3 call: cross-block boundary (Jun 4 = Block 13), no PCAT/DO expected.
 
-### 7. Call Distribution — `DEFERRED` (MEDIUM)
+### 7. Call Distribution — `PARTIALLY FIXED` (MEDIUM)
 *   **Issue:** Distribution is reasonable but not MAD-optimized. Equity shows 1-7 overnight calls across 10 faculty.
 *   **Context:** MAD equity (PR #1199) is implemented. Re-generating with the MAD constraint active will improve distribution.
-*   **Action:** Regenerate Block 12, verify MAD equity produces better balance.
+*   **Fix (Mar 1 — call eligibility + FMIT absence):** Two bugs fixed:
+    1. **`_get_call_eligible_faculty()` didn't check absences**: Faculty with blocking absences (deployment, mat/pat leave) were still eligible for solver-generated calls. Fixed by querying `absences` table for blocking overlaps and excluding those faculty. Tests: 8 unit tests in `tests/scheduling/test_call_eligibility_absence.py`.
+    2. **FMIT call preservation ignored absences**: `_create_call_assignments_from_result()` preserved FMIT Fri/Sat calls even for deployed faculty (deployed faculty member had 2 FMIT-preserved calls during deployment). Fixed by filtering `fmit_call_pairs` against blocking absences before the preservation step.
+*   **Post-fix (Mar 1):** Deployed faculty 2→0 calls. 26 calls across 8 available faculty (range 2-5). One faculty at 0 calls despite being available — MAD equity decision (11 YTD). MAD tuning deferred.
+*   **Action:** MAD constraint tuning to improve within-block equity balance.
 
 ### 8. Zeroing Validation — `DONE (DB + XLSX + Visual)` — Updated Feb 28 Post-41-Constraint-Regen
 *   **DB verification (10-check):** `scripts/scheduling/verify_block12.py` — **10/10 passed**. Check 7 WARN (186 template mismatches, C2 deferral). 24 calls, 23 chains verified (8 with FMIT/leave/weekend override).

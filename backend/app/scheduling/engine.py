@@ -1498,6 +1498,33 @@ class SchedulingEngine:
                     fmit_call_pairs.add((cast(UUID, preload.person_id), current))
                 current += timedelta(days=1)
 
+        # Exclude FMIT call pairs for faculty with blocking absences
+        # (e.g., deployment covering the block — FMIT preloads may pre-date
+        # the absence entry and should not preserve calls for absent faculty).
+        if fmit_call_pairs:
+            fmit_person_ids = {pid for pid, _ in fmit_call_pairs}
+            absent_fmit_ids = set(
+                row[0]
+                for row in self.db.query(Absence.person_id)
+                .filter(
+                    Absence.person_id.in_(fmit_person_ids),
+                    Absence.start_date <= self.end_date,
+                    Absence.end_date >= self.start_date,
+                    Absence.is_blocking == True,  # noqa: E712
+                )
+                .all()
+            )
+            if absent_fmit_ids:
+                before = len(fmit_call_pairs)
+                fmit_call_pairs = {
+                    (pid, d) for pid, d in fmit_call_pairs if pid not in absent_fmit_ids
+                }
+                logger.info(
+                    "FMIT call preservation: excluded {} pairs for {} absent faculty",
+                    before - len(fmit_call_pairs),
+                    len(absent_fmit_ids),
+                )
+
         # Clear existing call assignments for this date range to avoid conflicts,
         # but preserve FMIT Fri/Sat call preloads.
         existing_calls = (
@@ -2292,16 +2319,45 @@ class SchedulingEngine:
         """
         Get faculty eligible for solver-generated overnight call.
 
-        Adjunct faculty are excluded because they are manually added to call
-        rather than auto-scheduled by the solver.
+        Excludes:
+        - Adjunct faculty (manually added to call, not solver-scheduled)
+        - Faculty with blocking absences overlapping the block date range
+          (deployment, TDY, extended medical, etc.)
 
         Args:
             faculty: List of all faculty members
 
         Returns:
-            List of faculty eligible for overnight call (excludes adjuncts)
+            List of faculty eligible for overnight call
         """
-        return [f for f in faculty if f.faculty_role != FacultyRole.ADJUNCT.value]
+        core_faculty = [
+            f for f in faculty if f.faculty_role != FacultyRole.ADJUNCT.value
+        ]
+        if not core_faculty:
+            return []
+
+        # Find faculty with blocking absences overlapping this block
+        absent_ids = set(
+            row[0]
+            for row in self.db.query(Absence.person_id)
+            .filter(
+                Absence.person_id.in_([f.id for f in core_faculty]),
+                Absence.start_date <= self.end_date,
+                Absence.end_date >= self.start_date,
+                Absence.is_blocking == True,  # noqa: E712
+            )
+            .all()
+        )
+
+        eligible = [f for f in core_faculty if f.id not in absent_ids]
+
+        if absent_ids:
+            logger.info(
+                f"Call eligibility: {len(absent_ids)} faculty excluded "
+                f"(blocking absence), {len(eligible)} eligible"
+            )
+
+        return eligible
 
     def _load_fmit_assignments(self) -> list[Assignment]:
         """
