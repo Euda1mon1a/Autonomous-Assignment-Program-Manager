@@ -246,7 +246,7 @@ class IntegratedWorkloadConstraint(SoftConstraint):
         """
         # Get relevant variables
         call_vars = variables.get("call_assignments", {})
-        assignment_vars = variables.get("assignments", {})
+        faculty_assign_vars = variables.get("faculty_assignments", {})
 
         if not context.faculty:
             return
@@ -258,35 +258,43 @@ class IntegratedWorkloadConstraint(SoftConstraint):
             logger.debug("No eligible faculty for integrated workload constraint")
             return
 
-        # Calculate workload score per faculty
-        # Note: This is approximate since we can't easily track FMIT weeks
-        # in the solver. We use assignment counts as proxies.
+        # Use correct index dicts: call vars use call_eligible_faculty_idx,
+        # faculty assignment vars use faculty_idx
+        call_idx = getattr(context, "call_eligible_faculty_idx", {})
+        fac_idx = getattr(context, "faculty_idx", {})
 
         workload_vars = {}
         max_blocks = len(context.blocks)
 
         for faculty in eligible_faculty:
-            f_i = context.resident_idx.get(faculty.id)
-            if f_i is None:
+            # Call variables keyed by call_eligible_faculty_idx
+            cf_i = call_idx.get(faculty.id)
+            # Faculty assignment variables keyed by faculty_idx
+            fa_i = fac_idx.get(faculty.id)
+
+            if cf_i is None and fa_i is None:
                 continue
 
             # Count call assignments for this faculty
             call_count_vars = []
-            for block in context.blocks:
-                b_i = context.block_idx.get(block.id)
-                if b_i is not None and (f_i, b_i, "overnight") in call_vars:
-                    call_count_vars.append(call_vars[f_i, b_i, "overnight"])
+            if cf_i is not None:
+                for block in context.blocks:
+                    b_i = context.block_idx.get(block.id)
+                    if b_i is not None and (cf_i, b_i, "overnight") in call_vars:
+                        call_count_vars.append(call_vars[cf_i, b_i, "overnight"])
 
-            # Count general assignments (proxy for FMIT + clinic)
+            # Count faculty assignments (proxy for FMIT + clinic)
             assign_count_vars = []
-            for block in context.blocks:
-                b_i = context.block_idx.get(block.id)
-                if b_i is not None and (f_i, b_i) in assignment_vars:
-                    assign_count_vars.append(assignment_vars[f_i, b_i])
+            if fa_i is not None:
+                for block in context.blocks:
+                    b_i = context.block_idx.get(block.id)
+                    if b_i is not None and (fa_i, b_i) in faculty_assign_vars:
+                        assign_count_vars.append(faculty_assign_vars[fa_i, b_i])
 
             # Create workload score variable (scaled by 10 for integer math)
             # workload = call * 10 + assignments * 5 (simplified)
-            workload = model.NewIntVar(0, max_blocks * 15, f"workload_{f_i}")
+            fid_short = str(faculty.id)[:8]
+            workload = model.NewIntVar(0, max_blocks * 15, f"workload_{fid_short}")
 
             call_sum = sum(call_count_vars) if call_count_vars else 0
             assign_sum = sum(assign_count_vars) if assign_count_vars else 0
@@ -294,14 +302,25 @@ class IntegratedWorkloadConstraint(SoftConstraint):
             # Weighted sum (scaled to integers)
             model.Add(workload == call_sum * 10 + assign_sum * 5)
 
-            workload_vars[f_i] = workload
+            workload_vars[faculty.id] = workload
 
         if not workload_vars:
+            logger.warning(
+                "IntegratedWorkload: no faculty matched solver variables "
+                "(0 workload vars created from %d eligible faculty)",
+                len(eligible_faculty),
+            )
             return
+
+        logger.info(
+            "IntegratedWorkload: created %d workload variables for %d eligible faculty",
+            len(workload_vars),
+            len(eligible_faculty),
+        )
 
         # Minimize maximum workload
         max_workload = model.NewIntVar(0, max_blocks * 15, "max_workload")
-        for f_i, workload in workload_vars.items():
+        for _fid, workload in workload_vars.items():
             model.Add(workload <= max_workload)
 
         # Add to objective
@@ -319,7 +338,7 @@ class IntegratedWorkloadConstraint(SoftConstraint):
         import pulp
 
         call_vars = variables.get("call_assignments", {})
-        assignment_vars = variables.get("assignments", {})
+        faculty_assign_vars = variables.get("faculty_assignments", {})
 
         if not context.faculty:
             return
@@ -329,27 +348,35 @@ class IntegratedWorkloadConstraint(SoftConstraint):
         if not eligible_faculty:
             return
 
+        # Use correct index dicts for each variable source
+        call_idx = getattr(context, "call_eligible_faculty_idx", {})
+        fac_idx = getattr(context, "faculty_idx", {})
+
         max_blocks = len(context.blocks)
         workload_exprs = []
 
         for faculty in eligible_faculty:
-            f_i = context.resident_idx.get(faculty.id)
-            if f_i is None:
+            cf_i = call_idx.get(faculty.id)
+            fa_i = fac_idx.get(faculty.id)
+
+            if cf_i is None and fa_i is None:
                 continue
 
             # Count call assignments
             call_count_vars = []
-            for block in context.blocks:
-                b_i = context.block_idx.get(block.id)
-                if b_i is not None and (f_i, b_i, "overnight") in call_vars:
-                    call_count_vars.append(call_vars[f_i, b_i, "overnight"])
+            if cf_i is not None:
+                for block in context.blocks:
+                    b_i = context.block_idx.get(block.id)
+                    if b_i is not None and (cf_i, b_i, "overnight") in call_vars:
+                        call_count_vars.append(call_vars[cf_i, b_i, "overnight"])
 
-            # Count assignments
+            # Count faculty assignments
             assign_count_vars = []
-            for block in context.blocks:
-                b_i = context.block_idx.get(block.id)
-                if b_i is not None and (f_i, b_i) in assignment_vars:
-                    assign_count_vars.append(assignment_vars[f_i, b_i])
+            if fa_i is not None:
+                for block in context.blocks:
+                    b_i = context.block_idx.get(block.id)
+                    if b_i is not None and (fa_i, b_i) in faculty_assign_vars:
+                        assign_count_vars.append(faculty_assign_vars[fa_i, b_i])
 
             # Workload expression
             call_sum = pulp.lpSum(call_count_vars) if call_count_vars else 0

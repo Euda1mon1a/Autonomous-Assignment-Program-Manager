@@ -659,3 +659,228 @@ class TestPhase1Metadata:
         assert wb["__SYS_META__"].sheet_state == "veryHidden"
         assert wb["__REF__"].sheet_state == "veryHidden"
         wb.close()
+
+
+# ==================== YTD_SUMMARY Tests ====================
+
+
+class TestBuildYtdSummarySheet:
+    """Tests for _build_ytd_summary_sheet() and faculty union logic."""
+
+    def test_ytd_summary_headers(self):
+        """YTD_SUMMARY should have 10 column headers."""
+        mock_db = MagicMock()
+        service = CanonicalScheduleExportService(mock_db)
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "YTD_SUMMARY"
+
+        block = MagicMock()
+        block.block_number = 1
+        faculty = [{"name": "Dr. Test"}]
+
+        service._build_ytd_summary_sheet(ws, [block], faculty)
+
+        expected_headers = [
+            "Faculty Name",
+            "YTD Clinic (C+SM)",
+            "YTD CC",
+            "YTD CV",
+            "YTD Total Clinic",
+            "YTD AT (AT+PCAT+DO)",
+            "YTD Admin",
+            "YTD Leave",
+            "YTD FMIT Weeks",
+            "YTD Call Nights",
+        ]
+        for col_idx, header in enumerate(expected_headers, start=1):
+            assert ws.cell(row=1, column=col_idx).value == header
+
+        wb.close()
+
+    def test_ytd_summary_faculty_name_in_column_a(self):
+        """Faculty names should be in column A starting at row 2."""
+        mock_db = MagicMock()
+        service = CanonicalScheduleExportService(mock_db)
+
+        wb = Workbook()
+        ws = wb.active
+
+        block = MagicMock()
+        block.block_number = 1
+        faculty = [
+            {"name": "Alpha, Dr."},
+            {"name": "Beta, Dr."},
+        ]
+
+        service._build_ytd_summary_sheet(ws, [block], faculty)
+
+        assert ws.cell(row=2, column=1).value == "Alpha, Dr."
+        assert ws.cell(row=3, column=1).value == "Beta, Dr."
+        wb.close()
+
+    def test_ytd_summary_sumif_formulas_reference_block_sheets(self):
+        """Cross-sheet SUMIF formulas should reference all block sheets."""
+        mock_db = MagicMock()
+        service = CanonicalScheduleExportService(mock_db)
+
+        wb = Workbook()
+        ws = wb.active
+
+        block1 = MagicMock()
+        block1.block_number = 0
+        block2 = MagicMock()
+        block2.block_number = 1
+        faculty = [{"name": "Dr. Test"}]
+
+        service._build_ytd_summary_sheet(ws, [block1, block2], faculty)
+
+        # Column B (col 2) = YTD Clinic → SUMIF on BJ across both blocks
+        formula = ws.cell(row=2, column=2).value
+        assert formula is not None
+        assert "'Block 0'" in formula
+        assert "'Block 1'" in formula
+        assert "SUMIF" in formula
+        assert "$E$31:$E$80" in formula  # name lookup range
+        assert "BJ$31:BJ$80" in formula  # data range
+
+        wb.close()
+
+    def test_ytd_summary_total_clinic_formula(self):
+        """Column E (Total Clinic) should be =B+C+D."""
+        mock_db = MagicMock()
+        service = CanonicalScheduleExportService(mock_db)
+
+        wb = Workbook()
+        ws = wb.active
+
+        block = MagicMock()
+        block.block_number = 1
+        faculty = [{"name": "Dr. Test"}]
+
+        service._build_ytd_summary_sheet(ws, [block], faculty)
+
+        # Column E = Total Clinic = B + C + D
+        formula = ws.cell(row=2, column=5).value
+        assert formula == "=B2+C2+D2"
+        wb.close()
+
+    def test_ytd_summary_fmit_divides_by_14(self):
+        """FMIT weeks formula should divide SUMIF total by 14."""
+        mock_db = MagicMock()
+        service = CanonicalScheduleExportService(mock_db)
+
+        wb = Workbook()
+        ws = wb.active
+
+        block = MagicMock()
+        block.block_number = 5
+        faculty = [{"name": "Dr. Test"}]
+
+        service._build_ytd_summary_sheet(ws, [block], faculty)
+
+        # Column I (col 9) = FMIT weeks = SUMIF(BQ) / 14
+        formula = ws.cell(row=2, column=9).value
+        assert formula is not None
+        assert "/14" in formula
+        assert "BQ" in formula
+        wb.close()
+
+    def test_ytd_summary_empty_name_skipped(self):
+        """Faculty with empty name should not get formulas."""
+        mock_db = MagicMock()
+        service = CanonicalScheduleExportService(mock_db)
+
+        wb = Workbook()
+        ws = wb.active
+
+        block = MagicMock()
+        block.block_number = 1
+        faculty = [{"name": ""}, {"name": "Dr. Real"}]
+
+        service._build_ytd_summary_sheet(ws, [block], faculty)
+
+        # Row 2 has empty name — no formula in col B
+        assert ws.cell(row=2, column=2).value is None
+        # Row 3 has real name — formula in col B
+        assert ws.cell(row=3, column=2).value is not None
+        assert "SUMIF" in str(ws.cell(row=3, column=2).value)
+        wb.close()
+
+    @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
+    def test_export_year_xlsx_uses_faculty_union(self, mock_converter_class):
+        """export_year_xlsx() should pass union of all blocks' faculty to YTD_SUMMARY."""
+        mock_db = MagicMock()
+
+        block_one = MagicMock()
+        block_one.block_number = 1
+        block_one.start_date = date(2026, 7, 1)
+        block_one.end_date = date(2026, 7, 28)
+        block_one.id = uuid4()
+
+        block_two = MagicMock()
+        block_two.block_number = 2
+        block_two.start_date = date(2026, 7, 29)
+        block_two.end_date = date(2026, 8, 25)
+        block_two.id = uuid4()
+
+        mock_db.execute.return_value.scalars.return_value.all.return_value = [
+            block_one,
+            block_two,
+        ]
+        mock_db.query.return_value.distinct.return_value.all.return_value = []
+
+        mock_converter = MagicMock()
+
+        def _make_template():
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Block Template2"
+            buf = io.BytesIO()
+            wb.save(buf)
+            return buf.getvalue()
+
+        mock_converter.convert_from_json.return_value = _make_template()
+        mock_converter_class.return_value = mock_converter
+
+        # Block 1 has Faculty A and B; Block 2 has Faculty B and C
+        export_calls = [0]
+        faculty_block_1 = [{"name": "Alpha, Dr."}, {"name": "Beta, Dr."}]
+        faculty_block_2 = [{"name": "Beta, Dr."}, {"name": "Charlie, Dr."}]
+
+        def mock_export_json(*args, **kwargs):
+            export_calls[0] += 1
+            if export_calls[0] == 1:
+                return {"faculty": faculty_block_1}
+            return {"faculty": faculty_block_2}
+
+        service = CanonicalScheduleExportService(mock_db)
+        captured_faculty = []
+
+        original_build = service._build_ytd_summary_sheet
+
+        def capture_build(ws, blocks, faculty):
+            captured_faculty.extend(faculty)
+            return original_build(ws, blocks, faculty)
+
+        with (
+            patch.object(service, "_export_json_data", side_effect=mock_export_json),
+            patch.object(service, "_copy_worksheet"),
+            patch.object(service, "_apply_phantom_columns"),
+            patch.object(
+                service, "_build_ytd_summary_sheet", side_effect=capture_build
+            ),
+            patch.object(
+                service, "_template_path", return_value=Path("/fake/template.xlsx")
+            ),
+            patch.object(
+                service, "_structure_path", return_value=Path("/fake/structure.xml")
+            ),
+        ):
+            service.export_year_xlsx(academic_year=2026)
+
+        # Should have 3 unique faculty (union), sorted alphabetically
+        names = [f["name"] for f in captured_faculty]
+        assert len(names) == 3
+        assert names == ["Alpha, Dr.", "Beta, Dr.", "Charlie, Dr."]
