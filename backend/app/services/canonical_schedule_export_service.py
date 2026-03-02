@@ -140,6 +140,7 @@ class CanonicalScheduleExportService:
             raise ValueError(f"No academic blocks found for year {academic_year}")
 
         block_map = {}
+        all_faculty_by_name: dict[str, dict[str, Any]] = {}
         template_path = self._template_path()
         structure_path = self._structure_path()
         effective_preserve = structure_path is not None and template_path is not None
@@ -163,6 +164,12 @@ class CanonicalScheduleExportService:
                 include_faculty=include_faculty,
                 include_overrides=include_overrides,
             )
+
+            # Accumulate faculty across all blocks for YTD_SUMMARY
+            for f in data.get("faculty", []):
+                name = f.get("name", "")
+                if name:
+                    all_faculty_by_name[name] = f
 
             # Convert to temporary workbook to extract sheet
             temp_bytes = converter.convert_from_json(data)
@@ -194,9 +201,12 @@ class CanonicalScheduleExportService:
             block_map[sheet_title] = str(block.id)
             temp_wb.close()
 
-        # Build YTD Summary sheet as the first sheet
+        # Build YTD Summary sheet using union of all faculty across all blocks
+        all_faculty = sorted(
+            all_faculty_by_name.values(), key=lambda f: f.get("name", "")
+        )
         summary_ws = wb.create_sheet(title="YTD_SUMMARY", index=0)
-        self._build_ytd_summary_sheet(summary_ws, blocks, data.get("faculty", []))
+        self._build_ytd_summary_sheet(summary_ws, blocks, all_faculty)
 
         # Ensure YTD_SUMMARY is active
         wb.active = summary_ws
