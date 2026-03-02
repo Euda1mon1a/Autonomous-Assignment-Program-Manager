@@ -1547,14 +1547,14 @@ class SchedulingEngine:
                     fmit_call_pairs.add((cast(UUID, preload.person_id), current))
                 current += timedelta(days=1)
 
-        # Exclude FMIT call pairs for faculty with blocking absences
-        # (e.g., deployment covering the block — FMIT preloads may pre-date
-        # the absence entry and should not preserve calls for absent faculty).
+        # Exclude FMIT call pairs where the specific call DATE overlaps a
+        # blocking absence for that faculty member. Date-scoped, not
+        # person-scoped — a short absence should only remove FMIT pairs
+        # on dates it actually covers, not all pairs for that faculty.
         if fmit_call_pairs:
             fmit_person_ids = {pid for pid, _ in fmit_call_pairs}
-            absent_fmit_ids = set(
-                row[0]
-                for row in self.db.query(Absence.person_id)
+            blocking_absences = (
+                self.db.query(Absence.person_id, Absence.start_date, Absence.end_date)
                 .filter(
                     Absence.person_id.in_(fmit_person_ids),
                     Absence.start_date <= self.end_date,
@@ -1563,16 +1563,30 @@ class SchedulingEngine:
                 )
                 .all()
             )
-            if absent_fmit_ids:
+            if blocking_absences:
+                # Build per-person absence intervals for date-level checks
+                from collections import defaultdict
+
+                person_absences: dict[UUID, list[tuple[date, date]]] = defaultdict(list)
+                for pid, abs_start, abs_end in blocking_absences:
+                    person_absences[pid].append((abs_start, abs_end))
+
                 before = len(fmit_call_pairs)
                 fmit_call_pairs = {
-                    (pid, d) for pid, d in fmit_call_pairs if pid not in absent_fmit_ids
+                    (pid, d)
+                    for pid, d in fmit_call_pairs
+                    if not any(
+                        abs_start <= d <= abs_end
+                        for abs_start, abs_end in person_absences.get(pid, [])
+                    )
                 }
-                logger.info(
-                    "FMIT call preservation: excluded {} pairs for {} absent faculty",
-                    before - len(fmit_call_pairs),
-                    len(absent_fmit_ids),
-                )
+                excluded = before - len(fmit_call_pairs)
+                if excluded:
+                    logger.info(
+                        "FMIT call preservation: excluded {} pairs (date-scoped "
+                        "absence overlap)",
+                        excluded,
+                    )
 
         # Clear existing call assignments for this date range to avoid conflicts,
         # but preserve FMIT Fri/Sat call preloads.
@@ -2370,8 +2384,9 @@ class SchedulingEngine:
 
         Excludes:
         - Adjunct faculty (manually added to call, not solver-scheduled)
-        - Faculty with blocking absences overlapping the block date range
-          (deployment, TDY, extended medical, etc.)
+        - Faculty with blocking absences covering the ENTIRE block date range
+          (deployment, TDY spanning the full block). Short absences within
+          the block are handled per-night by OvernightCallGenerationConstraint.
 
         Args:
             faculty: List of all faculty members
@@ -2385,25 +2400,36 @@ class SchedulingEngine:
         if not core_faculty:
             return []
 
-        # Find faculty with blocking absences overlapping this block
-        absent_ids = set(
+        # Only exclude faculty whose blocking absence covers the ENTIRE block.
+        # Per-night exclusion (partial absences, FMIT weeks) is handled by
+        # OvernightCallGenerationConstraint.add_to_cpsat() which forces
+        # call_vars to 0 on ineligible nights.
+        fully_absent_ids = set(
             row[0]
             for row in self.db.query(Absence.person_id)
             .filter(
                 Absence.person_id.in_([f.id for f in core_faculty]),
-                Absence.start_date <= self.end_date,
-                Absence.end_date >= self.start_date,
+                Absence.start_date <= self.start_date,
+                Absence.end_date >= self.end_date,
                 Absence.is_blocking == True,  # noqa: E712
             )
             .all()
         )
 
-        eligible = [f for f in core_faculty if f.id not in absent_ids]
+        eligible = [f for f in core_faculty if f.id not in fully_absent_ids]
 
-        if absent_ids:
+        if fully_absent_ids:
             logger.info(
-                f"Call eligibility: {len(absent_ids)} faculty excluded "
-                f"(blocking absence), {len(eligible)} eligible"
+                f"Call eligibility: {len(fully_absent_ids)} faculty excluded "
+                f"(blocking absence covers entire block), {len(eligible)} eligible"
+            )
+
+        if not eligible:
+            logger.error(
+                "Call eligibility: 0 eligible faculty for block {}-{}. "
+                "Schedule will have no overnight coverage.",
+                self.start_date,
+                self.end_date,
             )
 
         return eligible

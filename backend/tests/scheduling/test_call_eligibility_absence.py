@@ -1,8 +1,8 @@
 """Tests for SchedulingEngine._get_call_eligible_faculty() absence filtering.
 
-Verifies that faculty with blocking absences overlapping the block date
-range are excluded from call eligibility, preventing the solver from
-assigning calls to deployed/on-leave faculty.
+Verifies that faculty with blocking absences covering the ENTIRE block
+date range are excluded from call eligibility. Partial absences within
+the block are handled per-night by OvernightCallGenerationConstraint.
 """
 
 from datetime import date
@@ -76,17 +76,22 @@ def test_excludes_faculty_with_blocking_absence(db):
     assert eligible[0].id == available.id
 
 
-def test_excludes_partial_overlap_blocking(db):
-    """Faculty with blocking absence overlapping part of block is excluded."""
+def test_partial_overlap_still_eligible(db):
+    """Faculty with partial blocking absence stays eligible at block level.
+
+    Per-night exclusion is handled by OvernightCallGenerationConstraint.
+    """
     faculty = _create_faculty(db, "Partial Overlap")
 
-    # Absence covers first 2 weeks of block
+    # Absence covers first 2 weeks of block — NOT the entire block
     _create_absence(db, faculty.id, date(2026, 5, 1), date(2026, 5, 20))
 
     engine = _make_engine(db)
     eligible = engine._get_call_eligible_faculty([faculty])
 
-    assert len(eligible) == 0
+    # Partial absence → still eligible (per-night blocking handles exclusion)
+    assert len(eligible) == 1
+    assert eligible[0].id == faculty.id
 
 
 def test_includes_faculty_without_absence(db):
@@ -150,13 +155,19 @@ def test_absence_outside_block_does_not_exclude(db):
 
 
 def test_multiple_faculty_mixed(db):
-    """Mix of available, deployed, and on-leave faculty."""
+    """Mix of available, deployed, and partially-absent faculty.
+
+    Only fully-deployed faculty (absence covers entire block) are excluded.
+    Partially-absent faculty remain eligible for per-night blocking.
+    """
     available1 = _create_faculty(db, "Available 1")
     available2 = _create_faculty(db, "Available 2")
     deployed = _create_faculty(db, "Deployed")
     on_leave = _create_faculty(db, "On Leave")
 
+    # Deployed covers entire block (Apr 1 - Jul 1 ⊇ May 7 - Jun 3)
     _create_absence(db, deployed.id, date(2026, 4, 1), date(2026, 7, 1), "deployment")
+    # On-leave covers only part of block (May 10-25 ⊄ May 7 - Jun 3)
     _create_absence(
         db,
         on_leave.id,
@@ -170,10 +181,13 @@ def test_multiple_faculty_mixed(db):
         [available1, available2, deployed, on_leave]
     )
 
-    assert len(eligible) == 2
+    # 3 eligible: 2 available + on_leave (partial). Deployed excluded.
+    assert len(eligible) == 3
     eligible_ids = {f.id for f in eligible}
     assert available1.id in eligible_ids
     assert available2.id in eligible_ids
+    assert on_leave.id in eligible_ids
+    assert deployed.id not in eligible_ids
 
 
 def test_empty_faculty_list(db):
