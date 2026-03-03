@@ -705,10 +705,12 @@ class XMLToXlsxConverter:
                 row=88, column=col_idx
             ).value = f"=CEILING({c}86/2,1)+CEILING({c}87/4,1)"
 
-            # Row 89: Residents in PROC (PR + VAS in resident rows)
-            sheet.cell(
-                row=89, column=col_idx
-            ).value = f'=COUNTIF({c}$9:{c}$30,"PR")+COUNTIF({c}$9:{c}$30,"VAS")'
+            # Row 89: Residents in PROC (PR + PROC + VAS in resident rows)
+            sheet.cell(row=89, column=col_idx).value = (
+                f'=COUNTIF({c}$9:{c}$30,"PR")'
+                f'+COUNTIF({c}$9:{c}$30,"PROC")'
+                f'+COUNTIF({c}$9:{c}$30,"VAS")'
+            )
 
             # Row 90: Residents in V Clinic (CV in resident rows)
             sheet.cell(row=90, column=col_idx).value = f'=COUNTIF({c}$9:{c}$30,"CV")'
@@ -729,8 +731,10 @@ class XMLToXlsxConverter:
             # Row 94: # Primary Care Appts = (interns + residents) * 6
             sheet.cell(row=94, column=col_idx).value = f"=({c}86+{c}87)*6"
 
-            # Row 95: PR Count (all rows)
-            sheet.cell(row=95, column=col_idx).value = f'=COUNTIF({c}$9:{c}$80,"PR")'
+            # Row 95: PR Count (all rows — PR + PROC)
+            sheet.cell(
+                row=95, column=col_idx
+            ).value = f'=COUNTIF({c}$9:{c}$80,"PR")+COUNTIF({c}$9:{c}$80,"PROC")'
 
             # Row 96: VAS Count (all rows)
             sheet.cell(row=96, column=col_idx).value = f'=COUNTIF({c}$9:{c}$80,"VAS")'
