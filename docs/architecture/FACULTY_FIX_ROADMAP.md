@@ -1,8 +1,8 @@
 # Faculty Scheduling Fix Roadmap
 
-> **Status:** Phase 1 COMPLETED, Phase 2 COMPLETED, Phase 3 COMPLETED, Phase 4 PLANNED
+> **Status:** Phase 1 COMPLETED, Phase 2 COMPLETED, Phase 3 COMPLETED, Phase 4 COMPLETED
 > **Created:** 2026-02-25
-> **Updated:** 2026-03-03 — Phases 1-3 complete (PRs #1196-#1222). Phase 4 added: AT/C category-gated template resolution (Gemini audit).
+> **Updated:** 2026-03-03 — All 4 phases complete. Phase 4 (PR #1233): AT/C category-gated template resolution per Gemini audit.
 > **Depends on:** Gemini WP-2/3/4/8/9 completion (Phases 2-3)
 > **Prereqs:** `FACULTY_SCHEDULING_SPECIFICATION.md`, `annual-workbook-architecture.md`, `excel-stateful-roundtrip-roadmap.md`
 >
@@ -355,11 +355,13 @@ cd backend
 
 ---
 
-## Phase 4: Category-Gated Template Resolution (AT/C Conflation Fix)
+## Phase 4: Category-Gated Template Resolution (AT/C Conflation Fix) — COMPLETED
 
-> **Status:** PLANNED
+> **Status:** COMPLETED
+> **PR:** #1233
 > **Priority:** HIGH — silent ACGME supervision violations possible
 > **Created:** 2026-03-03
+> **Completed:** 2026-03-03
 > **Audit:** `docs/reviews/2026-03-03-at-c-conflation-audit.md` (Gemini CLI)
 > **Depends on:** None (can be done independently)
 
@@ -435,6 +437,27 @@ Once templates gate correctly, register `FacultyWeeklyTemplateConstraint` so the
 | `backend/app/scheduling/engine.py` | Category-gate both resolvers (~20 lines each) |
 | `backend/app/scheduling/constraints/manager.py` | Register `FacultyWeeklyTemplateConstraint` |
 | `backend/tests/scheduling/test_resolve_template_activity.py` | Invert cross-category tests + add warning tests |
+
+### Implementation Summary (PR #1233)
+
+- **4A DONE:** `_resolve_template_activity()` category-gated — solver=C only overridden by `_SOLVER_CLINIC_CODES`, solver=AT only by `_SOLVER_ADMIN_CODES`. Cross-category falls back to solver type with warning.
+- **4B DONE:** `_apply_faculty_template_correction()` mirrored — same category gate for the post-solve template sweep.
+- **4C DEFERRED:** `FacultyWeeklyTemplateConstraint` registration — separate scope (solver-native template alignment during optimization, not post-processing safety gate).
+- **4D DONE:** `test_resolve_template_activity.py` rewritten — 34 tests: 7 classification, 8 same-category override, 6 cross-category rejection, 2 fallback, 6 pass-through, 5 post-call guard.
+
+### Future Optimization: Dynamic Code Sets from Activity Table
+
+The `_SOLVER_CLINIC_CODES` and `_SOLVER_ADMIN_CODES` sets are currently hardcoded in `engine.py`. If TAMC adds new activity codes (e.g., `geri_clinic`), someone must manually update these sets or the engine will reject the new code as a cross-category conflict.
+
+**Recommended approach** (when the activity list grows):
+
+```python
+# In _build_context(), where we already query activities:
+clinic_codes = {a.code.lower() for a in activities if a.counts_toward_physical_capacity}
+admin_codes = {a.code.lower() for a in activities if a.provides_supervision or a.activity_category == "administrative"}
+```
+
+This uses existing `Activity` model flags (`counts_toward_physical_capacity`, `provides_supervision`, `activity_category`) so the engine auto-adapts to new codes. Not needed now — TAMC's activity list is stable — but keeps the engine future-proof.
 
 ### Verification
 
