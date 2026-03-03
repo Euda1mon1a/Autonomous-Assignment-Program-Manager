@@ -192,27 +192,8 @@ class InternContinuityConstraint(HardConstraint):
             r.id for r in context.residents if getattr(r, "pgy_level", 0) == 1
         }
 
-        count = 0
-        for block in context.blocks:
-            if not self._is_wednesday_am(block):
-                continue
-
-            b_i = context.block_idx.get(block.id)
-            if b_i is None:
-                continue
-
-            for resident in context.residents:
-                if resident.id not in pgy1_residents:
-                    continue
-
-                r_i = context.resident_idx.get(resident.id)
-                if r_i is None:
-                    continue
-
-                # Expansion service handles this, constraint validates
-                count += 1
-
-        logger.info(f"Added {count} InternContinuity constraints")
+        # Expansion service handles assignment; this constraint validates only
+        logger.info("Added 0 InternContinuity constraints (validation-only)")
 
     def add_to_pulp(self, model: Any, variables: dict[str, Any], context: Any) -> None:
         """Add constraint to PuLP model (validation-focused)."""
