@@ -2,9 +2,10 @@
 
 Validates that:
 1. DFM is correctly classified as admin (not clinic)
-2. Templates are authoritative for C/AT — solver category doesn't gate resolution
-3. Solver type is used as fallback when no template exists
-4. PCAT, DO, OFF pass through unchanged (not overridden by templates)
+2. Same-category templates override solver types (C→cv, AT→gme)
+3. Cross-category templates are REJECTED (solver wins)
+4. Solver type is used as fallback when no template exists
+5. PCAT, DO, OFF pass through unchanged (not overridden by templates)
 """
 
 from datetime import date
@@ -18,7 +19,7 @@ import pytest
 # We import them indirectly to avoid pulling in the full engine context.
 # ---------------------------------------------------------------------------
 
-# These must match engine.py:3327-3346 exactly.
+# These must match engine.py's _SOLVER_CLINIC_CODES / _SOLVER_ADMIN_CODES.
 _SOLVER_CLINIC_CODES = {
     "cv",
     "fm_clinic",
@@ -56,8 +57,17 @@ def _make_resolve_fn(template_lookup: dict):
             return solver_type
         py_wd = slot_date.weekday()
         tpl_code = template_lookup.get((faculty_id, py_wd, time_of_day))
-        if tpl_code and tpl_code.lower() not in _POSTCALL_CODES:
-            return tpl_code  # Template is authoritative
+        if not tpl_code or tpl_code.lower() in _POSTCALL_CODES:
+            return solver_type
+
+        # Category gate: only override within same semantic family
+        tpl_lower = tpl_code.lower()
+        if solver_type == "C" and tpl_lower in _SOLVER_CLINIC_CODES:
+            return tpl_code
+        if solver_type == "AT" and tpl_lower in _SOLVER_ADMIN_CODES:
+            return tpl_code
+
+        # Cross-category conflict — solver wins
         return solver_type
 
     return _resolve_template_activity
@@ -101,12 +111,12 @@ class TestSolverCategoryClassification:
 
 
 # ---------------------------------------------------------------------------
-# Write-back resolution tests
+# Write-back resolution tests — same-category (template wins)
 # ---------------------------------------------------------------------------
 
 
-class TestResolveTemplateActivity:
-    """Verify the template-authoritative write-back logic."""
+class TestResolveTemplateActivitySameCategory:
+    """Verify that same-category templates override solver types."""
 
     @pytest.fixture()
     def faculty_id(self):
@@ -117,66 +127,44 @@ class TestResolveTemplateActivity:
         """A known Monday date."""
         return date(2026, 5, 11)  # Monday in Block 12
 
-    def test_template_wins_same_category_clinic(self, faculty_id, monday):
+    def test_solver_c_template_cv(self, faculty_id, monday):
         """Solver=C, template=cv (both clinic) → returns cv."""
         lookup = {(faculty_id, 0, "AM"): "cv"}
         resolve = _make_resolve_fn(lookup)
         assert resolve(faculty_id, monday, "AM", "C") == "cv"
 
-    def test_template_wins_same_category_admin(self, faculty_id, monday):
+    def test_solver_c_template_fm_clinic(self, faculty_id, monday):
+        """Solver=C, template=fm_clinic (both clinic) → returns fm_clinic."""
+        lookup = {(faculty_id, 0, "AM"): "fm_clinic"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "C") == "fm_clinic"
+
+    def test_solver_c_template_sm_clinic(self, faculty_id, monday):
+        """Solver=C, template=sm_clinic (both clinic) → returns sm_clinic."""
+        lookup = {(faculty_id, 0, "AM"): "sm_clinic"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "C") == "sm_clinic"
+
+    def test_solver_at_template_gme(self, faculty_id, monday):
         """Solver=AT, template=gme (both admin) → returns gme."""
         lookup = {(faculty_id, 0, "AM"): "gme"}
         resolve = _make_resolve_fn(lookup)
         assert resolve(faculty_id, monday, "AM", "AT") == "gme"
 
-    def test_template_wins_cross_category_solver_c_template_admin(
-        self, faculty_id, monday
-    ):
-        """Solver=C, template=gme (cross-category) → returns gme.
-
-        This is the core fix: templates are authoritative regardless of
-        solver category.
-        """
-        lookup = {(faculty_id, 0, "AM"): "gme"}
-        resolve = _make_resolve_fn(lookup)
-        assert resolve(faculty_id, monday, "AM", "C") == "gme"
-
-    def test_template_wins_cross_category_solver_at_template_clinic(
-        self, faculty_id, monday
-    ):
-        """Solver=AT, template=cv (cross-category) → returns cv."""
-        lookup = {(faculty_id, 0, "AM"): "cv"}
-        resolve = _make_resolve_fn(lookup)
-        assert resolve(faculty_id, monday, "AM", "AT") == "cv"
-
-    def test_no_template_falls_back_to_solver_c(self, faculty_id, monday):
-        """No template entry → returns solver type 'C'."""
-        resolve = _make_resolve_fn({})
-        assert resolve(faculty_id, monday, "AM", "C") == "C"
-
-    def test_no_template_falls_back_to_solver_at(self, faculty_id, monday):
-        """No template entry → returns solver type 'AT'."""
-        resolve = _make_resolve_fn({})
-        assert resolve(faculty_id, monday, "AM", "AT") == "AT"
-
-    def test_dfm_resolves_when_solver_at(self, faculty_id, monday):
-        """Solver=AT, template=dfm → returns dfm.
-
-        Before the fix, DFM was in _SOLVER_CLINIC_CODES so this would
-        have fallen back to generic 'AT'.
-        """
+    def test_solver_at_template_dfm(self, faculty_id, monday):
+        """Solver=AT, template=dfm (both admin) → returns dfm."""
         lookup = {(faculty_id, 0, "AM"): "dfm"}
         resolve = _make_resolve_fn(lookup)
         assert resolve(faculty_id, monday, "AM", "AT") == "dfm"
 
-    def test_dfm_resolves_when_solver_c(self, faculty_id, monday):
-        """Solver=C, template=dfm → returns dfm (template authoritative)."""
-        lookup = {(faculty_id, 0, "AM"): "dfm"}
+    def test_solver_at_template_sim(self, faculty_id, monday):
+        """Solver=AT, template=sim (both admin) → returns sim."""
+        lookup = {(faculty_id, 0, "AM"): "sim"}
         resolve = _make_resolve_fn(lookup)
-        assert resolve(faculty_id, monday, "AM", "C") == "dfm"
+        assert resolve(faculty_id, monday, "AM", "AT") == "sim"
 
     def test_pm_slot_uses_correct_lookup(self, faculty_id, monday):
-        """AM and PM slots resolve independently."""
+        """AM and PM slots resolve independently within same category."""
         lookup = {
             (faculty_id, 0, "AM"): "cv",
             (faculty_id, 0, "PM"): "gme",
@@ -189,9 +177,101 @@ class TestResolveTemplateActivity:
         """Friday (weekday=4) maps correctly."""
         friday = date(2026, 5, 15)  # Friday
         assert friday.weekday() == 4
-        lookup = {(faculty_id, 4, "AM"): "dfm"}
+        lookup = {(faculty_id, 4, "AM"): "gme"}
         resolve = _make_resolve_fn(lookup)
-        assert resolve(faculty_id, friday, "AM", "C") == "dfm"
+        assert resolve(faculty_id, friday, "AM", "AT") == "gme"
+
+
+# ---------------------------------------------------------------------------
+# Cross-category rejection tests (solver wins)
+# ---------------------------------------------------------------------------
+
+
+class TestCrossCategoryRejection:
+    """Verify that cross-category templates are REJECTED — solver type wins.
+
+    This is the AT/C conflation fix (Phase 4 of Faculty Fix Roadmap).
+    Prevents Failure Mode A (lost supervision) and B (lost capacity).
+    """
+
+    @pytest.fixture()
+    def faculty_id(self):
+        return uuid4()
+
+    @pytest.fixture()
+    def monday(self):
+        return date(2026, 5, 11)
+
+    def test_solver_c_template_gme_rejected(self, faculty_id, monday):
+        """Solver=C, template=gme (admin) → returns C (not gme).
+
+        Failure Mode B: solver demanded clinic capacity, template says admin.
+        Overriding would silently drop below clinic minimum.
+        """
+        lookup = {(faculty_id, 0, "AM"): "gme"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "C") == "C"
+
+    def test_solver_c_template_dfm_rejected(self, faculty_id, monday):
+        """Solver=C, template=dfm (admin) → returns C (not dfm)."""
+        lookup = {(faculty_id, 0, "AM"): "dfm"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "C") == "C"
+
+    def test_solver_at_template_cv_rejected(self, faculty_id, monday):
+        """Solver=AT, template=cv (clinic) → returns AT (not cv).
+
+        Failure Mode A: solver demanded ACGME supervision, template says
+        clinic. Overriding would create a silent supervision gap.
+        """
+        lookup = {(faculty_id, 0, "AM"): "cv"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "AT") == "AT"
+
+    def test_solver_at_template_fm_clinic_rejected(self, faculty_id, monday):
+        """Solver=AT, template=fm_clinic (clinic) → returns AT."""
+        lookup = {(faculty_id, 0, "AM"): "fm_clinic"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "AT") == "AT"
+
+    def test_solver_at_template_sm_clinic_rejected(self, faculty_id, monday):
+        """Solver=AT, template=sm_clinic (clinic) → returns AT."""
+        lookup = {(faculty_id, 0, "AM"): "sm_clinic"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "AT") == "AT"
+
+    def test_solver_c_template_sim_rejected(self, faculty_id, monday):
+        """Solver=C, template=sim (admin) → returns C."""
+        lookup = {(faculty_id, 0, "AM"): "sim"}
+        resolve = _make_resolve_fn(lookup)
+        assert resolve(faculty_id, monday, "AM", "C") == "C"
+
+
+# ---------------------------------------------------------------------------
+# Fallback tests (no template → solver type)
+# ---------------------------------------------------------------------------
+
+
+class TestNoTemplateFallback:
+    """Verify solver type is returned when no template exists."""
+
+    @pytest.fixture()
+    def faculty_id(self):
+        return uuid4()
+
+    @pytest.fixture()
+    def monday(self):
+        return date(2026, 5, 11)
+
+    def test_no_template_falls_back_to_solver_c(self, faculty_id, monday):
+        """No template entry → returns solver type 'C'."""
+        resolve = _make_resolve_fn({})
+        assert resolve(faculty_id, monday, "AM", "C") == "C"
+
+    def test_no_template_falls_back_to_solver_at(self, faculty_id, monday):
+        """No template entry → returns solver type 'AT'."""
+        resolve = _make_resolve_fn({})
+        assert resolve(faculty_id, monday, "AM", "AT") == "AT"
 
 
 # ---------------------------------------------------------------------------
@@ -299,8 +379,8 @@ class TestPostCallTemplateGuard:
         resolve = _make_resolve_fn(lookup)
         assert resolve(faculty_id, monday, "PM", "AT") == "AT"
 
-    def test_valid_template_still_works_alongside_guard(self, faculty_id, monday):
-        """Valid template codes (cv, gme) are not affected by the guard."""
+    def test_valid_same_category_still_works(self, faculty_id, monday):
+        """Valid same-category codes (cv for C, gme for AT) still work."""
         lookup = {
             (faculty_id, 0, "AM"): "cv",
             (faculty_id, 0, "PM"): "gme",
