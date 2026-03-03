@@ -3535,7 +3535,12 @@ class SchedulingEngine:
 
         After the solver writes coarse activity types (C, AT, OFF) and
         backfill fills gaps, this sweep ensures faculty HDAs align with
-        their weekly templates (e.g., C→sm_clinic, AT→gme, OFF→cv).
+        their weekly templates — but only within the same semantic category.
+
+        Category-gated: C-family codes (C, fm_clinic, cv, etc.) only
+        overridden by clinic templates; AT-family codes (AT, gme, dfm, etc.)
+        only by admin templates.  Cross-category overrides are logged and
+        skipped to prevent silent ACGME supervision or capacity loss.
 
         Only modifies source='solver' HDAs. Never touches preload, manual,
         post-call codes (CALL, PCAT, DO), or weekends (W).
@@ -3579,6 +3584,28 @@ class SchedulingEngine:
         # Post-call/rest codes that must never be overridden
         _PROTECTED_CODES = {"call", "pcat", "do", "w", "lec"}
 
+        # Category sets for gating template overrides (must match
+        # _persist_faculty_half_day_from_solver sets)
+        _SOLVER_CLINIC_CODES = {
+            "c",
+            "cv",
+            "fm_clinic",
+            "sm_clinic",
+            "c40",
+            "hlc",
+            "rad",
+            "asm",
+        }
+        _SOLVER_ADMIN_CODES = {
+            "at",
+            "gme",
+            "sim",
+            "lec",
+            "pi",
+            "dep",
+            "dfm",
+        }
+
         # Query solver-source faculty HDAs with their current activity code
         solver_hdas = (
             self.db.query(HalfDayAssignment, Activity.code)
@@ -3619,6 +3646,28 @@ class SchedulingEngine:
 
             # Skip if already matching
             if current_code and current_code.lower() == tpl_code.lower():
+                continue
+
+            # Category gate: only override within the same semantic family
+            cur_lower = current_code.lower() if current_code else ""
+            tpl_lower = tpl_code.lower()
+            cur_is_clinic = cur_lower in _SOLVER_CLINIC_CODES
+            cur_is_admin = cur_lower in _SOLVER_ADMIN_CODES
+            tpl_is_clinic = tpl_lower in _SOLVER_CLINIC_CODES
+            tpl_is_admin = tpl_lower in _SOLVER_ADMIN_CODES
+
+            if (cur_is_clinic and not tpl_is_clinic) or (
+                cur_is_admin and not tpl_is_admin
+            ):
+                logger.warning(
+                    "Template correction category conflict: current=%s, "
+                    "template=%s for %s on %s %s — skipping",
+                    current_code,
+                    tpl_code,
+                    hda.person_id,
+                    hda.date,
+                    hda.time_of_day,
+                )
                 continue
 
             # Resolve template activity ID
@@ -3893,10 +3942,11 @@ class SchedulingEngine:
         # activity code from the faculty's weekly template (CV, sm_clinic, dfm, etc.)
         from app.models.faculty_weekly_template import FacultyWeeklyTemplate
 
-        # Map solver categories to template activity codes that belong in each
-        # These sets classify template activity codes into the solver's binary
-        # C/AT model.  Retained for future constraint registration and capacity
-        # tracking; no longer gate the write-back (templates are authoritative).
+        # Map solver categories to template activity codes that belong in each.
+        # These sets gate the write-back: solver=C only overridden by clinic
+        # codes, solver=AT only by admin codes.  Prevents silent ACGME
+        # supervision loss (Failure Mode A) and capacity loss (Failure Mode B).
+        # See docs/reviews/2026-03-03-at-c-conflation-audit.md for details.
         _SOLVER_CLINIC_CODES = {
             "cv",
             "fm_clinic",
@@ -3959,14 +4009,13 @@ class SchedulingEngine:
             are the coarse categories that templates refine into specific codes
             (e.g., C → cv, fm_clinic; AT → gme, dfm).
 
-            PCAT, DO, and OFF have specific post-call/rest semantics that must
-            not be overridden by templates.  Additionally, if a template
-            erroneously contains a post-call code (pcat, do, off), we ignore
-            it for C/AT slots to prevent corrupting call-chain semantics.
+            Category-gated: solver=C only overridden by _SOLVER_CLINIC_CODES,
+            solver=AT only by _SOLVER_ADMIN_CODES.  Cross-category conflicts
+            (solver=C but template=admin, or vice versa) fall back to the
+            solver type to prevent silent ACGME supervision or capacity loss.
 
-            NOTE: FacultyWeeklyTemplateConstraint is not yet registered, so the
-            solver doesn't respect templates during optimization.  Once registered,
-            cross-category conflicts (solver=C, template=admin) will decrease.
+            PCAT, DO, and OFF have specific post-call/rest semantics that must
+            not be overridden by templates.
             """
             # Only override C and AT — PCAT, DO, OFF have specific semantics
             if solver_type not in ("C", "AT"):
@@ -3976,9 +4025,26 @@ class SchedulingEngine:
             py_wd = slot_date.weekday()  # 0=Mon ... 6=Sun
 
             tpl_code = template_lookup.get((faculty_id, py_wd, time_of_day))
-            if tpl_code and tpl_code.lower() not in _POSTCALL_CODES:
-                return tpl_code  # Template is authoritative
-            # No template for this slot (or template is post-call) — use solver type
+            if not tpl_code or tpl_code.lower() in _POSTCALL_CODES:
+                return solver_type
+
+            # Category gate: only override if template is in same semantic family
+            tpl_lower = tpl_code.lower()
+            if solver_type == "C" and tpl_lower in _SOLVER_CLINIC_CODES:
+                return tpl_code
+            if solver_type == "AT" and tpl_lower in _SOLVER_ADMIN_CODES:
+                return tpl_code
+
+            # Cross-category conflict — solver wins
+            logger.warning(
+                "Template/solver category conflict: solver={}, template={} "
+                "for {} {} {} — keeping solver type",
+                solver_type,
+                tpl_code,
+                faculty_id,
+                slot_date,
+                time_of_day,
+            )
             return solver_type
 
         # Track existing locked slots to avoid overwriting
