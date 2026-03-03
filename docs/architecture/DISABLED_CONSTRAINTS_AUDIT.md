@@ -1,90 +1,77 @@
 # Disabled Constraints Audit
 
 > **Date:** 2026-03-02 (updated 2026-03-03)
-> **Scope:** All constraints disabled in `ConstraintManager.create_default(profile="faculty")` (production default)
+> **Scope:** All constraints in `ConstraintManager.create_default(profile="faculty")` (production default)
 > **Source:** `backend/app/scheduling/constraints/manager.py`
 
 ## Summary
 
 The constraint manager registers **51 constraints** in `create_default()`. With the `profile="faculty"` flag (used by `engine.py`), **4 additional constraints are re-enabled** (FMITWeekBlocking, FMITMandatoryCall, OvernightCallGeneration, DeptChiefWednesdayPreference), giving **47 enabled** at the manager level.
 
-**Update (Mar 3, PR #1226):** 4 previously-disabled constraints re-enabled after combined stress test (all OPTIMAL, 16.7s, Block 12). Only **4 remain disabled** — all conditionally enabled by `engine.py` at runtime when data exists (ResidentWeeklyClinic, ZoneBoundary, PreferenceTrail, N1Vulnerability).
+Only **4 remain disabled** in the manager — all conditionally enabled by `engine.py` at runtime when their data dependencies exist: ResidentWeeklyClinic, ZoneBoundary, PreferenceTrail, N1Vulnerability.
 
-Of these 9, **3 are conditionally enabled** by `engine.py` at runtime when their data dependencies exist (HalfDayRequirement, ResidentWeeklyClinic, and the 3 Tier-2 resilience constraints).
+### Change Log
+
+| Date | PR | Change |
+|------|-----|--------|
+| Mar 2 | #1224 | Initial audit: 9 disabled constraints documented |
+| Mar 3 | #1225 | Removed FMITResidentClinicDay stub, fixed `_get_template_ids_by_activity` → `_get_template_ids_by_rotation_type` |
+| Mar 3 | #1226 | Re-enabled 4 constraints after combined stress test (all OPTIMAL, 16.7s, Block 12) |
 
 ## Constraint Inventory
 
-| # | Constraint Name | File | Type | Category | Reason Disabled | Recommendation |
-|---|----------------|------|------|----------|----------------|----------------|
-| 1 | `WednesdayPMSingleFaculty` | `temporal.py` | Hard | DEFER | `faculty_template_assignments` exists in both solver paths (`solvers.py:341`, `:1061`). Root cause of INFEASIBLE (Feb 28 stress test): hard `== 1` exactly-one-faculty-in-clinic conflicts with preloaded assignments on certain Wednesday PMs. | Investigate preload conflicts. Convert to soft constraint or relax to `>= 1`. |
-| 2 | `SMResidentFacultyAlignment` | `sports_medicine.py` | Hard | DEFER | Requires Sports Medicine program data (`is_sports_medicine`, `requires_specialty` on templates, SM faculty identification). No SM program currently configured in the database. Implementation is complete and well-tested. | Enable when SM program is configured. Safe to enable -- will no-op gracefully (early returns) when no SM data exists. |
-| 3 | `SMFacultyNoRegularClinic` | `faculty_role.py` | Hard | DEFER | Same dependency as #2. Blocks SM faculty (`faculty_role == "sports_med"`) from regular clinic templates. No SM faculty currently in database. | Enable when SM program is configured. Safe to enable -- no-ops when no SM faculty exist. |
-| 4 | ~~`FMITResidentClinicDay`~~ | ~~`inpatient.py`~~ | Hard | REMOVED | Was a stub: `add_to_cpsat()` logged "Added 0 constraints" and returned. Removed in PR #1225. Pre-loader handles PGY-specific FMIT clinic days. | Done. |
-| 5 | `HalfDayRequirement` | `halfday_requirement.py` | Soft | DEFER | Disabled at manager level but **conditionally enabled by engine.py** (line 1157) when `halfday_reqs` data exists. CP-SAT implementation is **incomplete** -- the deviation variable section has a "simplification" comment and does not actually add penalty terms to the objective. PuLP `add_to_pulp()` and `validate()` call `_get_template_ids_by_activity()` which **does not exist** (will raise `AttributeError`). | Fix the missing method (`_get_template_ids_by_activity` -> `_get_template_ids_by_rotation_type`) and complete the CP-SAT deviation penalty. Keep disabled at manager level; engine enables when data exists. |
-| 6 | `ResidentWeeklyClinic` | `resident_weekly_clinic.py` | Soft | OK | Disabled at manager level but **conditionally enabled by engine.py** (line 1146) when `weekly_reqs` data exists. Implementation is complete with proper CP-SAT soft penalty formulation (under_min/over_max IntVars). Tests exist. | No action needed. The current pattern (disabled in manager, enabled by engine when data exists) is correct and intentional. |
-| 7 | `ZoneBoundary` | `resilience.py` | Soft | OK | Tier-2 resilience constraint. Disabled at manager level but **conditionally enabled by engine.py** (line 1254) when zone assignment data exists from `ResilienceService`. Implementation is complete. Requires `context.zone_assignments` and `context.block_zones` to be populated. | No action needed. Correct pattern -- engine enables when resilience data is available. |
-| 8 | `PreferenceTrail` | `resilience.py` | Soft | OK | Tier-2 resilience constraint. Disabled at manager level but **conditionally enabled by engine.py** (line 1240) when preference trail data exists from stigmergy analysis. Implementation is complete. Requires `context.preference_trails` to be populated. | No action needed. Correct pattern -- engine enables when preference data is available. |
-| 9 | `N1Vulnerability` | `resilience.py` | Soft | OK | Tier-2 resilience constraint. Disabled at manager level but **conditionally enabled by engine.py** (line 1228) unconditionally during resilience loading. Implementation is complete. Uses `context.availability` and `context.n1_vulnerable_faculty` data. | No action needed. Correct pattern -- engine enables during resilience data loading. |
+| # | Constraint Name | File | Type | Status | Notes |
+|---|----------------|------|------|--------|-------|
+| 1 | `WednesdayPMSingleFaculty` | `temporal.py` | Hard | **ENABLED** (PR #1226) | Passes OPTIMAL but **no-ops at runtime** — looks for `faculty_template_assignments` which solver creates. Originally INFEASIBLE Feb 28; now OPTIMAL (likely due to Wed PM LEC preloader fix in PR #1215). Needs variable mapping refactor to become functional. |
+| 2 | `SMResidentFacultyAlignment` | `sports_medicine.py` | Hard | **ENABLED** (PR #1226) | SM data exists: SM faculty member (`faculty_role='sports_med'`), SM-AM/SM-PM/ACS-AM templates. `requires_specialty` column unpopulated so constraint no-ops gracefully. Fully functional when `requires_specialty` is populated. |
+| 3 | `SMFacultyNoRegularClinic` | `faculty_role.py` | Hard | **ENABLED** (PR #1226) | Blocks SM faculty from regular clinic templates. SM faculty member matches via `faculty_role='sports_med'`. Active — prevents SM faculty member assignment to non-SM clinic slots. |
+| 4 | ~~`FMITResidentClinicDay`~~ | ~~`inpatient.py`~~ | Hard | **REMOVED** (PR #1225) | Stub deleted. Pre-loader handles PGY-specific FMIT clinic days. |
+| 5 | `HalfDayRequirement` | `halfday_requirement.py` | Soft | **ENABLED** (PR #1226) | Method bug fixed (PR #1225). CP-SAT deviation penalty still **incomplete** — creates `fm_vars`/`specialty_vars` but never adds penalty to objective. Runs OPTIMAL but effectively passive. |
+| 6 | `ResidentWeeklyClinic` | `resident_weekly_clinic.py` | Soft | **DISABLED** (engine conditional) | Conditionally enabled by `engine.py` (line 1146) when `weekly_reqs` data exists. Implementation complete. Correct pattern. |
+| 7 | `ZoneBoundary` | `resilience.py` | Soft | **DISABLED** (engine conditional) | Conditionally enabled by `engine.py` (line 1254) when zone data exists from `ResilienceService`. Implementation complete. Correct pattern. |
+| 8 | `PreferenceTrail` | `resilience.py` | Soft | **DISABLED** (engine conditional) | Conditionally enabled by `engine.py` (line 1240) when preference trail data exists. Implementation complete. Correct pattern. |
+| 9 | `N1Vulnerability` | `resilience.py` | Soft | **DISABLED** (engine conditional) | Conditionally enabled by `engine.py` (line 1228) during resilience loading. Implementation complete. Correct pattern. |
 
 ## Category Summary
 
 | Category | Count | Constraints |
 |----------|-------|-------------|
-| **OK** (correctly disabled, engine enables when needed) | 4 | ResidentWeeklyClinic, ZoneBoundary, PreferenceTrail, N1Vulnerability |
-| **DEFER** (needs work before enabling) | 4 | WednesdayPMSingleFaculty, SMResidentFacultyAlignment, SMFacultyNoRegularClinic, HalfDayRequirement |
-| **REMOVED** (stub deleted PR #1225) | 1 | FMITResidentClinicDay |
+| **ENABLED** (active in manager, functional) | 1 | SMFacultyNoRegularClinic |
+| **ENABLED** (active in manager, passive/no-op) | 3 | WednesdayPMSingleFaculty, SMResidentFacultyAlignment, HalfDayRequirement |
+| **DISABLED** (engine enables when data exists) | 4 | ResidentWeeklyClinic, ZoneBoundary, PreferenceTrail, N1Vulnerability |
+| **REMOVED** | 1 | FMITResidentClinicDay |
 
-## Detailed Findings
+## Remaining Technical Debt
 
-### 1. WednesdayPMSingleFaculty (DEFER)
+### 1. WednesdayPMSingleFaculty — Variable Mapping Refactor (HIGH)
 
 **File:** `backend/app/scheduling/constraints/temporal.py:212`
 
-**Correction (PR #1225, Codex P2):** The original diagnosis was wrong — `faculty_template_assignments` **does** exist in both solver paths (`solvers.py:341` and `:1061`). The constraint accesses the correct variable key.
+**Status:** Enabled but passive. The constraint accesses `variables.get("faculty_template_assignments")` which the solver does create (`solvers.py:341`, `:1061`). It solves OPTIMAL but the variable key may not be populated for the constraint's specific use case (per-Wednesday-PM faculty assignment tracking). Needs investigation of whether the constraint actually adds any CP-SAT terms at runtime.
 
-The actual root cause of INFEASIBLE (Feb 28 stress test) is the hard `model.Add(sum(...) == 1)` requirement: on certain Wednesday PMs, preloaded assignments and other hard constraints leave zero or multiple faculty available for outpatient clinic, making exactly-one unsatisfiable.
+**Correction (PR #1225, Codex P2):** Original diagnosis was wrong — `faculty_template_assignments` does exist. The Feb 28 INFEASIBLE was likely caused by hard `== 1` conflicting with preloaded assignments on certain Wednesday PMs. The Wed PM LEC preloader (PR #1215) may have resolved the underlying conflict.
 
-**Tests:** `backend/tests/constraints/test_temporal_constraint.py:496` (helper tests only, no solver integration)
+### 2. SMResidentFacultyAlignment — Data Population (LOW)
 
-**Fix required:** Either:
-- Investigate which Wednesday PM blocks conflict with preloads/other constraints
-- Convert from hard to soft constraint (penalize deviation from 1)
-- Relax to `>= 1` if the concern is only about having at least one
+**File:** `backend/app/scheduling/constraints/sports_medicine.py`
 
-### 2-3. SM Constraints (DEFER -- data dependency)
+**Status:** Enabled but no-ops because `requires_specialty` column on `rotation_templates` is not populated. SM faculty member is correctly identified as `sports_med` faculty. SM-AM/SM-PM/ACS-AM templates exist. When `requires_specialty = "Sports Medicine"` is set on relevant templates, this constraint will automatically activate resident-faculty alignment for SM rotations.
 
-**Files:** `sports_medicine.py`, `faculty_role.py:329`
+### 3. HalfDayRequirement — CP-SAT Deviation Formulation (MEDIUM)
 
-Both constraints are well-implemented with proper CP-SAT, PuLP, and validation methods. They gracefully no-op when SM data is absent (early return when no SM templates/faculty found). The only reason they are disabled is that the Sports Medicine program is not yet configured in the database.
+**File:** `backend/app/scheduling/constraints/halfday_requirement.py:345-352`
 
-**Tests:** `backend/tests/scheduling/test_sports_medicine_constraint.py`, `backend/tests/scheduling/test_faculty_role_constraint.py`
+**Status:** Enabled but passive. The `add_to_cpsat()` method creates `fm_vars` and `specialty_vars` correctly but the deviation penalty section (lines 345-352) has a "simplification" comment and does not actually create deviation IntVars or add penalty terms to the objective. The constraint runs without error but has zero effect on the optimization.
 
-**Note:** These are actually safe to enable now -- they will do nothing without SM data and activate automatically when SM faculty/templates are added. However, keeping them disabled makes the constraint count cleaner and avoids any edge-case surprises.
-
-### 4. FMITResidentClinicDay (REMOVED — PR #1225)
-
-Stub constraint deleted. Pre-loader handles all PGY-specific FMIT clinic day assignments. Removed from `inpatient.py`, `manager.py`, `__init__.py`, `config.py`.
-
-### 5. HalfDayRequirement (DEFER -- buggy)
-
-**File:** `backend/app/scheduling/constraints/halfday_requirement.py:216`
-
-Two bugs identified:
-1. **Missing method:** `add_to_pulp()` (line 370) and `validate()` (line 425) call `self._get_template_ids_by_activity(context)` which does not exist. Only `_get_template_ids_by_rotation_type()` is defined. These methods will raise `AttributeError` at runtime.
-2. **Incomplete CP-SAT:** The `add_to_cpsat()` method creates `fm_vars` and `specialty_vars` but the deviation penalty section (lines 346-352) is commented as "simplification" and does not actually create deviation variables or add them to the objective.
-
-**Tests:** `backend/tests/scheduling/test_halfday_requirement_constraint.py` (tests exist but may not exercise the buggy paths)
-
-### 6-9. Conditionally-Enabled Constraints (OK)
-
-ResidentWeeklyClinic, ZoneBoundary, PreferenceTrail, and N1Vulnerability follow a correct architectural pattern: disabled in the manager (safe default), enabled by `engine.py` when their data dependencies are satisfied. This is the intended behavior and should not be changed.
+**Fix needed (~30 lines):** Create `under`/`over` IntVars for each target, add `AddAbsEquality` or similar deviation tracking, and append weighted penalty terms to the objective.
 
 ## Action Items
 
-| Priority | Action | Constraint | Effort |
-|----------|--------|-----------|--------|
-| ~~LOW~~ | ~~Remove stub from registration~~ | ~~FMITResidentClinicDay~~ | Done (PR #1225) |
-| ~~MEDIUM~~ | ~~Fix `_get_template_ids_by_activity` bug~~ | ~~HalfDayRequirement~~ | Done (PR #1225) |
+| Priority | Action | Constraint | Effort | Status |
+|----------|--------|-----------|--------|--------|
+| ~~LOW~~ | ~~Remove stub~~ | ~~FMITResidentClinicDay~~ | — | Done (PR #1225) |
+| ~~MEDIUM~~ | ~~Fix method name bug~~ | ~~HalfDayRequirement~~ | — | Done (PR #1225) |
+| ~~MEDIUM~~ | ~~Re-enable 4 stress-tested constraints~~ | ~~All 4~~ | — | Done (PR #1226) |
+| HIGH | Verify WednesdayPMSingleFaculty adds terms at runtime | WednesdayPMSingleFaculty | Investigation |
 | MEDIUM | Complete CP-SAT deviation formulation | HalfDayRequirement | ~30 lines |
-| HIGH | Refactor to use existing solver variables | WednesdayPMSingleFaculty | Variable mapping refactor |
-| LOW | Enable when SM program configured | SM constraints (2) | 0 code change (data dependency) |
+| LOW | Populate `requires_specialty` on SM templates | SMResidentFacultyAlignment | Data entry |
