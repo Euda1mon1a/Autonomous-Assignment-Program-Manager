@@ -1,8 +1,8 @@
 # Stateful Round-Trip and Schema Hardening Roadmap
 
-> **Status:** Planning (documentation only)
+> **Status:** Planning — Excel phases unstarted; Schema Track A partially implemented
 > **Created:** 2026-02-24
-> **Updated:** 2026-02-24 — augmented with structural DB fixes from external architecture review
+> **Updated:** 2026-03-02 — Track A call equity done (PRs #1199, #1202, #1217). Excel phases 1-4 remain backlog.
 > **Origin:** Architectural proposal from external review of Excel import/export pipeline and database schema
 
 ---

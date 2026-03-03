@@ -1,7 +1,7 @@
 # Call Coverage Constraints Reference
 
 > **Module:** `backend/app/scheduling/constraints/call_coverage.py`
-> **Last Updated:** 2025-12-26
+> **Last Updated:** 2026-03-02
 
 ---
 
@@ -183,31 +183,49 @@ class CallAvailabilityConstraint(HardConstraint):
 
 ## Soft Constraints (Equity)
 
-These constraints are defined in `call_equity.py` and work with the call variables:
+These constraints are defined in `call_equity.py` and `overnight_call.py`, and work with the call variables:
 
 ### SundayCallEquityConstraint
 
-**Weight:** 10.0
+**Weight:** 50.0
 
-Balances Sunday call assignments across faculty. Sunday is tracked separately because it's more burdensome (weekend night).
+Balances Sunday call assignments across faculty using MAD (Mean Absolute Deviation) via `AddAbsEquality`. Sunday is tracked separately because it's more burdensome (weekend night). Consumes YTD history from `prior_calls` for longitudinal equity.
 
 ### WeekdayCallEquityConstraint
 
-**Weight:** 5.0
+**Weight:** 25.0
 
-Balances Mon-Thu call assignments across faculty.
+Balances Mon-Thu call assignments across faculty using MAD formulation. Consumes YTD history from `prior_calls`.
+
+### EscalatingCallEquityConstraint
+
+**Weight:** 15.0 (base, escalates 1x/3x/7x per tier)
+
+Three-tier escalating penalty for faculty exceeding target call count. Uses F-multiplied integers for CP-SAT compatibility. `total_current` sum hoisted outside per-faculty loop (PR #1221).
+
+### NoConsecutiveCallConstraint
+
+**Weight:** 50.0
+
+Prevents back-to-back non-FMIT call assignments (Sun-Thu). Skips FMIT Fri+Sat pairs which are expected preloaded patterns. Added PR #1220.
 
 ### CallSpacingConstraint
 
 **Weight:** 8.0
 
-Prevents back-to-back call assignments. Penalizes when the same faculty has call on consecutive eligible nights.
+Penalizes when the same faculty has call on consecutive eligible nights (softer version of NoConsecutiveCall for general spacing).
 
 ### TuesdayCallPreferenceConstraint
 
 **Weight:** 2.0
 
 Honors faculty preferences for or against Tuesday call.
+
+### DeptChiefWednesdayPreferenceConstraint
+
+**Weight:** 5.0
+
+Bonus for department chief receiving Wednesday call (preferred by chief). Registered in manager, enabled for `profile="faculty"`.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **Status:** Phase 1 COMPLETED, Phase 2 COMPLETED, Phase 3 COMPLETED
 > **Created:** 2026-02-25
-> **Updated:** 2026-03-02 — Phase 3 completed (PR #1219). All 3 phases done.
+> **Updated:** 2026-03-02 — All 3 phases + post-sprint hardening complete (PRs #1196-#1222).
 > **Depends on:** Gemini WP-2/3/4/8/9 completion (Phases 2-3)
 > **Prereqs:** `FACULTY_SCHEDULING_SPECIFICATION.md`, `annual-workbook-architecture.md`, `excel-stateful-roundtrip-roadmap.md`
 >
@@ -159,6 +159,9 @@ No migration needed — metadata-only alignment.
 | 2C: `profile` parameter | **DONE** — `create_default(profile="resident"\|"faculty")` implemented |
 | 2D: DOW convention fix | **DONE** — PR #1210 (15 files, 67 tests) |
 | 2E: Call equity tuning | **DONE** — PR #1217. Equity weights Sunday 10→50, Weekday 5→25 to compete with `CLINIC_MIN_PENALTY=200`. Revived dead `OvernightCallGenerationConstraint` (`resident_idx` bug). Added availability-normalized `prior_calls`. |
+| 2F: Call spacing + escalating equity | **DONE** — PR #1220. `NoConsecutiveCallConstraint` (w=50, soft), `EscalatingCallEquityConstraint` (3-tier 1x/3x/7x), post-FMIT PC recovery preload, ARCH-005 pre-commit hook. |
+| 2G: CP-SAT optimization | **DONE** — PR #1221. Hoisted `total_current_vars` sum into single IntVar (Gemini review). |
+| 2H: ARCH-004 constraint logging | **DONE** — PR #1222. All 39 `add_to_cpsat()` methods across 13 files now log constraint counts. 0 ARCH-004 warnings. |
 
 ### Phase 2 Tests
 
