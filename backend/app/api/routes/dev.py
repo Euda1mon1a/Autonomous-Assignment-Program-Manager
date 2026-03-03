@@ -221,10 +221,19 @@ def cleanup_seed_data(db: Session = Depends(get_db)):
             detail="Dev cleanup only available in test environment or when ALLOW_DEV_SEED is true",
         )
 
-    # Delete HDAs for seeded people first (FK constraint)
+    # Delete child rows for seeded people first (FK constraints)
     hda_result = db.execute(
         text(
             "DELETE FROM half_day_assignments "
+            "WHERE person_id IN ("
+            "  SELECT id FROM people "
+            "  WHERE name LIKE 'Dr. Faculty-%%' OR name LIKE 'CPT Doe-%%'"
+            ")"
+        )
+    )
+    db.execute(
+        text(
+            "DELETE FROM person_academic_years "
             "WHERE person_id IN ("
             "  SELECT id FROM people "
             "  WHERE name LIKE 'Dr. Faculty-%%' OR name LIKE 'CPT Doe-%%'"
