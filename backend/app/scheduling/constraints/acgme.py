@@ -90,6 +90,7 @@ class AvailabilityConstraint(HardConstraint):
             blocking absences are absolutely forbidden and cannot be overridden.
         """
         x = variables.get("assignments", {})
+        count = 0
 
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
@@ -101,6 +102,9 @@ class AvailabilityConstraint(HardConstraint):
                         if not context.availability[resident.id][block.id]["available"]:
                             if (r_i, b_i) in x:
                                 model.Add(x[r_i, b_i] == 0)
+                                count += 1
+
+        logger.info(f"Added {count} Availability constraints")
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """
@@ -295,6 +299,7 @@ class EightyHourRuleConstraint(HardConstraint):
         preassigned_blocks = getattr(context, "preassigned_work_blocks", {})
 
         warned_fixed_80 = set()
+        count = 0
 
         # For each possible 28-day window starting point
         for window_start in dates:
@@ -344,6 +349,9 @@ class EightyHourRuleConstraint(HardConstraint):
                         sum(window_vars) + preassigned_count
                         <= self.max_blocks_per_window
                     )
+                    count += 1
+
+        logger.info(f"Added {count} EightyHourRule constraints")
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """
@@ -562,6 +570,7 @@ class OneInSevenRuleConstraint(HardConstraint):
 
         preassigned_days = getattr(context, "preassigned_work_days", {})
         warned_fixed_1in7 = set()
+        count = 0
 
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
@@ -628,6 +637,9 @@ class OneInSevenRuleConstraint(HardConstraint):
                         sum(day_worked_vars) + preassigned_day_count
                         <= self.MAX_CONSECUTIVE_DAYS
                     )
+                    count += 1
+
+        logger.info(f"Added {count} OneInSevenRule constraints")
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """
@@ -851,7 +863,7 @@ class SupervisionRatioConstraint(HardConstraint):
             Section VI.B: "The program must demonstrate that the appropriate
             level of supervision is in place for all residents."
         """
-        pass
+        logger.info("Added 0 SupervisionRatio constraints (validation-only)")
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """

@@ -171,6 +171,9 @@ class SundayCallEquityConstraint(SoftConstraint):
             objective_vars.append((abs_dev, int(self.weight)))
 
         variables["objective_terms"] = objective_vars
+        logger.info(
+            f"Added {len(faculty_sunday_counts)} SundayCallEquity MAD constraints"
+        )
 
     def add_to_pulp(
         self,
@@ -367,6 +370,9 @@ class HolidayCallEquityConstraint(SoftConstraint):
         objective_vars = variables.get("objective_terms", [])
         objective_vars.append((max_holiday, int(self.weight)))
         variables["objective_terms"] = objective_vars
+        logger.info(
+            f"Added {len(faculty_holiday_counts)} HolidayCallEquity minimax constraints"
+        )
 
     def add_to_pulp(
         self,
@@ -598,6 +604,9 @@ class WeekdayCallEquityConstraint(SoftConstraint):
             objective_vars.append((abs_dev, int(self.weight)))
 
         variables["objective_terms"] = objective_vars
+        logger.info(
+            f"Added {len(faculty_weekday_counts)} WeekdayCallEquity MAD constraints"
+        )
 
     def add_to_pulp(
         self,
@@ -998,6 +1007,7 @@ class FacultyCallPreferenceConstraint(SoftConstraint):
             blocks_by_weekday[block.date.weekday()].append(block)
 
         objective_vars = variables.get("objective_terms", [])
+        count = 0
         for pref in preferences:
             f_i = call_faculty_idx.get(pref.person_id)
             if f_i is None:
@@ -1019,8 +1029,10 @@ class FacultyCallPreferenceConstraint(SoftConstraint):
                 var = call_vars.get((f_i, b_i, "overnight"))
                 if var is not None:
                     objective_vars.append((var, weight))
+                    count += 1
 
         variables["objective_terms"] = objective_vars
+        logger.info(f"Added {count} FacultyCallPreference constraints")
 
     def add_to_pulp(
         self,
@@ -1212,6 +1224,7 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
             for var in penalty_vars:
                 objective_vars.append((var, int(self.weight)))
             variables["objective_terms"] = objective_vars
+        logger.info(f"Added {len(penalty_vars)} TuesdayCallPreference constraints")
 
     def add_to_pulp(
         self,
@@ -1358,6 +1371,7 @@ class CallNightBeforeLeaveConstraint(SoftConstraint):
         availability = context.availability or {}
 
         objective_vars = variables.get("objective_terms", [])
+        count = 0
 
         for faculty in call_eligible_faculty:
             f_i = call_faculty_idx.get(faculty.id)
@@ -1385,8 +1399,10 @@ class CallNightBeforeLeaveConstraint(SoftConstraint):
                 )
                 if next_day_unavailable:
                     objective_vars.append((call_var, int(self.weight)))
+                    count += 1
 
         variables["objective_terms"] = objective_vars
+        logger.info(f"Added {count} CallNightBeforeLeave constraints")
 
     def add_to_pulp(
         self,
@@ -1611,6 +1627,7 @@ class CallSpacingConstraint(SoftConstraint):
             for var in penalty_vars:
                 objective_vars.append((var, int(self.weight)))
             variables["objective_terms"] = objective_vars
+        logger.info(f"Added {len(penalty_vars)} CallSpacing constraints")
 
     def add_to_pulp(
         self,
@@ -1857,6 +1874,7 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
             for var in bonus_vars:
                 objective_vars.append((var, -int(self.weight)))
             variables["objective_terms"] = objective_vars
+        logger.info(f"Added {len(bonus_vars)} DeptChiefWednesdayPreference constraints")
 
     def add_to_pulp(
         self,

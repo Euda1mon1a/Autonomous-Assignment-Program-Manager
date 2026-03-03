@@ -658,6 +658,8 @@ class ResidentClinicDayPreferenceConstraint(SoftConstraint):
         if total_penalty:
             variables["clinic_day_penalty"] = total_penalty
 
+        logger.info("Added ResidentClinicDayPreference soft penalty to objective")
+
     def add_to_pulp(
         self,
         model: Any,

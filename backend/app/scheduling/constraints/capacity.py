@@ -50,6 +50,7 @@ class OnePersonPerBlockConstraint(HardConstraint):
     ) -> None:
         """At most max_per_block residents per block."""
         x = variables.get("assignments", {})
+        count = 0
 
         for block in context.blocks:
             b_i = context.block_idx[block.id]
@@ -60,6 +61,9 @@ class OnePersonPerBlockConstraint(HardConstraint):
             ]
             if resident_vars:
                 model.Add(sum(resident_vars) <= self.max_per_block)
+                count += 1
+
+        logger.info(f"Added {count} OnePersonPerBlock constraints")
 
     def add_to_pulp(
         self,
@@ -143,6 +147,7 @@ class ClinicCapacityConstraint(HardConstraint):
         if not template_vars:
             return  # No template-specific variables
 
+        count = 0
         # Group by (block, template)
         for block in context.blocks:
             b_i = context.block_idx[block.id]
@@ -159,6 +164,9 @@ class ClinicCapacityConstraint(HardConstraint):
 
                     if template_block_vars:
                         model.Add(sum(template_block_vars) <= template.max_residents)
+                        count += 1
+
+        logger.info(f"Added {count} ClinicCapacity constraints")
 
     def add_to_pulp(
         self,
@@ -282,6 +290,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         if not clinic_template_ids:
             return  # No clinic templates defined
 
+        count = 0
         # For each block, sum all clinic assignments (residents + faculty)
         for block in context.blocks:
             b_i = context.block_idx[block.id]
@@ -308,6 +317,9 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
 
             if clinic_vars:
                 model.Add(sum(clinic_vars) <= self.max_physicians)
+                count += 1
+
+        logger.info(f"Added {count} MaxPhysiciansInClinic constraints")
 
     def add_to_pulp(
         self,
@@ -427,6 +439,7 @@ class CoverageConstraint(SoftConstraint):
 
         total = sum(x.values())
         variables["coverage_bonus"] = total
+        logger.info(f"Added Coverage objective over {len(x)} assignment variables")
 
     def add_to_pulp(
         self,

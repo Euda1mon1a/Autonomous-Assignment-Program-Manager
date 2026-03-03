@@ -57,6 +57,8 @@ class EquityConstraint(SoftConstraint):
         if not x:
             return
 
+        count = 0
+
         # Check if residents have individual targets
         has_individual_targets = any(
             hasattr(r, "target_clinical_blocks")
@@ -87,6 +89,7 @@ class EquityConstraint(SoftConstraint):
                     model.Add(deviation >= resident_total - target)
                     model.Add(deviation >= target - resident_total)
                     total_deviation += deviation
+                    count += 2  # Two constraints per resident with target
 
             variables["equity_penalty"] = total_deviation
         else:
@@ -101,8 +104,11 @@ class EquityConstraint(SoftConstraint):
                     if (r_i, context.block_idx[b.id]) in x
                 )
                 model.Add(resident_total <= max_assigns)
+                count += 1
 
             variables["equity_penalty"] = max_assigns
+
+        logger.info(f"Added {count} Equity constraints")
 
     def add_to_pulp(
         self,
@@ -261,7 +267,7 @@ class ContinuityConstraint(SoftConstraint):
         """Continuity is complex for CP-SAT, handled via preference."""
         # This would require tracking template assignments across consecutive blocks
         # For simplicity, we handle this in post-processing or validation
-        pass
+        logger.info("Added 0 Continuity constraints (handled in post-processing)")
 
     def add_to_pulp(
         self,

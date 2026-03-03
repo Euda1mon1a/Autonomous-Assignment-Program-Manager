@@ -50,7 +50,7 @@ class PreferenceConstraint(SoftConstraint):
     ) -> None:
         """Add preference bonus to objective."""
         # Would require template-specific assignment variables
-        pass
+        logger.info("Added 0 Preference constraints (requires template variables)")
 
     def add_to_pulp(
         self,
