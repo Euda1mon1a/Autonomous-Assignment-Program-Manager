@@ -330,11 +330,12 @@ class TestConstraintManagerFactories:
                 assert c.enabled is False
                 break
 
-    def test_create_default_sm_disabled(self):
+    def test_create_default_sm_enabled(self):
+        """SM constraints re-enabled Mar 3 2026 after stress test (PR #1226)."""
         m = ConstraintManager.create_default()
         for c in m.constraints:
             if c.name == "SMResidentFacultyAlignment":
-                assert c.enabled is False
+                assert c.enabled is True
                 break
 
     def test_create_default_resilience_tier2_disabled(self):

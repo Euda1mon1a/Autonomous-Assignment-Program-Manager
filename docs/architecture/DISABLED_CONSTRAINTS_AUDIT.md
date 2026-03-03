@@ -1,12 +1,14 @@
 # Disabled Constraints Audit
 
-> **Date:** 2026-03-02
+> **Date:** 2026-03-02 (updated 2026-03-03)
 > **Scope:** All constraints disabled in `ConstraintManager.create_default(profile="faculty")` (production default)
 > **Source:** `backend/app/scheduling/constraints/manager.py`
 
 ## Summary
 
-The constraint manager registers **52 constraints** in `create_default()`. With the `profile="faculty"` flag (used by `engine.py`), **4 additional constraints are re-enabled** (FMITWeekBlocking, FMITMandatoryCall, OvernightCallGeneration, DeptChiefWednesdayPreference), leaving **9 constraints disabled** at the manager level.
+The constraint manager registers **51 constraints** in `create_default()`. With the `profile="faculty"` flag (used by `engine.py`), **4 additional constraints are re-enabled** (FMITWeekBlocking, FMITMandatoryCall, OvernightCallGeneration, DeptChiefWednesdayPreference), giving **47 enabled** at the manager level.
+
+**Update (Mar 3, PR #1226):** 4 previously-disabled constraints re-enabled after combined stress test (all OPTIMAL, 16.7s, Block 12). Only **4 remain disabled** — all conditionally enabled by `engine.py` at runtime when data exists (ResidentWeeklyClinic, ZoneBoundary, PreferenceTrail, N1Vulnerability).
 
 Of these 9, **3 are conditionally enabled** by `engine.py` at runtime when their data dependencies exist (HalfDayRequirement, ResidentWeeklyClinic, and the 3 Tier-2 resilience constraints).
 

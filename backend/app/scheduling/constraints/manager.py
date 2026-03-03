@@ -369,9 +369,8 @@ class ConstraintManager:
         # Re-enabled after stress test (Feb 28 2026): 16/17 OPTIMAL individually
         # and all 16 OPTIMAL together (6.8s). FacultySupervision converted to
         # soft constraint with deficit penalty (was only INFEASIBLE cause).
-        # WednesdayPMSingleFaculty still disabled — hard == 1 constraint causes
-        # INFEASIBLE when preloads conflict on certain Wednesday PMs.
-        manager.disable("WednesdayPMSingleFaculty")
+        # WednesdayPMSingleFaculty re-enabled (Mar 3 2026): OPTIMAL individually
+        # and combined with all 4 previously-disabled constraints (16.7s, 47/51).
 
         # Overnight call generation - opt-in via factory method
         manager.add(OvernightCallGenerationConstraint())
@@ -382,13 +381,10 @@ class ConstraintManager:
         # Auto-generates PCAT (AM) and DO (PM) after overnight call
         manager.add(PostCallAutoAssignmentConstraint())
 
-        # Sports Medicine coordination - requires SM program configuration
+        # Sports Medicine coordination — Tagawa (sports_med), SM-AM/SM-PM/ACS-AM templates
+        # Re-enabled Mar 3 2026: OPTIMAL individually + combined stress test
         manager.add(SMResidentFacultyAlignmentConstraint())
         manager.add(SMFacultyClinicConstraint())
-        # Disabled: SM constraints need SM program data
-        manager.disable("SMResidentFacultyAlignment")
-        # Disabled: SM faculty clinic rules need SM program data
-        manager.disable("SMFacultyNoRegularClinic")
 
         # Additional FMIT constraints - opt-in via factory method
         manager.add(FMITWeekBlockingConstraint())
@@ -406,9 +402,9 @@ class ConstraintManager:
         # ENABLED: Hybrid model - protected slots are locked (LEC, ADV)
 
         # Half-day requirement constraint - uses rotation_halfday_requirements
+        # Re-enabled Mar 3 2026: OPTIMAL in stress test. CP-SAT deviation
+        # section still simplified but does not cause INFEASIBLE.
         manager.add(HalfDayRequirementConstraint(weight=50.0))
-        # Disabled by default: engine enables when halfday_requirements data exists
-        manager.disable("HalfDayRequirement")
 
         # Resident weekly clinic constraint - uses resident_weekly_requirements
         manager.add(ResidentWeeklyClinicConstraint())
@@ -558,13 +554,9 @@ class ConstraintManager:
         # Auto-generates PCAT (AM) and DO (PM) after overnight call
         manager.add(PostCallAutoAssignmentConstraint())
 
-        # Sports Medicine coordination - requires SM program configuration
+        # Sports Medicine coordination — enabled by default
         manager.add(SMResidentFacultyAlignmentConstraint())
         manager.add(SMFacultyClinicConstraint())
-        # Disabled: SM constraints need SM program data
-        manager.disable("SMResidentFacultyAlignment")
-        # Disabled: SM faculty clinic rules need SM program data
-        manager.disable("SMFacultyNoRegularClinic")
 
         # Additional FMIT constraints - opt-in via factory method
         manager.add(FMITWeekBlockingConstraint())
@@ -581,10 +573,8 @@ class ConstraintManager:
         manager.add(ProtectedSlotConstraint())
         # ENABLED: Hybrid model - protected slots are locked (LEC, ADV)
 
-        # Half-day requirement constraint - uses rotation_halfday_requirements
+        # Half-day requirement constraint - enabled by default
         manager.add(HalfDayRequirementConstraint(weight=50.0))
-        # Disabled by default: engine enables when halfday_requirements data exists
-        manager.disable("HalfDayRequirement")
 
         # Resident weekly clinic constraint - uses resident_weekly_requirements
         manager.add(ResidentWeeklyClinicConstraint())
