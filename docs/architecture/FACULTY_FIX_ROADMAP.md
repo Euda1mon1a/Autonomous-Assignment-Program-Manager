@@ -1,8 +1,8 @@
 # Faculty Scheduling Fix Roadmap
 
-> **Status:** Phase 1 COMPLETED, Phase 2 COMPLETED, Phase 3 COMPLETED
+> **Status:** Phase 1 COMPLETED, Phase 2 COMPLETED, Phase 3 COMPLETED, Phase 4 PLANNED
 > **Created:** 2026-02-25
-> **Updated:** 2026-03-02 — All 3 phases + post-sprint hardening complete (PRs #1196-#1222).
+> **Updated:** 2026-03-03 — Phases 1-3 complete (PRs #1196-#1222). Phase 4 added: AT/C category-gated template resolution (Gemini audit).
 > **Depends on:** Gemini WP-2/3/4/8/9 completion (Phases 2-3)
 > **Prereqs:** `FACULTY_SCHEDULING_SPECIFICATION.md`, `annual-workbook-architecture.md`, `excel-stateful-roundtrip-roadmap.md`
 >
@@ -352,3 +352,100 @@ cd backend
 ```
 
 > **Note:** `test_fair_call_optimizer.py` has a pre-existing ortools `CpSolverStatus` attribute error — ignore until ortools version is updated.
+
+---
+
+## Phase 4: Category-Gated Template Resolution (AT/C Conflation Fix)
+
+> **Status:** PLANNED
+> **Priority:** HIGH — silent ACGME supervision violations possible
+> **Created:** 2026-03-03
+> **Audit:** `docs/reviews/2026-03-03-at-c-conflation-audit.md` (Gemini CLI)
+> **Depends on:** None (can be done independently)
+
+### Problem
+
+`_resolve_template_activity()` in `engine.py:3950` treats `C` (clinic/patient capacity) and `AT` (attending/supervision) as interchangeable coarse solver types. Both are unconditionally overridden by whatever the faculty weekly template says — with no check that the template code belongs to the same semantic category.
+
+**Two failure modes:**
+1. **Lost supervision:** Solver assigns `AT` (ACGME supervision needed) → template says `fm_clinic` → resolver overwrites → no attending for that slot.
+2. **Lost capacity:** Solver assigns `C` (clinic capacity needed) → template says `dfm` (admin) → resolver overwrites → clinic below minimum.
+
+The `_SOLVER_CLINIC_CODES` and `_SOLVER_ADMIN_CODES` sets already exist at `engine.py:3900-3917` but are **not used to gate the override** — the comment says "Retained for future constraint registration and capacity tracking; no longer gate the write-back."
+
+### Solution
+
+Two-part fix:
+
+#### 4A: Category-Gated Override in `_resolve_template_activity()`
+
+**File:** `backend/app/scheduling/engine.py` — modify `_resolve_template_activity()` (line ~3950)
+
+The sets already exist. Use them:
+
+```python
+def _resolve_template_activity(faculty_id, slot_date, time_of_day, solver_type):
+    if solver_type not in ("C", "AT"):
+        return solver_type
+
+    py_wd = slot_date.weekday()
+    tpl_code = template_lookup.get((faculty_id, py_wd, time_of_day))
+    if not tpl_code or tpl_code.lower() in _POSTCALL_CODES:
+        return solver_type
+
+    # Category gate: only override if template is in same semantic family
+    tpl_lower = tpl_code.lower()
+    if solver_type == "C" and tpl_lower in _SOLVER_CLINIC_CODES:
+        return tpl_code  # C → cv, fm_clinic, sm_clinic, etc.
+    if solver_type == "AT" and tpl_lower in _SOLVER_ADMIN_CODES:
+        return tpl_code  # AT → gme, dfm, sim, etc.
+
+    # Cross-category conflict: solver wins, log warning
+    logger.warning(
+        "Template/solver category conflict: solver=%s, template=%s for %s %s %s — keeping solver type",
+        solver_type, tpl_code, faculty_id, slot_date, time_of_day,
+    )
+    return solver_type
+```
+
+#### 4B: Mirror Fix in `_apply_faculty_template_correction()`
+
+**File:** `backend/app/scheduling/engine.py` — modify `_apply_faculty_template_correction()` (line ~3524)
+
+Same category gate for the post-solve sweep. Currently overrides any solver code with any template code. Should respect the solver's C/AT distinction.
+
+#### 4C: Register `FacultyWeeklyTemplateConstraint`
+
+**File:** `backend/app/scheduling/constraints/manager.py`
+
+Once templates gate correctly, register `FacultyWeeklyTemplateConstraint` so the solver **natively respects** templates during optimization. This reduces cross-category conflicts at the source (solver output already aligned with templates).
+
+#### 4D: Update Tests
+
+**File:** `backend/tests/scheduling/test_resolve_template_activity.py`
+
+- `test_template_wins_cross_category_*` tests must be **inverted** — cross-category overrides should now fall back to solver type
+- Add tests for category-gate warnings
+- Add tests for `_apply_faculty_template_correction()` category gating
+
+### Critical Files
+
+| File | Change |
+|------|--------|
+| `backend/app/scheduling/engine.py` | Category-gate both resolvers (~20 lines each) |
+| `backend/app/scheduling/constraints/manager.py` | Register `FacultyWeeklyTemplateConstraint` |
+| `backend/tests/scheduling/test_resolve_template_activity.py` | Invert cross-category tests + add warning tests |
+
+### Verification
+
+```bash
+cd backend
+# Unit tests for template resolution
+.venv/bin/python -m pytest tests/scheduling/test_resolve_template_activity.py -x -q -v
+
+# Full constraint suite
+.venv/bin/python -m pytest tests/scheduling/ -x -q
+
+# Block 12 pipeline (visual inspection of XLSX)
+SKIP_SETTINGS_VALIDATION=1 .venv/bin/python /tmp/run_block12_full_pipeline.py
+```

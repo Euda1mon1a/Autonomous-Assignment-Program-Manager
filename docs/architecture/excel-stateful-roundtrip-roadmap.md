@@ -1,8 +1,8 @@
 # Stateful Round-Trip and Schema Hardening Roadmap
 
-> **Status:** Planning — Excel phases unstarted; Schema Track A partially implemented
+> **Status:** Planning — Excel phases unstarted; Schema Track A partially implemented; Track E (ARO) architecture documented
 > **Created:** 2026-02-24
-> **Updated:** 2026-03-02 — Track A call equity done (PRs #1199, #1202, #1217). Excel phases 1-4 remain backlog.
+> **Updated:** 2026-03-03 — Track E (Annual Rotation Optimizer) architecture documented. Track A call equity done (PRs #1199, #1202, #1217). Excel phases 1-4 remain backlog.
 > **Origin:** Architectural proposal from external review of Excel import/export pipeline and database schema
 
 ---
@@ -19,12 +19,13 @@ Transform the exported Excel workbook into a **Stateful Offline Client** — a f
 
 ## Roadmap Structure
 
-Two parallel tracks, plus two evaluated-and-deferred proposals:
+Two parallel tracks, one new optimizer track, plus two evaluated-and-deferred proposals:
 
 | Track | Phases | Domain | Priority |
 |-------|--------|--------|----------|
 | **Excel Pipeline** | Phases 1–4 | Export/import `.xlsx` enrichment | Medium |
 | **Schema Hardening** | Tracks A, C | Database model fixes | A=**High** (July 1 deadline), C=Medium |
+| **Track E: Annual Rotation Optimizer (ARO)** | — | CP-SAT annual rotation assignment | **High** (AY 26-27 planning) |
 | **Deferred** | B, D | Evaluated, not needed now | N/A |
 
 ## Current State
@@ -450,6 +451,61 @@ stmt = select(Absence).where(
     )
 ).order_by(Absence.person_id, Absence.start_date)
 ```
+
+---
+
+## Track E: Annual Rotation Optimizer (ARO)
+
+**Priority: HIGH — AY 2026-27 planning needs to begin while AY 25-26 blocks 12-13 are still active**
+
+> **Architecture documented:** Mar 3, 2026. Full design at `docs/architecture/ANNUAL_ROTATION_OPTIMIZER.md`.
+
+**Goal:** CP-SAT-based optimizer that assigns rotations to blocks for all 18 residents across an entire academic year, maximizing leave preference satisfaction while respecting PGY-level constraints (sequencing, capacity, block eligibility).
+
+### Problem
+
+Coordinators currently assign rotations to blocks manually. With 75 leave requests from 18 residents, 12-13 rotations per PGY level, capacity constraints, sequencing rules, and block eligibility restrictions, manual optimization is impractical. The ARO solves this as a constraint satisfaction problem.
+
+### Key Features
+
+1. **Inter-AY staging:** `AnnualRotationPlan` + `AnnualRotationAssignment` staging tables allow planning AY 26-27 without touching live AY 25-26 data
+2. **Leave satisfaction optimization:** CP-SAT maximizes the number of leave requests that fall in leave-eligible rotation blocks
+3. **PGY-specific constraints:** Fixed blocks (FMO, Military), sequencing (Kap L+D after TAMC L+D), block eligibility (MBU late-year only), capacity (FMIT=3, SM=1)
+4. **Manual override + re-optimize:** Coordinator can lock specific assignments and re-run the solver
+5. **Publish lifecycle:** Draft -> Optimized -> Approved -> Published (writes to `block_assignments`)
+6. **PGY advancement prompting:** Per-resident confirmation of PGY level for target AY (handles off-cycle residents)
+
+### Model Size
+
+~2,500 BoolVars (18 residents x 14 blocks x ~12 eligible rotations with domain reduction). Trivial for CP-SAT — solves in <5 seconds.
+
+### Dependencies
+
+- `PersonAcademicYear` (Track A) — needed for PGY level in target AY
+- `get_all_block_dates()` from `backend/app/utils/academic_blocks.py`
+- `RotationTemplate.leave_eligible` flag
+- `BlockAssignment` model for publish step
+
+### Supporting Documents
+
+- `docs/architecture/ANNUAL_ROTATION_OPTIMIZER.md` — full architecture
+- `docs/architecture/aro/PGY_ROTATION_CONFIG.md` — PGY rotation requirements
+- `docs/architecture/aro/AY2627_LEAVE_REQUESTS.md` — 75 parsed leave requests mapped to blocks
+- `docs/architecture/aro/AY2627_BLOCK_CALENDAR.md` — AY 26-27 block calendar
+
+### New Files (Implementation)
+
+| File | Purpose |
+|------|---------|
+| `backend/app/models/annual_rotation_plan.py` | Staging models |
+| `backend/app/scheduling/annual/solver.py` | CP-SAT model |
+| `backend/app/scheduling/annual/context.py` | AnnualContext dataclass |
+| `backend/app/scheduling/annual/pgy_config.py` | PGY rotation requirements as code |
+| `backend/app/scheduling/annual/constraints/*.py` | 7 constraint classes |
+| `backend/app/services/annual_rotation_service.py` | Orchestration |
+| `backend/app/services/annual_leave_import_service.py` | Excel leave import |
+| `backend/app/schemas/annual_rotation.py` | Pydantic schemas |
+| `backend/app/api/routes/annual_rotation.py` | REST endpoints |
 
 ---
 

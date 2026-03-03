@@ -128,6 +128,7 @@ def test_preload_hilo_pattern(db):
     _create_activity(db, "TDY", "TDY", ActivityCategory.TIME_OFF.value)
     _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
     _create_activity(db, "ADV", "ADV", ActivityCategory.EDUCATIONAL.value)
+    _create_activity(db, "W", "W", ActivityCategory.TIME_OFF.value)
 
     resident = Person(
         id=uuid4(),
@@ -163,18 +164,23 @@ def test_preload_hilo_pattern(db):
     day0 = block_dates.start_date
     day1 = block_dates.start_date + timedelta(days=1)
     day2 = block_dates.start_date + timedelta(days=2)
-    day19 = block_dates.start_date + timedelta(days=19)
+    # Return clinic = Mon/Tue before block end (days 25/26 for Block 10)
+    return_mon = block_dates.start_date + timedelta(days=25)
+    return_tue = block_dates.start_date + timedelta(days=26)
 
     assert _get_assignment_code(db, resident.id, day0, "AM") == "C"
     assert _get_assignment_code(db, resident.id, day0, "PM") == "C"
     assert _get_assignment_code(db, resident.id, day1, "AM") == "C"
     assert _get_assignment_code(db, resident.id, day1, "PM") == "C"
 
-    assert _get_assignment_code(db, resident.id, day2, "AM") == "TDY"
-    assert _get_assignment_code(db, resident.id, day2, "PM") == "TDY"
+    # Day 2 is Saturday (block starts Thursday) — SATURDAY_OFF_ROTATIONS applies
+    assert _get_assignment_code(db, resident.id, day2, "AM") == "W"
+    assert _get_assignment_code(db, resident.id, day2, "PM") == "W"
 
-    assert _get_assignment_code(db, resident.id, day19, "AM") == "C"
-    assert _get_assignment_code(db, resident.id, day19, "PM") == "C"
+    assert _get_assignment_code(db, resident.id, return_mon, "AM") == "C"
+    assert _get_assignment_code(db, resident.id, return_mon, "PM") == "C"
+    assert _get_assignment_code(db, resident.id, return_tue, "AM") == "C"
+    assert _get_assignment_code(db, resident.id, return_tue, "PM") == "C"
 
 
 def test_preload_okinawa_pattern(db):
@@ -182,6 +188,7 @@ def test_preload_okinawa_pattern(db):
     _create_activity(db, "TDY", "TDY", ActivityCategory.TIME_OFF.value)
     _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
     _create_activity(db, "ADV", "ADV", ActivityCategory.EDUCATIONAL.value)
+    _create_activity(db, "W", "W", ActivityCategory.TIME_OFF.value)
 
     resident = Person(
         id=uuid4(),
@@ -217,18 +224,23 @@ def test_preload_okinawa_pattern(db):
     day0 = block_dates.start_date
     day1 = block_dates.start_date + timedelta(days=1)
     day2 = block_dates.start_date + timedelta(days=2)
-    day19 = block_dates.start_date + timedelta(days=19)
+    # Return clinic = Mon/Tue before block end (days 25/26 for Block 10)
+    return_mon = block_dates.start_date + timedelta(days=25)
+    return_tue = block_dates.start_date + timedelta(days=26)
 
     assert _get_assignment_code(db, resident.id, day0, "AM") == "C"
     assert _get_assignment_code(db, resident.id, day0, "PM") == "C"
     assert _get_assignment_code(db, resident.id, day1, "AM") == "C"
     assert _get_assignment_code(db, resident.id, day1, "PM") == "C"
 
-    assert _get_assignment_code(db, resident.id, day2, "AM") == "TDY"
-    assert _get_assignment_code(db, resident.id, day2, "PM") == "TDY"
+    # Day 2 is Saturday (block starts Thursday) — SATURDAY_OFF_ROTATIONS applies
+    assert _get_assignment_code(db, resident.id, day2, "AM") == "W"
+    assert _get_assignment_code(db, resident.id, day2, "PM") == "W"
 
-    assert _get_assignment_code(db, resident.id, day19, "AM") == "C"
-    assert _get_assignment_code(db, resident.id, day19, "PM") == "C"
+    assert _get_assignment_code(db, resident.id, return_mon, "AM") == "C"
+    assert _get_assignment_code(db, resident.id, return_mon, "PM") == "C"
+    assert _get_assignment_code(db, resident.id, return_tue, "AM") == "C"
+    assert _get_assignment_code(db, resident.id, return_tue, "PM") == "C"
 
 
 def test_preload_kapiolani_pattern(db):

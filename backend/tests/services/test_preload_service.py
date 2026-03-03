@@ -231,28 +231,71 @@ class TestGetNfCodes:
 
 
 class TestGetHiloCodes:
-    """Tests for Hilo/Okinawa TDY schedule codes."""
+    """Tests for Hilo/Okinawa TDY schedule codes.
+
+    Block: Mar 13 (Thu) to Apr 9 (Wed), 28 days.
+    Return clinic = Mon Apr 7 + Tue Apr 8 (Mon/Tue before block end).
+    """
 
     def test_day_0_clinic(self, service):
         # First day of block: clinic before leaving
         block_start = date(2025, 3, 13)
-        assert service._get_hilo_codes(date(2025, 3, 13), block_start) == ("C", "C")
+        block_end = date(2025, 4, 9)
+        assert service._get_hilo_codes(date(2025, 3, 13), block_start, block_end) == (
+            "C",
+            "C",
+        )
 
     def test_day_1_clinic(self, service):
         block_start = date(2025, 3, 13)
-        assert service._get_hilo_codes(date(2025, 3, 14), block_start) == ("C", "C")
+        block_end = date(2025, 4, 9)
+        assert service._get_hilo_codes(date(2025, 3, 14), block_start, block_end) == (
+            "C",
+            "C",
+        )
 
     def test_day_2_tdy(self, service):
         block_start = date(2025, 3, 13)
-        assert service._get_hilo_codes(date(2025, 3, 15), block_start) == ("TDY", "TDY")
+        block_end = date(2025, 4, 9)
+        assert service._get_hilo_codes(date(2025, 3, 15), block_start, block_end) == (
+            "TDY",
+            "TDY",
+        )
 
-    def test_day_19_return_clinic(self, service):
+    def test_return_monday_clinic(self, service):
+        # Monday before block end (Apr 7) = return clinic
         block_start = date(2025, 3, 13)
-        assert service._get_hilo_codes(date(2025, 4, 1), block_start) == ("C", "C")
+        block_end = date(2025, 4, 9)
+        assert service._get_hilo_codes(date(2025, 4, 7), block_start, block_end) == (
+            "C",
+            "C",
+        )
+
+    def test_return_tuesday_clinic(self, service):
+        # Tuesday before block end (Apr 8) = return clinic
+        block_start = date(2025, 3, 13)
+        block_end = date(2025, 4, 9)
+        assert service._get_hilo_codes(date(2025, 4, 8), block_start, block_end) == (
+            "C",
+            "C",
+        )
+
+    def test_old_day_19_now_tdy(self, service):
+        # Apr 1 (old hardcoded day 19) is now TDY, not clinic
+        block_start = date(2025, 3, 13)
+        block_end = date(2025, 4, 9)
+        assert service._get_hilo_codes(date(2025, 4, 1), block_start, block_end) == (
+            "TDY",
+            "TDY",
+        )
 
     def test_mid_tdy(self, service):
         block_start = date(2025, 3, 13)
-        assert service._get_hilo_codes(date(2025, 3, 25), block_start) == ("TDY", "TDY")
+        block_end = date(2025, 4, 9)
+        assert service._get_hilo_codes(date(2025, 3, 25), block_start, block_end) == (
+            "TDY",
+            "TDY",
+        )
 
 
 # ============================================================================
