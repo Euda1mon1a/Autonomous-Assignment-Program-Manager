@@ -12,7 +12,7 @@ Order of Operations (per TAMC skill):
 4b. Load post-FMIT PC recovery (Friday after FMIT week)
 5. Load C-I (inpatient clinic): PGY-1 Wed AM, PGY-2 Tue PM, PGY-3 Mon PM
 6. Load resident_call_preloads → CALL, PC
-7. Load faculty_call → CALL, PCAT, DO
+7. Load faculty_call → PCAT, DO (CALL tracked in call_assignments only)
 8. Load aSM (Wed AM for SM faculty)
 8b. Load faculty Wednesday PM LEC (protected didactic, skips 4th Wed)
 9. Load conferences (HAFP, USAFP, LEC)
@@ -855,8 +855,14 @@ class SyncPreloadService:
         return count
 
     def _load_faculty_call(self, start_date: date, end_date: date) -> int:
+        """Load PCAT/DO for the day AFTER each faculty overnight call.
+
+        Note: CALL is NOT written to half_day_assignments. Faculty work a full
+        day (normal AM/PM activities) and then go on call overnight. Call info
+        is tracked in the call_assignments table and displayed in the call row
+        (row 4) of the export spreadsheet.
+        """
         count = 0
-        call_id = self._activity_cache.get("CALL")
         pcat_id = self._activity_cache.get("PCAT")
         do_id = self._activity_cache.get("DO")
 
@@ -867,9 +873,7 @@ class SyncPreloadService:
         calls = self.session.execute(stmt).scalars().all()
 
         for call in calls:
-            if self._create_preload(call.person_id, call.date, "PM", call_id):
-                count += 1
-
+            # No CALL HDA — faculty work normal PM activity, call is overnight
             next_day = call.date + timedelta(days=1)
             if not self._is_on_fmit(call.person_id, next_day):
                 if self._create_preload(call.person_id, next_day, "AM", pcat_id):
@@ -877,7 +881,7 @@ class SyncPreloadService:
                 if self._create_preload(call.person_id, next_day, "PM", do_id):
                     count += 1
 
-        logger.info(f"Loaded {count} faculty call preloads")
+        logger.info(f"Loaded {count} faculty call preloads (PCAT/DO only)")
         return count
 
     def _load_sm_preloads(self, start_date: date, end_date: date) -> int:
