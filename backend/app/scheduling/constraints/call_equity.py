@@ -796,12 +796,17 @@ class EscalatingCallEquityConstraint(SoftConstraint):
         # Excess tiers: if F*(h_i + c_i) > (total_h + total_c) + F*k
         max_calls = max(h for _, h in faculty_call_data.values()) + len(call_blocks)
 
+        # Bind total current calls once — avoids rebuilding the same linear
+        # expression F times inside the per-faculty loop (Gemini review).
+        total_current = model.NewIntVar(0, len(total_current_vars), "esc_total_current")
+        model.Add(total_current == sum(total_current_vars))
+
         objective_terms = variables.get("objective_terms", [])
         tier_count = 0
 
         for f_i, (var_list, history) in faculty_call_data.items():
             # scaled_count = F * (history + sum(var_list))
-            # scaled_total = total_history + sum(all_current_vars)
+            # scaled_total = total_history + total_current
             # excess = scaled_count - scaled_total
             # Tier 1: excess > F*0 → penalty 1x
             # Tier 2: excess > F*1 → penalty 2x (cumulative 3x)
@@ -810,10 +815,7 @@ class EscalatingCallEquityConstraint(SoftConstraint):
                 -max_calls * F * 2, max_calls * F * 2, f"esc_excess_{f_i}"
             )
             model.Add(
-                excess
-                == F * (history + sum(var_list))
-                - total_history
-                - sum(total_current_vars)
+                excess == F * (history + sum(var_list)) - total_history - total_current
             )
 
             for tier, multiplier in [(0, 1), (1, 2), (2, 4)]:
