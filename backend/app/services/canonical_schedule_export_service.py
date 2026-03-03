@@ -450,13 +450,10 @@ class CanonicalScheduleExportService:
                 and f.get("name", "") not in self._EXCLUDED_FACULTY_NAMES
             ]
 
-        # Filter placeholder names from call assignments
-        if data.get("call", {}).get("nights"):
-            data["call"]["nights"] = [
-                n
-                for n in data["call"]["nights"]
-                if not n.get("staff", "").startswith("Faculty-")
-            ]
+        # Keep all call assignments (including placeholder faculty) so the
+        # call row shows complete 28-night coverage. CALL/SUN summary formulas
+        # only work for named faculty rows, but the call row itself needs all
+        # entries for visual verification by coordinators.
 
         # Ensure adjunct faculty appear even without assignments (blank rows)
         if include_faculty:

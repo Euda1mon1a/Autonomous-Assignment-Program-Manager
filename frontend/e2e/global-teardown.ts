@@ -20,11 +20,8 @@ async function globalTeardown(config: FullConfig) {
   // 1. Clean up test database
   console.log('✓ Cleaning up test database...');
   try {
-    const response = await fetch(`${apiURL}/api/v1/test/cleanup`, {
+    const response = await fetch(`${apiURL}/api/v1/dev/cleanup`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
 
     if (response.ok) {

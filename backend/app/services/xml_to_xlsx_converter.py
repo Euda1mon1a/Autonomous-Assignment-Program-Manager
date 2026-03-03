@@ -595,6 +595,22 @@ class XMLToXlsxConverter:
         ]
         for idx, header in enumerate(row30_headers):
             sheet.cell(row=30, column=62 + idx).value = header
+        # SUN header at col 72/BT (col 71/BS is LV Days)
+        sheet.cell(row=30, column=72).value = "SUN"
+
+        # Compute Sunday column letters for SUN call count
+        from datetime import timedelta
+
+        from openpyxl.utils import get_column_letter
+
+        sunday_col_letters: list[str] = []
+        num_days = (block_end - block_start).days + 1
+        for day_offset in range(num_days):
+            d = block_start + timedelta(days=day_offset)
+            if d.weekday() == 6:  # Sunday
+                am_col = COL_SCHEDULE_START + (day_offset * 2)
+                sunday_col_letters.append(get_column_letter(am_col))
+                sunday_col_letters.append(get_column_letter(am_col + 1))
 
         for row in range(31, 81):
             sheet.cell(
@@ -615,6 +631,15 @@ class XMLToXlsxConverter:
             sheet.cell(row=row, column=70).value = (
                 f'=COUNTIF(F4:BI4, "{call_name}")' if call_name else None
             )
+            # SUN column (col 72/BT): count calls on Sunday columns only
+            # Col 71/BS is reserved for LV Days (Phase 4 leave formula)
+            if call_name and sunday_col_letters:
+                sun_terms = "+".join(
+                    f'COUNTIF({c}4,"{call_name}")' for c in sunday_col_letters
+                )
+                sheet.cell(row=row, column=72).value = f"={sun_terms}"
+            else:
+                sheet.cell(row=row, column=72).value = 0
 
         sheet.cell(row=81, column=62).value = "=SUM(BJ31:BJ80)"
         sheet.cell(row=81, column=63).value = "=SUM(BK31:BK80)"
@@ -625,8 +650,17 @@ class XMLToXlsxConverter:
         sheet.cell(row=81, column=68).value = "=SUM(BP31:BP80)"
         sheet.cell(row=81, column=69).value = "=SUM(BQ31:BQ80)"
         sheet.cell(row=81, column=70).value = "=SUM(BR31:BR80)"
+        sheet.cell(row=81, column=72).value = "=SUM(BT31:BT80)"
         sheet.cell(row=82, column=62).value = "%CVf"
         sheet.cell(row=82, column=64).value = "=BL81/(BJ81+BK81+BL81)*100"
+        # %CVc: combined (resident + faculty) CV percentage
+        sheet.cell(row=82, column=66).value = "%CVc"
+        sheet.cell(
+            row=82, column=68
+        ).value = "=(BL29+BL81)/((BJ29+BJ81)+(BK29+BK81)+(BL29+BL81))*100"
+        # PGY1 CV Total
+        sheet.cell(row=82, column=71).value = "PGY1 CV"
+        sheet.cell(row=82, column=72).value = '=SUMIF($D$9:$D$30,"PGY 1",BL$9:BL$30)'
 
         self._apply_bottom_calc_rows(sheet, block_start, block_end)
 
