@@ -6,12 +6,10 @@ FMIT, Night Float, and NICU headcount limits.
 
 Classes:
     - ResidentInpatientHeadcountConstraint: Enforces headcount limits for FMIT/NF
-    - FMITResidentClinicDayConstraint: PGY-specific clinic days during FMIT
 
 Business Rules:
     - FMIT: 1 per PGY level per block (3 total)
     - Night Float: 1 resident at a time
-    - FMIT Clinic Days: PGY1=Wed AM, PGY2=Tue PM, PGY3=Mon PM
 """
 
 import logging
@@ -364,85 +362,5 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
-            violations=violations,
-        )
-
-
-class FMITResidentClinicDayConstraint(HardConstraint):
-    """
-    Enforces PGY-specific clinic days for FMIT residents.
-
-    - PGY-1 on FMIT: Wednesday AM clinic
-    - PGY-2 on FMIT: Tuesday PM clinic
-    - PGY-3 on FMIT: Monday PM clinic
-
-    Exception: Federal holidays or clinic closures → defaults back to FMIT duty
-    Exception: Inverted 4th Wednesday → PGY-1 NOT assigned clinic
-    """
-
-    # Clinic days by PGY level (weekday: 0=Mon, 1=Tue, 2=Wed, etc.)
-    FMIT_CLINIC_DAYS = {
-        1: {"weekday": 2, "time_of_day": "AM"},  # Wed AM for PGY-1
-        2: {"weekday": 1, "time_of_day": "PM"},  # Tue PM for PGY-2
-        3: {"weekday": 0, "time_of_day": "PM"},  # Mon PM for PGY-3
-    }
-
-    def __init__(self) -> None:
-        super().__init__(
-            name="FMITResidentClinicDay",
-            constraint_type=ConstraintType.ROTATION,
-            priority=ConstraintPriority.HIGH,
-        )
-
-    def add_to_cpsat(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
-        """
-        For each FMIT resident, force clinic assignment on their designated day.
-
-        Note: This is a complex constraint that requires knowing which residents
-        are currently on FMIT. In the current pre-loading approach, FMIT
-        assignments are loaded first, so this constraint validates rather
-        than generates.
-        """
-        # Implementation note: The pre-loading mechanism handles the assignment
-        # of FMIT residents. This constraint would be used for validation
-        # or for solvers that generate FMIT assignments.
-        logger.info("Added 0 FMITResidentClinicDay constraints (pre-loaded)")
-
-    def add_to_pulp(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
-        """Add FMIT clinic day constraints to PuLP model."""
-        # Same as above - pre-loading handles this
-        pass
-
-    def validate(
-        self,
-        assignments: list[Any],
-        context: SchedulingContext,
-    ) -> ConstraintResult:
-        """
-        Validate that FMIT residents have correct clinic day assignments.
-
-        For each resident on FMIT, check that they have a clinic assignment
-        on their designated day (unless it's a holiday or closure).
-        """
-        violations: list[ConstraintViolation] = []
-
-        # This validation would check:
-        # 1. Find all residents on FMIT in the date range
-        # 2. For each, verify they have clinic on their designated day
-        # 3. Skip validation for holidays/closures
-
-        # For now, return satisfied as pre-loading handles the rules
-        return ConstraintResult(
-            satisfied=True,
             violations=violations,
         )

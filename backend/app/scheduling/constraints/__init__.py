@@ -138,7 +138,6 @@ from .resilience import (
 
 # Resident inpatient constraints
 from .inpatient import (
-    FMITResidentClinicDayConstraint,
     ResidentInpatientHeadcountConstraint,
 )
 
@@ -265,7 +264,6 @@ __all__ = [
     "UtilizationBufferConstraint",
     "ZoneBoundaryConstraint",
     # Resident inpatient constraints
-    "FMITResidentClinicDayConstraint",
     "ResidentInpatientHeadcountConstraint",
     # Resident weekly clinic constraints
     "ResidentWeeklyClinicConstraint",

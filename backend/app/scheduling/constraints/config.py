@@ -262,16 +262,6 @@ class ConstraintConfigManager:
             disable_reason="Disabled by default - may use separate call scheduling",
         )
 
-        self._configs["FMITResidentClinicDay"] = ConstraintConfig(
-            name="FMITResidentClinicDay",
-            enabled=False,  # Opt-in
-            priority=ConstraintPriorityLevel.MEDIUM,
-            category=ConstraintCategory.FMIT,
-            description="Resident clinic day constraints during FMIT",
-            enable_condition="Enable when resident clinic must be scheduled during FMIT",
-            disable_reason="Disabled by default - clinic scheduling may be flexible",
-        )
-
         # ========================================
         # SPORTS MEDICINE CONSTRAINTS (Conditional)
         # ========================================
@@ -480,7 +470,6 @@ class ConstraintConfigManager:
             "PostCallAutoAssignment",
             "FMITWeekBlocking",
             "FMITMandatoryCall",
-            "FMITResidentClinicDay",
             "SMResidentFacultyAlignment",
             "SMFacultyNoRegularClinic",
             "ZoneBoundary",

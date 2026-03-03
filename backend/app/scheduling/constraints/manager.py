@@ -78,7 +78,6 @@ from .fmit import (
     PostFMITSundayBlockingConstraint,
 )
 from .inpatient import (
-    FMITResidentClinicDayConstraint,
     ResidentInpatientHeadcountConstraint,
 )
 
@@ -370,8 +369,8 @@ class ConstraintManager:
         # Re-enabled after stress test (Feb 28 2026): 16/17 OPTIMAL individually
         # and all 16 OPTIMAL together (6.8s). FacultySupervision converted to
         # soft constraint with deficit penalty (was only INFEASIBLE cause).
-        # WednesdayPMSingleFaculty still disabled — needs solver variable refactor
-        # (uses faculty_template_assignments vars that don't exist in current model).
+        # WednesdayPMSingleFaculty still disabled — hard == 1 constraint causes
+        # INFEASIBLE when preloads conflict on certain Wednesday PMs.
         manager.disable("WednesdayPMSingleFaculty")
 
         # Overnight call generation - opt-in via factory method
@@ -394,13 +393,10 @@ class ConstraintManager:
         # Additional FMIT constraints - opt-in via factory method
         manager.add(FMITWeekBlockingConstraint())
         manager.add(FMITMandatoryCallConstraint())
-        manager.add(FMITResidentClinicDayConstraint())
         # Disabled: FMIT blocking needs FMIT week configuration
         manager.disable("FMITWeekBlocking")
         # Disabled: FMIT mandatory call needs FMIT data
         manager.disable("FMITMandatoryCall")
-        # Disabled: FMIT resident clinic day needs FMIT data
-        manager.disable("FMITResidentClinicDay")
 
         # Weekend work constraint (enabled by default - uses template.includes_weekend_work)
         manager.add(WeekendWorkConstraint())
@@ -573,13 +569,10 @@ class ConstraintManager:
         # Additional FMIT constraints - opt-in via factory method
         manager.add(FMITWeekBlockingConstraint())
         manager.add(FMITMandatoryCallConstraint())
-        manager.add(FMITResidentClinicDayConstraint())
         # Disabled: FMIT blocking needs FMIT week configuration
         manager.disable("FMITWeekBlocking")
         # Disabled: FMIT mandatory call needs FMIT data
         manager.disable("FMITMandatoryCall")
-        # Disabled: FMIT resident clinic day needs FMIT data
-        manager.disable("FMITResidentClinicDay")
 
         # Weekend work constraint (enabled by default)
         manager.add(WeekendWorkConstraint())

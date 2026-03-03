@@ -1,10 +1,4 @@
-"""Tests for halfday requirement constraints (pure logic, no DB required).
-
-Note: HalfDayRequirementConstraint.validate has a bug - it calls
-_get_template_ids_by_activity() which doesn't exist (only
-_get_template_ids_by_rotation_type is defined). This raises AttributeError
-when requirements are non-empty. Tested with pytest.raises(AttributeError).
-"""
+"""Tests for halfday requirement constraints (pure logic, no DB required)."""
 
 from datetime import date
 from types import SimpleNamespace
@@ -395,12 +389,7 @@ class TestGetRotationBlockRange:
 
 
 class TestHalfDayRequirementValidate:
-    """Test HalfDayRequirementConstraint.validate method.
-
-    Note: validate calls self._get_template_ids_by_activity() which doesn't exist
-    (only _get_template_ids_by_rotation_type is defined). This raises AttributeError
-    when self._requirements is non-empty.
-    """
+    """Test HalfDayRequirementConstraint.validate method."""
 
     def test_no_requirements_satisfied(self):
         """No requirements -> satisfied with zero penalty."""
@@ -410,8 +399,8 @@ class TestHalfDayRequirementValidate:
         assert result.satisfied is True
         assert result.penalty == 0.0
 
-    def test_with_requirements_raises_attribute_error(self):
-        """Bug: validate calls _get_template_ids_by_activity which doesn't exist."""
+    def test_with_requirements_no_error(self):
+        """validate runs without error when requirements exist."""
         tid = uuid4()
         c = HalfDayRequirementConstraint(
             halfday_requirements={tid: {"fm_clinic_halfdays": 4}}
@@ -422,5 +411,5 @@ class TestHalfDayRequirementValidate:
         ctx = _context(residents=[res], blocks=[b], templates=[clinic])
 
         a = _assignment(res.id, b.id, rotation_template_id=clinic.id)
-        with pytest.raises(AttributeError, match="_get_template_ids_by_activity"):
-            c.validate([a], ctx)
+        result = c.validate([a], ctx)
+        assert isinstance(result.satisfied, bool)
