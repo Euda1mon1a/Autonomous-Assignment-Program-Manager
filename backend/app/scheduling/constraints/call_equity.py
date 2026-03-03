@@ -713,6 +713,236 @@ class WeekdayCallEquityConstraint(SoftConstraint):
         )
 
 
+class EscalatingCallEquityConstraint(SoftConstraint):
+    """
+    Escalating penalty for total call over-allocation (all types combined).
+
+    Combines Sunday + weekday call counts (with YTD history) and applies
+    tiered penalties that grow exponentially as a faculty member's total
+    call count diverges from the target (avg across pool).
+
+    Tiers (above target):
+        +1 excess: 1 * base_weight
+        +2 excess: 3 * base_weight  (cumulative 4x)
+        +3 excess: 7 * base_weight  (cumulative 11x)
+
+    This prevents any single faculty member from being dramatically
+    over-allocated (e.g., Montgomery's 6 calls when avg is 3.5).
+    """
+
+    def __init__(self, weight: float = 40.0) -> None:
+        super().__init__(
+            name="EscalatingCallEquity",
+            constraint_type=ConstraintType.EQUITY,
+            weight=weight,
+            priority=ConstraintPriority.HIGH,
+        )
+
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Add escalating call equity penalty to CP-SAT objective."""
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        call_eligible = getattr(context, "call_eligible_faculty", context.faculty)
+        call_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible)},
+        )
+
+        # Gather all call nights (Sun-Thu)
+        call_blocks = [b for b in context.blocks if b.date.weekday() in (6, 0, 1, 2, 3)]
+        if not call_blocks:
+            return
+
+        # Compute per-faculty call vars + history
+        faculty_call_data: dict[int, tuple[list, int]] = {}
+        total_history = 0
+        for faculty in call_eligible:
+            f_i = call_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            call_var_list = []
+            for block in call_blocks:
+                b_i = context.block_idx.get(block.id)
+                if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                    call_var_list.append(call_vars[f_i, b_i, "overnight"])
+
+            if not call_var_list:
+                continue
+
+            prior = getattr(context, "prior_calls", {}).get(faculty.id, {})
+            history = prior.get("weekday", 0) + prior.get("sunday", 0)
+            faculty_call_data[f_i] = (call_var_list, history)
+            total_history += history
+
+        if not faculty_call_data:
+            return
+
+        F = len(faculty_call_data)
+        total_current_vars = []
+        for _, (vl, _) in faculty_call_data.items():
+            total_current_vars.extend(vl)
+
+        # Target per faculty = (total_history + total_current) / F
+        # We use F-multiplied integers: F * (h_i + c_i) vs (total_h + total_c)
+        # Excess tiers: if F*(h_i + c_i) > (total_h + total_c) + F*k
+        max_calls = max(h for _, h in faculty_call_data.values()) + len(call_blocks)
+
+        objective_terms = variables.get("objective_terms", [])
+        tier_count = 0
+
+        for f_i, (var_list, history) in faculty_call_data.items():
+            # scaled_count = F * (history + sum(var_list))
+            # scaled_total = total_history + sum(all_current_vars)
+            # excess = scaled_count - scaled_total
+            # Tier 1: excess > F*0 → penalty 1x
+            # Tier 2: excess > F*1 → penalty 2x (cumulative 3x)
+            # Tier 3: excess > F*2 → penalty 4x (cumulative 7x)
+            excess = model.NewIntVar(
+                -max_calls * F * 2, max_calls * F * 2, f"esc_excess_{f_i}"
+            )
+            model.Add(
+                excess
+                == F * (history + sum(var_list))
+                - total_history
+                - sum(total_current_vars)
+            )
+
+            for tier, multiplier in [(0, 1), (1, 2), (2, 4)]:
+                threshold = F * tier
+                is_over = model.NewBoolVar(f"esc_t{tier}_{f_i}")
+                # is_over = 1 iff excess > threshold
+                # excess > threshold ⟺ excess >= threshold + 1
+                model.Add(excess >= threshold + 1).OnlyEnforceIf(is_over)
+                model.Add(excess <= threshold).OnlyEnforceIf(is_over.Not())
+                objective_terms.append((is_over, int(self.weight * multiplier)))
+                tier_count += 1
+
+        variables["objective_terms"] = objective_terms
+        logger.info(
+            f"Added {tier_count} escalating equity penalty terms "
+            f"(3 tiers x {F} faculty, base_weight={self.weight})"
+        )
+
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Add escalating call equity penalty to PuLP objective (simplified)."""
+        import pulp
+
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        call_eligible = getattr(context, "call_eligible_faculty", context.faculty)
+        call_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible)},
+        )
+
+        call_blocks = [b for b in context.blocks if b.date.weekday() in (6, 0, 1, 2, 3)]
+        if not call_blocks:
+            return
+
+        # Simplified PuLP: minimize max total calls (minimax)
+        faculty_totals = []
+        for faculty in call_eligible:
+            f_i = call_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            call_var_list = []
+            for block in call_blocks:
+                b_i = context.block_idx.get(block.id)
+                if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                    call_var_list.append(call_vars[f_i, b_i, "overnight"])
+
+            if call_var_list:
+                prior = getattr(context, "prior_calls", {}).get(faculty.id, {})
+                history = prior.get("weekday", 0) + prior.get("sunday", 0)
+                faculty_totals.append(history + pulp.lpSum(call_var_list))
+
+        if faculty_totals:
+            max_total = pulp.LpVariable("max_total_calls", lowBound=0, cat="Integer")
+            for i, total in enumerate(faculty_totals):
+                model += total <= max_total, f"esc_equity_max_{i}"
+            if "objective" in variables:
+                variables["objective"] += self.weight * max_total
+
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
+        """Validate total call distribution with escalating penalties."""
+        faculty_by_id = {f.id: f for f in context.faculty}
+
+        total_counts: dict[Any, int] = defaultdict(int)
+        for a in assignments:
+            if a.person_id not in faculty_by_id:
+                continue
+            if hasattr(a, "call_type") and a.call_type == "overnight":
+                total_counts[a.person_id] += 1
+
+        if not total_counts:
+            return ConstraintResult(satisfied=True, penalty=0.0)
+
+        counts = list(total_counts.values())
+        avg = sum(counts) / len(counts) if counts else 0
+        target = round(avg)
+
+        penalty = 0.0
+        violations = []
+        for person_id, count in total_counts.items():
+            excess = count - target
+            if excess > 0:
+                # Tier 1: +1
+                penalty += self.weight
+                if excess > 1:
+                    # Tier 2: +2 more
+                    penalty += self.weight * 2
+                if excess > 2:
+                    # Tier 3: +4 more
+                    penalty += self.weight * 4
+
+            if abs(count - avg) > 2:
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="MEDIUM",
+                        message=(
+                            f"Total call imbalance: {count} calls "
+                            f"(avg {avg:.1f}, delta {count - avg:+.1f})"
+                        ),
+                        person_id=person_id,
+                        details={
+                            "count": count,
+                            "average": avg,
+                            "delta": count - avg,
+                        },
+                    )
+                )
+
+        return ConstraintResult(
+            satisfied=True,
+            violations=violations,
+            penalty=penalty,
+        )
+
+
 class FacultyCallPreferenceConstraint(SoftConstraint):
     """
     Soft preferences for faculty call based on day of week.

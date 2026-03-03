@@ -17,6 +17,7 @@ Exclusions:
 
 Classes:
     - OvernightCallGenerationConstraint: Creates call variables and coverage constraints
+    - NoConsecutiveCallConstraint: Soft constraint penalizing back-to-back call nights
 """
 
 import logging
@@ -34,6 +35,7 @@ from .base import (
     ConstraintViolation,
     HardConstraint,
     SchedulingContext,
+    SoftConstraint,
 )
 from .fmit import get_fmit_week_dates
 
@@ -53,12 +55,14 @@ def is_overnight_call_night(block_date: date) -> bool:
     return block_date.weekday() in (6, 0, 1, 2, 3)  # Sun=6, Mon-Thu=0-3
 
 
-class OvernightCallGenerationConstraint(HardConstraint):
+class OvernightCallGenerationConstraint(HardConstraint):  # @archetype-ok
     """
     Generates overnight call assignments for Sunday through Thursday nights.
 
     This is a HARD constraint that ensures exactly one faculty member is
     assigned to overnight call for each eligible night.
+
+    Spacing guard: NoConsecutiveCallConstraint (registered in manager.py)
 
     Solver Variables Created:
         call_assignments[(f_i, b_i, "overnight")] = BoolVar
@@ -314,7 +318,7 @@ class OvernightCallGenerationConstraint(HardConstraint):
         context: SchedulingContext,
     ) -> ConstraintResult:
         """Validate overnight call assignments."""
-        violations = []
+        violations: list[ConstraintViolation] = []
         fmit_weeks = self._identify_fmit_weeks(context)
 
         # Get unique dates requiring call
@@ -390,4 +394,215 @@ class OvernightCallGenerationConstraint(HardConstraint):
         return ConstraintResult(
             satisfied=len(violations) == 0,
             violations=violations,
+        )
+
+
+class NoConsecutiveCallConstraint(SoftConstraint):
+    """
+    Penalizes back-to-back overnight call nights for the same faculty.
+
+    FMIT Fri/Sat pairs are expected and NOT penalized (they're preloaded,
+    not solver-generated). This only targets solver-generated Sun-Thu calls
+    where the same faculty is assigned consecutive nights.
+
+    The penalty is high (default 50.0) to strongly discourage back-to-back
+    call, but as a soft constraint it won't make the model infeasible if
+    8 faculty can't cleanly cover 5 nights/week.
+    """
+
+    def __init__(self, weight: float = 50.0) -> None:
+        super().__init__(
+            name="NoConsecutiveCall",
+            constraint_type=ConstraintType.CALL,
+            weight=weight,
+            priority=ConstraintPriority.HIGH,
+        )
+
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Add consecutive-call penalty to CP-SAT objective."""
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        call_eligible = context.call_eligible_faculty or context.faculty
+        if not call_eligible:
+            return
+
+        # Get sorted unique Sun-Thu dates from blocks
+        call_dates = sorted(
+            set(b.date for b in context.blocks if is_overnight_call_night(b.date))
+        )
+        if len(call_dates) < 2:
+            return
+
+        # Build date-to-block_idx map
+        date_to_b_i: dict[date, int] = {}
+        for b in context.blocks:
+            if b.date not in date_to_b_i and is_overnight_call_night(b.date):
+                b_i = context.block_idx.get(b.id)
+                if b_i is not None:
+                    date_to_b_i[b.date] = b_i
+
+        objective_terms = variables.get("objective_terms", [])
+        pair_count = 0
+
+        call_idx = context.call_eligible_faculty_idx or {
+            fac.id: i for i, fac in enumerate(call_eligible)
+        }
+
+        for faculty in call_eligible:
+            f_i = call_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            # Check each pair of consecutive call nights
+            for i in range(len(call_dates) - 1):
+                d1, d2 = call_dates[i], call_dates[i + 1]
+                # Only penalize truly consecutive calendar days
+                if (d2 - d1).days != 1:
+                    continue
+
+                b_i1 = date_to_b_i.get(d1)
+                b_i2 = date_to_b_i.get(d2)
+                if b_i1 is None or b_i2 is None:
+                    continue
+
+                key1 = (f_i, b_i1, "overnight")
+                key2 = (f_i, b_i2, "overnight")
+                if key1 not in call_vars or key2 not in call_vars:
+                    continue
+
+                # Create indicator: both_on = 1 iff both call vars are 1
+                both_on = model.NewBoolVar(f"consec_call_{f_i}_{d1}_{d2}")
+                model.AddBoolAnd([call_vars[key1], call_vars[key2]]).OnlyEnforceIf(
+                    both_on
+                )
+                model.AddBoolOr(
+                    [call_vars[key1].Not(), call_vars[key2].Not()]
+                ).OnlyEnforceIf(both_on.Not())
+
+                objective_terms.append((both_on, int(self.weight)))
+                pair_count += 1
+
+        variables["objective_terms"] = objective_terms
+        logger.info(
+            f"Added {pair_count} consecutive-call penalty terms (weight={self.weight})"
+        )
+
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Add consecutive-call penalty to PuLP objective."""
+        import pulp
+
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        call_eligible = context.call_eligible_faculty or context.faculty
+        if not call_eligible:
+            return
+
+        call_dates = sorted(
+            set(b.date for b in context.blocks if is_overnight_call_night(b.date))
+        )
+        if len(call_dates) < 2:
+            return
+
+        date_to_b_i: dict[date, int] = {}
+        for b in context.blocks:
+            if b.date not in date_to_b_i and is_overnight_call_night(b.date):
+                b_i = context.block_idx.get(b.id)
+                if b_i is not None:
+                    date_to_b_i[b.date] = b_i
+
+        call_idx = context.call_eligible_faculty_idx or {
+            fac.id: i for i, fac in enumerate(call_eligible)
+        }
+
+        pair_count = 0
+        for faculty in call_eligible:
+            f_i = call_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            for i in range(len(call_dates) - 1):
+                d1, d2 = call_dates[i], call_dates[i + 1]
+                if (d2 - d1).days != 1:
+                    continue
+
+                b_i1 = date_to_b_i.get(d1)
+                b_i2 = date_to_b_i.get(d2)
+                if b_i1 is None or b_i2 is None:
+                    continue
+
+                key1 = (f_i, b_i1, "overnight")
+                key2 = (f_i, b_i2, "overnight")
+                if key1 not in call_vars or key2 not in call_vars:
+                    continue
+
+                # both = min(var1, var2) via auxiliary variable
+                both = pulp.LpVariable(f"consec_{f_i}_{d1}_{d2}", cat="Binary")
+                model += both <= call_vars[key1]
+                model += both <= call_vars[key2]
+                model += both >= call_vars[key1] + call_vars[key2] - 1
+
+                if "objective" in variables:
+                    variables["objective"] += self.weight * both
+                pair_count += 1
+
+        logger.info(
+            f"Added {pair_count} consecutive-call penalty terms (weight={self.weight})"
+        )
+
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
+        """Validate no consecutive call assignments exist."""
+        violations: list[ConstraintViolation] = []
+
+        # Build call assignments by person and date
+        calls_by_person: dict[UUID, list[date]] = defaultdict(list)
+        for a in assignments:
+            if hasattr(a, "call_type") and a.call_type == "overnight":
+                if hasattr(a, "date"):
+                    calls_by_person[a.person_id].append(a.date)
+
+        penalty = 0.0
+        for person_id, dates in calls_by_person.items():
+            sorted_dates = sorted(dates)
+            for i in range(len(sorted_dates) - 1):
+                if (sorted_dates[i + 1] - sorted_dates[i]).days == 1:
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="MEDIUM",
+                            message=(
+                                f"Back-to-back call: {sorted_dates[i]} and "
+                                f"{sorted_dates[i + 1]}"
+                            ),
+                            person_id=person_id,
+                            details={
+                                "date1": str(sorted_dates[i]),
+                                "date2": str(sorted_dates[i + 1]),
+                            },
+                        )
+                    )
+                    penalty += self.weight
+
+        return ConstraintResult(
+            satisfied=True,  # Soft constraint
+            violations=violations,
+            penalty=penalty,
         )
