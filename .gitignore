@@ -272,6 +272,10 @@ scripts/setup-antigravity-skills.sh
 # PII-containing handoff docs (real names)
 docs/scheduling/HANDOFF_CLAUDE_MACOS.md
 
+# ARO planning docs (real resident names + leave requests - local only for solver)
+docs/architecture/aro/
+docs/architecture/ANNUAL_ROTATION_OPTIMIZER.md
+
 # WIP - needs investigation before commit (PII - local only)
 backend/scripts/validate_xml_vs_rosetta.py
 
