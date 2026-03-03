@@ -237,6 +237,15 @@ class TestWedPMSingleFacultyInit:
         c = WednesdayPMSingleFacultyConstraint()
         assert c.priority == ConstraintPriority.HIGH
 
+    def test_is_soft_constraint(self):
+        c = WednesdayPMSingleFacultyConstraint()
+        assert hasattr(c, "weight")
+        assert c.weight == 50.0
+
+    def test_custom_weight(self):
+        c = WednesdayPMSingleFacultyConstraint(weight=30.0)
+        assert c.weight == 30.0
+
 
 class TestWedPMSingleFacultyHelpers:
     """Test _is_regular_wednesday_pm helper."""
@@ -305,8 +314,8 @@ class TestWedPMSingleFacultyValidate:
         result = c.validate([a], ctx)
         assert result.satisfied is True
 
-    def test_zero_faculty_violation(self):
-        """No faculty on regular Wed PM clinic -> violation."""
+    def test_zero_faculty_penalty(self):
+        """No faculty on regular Wed PM clinic -> soft penalty."""
         c = WednesdayPMSingleFacultyConstraint()
         fac = _person(name="Dr. A")
         clinic = _template(rotation_type="outpatient")
@@ -314,11 +323,13 @@ class TestWedPMSingleFacultyValidate:
         ctx = _context(faculty=[fac], blocks=[wed_pm], templates=[clinic])
 
         result = c.validate([], ctx)
-        assert result.satisfied is False
+        assert result.satisfied is True  # Soft — always satisfied
+        assert len(result.violations) == 1
         assert "0 faculty" in result.violations[0].message
+        assert result.penalty == 50.0  # weight * |0 - 1|
 
-    def test_two_faculty_violation(self):
-        """Two faculty on Wed PM clinic -> violation."""
+    def test_two_faculty_penalty(self):
+        """Two faculty on Wed PM clinic -> soft penalty."""
         c = WednesdayPMSingleFacultyConstraint()
         fac_a = _person(name="Dr. A")
         fac_b = _person(name="Dr. B")
@@ -331,8 +342,10 @@ class TestWedPMSingleFacultyValidate:
             _assignment(fac_b.id, wed_pm.id, rotation_template_id=clinic.id),
         ]
         result = c.validate(assignments, ctx)
-        assert result.satisfied is False
+        assert result.satisfied is True  # Soft — always satisfied
+        assert len(result.violations) == 1
         assert "2 faculty" in result.violations[0].message
+        assert result.penalty == 50.0  # weight * |2 - 1|
 
     def test_fourth_wednesday_not_checked(self):
         """4th Wednesday PM -> not regular -> no check."""
@@ -361,7 +374,8 @@ class TestWedPMSingleFacultyValidate:
         # Only resident assigned, not faculty
         a = _assignment(res.id, wed_pm.id, rotation_template_id=clinic.id)
         result = c.validate([a], ctx)
-        assert result.satisfied is False  # 0 faculty in clinic
+        assert result.satisfied is True  # Soft — always satisfied
+        assert result.penalty > 0  # But penalized for 0 faculty
 
 
 # ==================== InvertedWednesdayConstraint ====================

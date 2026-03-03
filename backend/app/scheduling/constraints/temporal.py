@@ -18,6 +18,7 @@ from .base import (
     ConstraintViolation,
     HardConstraint,
     SchedulingContext,
+    SoftConstraint,
 )
 
 logger = logging.getLogger(__name__)
@@ -209,23 +210,27 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
         )
 
 
-class WednesdayPMSingleFacultyConstraint(HardConstraint):
+class WednesdayPMSingleFacultyConstraint(SoftConstraint):
     """
-    Ensures exactly 1 faculty is assigned to clinic on Wednesday PM.
+    Prefers exactly 1 faculty assigned to clinic on Wednesday PM.
 
     On 1st, 2nd, 3rd Wednesday each month, residents have PM academics
-    (Lecture, Clinic Meeting, Simulation). One faculty must cover clinic.
+    (Lecture, Clinic Meeting, Simulation). One faculty should cover clinic.
+
+    Soft constraint: penalizes deviation from exactly 1 faculty.
+    Prevents INFEASIBLE when preload conflicts arise (was hard prior to PR #1228).
 
     Note: This does NOT apply to 4th Wednesday (inverted schedule).
     """
 
     WEDNESDAY = 2
 
-    def __init__(self) -> None:
+    def __init__(self, weight: float = 50.0) -> None:
         """Initialize the constraint."""
         super().__init__(
             name="WednesdayPMSingleFaculty",
             constraint_type=ConstraintType.ROTATION,
+            weight=weight,
             priority=ConstraintPriority.HIGH,
         )
 
@@ -248,7 +253,7 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Enforce exactly 1 faculty in clinic on regular Wed PM."""
+        """Penalize deviation from exactly 1 faculty in clinic on regular Wed PM."""
         faculty_template_vars = variables.get("faculty_template_assignments", {})
         if not faculty_template_vars:
             return
@@ -261,6 +266,7 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
         if not clinic_template_ids:
             return
 
+        objective_terms = variables.setdefault("objective_terms", [])
         count = 0
         for block in context.blocks:
             if not self._is_regular_wednesday_pm(block):
@@ -279,12 +285,20 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
                     if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
                         faculty_clinic_vars.append(faculty_template_vars[f_i, b_i, t_i])
 
-            # Exactly 1 faculty in clinic
             if faculty_clinic_vars:
-                model.Add(sum(faculty_clinic_vars) == 1)
+                n = len(faculty_clinic_vars)
+                # IntVar for the sum of clinic assignments this Wed PM
+                sum_var = model.NewIntVar(0, n, f"wed_pm_sum_{b_i}")
+                model.Add(sum_var == sum(faculty_clinic_vars))
+
+                # Deviation from target of 1: |sum - 1|
+                dev_var = model.NewIntVar(0, n, f"wed_pm_dev_{b_i}")
+                model.AddAbsEquality(dev_var, sum_var - 1)
+
+                objective_terms.append((dev_var, int(self.weight)))
                 count += 1
 
-        logger.info("Added %d WednesdayPMSingleFaculty constraints", count)
+        logger.info("Added %d WednesdayPMSingleFaculty soft penalties", count)
 
     def add_to_pulp(
         self,
@@ -292,7 +306,7 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Enforce exactly 1 faculty in clinic on regular Wed PM (PuLP)."""
+        """Penalize deviation from exactly 1 faculty in clinic on regular Wed PM (PuLP)."""
         import pulp
 
         faculty_template_vars = variables.get("faculty_template_assignments", {})
@@ -306,6 +320,8 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
         }
         if not clinic_template_ids:
             return
+
+        objective_terms = variables.setdefault("objective_terms", [])
 
         for block in context.blocks:
             if not self._is_regular_wednesday_pm(block):
@@ -324,20 +340,26 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
                     if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
                         faculty_clinic_vars.append(faculty_template_vars[f_i, b_i, t_i])
 
-            # Exactly 1 faculty in clinic
             if faculty_clinic_vars:
-                model += (
-                    pulp.lpSum(faculty_clinic_vars) == 1,
-                    f"wed_pm_single_faculty_{b_i}",
+                sum_expr = pulp.lpSum(faculty_clinic_vars)
+                # Decompose |sum - 1| into over + under
+                over = pulp.LpVariable(f"wed_pm_over_{b_i}", lowBound=0, cat="Integer")
+                under = pulp.LpVariable(
+                    f"wed_pm_under_{b_i}", lowBound=0, cat="Integer"
                 )
+                model += (sum_expr == 1 + over - under, f"wed_pm_dev_{b_i}")
+
+                objective_terms.append((over, int(self.weight)))
+                objective_terms.append((under, int(self.weight)))
 
     def validate(
         self,
         assignments: list[Any],
         context: SchedulingContext,
     ) -> ConstraintResult:
-        """Check that exactly 1 faculty covers regular Wed PM clinic."""
+        """Check faculty count on regular Wed PM clinic (soft — always satisfied)."""
         violations: list[ConstraintViolation] = []
+        total_penalty = 0.0
 
         clinic_template_ids = {
             t.id
@@ -365,12 +387,14 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
             ]
 
             if len(faculty_in_clinic) != 1:
+                deviation = abs(len(faculty_in_clinic) - 1)
+                total_penalty += self.weight * deviation
                 violations.append(
                     ConstraintViolation(
                         constraint_name=self.name,
                         constraint_type=self.constraint_type,
-                        severity="HIGH",
-                        message=f"Wed PM {block.date}: {len(faculty_in_clinic)} faculty in clinic (need exactly 1)",
+                        severity="MEDIUM",
+                        message=f"Wed PM {block.date}: {len(faculty_in_clinic)} faculty in clinic (prefer exactly 1)",
                         block_id=block.id,
                         details={
                             "count": len(faculty_in_clinic),
@@ -380,8 +404,9 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
                 )
 
         return ConstraintResult(
-            satisfied=len(violations) == 0,
+            satisfied=True,  # Soft constraint — never causes infeasibility
             violations=violations,
+            penalty=total_penalty,
         )
 
 

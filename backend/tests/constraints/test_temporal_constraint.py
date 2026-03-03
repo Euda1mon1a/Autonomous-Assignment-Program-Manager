@@ -502,6 +502,13 @@ class TestWednesdayPMSingleFacultyConstraint:
         assert constraint.name == "WednesdayPMSingleFaculty"
         assert constraint.constraint_type == ConstraintType.ROTATION
         assert constraint.priority == ConstraintPriority.HIGH
+        assert hasattr(constraint, "weight")
+        assert constraint.weight == 50.0
+
+    def test_custom_weight(self):
+        """Test constraint accepts custom weight."""
+        constraint = WednesdayPMSingleFacultyConstraint(weight=30.0)
+        assert constraint.weight == 30.0
 
     def test_is_regular_wednesday_pm_first_week(self):
         """Test _is_regular_wednesday_pm correctly identifies 1st Wed PM."""
@@ -542,7 +549,7 @@ class TestWednesdayPMSingleFacultyConstraint:
         assert constraint._is_regular_wednesday_pm(wed4_pm) is False
 
     def test_validate_empty_assignments(self):
-        """Test validate with no assignments fails (need exactly 1 faculty)."""
+        """Test validate with no assignments reports penalty (soft constraint)."""
         constraint = WednesdayPMSingleFacultyConstraint()
         wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
         clinic_template = MockTemplate(rotation_type="outpatient")
@@ -555,11 +562,12 @@ class TestWednesdayPMSingleFacultyConstraint:
         )
 
         result = constraint.validate([], context)
-        assert result.satisfied is False
+        assert result.satisfied is True  # Soft — always satisfied
         assert len(result.violations) == 1
         assert "0 faculty in clinic" in result.violations[0].message
-        assert "need exactly 1" in result.violations[0].message
-        assert result.violations[0].severity == "HIGH"
+        assert "prefer exactly 1" in result.violations[0].message
+        assert result.violations[0].severity == "MEDIUM"
+        assert result.penalty == 50.0
 
     def test_validate_exactly_one_faculty(self):
         """Test validate passes when exactly 1 faculty on Wed PM."""
@@ -586,8 +594,8 @@ class TestWednesdayPMSingleFacultyConstraint:
         assert result.satisfied is True
         assert len(result.violations) == 0
 
-    def test_validate_two_faculty_violation(self):
-        """Test validate fails when 2 faculty on Wed PM (need exactly 1)."""
+    def test_validate_two_faculty_penalty(self):
+        """Test validate reports penalty when 2 faculty on Wed PM (soft)."""
         constraint = WednesdayPMSingleFacultyConstraint()
         wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
         clinic_template = MockTemplate(rotation_type="outpatient")
@@ -616,10 +624,11 @@ class TestWednesdayPMSingleFacultyConstraint:
         )
 
         result = constraint.validate(assignments, context)
-        assert result.satisfied is False
+        assert result.satisfied is True  # Soft — always satisfied
         assert len(result.violations) == 1
         assert "2 faculty in clinic" in result.violations[0].message
         assert result.violations[0].details["count"] == 2
+        assert result.penalty == 50.0  # weight * |2 - 1|
 
     def test_validate_fourth_wednesday_ignored(self):
         """Test 4th Wednesday PM is not checked by this constraint."""
@@ -662,9 +671,10 @@ class TestWednesdayPMSingleFacultyConstraint:
         )
 
         result = constraint.validate([assignment], context)
-        # Should fail because Wed PM has 0 faculty
-        assert result.satisfied is False
+        # Soft — always satisfied, but penalized for Wed PM having 0 faculty
+        assert result.satisfied is True
         assert len(result.violations) == 1
+        assert result.penalty > 0
 
     def test_validate_non_clinic_template_ignored(self):
         """Test non-clinic templates are not checked."""
@@ -694,8 +704,9 @@ class TestWednesdayPMSingleFacultyConstraint:
         )
 
         result = constraint.validate([assignment], context)
-        # Should fail because clinic has 0 faculty
-        assert result.satisfied is False
+        # Soft — always satisfied, but penalized for clinic having 0 faculty
+        assert result.satisfied is True
+        assert result.penalty > 0
 
     def test_validate_resident_assignments_ignored(self):
         """Test resident assignments don't count toward faculty coverage."""
@@ -720,8 +731,9 @@ class TestWednesdayPMSingleFacultyConstraint:
         )
 
         result = constraint.validate([assignment], context)
-        # Should fail because no faculty (resident doesn't count)
-        assert result.satisfied is False
+        # Soft — always satisfied, but penalized (resident doesn't count)
+        assert result.satisfied is True
+        assert result.penalty > 0
 
     def test_validate_multiple_wednesdays(self):
         """Test validation across multiple regular Wednesdays."""
@@ -748,7 +760,7 @@ class TestWednesdayPMSingleFacultyConstraint:
                 block_id=wed2_pm.id,
                 rotation_template_id=clinic_template.id,
             ),
-            # 3rd Wed - 0 faculty (Violation)
+            # 3rd Wed - 0 faculty (Penalty)
         ]
 
         context = SchedulingContext(
@@ -759,8 +771,9 @@ class TestWednesdayPMSingleFacultyConstraint:
         )
 
         result = constraint.validate(assignments, context)
-        assert result.satisfied is False
+        assert result.satisfied is True  # Soft — always satisfied
         assert len(result.violations) == 1  # 3rd Wed missing faculty
+        assert result.penalty == 50.0
 
     def test_validate_no_clinic_templates(self):
         """Test early return when no clinic templates exist."""
@@ -1297,9 +1310,10 @@ class TestTemporalConstraintsIntegration:
         result2 = constraint2.validate(assignments, context)
         result3 = constraint3.validate(assignments, context)
 
-        # All should fail
+        # Hard constraints fail, soft constraint reports penalty
         assert result1.satisfied is False
-        assert result2.satisfied is False
+        assert result2.satisfied is True  # Soft — always satisfied
+        assert result2.penalty > 0  # But penalized
         assert result3.satisfied is False
 
         # Check specific violations
