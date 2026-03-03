@@ -1885,24 +1885,45 @@ class SchedulingEngine:
             if key:
                 counts[pid][key] = row.total or 0
 
-        # Update PersonAcademicYear records
+        # Update existing PersonAcademicYear records
         pay_records = (
             self.db.query(PersonAcademicYear)
             .filter(PersonAcademicYear.academic_year == academic_year)
             .all()
         )
+        existing_pids = set()
         updated = 0
         for pay in pay_records:
             pid = cast(UUID, pay.person_id)
+            existing_pids.add(pid)
             person_counts = counts.get(pid, {"sunday": 0, "weekday": 0})
             pay.sunday_call_count = person_counts.get("sunday", 0)
             pay.weekday_call_count = person_counts.get("weekday", 0)
             updated += 1
 
+        # Create PAY rows for people with call data but no PAY record
+        # (e.g., faculty not seeded by the original migration)
+        created = 0
+        for pid, person_counts in counts.items():
+            if pid not in existing_pids:
+                import uuid as uuid_mod
+
+                pay = PersonAcademicYear(
+                    id=uuid_mod.uuid4(),
+                    person_id=pid,
+                    academic_year=academic_year,
+                    pgy_level=None,
+                    is_graduated=False,
+                    sunday_call_count=person_counts.get("sunday", 0),
+                    weekday_call_count=person_counts.get("weekday", 0),
+                )
+                self.db.add(pay)
+                created += 1
+
         self.db.flush()
         logger.info(
             f"Synced YTD call counts for AY {academic_year}: "
-            f"{updated} PersonAcademicYear records updated"
+            f"{updated} updated, {created} created"
         )
 
     def _validate_pcat_do_integrity(

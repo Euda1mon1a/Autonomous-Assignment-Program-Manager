@@ -36,6 +36,12 @@ The existing pipeline correctly separates `_load_fmit_call` (Friday/Saturday man
 > **Completed:** 2026-02-26
 > **PRs:** #1199 (MAD + prior_calls + sync), #1201 (max default=0 safety), #1202 (FMIT weekend split)
 > **Tests:** 9/9 passing in `backend/tests/test_call_equity_ytd.py`
+>
+> **Track A Data Status (Mar 2, 2026):**
+> - `person_academic_years` table: 48 rows (38 residents + 10 faculty)
+> - Faculty PAY rows created manually (migration only seeded residents); `_sync_academic_year_call_counts()` now auto-creates missing rows (upsert)
+> - **SYNTHETIC DATA**: Call counts reflect Block 12 only (Blocks 0-11 not generated). Prior-year history should be imported from TAMC Excel workbooks when available.
+> - Import path: Parse call row (row 4) from each block's XLSX → insert `call_assignments` → re-run sync
 
 ### Problem
 
