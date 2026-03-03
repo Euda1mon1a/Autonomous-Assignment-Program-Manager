@@ -199,7 +199,7 @@ Balances Mon-Thu call assignments across faculty using MAD formulation. Consumes
 
 ### EscalatingCallEquityConstraint
 
-**Weight:** 15.0 (base, escalates 1x/3x/7x per tier)
+**Weight:** 40.0 (base, escalates 1x/3x/7x per tier)
 
 Three-tier escalating penalty for faculty exceeding target call count. Uses F-multiplied integers for CP-SAT compatibility. `total_current` sum hoisted outside per-faculty loop (PR #1221).
 

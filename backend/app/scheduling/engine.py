@@ -24,7 +24,7 @@ import time
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import and_, case, func, select
 from sqlalchemy.orm import Session, selectinload
@@ -1906,10 +1906,8 @@ class SchedulingEngine:
         created = 0
         for pid, person_counts in counts.items():
             if pid not in existing_pids:
-                import uuid as uuid_mod
-
                 pay = PersonAcademicYear(
-                    id=uuid_mod.uuid4(),
+                    id=uuid4(),
                     person_id=pid,
                     academic_year=academic_year,
                     pgy_level=None,
