@@ -628,6 +628,113 @@ class XMLToXlsxConverter:
         sheet.cell(row=82, column=62).value = "%CVf"
         sheet.cell(row=82, column=64).value = "=BL81/(BJ81+BK81+BL81)*100"
 
+        self._apply_bottom_calc_rows(sheet, block_start, block_end)
+
+    def _apply_bottom_calc_rows(
+        self, sheet, block_start: date, block_end: date
+    ) -> None:
+        """Add 13 per-column calculation rows below the faculty summary.
+
+        Rows 84-96 provide daily staffing tallies per AM/PM slot:
+        screeners needed, clinic counts by PGY, supervision ratios,
+        procedure counts, and appointment estimates.
+        """
+        from openpyxl.styles import Font
+        from openpyxl.utils import get_column_letter
+
+        LABEL_COL = 5  # Column E
+        CALC_START_ROW = 84
+        SCHEDULE_START = 6  # Column F
+        num_days = (block_end - block_start).days + 1
+        schedule_end = SCHEDULE_START + (num_days * 2) - 1
+
+        labels = [
+            "Screeners Needed",
+            "Providers Virtual (CV)",
+            "Interns in Clinic",
+            "Residents in Clinic",
+            "Attendings Needed Clinic",
+            "Residents in PROC",
+            "Residents in V Clinic",
+            "Residents on HV",
+            "Total Attendings Needed",
+            "# Attendings Assigned",
+            "# Primary Care Appts",
+            "PR Count",
+            "VAS Count",
+        ]
+
+        bold = Font(name="Arial", bold=True, size=10)
+        sheet.cell(row=83, column=LABEL_COL, value="DAILY STAFFING").font = bold
+
+        for i, label in enumerate(labels):
+            sheet.cell(
+                row=CALC_START_ROW + i, column=LABEL_COL, value=label
+            ).font = bold
+
+        for col_idx in range(SCHEDULE_START, schedule_end + 1):
+            c = get_column_letter(col_idx)
+
+            # Row 84: Screeners Needed = ceil(interns_in_clinic / 2)
+            sheet.cell(row=84, column=col_idx).value = (
+                f'=CEILING((COUNTIFS($D$9:$D$30,"PGY 1",{c}$9:{c}$30,"C")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 1",{c}$9:{c}$30,"C-I"))/2,1)'
+            )
+
+            # Row 85: Providers Virtual (CV) — all rows
+            sheet.cell(row=85, column=col_idx).value = f'=COUNTIF({c}$9:{c}$80,"CV")'
+
+            # Row 86: Interns in Clinic (PGY 1 with C or C-I)
+            sheet.cell(row=86, column=col_idx).value = (
+                f'=COUNTIFS($D$9:$D$30,"PGY 1",{c}$9:{c}$30,"C")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 1",{c}$9:{c}$30,"C-I")'
+            )
+
+            # Row 87: Residents in Clinic (PGY 2/3 with C, C-I, SM)
+            sheet.cell(row=87, column=col_idx).value = (
+                f'=COUNTIFS($D$9:$D$30,"PGY 2",{c}$9:{c}$30,"C")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{c}$9:{c}$30,"C")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 2",{c}$9:{c}$30,"C-I")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{c}$9:{c}$30,"C-I")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 2",{c}$9:{c}$30,"SM")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{c}$9:{c}$30,"SM")'
+            )
+
+            # Row 88: Attendings Needed = ceil(interns/2) + ceil(residents/4)
+            sheet.cell(
+                row=88, column=col_idx
+            ).value = f"=CEILING({c}86/2,1)+CEILING({c}87/4,1)"
+
+            # Row 89: Residents in PROC (PR + VAS in resident rows)
+            sheet.cell(
+                row=89, column=col_idx
+            ).value = f'=COUNTIF({c}$9:{c}$30,"PR")+COUNTIF({c}$9:{c}$30,"VAS")'
+
+            # Row 90: Residents in V Clinic (CV in resident rows)
+            sheet.cell(row=90, column=col_idx).value = f'=COUNTIF({c}$9:{c}$30,"CV")'
+
+            # Row 91: Residents on HV
+            sheet.cell(row=91, column=col_idx).value = f'=COUNTIF({c}$9:{c}$30,"HV")'
+
+            # Row 92: Total Attendings Needed = clinic + ceil(proc/2)
+            sheet.cell(row=92, column=col_idx).value = f"={c}88+CEILING({c}89/2,1)"
+
+            # Row 93: # Attendings Assigned (AT + PCAT + DO in faculty rows)
+            sheet.cell(row=93, column=col_idx).value = (
+                f'=COUNTIF({c}$31:{c}$80,"AT")'
+                f'+COUNTIF({c}$31:{c}$80,"PCAT")'
+                f'+COUNTIF({c}$31:{c}$80,"DO")'
+            )
+
+            # Row 94: # Primary Care Appts = (interns + residents) * 6
+            sheet.cell(row=94, column=col_idx).value = f"=({c}86+{c}87)*6"
+
+            # Row 95: PR Count (all rows)
+            sheet.cell(row=95, column=col_idx).value = f'=COUNTIF({c}$9:{c}$80,"PR")'
+
+            # Row 96: VAS Count (all rows)
+            sheet.cell(row=96, column=col_idx).value = f'=COUNTIF({c}$9:{c}$80,"VAS")'
+
     def _call_last_name_token(self, raw_name: Any) -> str:
         if not raw_name:
             return ""
