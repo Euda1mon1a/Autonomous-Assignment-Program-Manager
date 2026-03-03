@@ -22,7 +22,7 @@ Only **4 remain disabled** in the manager — all conditionally enabled by `engi
 
 | # | Constraint Name | File | Type | Status | Notes |
 |---|----------------|------|------|--------|-------|
-| 1 | `WednesdayPMSingleFaculty` | `temporal.py` | Hard | **ENABLED** (PR #1226) | Passes OPTIMAL but **no-ops at runtime** — looks for `faculty_template_assignments` which solver creates. Originally INFEASIBLE Feb 28; now OPTIMAL (likely due to Wed PM LEC preloader fix in PR #1215). Needs variable mapping refactor to become functional. |
+| 1 | `WednesdayPMSingleFaculty` | `temporal.py` | Hard | **ENABLED** (PR #1226) | **Actively constraining** — adds hard `model.Add(sum(...) == 1)` using `faculty_template_assignments` which the solver populates. Currently solves OPTIMAL (likely due to Wed PM LEC preloader fix in PR #1215), but **can cause INFEASIBLE** if preloaded assignments conflict with the exactly-one requirement. Originally INFEASIBLE Feb 28. Monitor closely; consider converting to soft constraint. |
 | 2 | `SMResidentFacultyAlignment` | `sports_medicine.py` | Hard | **ENABLED** (PR #1226) | SM data exists: SM faculty member (`faculty_role='sports_med'`), SM-AM/SM-PM/ACS-AM templates. `requires_specialty` column unpopulated so constraint no-ops gracefully. Fully functional when `requires_specialty` is populated. |
 | 3 | `SMFacultyNoRegularClinic` | `faculty_role.py` | Hard | **ENABLED** (PR #1226) | Blocks SM faculty from regular clinic templates. SM faculty member matches via `faculty_role='sports_med'`. Active — prevents SM faculty member assignment to non-SM clinic slots. |
 | 4 | ~~`FMITResidentClinicDay`~~ | ~~`inpatient.py`~~ | Hard | **REMOVED** (PR #1225) | Stub deleted. Pre-loader handles PGY-specific FMIT clinic days. |
@@ -36,20 +36,22 @@ Only **4 remain disabled** in the manager — all conditionally enabled by `engi
 
 | Category | Count | Constraints |
 |----------|-------|-------------|
-| **ENABLED** (active in manager, functional) | 1 | SMFacultyNoRegularClinic |
-| **ENABLED** (active in manager, passive/no-op) | 3 | WednesdayPMSingleFaculty, SMResidentFacultyAlignment, HalfDayRequirement |
+| **ENABLED** (active in manager, functional) | 2 | WednesdayPMSingleFaculty, SMFacultyNoRegularClinic |
+| **ENABLED** (active in manager, passive/no-op) | 2 | SMResidentFacultyAlignment, HalfDayRequirement |
 | **DISABLED** (engine enables when data exists) | 4 | ResidentWeeklyClinic, ZoneBoundary, PreferenceTrail, N1Vulnerability |
 | **REMOVED** | 1 | FMITResidentClinicDay |
 
 ## Remaining Technical Debt
 
-### 1. WednesdayPMSingleFaculty — Variable Mapping Refactor (HIGH)
+### 1. WednesdayPMSingleFaculty — Fragile Hard Constraint (HIGH)
 
 **File:** `backend/app/scheduling/constraints/temporal.py:212`
 
-**Status:** Enabled but passive. The constraint accesses `variables.get("faculty_template_assignments")` which the solver does create (`solvers.py:341`, `:1061`). It solves OPTIMAL but the variable key may not be populated for the constraint's specific use case (per-Wednesday-PM faculty assignment tracking). Needs investigation of whether the constraint actually adds any CP-SAT terms at runtime.
+**Status:** Enabled and **actively constraining**. Adds hard `model.Add(sum(...) == 1)` using `faculty_template_assignments` which the solver populates (`solvers.py:341`, `:1061`). Currently solves OPTIMAL — likely because the Wed PM LEC preloader (PR #1215) resolved the preload conflicts that caused INFEASIBLE on Feb 28.
 
-**Correction (PR #1225, Codex P2):** Original diagnosis was wrong — `faculty_template_assignments` does exist. The Feb 28 INFEASIBLE was likely caused by hard `== 1` conflicting with preloaded assignments on certain Wednesday PMs. The Wed PM LEC preloader (PR #1215) may have resolved the underlying conflict.
+**Risk:** This is a hard constraint enforcing exactly-one-faculty-in-clinic on Wednesday PMs. If future preload or data changes re-introduce conflicts, it will cause INFEASIBLE with no solver fallback. Should be converted to a soft constraint (penalize deviation from 1) or relaxed to `>= 1`.
+
+**Correction (PR #1225, Codex P2):** Original diagnosis was wrong — `faculty_template_assignments` does exist. Codex P2 on PR #1227 further corrected: the constraint is not passive/no-op, it actively adds CP-SAT terms.
 
 ### 2. SMResidentFacultyAlignment — Data Population (LOW)
 
@@ -72,6 +74,6 @@ Only **4 remain disabled** in the manager — all conditionally enabled by `engi
 | ~~LOW~~ | ~~Remove stub~~ | ~~FMITResidentClinicDay~~ | — | Done (PR #1225) |
 | ~~MEDIUM~~ | ~~Fix method name bug~~ | ~~HalfDayRequirement~~ | — | Done (PR #1225) |
 | ~~MEDIUM~~ | ~~Re-enable 4 stress-tested constraints~~ | ~~All 4~~ | — | Done (PR #1226) |
-| HIGH | Verify WednesdayPMSingleFaculty adds terms at runtime | WednesdayPMSingleFaculty | Investigation |
+| HIGH | Convert hard `== 1` to soft constraint or relax to `>= 1` | WednesdayPMSingleFaculty | ~20 lines |
 | MEDIUM | Complete CP-SAT deviation formulation | HalfDayRequirement | ~30 lines |
 | LOW | Populate `requires_specialty` on SM templates | SMResidentFacultyAlignment | Data entry |
