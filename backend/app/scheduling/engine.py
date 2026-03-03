@@ -3622,10 +3622,16 @@ class SchedulingEngine:
         corrected = 0
         skipped_postcall = 0
         skipped_weekend = 0
+        skipped_final_wed = 0
         for hda, current_code in solver_hdas:
             # Skip weekends
             if hda.date.weekday() >= 5:
                 skipped_weekend += 1
+                continue
+
+            # Skip final Wednesday — handled by _backfill_last_wednesday_clinic
+            if hda.date.weekday() == 2 and (self.end_date - hda.date).days < 7:
+                skipped_final_wed += 1
                 continue
 
             # Skip protected codes
@@ -3689,7 +3695,8 @@ class SchedulingEngine:
         logger.info(
             f"Template correction: {corrected} HDAs updated, "
             f"{skipped_postcall} post-call skipped, "
-            f"{skipped_weekend} weekend skipped"
+            f"{skipped_weekend} weekend skipped, "
+            f"{skipped_final_wed} final-Wednesday skipped"
         )
         return corrected
 
@@ -3697,19 +3704,18 @@ class SchedulingEngine:
         self,
         faculty: list[Person],
     ) -> int:
-        """Ensure one faculty covers clinic on the last Wednesday AM and PM.
+        """Ensure faculty clinic coverage on the last Wednesday AM and PM.
 
         On the last Wednesday of a block all residents attend LEC AM / ADV PM,
-        leaving zero clinic providers.  This post-solve step finds one core
-        faculty member whose PM slot is LEC and overwrites it with C (clinic)
-        so the clinic doors stay open.  AM is already covered by faculty
-        templates (most core faculty have AM clinic or supervision).
+        leaving zero clinic providers.  This post-solve step converts one
+        faculty member's slot to C (clinic) for each half-day so the clinic
+        stays open.
 
-        Preference order for the faculty member to convert:
-        1. Someone already in C (clinic) that AM — keeps their day consistent.
-        2. Any core faculty not on leave/FMIT that day.
+        For PM: converts one faculty LEC → C.
+        For AM: converts one faculty non-protected slot → C.
+        Prefers different faculty for AM vs PM.
 
-        Returns the number of HDAs modified (0 or 1).
+        Returns the number of HDAs modified (0, 1, or 2).
         """
         from datetime import timedelta
 
@@ -3739,11 +3745,16 @@ class SchedulingEngine:
             return 0
 
         core_ids = [f.id for f in core_faculty]
+        c_activity_id = self._get_activity_id_by_code("C")
 
-        # Find faculty with LEC PM on the last Wednesday
-        # Activity codes may be stored as 'lec' or 'LEC' — use func.lower()
         from sqlalchemy import func as sa_func
 
+        # Codes that must never be overwritten
+        _PROTECTED = {"fmit", "lv", "lv-am", "lv-pm", "call", "pcat", "do", "w"}
+
+        modified = 0
+
+        # ── PM: Convert one faculty LEC PM → C ──
         lec_pm_hdas = (
             self.db.query(HalfDayAssignment, Activity.code)
             .join(Activity, HalfDayAssignment.activity_id == Activity.id)
@@ -3752,58 +3763,74 @@ class SchedulingEngine:
                 HalfDayAssignment.date == last_wed,
                 HalfDayAssignment.time_of_day == "PM",
                 sa_func.lower(Activity.code) == "lec",
-                # Never overwrite manual (coordinator) assignments
                 HalfDayAssignment.source != AssignmentSource.MANUAL.value,
             )
             .all()
         )
 
-        if not lec_pm_hdas:
-            logger.debug(
-                "Last Wednesday {}: no faculty LEC PM slots to convert", last_wed
+        pm_chosen_pid = None
+        if lec_pm_hdas:
+            chosen_hda = lec_pm_hdas[0][0]
+            chosen_hda.activity_id = c_activity_id
+            pm_chosen_pid = chosen_hda.person_id
+            modified += 1
+            chosen_name = next(
+                (f.name for f in core_faculty if f.id == pm_chosen_pid),
+                str(pm_chosen_pid),
             )
-            return 0
+            logger.info(
+                "Last Wednesday {}: converted {} PM LEC → C (clinic coverage)",
+                last_wed,
+                chosen_name,
+            )
 
-        # Build set of faculty who have C (clinic) in AM on last Wednesday
-        # — prefer converting these so their day stays clinic-oriented
-        am_clinic_pids = set(
-            pid
-            for (pid,) in self.db.query(HalfDayAssignment.person_id)
+        # ── AM: Convert one faculty non-protected AM → C ──
+        am_hdas = (
+            self.db.query(HalfDayAssignment, Activity.code)
             .join(Activity, HalfDayAssignment.activity_id == Activity.id)
             .filter(
                 HalfDayAssignment.person_id.in_(core_ids),
                 HalfDayAssignment.date == last_wed,
                 HalfDayAssignment.time_of_day == "AM",
-                sa_func.lower(Activity.code).in_(["c", "fm_clinic", "sm_clinic", "at"]),
+                HalfDayAssignment.source != AssignmentSource.MANUAL.value,
             )
             .all()
         )
 
-        # Pick the best candidate: prefer someone already in AM clinic
-        chosen_hda = None
-        for hda, _code in lec_pm_hdas:
-            if hda.person_id in am_clinic_pids:
-                chosen_hda = hda
-                break
-        if chosen_hda is None:
-            chosen_hda = lec_pm_hdas[0][0]
+        # Filter to convertible AM slots (not protected, not already clinic)
+        convertible_am = [
+            (hda, code)
+            for hda, code in am_hdas
+            if code
+            and code.lower() not in _PROTECTED
+            and code.lower() not in ("c", "fm_clinic", "sm_clinic", "cv")
+        ]
 
-        # Overwrite LEC → C
-        c_activity_id = self._get_activity_id_by_code("C")
-        chosen_hda.activity_id = c_activity_id
-        self.db.flush()
+        if convertible_am:
+            # Prefer someone different from the PM pick
+            am_chosen = None
+            for hda, _code in convertible_am:
+                if hda.person_id != pm_chosen_pid:
+                    am_chosen = hda
+                    break
+            if am_chosen is None:
+                am_chosen = convertible_am[0][0]
 
-        # Log who was converted
-        chosen_name = next(
-            (f.name for f in core_faculty if f.id == chosen_hda.person_id),
-            str(chosen_hda.person_id),
-        )
-        logger.info(
-            "Last Wednesday {}: converted {} PM from LEC → C (clinic coverage)",
-            last_wed,
-            chosen_name,
-        )
-        return 1
+            am_chosen.activity_id = c_activity_id
+            modified += 1
+            am_name = next(
+                (f.name for f in core_faculty if f.id == am_chosen.person_id),
+                str(am_chosen.person_id),
+            )
+            logger.info(
+                "Last Wednesday {}: converted {} AM → C (clinic coverage)",
+                last_wed,
+                am_name,
+            )
+
+        if modified:
+            self.db.flush()
+        return modified
 
     def _backfill_virtual_clinic(
         self,
@@ -3863,6 +3890,9 @@ class SchedulingEngine:
 
         by_person: dict = defaultdict(list)
         for a in clinic_assignments:
+            # Skip Wednesday clinic for faculty — protected didactic/inverted day
+            if a.person_id in faculty_id_set and a.date.weekday() == 2:
+                continue
             by_person[a.person_id].append(a)
 
         # Build priority key: faculty=100, PGY-3=3, PGY-2=2
