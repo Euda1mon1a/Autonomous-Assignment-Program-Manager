@@ -583,6 +583,9 @@ class NoConsecutiveCallConstraint(SoftConstraint):
             sorted_dates = sorted(dates)
             for i in range(len(sorted_dates) - 1):
                 if (sorted_dates[i + 1] - sorted_dates[i]).days == 1:
+                    # Skip FMIT Fri+Sat pairs — expected preloaded pattern
+                    if sorted_dates[i].weekday() == 4:  # Friday
+                        continue
                     violations.append(
                         ConstraintViolation(
                             constraint_name=self.name,
