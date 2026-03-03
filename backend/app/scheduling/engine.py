@@ -3703,6 +3703,8 @@ class SchedulingEngine:
                 HalfDayAssignment.date == last_wed,
                 HalfDayAssignment.time_of_day == "PM",
                 sa_func.lower(Activity.code) == "lec",
+                # Never overwrite manual (coordinator) assignments
+                HalfDayAssignment.source != AssignmentSource.MANUAL.value,
             )
             .all()
         )
