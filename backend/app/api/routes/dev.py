@@ -196,3 +196,57 @@ def seed_database(scenario: str = "e2e_baseline", db: Session = Depends(get_db))
         activities_created=len(activities),
         assignments_created=assignments_created,
     )
+
+
+class CleanupResponse(BaseModel):
+    status: str
+    hdas_deleted: int
+    faculty_deleted: int
+    residents_deleted: int
+
+
+@router.post("/cleanup", response_model=CleanupResponse)
+def cleanup_seed_data(db: Session = Depends(get_db)):
+    """Remove all data created by the /dev/seed endpoint.
+
+    Deletes Dr. Faculty-X placeholders, CPT Doe-XX residents, and their HDAs.
+    Same env gate as /dev/seed.
+    """
+    env = os.getenv("ENV", "development")
+    allow_seed = os.getenv("ALLOW_DEV_SEED", "false").lower() == "true"
+
+    if env != "test" and not allow_seed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Dev cleanup only available in test environment or when ALLOW_DEV_SEED is true",
+        )
+
+    # Delete child rows for seeded people first (FK constraints)
+    hda_result = db.execute(
+        text(
+            "DELETE FROM half_day_assignments "
+            "WHERE person_id IN ("
+            "  SELECT id FROM people "
+            "  WHERE name LIKE 'Dr. Faculty-%%' OR name LIKE 'CPT Doe-%%'"
+            ")"
+        )
+    )
+    db.execute(
+        text(
+            "DELETE FROM person_academic_years "
+            "WHERE person_id IN ("
+            "  SELECT id FROM people "
+            "  WHERE name LIKE 'Dr. Faculty-%%' OR name LIKE 'CPT Doe-%%'"
+            ")"
+        )
+    )
+    fac_result = db.execute(text("DELETE FROM people WHERE name LIKE 'Dr. Faculty-%%'"))
+    res_result = db.execute(text("DELETE FROM people WHERE name LIKE 'CPT Doe-%%'"))
+    db.commit()
+
+    return CleanupResponse(
+        status="success",
+        hdas_deleted=hda_result.rowcount,
+        faculty_deleted=fac_result.rowcount,
+        residents_deleted=res_result.rowcount,
+    )
