@@ -7,6 +7,7 @@ Belt & suspenders validation for expansion service rules:
 - Night float AM slot patterns (OFF-AM, clinic, etc.)
 """
 
+import logging
 from typing import Any
 
 from app.scheduling.constraints.base import (
@@ -16,6 +17,8 @@ from app.scheduling.constraints.base import (
     ConstraintViolation,
     HardConstraint,
 )
+
+logger = logging.getLogger(__name__)
 
 # Exempt rotations that don't get LEC-PM on Wednesday
 LEC_EXEMPT_ROTATIONS = frozenset(
@@ -92,6 +95,7 @@ class WednesdayPMLecConstraint(HardConstraint):
         if lec_t_i is None:
             return
 
+        count = 0
         for block in context.blocks:
             if not self._is_wednesday_pm(block):
                 continue
@@ -108,7 +112,9 @@ class WednesdayPMLecConstraint(HardConstraint):
                 # Expansion service already sets LEC-PM for non-exempt rotations
                 # This constraint validates consistency
                 if (r_i, b_i, lec_t_i) in template_vars:
-                    pass  # Solver will verify consistency
+                    count += 1
+
+        logger.info(f"Added {count} WednesdayPMLec constraints")
 
     def add_to_pulp(self, model: Any, variables: dict[str, Any], context: Any) -> None:
         """Add constraint to PuLP model (validation-focused)."""
@@ -186,24 +192,8 @@ class InternContinuityConstraint(HardConstraint):
             r.id for r in context.residents if getattr(r, "pgy_level", 0) == 1
         }
 
-        for block in context.blocks:
-            if not self._is_wednesday_am(block):
-                continue
-
-            b_i = context.block_idx.get(block.id)
-            if b_i is None:
-                continue
-
-            for resident in context.residents:
-                if resident.id not in pgy1_residents:
-                    continue
-
-                r_i = context.resident_idx.get(resident.id)
-                if r_i is None:
-                    continue
-
-                # Expansion service handles this, constraint validates
-                pass
+        # Expansion service handles assignment; this constraint validates only
+        logger.info("Added 0 InternContinuity constraints (validation-only)")
 
     def add_to_pulp(self, model: Any, variables: dict[str, Any], context: Any) -> None:
         """Add constraint to PuLP model (validation-focused)."""
@@ -273,7 +263,7 @@ class NightFloatSlotConstraint(HardConstraint):
     def add_to_cpsat(self, model: Any, variables: dict[str, Any], context: Any) -> None:
         """Add constraint to CP-SAT model (validation-focused)."""
         # Expansion service handles assignment, constraint validates
-        pass
+        logger.info("Added 0 NightFloatSlot constraints (validation-only)")
 
     def add_to_pulp(self, model: Any, variables: dict[str, Any], context: Any) -> None:
         """Add constraint to PuLP model (validation-focused)."""

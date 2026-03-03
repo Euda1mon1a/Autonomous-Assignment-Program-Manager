@@ -411,7 +411,7 @@ class FMITResidentClinicDayConstraint(HardConstraint):
         # Implementation note: The pre-loading mechanism handles the assignment
         # of FMIT residents. This constraint would be used for validation
         # or for solvers that generate FMIT assignments.
-        pass
+        logger.info("Added 0 FMITResidentClinicDay constraints (pre-loaded)")
 
     def add_to_pulp(
         self,

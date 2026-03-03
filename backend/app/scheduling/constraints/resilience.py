@@ -141,6 +141,8 @@ class HubProtectionConstraint(SoftConstraint):
         if total_hub_penalty:
             variables["hub_penalty"] = total_hub_penalty
 
+        logger.info("Added HubProtection penalty to objective")
+
     def add_to_pulp(
         self,
         model: Any,
@@ -349,6 +351,12 @@ class UtilizationBufferConstraint(SoftConstraint):
         # Use linear approximation with higher weight for large overages
         variables["utilization_penalty"] = over_util
 
+        logger.info(
+            "Added UtilizationBuffer constraint (safe_capacity=%d, max_capacity=%d)",
+            safe_capacity,
+            max_capacity,
+        )
+
     def add_to_pulp(
         self,
         model: Any,
@@ -551,6 +559,8 @@ class ZoneBoundaryConstraint(SoftConstraint):
         if total_zone_penalty:
             variables["zone_penalty"] = total_zone_penalty
 
+        logger.info("Added ZoneBoundary penalty to objective")
+
     def add_to_pulp(
         self,
         model: Any,
@@ -739,6 +749,8 @@ class PreferenceTrailConstraint(SoftConstraint):
 
         if total_trail_score:
             variables["trail_bonus"] = total_trail_score
+
+        logger.info("Added PreferenceTrail bonus/penalty to objective")
 
     def add_to_pulp(
         self,
@@ -943,6 +955,8 @@ class N1VulnerabilityConstraint(SoftConstraint):
 
         if total_n1_penalty:
             variables["n1_penalty"] = total_n1_penalty
+
+        logger.info("Added N1Vulnerability penalty to objective")
 
     def add_to_pulp(
         self,

@@ -753,6 +753,8 @@ class FacultyClinicEquitySoftConstraint(SoftConstraint):
         if total_deviation:
             variables["clinic_equity_penalty"] = total_deviation
 
+        logger.info("Added FacultyClinicEquity soft penalty to objective")
+
     def add_to_pulp(
         self,
         model: Any,

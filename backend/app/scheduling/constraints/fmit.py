@@ -180,6 +180,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
             if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
+        count = 0
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
             faculty_i = context.faculty_idx.get(faculty_id)
             call_i = context.call_eligible_faculty_idx.get(faculty_id)
@@ -205,11 +206,15 @@ class FMITWeekBlockingConstraint(HardConstraint):
                                 model.Add(
                                     faculty_template_vars[faculty_i, b_i, t_i] == 0
                                 )
+                                count += 1
 
                     # Block Sun-Thurs call
                     if call_vars and is_sun_thurs(block.date) and call_i is not None:
                         if (call_i, b_i, "overnight") in call_vars:
                             model.Add(call_vars[call_i, b_i, "overnight"] == 0)
+                            count += 1
+
+        logger.info(f"Added {count} FMITWeekBlocking constraints")
 
     def add_to_pulp(
         self,
@@ -367,6 +372,7 @@ class FMITMandatoryCallConstraint(HardConstraint):
         if not fmit_weeks_by_faculty:
             return
 
+        count = 0
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
             call_i = context.call_eligible_faculty_idx.get(faculty_id)
             if call_i is None:
@@ -379,12 +385,16 @@ class FMITMandatoryCallConstraint(HardConstraint):
                         b_i = context.block_idx[block.id]
                         if (call_i, b_i, "overnight") in call_vars:
                             model.Add(call_vars[call_i, b_i, "overnight"] == 1)
+                            count += 1
 
                     saturday = friday_start + timedelta(days=1)
                     if block.date == saturday:
                         b_i = context.block_idx[block.id]
                         if (call_i, b_i, "overnight") in call_vars:
                             model.Add(call_vars[call_i, b_i, "overnight"] == 1)
+                            count += 1
+
+        logger.info(f"Added {count} FMITMandatoryCall constraints")
 
     def add_to_pulp(
         self,
@@ -487,6 +497,7 @@ class PostFMITRecoveryConstraint(HardConstraint):
         if not fmit_weeks_by_faculty:
             return
 
+        count = 0
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
             faculty_i = context.faculty_idx.get(faculty_id)
             call_i = context.call_eligible_faculty_idx.get(faculty_id)
@@ -513,12 +524,16 @@ class PostFMITRecoveryConstraint(HardConstraint):
                                 and (faculty_i, b_i, t_i) in template_vars
                             ):
                                 model.Add(template_vars[faculty_i, b_i, t_i] == 0)
+                                count += 1
 
                     # Block call assignments
                     if call_vars and call_i is not None:
                         for call_type in ["overnight", "weekend", "backup"]:
                             if (call_i, b_i, call_type) in call_vars:
                                 model.Add(call_vars[call_i, b_i, call_type] == 0)
+                                count += 1
+
+        logger.info(f"Added {count} PostFMITRecovery constraints")
 
     def add_to_pulp(
         self,
@@ -673,6 +688,7 @@ class PostFMITSundayBlockingConstraint(SoftConstraint):
             return
 
         soft_objectives = variables.setdefault("soft_objectives", [])
+        count = 0
 
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
             call_i = context.call_eligible_faculty_idx.get(faculty_id)
@@ -691,6 +707,9 @@ class PostFMITSundayBlockingConstraint(SoftConstraint):
                             soft_objectives.append(
                                 (int(self.weight), call_vars[call_i, b_i, "overnight"])
                             )
+                            count += 1
+
+        logger.info(f"Added {count} PostFMITSundayBlocking soft penalties")
 
     def add_to_pulp(
         self,
@@ -833,7 +852,7 @@ class FMITContinuityTurfConstraint(HardConstraint):
         """
         # This constraint is primarily for validation and reporting
         # It doesn't add solver constraints since turf decisions are made dynamically
-        pass
+        logger.info("Added 0 FMITContinuityTurf constraints (validation-only)")
 
     def add_to_pulp(
         self,
@@ -959,6 +978,10 @@ class FMITStaffingFloorConstraint(HardConstraint):
         if total_faculty < self.MINIMUM_FACULTY_FOR_FMIT:
             # Block ALL FMIT assignments
             self._block_all_fmit_assignments(model, template_vars, context)
+            logger.info(
+                f"Added FMITStaffingFloor constraints: blocked all FMIT "
+                f"({total_faculty} faculty < {self.MINIMUM_FACULTY_FOR_FMIT} minimum)"
+            )
             return
 
         # Calculate maximum concurrent FMIT
@@ -968,6 +991,10 @@ class FMITStaffingFloorConstraint(HardConstraint):
         # This requires week-level grouping which is complex in CP-SAT
         # For now, we rely on validation to catch violations
         # Full CP-SAT implementation would require week variables
+        logger.info(
+            f"Added FMITStaffingFloor constraints: {total_faculty} faculty, "
+            f"max {max_concurrent_fmit} concurrent FMIT"
+        )
 
     def add_to_pulp(
         self,

@@ -80,6 +80,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
         # Get PGY levels for residents
         pgy_levels = {r.id: r.pgy_level for r in context.residents}
 
+        count = 0
         # For Wednesday AM blocks, prevent non-PGY-1 clinic assignments
         for block in context.blocks:
             if not self._is_wednesday_am(block):
@@ -102,6 +103,9 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
                     if (r_i, b_i, t_i) in template_vars:
                         # Force non-intern to 0 on Wednesday AM clinic
                         model.Add(template_vars[r_i, b_i, t_i] == 0)
+                        count += 1
+
+        logger.info("Added %d WednesdayAMInternOnly constraints", count)
 
     def add_to_pulp(
         self,
@@ -257,6 +261,7 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
         if not clinic_template_ids:
             return
 
+        count = 0
         for block in context.blocks:
             if not self._is_regular_wednesday_pm(block):
                 continue
@@ -277,6 +282,9 @@ class WednesdayPMSingleFacultyConstraint(HardConstraint):
             # Exactly 1 faculty in clinic
             if faculty_clinic_vars:
                 model.Add(sum(faculty_clinic_vars) == 1)
+                count += 1
+
+        logger.info("Added %d WednesdayPMSingleFaculty constraints", count)
 
     def add_to_pulp(
         self,
@@ -488,6 +496,11 @@ class InvertedWednesdayConstraint(HardConstraint):
                     if am_v and pm_v:
                         # Cannot have same faculty both AM and PM
                         model.Add(sum(am_v) + sum(pm_v) <= 1)
+
+        logger.info(
+            "Added InvertedWednesday constraints for %d 4th-Wednesday dates",
+            len(fourth_wed_groups),
+        )
 
     def add_to_pulp(
         self,

@@ -122,6 +122,8 @@ class FacultyRoleClinicConstraint(HardConstraint):
         if not clinic_template_ids:
             return
 
+        count = 0
+
         # Get faculty from context
         for faculty in context.faculty:
             if not hasattr(faculty, "faculty_role") or not faculty.faculty_role:
@@ -153,6 +155,9 @@ class FacultyRoleClinicConstraint(HardConstraint):
                 # Add weekly constraint
                 if week_clinic_vars and weekly_limit >= 0:
                     model.Add(sum(week_clinic_vars) <= weekly_limit)
+                    count += 1
+
+        logger.info(f"Added {count} FacultyRoleClinic constraints")
 
     def add_to_pulp(
         self,
@@ -368,6 +373,8 @@ class SMFacultyClinicConstraint(HardConstraint):
         if not regular_clinic_ids:
             return
 
+        count = 0
+
         # Find SM faculty
         for faculty in context.faculty:
             if (
@@ -391,6 +398,9 @@ class SMFacultyClinicConstraint(HardConstraint):
                         t_i = context.template_idx.get(template_id)
                         if t_i is not None and (f_i, b_i, t_i) in template_vars:
                             model.Add(template_vars[f_i, b_i, t_i] == 0)
+                            count += 1
+
+        logger.info(f"Added {count} SMFacultyNoRegularClinic constraints")
 
     def add_to_pulp(
         self,
