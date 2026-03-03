@@ -74,12 +74,26 @@ def get_nf_codes(rotation_code: str, current_date: date) -> tuple[str, str]:
     return ("OFF", "NF")
 
 
-def get_hilo_codes(current_date: date, block_start: date) -> tuple[str, str]:
-    """Hilo/Okinawa TDY pattern with pre/post clinic days."""
+def get_hilo_codes(
+    current_date: date, block_start: date, block_end: date
+) -> tuple[str, str]:
+    """Hilo/Okinawa TDY pattern with pre/post clinic days.
+
+    Pattern:
+      - Days 0-1 (block start): Clinic before departure
+      - Monday and Tuesday before block end: Clinic on return
+      - All other weekdays: TDY
+    """
     day_index = (current_date - block_start).days
     if day_index in (0, 1):  # Thu/Fri before leaving
         return ("C", "C")
-    if day_index == 19:  # Return Tuesday (4th Tuesday)
+    # Return clinic = Monday and Tuesday before block ends
+    # Find the last Monday on or before block_end
+    last_monday = block_end - timedelta(days=(block_end.weekday() - 0) % 7)
+    if last_monday > block_end:
+        last_monday -= timedelta(days=7)
+    last_tuesday = last_monday + timedelta(days=1)
+    if current_date in (last_monday, last_tuesday):
         return ("C", "C")
     return ("TDY", "TDY")
 
@@ -249,7 +263,7 @@ def get_rotation_preload_codes(
 
     if rotation_code in OFFSITE_ROTATIONS:
         if rotation_code in {"HILO", "OKI"}:
-            return get_hilo_codes(current_date, block_start)
+            return get_hilo_codes(current_date, block_start, block_end)
         if rotation_code == "PEDS-EM":
             return ("PEM", "PEM")
         return ("TDY", "TDY")

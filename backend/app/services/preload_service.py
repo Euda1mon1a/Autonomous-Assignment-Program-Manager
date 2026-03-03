@@ -820,9 +820,11 @@ class PreloadService:
         """Night Float pattern (NF/PedNF)."""
         return _get_nf_codes_fn(rotation_code, current_date)
 
-    def _get_hilo_codes(self, current_date: date, block_start: date) -> tuple[str, str]:
+    def _get_hilo_codes(
+        self, current_date: date, block_start: date, block_end: date
+    ) -> tuple[str, str]:
         """Hilo/Okinawa TDY pattern with pre/post clinic days."""
-        return _get_hilo_codes_fn(current_date, block_start)
+        return _get_hilo_codes_fn(current_date, block_start, block_end)
 
     async def _load_fmit_call(self, start_date: date, end_date: date) -> int:
         """
