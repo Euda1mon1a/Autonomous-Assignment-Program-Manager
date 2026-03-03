@@ -62,6 +62,7 @@ from .call_equity import (
     CallNightBeforeLeaveConstraint,
     CallSpacingConstraint,
     DeptChiefWednesdayPreferenceConstraint,
+    EscalatingCallEquityConstraint,
     FacultyCallPreferenceConstraint,
     HolidayCallEquityConstraint,
     SundayCallEquityConstraint,
@@ -87,7 +88,10 @@ from .call_coverage import (
     CallAvailabilityConstraint,
     OvernightCallCoverageConstraint,
 )
-from .overnight_call import OvernightCallGenerationConstraint
+from .overnight_call import (
+    NoConsecutiveCallConstraint,
+    OvernightCallGenerationConstraint,
+)
 
 # Post-call and faculty constraints
 from .post_call import PostCallAutoAssignmentConstraint
@@ -426,10 +430,13 @@ class ConstraintManager:
         manager.add(FacultyClinicEquitySoftConstraint(weight=15.0))
 
         # Block 10 soft constraints - call equity (weight hierarchy documented)
-        # Weight order: Sunday (50) > Weekday (25) > CallSpacing (8) > Holiday (7)
+        # Weight order: Consecutive (50) > Sunday (50) > Escalating (40) >
+        #   Weekday (25) > CallSpacing (8) > Holiday (7)
         # Raised to compete with CLINIC_MIN_PENALTY=200 in solver
         # Preferences: Tuesday (2) > FacultyCallPreference (1)
+        manager.add(NoConsecutiveCallConstraint(weight=50.0))
         manager.add(SundayCallEquityConstraint(weight=50.0))
+        manager.add(EscalatingCallEquityConstraint(weight=40.0))
         manager.add(HolidayCallEquityConstraint(weight=7.0))
         manager.add(CallSpacingConstraint(weight=8.0))
         manager.add(WeekdayCallEquityConstraint(weight=25.0))

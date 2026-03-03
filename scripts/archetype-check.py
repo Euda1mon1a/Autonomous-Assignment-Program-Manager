@@ -5,11 +5,12 @@ Mind Flayer's Probe — AST-based archetype enforcement for scheduling constrain
 Parses constraint files using Python's ast module and checks for anti-patterns
 that have caused real bugs:
 
-ARCH-001 (Phantasm):     resident_idx in call-related constraint (dead code)
-ARCH-002 (Lich's Trap):  Constraint initializes solver variable dict
-ARCH-003 (Doppelganger): Call constraint uses context.faculty instead of
-                         call_eligible_faculty
-ARCH-004 (Silent Killer): add_to_cpsat() missing constraint count logging
+ARCH-001 (Phantasm):       resident_idx in call-related constraint (dead code)
+ARCH-002 (Lich's Trap):    Constraint initializes solver variable dict
+ARCH-003 (Doppelganger):   Call constraint uses context.faculty instead of
+                           call_eligible_faculty
+ARCH-004 (Silent Killer):  add_to_cpsat() missing constraint count logging
+ARCH-005 (Revenant's Memory): Call coverage constraint without spacing guard
 
 Usage:
     python3 scripts/archetype-check.py [--staged] [files...]
@@ -369,6 +370,98 @@ def check_missing_constraint_logging(
 
 
 # ---------------------------------------------------------------------------
+# ARCH-005: Call coverage without spacing guard
+# ---------------------------------------------------------------------------
+
+
+def check_call_coverage_without_spacing(
+    tree: ast.Module, filepath: str
+) -> list[Violation]:
+    """
+    Detect call constraints that create coverage but lack spacing guards.
+
+    A call constraint that forces exactly-one-per-night coverage without
+    any consecutive-call prevention allows back-to-back call assignments.
+    This check flags call-related classes that contain model.Add(sum(...))
+    patterns (coverage) but no reference to consecutive, spacing, or
+    NoConsecutiveCall logic.
+    """
+    violations = []
+
+    for class_node in _get_constraint_classes(tree):
+        if not _is_call_related_class(class_node):
+            continue
+
+        solver_methods = _get_solver_methods(class_node)
+        if not solver_methods:
+            continue
+
+        has_coverage = False
+        has_spacing_guard = False
+
+        for method in solver_methods:
+            for node in ast.walk(method):
+                # Detect coverage pattern: model.Add(sum(...) == 1) or similar
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                    if node.func.attr in ("Add", "AddExactlyOne"):
+                        has_coverage = True
+
+                # Detect spacing references
+                if isinstance(node, ast.Name) and any(
+                    kw in node.id.lower()
+                    for kw in ("consecutive", "spacing", "back_to_back")
+                ):
+                    has_spacing_guard = True
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    if any(
+                        kw in node.value.lower()
+                        for kw in ("consecutive", "spacing", "back_to_back", "consec")
+                    ):
+                        has_spacing_guard = True
+                if isinstance(node, ast.Attribute) and any(
+                    kw in node.attr.lower()
+                    for kw in ("consecutive", "spacing", "back_to_back")
+                ):
+                    has_spacing_guard = True
+
+        # Also check class-level docstrings and comments for spacing references
+        for node in ast.walk(class_node):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                if any(
+                    kw in node.value.lower()
+                    for kw in (
+                        "noconsecutive",
+                        "no_consecutive",
+                        "spacing guard",
+                        "consecutive call",
+                    )
+                ):
+                    has_spacing_guard = True
+
+        if has_coverage and not has_spacing_guard:
+            if not _has_suppression(filepath, class_node.lineno):
+                violations.append(
+                    Violation(
+                        file=filepath,
+                        line=class_node.lineno,
+                        rule="ARCH-005",
+                        message=(
+                            "Call-related constraint creates coverage constraints "
+                            "but has no spacing guard. Back-to-back call nights "
+                            "may be assigned to the same faculty."
+                        ),
+                        fix=(
+                            "Ensure NoConsecutiveCallConstraint is registered "
+                            "in the constraint manager, or add # @archetype-ok"
+                        ),
+                        severity="warning",
+                    )
+                )
+
+    return violations
+
+
+# ---------------------------------------------------------------------------
 # File discovery
 # ---------------------------------------------------------------------------
 
@@ -441,6 +534,9 @@ def main() -> int:
         all_violations.extend(check_variable_initialization(tree, str(filepath)))
         all_violations.extend(check_wrong_faculty_source(tree, str(filepath)))
         all_violations.extend(check_missing_constraint_logging(tree, str(filepath)))
+        all_violations.extend(
+            check_call_coverage_without_spacing(tree, str(filepath))
+        )
 
     # Report
     errors = 0

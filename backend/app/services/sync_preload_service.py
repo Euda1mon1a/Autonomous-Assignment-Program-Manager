@@ -9,9 +9,10 @@ Order of Operations (per TAMC skill):
 2. Load institutional events → USAFP, holidays, retreats
 3. Load inpatient_preloads → FMIT, NF, PedW, KAP, IM, LDNF
 4. Load FMIT Fri/Sat call (auto-assigned with FMIT)
+4b. Load post-FMIT PC recovery (Friday after FMIT week)
 5. Load C-I (inpatient clinic): PGY-1 Wed AM, PGY-2 Tue PM, PGY-3 Mon PM
 6. Load resident_call_preloads → CALL, PC
-7. Load faculty_call → CALL, PCAT, DO
+7. Load faculty_call → PCAT, DO (CALL tracked in call_assignments only)
 8. Load aSM (Wed AM for SM faculty)
 8b. Load faculty Wednesday PM LEC (protected didactic, skips 4th Wed)
 9. Load conferences (HAFP, USAFP, LEC)
@@ -117,6 +118,7 @@ class SyncPreloadService:
         total += self._load_rotation_protected_preloads(block_number, academic_year)
         total += self._load_inpatient_preloads(start_date, end_date)
         total += self._load_fmit_call(start_date, end_date)
+        total += self._load_post_fmit_recovery(start_date, end_date)
         total += self._load_inpatient_clinic(block_number, academic_year)
         total += self._load_resident_call(start_date, end_date)
 
@@ -736,6 +738,51 @@ class SyncPreloadService:
         logger.info(f"Created {created_calls} FMIT call assignments")
         return created_calls
 
+    def _load_post_fmit_recovery(self, start_date: date, end_date: date) -> int:
+        """Load PC (Post-Call Recovery) for the Friday after each FMIT week.
+
+        FMIT weeks run Fri-Thu. The Friday after FMIT ends (i.e., end_date + 1)
+        is a full-day recovery: AM=PC, PM=PC. This prevents the solver from
+        assigning GME/AT on post-FMIT Fridays.
+        """
+        count = 0
+        pc_id = self._activity_cache.get("PC", required=False)
+        if not pc_id:
+            logger.warning("PC activity not found — skipping post-FMIT recovery")
+            return 0
+
+        stmt = (
+            select(InpatientPreload)
+            .where(
+                InpatientPreload.rotation_type == InpatientRotationType.FMIT,
+                InpatientPreload.start_date <= end_date,
+                InpatientPreload.end_date >= start_date,
+            )
+            .options(selectinload(InpatientPreload.person))
+        )
+        preloads = self.session.execute(stmt).scalars().all()
+
+        for preload in preloads:
+            if not preload.person or preload.person.type != "faculty":
+                continue
+
+            # FMIT week ends on Thursday. Post-FMIT Friday = end_date + 1.
+            post_fmit_friday = preload.end_date + timedelta(days=1)
+
+            # Only create if it's actually a Friday and within block range
+            if post_fmit_friday.weekday() != 4:  # 4 = Friday
+                continue
+            if post_fmit_friday < start_date or post_fmit_friday > end_date:
+                continue
+
+            if self._create_preload(preload.person_id, post_fmit_friday, "AM", pc_id):
+                count += 1
+            if self._create_preload(preload.person_id, post_fmit_friday, "PM", pc_id):
+                count += 1
+
+        logger.info(f"Loaded {count} post-FMIT PC recovery preloads")
+        return count
+
     def _load_inpatient_clinic(self, block_number: int, academic_year: int) -> int:
         count = 0
         ci_id = self._activity_cache.get(
@@ -808,8 +855,14 @@ class SyncPreloadService:
         return count
 
     def _load_faculty_call(self, start_date: date, end_date: date) -> int:
+        """Load PCAT/DO for the day AFTER each faculty overnight call.
+
+        Note: CALL is NOT written to half_day_assignments. Faculty work a full
+        day (normal AM/PM activities) and then go on call overnight. Call info
+        is tracked in the call_assignments table and displayed in the call row
+        (row 4) of the export spreadsheet.
+        """
         count = 0
-        call_id = self._activity_cache.get("CALL")
         pcat_id = self._activity_cache.get("PCAT")
         do_id = self._activity_cache.get("DO")
 
@@ -820,9 +873,7 @@ class SyncPreloadService:
         calls = self.session.execute(stmt).scalars().all()
 
         for call in calls:
-            if self._create_preload(call.person_id, call.date, "PM", call_id):
-                count += 1
-
+            # No CALL HDA — faculty work normal PM activity, call is overnight
             next_day = call.date + timedelta(days=1)
             if not self._is_on_fmit(call.person_id, next_day):
                 if self._create_preload(call.person_id, next_day, "AM", pcat_id):
@@ -830,7 +881,7 @@ class SyncPreloadService:
                 if self._create_preload(call.person_id, next_day, "PM", do_id):
                     count += 1
 
-        logger.info(f"Loaded {count} faculty call preloads")
+        logger.info(f"Loaded {count} faculty call preloads (PCAT/DO only)")
         return count
 
     def _load_sm_preloads(self, start_date: date, end_date: date) -> int:

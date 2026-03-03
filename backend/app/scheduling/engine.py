@@ -1703,20 +1703,6 @@ class SchedulingEngine:
             logger.warning("Missing PCAT or DO activity, skipping PCAT/DO sync")
             return 0
 
-        # Cache CALL activity ID so we can detect stale CALL preloads.
-        # When a call date moves between generations (e.g., May 11 → May 10),
-        # the old CALL HDA on May 11 PM has source='preload' which would
-        # normally be preserved.  But the stale CALL cleanup in
-        # _sync_call_to_half_day (Step 6.6a) deletes it AFTER this method,
-        # leaving no DO and no fallback for validation.  By overwriting stale
-        # CALL preloads here, we ensure PCAT/DO always wins.
-        call_activity = (
-            self.db.execute(select(Activity).where(Activity.code == "call"))
-            .scalars()
-            .first()
-        )
-        call_activity_id = call_activity.id if call_activity else None
-
         count = 0
         for call in call_assignments:
             next_day = call.date + timedelta(days=1)
@@ -1764,22 +1750,6 @@ class SchedulingEngine:
                         existing.activity_id = cast(UUID, activity.id)
                         existing.source = AssignmentSource.PRELOAD.value
                         count += 1
-                    elif (
-                        existing.source == AssignmentSource.PRELOAD.value
-                        and call_activity_id
-                        and existing.activity_id == call_activity_id
-                        and next_day <= self.end_date
-                    ):
-                        # Stale CALL preload from previous generation — the call
-                        # date moved, so this CALL will be cleaned up by stale
-                        # cleanup in _sync_call_to_half_day.  Overwrite with
-                        # PCAT/DO now to prevent validation gap.
-                        # Scoped to current block range: cross-block CALL
-                        # preloads belong to another block's generation and
-                        # must not be touched (Codex P1 #1216).
-                        existing.activity_id = cast(UUID, activity.id)
-                        # source stays 'preload'
-                        count += 1
                 else:
                     # Insert new
                     self.db.add(
@@ -1803,24 +1773,23 @@ class SchedulingEngine:
         self,
         call_assignments: list[CallAssignment],
     ) -> int:
-        """Create CALL HDAs for the call date itself.
+        """Clean up stale faculty CALL HDAs from previous generations.
 
-        _sync_call_pcat_do_to_half_day() creates PCAT/DO for the day AFTER a
-        call, but never creates a CALL HDA for the call date. The preloader's
-        _load_faculty_call() would normally do this, but it's skipped during
-        regeneration (skip_faculty_call=True) to avoid loading stale data.
+        CALL is NOT written to half_day_assignments. Faculty work a full day
+        (normal AM/PM activities) and go on call overnight. Call info is
+        tracked in call_assignments and shown in row 4 of the export.
 
-        This method fills the gap: for each new CallAssignment, create a CALL
-        HDA on the call date PM slot (overnight call starts PM).
+        This method only removes stale CALL HDAs that may remain from older
+        code paths or previous generations where call dates moved.
 
         Args:
-            call_assignments: Newly created CallAssignment records from solver
+            call_assignments: Current CallAssignment records (for stale detection)
 
         Returns:
-            Number of CALL HDAs created/updated
+            Number of stale CALL HDAs removed
         """
         from app.models.activity import Activity
-        from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+        from app.models.half_day_assignment import HalfDayAssignment
 
         if not call_assignments:
             return 0
@@ -1831,15 +1800,9 @@ class SchedulingEngine:
             .first()
         )
         if not call_activity:
-            logger.warning("Missing 'call' activity, skipping CALL HDA sync")
             return 0
 
-        # Remove stale faculty CALL preloads that no longer match a CallAssignment.
-        # On regeneration, if a call moves from faculty A → B, A's old CALL
-        # HDA would persist as a locked preload row. Clean them up first.
-        # Scoped to faculty only — resident CALL preloads come from
-        # resident_call_preloads (separate source, no CallAssignment rows).
-        current_call_keys = {(ca.person_id, ca.date) for ca in call_assignments}
+        # Remove ALL faculty CALL HDAs in this block range — they shouldn't exist.
         faculty_ids = {
             p.id
             for p in self.db.execute(select(Person).where(Person.type == "faculty"))
@@ -1850,7 +1813,6 @@ class SchedulingEngine:
             self.db.execute(
                 select(HalfDayAssignment).where(
                     HalfDayAssignment.activity_id == call_activity.id,
-                    HalfDayAssignment.time_of_day == "PM",
                     HalfDayAssignment.date >= self.start_date,
                     HalfDayAssignment.date <= self.end_date,
                     HalfDayAssignment.person_id.in_(faculty_ids),
@@ -1861,57 +1823,16 @@ class SchedulingEngine:
         )
         stale_count = 0
         for hda in stale_calls:
-            if (hda.person_id, hda.date) not in current_call_keys:
-                self.db.delete(hda)
-                stale_count += 1
+            self.db.delete(hda)
+            stale_count += 1
         if stale_count:
             self.db.flush()
             logger.info(
                 f"Removed {stale_count} stale faculty CALL HDAs "
-                f"(no matching call_assignment)"
+                f"(call tracked in call_assignments, not HDAs)"
             )
 
-        count = 0
-        for ca in call_assignments:
-            existing = (
-                self.db.execute(
-                    select(HalfDayAssignment).where(
-                        HalfDayAssignment.person_id == ca.person_id,
-                        HalfDayAssignment.date == ca.date,
-                        HalfDayAssignment.time_of_day == "PM",
-                    )
-                )
-                .scalars()
-                .first()
-            )
-
-            if existing:
-                # Skip manual overrides — coordinator curated, treated as locked
-                if existing.source == AssignmentSource.MANUAL.value:
-                    continue
-                # CALL overrides preload/solver/template sources — solver
-                # call_assignments are authoritative post-solver reality.
-                if existing.activity_id != call_activity.id:
-                    existing.activity_id = cast(UUID, call_activity.id)
-                    existing.source = AssignmentSource.PRELOAD.value
-                    count += 1
-            else:
-                self.db.add(
-                    HalfDayAssignment(
-                        person_id=ca.person_id,
-                        date=ca.date,
-                        time_of_day="PM",
-                        activity_id=call_activity.id,
-                        source=AssignmentSource.PRELOAD.value,
-                    )
-                )
-                count += 1
-
-        if count:
-            self.db.flush()
-            logger.info(f"Synced {count} CALL HDAs to match new call assignments")
-
-        return count
+        return stale_count
 
     def _sync_academic_year_call_counts(self, academic_year: int) -> None:
         """Recalculate and persist YTD call counts to PersonAcademicYear.
