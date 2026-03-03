@@ -222,24 +222,18 @@ def cleanup_seed_data(db: Session = Depends(get_db)):
         )
 
     # Delete child rows for seeded people first (FK constraints)
+    seed_filter = (
+        "person_id IN ("
+        "  SELECT id FROM people "
+        "  WHERE name LIKE 'Dr. Faculty-%%' OR name LIKE 'CPT Doe-%%'"
+        ")"
+    )
     hda_result = db.execute(
-        text(
-            "DELETE FROM half_day_assignments "
-            "WHERE person_id IN ("
-            "  SELECT id FROM people "
-            "  WHERE name LIKE 'Dr. Faculty-%%' OR name LIKE 'CPT Doe-%%'"
-            ")"
-        )
+        text(f"DELETE FROM half_day_assignments WHERE {seed_filter}")  # nosec B608
     )
-    db.execute(
-        text(
-            "DELETE FROM person_academic_years "
-            "WHERE person_id IN ("
-            "  SELECT id FROM people "
-            "  WHERE name LIKE 'Dr. Faculty-%%' OR name LIKE 'CPT Doe-%%'"
-            ")"
-        )
-    )
+    db.execute(text(f"DELETE FROM call_assignments WHERE {seed_filter}"))  # nosec B608
+    db.execute(text(f"DELETE FROM assignments WHERE {seed_filter}"))  # nosec B608
+    db.execute(text(f"DELETE FROM person_academic_years WHERE {seed_filter}"))  # nosec B608
     fac_result = db.execute(text("DELETE FROM people WHERE name LIKE 'Dr. Faculty-%%'"))
     res_result = db.execute(text("DELETE FROM people WHERE name LIKE 'CPT Doe-%%'"))
     db.commit()

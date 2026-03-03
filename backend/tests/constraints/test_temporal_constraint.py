@@ -79,10 +79,12 @@ class MockAssignment:
         person_id=None,
         block_id=None,
         rotation_template_id=None,
+        activity_code=None,
     ):
         self.id = assignment_id or uuid4()
         self.person_id = person_id
         self.block_id = block_id
+        self.activity_code = activity_code
         self.rotation_template_id = rotation_template_id
 
 
@@ -803,61 +805,69 @@ class TestWednesdayPMSingleFacultyConstraint:
 
 
 class TestInvertedWednesdayConstraint:
-    """Tests for inverted (4th) Wednesday constraint."""
+    """Tests for inverted (final) Wednesday constraint."""
 
     def test_constraint_initialization(self):
-        """Test constraint initializes with correct properties."""
+        """Test constraint initializes as soft with correct properties."""
         constraint = InvertedWednesdayConstraint()
         assert constraint.name == "InvertedWednesday"
         assert constraint.constraint_type == ConstraintType.ROTATION
         assert constraint.priority == ConstraintPriority.HIGH
+        assert constraint.weight == 50.0
 
-    def test_is_fourth_wednesday_detection(self):
-        """Test _is_fourth_wednesday correctly identifies 4th Wed."""
+    def test_is_final_wednesday_detection(self):
+        """Test _is_final_wednesday identifies last Wed before end_date."""
         constraint = InvertedWednesdayConstraint()
 
-        # 4th Wednesday - should be True
-        wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        assert wed4_am.date.day >= 22
-        assert constraint._is_fourth_wednesday(wed4_am) is True
-        assert constraint._is_fourth_wednesday(wed4_pm) is True
-
-        # 1st Wednesday - should be False
-        wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
-        assert constraint._is_fourth_wednesday(wed1_am) is False
-        assert constraint._is_fourth_wednesday(wed1_pm) is False
-
-        # 2nd Wednesday - should be False
-        wed2_am, wed2_pm = create_wednesday_blocks(2025, 1, 2)
-        assert constraint._is_fourth_wednesday(wed2_am) is False
-
-        # 3rd Wednesday - should be False
-        wed3_am, wed3_pm = create_wednesday_blocks(2025, 1, 3)
-        assert constraint._is_fourth_wednesday(wed3_am) is False
-
-    def test_validate_empty_assignments(self):
-        """Test validate with no assignments fails (need 1 AM + 1 PM)."""
-        constraint = InvertedWednesdayConstraint()
-        wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(rotation_type="outpatient")
+        # Block 12: May 7 – Jun 3, 2026.  Jun 3 is the last Wednesday.
+        final_wed_am = MockBlock(block_date=date(2026, 6, 3), time_of_day="AM")
+        final_wed_pm = MockBlock(block_date=date(2026, 6, 3), time_of_day="PM")
 
         context = SchedulingContext(
             residents=[],
             faculty=[],
-            blocks=[wed4_am, wed4_pm],
-            templates=[clinic_template],
+            templates=[],
+            blocks=[final_wed_am, final_wed_pm],
+            end_date=date(2026, 6, 3),
+        )
+
+        assert constraint._is_final_wednesday(final_wed_am, context) is True
+        assert constraint._is_final_wednesday(final_wed_pm, context) is True
+
+        # A Wednesday more than 7 days before end_date — should be False
+        earlier_wed = MockBlock(block_date=date(2026, 5, 20), time_of_day="AM")
+        assert constraint._is_final_wednesday(earlier_wed, context) is False
+
+        # A non-Wednesday in the last 7 days — should be False
+        tuesday = MockBlock(block_date=date(2026, 6, 2), time_of_day="AM")
+        assert constraint._is_final_wednesday(tuesday, context) is False
+
+    def test_validate_empty_assignments_has_violations(self):
+        """Test validate reports violations when no faculty in clinic."""
+        constraint = InvertedWednesdayConstraint()
+        final_wed_am = MockBlock(block_date=date(2026, 6, 3), time_of_day="AM")
+        final_wed_pm = MockBlock(block_date=date(2026, 6, 3), time_of_day="PM")
+
+        context = SchedulingContext(
+            residents=[],
+            faculty=[],
+            templates=[],
+            blocks=[final_wed_am, final_wed_pm],
+            end_date=date(2026, 6, 3),
         )
 
         result = constraint.validate([], context)
-        assert result.satisfied is False
-        # Should have 2 violations (0 AM faculty, 0 PM faculty)
+        # Soft constraint — satisfied is always True
+        assert result.satisfied is True
+        # But should report 2 violations (0 AM, 0 PM)
         assert len(result.violations) == 2
+        assert result.penalty > 0
 
     def test_validate_one_faculty_am_one_pm(self):
         """Test validate passes when 1 faculty AM, 1 different faculty PM."""
         constraint = InvertedWednesdayConstraint()
-        wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(rotation_type="outpatient")
+        final_wed_am = MockBlock(block_date=date(2026, 6, 3), time_of_day="AM")
+        final_wed_pm = MockBlock(block_date=date(2026, 6, 3), time_of_day="PM")
 
         faculty_am = MockPerson(person_type="faculty", name="Dr. AM")
         faculty_pm = MockPerson(person_type="faculty", name="Dr. PM")
@@ -865,21 +875,22 @@ class TestInvertedWednesdayConstraint:
         assignments = [
             MockAssignment(
                 person_id=faculty_am.id,
-                block_id=wed4_am.id,
-                rotation_template_id=clinic_template.id,
+                block_id=final_wed_am.id,
+                activity_code="C",
             ),
             MockAssignment(
                 person_id=faculty_pm.id,
-                block_id=wed4_pm.id,
-                rotation_template_id=clinic_template.id,
+                block_id=final_wed_pm.id,
+                activity_code="fm_clinic",
             ),
         ]
 
         context = SchedulingContext(
             residents=[],
             faculty=[faculty_am, faculty_pm],
-            blocks=[wed4_am, wed4_pm],
-            templates=[clinic_template],
+            templates=[],
+            blocks=[final_wed_am, final_wed_pm],
+            end_date=date(2026, 6, 3),
         )
 
         result = constraint.validate(assignments, context)
@@ -887,70 +898,69 @@ class TestInvertedWednesdayConstraint:
         assert len(result.violations) == 0
 
     def test_validate_same_faculty_am_and_pm_violation(self):
-        """Test validate fails when same faculty assigned both AM and PM."""
+        """Test validate flags when same faculty in clinic both AM and PM."""
         constraint = InvertedWednesdayConstraint()
-        wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(rotation_type="outpatient")
+        final_wed_am = MockBlock(block_date=date(2026, 6, 3), time_of_day="AM")
+        final_wed_pm = MockBlock(block_date=date(2026, 6, 3), time_of_day="PM")
 
         faculty = MockPerson(person_type="faculty", name="Dr. Both")
 
         assignments = [
             MockAssignment(
                 person_id=faculty.id,
-                block_id=wed4_am.id,
-                rotation_template_id=clinic_template.id,
+                block_id=final_wed_am.id,
+                activity_code="C",
             ),
             MockAssignment(
                 person_id=faculty.id,
-                block_id=wed4_pm.id,
-                rotation_template_id=clinic_template.id,
+                block_id=final_wed_pm.id,
+                activity_code="C",
             ),
         ]
 
         context = SchedulingContext(
             residents=[],
             faculty=[faculty],
-            blocks=[wed4_am, wed4_pm],
-            templates=[clinic_template],
+            templates=[],
+            blocks=[final_wed_am, final_wed_pm],
+            end_date=date(2026, 6, 3),
         )
 
         result = constraint.validate(assignments, context)
-        assert result.satisfied is False
-        # Should have violation for same faculty AM and PM
         assert any("Same faculty AM and PM" in v.message for v in result.violations)
-        assert any("must be different" in v.message for v in result.violations)
 
     def test_validate_zero_faculty_am(self):
-        """Test validate fails when 0 faculty on AM (need exactly 1)."""
+        """Test validate flags when 0 faculty in clinic AM."""
         constraint = InvertedWednesdayConstraint()
-        wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(rotation_type="outpatient")
+        final_wed_am = MockBlock(block_date=date(2026, 6, 3), time_of_day="AM")
+        final_wed_pm = MockBlock(block_date=date(2026, 6, 3), time_of_day="PM")
 
         faculty_pm = MockPerson(person_type="faculty", name="Dr. PM")
 
         assignment = MockAssignment(
             person_id=faculty_pm.id,
-            block_id=wed4_pm.id,
-            rotation_template_id=clinic_template.id,
+            block_id=final_wed_pm.id,
+            activity_code="C",
         )
 
         context = SchedulingContext(
             residents=[],
             faculty=[faculty_pm],
-            blocks=[wed4_am, wed4_pm],
-            templates=[clinic_template],
+            templates=[],
+            blocks=[final_wed_am, final_wed_pm],
+            end_date=date(2026, 6, 3),
         )
 
         result = constraint.validate([assignment], context)
-        assert result.satisfied is False
-        # Should have violation for 0 AM faculty
-        assert any("AM: 0 faculty" in v.message for v in result.violations)
+        assert any(
+            "AM:" in v.message and "0 faculty" in v.message for v in result.violations
+        )
 
     def test_validate_two_faculty_am_violation(self):
-        """Test validate fails when 2 faculty on AM (need exactly 1)."""
+        """Test validate flags when 2 faculty in clinic AM on final Wed."""
         constraint = InvertedWednesdayConstraint()
-        wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(rotation_type="outpatient")
+        final_wed_am = MockBlock(block_date=date(2026, 6, 3), time_of_day="AM")
+        final_wed_pm = MockBlock(block_date=date(2026, 6, 3), time_of_day="PM")
 
         faculty_am1 = MockPerson(person_type="faculty", name="Dr. AM1")
         faculty_am2 = MockPerson(person_type="faculty", name="Dr. AM2")
@@ -959,176 +969,97 @@ class TestInvertedWednesdayConstraint:
         assignments = [
             MockAssignment(
                 person_id=faculty_am1.id,
-                block_id=wed4_am.id,
-                rotation_template_id=clinic_template.id,
+                block_id=final_wed_am.id,
+                activity_code="C",
             ),
             MockAssignment(
                 person_id=faculty_am2.id,
-                block_id=wed4_am.id,
-                rotation_template_id=clinic_template.id,
+                block_id=final_wed_am.id,
+                activity_code="C",
             ),
             MockAssignment(
                 person_id=faculty_pm.id,
-                block_id=wed4_pm.id,
-                rotation_template_id=clinic_template.id,
+                block_id=final_wed_pm.id,
+                activity_code="C",
             ),
         ]
 
         context = SchedulingContext(
             residents=[],
             faculty=[faculty_am1, faculty_am2, faculty_pm],
-            blocks=[wed4_am, wed4_pm],
-            templates=[clinic_template],
+            templates=[],
+            blocks=[final_wed_am, final_wed_pm],
+            end_date=date(2026, 6, 3),
         )
 
         result = constraint.validate(assignments, context)
-        assert result.satisfied is False
-        # Should have violation for 2 AM faculty
-        assert any("AM: 2 faculty" in v.message for v in result.violations)
-
-    def test_validate_two_faculty_pm_violation(self):
-        """Test validate fails when 2 faculty on PM (need exactly 1)."""
-        constraint = InvertedWednesdayConstraint()
-        wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(rotation_type="outpatient")
-
-        faculty_am = MockPerson(person_type="faculty", name="Dr. AM")
-        faculty_pm1 = MockPerson(person_type="faculty", name="Dr. PM1")
-        faculty_pm2 = MockPerson(person_type="faculty", name="Dr. PM2")
-
-        assignments = [
-            MockAssignment(
-                person_id=faculty_am.id,
-                block_id=wed4_am.id,
-                rotation_template_id=clinic_template.id,
-            ),
-            MockAssignment(
-                person_id=faculty_pm1.id,
-                block_id=wed4_pm.id,
-                rotation_template_id=clinic_template.id,
-            ),
-            MockAssignment(
-                person_id=faculty_pm2.id,
-                block_id=wed4_pm.id,
-                rotation_template_id=clinic_template.id,
-            ),
-        ]
-
-        context = SchedulingContext(
-            residents=[],
-            faculty=[faculty_am, faculty_pm1, faculty_pm2],
-            blocks=[wed4_am, wed4_pm],
-            templates=[clinic_template],
+        assert result.satisfied is True  # Soft constraint
+        assert any(
+            "AM:" in v.message and "2 faculty" in v.message for v in result.violations
         )
 
-        result = constraint.validate(assignments, context)
-        assert result.satisfied is False
-        # Should have violation for 2 PM faculty
-        assert any("PM: 2 faculty" in v.message for v in result.violations)
-
-    def test_validate_non_fourth_wednesday_ignored(self):
-        """Test 1st, 2nd, 3rd Wednesdays are not checked."""
+    def test_validate_non_clinic_activity_ignored(self):
+        """Test non-clinic activity codes are not counted toward coverage."""
         constraint = InvertedWednesdayConstraint()
-        wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(rotation_type="outpatient")
-
-        # No assignments on 1st Wednesday - should pass (not checked)
-        context = SchedulingContext(
-            residents=[],
-            faculty=[],
-            blocks=[wed1_am, wed1_pm],
-            templates=[clinic_template],
-        )
-
-        result = constraint.validate([], context)
-        assert result.satisfied is True
-        assert len(result.violations) == 0
-
-    def test_validate_non_clinic_template_ignored(self):
-        """Test non-clinic templates are not checked."""
-        constraint = InvertedWednesdayConstraint()
-        wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-
-        inpatient_template = MockTemplate(
-            name="Inpatient",
-            rotation_type="inpatient",
-        )
-        clinic_template = MockTemplate(rotation_type="outpatient")
+        final_wed_am = MockBlock(block_date=date(2026, 6, 3), time_of_day="AM")
+        final_wed_pm = MockBlock(block_date=date(2026, 6, 3), time_of_day="PM")
 
         faculty = MockPerson(person_type="faculty", name="Dr. Faculty")
 
-        # Faculty on 4th Wed AM inpatient (not clinic)
+        # Faculty with AT (admin/supervision) — not a clinic code
         assignment = MockAssignment(
             person_id=faculty.id,
-            block_id=wed4_am.id,
-            rotation_template_id=inpatient_template.id,
+            block_id=final_wed_am.id,
+            activity_code="AT",
         )
 
         context = SchedulingContext(
             residents=[],
             faculty=[faculty],
-            blocks=[wed4_am, wed4_pm],
-            templates=[clinic_template, inpatient_template],
+            templates=[],
+            blocks=[final_wed_am, final_wed_pm],
+            end_date=date(2026, 6, 3),
         )
 
         result = constraint.validate([assignment], context)
-        # Should fail because clinic has no faculty
-        assert result.satisfied is False
+        # AT is not in the clinic codes, so 0 faculty in clinic
+        assert any(
+            "AM:" in v.message and "0 faculty" in v.message for v in result.violations
+        )
 
     def test_validate_resident_assignments_ignored(self):
         """Test resident assignments don't count toward faculty coverage."""
         constraint = InvertedWednesdayConstraint()
-        wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(rotation_type="outpatient")
+        final_wed_am = MockBlock(block_date=date(2026, 6, 3), time_of_day="AM")
+        final_wed_pm = MockBlock(block_date=date(2026, 6, 3), time_of_day="PM")
 
         resident = MockPerson(person_type="resident", name="PGY-1", pgy_level=1)
 
         assignments = [
-            # Residents on both AM and PM (don't count)
             MockAssignment(
                 person_id=resident.id,
-                block_id=wed4_am.id,
-                rotation_template_id=clinic_template.id,
+                block_id=final_wed_am.id,
+                activity_code="C",
             ),
             MockAssignment(
                 person_id=resident.id,
-                block_id=wed4_pm.id,
-                rotation_template_id=clinic_template.id,
+                block_id=final_wed_pm.id,
+                activity_code="C",
             ),
         ]
 
         context = SchedulingContext(
             residents=[resident],
             faculty=[],
-            blocks=[wed4_am, wed4_pm],
-            templates=[clinic_template],
+            templates=[],
+            blocks=[final_wed_am, final_wed_pm],
+            end_date=date(2026, 6, 3),
         )
 
         result = constraint.validate(assignments, context)
-        # Should fail because no faculty (residents don't count)
-        assert result.satisfied is False
-        assert len(result.violations) == 2  # 0 AM faculty, 0 PM faculty
-
-    def test_validate_no_clinic_templates(self):
-        """Test early return when no clinic templates exist."""
-        constraint = InvertedWednesdayConstraint()
-        wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-
-        non_clinic_template = MockTemplate(
-            name="Admin",
-            rotation_type="admin",
-        )
-
-        context = SchedulingContext(
-            residents=[],
-            faculty=[],
-            blocks=[wed4_am, wed4_pm],
-            templates=[non_clinic_template],
-        )
-
-        result = constraint.validate([], context)
+        # Soft constraint always satisfied, but violations because no faculty
         assert result.satisfied is True
-        assert len(result.violations) == 0
+        assert len(result.violations) == 2  # 0 AM faculty, 0 PM faculty
 
 
 # ============================================================================
@@ -1143,6 +1074,7 @@ class TestTemporalConstraintsIntegration:
     def test_complete_month_all_constraints(self):
         """Test all constraints across a full month of Wednesdays."""
         # Create all 4 Wednesdays in January 2025
+        # Jan 2025: 1st=Jan 1, 2nd=Jan 8, 3rd=Jan 15, 4th=Jan 22
         wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
         wed2_am, wed2_pm = create_wednesday_blocks(2025, 1, 2)
         wed3_am, wed3_pm = create_wednesday_blocks(2025, 1, 3)
@@ -1167,63 +1099,73 @@ class TestTemporalConstraintsIntegration:
         faculty1 = MockPerson(person_type="faculty", name="Dr. One")
         faculty2 = MockPerson(person_type="faculty", name="Dr. Two")
 
-        # Valid assignments
+        # Valid assignments — use activity_code for InvertedWednesday
         assignments = [
             # 1st Wed AM: PGY-1 only (correct)
             MockAssignment(
                 person_id=pgy1.id,
                 block_id=wed1_am.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
             # 1st Wed PM: 1 faculty (correct)
             MockAssignment(
                 person_id=faculty1.id,
                 block_id=wed1_pm.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
             # 2nd Wed AM: PGY-1 only (correct)
             MockAssignment(
                 person_id=pgy1.id,
                 block_id=wed2_am.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
             # 2nd Wed PM: 1 faculty (correct)
             MockAssignment(
                 person_id=faculty2.id,
                 block_id=wed2_pm.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
             # 3rd Wed AM: PGY-1 only (correct)
             MockAssignment(
                 person_id=pgy1.id,
                 block_id=wed3_am.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
             # 3rd Wed PM: 1 faculty (correct)
             MockAssignment(
                 person_id=faculty1.id,
                 block_id=wed3_pm.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
-            # 4th Wed AM: 1 faculty (correct)
+            # 4th Wed AM: 1 faculty (correct for InvertedWednesday)
             MockAssignment(
                 person_id=faculty1.id,
                 block_id=wed4_am.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
             # 4th Wed PM: 1 different faculty (correct)
             MockAssignment(
                 person_id=faculty2.id,
                 block_id=wed4_pm.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
         ]
 
+        # end_date close to 4th Wed (Jan 22) so _is_final_wednesday works
         context = SchedulingContext(
             residents=[pgy1, pgy2],
             faculty=[faculty1, faculty2],
             blocks=all_blocks,
             templates=[clinic_template],
+            end_date=date(2025, 1, 28),
         )
 
         # Validate all constraints
@@ -1238,6 +1180,7 @@ class TestTemporalConstraintsIntegration:
         assert result1.satisfied is True
         assert result2.satisfied is True
         assert result3.satisfied is True
+        assert len(result3.violations) == 0
 
     def test_complete_month_multiple_violations(self):
         """Test multiple constraint violations across a month."""
@@ -1272,34 +1215,40 @@ class TestTemporalConstraintsIntegration:
                 person_id=pgy2.id,
                 block_id=wed1_am.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
             # 1st Wed PM: 2 faculty (VIOLATION - should be 1)
             MockAssignment(
                 person_id=faculty1.id,
                 block_id=wed1_pm.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
             MockAssignment(
                 person_id=faculty2.id,
                 block_id=wed1_pm.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
             # 2nd Wed AM: PGY-1 (correct)
             MockAssignment(
                 person_id=pgy1.id,
                 block_id=wed2_am.id,
                 rotation_template_id=clinic_template.id,
+                activity_code="C",
             ),
             # 2nd Wed PM: 0 faculty (VIOLATION - should be 1)
-            # 4th Wed AM: 0 faculty (VIOLATION - should be 1)
-            # 4th Wed PM: 0 faculty (VIOLATION - should be 1)
+            # 4th Wed AM: 0 faculty (VIOLATION for InvertedWednesday)
+            # 4th Wed PM: 0 faculty (VIOLATION for InvertedWednesday)
         ]
 
+        # end_date close to 4th Wed (Jan 22)
         context = SchedulingContext(
             residents=[pgy1, pgy2],
             faculty=[faculty1, faculty2],
             blocks=all_blocks,
             templates=[clinic_template],
+            end_date=date(2025, 1, 28),
         )
 
         constraint1 = WednesdayAMInternOnlyConstraint()
@@ -1310,13 +1259,14 @@ class TestTemporalConstraintsIntegration:
         result2 = constraint2.validate(assignments, context)
         result3 = constraint3.validate(assignments, context)
 
-        # Hard constraints fail, soft constraint reports penalty
+        # Hard constraints fail, soft constraints always satisfied but penalized
         assert result1.satisfied is False
         assert result2.satisfied is True  # Soft — always satisfied
         assert result2.penalty > 0  # But penalized
-        assert result3.satisfied is False
+        assert result3.satisfied is True  # Soft — always satisfied
+        assert result3.penalty > 0  # But penalized (0 AM, 0 PM)
 
         # Check specific violations
         assert len(result1.violations) >= 1  # PGY-2 on Wed AM
         assert len(result2.violations) >= 2  # 2 faculty on 1st, 0 on 2nd and 3rd
-        assert len(result3.violations) >= 2  # 0 AM and 0 PM on 4th Wed
+        assert len(result3.violations) >= 2  # 0 AM and 0 PM on final Wed
