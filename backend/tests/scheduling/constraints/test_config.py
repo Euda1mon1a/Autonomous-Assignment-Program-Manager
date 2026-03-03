@@ -141,7 +141,7 @@ class TestConstraintConfigManagerInit:
 
     def test_fmit_constraints_disabled_by_default(self):
         mgr = ConstraintConfigManager()
-        for name in ["FMITWeekBlocking", "FMITMandatoryCall", "FMITResidentClinicDay"]:
+        for name in ["FMITWeekBlocking", "FMITMandatoryCall"]:
             assert mgr.is_enabled(name) is False
 
     def test_sm_constraints_disabled_by_default(self):

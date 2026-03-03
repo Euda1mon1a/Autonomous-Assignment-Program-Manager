@@ -12,7 +12,6 @@ from app.scheduling.constraints.base import (
     SchedulingContext,
 )
 from app.scheduling.constraints.inpatient import (
-    FMITResidentClinicDayConstraint,
     ResidentInpatientHeadcountConstraint,
 )
 
@@ -372,35 +371,3 @@ class TestHeadcountValidate:
         result = c.validate(assignments, ctx)
         assert result.violations[0].details["pgy_level"] == 2
         assert result.violations[0].details["count"] == 2
-
-
-# ==================== FMITResidentClinicDayConstraint ====================
-
-
-class TestFMITClinicDayInit:
-    """Test FMITResidentClinicDayConstraint initialization."""
-
-    def test_name(self):
-        c = FMITResidentClinicDayConstraint()
-        assert c.name == "FMITResidentClinicDay"
-
-    def test_type(self):
-        c = FMITResidentClinicDayConstraint()
-        assert c.constraint_type == ConstraintType.ROTATION
-
-    def test_priority(self):
-        c = FMITResidentClinicDayConstraint()
-        assert c.priority == ConstraintPriority.HIGH
-
-    def test_clinic_days_constants(self):
-        days = FMITResidentClinicDayConstraint.FMIT_CLINIC_DAYS
-        assert days[1] == {"weekday": 2, "time_of_day": "AM"}  # PGY-1: Wed AM
-        assert days[2] == {"weekday": 1, "time_of_day": "PM"}  # PGY-2: Tue PM
-        assert days[3] == {"weekday": 0, "time_of_day": "PM"}  # PGY-3: Mon PM
-
-    def test_validate_stub_satisfied(self):
-        """Validate is a stub that always returns satisfied."""
-        c = FMITResidentClinicDayConstraint()
-        ctx = _context()
-        result = c.validate([], ctx)
-        assert result.satisfied is True

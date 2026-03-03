@@ -1,9 +1,8 @@
 """
 Tests for resident inpatient rotation constraints.
 
-Tests the two inpatient constraints:
+Tests:
 1. ResidentInpatientHeadcountConstraint - FMIT and Night Float headcount limits
-2. FMITResidentClinicDayConstraint - PGY-specific clinic days for FMIT residents
 """
 
 from datetime import date, timedelta
@@ -17,7 +16,6 @@ from app.scheduling.constraints.base import (
     SchedulingContext,
 )
 from app.scheduling.constraints.inpatient import (
-    FMITResidentClinicDayConstraint,
     ResidentInpatientHeadcountConstraint,
 )
 
@@ -638,123 +636,6 @@ class TestResidentInpatientHeadcountConstraint:
 
 
 # ============================================================================
-# Tests for FMITResidentClinicDayConstraint
-# ============================================================================
-
-
-class TestFMITResidentClinicDayConstraint:
-    """Tests for FMIT resident clinic day constraint."""
-
-    def test_constraint_initialization(self):
-        """Test constraint initializes with correct properties."""
-        constraint = FMITResidentClinicDayConstraint()
-        assert constraint.name == "FMITResidentClinicDay"
-        assert constraint.constraint_type == ConstraintType.ROTATION
-        assert constraint.priority == ConstraintPriority.HIGH
-
-    def test_clinic_day_definitions(self):
-        """Test that clinic days are defined correctly for each PGY level."""
-        constraint = FMITResidentClinicDayConstraint()
-
-        # PGY-1: Wednesday AM (weekday 2)
-        assert constraint.FMIT_CLINIC_DAYS[1]["weekday"] == 2
-        assert constraint.FMIT_CLINIC_DAYS[1]["time_of_day"] == "AM"
-
-        # PGY-2: Tuesday PM (weekday 1)
-        assert constraint.FMIT_CLINIC_DAYS[2]["weekday"] == 1
-        assert constraint.FMIT_CLINIC_DAYS[2]["time_of_day"] == "PM"
-
-        # PGY-3: Monday PM (weekday 0)
-        assert constraint.FMIT_CLINIC_DAYS[3]["weekday"] == 0
-        assert constraint.FMIT_CLINIC_DAYS[3]["time_of_day"] == "PM"
-
-    def test_validate_empty_assignments(self):
-        """Test validate with no assignments passes."""
-        constraint = FMITResidentClinicDayConstraint()
-
-        context = SchedulingContext(
-            residents=[],
-            faculty=[],
-            blocks=[],
-            templates=[],
-        )
-
-        result = constraint.validate([], context)
-
-        # Should pass - validation currently handled by pre-loading
-        assert result.satisfied is True
-        assert len(result.violations) == 0
-
-    def test_validate_with_assignments_passes(self):
-        """Test validate passes with assignments (pre-loading handles rules)."""
-        constraint = FMITResidentClinicDayConstraint()
-        residents_by_pgy = create_residents_by_pgy()
-        blocks = create_week_of_blocks()
-        templates = create_fmit_templates()
-
-        all_residents = []
-        for residents in residents_by_pgy.values():
-            all_residents.extend(residents)
-
-        # Create some assignments
-        assignments = [
-            MockAssignment(
-                person_id=residents_by_pgy[1][0].id,
-                block_id=blocks[0].id,
-                rotation_template_id=templates[0].id,
-            )
-        ]
-
-        context = SchedulingContext(
-            residents=all_residents,
-            faculty=[],
-            blocks=blocks,
-            templates=templates,
-        )
-
-        result = constraint.validate(assignments, context)
-
-        # Should pass - constraint is currently a placeholder
-        # Pre-loading mechanism handles clinic day assignment
-        assert result.satisfied is True
-        assert len(result.violations) == 0
-
-    def test_add_to_cpsat_no_error(self):
-        """Test add_to_cpsat doesn't raise errors (currently a pass-through)."""
-        constraint = FMITResidentClinicDayConstraint()
-
-        context = SchedulingContext(
-            residents=[],
-            faculty=[],
-            blocks=[],
-            templates=[],
-        )
-
-        # Should not raise an error
-        try:
-            constraint.add_to_cpsat(model=None, variables={}, context=context)
-        except Exception as e:
-            pytest.fail(f"add_to_cpsat raised unexpected exception: {e}")
-
-    def test_add_to_pulp_no_error(self):
-        """Test add_to_pulp doesn't raise errors (currently a pass-through)."""
-        constraint = FMITResidentClinicDayConstraint()
-
-        context = SchedulingContext(
-            residents=[],
-            faculty=[],
-            blocks=[],
-            templates=[],
-        )
-
-        # Should not raise an error
-        try:
-            constraint.add_to_pulp(model=None, variables={}, context=context)
-        except Exception as e:
-            pytest.fail(f"add_to_pulp raised unexpected exception: {e}")
-
-
-# ============================================================================
 # Integration Tests
 # ============================================================================
 
@@ -766,7 +647,6 @@ class TestInpatientConstraintsIntegration:
     def test_complete_valid_week_all_constraints(self):
         """Test a complete valid week satisfying all inpatient constraints."""
         headcount_constraint = ResidentInpatientHeadcountConstraint()
-        clinic_day_constraint = FMITResidentClinicDayConstraint()
 
         residents_by_pgy = create_residents_by_pgy()
         blocks = create_week_of_blocks()
@@ -820,12 +700,9 @@ class TestInpatientConstraintsIntegration:
         )
 
         headcount_result = headcount_constraint.validate(assignments, context)
-        clinic_day_result = clinic_day_constraint.validate(assignments, context)
 
         assert headcount_result.satisfied is True
-        assert clinic_day_result.satisfied is True
         assert len(headcount_result.violations) == 0
-        assert len(clinic_day_result.violations) == 0
 
     def test_complete_invalid_week_multiple_violations(self):
         """Test a week with multiple inpatient constraint violations."""

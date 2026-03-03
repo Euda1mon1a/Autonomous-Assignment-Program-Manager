@@ -367,7 +367,7 @@ class HalfDayRequirementConstraint(SoftConstraint):
         if not template_vars or not self._requirements:
             return
 
-        templates_by_activity = self._get_template_ids_by_activity(context)
+        templates_by_activity = self._get_template_ids_by_rotation_type(context)
         fm_clinic_ids = templates_by_activity.get(
             "outpatient", set()
         ) | templates_by_activity.get("clinic", set())
@@ -422,7 +422,7 @@ class HalfDayRequirementConstraint(SoftConstraint):
         block_by_id = {b.id: b for b in context.blocks}
         template_by_id = {t.id: t for t in context.templates}
 
-        templates_by_activity = self._get_template_ids_by_activity(context)
+        templates_by_activity = self._get_template_ids_by_rotation_type(context)
         fm_clinic_ids = templates_by_activity.get(
             "outpatient", set()
         ) | templates_by_activity.get("clinic", set())
