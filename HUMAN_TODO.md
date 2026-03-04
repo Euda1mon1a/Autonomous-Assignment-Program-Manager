@@ -636,7 +636,7 @@ total_assignments: int = Field(alias="total_blocks_assigned")
 **Priority:** MEDIUM
 **Added:** 2026-01-19 (PLAN_PARTY analysis - 10 probes, 8.5/10 convergence)
 **Status:** Roadmap complete, implementation pending
-**Roadmap:** `docs/planning/HOOKS_AND_SCRIPTS_ROADMAP.md`
+**Roadmap:** `docs/archived/planning/HOOKS_AND_SCRIPTS_ROADMAP.md`
 
 ### Summary
 
@@ -705,7 +705,7 @@ Comprehensive hooks and scripts consolidation addressing:
 
 ### Related Documents
 
-- `docs/planning/HOOKS_AND_SCRIPTS_ROADMAP.md` - Full implementation roadmap
+- `docs/archived/planning/HOOKS_AND_SCRIPTS_ROADMAP.md` - Full implementation roadmap
 - `.claude/hooks/README.md` - Hooks ecosystem documentation
 - `.pre-commit-config.yaml` - Pre-commit configuration (24 phases)
 

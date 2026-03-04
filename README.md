@@ -463,7 +463,7 @@ Autonomous-Assignment-Program-Manager/
 ### Planning & Status
 | Document | Description |
 |----------|-------------|
-| [Master Priority List](docs/planning/MASTER_PRIORITY_LIST.md) | Authoritative prioritized work backlog |
+| [Master Priority List](docs/archived/planning/MASTER_PRIORITY_LIST.md) | Authoritative prioritized work backlog |
 | [Roadmap](docs/planning/ROADMAP.md) | Feature roadmap and milestones |
 | [Strategic Decisions](docs/planning/STRATEGIC_DECISIONS.md) | Key project decisions |
 | [Human TODO](HUMAN_TODO.md) | Tasks requiring human action |
