@@ -99,7 +99,7 @@ def parse_dates_from_text(text: str) -> tuple[date | None, date | None]:
         if month1 and month2:
             y1 = year or (2026 if month1 >= 7 else 2027)
             y2 = year or (2026 if month2 >= 7 else 2027)
-            if month2 < month1 and year is None:
+            if month2 < month1:
                 y2 = y1 + 1
             try:
                 return date(y1, month1, d1), date(y2, month2, d2)

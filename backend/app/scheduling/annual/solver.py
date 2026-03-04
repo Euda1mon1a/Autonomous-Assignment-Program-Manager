@@ -430,7 +430,10 @@ def solve(
                     break  # One rotation per block
 
     leave_sat_count = len(satisfied_leaves)
-    leave_total = len(leave_detail)
+    # Count all leave requests with matched residents, not just those modeled
+    leave_total = sum(
+        1 for lr in context.leave_requests if lr.person_id in context.resident_idx
+    )
 
     logger.info(
         "ARO: leave satisfaction %d/%d (%.1f%%)",

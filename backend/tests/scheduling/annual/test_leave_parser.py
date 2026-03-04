@@ -74,6 +74,12 @@ class TestParseDatesFromText:
         assert start == date(2027, 1, 5)
         assert end == date(2027, 1, 10)
 
+    def test_cross_year_with_explicit_year(self):
+        """Dec 28-Jan 3, 2026 → end year rolls to 2027."""
+        start, end = parse_dates_from_text("Dec 28-Jan 3, 2026")
+        assert start == date(2026, 12, 28)
+        assert end == date(2027, 1, 3)
+
     def test_full_month_name(self):
         start, end = parse_dates_from_text("February 14-21")
         assert start == date(2027, 2, 14)
