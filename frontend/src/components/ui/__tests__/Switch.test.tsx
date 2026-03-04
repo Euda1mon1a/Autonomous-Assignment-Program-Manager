@@ -1,4 +1,3 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Switch Component
  * Component: 34 - Toggle switch

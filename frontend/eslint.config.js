@@ -13,7 +13,12 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
+        destructuredArrayIgnorePattern: "^_",
+      }],
       "@typescript-eslint/no-explicit-any": "warn",
       "react/no-unescaped-entities": "off",
       "react/display-name": "off",
@@ -35,9 +40,9 @@ const eslintConfig = [
           selector: "typeProperty",
           format: ["camelCase"],
           leadingUnderscore: "allow",
-          // Allow UPPER_CASE for constants in types
+          // Allow UPPER_CASE constants and aria-* HTML attributes in types
           filter: {
-            regex: "^[A-Z][A-Z0-9_]*$",
+            regex: "^[A-Z][A-Z0-9_]*$|^aria-",
             match: false,
           },
         },
@@ -45,9 +50,14 @@ const eslintConfig = [
           selector: "objectLiteralProperty",
           format: ["camelCase"],
           leadingUnderscore: "allow",
-          // Allow snake_case in specific contexts (API query params, etc.)
+          // Allow non-camelCase in specific contexts:
+          // - HTTP headers (Content-Type, Authorization, X-*)
+          // - Numeric keys (HTTP status codes, grid columns)
+          // - CSS/Tailwind class name keys (gray-100, top-right, 2xl)
+          // - aria-* attributes
+          // - UPPER_CASE enum-like constant keys
           filter: {
-            regex: "^(Content-Type|Authorization|X-|_).*$",
+            regex: "^(Content-Type|Authorization|X-|_|aria-).*$|^\\d+$|^[a-z]+-\\d+$|^\\d+[a-z]+$|^[A-Z][A-Z0-9_]*$",
             match: false,
           },
         },

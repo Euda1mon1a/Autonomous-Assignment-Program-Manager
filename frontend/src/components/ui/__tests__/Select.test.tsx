@@ -1,4 +1,3 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Select Component
  * Component: 33 - Custom dropdown

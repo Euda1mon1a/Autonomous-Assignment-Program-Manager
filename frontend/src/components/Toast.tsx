@@ -281,12 +281,14 @@ interface ToastContainerProps {
   onDismiss: (id: string) => void
 }
 
+/* eslint-disable @typescript-eslint/naming-convention -- position keys are hyphenated UI layout concepts */
 const positionClasses: Record<ToastPosition, string> = {
   'top-right': 'top-4 right-4',
   'top-left': 'top-4 left-4',
   'bottom-right': 'bottom-4 right-4',
   'bottom-left': 'bottom-4 left-4',
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 /**
  * Container for displaying toast notifications.

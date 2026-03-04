@@ -1,4 +1,3 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Button Component
  * Component: 40 - Base button variants

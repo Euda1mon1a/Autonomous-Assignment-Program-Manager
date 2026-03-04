@@ -170,12 +170,12 @@ describe('personBaseSchema', () => {
   });
 
   it('rejects missing name', () => {
-    const { name, ...rest } = validPerson;
+    const { name: _name, ...rest } = validPerson;
     expect(personBaseSchema.safeParse(rest).success).toBe(false);
   });
 
   it('rejects missing type', () => {
-    const { type, ...rest } = validPerson;
+    const { type: _type, ...rest } = validPerson;
     expect(personBaseSchema.safeParse(rest).success).toBe(false);
   });
 
@@ -262,8 +262,8 @@ describe('swapRequestSchema', () => {
   const validUuid = '550e8400-e29b-41d4-a716-446655440000';
 
   const validSwap = {
-    requester_id: validUuid,
-    requester_assignmentId: validUuid,
+    requesterId: validUuid,
+    requesterAssignmentId: validUuid,
     swapType: 'one_to_one' as const,
     reason: 'Need to attend mandatory training session',
   };
@@ -285,8 +285,8 @@ describe('swapRequestSchema', () => {
   it('accepts optional target fields', () => {
     const result = swapRequestSchema.safeParse({
       ...validSwap,
-      target_id: validUuid,
-      target_assignmentId: validUuid,
+      targetId: validUuid,
+      targetAssignmentId: validUuid,
     });
     expect(result.success).toBe(true);
   });
@@ -294,8 +294,8 @@ describe('swapRequestSchema', () => {
   it('accepts null target fields', () => {
     const result = swapRequestSchema.safeParse({
       ...validSwap,
-      target_id: null,
-      target_assignmentId: null,
+      targetId: null,
+      targetAssignmentId: null,
     });
     expect(result.success).toBe(true);
   });
@@ -346,13 +346,15 @@ describe('paginationParamsSchema', () => {
 
 describe('sortParamsSchema', () => {
   it('accepts valid sort', () => {
+    // eslint-disable-next-line @typescript-eslint/naming-convention -- Couatl Killer: URL query param schema
     const result = sortParamsSchema.parse({ sort_by: 'name' });
-    expect(result.sort_order).toBe('asc');
+    expect(result.sort_order).toBe('asc'); // eslint-disable-line @typescript-eslint/naming-convention
   });
 
   it('accepts desc order', () => {
+    // eslint-disable-next-line @typescript-eslint/naming-convention -- Couatl Killer: URL query param schema
     const result = sortParamsSchema.parse({ sort_by: 'date', sort_order: 'desc' });
-    expect(result.sort_order).toBe('desc');
+    expect(result.sort_order).toBe('desc'); // eslint-disable-line @typescript-eslint/naming-convention
   });
 
   it('rejects missing sort_by', () => {

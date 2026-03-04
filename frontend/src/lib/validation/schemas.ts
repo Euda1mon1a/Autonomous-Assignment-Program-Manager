@@ -77,7 +77,7 @@ export const assignmentUpdateSchema = assignmentBaseSchema
   .partial()
   .extend({
     updatedAt: z.string().datetime(),
-    acknowledge_override: z.boolean().optional(),
+    acknowledgeOverride: z.boolean().optional(),
   });
 
 export const assignmentResponseSchema = assignmentBaseSchema.extend({
@@ -119,10 +119,10 @@ export const swapStatusSchema = z.enum([
 ]);
 
 export const swapRequestSchema = z.object({
-  requester_id: z.string().uuid(),
-  requester_assignmentId: z.string().uuid(),
-  target_id: z.string().uuid().optional().nullable(),
-  target_assignmentId: z.string().uuid().optional().nullable(),
+  requesterId: z.string().uuid(),
+  requesterAssignmentId: z.string().uuid(),
+  targetId: z.string().uuid().optional().nullable(),
+  targetAssignmentId: z.string().uuid().optional().nullable(),
   swapType: swapTypeSchema,
   reason: z.string().min(10, "Reason must be at least 10 characters").max(500),
 });
@@ -131,9 +131,9 @@ export const swapResponseSchema = swapRequestSchema.extend({
   id: z.string().uuid(),
   status: swapStatusSchema,
   createdAt: z.string().datetime(),
-  approved_at: z.string().datetime().optional().nullable(),
+  approvedAt: z.string().datetime().optional().nullable(),
   executedAt: z.string().datetime().optional().nullable(),
-  approved_by: z.string().optional().nullable(),
+  approvedBy: z.string().optional().nullable(),
 });
 
 // ==================== Filter Schemas ====================
@@ -144,7 +144,7 @@ export const dateRangeFilterSchema = z.object({
 });
 
 export const personFilterSchema = z.object({
-  person_type: personTypeSchema.optional(),
+  person_type: personTypeSchema.optional(), // eslint-disable-line @typescript-eslint/naming-convention -- Couatl Killer: URL query param
   pgyLevel: pgyLevelSchema.optional(),
   facultyRole: facultyRoleSchema.optional(),
   specialties: z.array(z.string()).optional(),
@@ -169,8 +169,8 @@ export const paginationParamsSchema = z.object({
 export const sortOrderSchema = z.enum(["asc", "desc"]);
 
 export const sortParamsSchema = z.object({
-  sort_by: z.string(),
-  sort_order: sortOrderSchema.default("asc"),
+  sort_by: z.string(), // eslint-disable-line @typescript-eslint/naming-convention -- Couatl Killer: URL query param
+  sort_order: sortOrderSchema.default("asc"), // eslint-disable-line @typescript-eslint/naming-convention -- Couatl Killer: URL query param
 });
 
 // ==================== Form Validation Schemas ====================

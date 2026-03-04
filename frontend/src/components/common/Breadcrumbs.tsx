@@ -12,6 +12,7 @@ interface BreadcrumbItem {
 }
 
 // Map of path segments to readable labels
+/* eslint-disable @typescript-eslint/naming-convention -- keys are URL path segments, must match routes */
 const PATH_LABELS: Record<string, string> = {
   schedule: 'Schedule',
   'my-schedule': 'My Schedule',
@@ -30,6 +31,7 @@ const PATH_LABELS: Record<string, string> = {
   'game-theory': 'Game Theory',
   '3d-schedule': '3D Schedule',
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 interface BreadcrumbsProps {
   /** Custom breadcrumb items (overrides auto-generated) */

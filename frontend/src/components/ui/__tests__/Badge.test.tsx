@@ -1,4 +1,3 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Badge Component
  * Component: 42 - Status badges

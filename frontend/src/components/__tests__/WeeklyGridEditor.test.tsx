@@ -11,7 +11,7 @@
  */
 
 // Converted from vitest to jest
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { WeeklyGridEditor } from '../WeeklyGridEditor';

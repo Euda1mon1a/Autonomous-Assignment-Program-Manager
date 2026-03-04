@@ -1,4 +1,3 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Modal Component
  * Component: 36 - Modal dialog
@@ -159,9 +158,9 @@ describe('Modal', () => {
         </Modal>
       );
 
-      const firstButton = screen.getByText('First');
+      screen.getByText('First');
       const lastButton = screen.getByText('Last');
-      const closeButton = screen.getByLabelText('Close modal');
+      screen.getByLabelText('Close modal');
 
       // Tab from last element should cycle to first
       lastButton.focus();

@@ -266,7 +266,7 @@ describe('useRAGSearch', () => {
     });
   });
 
-  it('limits number of results with top_k', async () => {
+  it('limits number of results with topK', async () => {
     const limitedResponse = {
       ...mockRAGSearchResponse,
       chunks: [mockRAGSearchResponse.chunks[0]],

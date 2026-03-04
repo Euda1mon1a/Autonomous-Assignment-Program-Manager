@@ -15,7 +15,7 @@ describe('DayOffIndicator', () => {
   };
 
   // Fix the current date for consistent testing of "X days ago" text
-  const realDateNow = Date.now;
+  const _realDateNow = Date.now;
   const realDate = global.Date;
 
   beforeAll(() => {

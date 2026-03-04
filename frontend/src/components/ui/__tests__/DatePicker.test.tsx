@@ -1,4 +1,3 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for DatePicker Component
  * Component: 31 - Date selection
@@ -105,7 +104,7 @@ describe('DatePicker', () => {
       // Open calendar
       fireEvent.click(screen.getByRole('button'));
 
-      const currentMonth = screen.getByText(/\w+ \d{4}/);
+      screen.getByText(/\w+ \d{4}/);
       const prevButton = screen.getByLabelText('Previous month');
 
       fireEvent.click(prevButton);

@@ -1,4 +1,3 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Input Component
  * Component: 43 - Form inputs
@@ -132,7 +131,7 @@ describe('Input', () => {
       render(<Input label="Username" id="username" onChange={() => {}} />);
 
       const label = screen.getByText('Username');
-      const input = screen.getByRole('textbox');
+      screen.getByRole('textbox');
 
       // Label should be properly associated
       expect(label.tagName).toBe('LABEL');

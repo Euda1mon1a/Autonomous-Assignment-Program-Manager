@@ -471,27 +471,22 @@ export function InlineLoader({
 // Exports
 // ============================================================================
 
+/* eslint-disable @typescript-eslint/naming-convention -- React component barrel export requires PascalCase keys */
 const LoadingStates = {
-  // Spinners
   Spinner,
   ButtonSpinner,
   PageSpinner,
-
-  // Skeletons
   SkeletonText,
   SkeletonAvatar,
   SkeletonButton,
   SkeletonCard,
-
-  // Progress
   ProgressBar,
   ProgressCircle,
-
-  // Composite
   PageLoader,
   CardLoader,
   TableLoader,
   InlineLoader,
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export default LoadingStates;

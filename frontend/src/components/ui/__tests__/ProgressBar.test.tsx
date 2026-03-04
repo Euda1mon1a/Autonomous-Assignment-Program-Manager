@@ -1,4 +1,3 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for ProgressBar Component
  * Component: 35 - Progress indicator
@@ -222,7 +221,7 @@ describe('ProgressBar', () => {
     });
 
     it('handles negative values', () => {
-      const { container } = render(<ProgressBar value={-10} />);
+      render(<ProgressBar value={-10} />);
 
       expect(screen.getByText('-10%')).toBeInTheDocument();
     });

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention -- raw fetch mock responses use snake_case keys from server */
 /**
  * Tests for CalendarExportButton Component
  * Component: CalendarExportButton - ICS calendar export

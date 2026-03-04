@@ -1,4 +1,3 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Dropdown Component
  * Component: 38 - Dropdown menu

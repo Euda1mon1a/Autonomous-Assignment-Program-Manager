@@ -143,7 +143,7 @@ describe('UserMenu', () => {
     });
 
     it('applies correct role badge color', () => {
-      const { container } = render(<UserMenu />);
+      render(<UserMenu />);
 
       fireEvent.click(screen.getByRole('button'));
 
