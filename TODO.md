@@ -58,7 +58,7 @@
 
 - [ ] **MCP placeholder tools (DEBT-009)** — 11 tools return mock data (Hopfield, immune, VaR, Shapley). Implement backend services.
 - [ ] **Frontend a11y gaps (DEBT-008)** — Exotic components (Three.js, voxel, Plotly). Deferred as low-priority.
-- [ ] **Frontend hub consolidation** — 14 hubs: 1 complete (Swap), 5 partial, 8 to build. See `FRONTEND_HUB_CONSOLIDATION_ROADMAP.md`.
+- [ ] **Frontend hub consolidation** — 14 hubs: 1 complete (Swap), 5 partial, 8 to build. Each hub is its own PR. See `docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md`.
 
 ## P3 — Low / Backlog
 
@@ -74,6 +74,7 @@
 
 ## Do NOT Auto-Assign
 
+- **PII history purge (`git filter-repo`)** — Incident #003 corrupted origin (179K lines mangled). Human-driven only, test on throwaway clone, bundle backup first. See `docs/security/PII_AUDIT_LOG.md`.
 - Scheduling engine changes, ACGME validator, constraint definitions
 - Auth/security files (`core/security.py`, `routes/auth.py`)
 - Architecture decisions (mobile, multi-program, solver rewrites)
