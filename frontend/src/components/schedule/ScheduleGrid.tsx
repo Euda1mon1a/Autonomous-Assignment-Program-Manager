@@ -27,6 +27,18 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { EmptyState } from '@/components/EmptyState'
 
+/* eslint-disable @typescript-eslint/naming-convention -- HTML data and aria attributes */
+interface GridCellProps {
+  tabIndex: number
+  'data-row': number
+  'data-col': number
+  onFocus: () => void
+  onClick: () => void
+  role: 'gridcell'
+  'aria-selected': boolean
+}
+/* eslint-enable @typescript-eslint/naming-convention */
+
 interface ScheduleGridProps {
   startDate: Date
   endDate: Date
@@ -54,6 +66,7 @@ interface PersonGroup {
  * Format faculty role for display in schedule grid
  */
 function formatFacultyRole(role: string): string {
+  /* eslint-disable @typescript-eslint/naming-convention -- enum value keys @enum-ok */
   const roleMap: Record<string, string> = {
     pd: 'PD',
     apd: 'APD',
@@ -63,6 +76,7 @@ function formatFacultyRole(role: string): string {
     core: 'Core',
     adjunct: 'Adj',
   }
+  /* eslint-enable @typescript-eslint/naming-convention */
   return roleMap[role] || role.toUpperCase()
 }
 
@@ -436,15 +450,7 @@ interface PersonGroupRowsProps {
   ) => ProcessedAssignment | undefined
   showSeparator: boolean
   rowOffset: number
-  getCellProps: (row: number, col: number) => {
-    tabIndex: number
-    'data-row': number
-    'data-col': number
-    onFocus: () => void
-    onClick: () => void
-    role: 'gridcell'
-    'aria-selected': boolean
-  }
+  getCellProps: (row: number, col: number) => GridCellProps
 }
 
 function PersonGroupRows({
@@ -498,15 +504,7 @@ interface PersonRowProps {
     timeOfDay: 'AM' | 'PM'
   ) => ProcessedAssignment | undefined
   rowIndex: number
-  getCellProps: (row: number, col: number) => {
-    tabIndex: number
-    'data-row': number
-    'data-col': number
-    onFocus: () => void
-    onClick: () => void
-    role: 'gridcell'
-    'aria-selected': boolean
-  }
+  getCellProps: (row: number, col: number) => GridCellProps
 }
 
 function PersonRow({ person, days, todayStr, getAssignment, rowIndex, getCellProps }: PersonRowProps) {
@@ -577,15 +575,7 @@ interface DayCellsProps {
   ) => ProcessedAssignment | undefined
   rowIndex: number
   colOffset: number
-  getCellProps: (row: number, col: number) => {
-    tabIndex: number
-    'data-row': number
-    'data-col': number
-    onFocus: () => void
-    onClick: () => void
-    role: 'gridcell'
-    'aria-selected': boolean
-  }
+  getCellProps: (row: number, col: number) => GridCellProps
 }
 
 function DayCells({

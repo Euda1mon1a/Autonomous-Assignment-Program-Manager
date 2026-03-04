@@ -190,6 +190,7 @@ export function MultiSelectPersonFilter({
         <div
           id={listboxId}
           role="listbox"
+          tabIndex={0}
           aria-label="Filter by people"
           aria-multiselectable="true"
           onKeyDown={handleKeyDown}

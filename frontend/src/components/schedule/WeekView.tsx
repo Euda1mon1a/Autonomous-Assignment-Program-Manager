@@ -158,8 +158,10 @@ export function WeekView({
       return (
         <div
           role="gridcell"
+          tabIndex={0}
           className={`schedule-cell min-h-[52px] ${isWeekendDay ? 'bg-gray-50' : 'bg-white'}`}
           onClick={() => handleCellClick('AM')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCellClick('AM'); } }}
           aria-label="No assignment"
         >
           <div className="text-center text-gray-300 text-xs">-</div>
@@ -172,9 +174,11 @@ export function WeekView({
       return (
         <div
           role="gridcell"
+          tabIndex={0}
           className={`schedule-cell min-h-[52px] ${getActivityColor(amAssignment.activity)}`}
           title={amAssignment.activity}
           onClick={() => handleCellClick('AM', amAssignment)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCellClick('AM', amAssignment); } }}
           aria-label={`All day: ${amAssignment.activity}`}
         >
           <div className="text-center">
@@ -197,6 +201,7 @@ export function WeekView({
           }`}
           title={amAssignment?.activity}
           onClick={() => handleCellClick('AM', amAssignment)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCellClick('AM', amAssignment); } }}
           role="button"
           tabIndex={0}
         >
@@ -212,6 +217,7 @@ export function WeekView({
           }`}
           title={pmAssignment?.activity}
           onClick={() => handleCellClick('PM', pmAssignment)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCellClick('PM', pmAssignment); } }}
           role="button"
           tabIndex={0}
         >
@@ -280,10 +286,12 @@ export function WeekView({
                 <div
                   key={day.toISOString()}
                   role="columnheader"
+                  tabIndex={0}
                   className={`p-2 text-center cursor-pointer hover:bg-gray-200 transition-colors ${
                     isWeekendDay ? 'bg-gray-100' : ''
                   } ${isTodayDate ? 'ring-2 ring-inset ring-blue-400' : ''}`}
                   onClick={() => onDayClick?.(day)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDayClick?.(day); } }}
                   aria-label={`${format(day, 'EEEE, MMMM d')}${holidayName ? `, ${holidayName}` : ''}`}
                   title={holidayName || undefined}
                 >

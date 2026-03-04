@@ -15,6 +15,7 @@ export interface ShiftIndicatorProps {
   className?: string;
 }
 
+/* eslint-disable @typescript-eslint/naming-convention -- ShiftType enum values */
 const shiftConfig: Record<ShiftType, {
   icon: string;
   label: string;
@@ -51,6 +52,7 @@ const shiftConfig: Record<ShiftType, {
     borderColor: 'border-purple-300',
   },
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 const sizeClasses = {
   sm: 'text-xs px-1.5 py-0.5',

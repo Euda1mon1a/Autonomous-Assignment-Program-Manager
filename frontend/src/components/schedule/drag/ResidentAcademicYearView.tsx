@@ -40,12 +40,9 @@ interface PersonGroup {
 // Academic year typically runs July 1 to June 30
 function getAcademicYearDates(year: number, startMonth: number = 6) {
   const startDate = new Date(year, startMonth, 1) // July 1
-  const _endDate = new Date(year + 1, startMonth - 1 + 12, 0) // June 30 next year (handles month wrap)
+  const endDate = new Date(year + 1, 5, 30) // June 30 of next year
 
-  // Actually calculate last day of June next year
-  const actualEndDate = new Date(year + 1, 5, 30) // June 30 of next year
-
-  return { startDate, endDate: actualEndDate }
+  return { startDate, endDate }
 }
 
 // Get month labels for header

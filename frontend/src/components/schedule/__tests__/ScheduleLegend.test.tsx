@@ -37,7 +37,7 @@ describe('ScheduleLegend', () => {
     });
 
     it('applies correct color classes to badges', () => {
-      const { container } = render(<ScheduleLegend />);
+      render(<ScheduleLegend />);
 
       const clinicBadge = screen.getByText('CLI');
       expect(clinicBadge).toHaveClass('bg-blue-100', 'text-blue-800', 'border-blue-300');

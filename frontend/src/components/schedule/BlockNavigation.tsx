@@ -69,6 +69,7 @@ export function BlockNavigation({
   }, [blocksData])
 
   // Find current block range, previous block, and next block
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured for context
   const { currentBlockRange: _currentBlockRange, previousBlockRange, nextBlockRange, todayBlockRange } = useMemo(() => {
     if (!blockRanges?.length) {
       return {
