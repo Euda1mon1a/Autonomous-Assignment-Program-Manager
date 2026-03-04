@@ -162,11 +162,11 @@ class RestoreService:
             raise
         except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Database error during restore: {e}")
+            logger.error("Database error during restore", exc_info=True)
             raise RestoreError(f"Database error during restore: {e}") from e
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Unexpected error during restore: {e}")
+            logger.error("Unexpected error during restore", exc_info=True)
             raise RestoreError(f"Unexpected error during restore: {e}") from e
 
     def restore_schedule_range(
@@ -274,13 +274,15 @@ class RestoreService:
             raise
         except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Database error during schedule range restore: {e}")
+            logger.error("Database error during schedule range restore", exc_info=True)
             raise RestoreError(
                 f"Database error during schedule range restore: {e}"
             ) from e
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Unexpected error during schedule range restore: {e}")
+            logger.error(
+                "Unexpected error during schedule range restore", exc_info=True
+            )
             raise RestoreError(
                 f"Unexpected error during schedule range restore: {e}"
             ) from e
@@ -309,7 +311,9 @@ class RestoreService:
         except (BackupNotFoundError, BackupReadError):
             raise
         except Exception as e:
-            logger.error(f"Error previewing restore from backup {backup_id}: {e}")
+            logger.error(
+                f"Error previewing restore from backup {backup_id}", exc_info=True
+            )
             raise BackupReadError(f"Failed to preview restore: {e}") from e
 
     def validate_backup(self, backup_id: str) -> dict[str, Any]:
@@ -374,10 +378,12 @@ class RestoreService:
             return validation_results
 
         except (BackupNotFoundError, BackupReadError) as e:
-            logger.error(f"Backup {backup_id} validation failed: {e}")
-            return {"valid": False, "error": str(e)}
+            logger.error(f"Backup {backup_id} validation failed", exc_info=True)
+            return {"valid": False, "error": "Operation failed"}
         except Exception as e:
-            logger.error(f"Unexpected error validating backup {backup_id}: {e}")
+            logger.error(
+                f"Unexpected error validating backup {backup_id}", exc_info=True
+            )
             return {"valid": False, "error": f"Validation error: {e}"}
 
     def rollback_restore(self, restore_id: str) -> dict[str, Any]:
@@ -440,17 +446,23 @@ class RestoreService:
             raise
         except json.JSONDecodeError as e:
             self.db.rollback()
-            logger.error(f"Invalid JSON in restore metadata {restore_id}: {e}")
+            logger.error(
+                f"Invalid JSON in restore metadata {restore_id}", exc_info=True
+            )
             raise RestoreRollbackError(
                 f"Restore metadata contains invalid JSON: {e}"
             ) from e
         except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Database error during rollback of restore {restore_id}: {e}")
+            logger.error(
+                f"Database error during rollback of restore {restore_id}", exc_info=True
+            )
             raise RestoreRollbackError(f"Database error during rollback: {e}") from e
         except OSError as e:
             self.db.rollback()
-            logger.error(f"File I/O error during rollback of restore {restore_id}: {e}")
+            logger.error(
+                f"File I/O error during rollback of restore {restore_id}", exc_info=True
+            )
             raise RestoreRollbackError(f"Failed to read restore metadata: {e}") from e
         except Exception as e:
             self.db.rollback()
@@ -488,10 +500,14 @@ class RestoreService:
             with open(metadata_file, encoding="utf-8") as f:
                 metadata = json.load(f)
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in metadata file for backup {backup_id}: {e}")
+            logger.error(
+                f"Invalid JSON in metadata file for backup {backup_id}", exc_info=True
+            )
             raise BackupReadError(f"Metadata file contains invalid JSON: {e}") from e
         except OSError as e:
-            logger.error(f"Error reading metadata file for backup {backup_id}: {e}")
+            logger.error(
+                f"Error reading metadata file for backup {backup_id}", exc_info=True
+            )
             raise BackupReadError(f"Failed to read metadata file: {e}") from e
 
         backup_file = self.backup_path / metadata["filename"]
@@ -513,10 +529,10 @@ class RestoreService:
                 with open(backup_file, encoding="utf-8") as f:
                     return json.load(f)
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in backup file {backup_file}: {e}")
+            logger.error(f"Invalid JSON in backup file {backup_file}", exc_info=True)
             raise BackupReadError(f"Backup file contains invalid JSON: {e}") from e
         except OSError as e:
-            logger.error(f"Error reading backup file {backup_file}: {e}")
+            logger.error(f"Error reading backup file {backup_file}", exc_info=True)
             raise BackupReadError(f"Failed to read backup file: {e}") from e
 
     def _replace_restore(self, backup_data: dict[str, Any]) -> dict[str, int]:
@@ -542,12 +558,12 @@ class RestoreService:
             return self._restore_data(backup_data)
 
         except SQLAlchemyError as e:
-            logger.error(f"Database error during replace restore: {e}")
+            logger.error("Database error during replace restore", exc_info=True)
             raise RestoreDataError(
                 f"Failed to delete existing data during replace restore: {e}"
             ) from e
         except Exception as e:
-            logger.error(f"Error during replace restore: {e}")
+            logger.error("Error during replace restore", exc_info=True)
             raise RestoreDataError(f"Failed during replace restore: {e}") from e
 
     def _merge_restore(self, backup_data: dict[str, Any]) -> dict[str, int]:
@@ -601,10 +617,10 @@ class RestoreService:
             return counts
 
         except SQLAlchemyError as e:
-            logger.error(f"Database error restoring data: {e}")
+            logger.error("Database error restoring data", exc_info=True)
             raise RestoreDataError(f"Database error during data restore: {e}") from e
         except Exception as e:
-            logger.error(f"Error restoring data: {e}")
+            logger.error("Error restoring data", exc_info=True)
             raise RestoreDataError(f"Failed to restore data: {e}") from e
 
     def _restore_people(self, people_data: list[dict[str, Any]]) -> int:
@@ -745,7 +761,7 @@ class RestoreService:
             logger.debug(f"Saved restore metadata to {restore_file}")
 
         except (OSError, PermissionError) as e:
-            logger.error(f"Error writing restore metadata file: {e}")
+            logger.error("Error writing restore metadata file", exc_info=True)
             # Don't fail the restore if we can't save metadata
             logger.warning("Continuing without saving restore metadata")
 

@@ -216,7 +216,7 @@ class RollbackManager:
 
         except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Failed to create snapshot: {e}")
+            logger.error("Failed to create snapshot", exc_info=True)
             raise
 
     def get_snapshot(self, snapshot_id: UUID) -> SnapshotRecord | None:
@@ -342,11 +342,11 @@ class RollbackManager:
                         records_restored += 1
 
                 except Exception as e:
-                    logger.warning(f"Failed to restore record: {e}")
+                    logger.warning("Failed to restore record", exc_info=True)
                     records_failed += 1
 
                     if not error_message:
-                        error_message = str(e)
+                        error_message = "Rollback failed"
 
                         # Commit restoration
             self.db.commit()
@@ -377,12 +377,12 @@ class RollbackManager:
             )
 
         except Exception as e:
-            logger.error(f"Rollback failed: {e}", exc_info=True)
+            logger.error("Rollback failed", exc_info=True)
             self.db.rollback()
 
             # Update rollback record
             rollback_record.status = RollbackStatus.FAILED.value
-            rollback_record.error_message = str(e)
+            rollback_record.error_message = "Operation failed"
             rollback_record.completed_at = datetime.now(UTC)
             self.db.commit()
 
@@ -391,7 +391,7 @@ class RollbackManager:
                 success=False,
                 records_restored=records_restored,
                 records_failed=records_failed,
-                error_message=str(e),
+                error_message="Operation failed",
             )
 
     def rollback_migration(
@@ -463,7 +463,7 @@ class RollbackManager:
 
         except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Failed to cleanup snapshots: {e}")
+            logger.error("Failed to cleanup snapshots", exc_info=True)
             raise
 
     def get_rollback_history(

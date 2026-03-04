@@ -118,9 +118,9 @@ class ScheduleServicer:
             return result
 
         except ValueError as e:
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Internal server error")
         except Exception as e:
-            logger.error(f"Error generating schedule: {e}", exc_info=True)
+            logger.error("Error generating schedule", exc_info=True)
             context.abort(grpc.StatusCode.INTERNAL, "Failed to generate schedule")
         finally:
             db.close()
@@ -175,9 +175,9 @@ class ScheduleServicer:
             return response
 
         except ValueError as e:
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Internal server error")
         except Exception as e:
-            logger.error(f"Error validating schedule: {e}", exc_info=True)
+            logger.error("Error validating schedule", exc_info=True)
             context.abort(grpc.StatusCode.INTERNAL, "Failed to validate schedule")
         finally:
             db.close()
@@ -250,9 +250,9 @@ class ScheduleServicer:
             logger.info(f"Streamed {total_streamed} assignments")
 
         except ValueError as e:
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Internal server error")
         except Exception as e:
-            logger.error(f"Error streaming assignments: {e}", exc_info=True)
+            logger.error("Error streaming assignments", exc_info=True)
             context.abort(grpc.StatusCode.INTERNAL, "Failed to stream assignments")
         finally:
             db.close()
@@ -298,9 +298,9 @@ class AssignmentServicer:
             return to_proto_assignment(response)
 
         except ValueError as e:
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Internal server error")
         except Exception as e:
-            logger.error(f"Error getting assignment: {e}", exc_info=True)
+            logger.error("Error getting assignment", exc_info=True)
             context.abort(grpc.StatusCode.INTERNAL, "Failed to get assignment")
         finally:
             db.close()
@@ -349,9 +349,9 @@ class AssignmentServicer:
             return proto_response
 
         except ValueError as e:
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Internal server error")
         except Exception as e:
-            logger.error(f"Error creating assignment: {e}", exc_info=True)
+            logger.error("Error creating assignment", exc_info=True)
             context.abort(grpc.StatusCode.INTERNAL, "Failed to create assignment")
         finally:
             db.close()
@@ -390,9 +390,9 @@ class AssignmentServicer:
             }
 
         except ValueError as e:
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Internal server error")
         except Exception as e:
-            logger.error(f"Error deleting assignment: {e}", exc_info=True)
+            logger.error("Error deleting assignment", exc_info=True)
             context.abort(grpc.StatusCode.INTERNAL, "Failed to delete assignment")
         finally:
             db.close()
@@ -433,9 +433,9 @@ class PersonServicer:
             return to_proto_person(person)
 
         except ValueError as e:
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Internal server error")
         except Exception as e:
-            logger.error(f"Error getting person: {e}", exc_info=True)
+            logger.error("Error getting person", exc_info=True)
             context.abort(grpc.StatusCode.INTERNAL, "Failed to get person")
         finally:
             db.close()
@@ -493,7 +493,7 @@ class PersonServicer:
             }
 
         except Exception as e:
-            logger.error(f"Error listing persons: {e}", exc_info=True)
+            logger.error("Error listing persons", exc_info=True)
             context.abort(grpc.StatusCode.INTERNAL, "Failed to list persons")
         finally:
             db.close()
@@ -528,7 +528,7 @@ class HealthServicer:
             db.execute(text("SELECT 1"))
             db_status = "healthy"
         except Exception as e:
-            logger.error(f"Database health check failed: {e}")
+            logger.error("Database health check failed", exc_info=True)
             db_status = "unhealthy"
         finally:
             db.close()

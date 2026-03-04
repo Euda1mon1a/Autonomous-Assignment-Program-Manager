@@ -254,7 +254,7 @@ async def create_snapshot(
             detail="Snapshot operation timed out",
         )
     except Exception as e:
-        logger.error(f"Error creating snapshot: {e}")
+        logger.error("Error creating snapshot", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="An error occurred creating the snapshot",
@@ -334,7 +334,7 @@ async def list_snapshots(
         )
 
     except Exception as e:
-        logger.error(f"Error listing snapshots: {e}")
+        logger.error("Error listing snapshots", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="An error occurred listing snapshots",
@@ -486,7 +486,7 @@ async def restore_snapshot(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error restoring snapshot: {e}")
+        logger.error("Error restoring snapshot", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="An error occurred restoring the snapshot",
@@ -696,7 +696,7 @@ async def create_backup(
             detail="Backup operation timed out",
         )
     except Exception as e:
-        logger.error(f"Error creating backup: {e}")
+        logger.error("Error creating backup", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="An error occurred creating the backup",
@@ -781,7 +781,7 @@ async def list_backups(
         )
 
     except Exception as e:
-        logger.error(f"Error listing backups: {e}")
+        logger.error("Error listing backups", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="An error occurred listing backups",
@@ -899,7 +899,7 @@ async def restore_from_backup(
             detail="Restore operation timed out",
         )
     except Exception as e:
-        logger.error(f"Error restoring backup: {e}")
+        logger.error("Error restoring backup", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="An error occurred restoring the backup",
@@ -970,14 +970,14 @@ async def verify_backup(
         )
 
     except Exception as e:
-        logger.error(f"Error verifying backup: {e}")
+        logger.error("Error verifying backup", exc_info=True)
         return BackupVerifyResult(
             backup_id=backup_id,
             valid=False,
             checksum=None,
             file_exists=False,
             size_mb=0.0,
-            error=str(e),
+            error="Operation failed",
         )
 
 
@@ -1047,7 +1047,7 @@ async def get_backup_status(
         )
 
     except Exception as e:
-        logger.error(f"Error getting backup status: {e}")
+        logger.error("Error getting backup status", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="An error occurred getting backup status",

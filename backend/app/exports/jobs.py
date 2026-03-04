@@ -119,7 +119,7 @@ def execute_export_job(
                 logger.error(
                     f"Failed to execute export job {job_id}: {e}", exc_info=True
                 )
-                return {"success": False, "error": str(e)}
+                return {"success": False, "error": "Operation failed"}
 
     # Run async function
     return asyncio.run(_execute_export_job())

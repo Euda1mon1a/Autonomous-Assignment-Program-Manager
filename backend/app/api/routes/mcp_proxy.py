@@ -216,13 +216,13 @@ async def calculate_equity_metrics(
         )
 
     except ValueError as e:
-        logger.warning(f"Invalid equity metrics request: {e}")
+        logger.warning("Invalid equity metrics request", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Invalid request parameters",
         ) from e
     except Exception as e:
-        logger.exception(f"Error calculating equity metrics: {e}")
+        logger.exception("Error calculating equity metrics", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to calculate equity metrics",
@@ -270,13 +270,13 @@ async def generate_lorenz_curve_endpoint(
         )
 
     except ValueError as e:
-        logger.warning(f"Invalid Lorenz curve request: {e}")
+        logger.warning("Invalid Lorenz curve request", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Invalid request parameters",
         ) from e
     except Exception as e:
-        logger.exception(f"Error generating Lorenz curve: {e}")
+        logger.exception("Error generating Lorenz curve", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate Lorenz curve",
@@ -421,13 +421,13 @@ async def calculate_shapley_workload(
         )
 
     except ValueError as e:
-        logger.warning(f"Invalid Shapley workload request: {e}")
+        logger.warning("Invalid Shapley workload request", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Invalid request parameters",
         ) from e
     except Exception as e:
-        logger.exception(f"Error calculating Shapley workload: {e}")
+        logger.exception("Error calculating Shapley workload", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to calculate Shapley workload",

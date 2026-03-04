@@ -193,11 +193,11 @@ class MigrationValidator:
                     result.checks_failed += 1
 
             except Exception as e:
-                logger.error(f"Validation check failed: {e}", exc_info=True)
+                logger.error("Validation check failed", exc_info=True)
                 result.checks_run += 1
                 result.checks_failed += 1
                 result.add_issue(
-                    "error", f"Validation check failed: {check.__name__}", str(e)
+                    "error", f"Validation check failed: {check.__name__}", "Check error"
                 )
 
         logger.info(result.get_summary())
@@ -243,11 +243,11 @@ class MigrationValidator:
                     result.checks_failed += 1
 
             except Exception as e:
-                logger.error(f"Validation check failed: {e}", exc_info=True)
+                logger.error("Validation check failed", exc_info=True)
                 result.checks_run += 1
                 result.checks_failed += 1
                 result.add_issue(
-                    "error", f"Validation check failed: {check.__name__}", str(e)
+                    "error", f"Validation check failed: {check.__name__}", "Check error"
                 )
 
         logger.info(result.get_summary())
@@ -288,7 +288,7 @@ class MigrationValidator:
             self.db.commit()
 
         except SQLAlchemyError as e:
-            logger.error(f"Failed to save validation record: {e}")
+            logger.error("Failed to save validation record", exc_info=True)
             self.db.rollback()
 
             # Built-in validation checks

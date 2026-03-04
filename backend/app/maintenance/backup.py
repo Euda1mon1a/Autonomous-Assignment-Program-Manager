@@ -66,7 +66,9 @@ class BackupService:
                 f"Cannot create or access backup directory '{backup_dir}': {e}"
             ) from e
         except OSError as e:
-            logger.error(f"OS error creating backup directory {backup_dir}: {e}")
+            logger.error(
+                f"OS error creating backup directory {backup_dir}", exc_info=True
+            )
             raise BackupPermissionError(
                 f"Failed to create backup directory '{backup_dir}': {e}"
             ) from e
@@ -157,17 +159,17 @@ class BackupService:
             return metadata
 
         except SQLAlchemyError as e:
-            logger.error(f"Database error during backup {backup_id}: {e}")
+            logger.error(f"Database error during backup {backup_id}", exc_info=True)
             raise BackupCreationError(
                 f"Failed to read database during backup creation: {e}"
             ) from e
         except OSError as e:
-            logger.error(f"File I/O error during backup {backup_id}: {e}")
+            logger.error(f"File I/O error during backup {backup_id}", exc_info=True)
             raise BackupCreationError(
                 f"Failed to write backup file '{filename}': {e}"
             ) from e
         except Exception as e:
-            logger.error(f"Unexpected error during backup {backup_id}: {e}")
+            logger.error(f"Unexpected error during backup {backup_id}", exc_info=True)
             raise BackupCreationError(
                 f"Unexpected error during backup creation: {e}"
             ) from e
@@ -301,15 +303,15 @@ class BackupService:
             return metadata
 
         except SQLAlchemyError as e:
-            logger.error(f"Database error during snapshot {backup_id}: {e}")
+            logger.error(f"Database error during snapshot {backup_id}", exc_info=True)
             raise BackupCreationError(
                 f"Failed to query database during snapshot creation: {e}"
             ) from e
         except OSError as e:
-            logger.error(f"File I/O error during snapshot {backup_id}: {e}")
+            logger.error(f"File I/O error during snapshot {backup_id}", exc_info=True)
             raise BackupCreationError(f"Failed to write snapshot file: {e}") from e
         except Exception as e:
-            logger.error(f"Unexpected error during snapshot {backup_id}: {e}")
+            logger.error(f"Unexpected error during snapshot {backup_id}", exc_info=True)
             raise BackupCreationError(
                 f"Unexpected error during snapshot creation: {e}"
             ) from e
@@ -376,17 +378,21 @@ class BackupService:
         except BackupNotFoundError:
             raise
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in backup {backup_id}: {e}")
+            logger.error(f"Invalid JSON in backup {backup_id}", exc_info=True)
             raise BackupReadError(f"Backup file contains invalid JSON: {e}") from e
         except OSError as e:
             if "read" in str(e).lower() or not Path(source_path).exists():
-                logger.error(f"Error reading backup {backup_id}: {e}")
+                logger.error(f"Error reading backup {backup_id}", exc_info=True)
                 raise BackupReadError(f"Failed to read backup file: {e}") from e
             else:
-                logger.error(f"Error writing export for backup {backup_id}: {e}")
+                logger.error(
+                    f"Error writing export for backup {backup_id}", exc_info=True
+                )
                 raise BackupWriteError(f"Failed to write export file: {e}") from e
         except Exception as e:
-            logger.error(f"Unexpected error exporting backup {backup_id}: {e}")
+            logger.error(
+                f"Unexpected error exporting backup {backup_id}", exc_info=True
+            )
             raise BackupReadError(f"Unexpected error during export: {e}") from e
 
     def list_backups(self) -> list[dict[str, Any]]:
@@ -419,7 +425,7 @@ class BackupService:
             return sorted(backups, key=lambda x: x.get("timestamp", ""), reverse=True)
 
         except Exception as e:
-            logger.error(f"Error listing backups: {e}")
+            logger.error("Error listing backups", exc_info=True)
             raise BackupReadError(f"Failed to list backups: {e}") from e
 
     def delete_backup(self, backup_id: str) -> bool:
@@ -473,17 +479,19 @@ class BackupService:
         except BackupNotFoundError:
             raise
         except PermissionError as e:
-            logger.error(f"Permission denied deleting backup {backup_id}: {e}")
+            logger.error(
+                f"Permission denied deleting backup {backup_id}", exc_info=True
+            )
             raise BackupPermissionError(
                 f"Permission denied when deleting backup {backup_id}: {e}"
             ) from e
         except OSError as e:
-            logger.error(f"OS error deleting backup {backup_id}: {e}")
+            logger.error(f"OS error deleting backup {backup_id}", exc_info=True)
             raise BackupPermissionError(
                 f"Failed to delete backup {backup_id}: {e}"
             ) from e
         except Exception as e:
-            logger.error(f"Unexpected error deleting backup {backup_id}: {e}")
+            logger.error(f"Unexpected error deleting backup {backup_id}", exc_info=True)
             raise BackupPermissionError(f"Unexpected error deleting backup: {e}") from e
 
             # Private helper methods
@@ -549,15 +557,19 @@ class BackupService:
                 with open(filepath, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2)
         except PermissionError as e:
-            logger.error(f"Permission denied writing backup file {filepath}: {e}")
+            logger.error(
+                f"Permission denied writing backup file {filepath}", exc_info=True
+            )
             raise BackupPermissionError(
                 f"Permission denied writing backup file: {e}"
             ) from e
         except OSError as e:
-            logger.error(f"I/O error writing backup file {filepath}: {e}")
+            logger.error(f"I/O error writing backup file {filepath}", exc_info=True)
             raise BackupWriteError(f"Failed to write backup file: {e}") from e
         except Exception as e:
-            logger.error(f"Unexpected error writing backup file {filepath}: {e}")
+            logger.error(
+                f"Unexpected error writing backup file {filepath}", exc_info=True
+            )
             raise BackupWriteError(f"Unexpected error writing backup file: {e}") from e
 
     def _save_metadata(self, backup_id: str, metadata: dict[str, Any]) -> None:
@@ -573,7 +585,7 @@ class BackupService:
             with open(metadata_file, "w", encoding="utf-8") as f:
                 json.dump(metadata, f, indent=2)
         except (OSError, PermissionError) as e:
-            logger.error(f"Error writing metadata file {metadata_file}: {e}")
+            logger.error(f"Error writing metadata file {metadata_file}", exc_info=True)
             raise BackupWriteError(f"Failed to write metadata file: {e}") from e
 
     def _load_metadata(self, backup_id: str) -> dict[str, Any]:
@@ -603,10 +615,12 @@ class BackupService:
             with open(metadata_file, encoding="utf-8") as f:
                 return json.load(f)
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in metadata file {metadata_file}: {e}")
+            logger.error(
+                f"Invalid JSON in metadata file {metadata_file}", exc_info=True
+            )
             raise BackupReadError(f"Metadata file contains invalid JSON: {e}") from e
         except OSError as e:
-            logger.error(f"Error reading metadata file {metadata_file}: {e}")
+            logger.error(f"Error reading metadata file {metadata_file}", exc_info=True)
             raise BackupReadError(f"Failed to read metadata file: {e}") from e
 
     def _validate_directory_permissions(self) -> None:
@@ -657,6 +671,6 @@ class BackupService:
         except BackupStorageError:
             raise
         except Exception as e:
-            logger.warning(f"Unable to check disk space: {e}")
+            logger.warning("Unable to check disk space", exc_info=True)
             # Don't fail the backup if we can't check disk space
             pass

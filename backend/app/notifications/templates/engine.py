@@ -151,15 +151,15 @@ class TemplateEngine:
                 context=context,
             ) from e
         except UndefinedError as e:
-            logger.error("Undefined variable in template: %s", str(e), exc_info=True)
+            logger.error("Undefined variable in template", exc_info=True)
             raise TemplateRenderError(
-                message=f"Undefined variable: {str(e)}",
+                message="Operation failed",
                 context=context,
             ) from e
         except Exception as e:
-            logger.error("Template rendering failed: %s", str(e), exc_info=True)
+            logger.error("Template rendering failed", exc_info=True)
             raise TemplateRenderError(
-                message=f"Template rendering failed: {str(e)}",
+                message="Operation failed",
                 context=context,
             ) from e
 
@@ -204,11 +204,11 @@ class TemplateEngine:
             logger.error(
                 "Undefined variable in template %s: %s",
                 template_name,
-                str(e),
+                "Operation failed",
                 exc_info=True,
             )
             raise TemplateRenderError(
-                message=f"Undefined variable: {str(e)}",
+                message="Operation failed",
                 template_name=template_name,
                 context=context,
             ) from e
@@ -216,11 +216,11 @@ class TemplateEngine:
             logger.error(
                 "Template rendering failed for %s: %s",
                 template_name,
-                str(e),
+                "Operation failed",
                 exc_info=True,
             )
             raise TemplateRenderError(
-                message=f"Template rendering failed: {str(e)}",
+                message="Operation failed",
                 template_name=template_name,
                 context=context,
             ) from e
@@ -446,7 +446,7 @@ class TemplateEngine:
             self._translation_cache[cache_key] = translations
             return translations
         except Exception as e:
-            logger.warning(f"Failed to load translations for {locale}: {e}")
+            logger.warning(f"Failed to load translations for {locale}", exc_info=True)
             return {}
 
             # Default global instance

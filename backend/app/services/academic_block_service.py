@@ -30,6 +30,10 @@ from app.schemas.academic_blocks import (
 from app.utils.academic_blocks import get_all_block_dates
 from app.validators.advanced_acgme import AdvancedACGMEValidator
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class AcademicBlockService:
     """Service for academic block matrix operations."""
@@ -166,9 +170,7 @@ class AcademicBlockService:
             return start_date, end_date
 
         except (ValueError, IndexError) as e:
-            raise ValueError(
-                f"Invalid academic year format '{academic_year}': {str(e)}"
-            )
+            raise ValueError(f"Invalid academic year format '{academic_year}'") from e
 
     def _generate_academic_blocks(
         self, start_date: date, end_date: date
@@ -469,7 +471,7 @@ class AcademicBlockService:
 
         except Exception as e:
             # Log error but don't fail the entire request
-            warnings.append(f"Error checking ACGME compliance: {str(e)}")
+            warnings.append("Operation failed")
 
         # Warnings for approaching limits
         if 75 <= avg_weekly_hours <= self.MAX_WEEKLY_HOURS_ACGME:

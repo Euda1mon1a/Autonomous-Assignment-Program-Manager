@@ -19,6 +19,7 @@ from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # TRACING CONFIGURATION
@@ -110,7 +111,7 @@ class TracingSetup:
                     f"Jaeger exporter configured: {self.config.jaeger_host}:{self.config.jaeger_port}"
                 )
             except Exception as e:
-                self.logger.warning(f"Failed to configure Jaeger: {e}")
+                self.logger.warning("Failed to configure Jaeger", exc_info=True)
 
                 # Add OTLP exporter
         if self.config.enable_otlp:
@@ -121,7 +122,7 @@ class TracingSetup:
                     f"OTLP exporter configured: {self.config.otlp_endpoint}"
                 )
             except Exception as e:
-                self.logger.warning(f"Failed to configure OTLP: {e}")
+                self.logger.warning("Failed to configure OTLP", exc_info=True)
 
                 # Set global tracer provider
         trace.set_tracer_provider(tracer_provider)
@@ -157,7 +158,7 @@ class TracingSetup:
                 readers.append(reader)
                 self.logger.info("OTLP metrics exporter configured")
             except Exception as e:
-                self.logger.warning(f"Failed to configure OTLP metrics: {e}")
+                self.logger.warning("Failed to configure OTLP metrics", exc_info=True)
 
                 # Create meter provider
         meter_provider = MeterProvider(resource=resource, metric_readers=readers)
@@ -182,7 +183,7 @@ class TracingSetup:
             )
             self.logger.info("FastAPI instrumentation configured")
         except Exception as e:
-            self.logger.warning(f"Failed to instrument FastAPI: {e}")
+            self.logger.warning("Failed to instrument FastAPI", exc_info=True)
 
     def instrument_sqlalchemy(self, engine: Any) -> None:
         """
@@ -198,7 +199,7 @@ class TracingSetup:
             )
             self.logger.info("SQLAlchemy instrumentation configured")
         except Exception as e:
-            self.logger.warning(f"Failed to instrument SQLAlchemy: {e}")
+            self.logger.warning("Failed to instrument SQLAlchemy", exc_info=True)
 
     def instrument_redis(self) -> None:
         """Instrument Redis client."""
@@ -208,7 +209,7 @@ class TracingSetup:
             )
             self.logger.info("Redis instrumentation configured")
         except Exception as e:
-            self.logger.warning(f"Failed to instrument Redis: {e}")
+            self.logger.warning("Failed to instrument Redis", exc_info=True)
 
     def instrument_requests(self) -> None:
         """Instrument requests library."""
@@ -218,7 +219,7 @@ class TracingSetup:
             )
             self.logger.info("Requests instrumentation configured")
         except Exception as e:
-            self.logger.warning(f"Failed to instrument Requests: {e}")
+            self.logger.warning("Failed to instrument Requests", exc_info=True)
 
     def setup_all(self, app: Any | None = None) -> None:
         """
@@ -406,7 +407,7 @@ class PerformanceTracer:
         }
 
         if error:
-            attributes["scheduler.error"] = str(error)
+            attributes["scheduler.error"] = "Operation failed"
 
         with self.tracer.start_as_current_span(
             "scheduler.execute", attributes=attributes

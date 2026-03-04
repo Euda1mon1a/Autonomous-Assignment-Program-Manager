@@ -257,12 +257,12 @@ def initialize_embeddings(
                     )
 
             except Exception as e:
-                logger.error(f"Error processing {filename}: {e}", exc_info=True)
+                logger.error(f"Error processing {filename}", exc_info=True)
                 results.append(
                     {
                         "filename": filename,
                         "status": "error",
-                        "error": str(e),
+                        "error": "Operation failed",
                         "doc_type": doc_type,
                     }
                 )
@@ -288,7 +288,7 @@ def initialize_embeddings(
         }
 
     except Exception as e:
-        logger.error(f"RAG initialization failed: {e}", exc_info=True)
+        logger.error("RAG initialization failed", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -376,7 +376,7 @@ def check_rag_health(self) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"RAG health check failed: {e}", exc_info=True)
+        logger.error("RAG health check failed", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -462,7 +462,7 @@ def clear_all_embeddings(self) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Failed to clear embeddings: {e}", exc_info=True)
+        logger.error("Failed to clear embeddings", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()

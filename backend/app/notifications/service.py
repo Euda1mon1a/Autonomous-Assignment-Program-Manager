@@ -468,7 +468,7 @@ class NotificationService:
 
             except Exception as e:
                 record.status = "failed"
-                record.error_message = str(e)
+                record.error_message = "Operation failed"
                 record.retry_count += 1
                 logger.error(
                     "Failed to send scheduled notification %s: %s",

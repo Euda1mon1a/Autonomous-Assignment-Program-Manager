@@ -318,7 +318,7 @@ class AbsenceService:
                     AbsenceValidationError(
                         index=idx,
                         field=None,
-                        message=str(e),
+                        message="Operation failed",
                         absence_data=None,
                     )
                 )
@@ -386,7 +386,7 @@ class AbsenceService:
                     AbsenceValidationError(
                         index=original_idx if original_idx is not None else idx,
                         field=None,
-                        message=f"Failed to create: {str(e)}",
+                        message="Operation failed",
                         absence_data=absence_create.model_dump(mode="json"),
                     )
                 )

@@ -151,7 +151,7 @@ class BackupService:
             return backup_id
 
         except Exception as e:
-            logger.error(f"Backup creation failed: {e}", exc_info=True)
+            logger.error("Backup creation failed", exc_info=True)
             raise ValueError(f"Backup creation failed: {e}")
 
     def _get_strategy(self, strategy: str) -> BackupStrategy:
@@ -243,7 +243,7 @@ class BackupService:
             raise ValueError(f"Backup {backup_id} not found")
 
         except Exception as e:
-            logger.error(f"Error getting backup info: {e}")
+            logger.error("Error getting backup info", exc_info=True)
             raise ValueError(f"Error getting backup info: {e}")
 
     def verify_backup(self, backup_id: str) -> bool:
@@ -283,7 +283,7 @@ class BackupService:
             return result
 
         except Exception as e:
-            logger.error(f"Failed to delete backup {backup_id}: {e}")
+            logger.error(f"Failed to delete backup {backup_id}", exc_info=True)
             raise ValueError(f"Failed to delete backup: {e}")
 
     def cleanup_old_backups(
@@ -382,7 +382,7 @@ class BackupService:
             return deleted_count
 
         except Exception as e:
-            logger.error(f"Backup cleanup failed: {e}", exc_info=True)
+            logger.error("Backup cleanup failed", exc_info=True)
             raise ValueError(f"Backup cleanup failed: {e}")
 
     def get_backup_statistics(self) -> dict[str, Any]:
@@ -430,9 +430,9 @@ class BackupService:
             }
 
         except Exception as e:
-            logger.error(f"Error calculating backup statistics: {e}")
+            logger.error("Error calculating backup statistics", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "total_count": 0,
                 "total_size_bytes": 0,
             }

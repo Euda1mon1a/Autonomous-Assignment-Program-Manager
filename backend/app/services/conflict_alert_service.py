@@ -525,7 +525,7 @@ class ConflictAlertService:
         except Exception as e:
             self.db.rollback()
             logger.error("Failed to apply conflict resolution: %s", e, exc_info=True)
-            return False, f"Error applying resolution: {str(e)}"
+            return False, "Error applying resolution"
 
     def validate_resolution(
         self,

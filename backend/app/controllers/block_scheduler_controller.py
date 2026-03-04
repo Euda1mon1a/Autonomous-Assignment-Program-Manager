@@ -17,6 +17,10 @@ from app.schemas.block_assignment import (
 )
 from app.services.block_scheduler_service import BlockSchedulerService
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class BlockSchedulerController:
     """Controller for block scheduler operations."""
@@ -113,7 +117,7 @@ class BlockSchedulerController:
                     status_code=409,
                     detail="Assignment already exists for this resident in this block",
                 )
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail="Invalid request")
 
         return self.get_assignment(assignment.id)
 

@@ -398,15 +398,17 @@ class DistributedLock:
                 await asyncio.sleep(wait_time)
 
         except redis.ConnectionError as e:
-            logger.error(f"Redis connection error while acquiring lock: {e}")
+            logger.error("Redis connection error while acquiring lock", exc_info=True)
             metrics.record_acquisition_failure(self.name, timed_out=False)
             raise LockAcquisitionError("Failed to acquire lock: Redis unavailable")
         except LockTimeoutError:
             raise
         except Exception as e:
-            logger.error(f"Unexpected error acquiring lock '{self.name}': {e}")
+            logger.error(
+                f"Unexpected error acquiring lock '{self.name}'", exc_info=True
+            )
             metrics.record_acquisition_failure(self.name, timed_out=False)
-            raise LockAcquisitionError(f"Failed to acquire lock: {str(e)}")
+            raise LockAcquisitionError("Failed to acquire lock") from e
 
     async def release(self) -> bool:
         """
@@ -473,11 +475,13 @@ class DistributedLock:
                 return False
 
         except redis.ConnectionError as e:
-            logger.error(f"Redis connection error while releasing lock: {e}")
+            logger.error("Redis connection error while releasing lock", exc_info=True)
             raise LockError("Failed to release lock: Redis unavailable")
         except Exception as e:
-            logger.error(f"Unexpected error releasing lock '{self.name}': {e}")
-            raise LockError(f"Failed to release lock: {str(e)}")
+            logger.error(
+                f"Unexpected error releasing lock '{self.name}'", exc_info=True
+            )
+            raise LockError("Failed to release lock") from e
 
     async def extend(self, additional_time: float) -> bool:
         """
@@ -541,15 +545,17 @@ class DistributedLock:
                 return False
 
         except redis.ConnectionError as e:
-            logger.error(f"Redis connection error while extending lock: {e}")
+            logger.error("Redis connection error while extending lock", exc_info=True)
             metrics = get_lock_metrics()
             metrics.record_renewal(success=False)
             raise LockRenewalError("Failed to extend lock: Redis unavailable")
         except Exception as e:
-            logger.error(f"Unexpected error extending lock '{self.name}': {e}")
+            logger.error(
+                f"Unexpected error extending lock '{self.name}'", exc_info=True
+            )
             metrics = get_lock_metrics()
             metrics.record_renewal(success=False)
-            raise LockRenewalError(f"Failed to extend lock: {str(e)}")
+            raise LockRenewalError("Failed to extend lock") from e
 
     async def renew(self) -> bool:
         """
@@ -604,15 +610,15 @@ class DistributedLock:
                 return False
 
         except redis.ConnectionError as e:
-            logger.error(f"Redis connection error while renewing lock: {e}")
+            logger.error("Redis connection error while renewing lock", exc_info=True)
             metrics = get_lock_metrics()
             metrics.record_renewal(success=False)
             raise LockRenewalError("Failed to renew lock: Redis unavailable")
         except Exception as e:
-            logger.error(f"Unexpected error renewing lock '{self.name}': {e}")
+            logger.error(f"Unexpected error renewing lock '{self.name}'", exc_info=True)
             metrics = get_lock_metrics()
             metrics.record_renewal(success=False)
-            raise LockRenewalError(f"Failed to renew lock: {str(e)}")
+            raise LockRenewalError("Failed to renew lock") from e
 
     async def _auto_renew_task(self, interval: float) -> None:
         """
@@ -630,7 +636,9 @@ class DistributedLock:
             # Task was cancelled (lock released)
             pass
         except Exception as e:
-            logger.error(f"Error in auto-renewal task for lock '{self.name}': {e}")
+            logger.error(
+                f"Error in auto-renewal task for lock '{self.name}'", exc_info=True
+            )
 
     def start_auto_renewal(self, interval: float = DEFAULT_RENEWAL_INTERVAL) -> None:
         """
@@ -1027,7 +1035,9 @@ class DeadlockDetector:
                         )
                     )
                 except (ValueError, KeyError) as e:
-                    logger.warning(f"Failed to parse lock info for {lock_name}: {e}")
+                    logger.warning(
+                        f"Failed to parse lock info for {lock_name}", exc_info=True
+                    )
 
         return active_locks
 

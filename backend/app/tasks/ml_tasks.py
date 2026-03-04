@@ -129,8 +129,11 @@ def train_ml_models(
                         "reason": f"Insufficient samples ({len(X)} < {min_samples})",
                     }
             except Exception as e:
-                logger.error(f"Preference model training failed: {e}")
-                results["preference"] = {"status": "failed", "error": str(e)}
+                logger.error("Preference model training failed", exc_info=True)
+                results["preference"] = {
+                    "status": "failed",
+                    "error": "Operation failed",
+                }
 
         # Train conflict predictor
         if "conflict" in model_types:
@@ -160,8 +163,8 @@ def train_ml_models(
                         "reason": f"Insufficient samples ({len(X)} < {min_samples})",
                     }
             except Exception as e:
-                logger.error(f"Conflict model training failed: {e}")
-                results["conflict"] = {"status": "failed", "error": str(e)}
+                logger.error("Conflict model training failed", exc_info=True)
+                results["conflict"] = {"status": "failed", "error": "Operation failed"}
 
         # Train workload optimizer
         if "workload" in model_types:
@@ -191,8 +194,8 @@ def train_ml_models(
                         "reason": f"Insufficient samples ({len(X)} < {min_samples // 2})",
                     }
             except Exception as e:
-                logger.error(f"Workload model training failed: {e}")
-                results["workload"] = {"status": "failed", "error": str(e)}
+                logger.error("Workload model training failed", exc_info=True)
+                results["workload"] = {"status": "failed", "error": "Operation failed"}
 
         trained_count = sum(1 for r in results.values() if r.get("status") == "trained")
         logger.info(
@@ -208,7 +211,7 @@ def train_ml_models(
         }
 
     except Exception as e:
-        logger.error(f"ML training failed: {e}", exc_info=True)
+        logger.error("ML training failed", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -284,7 +287,7 @@ def score_schedule(
         }
 
     except Exception as e:
-        logger.error(f"Schedule scoring failed: {e}", exc_info=True)
+        logger.error("Schedule scoring failed", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()

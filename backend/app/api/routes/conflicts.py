@@ -86,10 +86,10 @@ async def analyze_conflicts(
         }
 
     except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error analyzing conflicts: {e}", exc_info=True)
+        logger.error("Error analyzing conflicts", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error analyzing conflicts: {str(e)}",
+            detail="Error analyzing conflicts",
         )
 
 
@@ -139,7 +139,7 @@ async def get_conflict_summary(
         logger.exception("Error generating conflict summary")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error generating summary: {str(e)}",
+            detail="Error generating summary",
         )
 
 
@@ -195,7 +195,7 @@ async def get_conflict_timeline(
         logger.exception("Error generating conflict timeline")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error generating timeline: {str(e)}",
+            detail="Error generating timeline",
         )
 
 
@@ -240,7 +240,7 @@ async def get_conflict_heatmap(
         logger.exception("Error generating conflict heatmap")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error generating heatmap: {str(e)}",
+            detail="Error generating heatmap",
         )
 
 
@@ -284,7 +284,7 @@ async def get_conflict_gantt(
         logger.exception("Error generating conflict Gantt chart")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error generating Gantt chart: {str(e)}",
+            detail="Error generating Gantt chart",
         )
 
 
@@ -329,7 +329,7 @@ async def get_conflict_distribution(
         logger.exception("Error generating conflict distribution")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error generating distribution: {str(e)}",
+            detail="Error generating distribution",
         )
 
 
@@ -369,7 +369,7 @@ async def get_person_impact(
         logger.exception("Error generating person impact analysis")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error generating person impact: {str(e)}",
+            detail="Error generating person impact",
         )
 
 
@@ -464,5 +464,5 @@ async def batch_analyze_conflicts(
         logger.exception("Error in batch conflict analysis")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error in batch analysis: {str(e)}",
+            detail="Error in batch analysis",
         )

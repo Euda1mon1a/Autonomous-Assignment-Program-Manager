@@ -1048,7 +1048,7 @@ class AdvancedTaskScheduler:
                 asyncio.create_task(self._execute_task(task_execution))
 
             except Exception as e:
-                logger.error(f"Error in executor loop: {e}", exc_info=True)
+                logger.error("Error in executor loop", exc_info=True)
                 await asyncio.sleep(1)
 
     def _check_dependencies(self, task_execution: TaskExecution) -> bool:
@@ -1148,7 +1148,7 @@ class AdvancedTaskScheduler:
         except Exception as e:
             # Record failure
             task_execution.status = TaskStatus.FAILED
-            task_execution.error = str(e)
+            task_execution.error = "Operation failed"
             task_execution.traceback_str = traceback.format_exc()
             task_execution.completed_time = datetime.now(UTC)
 

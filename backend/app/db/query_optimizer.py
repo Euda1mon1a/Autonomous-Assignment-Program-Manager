@@ -167,11 +167,11 @@ class QueryAnalyzer:
             }
 
         except Exception as e:
-            logger.warning(f"Could not analyze query plan: {e}")
+            logger.warning("Could not analyze query plan", exc_info=True)
             return {
                 "query": str(query),
                 "plan": None,
-                "error": str(e),
+                "error": "Operation failed",
             }
 
     @staticmethod
@@ -204,10 +204,10 @@ class QueryAnalyzer:
             }
 
         except Exception as e:
-            logger.error(f"Error getting table stats for {table_name}: {e}")
+            logger.error(f"Error getting table stats for {table_name}", exc_info=True)
             return {
                 "table": table_name,
-                "error": str(e),
+                "error": "Operation failed",
             }
 
 
@@ -301,7 +301,7 @@ class BulkOperations:
             return len(data_list)
         except Exception as e:
             session.rollback()
-            logger.error(f"Bulk insert error: {e}")
+            logger.error("Bulk insert error", exc_info=True)
             return 0
 
     @staticmethod
@@ -326,7 +326,7 @@ class BulkOperations:
             return len(data_list)
         except Exception as e:
             session.rollback()
-            logger.error(f"Bulk update error: {e}")
+            logger.error("Bulk update error", exc_info=True)
             return 0
 
     @staticmethod
@@ -351,7 +351,7 @@ class BulkOperations:
             return len(ids)
         except Exception as e:
             session.rollback()
-            logger.error(f"Bulk delete error: {e}")
+            logger.error("Bulk delete error", exc_info=True)
             return 0
 
 

@@ -14,6 +14,10 @@ from app.schemas.person import (
 )
 from app.services.person_service import PersonService
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class PersonController:
     """Controller for person endpoints."""
@@ -167,7 +171,7 @@ class PersonController:
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e),
+                detail="Internal server error",
             )
 
     def batch_update_people(
@@ -194,7 +198,7 @@ class PersonController:
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e),
+                detail="Internal server error",
             )
 
     def batch_delete_people(
@@ -221,5 +225,5 @@ class PersonController:
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e),
+                detail="Internal server error",
             )

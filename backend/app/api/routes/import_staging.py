@@ -106,7 +106,7 @@ async def stage_import(
     try:
         content = await file.read()
     except Exception as e:
-        logger.error(f"Failed to read uploaded file: {e}", exc_info=True)
+        logger.error("Failed to read uploaded file", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
@@ -133,7 +133,7 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "error": str(e),
+                "error": "Operation failed",
                 "error_code": "SECURITY_VALIDATION_FAILED",
             },
         )
@@ -252,7 +252,7 @@ async def stage_yearly_import(
     try:
         validate_excel_upload(content, file.filename, file.content_type or "")
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
     from app.tasks.import_tasks import process_yearly_workbook
 

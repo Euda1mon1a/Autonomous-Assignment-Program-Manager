@@ -226,13 +226,13 @@ class DataAnonymizer:
             )
 
         except Exception as e:
-            logger.error(f"Error anonymizing record: {e}", exc_info=True)
+            logger.error("Error anonymizing record", exc_info=True)
             return AnonymizationResult(
                 success=False,
                 anonymized_data=record,
                 original_count=1,
                 anonymized_count=0,
-                errors=[str(e)],
+                errors=["Operation failed"],
             )
 
     def anonymize_batch(
@@ -331,13 +331,13 @@ class DataAnonymizer:
             )
 
         except Exception as e:
-            logger.error(f"Error in batch anonymization: {e}", exc_info=True)
+            logger.error("Error in batch anonymization", exc_info=True)
             return AnonymizationResult(
                 success=False,
                 anonymized_data=records,
                 original_count=len(records),
                 anonymized_count=0,
-                errors=[str(e)],
+                errors=["Operation failed"],
             )
 
     def _mask_record(
@@ -425,7 +425,7 @@ class DataAnonymizer:
             return audit.id
 
         except Exception as e:
-            logger.error(f"Error creating audit entry: {e}")
+            logger.error("Error creating audit entry", exc_info=True)
             self.db.rollback()
             return None
 

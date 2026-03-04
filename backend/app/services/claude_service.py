@@ -86,16 +86,16 @@ class ClaudeService:
                 )
 
         except anthropic.APIError as e:
-            logger.error(f"Claude API error: {str(e)}")
+            logger.error("Claude API error", exc_info=True)
             yield StreamUpdate(
                 type="error",
-                content=f"API Error: {str(e)}",
+                content="Internal error",
             )
         except Exception as e:
-            logger.error(f"Unexpected error in stream_task: {str(e)}")
+            logger.error("Unexpected error in stream_task", exc_info=True)
             yield StreamUpdate(
                 type="error",
-                content=f"Unexpected error: {str(e)}",
+                content="Internal error",
             )
 
     async def execute_task(
@@ -131,7 +131,7 @@ class ClaudeService:
                 },
             }
         except Exception as e:
-            logger.error(f"Task execution error: {str(e)}")
+            logger.error("Task execution error", exc_info=True)
             raise
 
     def _build_system_prompt(self, action: str) -> str:

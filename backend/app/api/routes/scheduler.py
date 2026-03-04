@@ -102,9 +102,9 @@ async def create_job(
         return JobResponseSchema.model_validate(job)
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Error creating job: {e}", exc_info=True)
+        logger.error("Error creating job", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create job")
 
 
@@ -136,7 +136,7 @@ async def list_jobs(
         )
 
     except Exception as e:
-        logger.error(f"Error listing jobs: {e}", exc_info=True)
+        logger.error("Error listing jobs", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list jobs")
 
 
@@ -166,7 +166,7 @@ async def get_job(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting job: {e}", exc_info=True)
+        logger.error("Error getting job", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get job")
 
 
@@ -225,7 +225,7 @@ async def update_job(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating job: {e}", exc_info=True)
+        logger.error("Error updating job", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to update job")
 
 
@@ -265,7 +265,7 @@ async def delete_job(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting job: {e}", exc_info=True)
+        logger.error("Error deleting job", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to delete job")
 
 
@@ -309,7 +309,7 @@ async def pause_job(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error pausing job: {e}", exc_info=True)
+        logger.error("Error pausing job", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to pause job")
 
 
@@ -348,7 +348,7 @@ async def resume_job(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error resuming job: {e}", exc_info=True)
+        logger.error("Error resuming job", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to resume job")
 
 
@@ -406,7 +406,7 @@ async def get_job_executions(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting job executions: {e}", exc_info=True)
+        logger.error("Error getting job executions", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get job executions")
 
 
@@ -445,7 +445,7 @@ async def get_all_executions(
         )
 
     except Exception as e:
-        logger.error(f"Error getting executions: {e}", exc_info=True)
+        logger.error("Error getting executions", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get executions")
 
 
@@ -483,7 +483,7 @@ async def get_job_statistics(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting job statistics: {e}", exc_info=True)
+        logger.error("Error getting job statistics", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get job statistics")
 
 
@@ -518,7 +518,7 @@ async def sync_scheduler(
         return SyncResultSchema(**result)
 
     except Exception as e:
-        logger.error(f"Error syncing scheduler: {e}", exc_info=True)
+        logger.error("Error syncing scheduler", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to sync scheduler")
 
 
@@ -546,5 +546,5 @@ async def get_scheduler_status(
         }
 
     except Exception as e:
-        logger.error(f"Error getting scheduler status: {e}", exc_info=True)
+        logger.error("Error getting scheduler status", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get scheduler status")

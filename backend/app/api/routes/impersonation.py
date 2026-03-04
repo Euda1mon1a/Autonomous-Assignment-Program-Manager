@@ -135,13 +135,13 @@ async def start_impersonation(
         logger.warning("Impersonation forbidden: %s", e)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e),
+            detail="Internal server error",
         )
     except ValueError as e:
         logger.warning("Impersonation target not found: %s", e)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
+            detail="Internal server error",
         )
 
 
@@ -197,7 +197,7 @@ async def end_impersonation(
         response.delete_cookie(key="impersonation_token", path="/")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Internal server error",
         )
 
 

@@ -177,13 +177,13 @@ class LLMProvider(ABC):
                 error_message=None,
             )
         except Exception as e:
-            logger.error(f"Health check failed for {self.name}: {str(e)}")
+            logger.error(f"Health check failed for {self.name}", exc_info=True)
             return ProviderHealth(
                 provider=self.name,
                 is_available=False,
                 last_check=datetime.now(UTC),
                 failure_count=self._failure_count,
-                error_message=str(e),
+                error_message="Operation failed",
             )
 
     def _record_success(self, latency_ms: float) -> None:
@@ -303,12 +303,12 @@ class MLXProvider(LLMProvider):
             ) from e
         except httpx.RequestError as e:
             self._record_failure()
-            logger.error(f"MLX request error: {str(e)}")
-            raise LLMProviderError(f"MLX connection failed: {str(e)}") from e
+            logger.error("MLX request error", exc_info=True)
+            raise LLMProviderError("MLX connection failed") from e
         except Exception as e:
             self._record_failure()
-            logger.error(f"MLX unexpected error: {str(e)}")
-            raise LLMProviderError(f"MLX error: {str(e)}") from e
+            logger.error("MLX unexpected error", exc_info=True)
+            raise LLMProviderError("MLX error") from e
 
     async def generate_with_tools(
         self,
@@ -376,8 +376,8 @@ class MLXProvider(LLMProvider):
 
         except Exception as e:
             self._record_failure()
-            logger.error(f"MLX tool calling error: {str(e)}")
-            raise LLMProviderError(f"MLX tool calling failed: {str(e)}") from e
+            logger.error("MLX tool calling error", exc_info=True)
+            raise LLMProviderError("MLX tool calling failed") from e
 
     async def stream_generate(  # type: ignore[override]
         self,
@@ -440,8 +440,8 @@ class MLXProvider(LLMProvider):
 
         except Exception as e:
             self._record_failure()
-            logger.error(f"MLX streaming error: {str(e)}")
-            raise LLMProviderError(f"MLX streaming failed: {str(e)}") from e
+            logger.error("MLX streaming error", exc_info=True)
+            raise LLMProviderError("MLX streaming failed") from e
 
     def is_available(self) -> bool:
         if not self._is_available:
@@ -553,12 +553,12 @@ class OllamaProvider(LLMProvider):
             ) from e
         except httpx.RequestError as e:
             self._record_failure()
-            logger.error(f"Ollama request error: {str(e)}")
-            raise LLMProviderError(f"Ollama connection failed: {str(e)}") from e
+            logger.error("Ollama request error", exc_info=True)
+            raise LLMProviderError("Ollama connection failed") from e
         except Exception as e:
             self._record_failure()
-            logger.error(f"Ollama unexpected error: {str(e)}")
-            raise LLMProviderError(f"Ollama error: {str(e)}") from e
+            logger.error("Ollama unexpected error", exc_info=True)
+            raise LLMProviderError("Ollama error") from e
 
     async def generate_with_tools(
         self,
@@ -628,8 +628,8 @@ class OllamaProvider(LLMProvider):
 
         except Exception as e:
             self._record_failure()
-            logger.error(f"Ollama tool calling error: {str(e)}")
-            raise LLMProviderError(f"Ollama tool calling failed: {str(e)}") from e
+            logger.error("Ollama tool calling error", exc_info=True)
+            raise LLMProviderError("Ollama tool calling failed") from e
 
     async def stream_generate(  # type: ignore[override]
         self,
@@ -686,8 +686,8 @@ class OllamaProvider(LLMProvider):
 
         except Exception as e:
             self._record_failure()
-            logger.error(f"Ollama streaming error: {str(e)}")
-            raise LLMProviderError(f"Ollama streaming failed: {str(e)}") from e
+            logger.error("Ollama streaming error", exc_info=True)
+            raise LLMProviderError("Ollama streaming failed") from e
 
     def is_available(self) -> bool:
         """
@@ -803,8 +803,8 @@ class AnthropicProvider(LLMProvider):
 
         except Exception as e:
             self._record_failure()
-            logger.error(f"Anthropic generation error: {str(e)}")
-            raise LLMProviderError(f"Anthropic generation failed: {str(e)}") from e
+            logger.error("Anthropic generation error", exc_info=True)
+            raise LLMProviderError("Anthropic generation failed") from e
 
     async def generate_with_tools(
         self,
@@ -867,8 +867,8 @@ class AnthropicProvider(LLMProvider):
 
         except Exception as e:
             self._record_failure()
-            logger.error(f"Anthropic tool calling error: {str(e)}")
-            raise LLMProviderError(f"Anthropic tool calling failed: {str(e)}") from e
+            logger.error("Anthropic tool calling error", exc_info=True)
+            raise LLMProviderError("Anthropic tool calling failed") from e
 
     async def stream_generate(  # type: ignore[override]
         self,
@@ -910,8 +910,8 @@ class AnthropicProvider(LLMProvider):
 
         except Exception as e:
             self._record_failure()
-            logger.error(f"Anthropic streaming error: {str(e)}")
-            raise LLMProviderError(f"Anthropic streaming failed: {str(e)}") from e
+            logger.error("Anthropic streaming error", exc_info=True)
+            raise LLMProviderError("Anthropic streaming failed") from e
 
     def is_available(self) -> bool:
         """
@@ -1145,9 +1145,7 @@ class LLMRouter:
             return response
 
         except (LLMProviderError, ProviderUnavailableError) as e:
-            logger.warning(
-                f"Provider {provider_name} failed: {str(e)}, attempting fallback"
-            )
+            logger.warning(f"Provider {provider_name} failed, attempting fallback")
             self.stats.error_count += 1
 
             # Try fallback chain if enabled
@@ -1276,7 +1274,7 @@ class LLMRouter:
                 return response
 
             except Exception as e:
-                logger.warning(f"Fallback to {provider_name} failed: {str(e)}")
+                logger.warning(f"Fallback to {provider_name} failed", exc_info=True)
                 continue
 
         # All providers failed

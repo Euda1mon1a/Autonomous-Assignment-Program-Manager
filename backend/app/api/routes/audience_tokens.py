@@ -281,7 +281,7 @@ async def request_audience_token(
         # Invalid audience or TTL
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Internal server error",
         )
     except Exception as e:
         logger.error(

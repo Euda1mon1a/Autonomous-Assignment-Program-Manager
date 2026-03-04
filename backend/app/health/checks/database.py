@@ -88,10 +88,10 @@ class DatabaseHealthCheck:
 
         except Exception as e:
             response_time_ms = (time.time() - start_time) * 1000
-            logger.error(f"Database health check failed: {e}", exc_info=True)
+            logger.error("Database health check failed", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": str(e),
+                "error": "Operation failed",
                 "response_time_ms": round(response_time_ms, 2),
             }
 
@@ -133,10 +133,10 @@ class DatabaseHealthCheck:
             }
 
         except SQLAlchemyError as e:
-            logger.error(f"Database health check failed: {e}")
+            logger.error("Database health check failed", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": f"Database error: {str(e)}",
+                "error": "Operation failed",
             }
 
         finally:
@@ -163,7 +163,7 @@ class DatabaseHealthCheck:
             }
 
         except Exception as e:
-            logger.warning(f"Failed to get pool status: {e}")
+            logger.warning("Failed to get pool status", exc_info=True)
             return {
                 "error": "Could not retrieve pool status",
             }
@@ -268,11 +268,11 @@ class DatabaseHealthCheck:
             if db:
                 db.rollback()
 
-            logger.error(f"Database read-write check failed: {e}")
+            logger.error("Database read-write check failed", exc_info=True)
             return {
                 "status": "degraded",
                 "read_write": "failed",
-                "error": str(e),
+                "error": "Operation failed",
             }
 
         finally:

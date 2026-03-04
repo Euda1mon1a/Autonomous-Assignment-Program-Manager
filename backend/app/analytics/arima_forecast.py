@@ -241,7 +241,7 @@ class ARIMAForecaster:
                     f"BIC={self.model_.bic:.2f}"
                 )
             except Exception as e:
-                logger.warning(f"ARIMA fitting failed: {e}. Using fallback.")
+                logger.warning("ARIMA fitting failed. Using fallback.", exc_info=True)
                 self._fit_fallback()
 
         return self
@@ -284,7 +284,7 @@ class ARIMAForecaster:
                     logger.debug(f"Series stationary at d={d} (p={p_value:.4f})")
                     return d
             except Exception as e:
-                logger.debug(f"ADF test failed at d={d}: {e}")
+                logger.debug(f"ADF test failed at d={d}", exc_info=True)
                 continue
 
         return 1  # Default if no stationarity found
@@ -399,7 +399,9 @@ class ARIMAForecaster:
                         }
                     )
             except Exception as e:
-                logger.warning(f"Statsmodels forecast failed: {e}. Using fallback.")
+                logger.warning(
+                    "Statsmodels forecast failed. Using fallback.", exc_info=True
+                )
                 forecasts = self._forecast_fallback(periods, alpha)
         else:
             # Fallback forecast
@@ -622,5 +624,5 @@ def check_stationarity(
     except Exception as e:
         return {
             "is_stationary": None,
-            "error": str(e),
+            "error": "Operation failed",
         }

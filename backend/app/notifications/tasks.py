@@ -186,7 +186,7 @@ def send_email(
             to,
             self.request.retries + 1,
             self.max_retries + 1,
-            str(e),
+            "Operation failed",
         )
         # Let autoretry_for handle the retry, or raise to trigger it
         raise
@@ -240,7 +240,7 @@ def send_webhook(
             url,
             self.request.retries + 1,
             self.max_retries + 1,
-            str(e),
+            "Operation failed",
         )
         raise
 
@@ -317,6 +317,6 @@ def detect_leave_conflicts(
             absence_id,
             self.request.retries + 1,
             self.max_retries + 1,
-            str(e),
+            "Operation failed",
         )
         raise

@@ -183,11 +183,11 @@ class HTTPHealthProbe(HealthProbe):
 
         except Exception as e:
             response_time_ms = (time.time() - start_time) * 1000
-            logger.debug(f"Health check failed for {url}: {e}")
+            logger.debug(f"Health check failed for {url}", exc_info=True)
             return HealthCheckResult(
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=response_time_ms,
-                error=str(e),
+                error="Operation failed",
                 details={"url": url},
             )
 
@@ -259,7 +259,7 @@ class TCPHealthProbe(HealthProbe):
             return HealthCheckResult(
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=response_time_ms,
-                error=str(e),
+                error="Operation failed",
                 details={
                     "host": instance.host,
                     "port": instance.port,
@@ -375,7 +375,7 @@ class ServiceHealthChecker:
 
             return HealthCheckResult(
                 status=HealthStatus.UNHEALTHY,
-                error=str(e),
+                error="Operation failed",
             )
 
     async def check_all_services(self) -> dict[str, list[HealthCheckResult]]:
@@ -437,7 +437,7 @@ class ServiceHealthChecker:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error in health check loop: {e}", exc_info=True)
+                logger.error("Error in health check loop", exc_info=True)
                 await asyncio.sleep(self.check_interval)
 
     def get_stats(self) -> dict[str, Any]:

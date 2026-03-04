@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-02-26T23:24:17Z
+ * Generated at: 2026-03-04T14:51:39Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:

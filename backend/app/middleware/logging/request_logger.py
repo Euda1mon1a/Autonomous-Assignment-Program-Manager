@@ -218,7 +218,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         try:
             self.config.storage.store(log_entry)
         except Exception as e:
-            logger.error(f"Failed to store request log: {e}")
+            logger.error("Failed to store request log", exc_info=True)
 
         return log_entry
 
@@ -264,7 +264,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 }
 
         except Exception as e:
-            logger.error(f"Error reading request body: {e}")
+            logger.error("Error reading request body", exc_info=True)
             return None
 
     async def _log_response(
@@ -313,7 +313,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         try:
             self.config.storage.store(log_entry)
         except Exception as e:
-            logger.error(f"Failed to store response log: {e}")
+            logger.error("Failed to store response log", exc_info=True)
 
     async def _log_error(
         self,
@@ -333,7 +333,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             "duration_ms": round(duration_ms, 2),
             "user_id": user_id,
             "error_type": type(error).__name__,
-            "error_message": str(error),
+            "error_message": "Request error",
         }
 
         logger.error(
@@ -346,7 +346,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         try:
             self.config.storage.store(log_entry)
         except Exception as e:
-            logger.error(f"Failed to store error log: {e}")
+            logger.error("Failed to store error log", exc_info=True)
 
     def _get_log_level(self, path: str) -> str:
         """Get log level for path."""

@@ -160,7 +160,7 @@ class ThrottleStorage:
                 return False, "Maximum concurrent requests reached"
 
         except Exception as e:
-            logger.error(f"Error acquiring throttle slot: {e}")
+            logger.error("Error acquiring throttle slot", exc_info=True)
             # Fail open: allow request if Redis fails
             return True, None
 
@@ -199,7 +199,7 @@ class ThrottleStorage:
             return False
 
         except Exception as e:
-            logger.error(f"Error releasing throttle slot: {e}")
+            logger.error("Error releasing throttle slot", exc_info=True)
             return False
 
     async def enqueue_request(
@@ -299,8 +299,8 @@ class ThrottleStorage:
                 return False, "Queue is full"
 
         except Exception as e:
-            logger.error(f"Error enqueueing request: {e}")
-            return False, f"Queue error: {str(e)}"
+            logger.error("Error enqueueing request", exc_info=True)
+            return False, "Queue error"
 
     async def dequeue_request(self, request_id: str) -> bool:
         """
@@ -331,7 +331,7 @@ class ThrottleStorage:
             return False
 
         except Exception as e:
-            logger.error(f"Error dequeuing request: {e}")
+            logger.error("Error dequeuing request", exc_info=True)
             return False
 
     async def get_metrics(
@@ -382,7 +382,7 @@ class ThrottleStorage:
             )
 
         except Exception as e:
-            logger.error(f"Error getting throttle metrics: {e}")
+            logger.error("Error getting throttle metrics", exc_info=True)
             return ThrottleMetrics(
                 active_requests=0,
                 queued_requests=0,
@@ -414,5 +414,5 @@ class ThrottleStorage:
             return active_cleaned, queue_cleaned
 
         except Exception as e:
-            logger.error(f"Error cleaning up expired requests: {e}")
+            logger.error("Error cleaning up expired requests", exc_info=True)
             return 0, 0

@@ -34,6 +34,10 @@ from app.schemas.rotation_template_gui import (
     WeeklyPatternResponse,
 )
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class RotationTemplateService:
     """Service for rotation template operations including patterns and preferences.
@@ -1256,7 +1260,7 @@ class RotationTemplateService:
                         "index": idx,
                         "template_id": tid,
                         "success": False,
-                        "error": f"Pattern validation failed: {str(e)}",
+                        "error": "Operation failed",
                     }
                     for idx, tid in enumerate(template_ids)
                 ],
@@ -1351,7 +1355,7 @@ class RotationTemplateService:
                         "index": idx,
                         "template_id": tid,
                         "success": False,
-                        "error": f"Preference validation failed: {str(e)}",
+                        "error": "Operation failed",
                     }
                     for idx, tid in enumerate(template_ids)
                 ],
@@ -1482,7 +1486,7 @@ class RotationTemplateService:
                     results[idx]["slots_modified"] = slots_modified
                 except Exception as e:
                     results[idx]["success"] = False
-                    results[idx]["error"] = str(e)
+                    results[idx]["error"] = "Operation failed"
 
                     # Recalculate success/failure counts
         successful = sum(1 for r in results if r["success"])

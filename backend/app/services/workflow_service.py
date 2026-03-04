@@ -84,7 +84,7 @@ class WorkflowService:
 
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Failed to create workflow template '{name}': {str(e)}")
+            logger.error(f"Failed to create workflow template '{name}'", exc_info=True)
             raise
 
     def get_template(
@@ -252,9 +252,7 @@ class WorkflowService:
 
         except Exception as e:
             self.db.rollback()
-            logger.error(
-                f"Failed to start workflow '{template_name}': {str(e)}", exc_info=True
-            )
+            logger.error(f"Failed to start workflow '{template_name}'", exc_info=True)
             raise
 
     def get_instance(self, instance_id: UUID) -> WorkflowInstance | None:
@@ -305,7 +303,7 @@ class WorkflowService:
 
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Failed to cancel workflow {instance_id}: {str(e)}")
+            logger.error(f"Failed to cancel workflow {instance_id}", exc_info=True)
             raise
 
     # ========================================================================

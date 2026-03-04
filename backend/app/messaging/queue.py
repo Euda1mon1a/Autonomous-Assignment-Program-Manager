@@ -318,7 +318,7 @@ class MessageQueueAdapter(ABC):
         try:
             return json.dumps(message.body, default=str).encode("utf-8")
         except (TypeError, ValueError) as e:
-            logger.error(f"Failed to serialize message: {e}")
+            logger.error("Failed to serialize message", exc_info=True)
             raise
 
     def deserialize_message(self, body: bytes) -> Any:
@@ -334,7 +334,7 @@ class MessageQueueAdapter(ABC):
         try:
             return json.loads(body.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
-            logger.error(f"Failed to deserialize message: {e}")
+            logger.error("Failed to deserialize message", exc_info=True)
             raise
 
     @property
@@ -401,7 +401,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
             logger.error("aio_pika not installed. Install with: pip install aio-pika")
             raise
         except Exception as e:
-            logger.error(f"Failed to connect to RabbitMQ: {e}")
+            logger.error("Failed to connect to RabbitMQ", exc_info=True)
             raise
 
     async def disconnect(self) -> None:
@@ -417,7 +417,9 @@ class RabbitMQAdapter(MessageQueueAdapter):
                 try:
                     await consumer.cancel()
                 except Exception as e:
-                    logger.warning(f"Error canceling consumer {consumer_tag}: {e}")
+                    logger.warning(
+                        f"Error canceling consumer {consumer_tag}", exc_info=True
+                    )
 
                     # Close channel and connection
             if self._channel and not self._channel.is_closed:
@@ -430,7 +432,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
             logger.info("Disconnected from RabbitMQ")
 
         except Exception as e:
-            logger.error(f"Error disconnecting from RabbitMQ: {e}")
+            logger.error("Error disconnecting from RabbitMQ", exc_info=True)
         finally:
             self._closing = False
             self._channel = None
@@ -497,7 +499,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
             return True
 
         except Exception as e:
-            logger.error(f"Failed to publish message: {e}")
+            logger.error("Failed to publish message", exc_info=True)
             return False
 
     async def consume(
@@ -555,7 +557,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
                             await message.ack()
 
                     except Exception as e:
-                        logger.error(f"Error processing message: {e}", exc_info=True)
+                        logger.error("Error processing message", exc_info=True)
                         # Auto-nack on error if manual ack mode
                         if ack_mode == AckMode.MANUAL:
                             await message.nack(requeue=False)
@@ -570,7 +572,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
             logger.info(f"Started consuming from queue {queue} (ack_mode={ack_mode})")
 
         except Exception as e:
-            logger.error(f"Failed to start consumer: {e}")
+            logger.error("Failed to start consumer", exc_info=True)
             raise
 
     async def ack(self, delivery_tag: Any) -> None:
@@ -735,7 +737,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
             logger.error("redis not installed. Install with: pip install redis")
             raise
         except Exception as e:
-            logger.error(f"Failed to connect to Redis: {e}")
+            logger.error("Failed to connect to Redis", exc_info=True)
             raise
 
     async def disconnect(self) -> None:
@@ -766,7 +768,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
             logger.info("Disconnected from Redis")
 
         except Exception as e:
-            logger.error(f"Error disconnecting from Redis: {e}")
+            logger.error("Error disconnecting from Redis", exc_info=True)
         finally:
             self._closing = False
             self._redis = None
@@ -834,7 +836,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
             return True
 
         except Exception as e:
-            logger.error(f"Failed to publish message to Redis: {e}")
+            logger.error("Failed to publish message to Redis", exc_info=True)
             return False
 
     async def consume(
@@ -892,7 +894,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
                         await self._redis.lrem(processing_key, 1, serialized)
 
                     except Exception as e:
-                        logger.error(f"Error processing message: {e}", exc_info=True)
+                        logger.error("Error processing message", exc_info=True)
 
                         # Remove from processing queue
                         await self._redis.lrem(processing_key, 1, serialized)
@@ -903,7 +905,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
                         if retry_count < retry_policy.max_retries:
                             # Update retry count
                             envelope["metadata"]["retry_count"] = retry_count + 1
-                            envelope["metadata"]["last_error"] = str(e)
+                            envelope["metadata"]["last_error"] = "Processing failed"
 
                             # Calculate delay
                             delay = retry_policy.get_delay(retry_count)
@@ -928,7 +930,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
                         else:
                             # Max retries exceeded, send to DLQ
                             envelope["metadata"]["dlq_reason"] = "max_retries_exceeded"
-                            envelope["metadata"]["last_error"] = str(e)
+                            envelope["metadata"]["last_error"] = "Processing failed"
 
                             await self._redis.lpush(
                                 dlq_key,
@@ -943,7 +945,7 @@ class RedisQueueAdapter(MessageQueueAdapter):
                     logger.info(f"Consumer for {queue} cancelled")
                     break
                 except Exception as e:
-                    logger.error(f"Error in consumer loop: {e}", exc_info=True)
+                    logger.error("Error in consumer loop", exc_info=True)
                     await asyncio.sleep(self.config.reconnect_delay)
 
                     # Start consumer task

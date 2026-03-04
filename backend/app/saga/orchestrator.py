@@ -208,14 +208,14 @@ class SagaOrchestrator:
             logger.exception(f"Unexpected error in saga {saga_id}")
             saga_exec.status = SagaStatus.FAILED.value
             saga_exec.completed_at = datetime.now(UTC)
-            saga_exec.error_message = str(e)
+            saga_exec.error_message = "Operation failed"
             self.db.commit()
 
             await self._log_event(
                 saga_exec.id,
                 "saga_error",
-                {"error": str(e)},
-                f"Saga failed with error: {str(e)}",
+                {"error": "Operation failed"},
+                "Saga failed",
             )
 
             raise
@@ -284,10 +284,10 @@ class SagaOrchestrator:
 
         except Exception as e:
             # Saga failed, trigger compensation
-            logger.error(f"Saga {context.saga_id} failed: {e}")
+            logger.error(f"Saga {context.saga_id} failed", exc_info=True)
             result.status = SagaStatus.FAILED
             result.completed_at = datetime.now(UTC)
-            result.error_message = str(e)
+            result.error_message = "Operation failed"
 
             # Compensate completed steps
             compensated = await self._compensate_saga(definition, context, saga_exec)
@@ -458,9 +458,9 @@ class SagaOrchestrator:
                     return result
 
             except Exception as e:
-                error_msg = str(e)
+                error_msg = "Step execution failed"
                 logger.error(
-                    f"Step {step_def.name} failed (attempt {attempt + 1}): {e}",
+                    f"Step {step_def.name} failed (attempt {attempt + 1})",
                     exc_info=True,
                 )
 
@@ -671,7 +671,7 @@ class SagaOrchestrator:
                 error_msg = f"Compensation failed for step '{step_exec.step_name}': {e}"
                 logger.error(error_msg, exc_info=True)
 
-                step_exec.compensation_error = str(e)
+                step_exec.compensation_error = "Operation failed"
                 self.db.commit()
 
                 compensation_errors.append(error_msg)
@@ -679,7 +679,7 @@ class SagaOrchestrator:
                 await self._log_event(
                     saga_exec.id,
                     "compensation_error",
-                    {"step_name": step_exec.step_name, "error": str(e)},
+                    {"step_name": step_exec.step_name, "error": "Operation failed"},
                     error_msg,
                     step_id=step_exec.id,
                 )

@@ -1226,7 +1226,9 @@ class PermissionCache:
             logger.info("Permission cache connected to Redis")
             return self._redis
         except (RedisError, OSError) as e:
-            logger.warning(f"Failed to connect to Redis for permission cache: {e}")
+            logger.warning(
+                "Failed to connect to Redis for permission cache", exc_info=True
+            )
             self._fallback_mode = True
             self._redis = None
             return None
@@ -1259,7 +1261,7 @@ class PermissionCache:
             permissions = json.loads(data)
             return set(permissions)
         except (RedisError, json.JSONDecodeError) as e:
-            logger.warning(f"Failed to get role permissions from cache: {e}")
+            logger.warning("Failed to get role permissions from cache", exc_info=True)
             return None
 
     async def set_role_permissions(
@@ -1277,7 +1279,7 @@ class PermissionCache:
             logger.debug(f"Cached permissions for role {role} (TTL: {ttl}s)")
             return True
         except (RedisError, json.JSONEncodeError) as e:
-            logger.warning(f"Failed to cache role permissions: {e}")
+            logger.warning("Failed to cache role permissions", exc_info=True)
             return False
 
     async def get_user_permissions(self, user_id: str) -> set[str] | None:
@@ -1293,7 +1295,7 @@ class PermissionCache:
             permissions = json.loads(data)
             return set(permissions)
         except (RedisError, json.JSONDecodeError) as e:
-            logger.warning(f"Failed to get user permissions from cache: {e}")
+            logger.warning("Failed to get user permissions from cache", exc_info=True)
             return None
 
     async def set_user_permissions(
@@ -1311,7 +1313,7 @@ class PermissionCache:
             logger.debug(f"Cached permissions for user {user_id} (TTL: {ttl}s)")
             return True
         except (RedisError, json.JSONEncodeError) as e:
-            logger.warning(f"Failed to cache user permissions: {e}")
+            logger.warning("Failed to cache user permissions", exc_info=True)
             return False
 
     async def invalidate_user_permissions(self, user_id: str) -> bool:
@@ -1325,7 +1327,7 @@ class PermissionCache:
             logger.debug(f"Invalidated permissions cache for user {user_id}")
             return True
         except RedisError as e:
-            logger.warning(f"Failed to invalidate user permissions: {e}")
+            logger.warning("Failed to invalidate user permissions", exc_info=True)
             return False
 
     async def invalidate_role_permissions(self, role: UserRole | str) -> bool:
@@ -1339,7 +1341,7 @@ class PermissionCache:
             logger.debug(f"Invalidated permissions cache for role {role}")
             return True
         except RedisError as e:
-            logger.warning(f"Failed to invalidate role permissions: {e}")
+            logger.warning("Failed to invalidate role permissions", exc_info=True)
             return False
 
     async def invalidate_all_permissions(self) -> bool:
@@ -1367,7 +1369,7 @@ class PermissionCache:
             logger.info(f"Invalidated {deleted_count} permission cache entries")
             return True
         except RedisError as e:
-            logger.warning(f"Failed to invalidate all permissions: {e}")
+            logger.warning("Failed to invalidate all permissions", exc_info=True)
             return False
 
     async def warm_cache(self, permissions_map: dict[UserRole, set[str]]) -> int:
@@ -1432,10 +1434,10 @@ class PermissionCache:
                 "hit_rate": self._calculate_hit_rate(info),
             }
         except RedisError as e:
-            logger.warning(f"Failed to get cache stats: {e}")
+            logger.warning("Failed to get cache stats", exc_info=True)
             return {
                 "status": "error",
-                "error": str(e),
+                "error": "Operation failed",
                 "fallback_mode": True,
             }
 

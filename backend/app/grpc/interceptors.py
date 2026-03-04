@@ -95,7 +95,7 @@ class AuthenticationInterceptor(grpc.ServerInterceptor):
             return continuation(handler_call_details)
 
         except Exception as e:
-            logger.error(f"Authentication error: {e}", exc_info=True)
+            logger.error("Authentication error", exc_info=True)
             return self._unauthenticated_handler()
         finally:
             db.close()
@@ -235,7 +235,7 @@ class ErrorHandlingInterceptor(grpc.ServerInterceptor):
         # Map exception types to gRPC status codes
         if isinstance(exception, (ValueError, TypeError)):
             status_code = grpc.StatusCode.INVALID_ARGUMENT
-            message = str(exception)
+            message = "Operation failed"
         elif isinstance(exception, PermissionError):
             status_code = grpc.StatusCode.PERMISSION_DENIED
             message = "Permission denied"
@@ -248,7 +248,7 @@ class ErrorHandlingInterceptor(grpc.ServerInterceptor):
         elif hasattr(exception, "status_code"):
             # Handle custom exceptions with status_code attribute
             status_code = grpc.StatusCode.INTERNAL
-            message = getattr(exception, "message", str(exception))
+            message = getattr(exception, "message", "Operation failed")
         else:
             status_code = grpc.StatusCode.INTERNAL
             # Don't leak internal details in production

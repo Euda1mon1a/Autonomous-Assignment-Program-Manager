@@ -118,7 +118,7 @@ class ChainSwapCoordinator:
         try:
             cycles = list(nx.simple_cycles(graph))
         except Exception as e:
-            logger.warning(f"Error finding cycles: {e}")
+            logger.warning("Error finding cycles", exc_info=True)
             cycles = []
 
         for cycle in cycles:
@@ -207,10 +207,10 @@ class ChainSwapCoordinator:
 
         except Exception as e:
             await self.db.rollback()
-            logger.exception(f"Failed to execute chain {chain.chain_id}: {e}")
+            logger.exception(f"Failed to execute chain {chain.chain_id}", exc_info=True)
             return {
                 "success": False,
-                "error": str(e),
+                "error": "Operation failed",
             }
 
     async def validate_chain(self, chain: SwapChain) -> tuple[bool, list[str]]:

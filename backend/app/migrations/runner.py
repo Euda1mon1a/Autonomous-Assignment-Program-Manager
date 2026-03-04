@@ -455,7 +455,7 @@ class MigrationLockManager:
             logger.info(f"Lock '{lock.lock_name}' released by {self.lock_holder_id}")
 
         except Exception as e:
-            logger.error(f"Error releasing lock: {e}")
+            logger.error("Error releasing lock", exc_info=True)
             self.db.rollback()
 
     def refresh_lock(self, lock: MigrationLock) -> None:
@@ -477,7 +477,7 @@ class MigrationLockManager:
             self.db.commit()
 
         except Exception as e:
-            logger.error(f"Error refreshing lock: {e}")
+            logger.error("Error refreshing lock", exc_info=True)
             self.db.rollback()
             raise
 
@@ -510,7 +510,7 @@ class MigrationLockManager:
             return count
 
         except Exception as e:
-            logger.error(f"Error cleaning up expired locks: {e}")
+            logger.error("Error cleaning up expired locks", exc_info=True)
             self.db.rollback()
             return 0
 
@@ -559,7 +559,7 @@ class MigrationDiscovery:
                 if migration:
                     migrations.append(migration)
             except Exception as e:
-                logger.error(f"Error loading migration {file_path}: {e}")
+                logger.error(f"Error loading migration {file_path}", exc_info=True)
 
         logger.info(f"Discovered {len(migrations)} migrations from {directory}")
         return migrations
@@ -853,7 +853,7 @@ class MigrationRunner:
                 try:
                     hooks.pre_run(self.db)
                 except Exception as e:
-                    logger.error(f"Pre-run hook failed: {e}")
+                    logger.error("Pre-run hook failed", exc_info=True)
 
                     # Execute migrations
             result = self._execute_migrations(
@@ -872,7 +872,7 @@ class MigrationRunner:
                 try:
                     hooks.post_run(self.db, result)
                 except Exception as e:
-                    logger.error(f"Post-run hook failed: {e}")
+                    logger.error("Post-run hook failed", exc_info=True)
 
                     # Calculate execution time
             result.execution_time = time.time() - start_time
@@ -940,7 +940,7 @@ class MigrationRunner:
                     try:
                         hooks.pre_migration(self.db, migration)
                     except Exception as e:
-                        logger.error(f"Pre-migration hook failed: {e}")
+                        logger.error("Pre-migration hook failed", exc_info=True)
 
                         # Execute migration
                 success = self._execute_single_migration(
@@ -960,13 +960,16 @@ class MigrationRunner:
                     try:
                         hooks.post_migration(self.db, migration, success)
                     except Exception as e:
-                        logger.error(f"Post-migration hook failed: {e}")
+                        logger.error("Post-migration hook failed", exc_info=True)
 
             except Exception as e:
                 failed += 1
                 if not error_message:
-                    error_message = str(e)
-                    error_details = {"migration": migration.version, "error": str(e)}
+                    error_message = "Migration failed"
+                    error_details = {
+                        "migration": migration.version,
+                        "error": "Operation failed",
+                    }
 
                 logger.error(
                     f"Migration {migration.version} failed: {e}", exc_info=True
@@ -1064,14 +1067,14 @@ class MigrationRunner:
             return True
 
         except Exception as e:
-            logger.error(f"Migration {migration.version} failed: {e}", exc_info=True)
+            logger.error(f"Migration {migration.version} failed", exc_info=True)
 
             self.db.rollback()
 
             exec_record.status = MigrationRunStatus.FAILED.value
             exec_record.completed_at = datetime.now(UTC)
-            exec_record.error_message = str(e)
-            exec_record.error_details = {"error": str(e)}
+            exec_record.error_message = "Operation failed"
+            exec_record.error_details = {"error": "Operation failed"}
             self.db.commit()
 
             return False
@@ -1101,7 +1104,7 @@ class MigrationRunner:
             return hashlib.sha256(schema_info.encode()).hexdigest()
 
         except Exception as e:
-            logger.warning(f"Could not calculate DB checksum: {e}")
+            logger.warning("Could not calculate DB checksum", exc_info=True)
             return ""
 
     def _verify_migration(

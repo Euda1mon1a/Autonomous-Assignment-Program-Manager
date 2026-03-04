@@ -101,7 +101,7 @@ class EmailSender:
             logger.error("Failed to send email to %s: %s", to_address, e, exc_info=True)
             return {
                 "success": False,
-                "error": str(e),
+                "error": "Operation failed",
                 "recipient": to_address,
             }
 

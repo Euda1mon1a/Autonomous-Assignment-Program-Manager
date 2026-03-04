@@ -305,11 +305,11 @@ class ImportStagingService:
             )
 
         except Exception as e:
-            logger.exception(f"Failed to stage import: {e}")
+            logger.exception("Failed to stage import", exc_info=True)
             self.db.rollback()
             return StageResult(
                 success=False,
-                message=f"Failed to stage import: {str(e)}",
+                message="Operation failed",
                 error_code="STAGING_FAILED",
             )
 
@@ -407,7 +407,7 @@ class ImportStagingService:
                 # Would need to simulate the changes for proper ACGME validation
                 # For now, return empty list
             except Exception as e:
-                logger.warning(f"ACGME validation preview failed: {e}")
+                logger.warning("ACGME validation preview failed", exc_info=True)
 
         return PreviewResult(
             batch_id=batch_id,
@@ -535,7 +535,7 @@ class ImportStagingService:
                                 "row_number": staged.row_number,
                                 "person_name": staged.person_name,
                                 "assignment_date": staged.assignment_date.isoformat(),
-                                "error_message": str(e),
+                                "error_message": "Operation failed",
                                 "error_code": "APPLY_FAILED",
                             }
                         )
@@ -560,7 +560,9 @@ class ImportStagingService:
                                 f"{v.severity}: {v.message}" for v in result.violations
                             ]
                     except Exception as e:
-                        logger.warning(f"ACGME validation after apply failed: {e}")
+                        logger.warning(
+                            "ACGME validation after apply failed", exc_info=True
+                        )
 
                 logger.info(
                     f"Applied batch {batch_id}: {applied_count} applied, "
@@ -582,12 +584,12 @@ class ImportStagingService:
                 )
 
         except Exception as e:
-            logger.exception(f"Failed to apply batch {batch_id}: {e}")
+            logger.exception(f"Failed to apply batch {batch_id}", exc_info=True)
             return ApplyResult(
                 success=False,
                 batch_id=batch_id,
                 status=ImportBatchStatus.FAILED,
-                message=f"Apply failed: {str(e)}",
+                message="Apply failed",
                 error_code="APPLY_FAILED",
             )
 
@@ -698,7 +700,7 @@ class ImportStagingService:
                             f"Failed to rollback staged assignment {staged.id}: {e}"
                         )
                         failed_count += 1
-                        errors.append(str(e))
+                        errors.append("Operation failed")
 
                         # Update batch status
                 batch.status = ImportBatchStatus.ROLLED_BACK
@@ -722,12 +724,12 @@ class ImportStagingService:
                 )
 
         except Exception as e:
-            logger.exception(f"Failed to rollback batch {batch_id}: {e}")
+            logger.exception(f"Failed to rollback batch {batch_id}", exc_info=True)
             return RollbackResult(
                 success=False,
                 batch_id=batch_id,
                 status=ImportBatchStatus.FAILED,
-                message=f"Rollback failed: {str(e)}",
+                message="Operation failed",
                 error_code="ROLLBACK_FAILED",
             )
 
@@ -775,9 +777,9 @@ class ImportStagingService:
             return True, "Batch rejected successfully"
 
         except Exception as e:
-            logger.exception(f"Failed to reject batch {batch_id}: {e}")
+            logger.exception(f"Failed to reject batch {batch_id}", exc_info=True)
             self.db.rollback()
-            return False, f"Failed to reject batch: {str(e)}"
+            return False, "Failed to reject batch"
 
     async def get_batch(self, batch_id: UUID) -> ImportBatch | None:
         """Get a batch by ID with counts."""
@@ -912,7 +914,7 @@ class ImportStagingService:
             wb.close()
 
         except Exception as e:
-            errors.append(str(e))
+            errors.append("Operation failed")
 
         return rows, warnings, errors
 

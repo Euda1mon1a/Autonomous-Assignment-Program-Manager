@@ -153,7 +153,7 @@ class RestoreService:
             }
 
         except Exception as e:
-            logger.error(f"Restoration failed: {e}", exc_info=True)
+            logger.error("Restoration failed", exc_info=True)
             if not dry_run:
                 db.rollback()
             raise ValueError(f"Restoration failed: {e}")
@@ -299,7 +299,7 @@ class RestoreService:
                 tables_restored.append(table_name)
 
             except Exception as e:
-                logger.error(f"Error restoring table {table_name}: {e}")
+                logger.error(f"Error restoring table {table_name}", exc_info=True)
                 # Continue with other tables
                 continue
 
@@ -378,7 +378,9 @@ class RestoreService:
                 rows_restored += 1
 
             except Exception as e:
-                logger.warning(f"Error restoring row in {table_name}: {e}. Row: {row}")
+                logger.warning(
+                    f"Error restoring row in {table_name}. Row: {row}", exc_info=True
+                )
                 # Continue with other rows
                 continue
 
@@ -459,7 +461,7 @@ class RestoreService:
             return result
 
         except Exception as e:
-            logger.error(f"Point-in-time restoration failed: {e}", exc_info=True)
+            logger.error("Point-in-time restoration failed", exc_info=True)
             raise ValueError(f"Point-in-time restoration failed: {e}")
 
     def validate_backup_chain(self, backup_id: str) -> dict[str, Any]:
@@ -511,7 +513,7 @@ class RestoreService:
                             "backup_type": chain_backup["backup_type"],
                             "created_at": chain_backup["created_at"],
                             "valid": False,
-                            "error": str(e),
+                            "error": "Operation failed",
                         }
                     )
 
@@ -532,5 +534,5 @@ class RestoreService:
             }
 
         except Exception as e:
-            logger.error(f"Backup chain validation failed: {e}", exc_info=True)
+            logger.error("Backup chain validation failed", exc_info=True)
             raise ValueError(f"Backup chain validation failed: {e}")

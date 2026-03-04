@@ -417,9 +417,9 @@ class ConflictAutoResolver:
                         strategy=ResolutionStrategyEnum.DEFER_TO_HUMAN,
                         success=False,
                         status=ResolutionStatusEnum.FAILED,
-                        message=f"Error processing conflict: {str(e)}",
+                        message="Error processing conflict",
                         error_code="PROCESSING_ERROR",
-                        error_details={"exception": str(e)},
+                        error_details={"exception": "Operation failed"},
                     )
                 )
 
@@ -1521,9 +1521,9 @@ class ConflictAutoResolver:
                 strategy=option.strategy,
                 success=False,
                 status=ResolutionStatusEnum.FAILED,
-                message=f"Error applying resolution: {str(e)}",
+                message="Operation failed",
                 error_code="APPLICATION_ERROR",
-                error_details={"exception": str(e)},
+                error_details={"exception": "Operation failed"},
             )
 
     def _apply_swap_resolution(

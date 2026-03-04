@@ -190,7 +190,7 @@ class DeduplicationStorage:
                 return False, None
 
         except Exception as e:
-            logger.error(f"Error acquiring lock: {e}")
+            logger.error("Error acquiring lock", exc_info=True)
             # Fail open: allow request if Redis fails
             return True, None
 
@@ -241,7 +241,7 @@ class DeduplicationStorage:
                 return False
 
         except Exception as e:
-            logger.error(f"Error releasing lock: {e}")
+            logger.error("Error releasing lock", exc_info=True)
             return False
 
     async def wait_for_completion(
@@ -328,7 +328,7 @@ class DeduplicationStorage:
             return True
 
         except Exception as e:
-            logger.error(f"Error saving request record: {e}")
+            logger.error("Error saving request record", exc_info=True)
             return False
 
     async def get_record(self, idempotency_key: str) -> RequestRecord | None:
@@ -363,7 +363,7 @@ class DeduplicationStorage:
             return record
 
         except Exception as e:
-            logger.error(f"Error getting request record: {e}")
+            logger.error("Error getting request record", exc_info=True)
             return None
 
     async def update_record(
@@ -425,7 +425,7 @@ class DeduplicationStorage:
             return deleted > 0
 
         except Exception as e:
-            logger.error(f"Error deleting request record: {e}")
+            logger.error("Error deleting request record", exc_info=True)
             return False
 
     async def cleanup_expired(self) -> int:
@@ -471,7 +471,7 @@ class DeduplicationStorage:
             return cleaned
 
         except Exception as e:
-            logger.error(f"Error cleaning up expired records: {e}")
+            logger.error("Error cleaning up expired records", exc_info=True)
             return 0
 
     async def get_stats(self) -> dict[str, Any]:
@@ -525,11 +525,11 @@ class DeduplicationStorage:
             return stats
 
         except Exception as e:
-            logger.error(f"Error getting deduplication stats: {e}")
+            logger.error("Error getting deduplication stats", exc_info=True)
             return {
                 "total_records": 0,
                 "processing": 0,
                 "completed": 0,
                 "failed": 0,
-                "error": str(e),
+                "error": "Operation failed",
             }

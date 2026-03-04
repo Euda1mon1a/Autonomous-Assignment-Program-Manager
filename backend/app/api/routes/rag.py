@@ -79,9 +79,9 @@ async def retrieve_documents(
         return response
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"RAG retrieval failed: {str(e)}", exc_info=True)
+        logger.error("RAG retrieval failed", exc_info=True)
         raise HTTPException(status_code=500, detail="Retrieval failed")
 
 
@@ -120,7 +120,7 @@ async def get_rag_health(
         return await service.get_health()
 
     except Exception as e:
-        logger.error(f"RAG health check failed: {str(e)}", exc_info=True)
+        logger.error("RAG health check failed", exc_info=True)
         raise HTTPException(status_code=500, detail="Health check failed")
 
 
@@ -166,9 +166,9 @@ async def ingest_document(
         return response
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Document ingestion failed: {str(e)}", exc_info=True)
+        logger.error("Document ingestion failed", exc_info=True)
         raise HTTPException(status_code=500, detail="Ingestion failed")
 
 
@@ -212,9 +212,9 @@ async def build_context(
         return response
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Context building failed: {str(e)}", exc_info=True)
+        logger.error("Context building failed", exc_info=True)
         raise HTTPException(status_code=500, detail="Context building failed")
 
 
@@ -248,7 +248,7 @@ async def delete_documents_by_type(
         }
 
     except Exception as e:
-        logger.error(f"Document deletion failed: {str(e)}", exc_info=True)
+        logger.error("Document deletion failed", exc_info=True)
         raise HTTPException(status_code=500, detail="Deletion failed")
 
 
@@ -283,5 +283,5 @@ async def get_rag_stats(
         }
 
     except Exception as e:
-        logger.error(f"RAG stats failed: {str(e)}", exc_info=True)
+        logger.error("RAG stats failed", exc_info=True)
         raise HTTPException(status_code=500, detail="Stats retrieval failed")

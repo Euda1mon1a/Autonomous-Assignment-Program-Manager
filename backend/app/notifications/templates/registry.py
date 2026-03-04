@@ -128,7 +128,7 @@ class TemplateRegistry:
             self.engine.validate_syntax(template.html_template)
             self.engine.validate_syntax(template.text_template)
         except Exception as e:
-            raise ValueError(f"Template validation failed: {str(e)}") from e
+            raise ValueError("Template validation failed") from e
 
             # Add to registry
         if template.template_id not in self._templates:
@@ -360,7 +360,7 @@ class TemplateRegistry:
             logger.error(
                 "Failed to render template %s: %s",
                 template_id,
-                str(e),
+                "Operation failed",
                 exc_info=True,
             )
             return None

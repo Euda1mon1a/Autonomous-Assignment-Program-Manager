@@ -172,10 +172,10 @@ class WebhookVerificationService:
             body = await request.body()
             payload = json.loads(body) if body else {}
         except json.JSONDecodeError as e:
-            logger.warning(f"Webhook payload JSON decode error: {e}")
+            logger.warning("Webhook payload JSON decode error", exc_info=True)
             return VerificationResult(False, f"Invalid JSON payload: {e}")
         except Exception as e:
-            logger.error(f"Error reading webhook payload: {e}", exc_info=True)
+            logger.error("Error reading webhook payload", exc_info=True)
             return VerificationResult(False, f"Error reading payload: {e}")
 
             # Step 4: Validate payload size
@@ -370,7 +370,7 @@ class WebhookVerificationService:
             return VerificationResult(True, metadata={"algorithm": algorithm.value})
 
         except Exception as e:
-            logger.error(f"Error verifying signature: {e}", exc_info=True)
+            logger.error("Error verifying signature", exc_info=True)
             return VerificationResult(False, f"Signature verification error: {e}")
 
     def _verify_timestamp(self, timestamp: int) -> VerificationResult:
@@ -409,7 +409,7 @@ class WebhookVerificationService:
             )
 
         except Exception as e:
-            logger.error(f"Error verifying timestamp: {e}", exc_info=True)
+            logger.error("Error verifying timestamp", exc_info=True)
             return VerificationResult(False, f"Timestamp verification error: {e}")
 
     def _verify_ip_address(
@@ -463,13 +463,13 @@ class WebhookVerificationService:
                                 },
                             )
                 except ValueError as e:
-                    logger.warning(f"Invalid IP in whitelist: {allowed} - {e}")
+                    logger.warning(f"Invalid IP in whitelist: {allowed}", exc_info=True)
                     continue
 
             return VerificationResult(False, f"IP address {client_ip} not in whitelist")
 
         except ValueError as e:
-            logger.warning(f"Invalid client IP address: {client_ip} - {e}")
+            logger.warning(f"Invalid client IP address: {client_ip}", exc_info=True)
             return VerificationResult(False, f"Invalid client IP: {client_ip}")
 
     def _verify_required_headers(
@@ -539,9 +539,11 @@ class WebhookVerificationService:
             return VerificationResult(True, metadata={"delivery_id": delivery_id})
 
         except Exception as e:
-            logger.error(f"Error detecting retry for {delivery_id}: {e}", exc_info=True)
+            logger.error(f"Error detecting retry for {delivery_id}", exc_info=True)
             # Don't fail verification on retry detection errors
-            return VerificationResult(True, metadata={"retry_detection_error": str(e)})
+            return VerificationResult(
+                True, metadata={"retry_detection_error": "Detection failed"}
+            )
 
             # =========================================================================
             # Helper Methods
@@ -599,7 +601,7 @@ class WebhookVerificationService:
             result = await db.execute(select(Webhook).where(Webhook.id == webhook_id))
             return result.scalar_one_or_none()
         except Exception as e:
-            logger.error(f"Error fetching webhook {webhook_id}: {e}", exc_info=True)
+            logger.error(f"Error fetching webhook {webhook_id}", exc_info=True)
             return None
 
             # =========================================================================

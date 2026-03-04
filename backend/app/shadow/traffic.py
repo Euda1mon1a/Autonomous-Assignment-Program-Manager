@@ -539,14 +539,16 @@ class ShadowTrafficManager:
 
         except httpx.HTTPError as e:
             response_time = (time.time() - start_time) * 1000
-            error = f"HTTP error: {str(e)}"
-            logger.error(f"Shadow request failed: request_id={request_id}, error={e}")
+            error = "HTTP error"
+            logger.error(
+                f"Shadow request failed: request_id={request_id}, error=", exc_info=True
+            )
             self._health.error_count += 1
             return None, response_time, error
 
         except Exception as e:
             response_time = (time.time() - start_time) * 1000
-            error = f"Unexpected error: {str(e)}"
+            error = "Unexpected error"
             logger.error(
                 f"Shadow request unexpected error: request_id={request_id}, error={e}",
                 exc_info=True,
@@ -611,9 +613,9 @@ class ShadowTrafficManager:
                     "shadow": str(shadow_body)[:200],
                 }
         except Exception as e:
-            logger.warning(f"Could not parse shadow response body: {e}")
+            logger.warning("Could not parse shadow response body", exc_info=True)
             comparison.body_match = False
-            comparison.diff_details["body_parse_error"] = str(e)
+            comparison.diff_details["body_parse_error"] = "Parse error"
 
             # Compare selected headers (content-type, etc.)
         important_headers = ["content-type", "content-length"]
@@ -756,7 +758,7 @@ class ShadowTrafficManager:
                 else:
                     self.alert_callback(report)
             except Exception as e:
-                logger.error(f"Alert callback failed: {e}", exc_info=True)
+                logger.error("Alert callback failed", exc_info=True)
 
     def _generate_diff_summary(self, comparison: ResponseComparison) -> str:
         """
@@ -967,7 +969,7 @@ class ShadowTrafficManager:
             self._health.avg_response_time = response_time
 
         except Exception as e:
-            logger.error(f"Shadow service health check failed: {e}")
+            logger.error("Shadow service health check failed", exc_info=True)
             self._health.status = "unhealthy"
             self._health.last_check = datetime.now(UTC)
 

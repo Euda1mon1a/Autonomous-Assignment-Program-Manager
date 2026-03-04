@@ -107,7 +107,7 @@ async def create_experiment(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Internal server error",
         )
     finally:
         await service.close()
@@ -258,7 +258,7 @@ async def update_experiment(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
+            detail="Internal server error",
         )
     finally:
         await service.close()
@@ -316,7 +316,7 @@ async def start_experiment(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Internal server error",
         )
     finally:
         await service.close()
@@ -341,7 +341,7 @@ async def pause_experiment(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Internal server error",
         )
     finally:
         await service.close()
@@ -371,7 +371,7 @@ async def conclude_experiment(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Internal server error",
         )
     finally:
         await service.close()
@@ -409,7 +409,7 @@ async def assign_user(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Internal server error",
         )
     finally:
         await service.close()
@@ -487,7 +487,7 @@ async def track_metric(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Internal server error",
         )
     finally:
         await service.close()
@@ -560,7 +560,7 @@ async def get_experiment_results(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
+            detail="Internal server error",
         )
     finally:
         await service.close()

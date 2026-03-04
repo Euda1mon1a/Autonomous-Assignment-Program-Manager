@@ -456,9 +456,9 @@ class SolutionExplorer:
             if knee and knee.id != current.id:
                 return min(
                     candidates,
-                    key=lambda s: self._calculate_distance(s, knee)
-                    if knee
-                    else float("inf"),
+                    key=lambda s: (
+                        self._calculate_distance(s, knee) if knee else float("inf")
+                    ),
                 )
             return min(candidates, key=lambda s: self._calculate_distance(current, s))
 

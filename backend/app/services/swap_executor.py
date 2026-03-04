@@ -320,10 +320,10 @@ class SwapExecutor:
             )
 
         except (SQLAlchemyError, ValueError, KeyError) as e:
-            logger.exception(f"Swap execution failed: {e}")
+            logger.exception("Swap execution failed", exc_info=True)
             return ExecutionResult(
                 success=False,
-                message=f"Swap execution failed: {str(e)}",
+                message="Operation failed",
                 error_code="EXECUTION_FAILED",
             )
 
@@ -403,10 +403,10 @@ class SwapExecutor:
             )
 
         except (SQLAlchemyError, ValueError, KeyError) as e:
-            logger.exception(f"Swap execution failed: {e}")
+            logger.exception("Swap execution failed", exc_info=True)
             return ExecutionResult(
                 success=False,
-                message=f"Swap execution failed: {str(e)}",
+                message="Operation failed",
                 error_code="EXECUTION_FAILED",
             )
 
@@ -568,7 +568,7 @@ class SwapExecutor:
             logger.exception("Rollback failed for swap %s: %s", swap_id, e)
             return RollbackResult(
                 success=False,
-                message=f"Rollback failed: {str(e)}",
+                message="Operation failed",
                 error_code="ROLLBACK_FAILED",
             )
 
@@ -808,11 +808,11 @@ class SwapExecutor:
             )
 
         except (SQLAlchemyError, ValueError, KeyError) as e:
-            logger.exception(f"Swap staging failed: {e}")
+            logger.exception("Swap staging failed", exc_info=True)
             self.db.rollback()
             return ExecutionResult(
                 success=False,
-                message=f"Swap staging failed: {str(e)}",
+                message="Operation failed",
                 error_code="STAGING_FAILED",
             )
 

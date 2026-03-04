@@ -117,7 +117,7 @@ class BackupStrategy(ABC):
             count = result.scalar()
             return count or 0
         except Exception as e:
-            logger.warning(f"Error getting row count for {table}: {e}")
+            logger.warning(f"Error getting row count for {table}", exc_info=True)
             return 0
 
     def _calculate_checksum(self, data: bytes) -> str:
@@ -225,10 +225,10 @@ class FullBackupStrategy(BackupStrategy):
                     total_rows += table_data["row_count"]
 
                 except Exception as e:
-                    logger.error(f"Error backing up table {table}: {e}")
+                    logger.error(f"Error backing up table {table}", exc_info=True)
                     # Continue with other tables
                     backup_data["tables"][table] = {
-                        "error": str(e),
+                        "error": "Operation failed",
                         "row_count": 0,
                         "rows": [],
                     }
@@ -242,7 +242,7 @@ class FullBackupStrategy(BackupStrategy):
             return backup_data
 
         except Exception as e:
-            logger.error(f"Full backup failed: {e}", exc_info=True)
+            logger.error("Full backup failed", exc_info=True)
             raise ValueError(f"Full backup failed: {e}")
 
     def _backup_table_full(self, db: Session, table: str) -> dict[str, Any]:
@@ -372,7 +372,9 @@ class IncrementalBackupStrategy(BackupStrategy):
                         tables_with_changes += 1
 
                 except Exception as e:
-                    logger.warning(f"Error checking table {table} for changes: {e}")
+                    logger.warning(
+                        f"Error checking table {table} for changes", exc_info=True
+                    )
                     # Continue with other tables
                     continue
 
@@ -387,7 +389,7 @@ class IncrementalBackupStrategy(BackupStrategy):
             return backup_data
 
         except Exception as e:
-            logger.error(f"Incremental backup failed: {e}", exc_info=True)
+            logger.error("Incremental backup failed", exc_info=True)
             raise ValueError(f"Incremental backup failed: {e}")
 
     def _backup_table_incremental(

@@ -209,12 +209,12 @@ def generate_multi_block_report(
                     block_results.append(block_result)
 
                 except Exception as e:
-                    logger.error(f"Failed to process Block {block_num}: {e}")
+                    logger.error(f"Failed to process Block {block_num}", exc_info=True)
                     block_results.append(
                         {
                             "block_number": block_num,
                             "success": False,
-                            "error": str(e),
+                            "error": "Operation failed",
                         }
                     )
 
@@ -253,8 +253,8 @@ def generate_multi_block_report(
                     result["gaps_identified"] = summary.gaps_identified
 
                 except Exception as e:
-                    logger.error(f"Failed to generate summary: {e}")
-                    result["summary_error"] = str(e)
+                    logger.error("Failed to generate summary", exc_info=True)
+                    result["summary_error"] = "Operation failed"
 
             return result
 
@@ -316,9 +316,9 @@ def check_block_schedule_quality(
             db.close()
 
     except Exception as e:
-        logger.error(f"Block quality check failed: {e}")
+        logger.error("Block quality check failed", exc_info=True)
         return {
             "block_number": block_number,
             "passed": False,
-            "error": str(e),
+            "error": "Operation failed",
         }

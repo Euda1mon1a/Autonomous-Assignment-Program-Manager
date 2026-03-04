@@ -45,7 +45,7 @@ async def _get_admin_user_ids() -> list[str]:
         )
         return [str(user.id) for user in admin_users]
     except Exception as e:
-        logger.error(f"Failed to fetch admin users: {e}", exc_info=True)
+        logger.error("Failed to fetch admin users", exc_info=True)
         return []
     finally:
         db.close()
@@ -117,7 +117,7 @@ async def _notify_rotation_event(
         #     db.close()
 
     except Exception as e:
-        logger.warning(f"Failed to process rotation notification: {e}", exc_info=True)
+        logger.warning("Failed to process rotation notification", exc_info=True)
 
 
 def get_db_session() -> Session:
@@ -196,7 +196,7 @@ def check_scheduled_rotations(self) -> dict:
                     f"Error checking rotation for {secret_type.value}: {e}",
                     exc_info=True,
                 )
-                rotation_status[secret_type.value] = f"error: {str(e)}"
+                rotation_status[secret_type.value] = "error"
 
         return {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -204,7 +204,7 @@ def check_scheduled_rotations(self) -> dict:
         }
 
     except Exception as e:
-        logger.error(f"Scheduled rotation check failed: {e}", exc_info=True)
+        logger.error("Scheduled rotation check failed", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -277,7 +277,7 @@ def rotate_secret(
         }
 
     except Exception as e:
-        logger.error(f"Secret rotation failed for {secret_type}: {e}", exc_info=True)
+        logger.error(f"Secret rotation failed for {secret_type}", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -344,7 +344,7 @@ def complete_grace_periods(self) -> dict:
                 results[rotation.secret_type.value] = {
                     "rotation_id": str(rotation.id),
                     "success": False,
-                    "error": str(e),
+                    "error": "Operation failed",
                 }
 
         return {
@@ -357,7 +357,7 @@ def complete_grace_periods(self) -> dict:
         }
 
     except Exception as e:
-        logger.error(f"Grace period completion failed: {e}", exc_info=True)
+        logger.error("Grace period completion failed", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -419,7 +419,7 @@ def send_rotation_reminder(
                 )
             )
         except Exception as e:
-            logger.error(f"Failed to send rotation notification: {e}", exc_info=True)
+            logger.error("Failed to send rotation notification", exc_info=True)
 
         return {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -429,12 +429,12 @@ def send_rotation_reminder(
         }
 
     except Exception as e:
-        logger.error(f"Failed to send rotation reminder: {e}", exc_info=True)
+        logger.error("Failed to send rotation reminder", exc_info=True)
         return {
             "timestamp": datetime.now(UTC).isoformat(),
             "secret_type": secret_type,
             "notification_sent": False,
-            "error": str(e),
+            "error": "Operation failed",
         }
 
 
@@ -560,7 +560,7 @@ def monitor_rotation_health(self) -> dict:
         }
 
     except Exception as e:
-        logger.error(f"Rotation health check failed: {e}", exc_info=True)
+        logger.error("Rotation health check failed", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -643,7 +643,7 @@ def emergency_rotate_all(
                 )
                 results[secret_type.value] = {
                     "success": False,
-                    "error": str(e),
+                    "error": "Operation failed",
                 }
 
         # Count successes and failures
@@ -715,7 +715,7 @@ def cleanup_old_rotation_history(
         }
 
     except Exception as e:
-        logger.error(f"Rotation history cleanup failed: {e}", exc_info=True)
+        logger.error("Rotation history cleanup failed", exc_info=True)
         db.rollback()
         raise self.retry(exc=e)
     finally:

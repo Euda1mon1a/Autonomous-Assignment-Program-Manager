@@ -92,10 +92,10 @@ class RedisHealthCheck:
 
         except Exception as e:
             response_time_ms = (time.time() - start_time) * 1000
-            logger.error(f"Redis health check failed: {e}", exc_info=True)
+            logger.error("Redis health check failed", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": str(e),
+                "error": "Operation failed",
                 "response_time_ms": round(response_time_ms, 2),
             }
 
@@ -141,7 +141,7 @@ class RedisHealthCheck:
                 # Get dbsize (total keys across all databases)
                 keys_total = await self._redis_client.dbsize()
             except Exception as e:
-                logger.warning(f"Could not get key count: {e}")
+                logger.warning("Could not get key count", exc_info=True)
 
                 # 6. Get Redis version
             redis_version = info.get("redis_version", "unknown")
@@ -157,17 +157,17 @@ class RedisHealthCheck:
             }
 
         except redis.ConnectionError as e:
-            logger.error(f"Redis connection error: {e}")
+            logger.error("Redis connection error", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": f"Connection error: {str(e)}",
+                "error": "Operation failed",
             }
 
         except redis.RedisError as e:
-            logger.error(f"Redis error: {e}")
+            logger.error("Redis error", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": f"Redis error: {str(e)}",
+                "error": "Operation failed",
             }
 
     async def check_read_write(self) -> dict[str, Any]:
@@ -213,11 +213,11 @@ class RedisHealthCheck:
             }
 
         except redis.RedisError as e:
-            logger.error(f"Redis read-write check failed: {e}")
+            logger.error("Redis read-write check failed", exc_info=True)
             return {
                 "status": "degraded",
                 "read_write": "failed",
-                "error": str(e),
+                "error": "Operation failed",
             }
 
     async def check_persistence(self) -> dict[str, Any]:
@@ -243,8 +243,8 @@ class RedisHealthCheck:
             }
 
         except redis.RedisError as e:
-            logger.error(f"Redis persistence check failed: {e}")
+            logger.error("Redis persistence check failed", exc_info=True)
             return {
                 "status": "unknown",
-                "error": str(e),
+                "error": "Operation failed",
             }

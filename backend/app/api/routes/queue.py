@@ -198,9 +198,9 @@ async def submit_task(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Error submitting task: {e}")
+        logger.error("Error submitting task", exc_info=True)
         raise HTTPException(status_code=500, detail="Error submitting task")
 
 
@@ -252,9 +252,9 @@ async def submit_task_chain(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Error submitting task chain: {e}")
+        logger.error("Error submitting task chain", exc_info=True)
         raise HTTPException(status_code=500, detail="Error submitting task chain")
 
 
@@ -304,9 +304,9 @@ async def submit_task_group(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Error submitting task group: {e}")
+        logger.error("Error submitting task group", exc_info=True)
         raise HTTPException(status_code=500, detail="Error submitting task group")
 
 
@@ -352,9 +352,9 @@ async def submit_task_with_dependencies(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Error submitting task with dependencies: {e}")
+        logger.error("Error submitting task with dependencies", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Error submitting task with dependencies"
         )
@@ -383,7 +383,7 @@ async def get_task_status_endpoint(
         return TaskStatusResponse(**status)
 
     except Exception as e:
-        logger.error(f"Error getting task status: {e}")
+        logger.error("Error getting task status", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching task status")
 
 
@@ -412,7 +412,7 @@ async def get_task_progress(
         return TaskProgressResponse(task_id=task_id, **progress)
 
     except Exception as e:
-        logger.error(f"Error getting task progress: {e}")
+        logger.error("Error getting task progress", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching task progress")
 
 
@@ -452,7 +452,7 @@ async def cancel_task(
         )
 
     except Exception as e:
-        logger.error(f"Error cancelling task: {e}")
+        logger.error("Error cancelling task", exc_info=True)
         raise HTTPException(status_code=500, detail="Error cancelling task")
 
 
@@ -493,9 +493,9 @@ async def retry_task(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Error retrying task: {e}")
+        logger.error("Error retrying task", exc_info=True)
         raise HTTPException(status_code=500, detail="Error retrying task")
 
 
@@ -523,7 +523,7 @@ async def get_queue_stats(
         return QueueStatsResponse(**stats)
 
     except Exception as e:
-        logger.error(f"Error getting queue stats: {e}")
+        logger.error("Error getting queue stats", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching queue statistics")
 
 
@@ -562,7 +562,7 @@ async def purge_queue(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error purging queue: {e}")
+        logger.error("Error purging queue", exc_info=True)
         raise HTTPException(status_code=500, detail="Error purging queue")
 
 
@@ -589,7 +589,7 @@ async def get_worker_health(
         return WorkerHealthResponse(**health)
 
     except Exception as e:
-        logger.error(f"Error getting worker health: {e}")
+        logger.error("Error getting worker health", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching worker health")
 
 
@@ -612,7 +612,7 @@ async def get_worker_stats(
         return WorkerStatsResponse(**stats)
 
     except Exception as e:
-        logger.error(f"Error getting worker stats: {e}")
+        logger.error("Error getting worker stats", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching worker statistics")
 
 
@@ -634,7 +634,7 @@ async def get_worker_utilization(
         return WorkerUtilizationResponse(**utilization)
 
     except Exception as e:
-        logger.error(f"Error getting worker utilization: {e}")
+        logger.error("Error getting worker utilization", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching worker utilization")
 
 
@@ -657,7 +657,7 @@ async def get_worker_tasks(
         return WorkerTasksResponse(**tasks)
 
     except Exception as e:
-        logger.error(f"Error getting worker tasks: {e}")
+        logger.error("Error getting worker tasks", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching worker tasks")
 
 
@@ -728,7 +728,7 @@ async def control_worker(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error controlling worker: {e}")
+        logger.error("Error controlling worker", exc_info=True)
         raise HTTPException(status_code=500, detail="Error controlling worker")
 
 
@@ -792,9 +792,9 @@ async def schedule_task(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Error scheduling task: {e}")
+        logger.error("Error scheduling task", exc_info=True)
         raise HTTPException(status_code=500, detail="Error scheduling task")
 
 
@@ -843,9 +843,9 @@ async def add_periodic_task(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Error adding periodic task: {e}")
+        logger.error("Error adding periodic task", exc_info=True)
         raise HTTPException(status_code=500, detail="Error adding periodic task")
 
 
@@ -867,7 +867,7 @@ async def get_periodic_tasks(
         return PeriodicTasksListResponse(**tasks)
 
     except Exception as e:
-        logger.error(f"Error getting periodic tasks: {e}")
+        logger.error("Error getting periodic tasks", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching periodic tasks")
 
 
@@ -889,7 +889,7 @@ async def get_scheduled_tasks(
         return ScheduledTasksListResponse(**tasks)
 
     except Exception as e:
-        logger.error(f"Error getting scheduled tasks: {e}")
+        logger.error("Error getting scheduled tasks", exc_info=True)
         raise HTTPException(status_code=500, detail="Error fetching scheduled tasks")
 
 
@@ -937,9 +937,9 @@ async def control_periodic_task(
         )
 
     except KeyError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="Internal server error")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error controlling periodic task: {e}")
+        logger.error("Error controlling periodic task", exc_info=True)
         raise HTTPException(status_code=500, detail="Error controlling periodic task")

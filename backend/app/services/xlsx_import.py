@@ -678,9 +678,7 @@ class ClinicScheduleImporter:
             return self.import_worksheet(ws)
 
         except Exception as e:
-            return ImportResult(
-                success=False, errors=[f"Failed to parse Excel file: {str(e)}"]
-            )
+            return ImportResult(success=False, errors=["Operation failed"])
 
 
 @dataclass
@@ -1818,7 +1816,7 @@ class BlockScheduleParser:
             return str(val).strip() if str(val).strip() else None
 
         except Exception as e:
-            logger.warning(f"Error reading cell ({row}, {col}): {e}")
+            logger.warning(f"Error reading cell ({row}, {col})", exc_info=True)
             return None
 
     def _extract_block_number(self, sheet_name: str, ws: Worksheet) -> int:

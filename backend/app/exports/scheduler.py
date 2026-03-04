@@ -321,7 +321,7 @@ class ExportSchedulerService:
                 (execution.finished_at - execution.started_at).total_seconds()
             )
             execution.status = ExportJobStatus.FAILED
-            execution.error_message = str(e)
+            execution.error_message = "Operation failed"
             execution.error_traceback = (
                 logging.traceback.format_exc()
                 if hasattr(logging, "traceback")
@@ -695,6 +695,6 @@ class ExportSchedulerService:
             cron = croniter(cron_expression, datetime.now(UTC))
             return cron.get_next(datetime)
         except Exception as e:
-            logger.error(f"Invalid cron expression: {cron_expression}: {e}")
+            logger.error(f"Invalid cron expression: {cron_expression}", exc_info=True)
             # Default to 1 day from now
             return datetime.now(UTC) + timedelta(days=1)

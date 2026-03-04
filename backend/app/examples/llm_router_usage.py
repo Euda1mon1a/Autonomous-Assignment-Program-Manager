@@ -11,6 +11,10 @@ from app.core.config import get_settings
 from app.schemas.llm import LLMRequest
 from app.services.llm_router import LLMRouter
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 async def example_basic_generation() -> None:
     """Example: Basic text generation with automatic routing."""
@@ -223,7 +227,7 @@ async def main() -> None:
         # await example_tool_calling()
 
     except Exception as e:
-        print(f"\nError running examples: {str(e)}")
+        print("Error occurred")
         print("Make sure Ollama is running: docker-compose up ollama")
         print("Or set ANTHROPIC_API_KEY for cloud provider")
 

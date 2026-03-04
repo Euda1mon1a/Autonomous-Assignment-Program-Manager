@@ -56,7 +56,7 @@ def run_command(
     except FileNotFoundError:
         return -2, "", f"Command not found: {cmd[0]}"
     except Exception as e:
-        return -3, "", str(e)
+        return -3, "", "Health check failed"
 
 
 def check_frontend_typecheck() -> dict[str, Any]:
@@ -297,8 +297,8 @@ def stack_health_check(self, write_report: bool = True) -> dict[str, Any]:
             logger.info(f"Stack health report written to: {report_path}")
             result["report_path"] = str(report_path)
         except Exception as e:
-            logger.warning(f"Failed to write report: {e}")
-            result["report_error"] = str(e)
+            logger.warning("Failed to write report", exc_info=True)
+            result["report_error"] = "Operation failed"
 
             # Log summary
     logger.info(f"Stack health check complete: {status}")

@@ -148,13 +148,13 @@ async def upload_file(
         return UploadResponse(**result)
 
     except UploadValidationError as e:
-        logger.warning(f"Upload validation failed: {e}")
+        logger.warning("Upload validation failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Internal server error",
         )
     except Exception as e:
-        logger.error(f"Upload failed: {e}", exc_info=True)
+        logger.error("Upload failed", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Upload failed. Please try again.",
@@ -214,7 +214,7 @@ async def get_file_url(
         return FileUrlResponse(file_id=file_id, url=url, expires_at=expires_at)
 
     except Exception as e:
-        logger.error(f"Failed to get file URL: {e}")
+        logger.error("Failed to get file URL", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"File not found: {file_id}",
@@ -248,7 +248,7 @@ async def download_file(
         )
 
     except Exception as e:
-        logger.error(f"Failed to download file: {e}")
+        logger.error("Failed to download file", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"File not found: {file_id}",
@@ -286,7 +286,7 @@ async def delete_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete file: {e}")
+        logger.error("Failed to delete file", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete file",
