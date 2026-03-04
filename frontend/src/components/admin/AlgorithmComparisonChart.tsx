@@ -46,14 +46,14 @@ export const MOCK_ALGORITHM_DATA: AlgorithmMetrics[] = [
 
 const ALGORITHM_LABELS: Record<Algorithm, string> = {
   greedy: 'Greedy',
-  cp_sat: 'CP-SAT',
+  cp_sat: 'CP-SAT', // eslint-disable-line @typescript-eslint/naming-convention -- enum value as key @enum-ok
   pulp: 'PuLP',
   hybrid: 'Hybrid',
 };
 
 const ALGORITHM_COLORS: Record<Algorithm, string> = {
   greedy: 'bg-orange-500',
-  cp_sat: 'bg-blue-500',
+  cp_sat: 'bg-blue-500', // eslint-disable-line @typescript-eslint/naming-convention -- enum value as key @enum-ok
   pulp: 'bg-green-500',
   hybrid: 'bg-violet-500',
 };

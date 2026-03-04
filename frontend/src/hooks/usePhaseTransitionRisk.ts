@@ -16,8 +16,8 @@ import type { ApiError } from '@/lib/api';
 // ============================================================================
 
 export interface CriticalSignal {
-  signal_type: string;
-  metric_name: string;
+  signalType: string;
+  metricName: string;
   severity: string;
   value: number;
   threshold: number;
@@ -29,7 +29,7 @@ export interface PhaseTransitionRequest {
   /** Schedule ID to analyze (optional) */
   scheduleId?: string | null;
   /** Days of history to analyze */
-  lookback_days?: number;
+  lookbackDays?: number;
   /** Detection sensitivity multiplier */
   sensitivity?: number;
 }
@@ -40,7 +40,7 @@ export interface PhaseTransitionResponse {
   /** Detected early warning signals */
   signals: CriticalSignal[];
   /** Estimated time until transition (hours) */
-  time_to_transition: number | null;
+  timeToTransition: number | null;
   /** Prediction confidence (0-1) */
   confidence: number;
   /** Suggested interventions */
@@ -93,8 +93,8 @@ export const phaseTransitionQueryKeys = {
  *       <AlertTitle>Phase Transition Warning</AlertTitle>
  *       <p>System approaching critical point</p>
  *       <p>Confidence: {(data.confidence * 100).toFixed(0)}%</p>
- *       {data.time_to_transition && (
- *         <p>Estimated time: {data.time_to_transition} hours</p>
+ *       {data.timeToTransition && (
+ *         <p>Estimated time: {data.timeToTransition} hours</p>
  *       )}
  *       <ul>
  *         {data.recommendations.map((rec, i) => (
@@ -120,7 +120,7 @@ export function usePhaseTransitionRisk(
     queryFn: async () => {
       const request: PhaseTransitionRequest = {
         scheduleId: scheduleId || null,
-        lookback_days: lookbackDays,
+        lookbackDays: lookbackDays,
         sensitivity: sensitivity,
       };
 

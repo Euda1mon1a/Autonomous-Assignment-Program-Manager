@@ -314,7 +314,6 @@ export const SolverVisualization: React.FC<SolverVisualizationProps> = ({
     status,
     metrics,
     currentAssignments,
-    latestDelta: _latestDelta,
     latestSolutionNum,
   } = useSolverWebSocket({
     taskId,

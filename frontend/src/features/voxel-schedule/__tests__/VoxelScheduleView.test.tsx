@@ -46,9 +46,9 @@ HTMLCanvasElement.prototype.getContext = jest.fn(() => mockContext) as jest.Mock
 // Sample voxel grid data
 const mockVoxelGridData = {
   dimensions: {
-    x_size: 4,
-    y_size: 3,
-    z_size: 2,
+    xSize: 4,
+    ySize: 3,
+    zSize: 2,
     xLabels: ["2024-01-15 AM", "2024-01-15 PM", "2024-01-16 AM", "2024-01-16 PM"],
     yLabels: ["Dr. Smith", "Resident A", "Resident B"],
     zLabels: ["clinic", "inpatient"],
@@ -73,10 +73,10 @@ const mockVoxelGridData = {
         height: 1.0,
       },
       state: {
-        is_occupied: true,
+        isOccupied: true,
         isConflict: false,
         isViolation: false,
-        violation_details: [],
+        violationDetails: [],
       },
       metadata: {
         role: "supervising",
@@ -103,10 +103,10 @@ const mockVoxelGridData = {
         height: 1.0,
       },
       state: {
-        is_occupied: true,
+        isOccupied: true,
         isConflict: false,
         isViolation: false,
-        violation_details: [],
+        violationDetails: [],
       },
       metadata: {
         role: "primary",
@@ -383,10 +383,10 @@ describe("VoxelScheduleView", () => {
             height: 1.0,
           },
           state: {
-            is_occupied: true,
+            isOccupied: true,
             isConflict: true,
             isViolation: false,
-            violation_details: ["Double-booked"],
+            violationDetails: ["Double-booked"],
           },
           metadata: {
             role: "primary",

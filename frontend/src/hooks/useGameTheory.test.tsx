@@ -306,7 +306,7 @@ describe('useValidateStrategy', () => {
   it('validates strategy against tit for tat', async () => {
     const mockValidationResult = {
       strategyId: 'strategy-123',
-      is_valid: true,
+      isValid: true,
       score: 85,
       cooperations: 90,
       defections: 10,

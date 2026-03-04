@@ -127,8 +127,8 @@ export function ConfigurationPresets({
         const stored = localStorage.getItem(PRESETS_STORAGE_KEY)
         const userPresets = stored ? JSON.parse(stored) : []
         setPresets([...BUILT_IN_PRESETS, ...userPresets])
-      } catch (_error) {
-        // console.error('Failed to load presets:', _error)
+      } catch {
+        // Failed to load presets from localStorage
         setPresets(BUILT_IN_PRESETS)
       }
     }
@@ -142,8 +142,8 @@ export function ConfigurationPresets({
     )
     try {
       localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(userPresets))
-    } catch (_error) {
-      // console.error('Failed to save presets:', _error)
+    } catch {
+      // Failed to save presets to localStorage
     }
   }, [])
 
@@ -231,8 +231,8 @@ export function ConfigurationPresets({
             setPresets(updatedPresets)
             savePresetsToStorage(updatedPresets)
           }
-        } catch (_error) {
-          // console.error('Failed to import presets:', _error)
+        } catch {
+          // Failed to import presets from file
         }
       }
       reader.readAsText(file)

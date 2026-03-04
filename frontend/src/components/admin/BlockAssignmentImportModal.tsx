@@ -81,10 +81,8 @@ export function BlockAssignmentImportModal({
     duplicateActions,
     canImport,
     matchedCount,
-    errorCount: _errorCount,
     uploadContent,
     uploadFile,
-    setDuplicateAction: _setDuplicateAction,
     setAllDuplicateActions,
     createTemplate,
     executeImport,
@@ -535,6 +533,7 @@ export function BlockAssignmentImportModal({
 
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center">
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- modal backdrop dismiss */}
         <div
           className="absolute inset-0 bg-black/50"
           onClick={() => setTemplateDialogOpen(false)}
