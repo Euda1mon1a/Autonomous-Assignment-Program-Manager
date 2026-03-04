@@ -31,7 +31,7 @@ Current Codex automations produce useful signal, but too much mixed/noisy output
 ## Automation prompt refinements
 
 1. Add mandatory env preflight for all backend commands run in Codex worktrees.
-- Required wrapper: `python3 scripts/ops/codex_worktree_env_exec.py -- <backend command>`
+- Required wrapper: `python3 .codex/scripts/codex_worktree_env_exec.py -- <backend command>`
 
 2. Require "minimal-scope edits" in prompts.
 - Constrain each run to one subsystem (for example: one route file + matching tests).
@@ -61,8 +61,8 @@ Current Codex automations produce useful signal, but too much mixed/noisy output
 
 ## Operational checklist
 
-1. Generate report: `python3 scripts/ops/codex_automation_report.py`
-2. Generate plan: `python3 scripts/ops/codex_automation_triage.py --plan`
+1. Generate report: `python3 .codex/scripts/codex_automation_report.py`
+2. Generate plan: `python3 .codex/scripts/codex_automation_triage.py --plan`
 3. Harvest only wheat + selective mixed wheat.
 4. Validate with focused tests.
 5. Run PII/secrets scan on staged files.

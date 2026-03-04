@@ -1207,7 +1207,7 @@ Block 11 went through 7 rounds. Key lesson: Codex false positives happen (e.g., 
 
 LLM-generated constraint code introduced a dead-code bug where `context.resident_idx.get(faculty_uuid)` was used in a faculty constraint. Faculty UUIDs are never in `resident_idx` — the method always returned `None`, making the entire `OvernightCallGenerationConstraint` inert. The code passed linting, type checking, and even a Codex review. No existing tool catches semantic correctness at this level.
 
-### The 4 Rules
+### The 6 Rules
 
 | Rule | Name | Severity | Anti-Pattern |
 |------|------|----------|-------------|
@@ -1215,16 +1215,15 @@ LLM-generated constraint code introduced a dead-code bug where `context.resident
 | ARCH-002 | Lich's Trap | **error** | `variables["call_assignments"] = {}` — erases solver-created variables. Constraints must READ, not initialize. |
 | ARCH-003 | Doppelganger | **error** | `for x in context.faculty:` in a call constraint. Must use `call_eligible_faculty` (excludes adjuncts). |
 | ARCH-004 | Silent Killer | **warning** | `add_to_cpsat()` with no `logger.info()` call. 0 constraints added = dead code, but invisible without logging. |
+| ARCH-005 | Revenant's Memory | **warning** | Call coverage constraint without spacing guard. Back-to-back call nights violate ACGME if no min-spacing constraint exists. |
+| ARCH-006 | Basilisk's Gaze | **warning** | Activity query ORs `code` with `display_abbreviation` — nondeterministic `.first()` when multiple activities share a display abbreviation (e.g., `C` and `fm_clinic` both display `'C'`). Use `code` only. |
 
 ### How It Works
 
 The checker uses Python's `ast` module to parse constraint files and classify each class:
 - A class is **call-related** if it has `constraint_type=ConstraintType.CALL` OR accesses `variables["call_assignments"]`
-- ARCH-001/003 only fire on call-related classes, preventing false positives on `protected_slot.py`, `resilience.py`, etc. that correctly use `resident_idx`
-
-### Future Rules Under Consideration
-
-**ARCH-005 (Empty Feasible Set):** A constraint that blocks all activity types for a faculty slot forces `_backfill_faculty_gaps` to fill with OFF/W — effectively a silent no-op. Difficult to detect via AST since it's a runtime property. Current mitigation: ARCH-004 logging warnings surface 0-constraint cases. A runtime assertion (post-solve) would be more effective than static analysis for this class of bug.
+- ARCH-001/003/005 only fire on call-related classes, preventing false positives on `protected_slot.py`, `resilience.py`, etc. that correctly use `resident_idx`
+- ARCH-006 scans any file under `scheduling/` for activity lookups that OR code with display_abbreviation
 
 ### Suppressing False Positives
 

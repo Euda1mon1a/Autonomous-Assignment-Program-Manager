@@ -7,8 +7,8 @@
 # - missing `name:` frontmatter in SKILL.md
 #
 # Usage:
-#   scripts/ops/codex_skill_audit.sh
-#   scripts/ops/codex_skill_audit.sh --save
+#   .codex/scripts/codex_skill_audit.sh
+#   .codex/scripts/codex_skill_audit.sh --save
 
 set -euo pipefail
 
@@ -18,7 +18,7 @@ OUTPUT=""
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/ops/codex_skill_audit.sh [--save] [--output PATH]
+  .codex/scripts/codex_skill_audit.sh [--save] [--output PATH]
 
 Options:
   --save          Save markdown report to docs/reports/automation/
@@ -138,7 +138,7 @@ fi
 report+=$'\n'
 report+="## Quick Actions"$'\n'
 report+=$'\n'
-report+="- Run \`scripts/ops/codex_cherry_pick_hunter.sh --save\` before any worktree prune"$'\n'
+report+="- Run \`.codex/scripts/codex_cherry_pick_hunter.sh --save\` before any worktree prune"$'\n'
 report+="- Keep high-signal skills in one canonical location to reduce routing ambiguity"$'\n'
 report+="- Add/normalize frontmatter \`name:\` where missing for reliable discovery"$'\n'
 

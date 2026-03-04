@@ -7,9 +7,9 @@
 # - no deletion unless --apply is explicitly provided
 #
 # Usage:
-#   scripts/ops/codex_safe_prune_plan.sh --save
-#   scripts/ops/codex_safe_prune_plan.sh --exclude-ids bad1,foo --save
-#   scripts/ops/codex_safe_prune_plan.sh --apply --exclude-ids bad1
+#   .codex/scripts/codex_safe_prune_plan.sh --save
+#   .codex/scripts/codex_safe_prune_plan.sh --exclude-ids bad1,foo --save
+#   .codex/scripts/codex_safe_prune_plan.sh --apply --exclude-ids bad1
 
 set -euo pipefail
 
@@ -24,7 +24,7 @@ APPLY=false
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/ops/codex_safe_prune_plan.sh [options]
+  .codex/scripts/codex_safe_prune_plan.sh [options]
 
 Options:
   --worktree-root PATH   Root directory for Codex worktrees (default: ~/.codex/worktrees)

@@ -346,7 +346,7 @@ RATE_LIMIT_TEST=true k6 run scenarios/rate-limit.js
 2. **Test Data**: Populate database with realistic data
    ```bash
    cd backend
-   python scripts/seed_test_data.py --people 100 --rotations 20 --blocks 365
+   python scripts/seed/seed_test_data.py --people 100 --rotations 20 --blocks 365
    ```
 
 3. **Test Users**: Create users for load testing
@@ -649,7 +649,7 @@ jobs:
           DATABASE_URL: postgresql://scheduler:test_password@localhost:5432/residency_scheduler
         run: |
           cd backend
-          python scripts/seed_test_data.py --people 50 --rotations 10
+          python scripts/seed/seed_test_data.py --people 50 --rotations 10
 
       - name: Start backend server
         env:
@@ -1069,12 +1069,12 @@ docker stats backend-1 backend-2 backend-3
 **No Real User Data in Load Tests:**
 - ❌ **Never** use production database for load testing
 - ❌ **Never** use real user names, personal identifiers
-- ✅ Use synthetic test data (`scripts/seed_test_data.py`)
+- ✅ Use synthetic test data (`scripts/seed/seed_test_data.py`)
 - ✅ Anonymize any data if seeding from production samples
 
 **Test Data Generation**:
 ```python
-# scripts/seed_test_data.py
+# scripts/seed/seed_test_data.py
 def create_test_person(index):
     return Person(
         first_name=f"TestUser{index}",     # Not real names

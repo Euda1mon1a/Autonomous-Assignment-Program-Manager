@@ -189,6 +189,8 @@ export const VIEW_MODE_LABELS: Record<TimelineViewMode, string> = {
   quarterly: 'Quarterly View',
 };
 
+/* eslint-disable @typescript-eslint/naming-convention -- Record keys are enum values (WorkloadStatus, AssignmentStatus, activity type strings), must match API values */
+
 /**
  * Workload status colors
  */
@@ -229,6 +231,8 @@ export const ACTIVITY_TYPE_COLORS: Record<string, string> = {
   'Residency': '#f59e0b', // amber
   'default': '#6b7280', // gray
 };
+
+/* eslint-enable @typescript-eslint/naming-convention */
 
 /**
  * Default date range (current academic year)

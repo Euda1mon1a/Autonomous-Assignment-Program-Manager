@@ -162,7 +162,7 @@ def seed_test_data(project_root: Path) -> bool:
     # Seed people
     print("\n2. Seeding people...")
     if not run_command(
-        [python_cmd, "../scripts/seed_people.py"],
+        [python_cmd, "../scripts/seed/seed_people.py"],
         cwd=backend_dir,
     ):
         return False
@@ -172,7 +172,7 @@ def seed_test_data(project_root: Path) -> bool:
     # Seed templates
     print("\n3. Seeding rotation templates...")
     if not run_command(
-        [python_cmd, "../scripts/seed_templates.py"],
+        [python_cmd, "../scripts/seed/seed_templates.py"],
         cwd=backend_dir,
     ):
         return False

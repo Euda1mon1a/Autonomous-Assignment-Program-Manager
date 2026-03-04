@@ -260,6 +260,7 @@ export interface GameTheorySummary {
   }[];
 }
 
+/* eslint-disable @typescript-eslint/naming-convention -- keys are StrategyType enum values (snake_case by design, @enum-ok) */
 // Color mapping for strategy types
 export const STRATEGY_COLORS: Record<StrategyType, string> = {
   cooperative: '#22c55e',    // green
@@ -285,6 +286,7 @@ export const STRATEGY_LABELS: Record<StrategyType, string> = {
   forgiving_tft: 'Forgiving TFT',
   custom: 'Custom',
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 // Status colors
 export const STATUS_COLORS: Record<SimulationStatus, string> = {

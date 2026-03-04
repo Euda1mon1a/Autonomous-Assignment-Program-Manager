@@ -183,7 +183,7 @@ npm test -- --passWithNoTests
 
 | Batch | Directory | ~Errors |
 |-------|-----------|---------|
-| 1 | `app/services/_archived/` | 74 |
+| ~~1~~ | ~~`app/services/_archived/`~~ | **DELETED** — dead code removed Mar 2026 |
 | 2 | `app/frms/` | 43 |
 | 3 | `app/tenancy/` | 42 |
 | 4 | `app/search/` | 49 |

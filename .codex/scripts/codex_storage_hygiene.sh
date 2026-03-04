@@ -24,7 +24,7 @@ REPO_NAME="${DEFAULT_REPO_NAME}"
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/ops/codex_storage_hygiene.sh [options]
+  .codex/scripts/codex_storage_hygiene.sh [options]
 
 Options:
   --audit                Run storage audit (default).
@@ -46,13 +46,13 @@ Options:
   -h, --help             Show help.
 
 Examples:
-  scripts/ops/codex_storage_hygiene.sh --audit
-  scripts/ops/codex_storage_hygiene.sh --clean-caches
-  scripts/ops/codex_storage_hygiene.sh --clean-caches --apply
-  scripts/ops/codex_storage_hygiene.sh --list-stale --days 14
-  scripts/ops/codex_storage_hygiene.sh --prune-stale --days 14 --apply
-  scripts/ops/codex_storage_hygiene.sh --list-old-sessions --session-days 45
-  scripts/ops/codex_storage_hygiene.sh --prune-old-sessions --session-days 45 --apply
+  .codex/scripts/codex_storage_hygiene.sh --audit
+  .codex/scripts/codex_storage_hygiene.sh --clean-caches
+  .codex/scripts/codex_storage_hygiene.sh --clean-caches --apply
+  .codex/scripts/codex_storage_hygiene.sh --list-stale --days 14
+  .codex/scripts/codex_storage_hygiene.sh --prune-stale --days 14 --apply
+  .codex/scripts/codex_storage_hygiene.sh --list-old-sessions --session-days 45
+  .codex/scripts/codex_storage_hygiene.sh --prune-old-sessions --session-days 45 --apply
 EOF
 }
 
@@ -233,8 +233,8 @@ audit() {
   done | sort -t: -k2,2hr
   echo ""
   echo "Run next:"
-  echo "- scripts/ops/codex_storage_hygiene.sh --clean-caches"
-  echo "- scripts/ops/codex_storage_hygiene.sh --list-stale --days ${STALE_DAYS}"
+  echo "- .codex/scripts/codex_storage_hygiene.sh --clean-caches"
+  echo "- .codex/scripts/codex_storage_hygiene.sh --list-stale --days ${STALE_DAYS}"
 }
 
 clean_caches() {

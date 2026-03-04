@@ -200,9 +200,9 @@ sleep 10
 cd backend && alembic upgrade head
 
 # Seed fresh data
-python scripts/seed_people.py
-python scripts/seed_blocks.py
-python scripts/seed_templates.py
+python scripts/seed/seed_people.py
+python scripts/seed/seed_blocks.py
+python scripts/seed/seed_templates.py
 ```
 
 ---

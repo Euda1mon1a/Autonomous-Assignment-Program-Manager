@@ -281,23 +281,23 @@ export function FairnessTrend({
     );
   }
 
-  // Format data for charts
+  // Format data for charts — use camelCase keys, Recharts Line `name` prop handles display labels
   const chartData = data.dataPoints.map((point) => ({
     date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    'Gini Coefficient': point.giniCoefficient,
-    'Workload Variance': point.workloadVariance,
-    'PGY Equity Score': point.pgyEquityScore,
-    'Fairness Score': point.fairnessScore,
+    giniCoefficient: point.giniCoefficient,
+    workloadVariance: point.workloadVariance,
+    pgyEquityScore: point.pgyEquityScore,
+    fairnessScore: point.fairnessScore,
   }));
 
   // Filter lines based on selected metric
   const getVisibleLines = () => {
     if (selectedMetric === 'all') {
-      return ['Gini Coefficient', 'Workload Variance', 'PGY Equity Score', 'Fairness Score'];
+      return ['giniCoefficient', 'workloadVariance', 'pgyEquityScore', 'fairnessScore'];
     }
-    if (selectedMetric === 'gini') return ['Gini Coefficient'];
-    if (selectedMetric === 'variance') return ['Workload Variance'];
-    if (selectedMetric === 'equity') return ['PGY Equity Score'];
+    if (selectedMetric === 'gini') return ['giniCoefficient'];
+    if (selectedMetric === 'variance') return ['workloadVariance'];
+    if (selectedMetric === 'equity') return ['pgyEquityScore'];
     return [];
   };
 
@@ -340,40 +340,44 @@ export function FairnessTrend({
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
-              {visibleLines.includes('Gini Coefficient') && (
+              {visibleLines.includes('giniCoefficient') && (
                 <Line
                   type="monotone"
-                  dataKey="Gini Coefficient"
+                  dataKey="giniCoefficient"
+                  name="Gini Coefficient"
                   stroke="#ef4444"
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
                 />
               )}
-              {visibleLines.includes('Workload Variance') && (
+              {visibleLines.includes('workloadVariance') && (
                 <Line
                   type="monotone"
-                  dataKey="Workload Variance"
+                  dataKey="workloadVariance"
+                  name="Workload Variance"
                   stroke="#f59e0b"
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
                 />
               )}
-              {visibleLines.includes('PGY Equity Score') && (
+              {visibleLines.includes('pgyEquityScore') && (
                 <Line
                   type="monotone"
-                  dataKey="PGY Equity Score"
+                  dataKey="pgyEquityScore"
+                  name="PGY Equity Score"
                   stroke="#3b82f6"
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
                 />
               )}
-              {visibleLines.includes('Fairness Score') && (
+              {visibleLines.includes('fairnessScore') && (
                 <Line
                   type="monotone"
-                  dataKey="Fairness Score"
+                  dataKey="fairnessScore"
+                  name="Fairness Score"
                   stroke="#10b981"
                   strokeWidth={2}
                   dot={{ r: 4 }}

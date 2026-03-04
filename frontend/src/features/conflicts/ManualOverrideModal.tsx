@@ -150,10 +150,10 @@ export function ManualOverrideModal({
       justification,
       expiresAt: overrideType === 'temporary' ? expiresAt : undefined,
       isAcgmeRelated: isAcgmeRelated,
-      acgme_exception_type: isAcgmeRelated ? acgmeExceptionType : undefined,
+      acgmeExceptionType: isAcgmeRelated ? acgmeExceptionType : undefined,
       supervisorApprovalRequired: supervisorRequired,
       supervisorApproved: supervisorApproved,
-      supervisor_id: supervisorApproved ? supervisorId || undefined : undefined,
+      supervisorId: supervisorApproved ? supervisorId || undefined : undefined,
     };
 
     try {

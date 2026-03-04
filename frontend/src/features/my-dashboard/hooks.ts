@@ -26,9 +26,9 @@ interface AssignmentApiResponse {
   timeOfDay: string;
   activity: string;
   location: string;
-  can_trade?: boolean;
-  is_conflict?: boolean;
-  conflict_reason?: string;
+  canTrade?: boolean;
+  isConflict?: boolean;
+  conflictReason?: string;
 }
 
 interface SwapApiResponse {
@@ -61,15 +61,15 @@ interface UserApiResponse {
 
 interface DashboardApiResponse {
   user: UserApiResponse;
-  upcoming_schedule?: AssignmentApiResponse[];
-  pending_swaps?: SwapApiResponse[];
+  upcomingSchedule?: AssignmentApiResponse[];
+  pendingSwaps?: SwapApiResponse[];
   absences?: AbsenceApiResponse[];
-  calendar_sync_url?: string;
+  calendarSyncUrl?: string;
   summary?: {
-    next_assignment?: string | null;
-    workload_next_4_weeks?: number;
-    pending_swap_count?: number;
-    upcoming_absences?: number;
+    nextAssignment?: string | null;
+    workloadNext4Weeks?: number;
+    pendingSwapCount?: number;
+    upcomingAbsences?: number;
   };
 }
 
@@ -108,9 +108,9 @@ function transformAssignment(assignment: AssignmentApiResponse): UpcomingAssignm
     timeOfDay: assignment.timeOfDay as TimeOfDay,
     activity: assignment.activity,
     location: assignment.location as Location,
-    canTrade: assignment.can_trade ?? true,
-    isConflict: assignment.is_conflict,
-    conflictReason: assignment.conflict_reason,
+    canTrade: assignment.canTrade ?? true,
+    isConflict: assignment.isConflict,
+    conflictReason: assignment.conflictReason,
   };
 }
 
@@ -186,17 +186,17 @@ export function useMyDashboard(
           name: response.user.name,
           role: response.user.role,
         },
-        upcomingSchedule: (response.upcoming_schedule || []).map(transformAssignment),
-        pendingSwaps: (response.pending_swaps || []).map((swap: SwapApiResponse) =>
+        upcomingSchedule: (response.upcomingSchedule || []).map(transformAssignment),
+        pendingSwaps: (response.pendingSwaps || []).map((swap: SwapApiResponse) =>
           transformPendingSwap(swap, currentUserId)
         ),
         absences: (response.absences || []).map(transformAbsence),
-        calendarSyncUrl: response.calendar_sync_url || '',
+        calendarSyncUrl: response.calendarSyncUrl || '',
         summary: {
-          nextAssignment: response.summary?.next_assignment || null,
-          workloadNext4Weeks: response.summary?.workload_next_4_weeks || 0,
-          pendingSwapCount: response.summary?.pending_swap_count || 0,
-          upcomingAbsences: response.summary?.upcoming_absences || 0,
+          nextAssignment: response.summary?.nextAssignment || null,
+          workloadNext4Weeks: response.summary?.workloadNext4Weeks || 0,
+          pendingSwapCount: response.summary?.pendingSwapCount || 0,
+          upcomingAbsences: response.summary?.upcomingAbsences || 0,
         },
       };
     },

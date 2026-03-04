@@ -201,7 +201,7 @@
 | P1.2 | Consolidate backup scripts to single `stack-backup.sh` | 2h | `scripts/backup*.sh` | Single script, modes work |
 | P1.3 | Externalize PII names to `.pii-scan-config.yaml` | 1h | `scripts/pii-scan.sh` | Config file sourced |
 | P1.4 | Add documentation headers to undocumented scripts | 2h | `scripts/*.sh` | All scripts have headers |
-| P1.5 | Remove deprecated backup scripts | 30m | `scripts/backup_full_stack.sh`, `scripts/full-stack-backup.sh` | Only `stack-backup.sh` remains |
+| ~~P1.5~~ | ~~Remove deprecated backup scripts~~ | ~~30m~~ | ~~`scripts/archived/`~~ | **DONE** — deleted Mar 2026 |
 
 **Verification Checklist:**
 - [ ] `pre-commit run --all-files` completes in <10s (was 15-30s)
@@ -368,8 +368,8 @@
 
 | File | Phase | Reason |
 |------|-------|--------|
-| `scripts/backup_full_stack.sh` | 1 | Deprecated, consolidated |
-| `scripts/full-stack-backup.sh` | 1 | Deprecated, consolidated |
+| `scripts/archived/backup_full_stack.sh` | 1 | Deprecated, consolidated |
+| `scripts/archived/full-stack-backup.sh` | 1 | Deprecated, consolidated |
 
 ---
 

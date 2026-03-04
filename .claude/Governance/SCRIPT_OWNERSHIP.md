@@ -47,9 +47,7 @@ This document maps all executable scripts in the repository to their owning agen
 |--------|-------------|-------------|---------|-------------------|
 | `scripts/stack-backup.sh` | DBA | COORD_PLATFORM | **Unified** backup/restore with immaculate fallback | Before risky operations, recovery, emergency |
 | `scripts/backup-db.sh` | DBA | COORD_PLATFORM | Create compressed PostgreSQL backups with rotation | Scheduled backups, before destructive operations |
-| `scripts/backup_full_stack.sh` | DBA | COORD_PLATFORM | **DEPRECATED** - Use stack-backup.sh | Legacy |
-| `scripts/full-stack-backup.sh` | DBA | COORD_PLATFORM | **DEPRECATED** - Use stack-backup.sh | Legacy |
-| `scripts/restore_full_stack.sh` | DBA | COORD_PLATFORM | **DEPRECATED** - Use stack-backup.sh | Legacy |
+| ~~`scripts/archived/`~~ | — | — | **DELETED** — deprecated backup scripts removed (Mar 2026) | — |
 
 ### Security Scripts (SECURITY_AUDITOR Domain)
 
@@ -554,11 +552,11 @@ Pre-downloads Python packages for offline installation. Creates a wheelhouse dir
 
 | Script | Owner | Purpose |
 |--------|-------|---------|
-| `scripts/seed_people.py` | DBA | Seed person data |
-| `scripts/seed_templates.py` | DBA | Seed rotation templates |
-| `scripts/seed_feature_flags.py` | DBA | Seed feature flags |
-| `scripts/seed_rotation_templates.py` | DBA | Seed rotation template data |
-| `scripts/seed_inpatient_rotations.py` | DBA | Seed inpatient rotation data |
+| `scripts/seed/seed_people.py` | DBA | Seed person data |
+| `scripts/seed/seed_templates.py` | DBA | Seed rotation templates |
+| `scripts/seed/seed_feature_flags.py` | DBA | Seed feature flags |
+| `scripts/seed/seed_rotation_templates.py` | DBA | Seed rotation template data |
+| `scripts/seed/seed_inpatient_rotations.py` | DBA | Seed inpatient rotation data |
 | `scripts/generate_blocks.py` | SCHEDULER | Generate schedule blocks |
 
 ### Scheduling & Validation Scripts
@@ -617,7 +615,7 @@ Pre-downloads Python packages for offline installation. Creates a wheelhouse dir
 | `backend/scripts/export_openapi.py` | ARCHITECT | Export OpenAPI schema to JSON |
 | `backend/scripts/export_sanitized_metrics.py` | RESILIENCE_ENGINEER | Export sanitized metrics for analysis |
 | `backend/scripts/migration_utils.py` | DBA | Alembic migration utilities/helpers |
-| `backend/scripts/seed_data.py` | DBA | Database seeding for dev/test |
+| `backend/scripts/seed/seed_data.py` | DBA | Database seeding for dev/test |
 
 ---
 
@@ -696,7 +694,7 @@ Scripts that interact with database state:
 
 **Key Scripts:**
 - `scripts/backup-db.sh`
-- `scripts/seed_*.py`
+- `scripts/seed/seed_*.py`
 - `scripts/ops/backup_database.py`
 
 ### Security Domain (SECURITY_AUDITOR Ownership via COORD_RESILIENCE)

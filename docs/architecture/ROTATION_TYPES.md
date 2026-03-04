@@ -211,4 +211,4 @@ The `rotation_type` field determines how the engine handles the rotation during 
 
 - [Engine Assignment Flow](ENGINE_ASSIGNMENT_FLOW.md) - How preserved assignments flow through the engine
 - [FMIT Constraints](FMIT_CONSTRAINTS.md) - FMIT-specific constraint rules
-- [Seed Rotation Templates Script](../../scripts/seed_rotation_templates.py) - Template seeding
+- [Seed Rotation Templates Script](../../scripts/seed/seed_rotation_templates.py) - Template seeding

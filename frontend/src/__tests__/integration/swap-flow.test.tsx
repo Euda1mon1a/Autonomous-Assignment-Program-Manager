@@ -5,9 +5,6 @@
  * schedule swap requests. Covers swap marketplace, auto-matching, approval workflows,
  * and rollback functionality.
  */
-import { render, screen, waitFor } from '@/test-utils'
-import userEvent from '@testing-library/user-event'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as api from '@/lib/api'
 
 // Mock the API module
@@ -24,32 +21,6 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/swaps',
   useSearchParams: () => new URLSearchParams(),
 }))
-
-// Create test query client
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-        staleTime: 0,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  })
-}
-
-// Test wrapper
-function renderWithProviders(ui: React.ReactElement) {
-  const queryClient = createTestQueryClient()
-  return render(
-    <QueryClientProvider client={queryClient}>
-      {ui}
-    </QueryClientProvider>
-  )
-}
 
 // Mock data
 const mockPeople = [
@@ -827,8 +798,8 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.get.mockResolvedValueOnce({
         compliant: true,
         checks: {
-          hours_80: 'pass', // @gorgon-ok — numeric suffix not converted by interceptor
-          daysOff_1in7: 'pass', // @gorgon-ok — numeric suffix not converted by interceptor
+          hours80: 'pass',
+          daysOff1In7: 'pass',
         },
       })
 

@@ -30,7 +30,7 @@
 4. Scope: Fix bugs in ONE directory per run. Never touch 50+ files.
 
 5. Env preflight for backend commands:
-   python3 scripts/ops/codex_worktree_env_exec.py -- <backend command>
+   python3 .codex/scripts/codex_worktree_env_exec.py -- <backend command>
 
 6. Preserve intentional workarounds:
    - If a file contains `# HACK:`, `# WORKAROUND:`, or lint suppression comments,

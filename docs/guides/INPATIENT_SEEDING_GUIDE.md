@@ -80,7 +80,7 @@ Expected templates:
 
 ### Location
 ```
-scripts/seed_inpatient_rotations.py
+scripts/seed/seed_inpatient_rotations.py
 ```
 
 ### Prerequisites
@@ -93,13 +93,13 @@ scripts/seed_inpatient_rotations.py
 
 ```bash
 # Dry run - shows what would be created without making changes
-python scripts/seed_inpatient_rotations.py --block 10 --dry-run
+python scripts/seed/seed_inpatient_rotations.py --block 10 --dry-run
 
 # Execute seeding
-python scripts/seed_inpatient_rotations.py --block 10
+python scripts/seed/seed_inpatient_rotations.py --block 10
 
 # With clearing existing assignments first
-python scripts/seed_inpatient_rotations.py --block 10 --clear-first
+python scripts/seed/seed_inpatient_rotations.py --block 10 --clear-first
 ```
 
 ### Environment Variables
@@ -220,10 +220,10 @@ Or create de-sanitized copies without the `sanitized_` prefix.
 cd /path/to/Autonomous-Assignment-Program-Manager
 
 # Dry run first
-python scripts/seed_inpatient_rotations.py --block 10 --dry-run
+python scripts/seed/seed_inpatient_rotations.py --block 10 --dry-run
 
 # If output looks correct, run for real
-python scripts/seed_inpatient_rotations.py --block 10
+python scripts/seed/seed_inpatient_rotations.py --block 10
 ```
 
 ### Step 5: Verify Inpatient Assignments
@@ -334,9 +334,9 @@ docker compose exec db psql -U scheduler -d residency_scheduler \
 
 ## Related Files
 
-- `scripts/seed_inpatient_rotations.py` - The seeding script
-- `scripts/seed_people.py` - Seeds people from JSON
-- `scripts/seed_templates.py` - Seeds rotation templates
+- `scripts/seed/seed_inpatient_rotations.py` - The seeding script
+- `scripts/seed/seed_people.py` - Seeds people from JSON
+- `scripts/seed/seed_templates.py` - Seeds rotation templates
 - `backend/app/scheduling/engine.py` - Schedule generation engine
 - `docs/guides/SCHEDULE_GENERATION_RUNBOOK.md` - Full generation workflow
 

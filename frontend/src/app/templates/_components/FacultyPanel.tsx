@@ -20,7 +20,7 @@ const FACULTY_ROLE_LABELS: Record<string, string> = {
   oic: 'OIC',
   core: 'Core Faculty',
   adjunct: 'Adjunct',
-  clinical_staff: 'Clinical Staff',
+  clinical_staff: 'Clinical Staff', // eslint-disable-line @typescript-eslint/naming-convention -- enum value key
 };
 
 export function FacultyPanel() {

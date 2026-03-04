@@ -288,7 +288,7 @@ Files to Modify/Create
 | CREATE | backend/alembic/versions/XXXXXX_add_pc_template.py          |
 | MODIFY | backend/app/scheduling/constraints/__init__.py              |
 | MODIFY | backend/app/scheduling/engine.py (register constraint)      |
-| MODIFY | scripts/seed_rotation_templates.py (add PC template)        |
+| MODIFY | scripts/seed/seed_rotation_templates.py (add PC template)        |
 
 Validation Rules
 

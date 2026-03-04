@@ -28,5 +28,5 @@
    - Frontend: frontend/__tests__/<layer>/<Module>.test.tsx
 
 6. Env preflight for backend test runs:
-   python3 scripts/ops/codex_worktree_env_exec.py -- pytest <test_file> -v
+   python3 .codex/scripts/codex_worktree_env_exec.py -- pytest <test_file> -v
 ```

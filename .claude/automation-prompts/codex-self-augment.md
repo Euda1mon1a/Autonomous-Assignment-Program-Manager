@@ -179,8 +179,8 @@ Fix: Change `async def factory_name(...)` to `def factory_name(...)`. Keep the i
 ### Verification
 After changes:
 ```bash
-python3 scripts/ops/codex_worktree_env_exec.py -- python -m py_compile <changed_file>
-python3 scripts/ops/codex_worktree_env_exec.py -- pytest <related_test_file> -v
+python3 .codex/scripts/codex_worktree_env_exec.py -- python -m py_compile <changed_file>
+python3 .codex/scripts/codex_worktree_env_exec.py -- pytest <related_test_file> -v
 ```
 ```
 

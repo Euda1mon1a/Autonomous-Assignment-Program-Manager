@@ -15,16 +15,16 @@ This tool finds:
 
 ```bash
 # Human-readable report in terminal
-scripts/ops/codex_cherry_pick_hunter.sh
+.codex/scripts/codex_cherry_pick_hunter.sh
 
 # Save report to docs/archived/reports/automation/
-scripts/ops/codex_cherry_pick_hunter.sh --save
+.codex/scripts/codex_cherry_pick_hunter.sh --save
 ```
 
 ## Safety Gate Mode
 
 ```bash
-scripts/ops/codex_cherry_pick_hunter.sh --risk-check
+.codex/scripts/codex_cherry_pick_hunter.sh --risk-check
 echo $?
 ```
 
@@ -35,7 +35,7 @@ Exit codes:
 
 ## Integration With Prune
 
-`scripts/ops/codex_storage_hygiene.sh --prune-stale --apply` now uses this as a hard gate:
+`.codex/scripts/codex_storage_hygiene.sh --prune-stale --apply` now uses this as a hard gate:
 
 - If risk is detected, prune is blocked and a report is generated.
 - To bypass intentionally, pass `--allow-risky-prune`.

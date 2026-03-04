@@ -34,7 +34,7 @@ export const ACTIVITY_CATEGORY_LABELS: Record<ActivityCategory, string> = {
   clinical: 'Clinical',
   educational: 'Educational',
   administrative: 'Administrative',
-  time_off: 'Time Off',
+  time_off: 'Time Off', // eslint-disable-line @typescript-eslint/naming-convention -- enum value key
 };
 
 // ============================================================================

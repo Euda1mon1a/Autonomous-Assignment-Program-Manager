@@ -139,14 +139,14 @@ When performing a new audit, add an entry below with:
 
 | Date | Commit | Action |
 |------|--------|--------|
-| Dec 21 | `2ce9f0b9` | Removed PII from seed scripts (`scripts/seed_people.py`) and data docs (`AIRTABLE_EXPORT_SUMMARY.md`) |
+| Dec 21 | `2ce9f0b9` | Removed PII from seed scripts (`scripts/seed/seed_people.py`) and data docs (`AIRTABLE_EXPORT_SUMMARY.md`) |
 | Dec 21 | `05651fde` | Removed remaining PII from docstrings and tests (`schedule.py`, `xlsx_import.py`, `test_xlsx_import.py`) |
 | Dec 21 | `0fc0e6d5` | Added gitignore entries for local PII data files |
 | Dec 22 | `5ee6cfbe` | Reconciliation merge using `--allow-unrelated-histories` (diverged after force-push) |
 | Dec 22 | `664c2255` | Post-merge fix: restored FMIT preservation code lost in merge conflict |
 
 ### What Was Found
-- **Seed scripts** (`scripts/seed_people.py`) with real resident/faculty names
+- **Seed scripts** (`scripts/seed/seed_people.py`) with real resident/faculty names
 - **Docstrings and tests** in backend files referencing real people
 - **Data export summary** (`docs/data/AIRTABLE_EXPORT_SUMMARY.md`) with real identifiers
 

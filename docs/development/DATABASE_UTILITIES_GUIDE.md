@@ -286,7 +286,7 @@ print(f"Would execute:\n{sql}")
 The `SeedData` module provides development and test data generation.
 
 ### Location
-`backend/scripts/seed_data.py`
+`backend/scripts/seed/seed_data.py`
 
 ### Seed Types
 
@@ -320,19 +320,19 @@ result = SeedDataManager.seed_demo(db)
 
 ```bash
 # Seed development data
-python backend/scripts/seed_data.py dev
+python backend/scripts/seed/seed_data.py dev
 
 # Seed test fixtures
-python backend/scripts/seed_data.py test
+python backend/scripts/seed/seed_data.py test
 
 # Seed demo data
-python backend/scripts/seed_data.py demo
+python backend/scripts/seed/seed_data.py demo
 
 # Validate environment
-python backend/scripts/seed_data.py validate
+python backend/scripts/seed/seed_data.py validate
 
 # Clear all seed data
-python backend/scripts/seed_data.py clear
+python backend/scripts/seed/seed_data.py clear
 ```
 
 ### What Gets Created

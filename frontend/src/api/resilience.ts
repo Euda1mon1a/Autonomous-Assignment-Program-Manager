@@ -44,14 +44,14 @@ export async function fetchSystemHealth(
 export async function fetchVulnerabilityReport(params?: {
   startDate?: string;
   endDate?: string;
-  include_n2?: boolean;
+  includeN2?: boolean;
 }): Promise<VulnerabilityReportResponse> {
   const queryParams = new URLSearchParams();
   // URL query params MUST use snake_case (backend expects snake_case)
   if (params?.startDate) queryParams.set("start_date", params.startDate);
   if (params?.endDate) queryParams.set("end_date", params.endDate);
-  if (params?.include_n2 !== undefined)
-    queryParams.set("include_n2", String(params.include_n2));
+  if (params?.includeN2 !== undefined)
+    queryParams.set("include_n2", String(params.includeN2));
 
   return get<VulnerabilityReportResponse>(
     `${BASE_URL}/vulnerability?${queryParams.toString()}`

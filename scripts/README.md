@@ -88,7 +88,7 @@ Seeds the database with test people (residents and faculty) via the API.
 
 ```bash
 # Requires the API to be running
-python scripts/seed_people.py
+python scripts/seed/seed_people.py
 ```
 
 Creates:

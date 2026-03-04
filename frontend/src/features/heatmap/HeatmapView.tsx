@@ -129,8 +129,8 @@ export function HeatmapView({
         t: 80,
         b: 120,
       },
-      paper_bgcolor: 'white',
-      plot_bgcolor: 'white',
+      paper_bgcolor: 'white', // eslint-disable-line @typescript-eslint/naming-convention -- Plotly.js API property
+      plot_bgcolor: 'white', // eslint-disable-line @typescript-eslint/naming-convention -- Plotly.js API property
       annotations: data?.annotations || [],
       autosize: true,
     };

@@ -8,7 +8,7 @@
  * Note: The component uses labels without proper for/id associations,
  * so tests use alternative selectors (getByRole, getByDisplayValue, etc.)
  */
-import { render, screen, waitFor, act, within, fireEvent } from '@/test-utils'
+import { render, screen, waitFor, act, fireEvent } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SettingsPage from '@/app/settings/page'
@@ -30,9 +30,9 @@ const mockSettings = {
   workHoursPerWeek: 80,
   maxConsecutiveDays: 6,
   minDaysOffPerWeek: 1,
-  pgy1_supervisionRatio: '1:2',
-  pgy2_supervisionRatio: '1:4',
-  pgy3_supervisionRatio: '1:4',
+  pgy1SupervisionRatio: '1:2',
+  pgy2SupervisionRatio: '1:4',
+  pgy3SupervisionRatio: '1:4',
   enableWeekendScheduling: true,
   enableHolidayScheduling: false,
   defaultBlockDurationHours: 4,
@@ -502,7 +502,7 @@ describe('SettingsPage', () => {
     })
 
     it('should show "unsaved changes" indicator when fields are modified', async () => {
-      const user = userEvent.setup({ delay: null })
+      const _user = userEvent.setup({ delay: null })
 
       const { container } = renderWithProviders(<SettingsPage />)
 
@@ -519,7 +519,7 @@ describe('SettingsPage', () => {
     })
 
     it('should enable save button when changes are made', async () => {
-      const user = userEvent.setup({ delay: null })
+      const _user = userEvent.setup({ delay: null })
 
       const { container } = renderWithProviders(<SettingsPage />)
 

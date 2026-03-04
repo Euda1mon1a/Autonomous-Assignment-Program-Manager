@@ -12,7 +12,7 @@ MAX_PER_MINUTE=5
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/ops/codex_app_schedule_status.sh [options]
+  .codex/scripts/codex_app_schedule_status.sh [options]
 
 Options:
   --fail-on-collision    Exit non-zero when active automations exceed max per minute

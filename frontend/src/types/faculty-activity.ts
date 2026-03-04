@@ -26,8 +26,8 @@ export const FACULTY_ROLE_LABELS: Record<FacultyRole, string> = {
   pd: 'Program Director',
   apd: 'Associate Program Director',
   oic: 'Officer in Charge',
-  dept_chief: 'Department Chief',
-  sports_med: 'Sports Medicine',
+  dept_chief: 'Department Chief', // eslint-disable-line @typescript-eslint/naming-convention -- enum value key
+  sports_med: 'Sports Medicine', // eslint-disable-line @typescript-eslint/naming-convention -- enum value key
   core: 'Core Faculty',
   adjunct: 'Adjunct Faculty',
 };

@@ -5,9 +5,6 @@
  * Covers login, logout, session management, token refresh, password reset,
  * role-based navigation, and security features.
  */
-import { render, screen, waitFor } from '@/test-utils'
-import userEvent from '@testing-library/user-event'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { AxiosRequestConfig } from 'axios'
 import * as api from '@/lib/api'
 
@@ -29,22 +26,6 @@ jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/login'),
   useSearchParams: () => new URLSearchParams(),
 }))
-
-// Create test query client
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-        staleTime: 0,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  })
-}
 
 // ============================================================================
 // Type Definitions
@@ -478,7 +459,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should show role-specific menu items', async () => {
       setupApiMock()
 
-      const user: any = await mockedApi.get('/api/auth/me')
+      const _user: any = await mockedApi.get('/api/auth/me')
 
       const menuItems = {
         coordinator: ['dashboard', 'schedule', 'people', 'admin', 'compliance'],

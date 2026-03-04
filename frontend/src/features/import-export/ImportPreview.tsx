@@ -268,7 +268,7 @@ interface PreviewRowProps {
   columns: string[];
   isExpanded: boolean;
   onToggle: () => void;
-  StatusIcon: React.ComponentType<{ status: ImportRowStatus }>;
+  StatusIcon: React.ComponentType<{ status: ImportRowStatus }>; // eslint-disable-line @typescript-eslint/naming-convention -- React component prop
   getRowBackground: (status: ImportRowStatus) => string;
 }
 

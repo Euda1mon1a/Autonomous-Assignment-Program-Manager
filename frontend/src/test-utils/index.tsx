@@ -170,10 +170,10 @@ export interface MockAssignment {
 
 export interface MockSwapRequest {
   id: string;
-  requester_id: string;
-  target_id: string;
-  requester_blockId: string;
-  target_blockId: string;
+  requesterId: string;
+  targetId: string;
+  requesterBlockId: string;
+  targetBlockId: string;
   status: string;
   swapType: string;
   reason: string;
@@ -196,7 +196,7 @@ export interface MockPaginatedResponse<T> {
   items: T[];
   total: number;
   page: number;
-  per_page: number;
+  perPage: number;
 }
 
 export const mockData = {
@@ -261,10 +261,10 @@ export const mockData = {
    */
   swapRequest: (overrides?: Partial<MockSwapRequest>): MockSwapRequest => ({
     id: 'swap-1',
-    requester_id: 'person-1',
-    target_id: 'person-2',
-    requester_blockId: 'block-1',
-    target_blockId: 'block-2',
+    requesterId: 'person-1',
+    targetId: 'person-2',
+    requesterBlockId: 'block-1',
+    targetBlockId: 'block-2',
     status: 'pending',
     swapType: 'one_to_one', // @gorgon-ok
     reason: 'Test swap request',
@@ -295,7 +295,7 @@ export const mockData = {
     items,
     total: items.length,
     page: 1,
-    per_page: DEFAULT_PER_PAGE,
+    perPage: DEFAULT_PER_PAGE,
     ...overrides,
   }),
 };
@@ -463,7 +463,7 @@ export async function waitForElement(
       { timeout }
     );
     return element!;
-  } catch (error) {
+  } catch (_error) {
     throw new Error(errorMessage);
   }
 }
@@ -517,7 +517,7 @@ export async function typeIntoField(user: ReturnType<typeof userEvent.setup>, in
 export async function selectOption(
   user: ReturnType<typeof userEvent.setup>,
   select: HTMLElement,
-  optionText: string
+  _optionText: string
 ): Promise<void> {
   await user.click(select);
   await user.click(await waitForElement(() => document.querySelector(`[role="option"]`)));

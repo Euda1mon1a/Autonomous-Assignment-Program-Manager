@@ -33,5 +33,5 @@
    - Use synthetic IDs for any test data
 
 6. Run Bandit after changes:
-   python3 scripts/ops/codex_worktree_env_exec.py -- bandit -r backend/app/ -c pyproject.toml
+   python3 .codex/scripts/codex_worktree_env_exec.py -- bandit -r backend/app/ -c pyproject.toml
 ```

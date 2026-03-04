@@ -16,7 +16,7 @@ PRESERVE_PREFIX="codex/salvage"
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/ops/codex_cherry_pick_hunter.sh [options]
+  .codex/scripts/codex_cherry_pick_hunter.sh [options]
 
 Options:
   --worktree-root PATH   Worktree root (default: ~/.codex/worktrees)

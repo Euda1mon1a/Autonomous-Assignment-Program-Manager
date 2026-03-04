@@ -253,7 +253,7 @@ Task 8: Transaction Management ✅
 
 ### File Created
 
-6. **`backend/scripts/seed_data.py`** (430 lines)
+6. **`backend/scripts/seed/seed_data.py`** (430 lines)
 
 ### Classes Implemented
 
@@ -722,9 +722,9 @@ alembic upgrade head
 
 ### Seeding
 ```bash
-python scripts/seed_data.py dev
-python scripts/seed_data.py validate
-python scripts/seed_data.py clear
+python scripts/seed/seed_data.py dev
+python scripts/seed/seed_data.py validate
+python scripts/seed/seed_data.py clear
 ```
 
 ### Query Optimization

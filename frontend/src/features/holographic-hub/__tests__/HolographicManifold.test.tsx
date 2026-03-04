@@ -7,7 +7,6 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { HolographicManifold } from "../HolographicManifold";
-import { ManifoldPoint } from "../types";
 
 // Create a wrapper with QueryClientProvider
 const createWrapper = () => {

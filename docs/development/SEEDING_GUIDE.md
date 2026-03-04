@@ -10,7 +10,7 @@ All seed scripts are in `backend/` and should be run from that directory using t
 cd backend
 
 # Full environment seed (core entities: users, people, rotations, blocks, call)
-.venv/bin/python scripts/seed_antigravity.py --clear
+.venv/bin/python scripts/seed/seed_antigravity.py --clear
 
 # Feature-specific seeds (run AFTER seed_antigravity.py)
 .venv/bin/python seed_game_theory.py
@@ -29,8 +29,8 @@ cd backend
 
 | Script                        | Tables                                                                                                                                                                                                      | Rows Created | Prerequisites                                |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | -------------------------------------------- |
-| `scripts/seed_antigravity.py` | users, people, blocks, rotations, call_assignments, absences                                                                                                                                                | ~200+        | None (use `--clear` for clean slate)         |
-| `scripts/seed_data.py`        | Legacy seeder                                                                                                                                                                                               | Varies       | Deprecated; use `seed_antigravity.py`        |
+| `scripts/seed/seed_antigravity.py` | users, people, blocks, rotations, call_assignments, absences                                                                                                                                                | ~200+        | None (use `--clear` for clean slate)         |
+| `scripts/seed/seed_data.py`        | Legacy seeder                                                                                                                                                                                               | Varies       | Deprecated; use `seed_antigravity.py`        |
 | `seed_game_theory.py`         | config_strategies, game_theory_tournaments, tournament_matches                                                                                                                                              | ~8           | `seed_antigravity.py` (needs people)         |
 | `seed_wellness.py`            | surveys, wellness_accounts, survey_responses, hopfield_positions                                                                                                                                            | ~35          | `seed_antigravity.py` (needs people)         |
 | `seed_notifications.py`       | email_templates, notification_preferences, notifications, email_logs                                                                                                                                        | ~32          | `seed_antigravity.py` (needs users)          |
