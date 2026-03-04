@@ -1,6 +1,6 @@
 # Faculty Scheduling Fix Roadmap
 
-> **Status:** Phase 1 COMPLETED, Phase 2 COMPLETED, Phase 3 COMPLETED, Phase 4 COMPLETED
+> **Status:** Phase 1 COMPLETED, Phase 2 COMPLETED, Phase 3 COMPLETED, Phase 4 COMPLETED, Phase 5 IN PROGRESS
 > **Created:** 2026-02-25
 > **Updated:** 2026-03-03 — All 4 phases complete. Phase 4 (PR #1233): AT/C category-gated template resolution per Gemini audit.
 > **Depends on:** Gemini WP-2/3/4/8/9 completion (Phases 2-3)
@@ -471,4 +471,114 @@ cd backend
 
 # Block 12 pipeline (visual inspection of XLSX)
 SKIP_SETTINGS_VALIDATION=1 .venv/bin/python /tmp/run_block12_full_pipeline.py
+```
+
+---
+
+## Phase 5: Faculty Final Wednesday Inverted Schedule — IN PROGRESS
+
+> **Status:** IN PROGRESS
+> **Priority:** HIGH — faculty final Wednesday schedule completely wrong
+> **Created:** 2026-03-03
+> **Ground truth:** `Block12_TAMC_20260303_135946.xlsx` (user-corrected)
+> **Depends on:** Phase 4 (category-gated template correction)
+
+### Problem
+
+The pipeline treats faculty and residents differently on the final Wednesday (inverted schedule day). In reality, **faculty follow the same inverted pattern as residents** — LEC AM / ADV PM — with only three exception layers:
+
+1. **Leave** — if on leave, stays LV
+2. **FMIT rotation** — if on FMIT preload, stays FMIT
+3. **Clinic coverage** — exactly 1 faculty gets C AM, exactly 1 *different* faculty gets C PM. Their other slot follows the inverted pattern (C AM faculty gets ADV PM, C PM faculty gets LEC AM).
+
+**Current pipeline behavior (wrong):**
+- `_apply_faculty_template_correction()` overwrites final Wednesday to weekly templates (AT, GME, DFM, SIM, etc.)
+- `_backfill_last_wednesday_clinic()` only places 1-2 C slots — never applies LEC/ADV to the rest
+- Result: faculty have their regular template activities instead of attending didactics
+
+**Correct behavior (from ground truth XLSX):**
+
+| Faculty Role | AM | PM | Rule Applied |
+|---------|----|----|-------------|
+| APD (FMIT rotation) | FMIT | FMIT | FMIT rotation override |
+| Core faculty #1 | LEC | C | Inverted + clinic PM |
+| OIC faculty | LEC | ADV | Full inverted |
+| Core faculty (on leave) | LV | LV | Leave override |
+| SM faculty | LEC | ADV | Full inverted |
+| Dept Chief | LEC | ADV | Full inverted |
+| Core faculty #2 | LEC | ADV | Full inverted |
+| Core faculty #3 | C | ADV | Clinic AM + inverted PM |
+| PD faculty | LEC | ADV | Full inverted |
+| Core faculty #4 | LEC | ADV | Full inverted |
+
+### Solution
+
+Rewrite `_backfill_last_wednesday_clinic()` to handle the complete final Wednesday faculty pattern:
+
+#### 5A: Apply inverted schedule to all eligible faculty
+
+For all non-leave, non-FMIT core faculty on the final Wednesday:
+1. Set AM → LEC
+2. Set PM → ADV
+
+This replaces whatever the solver or template correction placed.
+
+#### 5B: Designate clinic coverage (exactly 1 AM + 1 PM)
+
+After applying LEC/ADV:
+1. Pick 1 faculty → convert AM from LEC to C
+2. Pick 1 *different* faculty → convert PM from ADV to C
+
+Selection criteria: prefer faculty whose weekly template includes clinic on Wednesdays, or who have the fewest clinic days in the block (equity).
+
+#### 5C: Skip final Wednesday in template correction
+
+In `_apply_faculty_template_correction()`, skip all HDAs on the final Wednesday. The inverted schedule is handled entirely by the backfill method — template correction would overwrite LEC/ADV back to template codes.
+
+```python
+# In the solver_hdas loop:
+is_final_wed = (
+    hda.date.weekday() == 2
+    and (self.end_date - hda.date).days < 7
+)
+if is_final_wed:
+    continue
+```
+
+### Critical Files
+
+| File | Change |
+|------|--------|
+| `backend/app/scheduling/engine.py` | Rewrite `_backfill_last_wednesday_clinic()` (LEC/ADV + clinic picks) |
+| `backend/app/scheduling/engine.py` | Add final-Wednesday skip to `_apply_faculty_template_correction()` |
+| `backend/tests/scheduling/test_faculty_template_correction.py` | Add final-Wednesday skip tests |
+
+### Verification
+
+```bash
+cd backend
+# Run pipeline
+SKIP_SETTINGS_VALIDATION=1 .venv/bin/python /tmp/run_block12_full_pipeline.py
+
+# Verify via SQL
+psql -c "
+SELECT p.name, h.time_of_day, a.code
+FROM half_day_assignments h
+JOIN people p ON h.person_id = p.id
+JOIN activities a ON h.activity_id = a.id
+WHERE h.date = '2026-06-03' AND p.type = 'faculty'
+ORDER BY p.name, h.time_of_day;
+"
+# Expect: LEC AM / ADV PM for most, FMIT for FMIT-rotation faculty, LV for leave faculty,
+#         C AM for 1 faculty, C PM for 1 different faculty
+
+# Verify XLSX matches ground truth
+python3 -c "
+import openpyxl
+wb = openpyxl.load_workbook('path/to/exported.xlsx', data_only=True)
+ws = wb['Block Template2']
+# Check col 60 (Jun 3) for faculty rows 31-40
+for r in range(31, 41):
+    print(ws.cell(r,5).value, ws.cell(r,60).value, ws.cell(r,61).value)
+"
 ```
