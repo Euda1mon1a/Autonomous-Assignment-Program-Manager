@@ -211,9 +211,9 @@ npm test -- --passWithNoTests
 
 | File | Count | Notes |
 |------|-------|-------|
-| `scheduling/quantum/call_assignment_qubo.py` | 15 | Quantum QUBO — not production scheduling |
-| `scheduling/quantum/qubo_template_selector.py` | 4 | Quantum QUBO — not production scheduling |
-| `scheduling/zeno_dashboard.py` | 2 | Zeno dashboard — safe |
+| ~~`scheduling/quantum/call_assignment_qubo.py`~~ | 15 | **EXCLUDED** — inside `scheduling/` hard boundary |
+| ~~`scheduling/quantum/qubo_template_selector.py`~~ | 4 | **EXCLUDED** — inside `scheduling/` hard boundary |
+| ~~`scheduling/zeno_dashboard.py`~~ | 2 | **EXCLUDED** — inside `scheduling/` hard boundary |
 | `middleware/logging/__init__.py` | 2 | Logging module — likely intentional, review |
 | `frms/scenario_analyzer.py` | 1 | FRMS — safe |
 | `core/cache/redis_cache.py` | 1 | Cache — safe |
