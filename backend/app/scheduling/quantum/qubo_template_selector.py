@@ -120,10 +120,10 @@ USAGE EXAMPLE
     # Get full result with Pareto front
     result = solver.solve_with_full_result(context)
 
-    print(f"Success: {result.success}")
-    print(f"Assignments: {len(result.assignments)}")
-    print(f"Pareto frontier: {len(result.pareto_frontier)} solutions")
-    print(f"Local minima: {result.statistics['num_local_minima']}")
+    logger.info("Success: %s", result.success)
+    logger.info("Assignments: %s", len(result.assignments))
+    logger.info("Pareto frontier: %s solutions", len(result.pareto_frontier))
+    logger.info("Local minima: %s", result.statistics['num_local_minima'])
 
     # Export for visualization
     viz_data = result.to_json()

@@ -141,7 +141,7 @@ class ScenarioAnalyzer:
             blocks=blocks
         )
 
-        print(report.impact_summary)
+        logger.info("Impact summary: %s", report.impact_summary)
     """
 
     def __init__(self) -> None:
