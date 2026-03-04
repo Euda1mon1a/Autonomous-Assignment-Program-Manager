@@ -13,7 +13,7 @@ from datetime import datetime, UTC
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 from app.core.config import get_settings
 
@@ -117,7 +117,7 @@ class EmailDeliveryService:
                 file_data.seek(0)
                 attachment_data = file_data.read()
 
-            attachment = MIMEApplication(attachment_data, _subtype=None)
+            attachment = MIMEApplication(attachment_data, _subtype="octet-stream")
             attachment.add_header("Content-Type", content_type)
             attachment.add_header(
                 "Content-Disposition", "attachment", filename=filename
@@ -212,13 +212,14 @@ class S3DeliveryService:
             s3_client = boto3.client("s3", **s3_config)
 
             # Prepare upload parameters
-            upload_params = {
+            upload_params: dict[str, Any] = {
                 "ContentType": content_type,
             }
             if metadata:
                 upload_params["Metadata"] = metadata
 
                 # Upload file
+            file_obj: BinaryIO
             if isinstance(file_data, bytes):
                 file_obj = io.BytesIO(file_data)
             else:

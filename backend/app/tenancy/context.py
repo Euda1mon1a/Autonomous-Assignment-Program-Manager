@@ -16,9 +16,11 @@ gets its own isolated context that doesn't interfere with other
 concurrent requests.
 """
 
+from __future__ import annotations
+
 import logging
-from contextvars import ContextVar
-from typing import Optional
+from contextvars import ContextVar, Token
+from typing import Any, Optional
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -71,11 +73,11 @@ class TenantContext:
         self.tenant_id = tenant_id
         self.tenant_slug = tenant_slug
         self.bypass = bypass
-        self._tenant_id_token = None
-        self._tenant_slug_token = None
-        self._bypass_token = None
+        self._tenant_id_token: Token[UUID | None] | None = None
+        self._tenant_slug_token: Token[str | None] | None = None
+        self._bypass_token: Token[bool] | None = None
 
-    def __enter__(self):
+    def __enter__(self) -> TenantContext:
         """Enter the context and set tenant variables."""
         self._tenant_id_token = _tenant_id.set(self.tenant_id)
         self._tenant_slug_token = _tenant_slug.set(self.tenant_slug)
@@ -433,7 +435,7 @@ def _get_role_permissions(role: str) -> dict[str, list[str]]:
     return ROLE_PERMISSIONS.get(role, {})
 
 
-async def get_tenant_by_slug(slug: str, db: Session) -> Optional:
+async def get_tenant_by_slug(slug: str, db: Session) -> Any | None:
     """
     Get a tenant by its slug.
 
@@ -455,7 +457,7 @@ async def get_tenant_by_slug(slug: str, db: Session) -> Optional:
     return result.scalar_one_or_none()
 
 
-async def get_tenant_by_id(tenant_id: UUID, db: Session) -> Optional:
+async def get_tenant_by_id(tenant_id: UUID, db: Session) -> Any:
     """
     Get a tenant by its ID.
 

@@ -29,6 +29,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, UTC
 from enum import Enum
+from collections.abc import Sequence
 from typing import Any
 
 import redis
@@ -796,7 +797,7 @@ class AutocompleteService:
         if len(s2) == 0:
             return len(s1)
 
-        previous_row = range(len(s2) + 1)
+        previous_row: Sequence[int] = range(len(s2) + 1)
         for i, c1 in enumerate(s1):
             current_row = [i + 1]
             for j, c2 in enumerate(s2):

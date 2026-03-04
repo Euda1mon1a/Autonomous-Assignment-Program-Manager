@@ -186,6 +186,9 @@ class TenantScope:
 
     async def _set_schema(self) -> None:
         """Set PostgreSQL search_path to tenant schema."""
+        assert self.tenant_id is not None, (
+            "tenant_id must be set before calling _set_schema"
+        )
         schema_name = get_tenant_schema(self.tenant_id)
         validate_schema_name(schema_name)
 
@@ -208,6 +211,9 @@ class TenantScope:
 
     def _set_schema_sync(self) -> None:
         """Set PostgreSQL search_path to tenant schema (sync)."""
+        assert self.tenant_id is not None, (
+            "tenant_id must be set before calling _set_schema_sync"
+        )
         schema_name = get_tenant_schema(self.tenant_id)
         validate_schema_name(schema_name)
 
@@ -1262,6 +1268,7 @@ class TenantIsolationService:
         self.encryption_service = TenantEncryptionService(master_encryption_key)
         self.quota_service = TenantQuotaService(session)
 
+        self.pool_manager: TenantConnectionPoolManager | None
         if database_url:
             self.pool_manager = TenantConnectionPoolManager(database_url)
         else:
