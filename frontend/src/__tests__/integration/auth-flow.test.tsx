@@ -56,19 +56,19 @@ interface User {
   name: string;
   role: 'coordinator' | 'admin' | 'resident' | 'faculty';
   personId: string;
-  requires_password_change?: boolean;
+  requiresPasswordChange?: boolean;
 }
 
 interface AuthResponse {
   accessToken: string;
   tokenType: string;
-  expires_in: number;
+  expiresIn: number;
   user: User;
-  remember_token?: string;
-  mfa_required?: boolean;
-  mfa_method?: string;
-  mfa_verified?: boolean;
-  sso_provider?: string;
+  rememberToken?: string;
+  mfaRequired?: boolean;
+  mfaMethod?: string;
+  mfaVerified?: boolean;
+  ssoProvider?: string;
 }
 
 interface RefreshTokenResponse {
@@ -78,15 +78,10 @@ interface RefreshTokenResponse {
 interface ApiError {
   message: string;
   status: number;
-  failed_attempts?: number;
-  max_attempts?: number;
-  locked_until?: string;
-  retry_after?: number;
-}
-
-interface ApiConfig {
-  headers?: Record<string, string>;
-  responseType?: string;
+  failedAttempts?: number;
+  maxAttempts?: number;
+  lockedUntil?: string;
+  retryAfter?: number;
 }
 
 // Mock auth data
@@ -101,7 +96,7 @@ const mockUser: User = {
 const mockAuthResponse: AuthResponse = {
   accessToken: 'mock-jwt-token',
   tokenType: 'bearer',
-  expires_in: 3600,
+  expiresIn: 3600,
   user: mockUser,
 }
 
@@ -225,7 +220,7 @@ describe('Authentication Flow - Integration Tests', () => {
       mockedApi.post.mockRejectedValueOnce({
         message: 'Too many login attempts',
         status: 429,
-        retry_after: 60,
+        retryAfter: 60,
       })
 
       await expect(
@@ -300,24 +295,24 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         ...mockUser,
-        session_expires_in: 300, // 5 minutes
-        show_warning: true,
+        sessionExpiresIn: 300, // 5 minutes
+        showWarning: true,
       })
 
       const result: any = await mockedApi.get('/api/auth/me')
-      expect(result.show_warning).toBe(true)
+      expect(result.showWarning).toBe(true)
     })
 
     it('should allow session extension', async () => {
       setupApiMock()
 
       mockedApi.post.mockResolvedValueOnce({
-        session_extended: true,
-        new_expiresAt: '2024-01-29T01:00:00Z',
+        sessionExtended: true,
+        newExpiresAt: '2024-01-29T01:00:00Z',
       })
 
       const result: any = await mockedApi.post('/api/auth/extend-session', {})
-      expect(result.session_extended).toBe(true)
+      expect(result.sessionExtended).toBe(true)
     })
   })
 
@@ -389,15 +384,15 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.post.mockResolvedValueOnce({
         success: true,
-        email_sent: true,
-        reset_tokenExpires_in: 3600,
+        emailSent: true,
+        resetTokenExpiresIn: 3600,
       })
 
       const result: any = await mockedApi.post('/api/auth/password-reset', {
         email: 'test@hospital.org',
       })
 
-      expect(result.email_sent).toBe(true)
+      expect(result.emailSent).toBe(true)
     })
 
     it('should validate reset token', async () => {
@@ -405,7 +400,7 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.post.mockResolvedValueOnce({
         valid: true,
-        user_email: 'test@hospital.org',
+        userEmail: 'test@hospital.org',
       })
 
       const result: any = await mockedApi.post('/api/auth/validate-reset-token', {
@@ -420,7 +415,7 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.post.mockResolvedValueOnce({
         success: true,
-        password_changed: true,
+        passwordChanged: true,
       })
 
       const result: any = await mockedApi.post('/api/auth/reset-password', {
@@ -428,7 +423,7 @@ describe('Authentication Flow - Integration Tests', () => {
         newPassword: 'NewSecurePassword123!',
       })
 
-      expect(result.password_changed).toBe(true)
+      expect(result.passwordChanged).toBe(true)
     })
 
     it('should enforce password complexity', async () => {
@@ -550,8 +545,8 @@ describe('Authentication Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.post.mockResolvedValueOnce({
-        mfa_required: true,
-        mfa_method: 'totp',
+        mfaRequired: true,
+        mfaMethod: 'totp',
       })
 
       const result: any = await mockedApi.post('/api/auth/login', {
@@ -559,7 +554,7 @@ describe('Authentication Flow - Integration Tests', () => {
         password: 'password123',
       })
 
-      expect(result.mfa_required).toBe(true)
+      expect(result.mfaRequired).toBe(true)
     })
 
     it('should verify MFA code', async () => {
@@ -567,7 +562,7 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.post.mockResolvedValueOnce({
         accessToken: 'mock-jwt-token',
-        mfa_verified: true,
+        mfaVerified: true,
       })
 
       const result: any = await mockedApi.post('/api/auth/verify-mfa', {
@@ -575,7 +570,7 @@ describe('Authentication Flow - Integration Tests', () => {
         code: '123456',
       })
 
-      expect(result.mfa_verified).toBe(true)
+      expect(result.mfaVerified).toBe(true)
     })
 
     it('should handle invalid MFA codes', async () => {
@@ -603,11 +598,11 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         ...mockUser,
-        requires_password_change: true,
+        requiresPasswordChange: true,
       })
 
       const user: any = await mockedApi.get('/api/auth/me')
-      expect(user.requires_password_change).toBe(true)
+      expect(user.requiresPasswordChange).toBe(true)
     })
 
     it('should track failed login attempts', async () => {
@@ -616,8 +611,8 @@ describe('Authentication Flow - Integration Tests', () => {
       mockedApi.post.mockRejectedValueOnce({
         message: 'Invalid credentials',
         status: 401,
-        failed_attempts: 3,
-        max_attempts: 5,
+        failedAttempts: 3,
+        maxAttempts: 5,
       })
 
       try {
@@ -627,7 +622,7 @@ describe('Authentication Flow - Integration Tests', () => {
         })
       } catch (error) {
         const apiError = error as ApiError
-        expect(apiError.failed_attempts).toBe(3)
+        expect(apiError.failedAttempts).toBe(3)
       }
     })
 
@@ -637,7 +632,7 @@ describe('Authentication Flow - Integration Tests', () => {
       mockedApi.post.mockRejectedValueOnce({
         message: 'Account locked due to too many failed attempts',
         status: 403,
-        locked_until: '2024-01-29T01:00:00Z',
+        lockedUntil: '2024-01-29T01:00:00Z',
       })
 
       await expect(
@@ -656,7 +651,7 @@ describe('Authentication Flow - Integration Tests', () => {
       mockedApi.get.mockResolvedValueOnce({
         events: [
           { event: 'login', timestamp: '2024-01-29T00:00:00Z', ip: '192.168.1.1' },
-          { event: 'password_changed', timestamp: '2024-01-28T00:00:00Z', ip: '192.168.1.1' },
+          { event: 'password_changed', timestamp: '2024-01-28T00:00:00Z', ip: '192.168.1.1' }, // @gorgon-ok enum value
         ],
       })
 
@@ -671,8 +666,8 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         sessions: [
-          { id: 'session-1', device: 'Chrome on Windows', last_active: '2024-01-29T00:00:00Z', current: true },
-          { id: 'session-2', device: 'Safari on iPhone', last_active: '2024-01-28T00:00:00Z', current: false },
+          { id: 'session-1', device: 'Chrome on Windows', lastActive: '2024-01-29T00:00:00Z', current: true },
+          { id: 'session-2', device: 'Safari on iPhone', lastActive: '2024-01-28T00:00:00Z', current: false },
         ],
       })
 
@@ -694,11 +689,11 @@ describe('Authentication Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.post.mockResolvedValueOnce({
-        revoked_count: 3,
+        revokedCount: 3,
       })
 
       const result: any = await mockedApi.post('/api/auth/revoke-all-sessions', {})
-      expect(result.revoked_count).toBe(3)
+      expect(result.revokedCount).toBe(3)
     })
   })
 
@@ -708,17 +703,17 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.post.mockResolvedValueOnce({
         ...mockAuthResponse,
-        remember_token: 'long-lived-token',
-        expires_in: 2592000, // 30 days
+        rememberToken: 'long-lived-token',
+        expiresIn: 2592000, // 30 days
       })
 
       const result: any = await mockedApi.post('/api/auth/login', {
         email: 'test@hospital.org',
         password: 'password123',
-        remember_me: true,
+        rememberMe: true,
       })
 
-      expect(result.remember_token).toBeDefined()
+      expect(result.rememberToken).toBeDefined()
     })
 
     it('should persist session across browser restarts', async () => {
@@ -772,12 +767,12 @@ describe('Authentication Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        sso_url: 'https://sso.provider.com/auth?client_id=123',
+        ssoUrl: 'https://sso.provider.com/auth?client_id=123',
         state: 'random-state-token',
       })
 
       const result: any = await mockedApi.get('/api/auth/sso/initiate')
-      expect(result.sso_url).toContain('sso.provider.com')
+      expect(result.ssoUrl).toContain('sso.provider.com')
     })
 
     it('should handle SSO callback', async () => {
@@ -785,7 +780,7 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.post.mockResolvedValueOnce({
         ...mockAuthResponse,
-        sso_provider: 'microsoft',
+        ssoProvider: 'microsoft',
       })
 
       const result: any = await mockedApi.post('/api/auth/sso/callback', {
@@ -868,8 +863,8 @@ describe('Authentication Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.post.mockResolvedValueOnce({
-        impersonation_token: 'impersonate-token',
-        impersonated_user: {
+        impersonationToken: 'impersonate-token',
+        impersonatedUser: {
           id: 'user-2',
           name: 'Dr. Resident',
           role: 'resident',
@@ -880,18 +875,18 @@ describe('Authentication Flow - Integration Tests', () => {
         userId: 'user-2',
       })
 
-      expect(result.impersonated_user.role).toBe('resident')
+      expect(result.impersonatedUser.role).toBe('resident')
     })
 
     it('should end impersonation', async () => {
       setupApiMock()
 
       mockedApi.post.mockResolvedValueOnce({
-        restored_user: mockUser,
+        restoredUser: mockUser,
       })
 
       const result: any = await mockedApi.post('/api/auth/end-impersonation', {})
-      expect(result.restored_user.role).toBe('coordinator')
+      expect(result.restoredUser.role).toBe('coordinator')
     })
   })
 
@@ -953,14 +948,14 @@ describe('Authentication Flow - Integration Tests', () => {
         events: [
           {
             event: 'login_success',
-            ip_address: '192.168.1.1',
-            user_agent: 'Mozilla/5.0 Chrome/120.0',
+            ipAddress: '192.168.1.1',
+            userAgent: 'Mozilla/5.0 Chrome/120.0',
           },
         ],
       })
 
       const result: any = await mockedApi.get('/api/auth/audit-log')
-      expect(result.events[0].ip_address).toBeDefined()
+      expect(result.events[0].ipAddress).toBeDefined()
     })
   })
 
@@ -1006,12 +1001,12 @@ describe('Authentication Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.post.mockResolvedValueOnce({
-        credential_id: 'biometric-credential-1',
+        credentialId: 'biometric-credential-1',
         registered: true,
       })
 
       const result: any = await mockedApi.post('/api/auth/register-biometric', {
-        public_key: 'biometric-public-key',
+        publicKey: 'biometric-public-key',
       })
 
       expect(result.registered).toBe(true)
@@ -1022,11 +1017,11 @@ describe('Authentication Flow - Integration Tests', () => {
 
       mockedApi.post.mockResolvedValueOnce({
         ...mockAuthResponse,
-        auth_method: 'biometric',
+        authMethod: 'biometric',
       })
 
       const result: any = await mockedApi.post('/api/auth/biometric-login', {
-        credential_id: 'biometric-credential-1',
+        credentialId: 'biometric-credential-1',
         signature: 'biometric-signature',
       })
 
