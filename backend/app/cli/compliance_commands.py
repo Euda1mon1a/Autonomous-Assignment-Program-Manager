@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import click
 from sqlalchemy import select
@@ -229,7 +229,7 @@ def report(
         violations = validator.validate_assignments(assignments)
 
         # Calculate statistics
-        people = {}
+        people: dict[Any, dict[str, Any]] = {}
         for a in assignments:
             if a.person_id not in people:
                 people[a.person_id] = {

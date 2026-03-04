@@ -445,7 +445,7 @@ def export(
             try:
                 import pandas as pd
 
-                data = {
+                df_data = {
                     "Person": [
                         f"{a.person.first_name} {a.person.last_name}"
                         for a in assignments
@@ -457,7 +457,7 @@ def export(
                     ],
                 }
 
-                df = pd.DataFrame(data)
+                df = pd.DataFrame(df_data)
                 df.to_excel(output_path, index=False)
 
             except ImportError:
