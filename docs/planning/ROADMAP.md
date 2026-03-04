@@ -89,12 +89,12 @@ The current release includes:
 - [ ] Verify `CLC` is `is_protected=True`
 - [ ] Solver and import engine must treat these as locked structural blocks that override rotation logic
 
-**SM Deterministic Preload (design doc complete):**
-- [ ] Remove SM from solver optimization — preload from weekly templates with exclusion logic
-- [ ] Exclusion rules: skip FMIT weeks, skip Mondays (Sunday call risk), skip post-call days
-- [ ] Two-pass approach: preload SM first, post-solver cleanup for post-call conflicts
-- [ ] Eliminate SM dual-classification problem (clinic vs admin) by sidestepping solver entirely
-- [ ] Design: `docs/architecture/SM_DETERMINISTIC_PRELOAD.md` (6 implementation steps, 8 test cases)
+**SM Deterministic Preload (design doc — needs discussion):**
+- [ ] **DECISION NEEDED:** Whether to remove SM from solver entirely vs. improving solver's SM handling
+- [ ] Option A: Deterministic preload from weekly templates with exclusion logic (sidesteps dual-classification)
+- [ ] Option B: Fix solver's binary C/AT model to handle SM's dual clinic+supervision nature
+- [ ] Either way: must address post-call SM (Sunday call → Monday SM clinic) safety concern
+- [ ] Design doc: `docs/architecture/SM_DETERMINISTIC_PRELOAD.md` — details Option A (6 steps, 8 tests)
 
 ### Upcoming: Frontend Rewiring (Post-Backend Sprint)
 
