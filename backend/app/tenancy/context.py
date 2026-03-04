@@ -435,7 +435,7 @@ def _get_role_permissions(role: str) -> dict[str, list[str]]:
     return ROLE_PERMISSIONS.get(role, {})
 
 
-async def get_tenant_by_slug(slug: str, db: Session) -> Any:
+async def get_tenant_by_slug(slug: str, db: Session) -> Any | None:
     """
     Get a tenant by its slug.
 
