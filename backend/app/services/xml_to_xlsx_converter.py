@@ -435,22 +435,7 @@ class XMLToXlsxConverter:
         if self.use_block_template2:
             self._prune_empty_sheets(wb, keep={"Block Template2", "Export_QA"})
 
-        # Apply Arial 16 font to all cells and set column widths
-        base_font = Font(name="Arial", size=16)
-        for ws in wb.worksheets:
-            for row in ws.iter_rows():
-                for cell in row:
-                    if cell.font and (cell.font.color or cell.font.bold):
-                        cell.font = Font(
-                            name="Arial",
-                            size=16,
-                            bold=cell.font.bold,
-                            color=cell.font.color,
-                        )
-                    else:
-                        cell.font = base_font
-
-        # Set column widths for Arial 16 on main schedule sheet
+        # ── Final presentation pass: match TAMC hand-jammed format ──
         if self.use_block_template2:
             main_sheet = (
                 wb["Block Template2"]
@@ -459,17 +444,18 @@ class XMLToXlsxConverter:
             )
         else:
             main_sheet = wb.active
-        # Label columns A-E
-        main_sheet.column_dimensions["A"].width = 15  # Rotation1
-        main_sheet.column_dimensions["B"].width = 9  # Rotation2
-        main_sheet.column_dimensions["C"].width = 7  # Template
-        main_sheet.column_dimensions["D"].width = 10  # Role/PGY
-        main_sheet.column_dimensions["E"].width = 35  # Name
-        # Schedule columns (F onward): 2 cols per day, need ~9 for "FMIT"
         actual_days = (block_end - block_start).days + 1
-        schedule_end = BT2_COL_SCHEDULE_START + (actual_days * COLS_PER_DAY)
-        for col in range(BT2_COL_SCHEDULE_START, schedule_end + 1):
-            main_sheet.column_dimensions[get_column_letter(col)].width = 9
+        schedule_end_col = BT2_COL_SCHEDULE_START + (actual_days * COLS_PER_DAY) - 1
+        self._apply_tamc_presentation(main_sheet, schedule_end_col)
+
+        # Apply Arial 16 base font to non-schedule sheets (QA, etc.)
+        base_font = Font(name="Arial", size=16)
+        for ws in wb.worksheets:
+            if ws is main_sheet:
+                continue
+            for row in ws.iter_rows():
+                for cell in row:
+                    cell.font = base_font
 
         # Save to bytes
         buffer = BytesIO()
@@ -732,6 +718,7 @@ class XMLToXlsxConverter:
             "# Primary Care Appts",
             "PR Count",
             "VAS Count",
+            "PR/VAS Conflict",
         ]
 
         bold = Font(name="Arial", bold=True, size=10)
@@ -742,72 +729,121 @@ class XMLToXlsxConverter:
                 row=CALC_START_ROW + i, column=LABEL_COL, value=label
             ).font = bold
 
+        # Range covers all people rows (residents 9-30 + faculty 31-80)
+        R_ALL = "$9:${c}$80"  # noqa: N806 — placeholder, used via f-string
+
         for col_idx in range(SCHEDULE_START, schedule_end + 1):
             c = get_column_letter(col_idx)
+            r_all = f"{c}$9:{c}$80"  # all people rows
+            r_res = f"{c}$9:{c}$30"  # resident rows
+            r_fac = f"{c}$31:{c}$80"  # faculty rows
 
-            # Row 84: Screeners Needed = ceil(interns_in_clinic / 2)
+            # Row 84: Screeners Needed — total providers in clinic
+            # Matches reference: counts C, C30, C40, C60, CC, C-I, C-N,
+            # VAS, VASc, PR, OPR, SM, GAC, PE, C10, V1-V3, PAP(×2),
+            # CF2V/CV2F (×0.5)
             sheet.cell(row=84, column=col_idx).value = (
-                f'=CEILING((COUNTIFS($D$9:$D$30,"PGY 1",{c}$9:{c}$30,"C")'
-                f'+COUNTIFS($D$9:$D$30,"PGY 1",{c}$9:{c}$30,"C-I"))/2,1)'
+                f'=COUNTIF({r_all},"C")'
+                f'+COUNTIF({r_all},"C30")'
+                f'+COUNTIF({r_all},"C40")'
+                f'+COUNTIF({r_all},"C60")'
+                f'+COUNTIF({r_all},"CC")'
+                f'+COUNTIF({r_all},"C-I")'
+                f'+COUNTIF({r_all},"C-N")'
+                f'+COUNTIF({r_all},"VAS")'
+                f'+COUNTIF({r_all},"VASc")'
+                f'+COUNTIF({r_all},"PR")'
+                f'+COUNTIF({r_all},"OPR")'
+                f'+COUNTIF({r_all},"SM")'
+                f'+COUNTIF({r_all},"GAC")'
+                f'+COUNTIF({r_all},"PE")'
+                f'+COUNTIF({r_all},"C10")'
+                f'+COUNTIF({r_all},"V1")'
+                f'+COUNTIF({r_all},"V2")'
+                f'+COUNTIF({r_all},"V3")'
+                f'+COUNTIF({r_all},"PAP")*2'
+                f'+COUNTIF({r_all},"CF2V")*0.5'
+                f'+COUNTIF({r_all},"CV2F")*0.5'
             )
 
-            # Row 85: Providers Virtual (CV) — all rows
-            sheet.cell(row=85, column=col_idx).value = f'=COUNTIF({c}$9:{c}$80,"CV")'
+            # Row 85: Providers Virtual (CV, CV10, CF2V/CV2F half-weight)
+            sheet.cell(row=85, column=col_idx).value = (
+                f'=COUNTIF({r_all},"CV")'
+                f'+COUNTIF({r_all},"CV10")'
+                f'+COUNTIF({r_all},"CF2V")*0.5'
+                f'+COUNTIF({r_all},"CV2F")*0.5'
+            )
 
-            # Row 86: Interns in Clinic (PGY 1 with C or C-I)
+            # Row 86: Interns in Clinic (PGY 1 rows with clinic codes)
             sheet.cell(row=86, column=col_idx).value = (
-                f'=COUNTIFS($D$9:$D$30,"PGY 1",{c}$9:{c}$30,"C")'
-                f'+COUNTIFS($D$9:$D$30,"PGY 1",{c}$9:{c}$30,"C-I")'
+                f'=COUNTIFS($D$9:$D$30,"PGY 1",{r_res},"C")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 1",{r_res},"C30")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 1",{r_res},"C40")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 1",{r_res},"C60")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 1",{r_res},"CC")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 1",{r_res},"C-I")'
             )
 
-            # Row 87: Residents in Clinic (PGY 2/3 with C, C-I, SM)
+            # Row 87: Residents in Clinic (PGY 2/3 with clinic codes + CV)
             sheet.cell(row=87, column=col_idx).value = (
-                f'=COUNTIFS($D$9:$D$30,"PGY 2",{c}$9:{c}$30,"C")'
-                f'+COUNTIFS($D$9:$D$30,"PGY 3",{c}$9:{c}$30,"C")'
-                f'+COUNTIFS($D$9:$D$30,"PGY 2",{c}$9:{c}$30,"C-I")'
-                f'+COUNTIFS($D$9:$D$30,"PGY 3",{c}$9:{c}$30,"C-I")'
-                f'+COUNTIFS($D$9:$D$30,"PGY 2",{c}$9:{c}$30,"SM")'
-                f'+COUNTIFS($D$9:$D$30,"PGY 3",{c}$9:{c}$30,"SM")'
+                f'=COUNTIFS($D$9:$D$30,"PGY 2",{r_res},"C")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{r_res},"C")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 2",{r_res},"C30")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{r_res},"C30")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 2",{r_res},"C40")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{r_res},"C40")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 2",{r_res},"C60")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{r_res},"C60")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 2",{r_res},"CC")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{r_res},"CC")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 2",{r_res},"C-I")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{r_res},"C-I")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 2",{r_res},"SM")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{r_res},"SM")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 2",{r_res},"CV")'
+                f'+COUNTIFS($D$9:$D$30,"PGY 3",{r_res},"CV")'
             )
 
-            # Row 88: Attendings Needed = ceil(interns/2) + ceil(residents/4)
-            sheet.cell(
-                row=88, column=col_idx
-            ).value = f"=CEILING({c}86/2,1)+CEILING({c}87/4,1)"
+            # Row 88: Attendings Needed = interns×0.5 + residents×0.25
+            sheet.cell(row=88, column=col_idx).value = f"={c}86*0.5+{c}87*0.25"
 
-            # Row 89: Residents in PROC (PR + PROC + VAS in resident rows)
+            # Row 89: Residents in PROC (VAS + PR + OPR in resident rows)
             sheet.cell(row=89, column=col_idx).value = (
-                f'=COUNTIF({c}$9:{c}$30,"PR")'
-                f'+COUNTIF({c}$9:{c}$30,"PROC")'
-                f'+COUNTIF({c}$9:{c}$30,"VAS")'
+                f'=COUNTIF({r_res},"VAS")+COUNTIF({r_res},"PR")+COUNTIF({r_res},"OPR")'
             )
 
-            # Row 90: Residents in V Clinic (CV in resident rows)
-            sheet.cell(row=90, column=col_idx).value = f'=COUNTIF({c}$9:{c}$30,"CV")'
+            # Row 90: Residents in V Clinic
+            sheet.cell(row=90, column=col_idx).value = (
+                f'=COUNTIF({r_res},"V1")'
+                f'+COUNTIF({r_res},"V2")'
+                f'+COUNTIF({r_res},"V3")'
+                f'+COUNTIF({r_res},"CV")'
+            )
 
             # Row 91: Residents on HV
-            sheet.cell(row=91, column=col_idx).value = f'=COUNTIF({c}$9:{c}$30,"HV")'
+            sheet.cell(row=91, column=col_idx).value = f'=COUNTIF({r_res},"HV")'
 
-            # Row 92: Total Attendings Needed = clinic + ceil(proc/2)
-            sheet.cell(row=92, column=col_idx).value = f"={c}88+CEILING({c}89/2,1)"
+            # Row 92: Total Attendings Needed = ROUNDUP(clinic + proc)
+            sheet.cell(row=92, column=col_idx).value = f"=ROUNDUP(SUM({c}88:{c}89),0)"
 
-            # Row 93: # Attendings Assigned (AT + PCAT + DO in faculty rows)
+            # Row 93: # Attendings Assigned (AT + PCAT in faculty rows)
             sheet.cell(row=93, column=col_idx).value = (
-                f'=COUNTIF({c}$31:{c}$80,"AT")'
-                f'+COUNTIF({c}$31:{c}$80,"PCAT")'
-                f'+COUNTIF({c}$31:{c}$80,"DO")'
+                f'=COUNTIF({r_fac},"AT")+COUNTIF({r_fac},"PCAT")'
             )
 
-            # Row 94: # Primary Care Appts = (interns + residents) * 6
-            sheet.cell(row=94, column=col_idx).value = f"=({c}86+{c}87)*6"
+            # Row 94: # Primary Care Appts (placeholder — manual input)
+            sheet.cell(row=94, column=col_idx).value = ""
 
-            # Row 95: PR Count (all rows — PR + PROC)
-            sheet.cell(
-                row=95, column=col_idx
-            ).value = f'=COUNTIF({c}$9:{c}$80,"PR")+COUNTIF({c}$9:{c}$80,"PROC")'
+            # Row 95: PR Count (resident rows)
+            sheet.cell(row=95, column=col_idx).value = f'=COUNTIF({r_res},"PR")'
 
-            # Row 96: VAS Count (all rows)
-            sheet.cell(row=96, column=col_idx).value = f'=COUNTIF({c}$9:{c}$80,"VAS")'
+            # Row 96: VAS Count (resident rows)
+            sheet.cell(row=96, column=col_idx).value = f'=COUNTIF({r_res},"VAS")'
+
+            # Row 97: PR/VAS Conflict detector
+            sheet.cell(row=97, column=col_idx).value = (
+                f'=IF(OR({c}95>1,{c}96>1,AND({c}95>=1,{c}96>=1)),"\u26a0","")'
+            )
 
     def _call_last_name_token(self, raw_name: Any) -> str:
         if not raw_name:
@@ -1154,6 +1190,105 @@ class XMLToXlsxConverter:
             return date.fromisoformat(value)
         return None
 
+    def _apply_tamc_presentation(self, sheet, schedule_end_col: int) -> None:
+        """Apply TAMC hand-jammed formatting to match the reference workbook.
+
+        Matches the formatting from 'Current AY 25-26' Block 11:
+        - Arial 16 body, Arial 18 day names, Arial 20 call names
+        - Column widths matched to reference
+        - Row heights: 15-25 headers, 21 residents, 20 faculty
+        - No borders on body cells (reference has none)
+        - AM/PM column merges on header rows 1-5
+        """
+        no_border = Border()
+        base_font = Font(name="Arial", size=16)
+        bold_font = Font(name="Arial", size=16, bold=True)
+
+        # --- Column widths (match reference Block 11) ---
+        sheet.column_dimensions["A"].width = 10.2  # Rotation1
+        sheet.column_dimensions["B"].width = 12.2  # Rotation2
+        sheet.column_dimensions["C"].width = 9.2  # Template
+        sheet.column_dimensions["D"].width = 11.8  # Role/PGY
+        sheet.column_dimensions["E"].width = 40.5  # Name
+        # Schedule columns: reference defaultColWidth = 10.2
+        for col in range(BT2_COL_SCHEDULE_START, schedule_end_col + 1):
+            sheet.column_dimensions[get_column_letter(col)].width = 10.2
+
+        # --- Row heights ---
+        sheet.row_dimensions[1].height = 15  # Day full names
+        sheet.row_dimensions[2].height = 15  # Day abbreviations
+        sheet.row_dimensions[3].height = 20  # Dates
+        sheet.row_dimensions[4].height = 25  # Staff call
+        sheet.row_dimensions[5].height = 15  # Resident call
+        for row in range(6, 8):
+            sheet.row_dimensions[row].height = 20  # Label/spacer rows
+        sheet.row_dimensions[8].height = 21  # Row 8 matches resident height
+        for row in range(9, 30):
+            sheet.row_dimensions[row].height = 21  # Resident rows
+        for row in range(30, 70):
+            sheet.row_dimensions[row].height = 20  # Faculty rows
+
+        # --- Fonts and borders for all cells ---
+        for row in sheet.iter_rows(
+            min_row=1,
+            max_row=sheet.max_row,
+            min_col=1,
+            max_col=max(schedule_end_col, sheet.max_column),
+        ):
+            for cell in row:
+                r = cell.row
+                # Preserve existing font color from color scheme
+                existing_color = (
+                    cell.font.color if cell.font and cell.font.color else None
+                )
+                # Row-specific font sizes (match reference Block 11)
+                if r in (1, 2) and cell.column >= BT2_COL_SCHEDULE_START:
+                    # Day names + abbreviations: Arial 18, not bold
+                    cell.font = Font(name="Arial", size=18, color=existing_color)
+                elif r == 4 and cell.column >= BT2_COL_SCHEDULE_START:
+                    # Staff call names: Arial 20
+                    cell.font = Font(name="Arial", size=20, color=existing_color)
+                elif r == 5 and cell.column >= BT2_COL_SCHEDULE_START:
+                    # Resident call: Arial 14
+                    cell.font = Font(name="Arial", size=14, color=existing_color)
+                elif r == 6 and cell.column <= 5:
+                    # Row 6 label columns (TEMPLATE, ROLE, PROVIDER): Arial 11 bold
+                    cell.font = Font(
+                        name="Arial",
+                        size=11,
+                        bold=True,
+                        color=existing_color,
+                    )
+                elif r <= 5:
+                    # Header rows 1-5 label columns: Arial 16 bold
+                    cell.font = Font(
+                        name="Arial",
+                        size=16,
+                        bold=True,
+                        color=existing_color,
+                    )
+                elif r <= 8:
+                    # Rows 6-8 schedule area: Arial 16, not bold
+                    cell.font = Font(name="Arial", size=16, color=existing_color)
+                else:
+                    # Body cells: Arial 16 with existing color
+                    cell.font = Font(name="Arial", size=16, color=existing_color)
+
+                # Remove borders from body cells (reference has none)
+                if r >= 6:
+                    cell.border = no_border
+
+        # --- Merge AM/PM columns in header rows 1-5 ---
+        for col in range(BT2_COL_SCHEDULE_START, schedule_end_col + 1, COLS_PER_DAY):
+            am_letter = get_column_letter(col)
+            pm_letter = get_column_letter(col + 1)
+            for row in range(1, 6):
+                merge_range = f"{am_letter}{row}:{pm_letter}{row}"
+                try:
+                    sheet.merge_cells(merge_range)
+                except ValueError:
+                    pass  # Already merged
+
     def _apply_cell_color(self, cell, code: str) -> None:
         """Apply background and font color to cell based on schedule code.
 
@@ -1280,7 +1415,7 @@ class XMLToXlsxConverter:
             day_cell.value = day_full.get(weekday, "")
             abbrev_cell.value = day_abbrev.get(weekday, "")
             date_cell.value = datetime(current.year, current.month, current.day)
-            date_cell.number_format = "m/d"
+            date_cell.number_format = "d-mmm"
 
             current += timedelta(days=1)
             col += 2
