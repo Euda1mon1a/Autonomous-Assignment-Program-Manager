@@ -3622,16 +3622,10 @@ class SchedulingEngine:
         corrected = 0
         skipped_postcall = 0
         skipped_weekend = 0
-        skipped_final_wed = 0
         for hda, current_code in solver_hdas:
             # Skip weekends
             if hda.date.weekday() >= 5:
                 skipped_weekend += 1
-                continue
-
-            # Skip final Wednesday — handled by _backfill_last_wednesday_clinic
-            if hda.date.weekday() == 2 and (self.end_date - hda.date).days < 7:
-                skipped_final_wed += 1
                 continue
 
             # Skip protected codes
@@ -3695,8 +3689,7 @@ class SchedulingEngine:
         logger.info(
             f"Template correction: {corrected} HDAs updated, "
             f"{skipped_postcall} post-call skipped, "
-            f"{skipped_weekend} weekend skipped, "
-            f"{skipped_final_wed} final-Wednesday skipped"
+            f"{skipped_weekend} weekend skipped"
         )
         return corrected
 
@@ -3754,37 +3747,46 @@ class SchedulingEngine:
 
         modified = 0
 
-        # ── PM: Convert one faculty LEC PM → C ──
-        lec_pm_hdas = (
+        # ── PM: Ensure exactly 1 faculty C PM ──
+        pm_hdas = (
             self.db.query(HalfDayAssignment, Activity.code)
             .join(Activity, HalfDayAssignment.activity_id == Activity.id)
             .filter(
                 HalfDayAssignment.person_id.in_(core_ids),
                 HalfDayAssignment.date == last_wed,
                 HalfDayAssignment.time_of_day == "PM",
-                sa_func.lower(Activity.code) == "lec",
                 HalfDayAssignment.source != AssignmentSource.MANUAL.value,
             )
             .all()
         )
 
-        pm_chosen_pid = None
-        if lec_pm_hdas:
-            chosen_hda = lec_pm_hdas[0][0]
-            chosen_hda.activity_id = c_activity_id
-            pm_chosen_pid = chosen_hda.person_id
-            modified += 1
-            chosen_name = next(
-                (f.name for f in core_faculty if f.id == pm_chosen_pid),
-                str(pm_chosen_pid),
-            )
-            logger.info(
-                "Last Wednesday {}: converted {} PM LEC → C (clinic coverage)",
-                last_wed,
-                chosen_name,
-            )
+        has_c_pm = any(
+            code and code.lower() in ("c", "fm_clinic", "sm_clinic")
+            for _, code in pm_hdas
+        )
 
-        # ── AM: Convert one faculty non-protected AM → C ──
+        pm_chosen_pid = None
+        if not has_c_pm:
+            # Find LEC PM slots to convert
+            lec_pm = [
+                (hda, code) for hda, code in pm_hdas if code and code.lower() == "lec"
+            ]
+            if lec_pm:
+                chosen_hda = lec_pm[0][0]
+                chosen_hda.activity_id = c_activity_id
+                pm_chosen_pid = chosen_hda.person_id
+                modified += 1
+                chosen_name = next(
+                    (f.name for f in core_faculty if f.id == pm_chosen_pid),
+                    str(pm_chosen_pid),
+                )
+                logger.info(
+                    "Last Wednesday {}: converted {} PM LEC → C (clinic coverage)",
+                    last_wed,
+                    chosen_name,
+                )
+
+        # ── AM: Convert one faculty non-protected AM → C (if not already covered) ──
         am_hdas = (
             self.db.query(HalfDayAssignment, Activity.code)
             .join(Activity, HalfDayAssignment.activity_id == Activity.id)
@@ -3797,36 +3799,43 @@ class SchedulingEngine:
             .all()
         )
 
-        # Filter to convertible AM slots (not protected, not already clinic)
-        convertible_am = [
-            (hda, code)
-            for hda, code in am_hdas
-            if code
-            and code.lower() not in _PROTECTED
-            and code.lower() not in ("c", "fm_clinic", "sm_clinic", "cv")
-        ]
+        # Check if any faculty already has C AM (template or solver may have placed one)
+        has_c_am = any(
+            code and code.lower() in ("c", "fm_clinic", "sm_clinic")
+            for _, code in am_hdas
+        )
 
-        if convertible_am:
-            # Prefer someone different from the PM pick
-            am_chosen = None
-            for hda, _code in convertible_am:
-                if hda.person_id != pm_chosen_pid:
-                    am_chosen = hda
-                    break
-            if am_chosen is None:
-                am_chosen = convertible_am[0][0]
+        if not has_c_am:
+            # Filter to convertible AM slots (not protected, not already clinic)
+            convertible_am = [
+                (hda, code)
+                for hda, code in am_hdas
+                if code
+                and code.lower() not in _PROTECTED
+                and code.lower() not in ("c", "fm_clinic", "sm_clinic", "cv")
+            ]
 
-            am_chosen.activity_id = c_activity_id
-            modified += 1
-            am_name = next(
-                (f.name for f in core_faculty if f.id == am_chosen.person_id),
-                str(am_chosen.person_id),
-            )
-            logger.info(
-                "Last Wednesday {}: converted {} AM → C (clinic coverage)",
-                last_wed,
-                am_name,
-            )
+            if convertible_am:
+                # Prefer someone different from the PM pick
+                am_chosen = None
+                for hda, _code in convertible_am:
+                    if hda.person_id != pm_chosen_pid:
+                        am_chosen = hda
+                        break
+                if am_chosen is None:
+                    am_chosen = convertible_am[0][0]
+
+                am_chosen.activity_id = c_activity_id
+                modified += 1
+                am_name = next(
+                    (f.name for f in core_faculty if f.id == am_chosen.person_id),
+                    str(am_chosen.person_id),
+                )
+                logger.info(
+                    "Last Wednesday {}: converted {} AM → C (clinic coverage)",
+                    last_wed,
+                    am_name,
+                )
 
         if modified:
             self.db.flush()
