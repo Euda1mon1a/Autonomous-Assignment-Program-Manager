@@ -18,40 +18,40 @@ const mockedApi = api as jest.Mocked<typeof api>;
 // Test data
 const mockRAGHealth = {
   status: 'healthy' as const,
-  vector_store_available: true,
-  document_count: 150,
-  embedding_model: 'all-MiniLM-L6-v2',
-  last_updated: '2024-01-01T00:00:00Z',
+  vectorStoreAvailable: true,
+  documentCount: 150,
+  embeddingModel: 'all-MiniLM-L6-v2',
+  lastUpdated: '2024-01-01T00:00:00Z',
 };
 
 const mockRAGSearchResponse = {
   chunks: [
     {
-      chunk_id: 'chunk-1',
+      chunkId: 'chunk-1',
       category: 'acgme_rules' as const,
       content: 'Residents must have at least one day in seven free from all duties',
-      similarity_score: 0.92,
+      similarityScore: 0.92,
       metadata: {
-        source_file: 'acgme-common-program-requirements.pdf',
-        section_title: 'Duty Hours',
-        page_number: 15,
+        sourceFile: 'acgme-common-program-requirements.pdf',
+        sectionTitle: 'Duty Hours',
+        pageNumber: 15,
       },
     },
     {
-      chunk_id: 'chunk-2',
+      chunkId: 'chunk-2',
       category: 'acgme_rules' as const,
       content: 'Work hours must be limited to 80 hours per week averaged over four weeks',
-      similarity_score: 0.88,
+      similarityScore: 0.88,
       metadata: {
-        source_file: 'acgme-common-program-requirements.pdf',
-        section_title: 'Duty Hours',
-        page_number: 14,
+        sourceFile: 'acgme-common-program-requirements.pdf',
+        sectionTitle: 'Duty Hours',
+        pageNumber: 14,
       },
     },
   ],
-  total_searched: 150,
-  query_time_ms: 45,
-  category_filter: 'acgme_rules' as const,
+  totalSearched: 150,
+  queryTimeMs: 45,
+  categoryFilter: 'acgme_rules' as const,
 };
 
 // Create wrapper with QueryClient
@@ -85,8 +85,8 @@ describe('useRAGHealth', () => {
     });
 
     expect(result.current.data).toEqual(mockRAGHealth);
-    expect(result.current.data?.vector_store_available).toBe(true);
-    expect(result.current.data?.document_count).toBe(150);
+    expect(result.current.data?.vectorStoreAvailable).toBe(true);
+    expect(result.current.data?.documentCount).toBe(150);
     expect(mockedApi.get).toHaveBeenCalledWith('/rag/health');
   });
 
@@ -94,8 +94,8 @@ describe('useRAGHealth', () => {
     const unhealthyResponse = {
       ...mockRAGHealth,
       status: 'unhealthy' as const,
-      vector_store_available: false,
-      document_count: 0,
+      vectorStoreAvailable: false,
+      documentCount: 0,
     };
     mockedApi.get.mockResolvedValueOnce(unhealthyResponse);
 
@@ -105,7 +105,7 @@ describe('useRAGHealth', () => {
 
     await waitFor(() => {
       expect(result.current.data?.status).toBe('unhealthy');
-      expect(result.current.data?.vector_store_available).toBe(false);
+      expect(result.current.data?.vectorStoreAvailable).toBe(false);
     });
   });
 
@@ -117,7 +117,7 @@ describe('useRAGHealth', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.data?.embedding_model).toBe('all-MiniLM-L6-v2');
+      expect(result.current.data?.embeddingModel).toBe('all-MiniLM-L6-v2');
     });
   });
 
@@ -176,7 +176,7 @@ describe('useRAGSearch', () => {
       result.current.mutate({
         query: '80 hour work week',
         category: 'acgme_rules',
-        top_k: 5,
+        topK: 5,
       });
     });
 
@@ -189,7 +189,7 @@ describe('useRAGSearch', () => {
     expect(mockedApi.post).toHaveBeenCalledWith('/rag/retrieve', {
       query: '80 hour work week',
       category: 'acgme_rules',
-      top_k: 5,
+      topK: 5,
     });
   });
 
@@ -210,15 +210,15 @@ describe('useRAGSearch', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data?.chunks[0].similarity_score).toBeGreaterThan(
-      result.current.data!.chunks[1].similarity_score
+    expect(result.current.data?.chunks[0].similarityScore).toBeGreaterThan(
+      result.current.data!.chunks[1].similarityScore
     );
   });
 
   it('searches without category filter', async () => {
     mockedApi.post.mockResolvedValueOnce({
       ...mockRAGSearchResponse,
-      category_filter: undefined,
+      categoryFilter: undefined,
     });
 
     const { result } = renderHook(() => useRAGSearch(), {
@@ -228,7 +228,7 @@ describe('useRAGSearch', () => {
     await act(async () => {
       result.current.mutate({
         query: 'general query',
-        top_k: 10,
+        topK: 10,
       });
     });
 
@@ -238,7 +238,7 @@ describe('useRAGSearch', () => {
 
     expect(mockedApi.post).toHaveBeenCalledWith('/rag/retrieve', {
       query: 'general query',
-      top_k: 10,
+      topK: 10,
     });
   });
 
@@ -280,7 +280,7 @@ describe('useRAGSearch', () => {
     await act(async () => {
       result.current.mutate({
         query: 'test query',
-        top_k: 1,
+        topK: 1,
       });
     });
 
@@ -308,18 +308,18 @@ describe('useRAGSearch', () => {
     });
 
     const firstChunk = result.current.data?.chunks[0];
-    expect(firstChunk?.metadata?.source_file).toBe(
+    expect(firstChunk?.metadata?.sourceFile).toBe(
       'acgme-common-program-requirements.pdf'
     );
-    expect(firstChunk?.metadata?.section_title).toBe('Duty Hours');
-    expect(firstChunk?.metadata?.page_number).toBe(15);
+    expect(firstChunk?.metadata?.sectionTitle).toBe('Duty Hours');
+    expect(firstChunk?.metadata?.pageNumber).toBe(15);
   });
 
   it('handles search with no results', async () => {
     const emptyResponse = {
       chunks: [],
-      total_searched: 150,
-      query_time_ms: 20,
+      totalSearched: 150,
+      queryTimeMs: 20,
     };
     mockedApi.post.mockResolvedValueOnce(emptyResponse);
 
@@ -373,25 +373,28 @@ describe('useRAGSearch', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.data?.query_time_ms).toBe(45);
+      expect(result.current.data?.queryTimeMs).toBe(45);
     });
   });
 
   it('searches different document categories', async () => {
+    // @enum-ok — keys are RAGCategory enum values, must stay snake_case
+    /* eslint-disable @typescript-eslint/naming-convention -- enum value keys */
     const categoryResponses = {
       military_specific: {
         ...mockRAGSearchResponse,
-        category_filter: 'military_specific' as const,
+        categoryFilter: 'military_specific' as const,
       },
       resilience_concepts: {
         ...mockRAGSearchResponse,
-        category_filter: 'resilience_concepts' as const,
+        categoryFilter: 'resilience_concepts' as const,
       },
       swap_system: {
         ...mockRAGSearchResponse,
-        category_filter: 'swap_system' as const,
+        categoryFilter: 'swap_system' as const,
       },
     };
+    /* eslint-enable @typescript-eslint/naming-convention */
 
     mockedApi.post.mockResolvedValueOnce(categoryResponses.military_specific);
 
@@ -407,7 +410,7 @@ describe('useRAGSearch', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.data?.category_filter).toBe('military_specific');
+      expect(result.current.data?.categoryFilter).toBe('military_specific');
     });
   });
 });

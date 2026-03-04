@@ -123,13 +123,13 @@ export function useCreateActivity() {
         name: data.name,
         code: data.code,
         displayAbbreviation: data.displayAbbreviation,
-        activity_category: data.activityCategory,
+        activityCategory: data.activityCategory,
         fontColor: data.fontColor,
         backgroundColor: data.backgroundColor,
-        requires_supervision: data.requiresSupervision,
+        requiresSupervision: data.requiresSupervision,
         isProtected: data.isProtected,
-        counts_toward_clinical_hours: data.countsTowardClinicalHours,
-        display_order: data.displayOrder,
+        countsTowardClinicalHours: data.countsTowardClinicalHours,
+        displayOrder: data.displayOrder,
       };
       return post<Activity>('/activities', payload);
     },
@@ -162,13 +162,13 @@ export function useUpdateActivity() {
       if (data.name !== undefined) payload.name = data.name;
       if (data.code !== undefined) payload.code = data.code;
       if (data.displayAbbreviation !== undefined) payload.displayAbbreviation = data.displayAbbreviation;
-      if (data.activityCategory !== undefined) payload.activity_category = data.activityCategory;
+      if (data.activityCategory !== undefined) payload.activityCategory = data.activityCategory;
       if (data.fontColor !== undefined) payload.fontColor = data.fontColor;
       if (data.backgroundColor !== undefined) payload.backgroundColor = data.backgroundColor;
-      if (data.requiresSupervision !== undefined) payload.requires_supervision = data.requiresSupervision;
+      if (data.requiresSupervision !== undefined) payload.requiresSupervision = data.requiresSupervision;
       if (data.isProtected !== undefined) payload.isProtected = data.isProtected;
-      if (data.countsTowardClinicalHours !== undefined) payload.counts_toward_clinical_hours = data.countsTowardClinicalHours;
-      if (data.displayOrder !== undefined) payload.display_order = data.displayOrder;
+      if (data.countsTowardClinicalHours !== undefined) payload.countsTowardClinicalHours = data.countsTowardClinicalHours;
+      if (data.displayOrder !== undefined) payload.displayOrder = data.displayOrder;
       return put<Activity>(`/activities/${activityId}`, payload);
     },
     onSuccess: (_, { activityId }) => {
@@ -269,14 +269,14 @@ export function useReplaceActivityRequirements() {
     mutationFn: async ({ templateId, requirements }) => {
       // Convert camelCase to snake_case
       const payload = requirements.map((req) => ({
-        activity_id: req.activityId,
-        min_halfdays: req.minHalfdays ?? 0,
-        max_halfdays: req.maxHalfdays ?? 14,
-        target_halfdays: req.targetHalfdays,
-        applicable_weeks: req.applicableWeeks,
-        prefer_full_days: req.preferFullDays ?? true,
-        preferred_days: req.preferredDays,
-        avoid_days: req.avoidDays,
+        activityId: req.activityId,
+        minHalfdays: req.minHalfdays ?? 0,
+        maxHalfdays: req.maxHalfdays ?? 14,
+        targetHalfdays: req.targetHalfdays,
+        applicableWeeks: req.applicableWeeks,
+        preferFullDays: req.preferFullDays ?? true,
+        preferredDays: req.preferredDays,
+        avoidDays: req.avoidDays,
         priority: req.priority ?? 50,
       }));
       return put<ActivityRequirement[]>(
@@ -306,14 +306,14 @@ export function useAddActivityRequirement() {
     mutationFn: async ({ templateId, requirement }) => {
       // Convert camelCase to snake_case
       const payload = {
-        activity_id: requirement.activityId,
-        min_halfdays: requirement.minHalfdays ?? 0,
-        max_halfdays: requirement.maxHalfdays ?? 14,
-        target_halfdays: requirement.targetHalfdays,
-        applicable_weeks: requirement.applicableWeeks,
-        prefer_full_days: requirement.preferFullDays ?? true,
-        preferred_days: requirement.preferredDays,
-        avoid_days: requirement.avoidDays,
+        activityId: requirement.activityId,
+        minHalfdays: requirement.minHalfdays ?? 0,
+        maxHalfdays: requirement.maxHalfdays ?? 14,
+        targetHalfdays: requirement.targetHalfdays,
+        applicableWeeks: requirement.applicableWeeks,
+        preferFullDays: requirement.preferFullDays ?? true,
+        preferredDays: requirement.preferredDays,
+        avoidDays: requirement.avoidDays,
         priority: requirement.priority ?? 50,
       };
       return post<ActivityRequirement>(

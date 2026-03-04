@@ -16,28 +16,28 @@ import type { ApiError } from '@/lib/api';
 
 export interface EquityMetricsRequest {
   /** Mapping of provider ID to total hours worked */
-  provider_hours: Record<string, number>;
+  providerHours: Record<string, number>;
   /** Optional intensity weights (e.g., night shift = 1.5x) */
-  intensity_weights?: Record<string, number> | null;
+  intensityWeights?: Record<string, number> | null;
 }
 
 export interface EquityMetricsResponse {
   /** Gini coefficient (0 = perfect equality, 1 = perfect inequality) */
   giniCoefficient: number;
   /** Whether workload distribution is equitable (Gini < 0.15) */
-  is_equitable: boolean;
+  isEquitable: boolean;
   /** Mean workload across all providers */
-  mean_workload: number;
+  meanWorkload: number;
   /** Standard deviation of workload */
-  std_workload: number;
+  stdWorkload: number;
   /** Provider ID with highest workload */
-  most_overloaded_provider: string | null;
+  mostOverloadedProvider: string | null;
   /** Provider ID with lowest workload */
-  most_underloaded_provider: string | null;
+  mostUnderloadedProvider: string | null;
   /** Maximum workload value */
-  max_workload: number;
+  maxWorkload: number;
   /** Minimum workload value */
-  min_workload: number;
+  minWorkload: number;
   /** Recommended rebalancing actions */
   recommendations: string[];
   /** Human-readable interpretation */
@@ -78,7 +78,7 @@ export const equityMetricsQueryKeys = {
  *   if (isLoading) return <Skeleton />;
  *
  *   return (
- *     <div className={data.is_equitable ? 'text-green-500' : 'text-red-500'}>
+ *     <div className={data.isEquitable ? 'text-green-500' : 'text-red-500'}>
  *       <span>Gini: {data.giniCoefficient.toFixed(3)}</span>
  *       <p>{data.interpretation}</p>
  *     </div>
@@ -101,21 +101,21 @@ export function useEquityMetrics(
         // Return default values for empty input
         return {
           giniCoefficient: 0.0,
-          is_equitable: true,
-          mean_workload: 0,
-          std_workload: 0,
-          most_overloaded_provider: null,
-          most_underloaded_provider: null,
-          max_workload: 0,
-          min_workload: 0,
+          isEquitable: true,
+          meanWorkload: 0,
+          stdWorkload: 0,
+          mostOverloadedProvider: null,
+          mostUnderloadedProvider: null,
+          maxWorkload: 0,
+          minWorkload: 0,
           recommendations: [],
           interpretation: 'No workload data to analyze',
         };
       }
 
       const request: EquityMetricsRequest = {
-        provider_hours: providerHours,
-        intensity_weights: intensityWeights || null,
+        providerHours: providerHours,
+        intensityWeights: intensityWeights || null,
       };
 
       // Call MCP tool via backend proxy

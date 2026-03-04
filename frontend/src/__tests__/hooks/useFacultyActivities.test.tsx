@@ -313,7 +313,7 @@ describe('useUpsertTemplateSlot', () => {
     expect(callArgs[1]).toMatchObject({
       dayOfWeek: 1,
       timeOfDay: 'AM',
-      activity_id: 'activity-1',
+      activityId: 'activity-1',
       isLocked: false,
       priority: 50,
     })
@@ -444,10 +444,10 @@ describe('useCreateFacultyOverride', () => {
     const callArgs = mockedApi.post.mock.calls[0]
     expect(callArgs[0]).toBe('/faculty/person-1/weekly-overrides')
     expect(callArgs[1]).toMatchObject({
-      effective_date: '2024-01-08',
+      effectiveDate: '2024-01-08',
       dayOfWeek: 1,
       timeOfDay: 'AM',
-      activity_id: 'activity-2',
+      activityId: 'activity-2',
       overrideReason: 'Conference',
     })
   })
@@ -546,6 +546,7 @@ describe('usePermittedActivities', () => {
 
   it('should not fetch when role is empty', async () => {
     const { result } = renderHook(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- testing invalid input
       () => usePermittedActivities('' as any),
       { wrapper: createWrapper() }
     )

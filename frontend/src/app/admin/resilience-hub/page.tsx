@@ -197,7 +197,7 @@ function formatShortDate(value?: string | null): string | null {
 
 function OverviewTab() {
   const { data: health, isLoading: healthLoading, error: healthError } = useSystemHealth();
-  const { data: vulnerability } = useVulnerabilityReport({ include_n2: true });
+  const { data: vulnerability } = useVulnerabilityReport({ includeN2: true });
   const {
     data: breakGlass,
     isLoading: breakGlassLoading,

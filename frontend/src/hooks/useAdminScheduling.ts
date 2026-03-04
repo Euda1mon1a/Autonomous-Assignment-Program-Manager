@@ -138,11 +138,11 @@ export function useGenerateScheduleRun() {
       startDate: getBlockStartDate(config.blockRange.start, config.academicYear),
       endDate: getBlockEndDate(config.blockRange.end, config.academicYear),
       algorithm: config.algorithm,
-      timeout_seconds: config.timeoutSeconds,
+      timeoutSeconds: config.timeoutSeconds,
       dryRun: config.dryRun,
-      preserve_fmit: config.preserveFMIT,
-      nf_post_call: config.nfPostCallEnabled,
-      constraint_ids: config.constraints.filter(c => c.enabled).map(c => c.id),
+      preserveFmit: config.preserveFMIT,
+      nfPostCall: config.nfPostCallEnabled,
+      constraintIds: config.constraints.filter(c => c.enabled).map(c => c.id),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-scheduling', 'runs'] });

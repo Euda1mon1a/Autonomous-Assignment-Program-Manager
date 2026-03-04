@@ -165,8 +165,8 @@ export function useApplyImport() {
   return useMutation<ImportApplyResponse, ApiError, ApplyImportParams>({
     mutationFn: async ({ batchId, validateAcgme = true, dryRun = false }) => {
       return post<ImportApplyResponse>(`/import/batches/${batchId}/apply`, {
-        validate_acgme: validateAcgme,
-        dry_run: dryRun,
+        validateAcgme,
+        dryRun,
       });
     },
     onSuccess: (data) => {

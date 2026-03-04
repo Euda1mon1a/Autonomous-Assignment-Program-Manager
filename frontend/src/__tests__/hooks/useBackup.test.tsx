@@ -25,19 +25,19 @@ const mockedApi = api as jest.Mocked<typeof api>
 // Mock data
 const mockSnapshots: SnapshotResponse[] = [
   {
-    snapshot_id: 'rotationTemplates_20260205_120000',
+    snapshotId: 'rotationTemplates_20260205_120000',
     table: 'rotation_templates',
-    row_count: 42,
-    file_path: '/backups/rotationTemplates_20260205_120000.json',
+    rowCount: 42,
+    filePath: '/backups/rotationTemplates_20260205_120000.json',
     createdAt: '2026-02-05T12:00:00Z',
     createdBy: 'user-123',
     reason: 'Before bulk delete',
   },
   {
-    snapshot_id: 'assignments_20260205_100000',
+    snapshotId: 'assignments_20260205_100000',
     table: 'assignments',
-    row_count: 157,
-    file_path: '/backups/assignments_20260205_100000.json',
+    rowCount: 157,
+    filePath: '/backups/assignments_20260205_100000.json',
     createdAt: '2026-02-05T10:00:00Z',
     createdBy: 'user-456',
     reason: 'Before schedule regeneration',
@@ -261,9 +261,9 @@ describe('useRestoreSnapshot', () => {
 
   it('should restore from snapshot successfully', async () => {
     const mockResponse: RestoreResponse = {
-      snapshot_id: 'rotationTemplates_20260205_120000',
+      snapshotId: 'rotationTemplates_20260205_120000',
       table: 'rotation_templates',
-      rows_restored: 42,
+      rowsRestored: 42,
       dryRun: false,
       message: 'Successfully restored 42 rows',
     }
@@ -275,7 +275,7 @@ describe('useRestoreSnapshot', () => {
     )
 
     const restoreRequest = {
-      snapshot_id: 'rotationTemplates_20260205_120000',
+      snapshotId: 'rotationTemplates_20260205_120000',
       dryRun: false,
     }
 
@@ -291,9 +291,9 @@ describe('useRestoreSnapshot', () => {
 
   it('should support dry run mode', async () => {
     const mockResponse: RestoreResponse = {
-      snapshot_id: 'rotationTemplates_20260205_120000',
+      snapshotId: 'rotationTemplates_20260205_120000',
       table: 'rotation_templates',
-      rows_restored: 42,
+      rowsRestored: 42,
       dryRun: true,
       message: 'Dry run: would restore 42 rows',
     }
@@ -305,7 +305,7 @@ describe('useRestoreSnapshot', () => {
     )
 
     result.current.mutate({
-      snapshot_id: 'rotationTemplates_20260205_120000',
+      snapshotId: 'rotationTemplates_20260205_120000',
       dryRun: true,
     })
 
@@ -330,7 +330,7 @@ describe('useRestoreSnapshot', () => {
     )
 
     result.current.mutate({
-      snapshot_id: 'nonexistent_snapshot',
+      snapshotId: 'nonexistent_snapshot',
       dryRun: false,
     })
 
@@ -346,9 +346,9 @@ describe('useRestoreSnapshot', () => {
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries')
 
     const mockResponse: RestoreResponse = {
-      snapshot_id: 'rotationTemplates_20260205_120000',
+      snapshotId: 'rotationTemplates_20260205_120000',
       table: 'rotation_templates',
-      rows_restored: 42,
+      rowsRestored: 42,
       dryRun: false,
       message: 'Success',
     }
@@ -363,7 +363,7 @@ describe('useRestoreSnapshot', () => {
     const { result } = renderHook(() => useRestoreSnapshot(), { wrapper })
 
     result.current.mutate({
-      snapshot_id: 'rotationTemplates_20260205_120000',
+      snapshotId: 'rotationTemplates_20260205_120000',
       dryRun: false,
     })
 
@@ -488,7 +488,7 @@ describe('useWithBackup', () => {
         { table: 'rotation_templates', reason: 'Test' },
         operation
       )
-    } catch (e) {
+    } catch {
       // Expected to throw
     }
 

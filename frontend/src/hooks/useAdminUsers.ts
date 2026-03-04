@@ -272,7 +272,7 @@ export function useCreateUser() {
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
-        send_invite: data.sendInvite,
+        sendInvite: data.sendInvite,
       };
       const response = await post<AdminUserApiResponse>(
         "/admin/users",

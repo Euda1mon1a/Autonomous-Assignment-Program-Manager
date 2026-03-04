@@ -55,10 +55,10 @@ export interface SwapRequest {
   status: SwapStatus;
   requestedAt: string;
   requestedById?: string;
-  approved_at?: string;
-  approved_by_id?: string;
+  approvedAt?: string;
+  approvedById?: string;
   executedAt?: string;
-  executed_by_id?: string;
+  executedById?: string;
   reason?: string;
   notes?: string;
 }
@@ -73,7 +73,7 @@ export interface SwapCreateRequest {
   targetWeek?: string;
   swapType: SwapType;
   reason?: string;
-  auto_match?: boolean;
+  autoMatch?: boolean;
 }
 
 /**
@@ -118,9 +118,9 @@ export interface SwapRejectRequest {
 export interface SwapCandidate {
   facultyId: string;
   facultyName: string;
-  available_weeks: string[];
-  compatibility_score: number;
-  constraints_met: boolean;
+  availableWeeks: string[];
+  compatibilityScore: number;
+  constraintsMet: boolean;
   reason?: string;
 }
 
@@ -130,8 +130,8 @@ export interface SwapCandidate {
 export interface AutoMatchRequest {
   sourceFacultyId: string;
   sourceWeek: string;
-  max_candidates?: number;
-  prefer_oneToOne?: boolean;
+  maxCandidates?: number;
+  preferOneToOne?: boolean;
 }
 
 /**
@@ -140,7 +140,7 @@ export interface AutoMatchRequest {
 export interface AutoMatchResponse {
   success: boolean;
   candidates: SwapCandidate[];
-  total_candidates: number;
+  totalCandidates: number;
   message: string;
 }
 
@@ -438,7 +438,7 @@ export function useSwapCandidates(
  *     sourceFacultyId: 'faculty-123',
  *     sourceWeek: '2024-03-01',
  *     swapType: SwapType.ABSORB,
- *     auto_match: true,
+ *     autoMatch: true,
  *   });
  * };
  * ```
@@ -634,16 +634,16 @@ export function useSwapReject() {
  *       {
  *         sourceFacultyId: facultyId,
  *         sourceWeek: week,
- *         max_candidates: 10,
- *         prefer_oneToOne: true,
+ *         maxCandidates: 10,
+ *         preferOneToOne: true,
  *       },
  *       {
  *         onSuccess: (result) => {
- *           if (result.total_candidates === 0) {
+ *           if (result.totalCandidates === 0) {
  *             toast.warning('No compatible candidates found');
  *           } else {
  *             toast.success(
- *               `Found ${result.total_candidates} compatible candidates`
+ *               `Found ${result.totalCandidates} compatible candidates`
  *             );
  *           }
  *         },

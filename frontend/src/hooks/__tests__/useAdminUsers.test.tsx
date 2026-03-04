@@ -436,7 +436,7 @@ describe('useCreateUser', () => {
       firstName: 'John',
       lastName: 'Doe',
       role: 'resident',
-      send_invite: true,
+      sendInvite: true,
     });
 
     expect(result.current.data?.id).toBe('user-1');

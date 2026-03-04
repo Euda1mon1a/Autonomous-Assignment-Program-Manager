@@ -44,20 +44,20 @@ export interface ScheduleGenerateRequest {
   pgyLevels?: number[];
   rotationTemplateIds?: string[];
   algorithm?: "greedy" | "cp_sat" | "pulp" | "hybrid";
-  timeout_seconds?: number;
+  timeoutSeconds?: number;
 }
 
 export interface ScheduleGenerateResponse {
   status: "success" | "partial" | "failed";
   message: string;
-  totalBlocks_assigned: number;
+  totalBlocksAssigned: number;
   totalBlocks: number;
   validation: ValidationResult;
-  run_id?: string;
+  runId?: string;
   solverStats?: {
     totalResidents?: number;
     coverageRate?: number;
-    solve_time?: number;
+    solveTime?: number;
     iterations?: number;
     branches?: number;
     conflicts?: number;

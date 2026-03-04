@@ -16,7 +16,8 @@ import {
   OptimisticUpdateMonitor,
 } from './useOptimisticUpdate';
 
-// Create wrapper with QueryClient
+// Create wrapper with QueryClient — used by future tests
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- available for new test additions
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -246,7 +247,7 @@ describe('useOptimisticList', () => {
       result.current.addItem({ id: 2, name: 'Item 2' });
     });
 
-    const data = queryClient.getQueryData<any[]>(['items']);
+    const data = queryClient.getQueryData<ListItem[]>(['items']);
     expect(data).toHaveLength(2);
     expect(data?.[1]).toEqual({ id: 2, name: 'Item 2' });
   });
@@ -277,7 +278,7 @@ describe('useOptimisticList', () => {
       result.current.updateItem(1, { name: 'Updated Item' });
     });
 
-    const data = queryClient.getQueryData<any[]>(['items']);
+    const data = queryClient.getQueryData<ListItem[]>(['items']);
     expect(data?.[0].name).toBe('Updated Item');
   });
 
@@ -310,7 +311,7 @@ describe('useOptimisticList', () => {
       result.current.deleteItem(1);
     });
 
-    const data = queryClient.getQueryData<any[]>(['items']);
+    const data = queryClient.getQueryData<ListItem[]>(['items']);
     expect(data).toHaveLength(1);
     expect(data?.[0].id).toBe(2);
   });
@@ -341,7 +342,7 @@ describe('useOptimisticList', () => {
       result.current.replaceItem(1, { id: 1, name: 'Replaced Item' });
     });
 
-    const data = queryClient.getQueryData<any[]>(['items']);
+    const data = queryClient.getQueryData<ListItem[]>(['items']);
     expect(data?.[0]).toEqual({ id: 1, name: 'Replaced Item' });
   });
 });

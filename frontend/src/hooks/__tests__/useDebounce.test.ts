@@ -3,7 +3,7 @@
  *
  * Tests value debouncing, callback debouncing, and debounced state.
  */
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import {
   useDebounce,
   useDebouncedCallback,

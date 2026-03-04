@@ -74,17 +74,17 @@ export interface LeaveBalance {
   /** Name of the person */
   personName: string
   /** Available vacation days remaining */
-  vacation_days: number
+  vacationDays: number
   /** Available sick days remaining */
-  sick_days: number
+  sickDays: number
   /** Available personal days remaining */
-  personal_days: number
+  personalDays: number
   /** Total leave days taken this year */
-  total_days_taken: number
+  totalDaysTaken: number
   /** Total leave days allocated for the year */
-  total_days_allocated: number
+  totalDaysAllocated: number
   /** Timestamp when balance was last updated */
-  last_updated?: string
+  lastUpdated?: string
 }
 
 /**
@@ -92,13 +92,13 @@ export interface LeaveBalance {
  */
 export interface AbsenceApprovalRequest {
   /** ID of the absence to approve */
-  absence_id: string
+  absenceId: string
   /** Whether to approve (true) or reject (false) */
   approved: boolean
   /** Optional comments about the decision */
   comments?: string
   /** ID of the user approving/rejecting */
-  approved_by?: string
+  approvedBy?: string
 }
 
 /**
@@ -110,15 +110,15 @@ export interface LeaveCalendarEntry {
   /** Name of the faculty/person */
   facultyName: string
   /** Type of leave */
-  leave_type: string
+  leaveType: string
   /** Start date of leave */
   startDate: string
   /** End date of leave */
   endDate: string
   /** Whether this leave blocks assignments */
-  is_blocking: boolean
+  isBlocking: boolean
   /** Whether there's a conflict with FMIT */
-  has_fmit_conflict: boolean
+  hasFmitConflict: boolean
 }
 
 /**
@@ -485,11 +485,11 @@ export function useMilitaryLeave(
  *
  *   return (
  *     <BalanceCard
- *       vacation={data.vacation_days}
- *       sick={data.sick_days}
- *       personal={data.personal_days}
- *       used={data.total_days_taken}
- *       total={data.total_days_allocated}
+ *       vacation={data.vacationDays}
+ *       sick={data.sickDays}
+ *       personal={data.personalDays}
+ *       used={data.totalDaysTaken}
+ *       total={data.totalDaysAllocated}
  *     />
  *   );
  * }
@@ -685,7 +685,7 @@ export function useAbsenceUpdate() {
  *
  *   const handleApprove = () => {
  *     approve({
- *       absence_id: absence.id,
+ *       absenceId: absence.id,
  *       approved: true,
  *       comments: 'Approved - adequate coverage available',
  *     }, {
@@ -704,7 +704,7 @@ export function useAbsenceUpdate() {
  *
  *   const handleReject = () => {
  *     approve({
- *       absence_id: absence.id,
+ *       absenceId: absence.id,
  *       approved: false,
  *       comments: 'Rejected - insufficient coverage',
  *     });
@@ -730,12 +730,12 @@ export function useAbsenceApprove() {
   const queryClient = useQueryClient()
 
   return useMutation<Absence, ApiError, AbsenceApprovalRequest>({
-    mutationFn: (request) => post<Absence>(`/absences/${request.absence_id}/approve`, request),
-    onSuccess: (data, { absence_id }) => {
+    mutationFn: (request) => post<Absence>(`/absences/${request.absenceId}/approve`, request),
+    onSuccess: (data, { absenceId }) => {
       // Invalidate all absence queries
       queryClient.invalidateQueries({ queryKey: absenceQueryKeys.all() })
       // Invalidate specific absence
-      queryClient.invalidateQueries({ queryKey: absenceQueryKeys.detail(absence_id) })
+      queryClient.invalidateQueries({ queryKey: absenceQueryKeys.detail(absenceId) })
       // Approved absences affect schedules
       queryClient.invalidateQueries({ queryKey: ['schedule'] })
     },

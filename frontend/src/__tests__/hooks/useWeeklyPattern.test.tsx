@@ -15,7 +15,7 @@ import {
   useBulkUpdateWeeklyPatterns,
   weeklyPatternQueryKeys,
 } from '@/hooks/useWeeklyPattern'
-import type { WeeklyPatternGrid, WeeklyPatternResponse, DayOfWeek } from '@/types/weekly-pattern'
+import type { WeeklyPatternGrid, DayOfWeek } from '@/types/weekly-pattern'
 
 // Mock the api module
 jest.mock('@/lib/api')

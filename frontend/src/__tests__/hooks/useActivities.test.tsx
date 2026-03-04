@@ -272,13 +272,13 @@ describe('useCreateActivity', () => {
       name: 'Inpatient Medicine',
       code: 'IM',
       displayAbbreviation: 'IM',
-      activity_category: 'clinical',
+      activityCategory: 'clinical',
       fontColor: '#000000',
       backgroundColor: '#E3F2FD',
-      requires_supervision: true,
+      requiresSupervision: true,
       isProtected: false,
-      counts_toward_clinical_hours: true,
-      display_order: 1,
+      countsTowardClinicalHours: true,
+      displayOrder: 1,
     });
   });
 
@@ -360,8 +360,8 @@ describe('useUpdateActivity', () => {
     });
 
     expect(mockedApi.put).toHaveBeenCalledWith('/activities/activity-1', {
-      requires_supervision: false,
-      counts_toward_clinical_hours: false,
+      requiresSupervision: false,
+      countsTowardClinicalHours: false,
     });
   });
 });

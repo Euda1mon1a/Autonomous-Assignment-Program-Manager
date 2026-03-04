@@ -59,11 +59,11 @@ export interface EndImpersonationResponse {
 }
 
 /**
- * Raw API response from status endpoint (snake_case)
+ * API response from status endpoint (after axios interceptor camelCase conversion)
  */
 interface ImpersonationStatusApiResponse {
-  is_impersonating: boolean;
-  target_user: {
+  isImpersonating: boolean;
+  targetUser: {
     id: string;
     username: string;
     email: string;
@@ -71,7 +71,7 @@ interface ImpersonationStatusApiResponse {
     lastName: string;
     role: string;
   } | null;
-  original_user: {
+  originalUser: {
     id: string;
     username: string;
     email: string;
@@ -79,16 +79,16 @@ interface ImpersonationStatusApiResponse {
     lastName: string;
     role: string;
   } | null;
-  session_expiresAt: string | null;
+  sessionExpiresAt: string | null;
 }
 
 /**
- * Raw API response from start impersonation (snake_case)
+ * API response from start impersonation (after axios interceptor camelCase conversion)
  */
 interface StartImpersonationApiResponse {
   success: boolean;
-  impersonation_token: string;
-  target_user: {
+  impersonationToken: string;
+  targetUser: {
     id: string;
     username: string;
     email: string;
@@ -96,7 +96,7 @@ interface StartImpersonationApiResponse {
     lastName: string;
     role: string;
   };
-  original_user: {
+  originalUser: {
     id: string;
     username: string;
     email: string;
@@ -104,17 +104,17 @@ interface StartImpersonationApiResponse {
     lastName: string;
     role: string;
   };
-  session_expiresAt: string;
+  sessionExpiresAt: string;
   message: string;
 }
 
 /**
- * Raw API response from end impersonation (snake_case)
+ * API response from end impersonation (after axios interceptor camelCase conversion)
  */
 interface EndImpersonationApiResponse {
   success: boolean;
   message: string;
-  restored_user: {
+  restoredUser: {
     id: string;
     username: string;
     email: string;
@@ -220,10 +220,10 @@ async function fetchImpersonationStatus(): Promise<ImpersonationStatusResponse> 
   );
 
   return {
-    isImpersonating: response.is_impersonating,
-    targetUser: transformApiUser(response.target_user),
-    originalUser: transformApiUser(response.original_user),
-    sessionExpiresAt: response.session_expiresAt,
+    isImpersonating: response.isImpersonating,
+    targetUser: transformApiUser(response.targetUser),
+    originalUser: transformApiUser(response.originalUser),
+    sessionExpiresAt: response.sessionExpiresAt,
   };
 }
 
@@ -236,19 +236,19 @@ async function startImpersonation(
   const response = await post<StartImpersonationApiResponse>(
     "/auth/impersonate",
     {
-      target_userId: targetUserId,
+      targetUserId: targetUserId,
     }
   );
 
   // Store the impersonation token
-  storeImpersonationToken(response.impersonation_token);
+  storeImpersonationToken(response.impersonationToken);
 
   return {
     success: response.success,
-    impersonationToken: response.impersonation_token,
-    targetUser: transformApiUser(response.target_user)!,
-    originalUser: transformApiUser(response.original_user)!,
-    sessionExpiresAt: response.session_expiresAt,
+    impersonationToken: response.impersonationToken,
+    targetUser: transformApiUser(response.targetUser)!,
+    originalUser: transformApiUser(response.originalUser)!,
+    sessionExpiresAt: response.sessionExpiresAt,
     message: response.message,
   };
 }
@@ -279,7 +279,7 @@ async function endImpersonation(): Promise<EndImpersonationResponse> {
   return {
     success: response.success,
     message: response.message,
-    restoredUser: transformApiUser(response.restored_user)!,
+    restoredUser: transformApiUser(response.restoredUser)!,
   };
 }
 

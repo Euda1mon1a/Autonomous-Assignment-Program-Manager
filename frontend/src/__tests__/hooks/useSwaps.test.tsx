@@ -64,8 +64,8 @@ const mockApprovedSwap: SwapRequest = {
   ...mockSwapRequest,
   id: 'swap-456',
   status: SwapStatus.APPROVED,
-  approved_at: '2024-02-02T10:00:00Z',
-  approved_by_id: 'admin-1',
+  approvedAt: '2024-02-02T10:00:00Z',
+  approvedById: 'admin-1',
 }
 
 const mockSwapListResponse: ListResponse<SwapRequest> = {
@@ -76,9 +76,9 @@ const mockSwapListResponse: ListResponse<SwapRequest> = {
 const mockSwapCandidate: SwapCandidate = {
   facultyId: 'faculty-3',
   facultyName: 'Dr. Wilson',
-  available_weeks: ['2024-03-08', '2024-03-15'],
-  compatibility_score: 0.85,
-  constraints_met: true,
+  availableWeeks: ['2024-03-08', '2024-03-15'],
+  compatibilityScore: 0.85,
+  constraintsMet: true,
   reason: 'Good match',
 }
 
@@ -103,7 +103,7 @@ const mockSwapActionResponse: SwapActionResponse = {
 const mockAutoMatchResponse: AutoMatchResponse = {
   success: true,
   candidates: [mockSwapCandidate],
-  total_candidates: 1,
+  totalCandidates: 1,
   message: 'Found 1 compatible candidate',
 }
 
@@ -439,7 +439,7 @@ describe('useSwapCreate', () => {
       sourceFacultyId: 'faculty-1',
       sourceWeek: '2024-03-01',
       swapType: SwapType.ABSORB,
-      auto_match: true,
+      autoMatch: true,
     }
 
     result.current.mutate(createRequest)
@@ -656,8 +656,8 @@ describe('useAutoMatch', () => {
     const matchRequest: AutoMatchRequest = {
       sourceFacultyId: 'faculty-1',
       sourceWeek: '2024-03-01',
-      max_candidates: 10,
-      prefer_oneToOne: true,
+      maxCandidates: 10,
+      preferOneToOne: true,
     }
 
     result.current.mutate(matchRequest)
@@ -696,7 +696,7 @@ describe('useAutoMatch', () => {
     const noCandidatesResponse: AutoMatchResponse = {
       success: true,
       candidates: [],
-      total_candidates: 0,
+      totalCandidates: 0,
       message: 'No compatible candidates found',
     }
     mockedApi.post.mockResolvedValueOnce(noCandidatesResponse)

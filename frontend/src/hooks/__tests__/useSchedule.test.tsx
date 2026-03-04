@@ -125,10 +125,10 @@ const mockValidationResult = {
 const mockGenerateResponse = {
   status: 'success',
   message: 'Schedule generated successfully',
-  totalBlocks_assigned: 100,
+  totalBlocksAssigned: 100,
   totalBlocks: 105,
   validation: mockValidationResult,
-  run_id: 'run-1',
+  runId: 'run-1',
   solverStats: {
     totalResidents: 18,
     coverageRate: 0.95,
@@ -390,7 +390,7 @@ describe('useGenerateSchedule', () => {
         startDate: '2025-01-01',
         endDate: '2025-06-30',
         algorithm: 'hybrid',
-        timeout_seconds: 300,
+        timeoutSeconds: 300,
       });
     });
 
@@ -402,11 +402,11 @@ describe('useGenerateSchedule', () => {
       startDate: '2025-01-01',
       endDate: '2025-06-30',
       algorithm: 'hybrid',
-      timeout_seconds: 300,
+      timeoutSeconds: 300,
     });
 
     expect(result.current.data?.status).toBe('success');
-    expect(result.current.data?.totalBlocks_assigned).toBe(100);
+    expect(result.current.data?.totalBlocksAssigned).toBe(100);
   });
 
   it('should handle generation error', async () => {

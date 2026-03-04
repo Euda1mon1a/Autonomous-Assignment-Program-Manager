@@ -76,7 +76,7 @@ export function RigidityBadge({
     }
   };
 
-  const Icon = getStabilityIconComponent(data.stability_grade);
+  const Icon = getStabilityIconComponent(data.stabilityGrade);
 
   // Compact badge
   if (!detailed) {
@@ -90,7 +90,7 @@ export function RigidityBadge({
           {data.rigidityScore.toFixed(2)}
         </span>
         <span className="text-xs text-slate-400">
-          ({data.stability_grade})
+          ({data.stabilityGrade})
         </span>
       </div>
     );
@@ -113,16 +113,16 @@ export function RigidityBadge({
           </span>
           <span
             className={`text-xs px-2 py-0.5 rounded ${
-              data.stability_grade === 'excellent'
+              data.stabilityGrade === 'excellent'
                 ? 'bg-green-500/20 text-green-400'
-                : data.stability_grade === 'good'
+                : data.stabilityGrade === 'good'
                 ? 'bg-blue-500/20 text-blue-400'
-                : data.stability_grade === 'fair'
+                : data.stabilityGrade === 'fair'
                 ? 'bg-yellow-500/20 text-yellow-400'
                 : 'bg-red-500/20 text-red-400'
             }`}
           >
-            {data.stability_grade}
+            {data.stabilityGrade}
           </span>
         </div>
       </div>
@@ -132,26 +132,26 @@ export function RigidityBadge({
         <div className="px-2 py-1.5 bg-slate-800 rounded">
           <div className="text-slate-500">Changes</div>
           <div className="text-white font-medium">
-            {data.changed_assignments} / {data.totalAssignments}
+            {data.changedAssignments} / {data.totalAssignments}
           </div>
         </div>
         <div className="px-2 py-1.5 bg-slate-800 rounded">
           <div className="text-slate-500">Churn Rate</div>
           <div className="text-white font-medium">
-            {(data.change_rate * 100).toFixed(1)}%
+            {(data.changeRate * 100).toFixed(1)}%
           </div>
         </div>
       </div>
 
       {/* Affected faculty */}
-      {data.affected_faculty.length > 0 && (
+      {data.affectedFaculty.length > 0 && (
         <div className="text-xs">
           <div className="text-slate-400 mb-1">
-            Affected Faculty: {data.affected_faculty.length}
+            Affected Faculty: {data.affectedFaculty.length}
           </div>
-          {data.affected_faculty.length <= 3 && (
+          {data.affectedFaculty.length <= 3 && (
             <div className="text-slate-500">
-              {data.affected_faculty.join(', ')}
+              {data.affectedFaculty.join(', ')}
             </div>
           )}
         </div>

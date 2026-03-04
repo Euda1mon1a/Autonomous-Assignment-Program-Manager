@@ -134,11 +134,11 @@ const mockLeaveCalendarResponse = {
     {
       facultyId: 'person-1',
       facultyName: 'Dr. Smith',
-      leave_type: 'vacation',
+      leaveType: 'vacation',
       startDate: '2025-07-01',
       endDate: '2025-07-14',
-      is_blocking: true,
-      has_fmit_conflict: false,
+      isBlocking: true,
+      hasFmitConflict: false,
     },
   ],
   conflictCount: 0,
@@ -147,11 +147,11 @@ const mockLeaveCalendarResponse = {
 const mockLeaveBalance = {
   personId: 'person-1',
   personName: 'Dr. Smith',
-  vacation_days: 15,
-  sick_days: 10,
-  personal_days: 3,
-  total_days_taken: 5,
-  total_days_allocated: 30,
+  vacationDays: 15,
+  sickDays: 10,
+  personalDays: 3,
+  totalDaysTaken: 5,
+  totalDaysAllocated: 30,
 };
 
 const mockAwaySummary = {
@@ -709,7 +709,7 @@ describe('useAbsenceApprove', () => {
 
     await act(async () => {
       result.current.mutate({
-        absence_id: 'abs-1',
+        absenceId: 'abs-1',
         approved: true,
         comments: 'Adequate coverage available',
       });
@@ -720,7 +720,7 @@ describe('useAbsenceApprove', () => {
     });
 
     expect(mockPost).toHaveBeenCalledWith('/absences/abs-1/approve', {
-      absence_id: 'abs-1',
+      absenceId: 'abs-1',
       approved: true,
       comments: 'Adequate coverage available',
     });
@@ -735,7 +735,7 @@ describe('useAbsenceApprove', () => {
 
     await act(async () => {
       result.current.mutate({
-        absence_id: 'abs-1',
+        absenceId: 'abs-1',
         approved: false,
         comments: 'Insufficient coverage',
       });
@@ -746,7 +746,7 @@ describe('useAbsenceApprove', () => {
     });
 
     expect(mockPost).toHaveBeenCalledWith('/absences/abs-1/approve', {
-      absence_id: 'abs-1',
+      absenceId: 'abs-1',
       approved: false,
       comments: 'Insufficient coverage',
     });

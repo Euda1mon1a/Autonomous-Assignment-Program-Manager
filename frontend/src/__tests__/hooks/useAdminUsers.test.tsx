@@ -69,6 +69,7 @@ const mockApiUser: AdminUserApiResponse = {
   inviteAcceptedAt: null,
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for reference/future tests
 const mockUsersResponse: UsersResponse = {
   users: [mockUser],
   total: 1,
@@ -85,6 +86,7 @@ const mockApiUsersResponse: AdminUserListApiResponse = {
   totalPages: 1,
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for reference/future tests
 const mockLockResponse: LockUserResponse = {
   success: true,
   user: mockUser,
@@ -96,6 +98,7 @@ const mockResendInviteResponse: ResendInviteResponse = {
   message: 'Invitation resent successfully',
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for reference/future tests
 const mockBulkActionResponse: BulkActionResponse = {
   success: true,
   affected: 2,
@@ -405,7 +408,7 @@ describe('useCreateUser', () => {
       firstName: 'John',
       lastName: 'Doe',
       role: 'resident',
-      send_invite: true,
+      sendInvite: true,
     })
   })
 

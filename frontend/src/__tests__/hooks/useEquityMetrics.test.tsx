@@ -23,26 +23,26 @@ const mockedApi = api as jest.Mocked<typeof api>;
 // Mock data
 const mockEquitableResponse: EquityMetricsResponse = {
   giniCoefficient: 0.12,
-  is_equitable: true,
-  mean_workload: 160,
-  std_workload: 15,
-  most_overloaded_provider: 'provider-2',
-  most_underloaded_provider: 'provider-3',
-  max_workload: 175,
-  min_workload: 145,
+  isEquitable: true,
+  meanWorkload: 160,
+  stdWorkload: 15,
+  mostOverloadedProvider: 'provider-2',
+  mostUnderloadedProvider: 'provider-3',
+  maxWorkload: 175,
+  minWorkload: 145,
   recommendations: [],
   interpretation: 'Workload is equitably distributed',
 };
 
 const mockModerateResponse: EquityMetricsResponse = {
   giniCoefficient: 0.18,
-  is_equitable: false,
-  mean_workload: 160,
-  std_workload: 25,
-  most_overloaded_provider: 'provider-1',
-  most_underloaded_provider: 'provider-4',
-  max_workload: 200,
-  min_workload: 120,
+  isEquitable: false,
+  meanWorkload: 160,
+  stdWorkload: 25,
+  mostOverloadedProvider: 'provider-1',
+  mostUnderloadedProvider: 'provider-4',
+  maxWorkload: 200,
+  minWorkload: 120,
   recommendations: [
     'Consider redistributing 15 hours from provider-1 to provider-4',
   ],
@@ -51,13 +51,13 @@ const mockModerateResponse: EquityMetricsResponse = {
 
 const mockHighInequalityResponse: EquityMetricsResponse = {
   giniCoefficient: 0.35,
-  is_equitable: false,
-  mean_workload: 160,
-  std_workload: 50,
-  most_overloaded_provider: 'provider-1',
-  most_underloaded_provider: 'provider-5',
-  max_workload: 240,
-  min_workload: 80,
+  isEquitable: false,
+  meanWorkload: 160,
+  stdWorkload: 50,
+  mostOverloadedProvider: 'provider-1',
+  mostUnderloadedProvider: 'provider-5',
+  maxWorkload: 240,
+  minWorkload: 80,
   recommendations: [
     'Immediate rebalancing required',
     'Redistribute 60 hours from provider-1',
@@ -65,12 +65,14 @@ const mockHighInequalityResponse: EquityMetricsResponse = {
   interpretation: 'High inequality - immediate action required',
 };
 
+/* eslint-disable @typescript-eslint/naming-convention -- ID keys */
 const mockProviderHours: Record<string, number> = {
   'provider-1': 175,
   'provider-2': 165,
   'provider-3': 155,
   'provider-4': 160,
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 // Create a fresh QueryClient for each test
 function createTestQueryClient() {
@@ -121,8 +123,8 @@ describe('useEquityMetrics', () => {
     expect(mockedApi.post).toHaveBeenCalledWith(
       '/mcp/calculate-equity-metrics',
       {
-        provider_hours: mockProviderHours,
-        intensity_weights: null,
+        providerHours: mockProviderHours,
+        intensityWeights: null,
       }
     );
   });
@@ -130,10 +132,12 @@ describe('useEquityMetrics', () => {
   it('should include intensity weights if provided', async () => {
     mockedApi.post.mockResolvedValueOnce(mockEquitableResponse);
 
+    /* eslint-disable @typescript-eslint/naming-convention -- ID keys */
     const intensityWeights = {
       'provider-1': 1.5,
       'provider-2': 1.0,
     };
+    /* eslint-enable @typescript-eslint/naming-convention */
 
     const { result } = renderHook(
       () => useEquityMetrics(mockProviderHours, intensityWeights),
@@ -147,8 +151,8 @@ describe('useEquityMetrics', () => {
     expect(mockedApi.post).toHaveBeenCalledWith(
       '/mcp/calculate-equity-metrics',
       {
-        provider_hours: mockProviderHours,
-        intensity_weights: intensityWeights,
+        providerHours: mockProviderHours,
+        intensityWeights: intensityWeights,
       }
     );
   });
@@ -166,7 +170,7 @@ describe('useEquityMetrics', () => {
     });
 
     expect(result.current.data?.giniCoefficient).toBeLessThan(0.15);
-    expect(result.current.data?.is_equitable).toBe(true);
+    expect(result.current.data?.isEquitable).toBe(true);
   });
 
   it('should handle moderate inequality', async () => {
@@ -183,7 +187,7 @@ describe('useEquityMetrics', () => {
 
     expect(result.current.data?.giniCoefficient).toBeGreaterThanOrEqual(0.15);
     expect(result.current.data?.giniCoefficient).toBeLessThan(0.25);
-    expect(result.current.data?.is_equitable).toBe(false);
+    expect(result.current.data?.isEquitable).toBe(false);
   });
 
   it('should handle high inequality', async () => {
@@ -258,10 +262,10 @@ describe('useEquityMetrics', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data?.mean_workload).toBe(160);
-    expect(result.current.data?.std_workload).toBe(15);
-    expect(result.current.data?.max_workload).toBe(175);
-    expect(result.current.data?.min_workload).toBe(145);
+    expect(result.current.data?.meanWorkload).toBe(160);
+    expect(result.current.data?.stdWorkload).toBe(15);
+    expect(result.current.data?.maxWorkload).toBe(175);
+    expect(result.current.data?.minWorkload).toBe(145);
   });
 
   it('should identify overloaded and underloaded providers', async () => {
@@ -276,8 +280,8 @@ describe('useEquityMetrics', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data?.most_overloaded_provider).toBe('provider-1');
-    expect(result.current.data?.most_underloaded_provider).toBe('provider-4');
+    expect(result.current.data?.mostOverloadedProvider).toBe('provider-1');
+    expect(result.current.data?.mostUnderloadedProvider).toBe('provider-4');
   });
 
   it('should provide recommendations for rebalancing', async () => {

@@ -107,6 +107,7 @@ const mockHealthResponse: HealthCheckResponse = {
       buffer: 2,
     },
   ],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- enum value not in TS type
   loadSheddingLevel: 'NORMAL' as any,
   activeFallbacks: [],
   crisisMode: false,
@@ -255,9 +256,11 @@ const mockUnifiedCriticalIndexResponse: UnifiedCriticalIndexResponse = {
   criticalCount: 3,
   universalCriticalCount: 1,
   patternDistribution: {
+    /* eslint-disable @typescript-eslint/naming-convention -- enum values @enum-ok */
     universal_critical: 1,
     structural_burnout: 2,
     low_risk: 17,
+    /* eslint-enable @typescript-eslint/naming-convention */
   },
   topPriority: ['faculty-1', 'faculty-2'],
   topCriticalFaculty: [
@@ -265,12 +268,14 @@ const mockUnifiedCriticalIndexResponse: UnifiedCriticalIndexResponse = {
       facultyId: 'faculty-1',
       facultyName: 'Dr. Smith',
       compositeIndex: 0.85,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- enum value @enum-ok
       riskPattern: 'universal_critical' as any,
       confidence: 0.9,
       domainScores: {},
       domainAgreement: 0.95,
       leadingDomain: 'contingency',
       conflictDetails: [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- enum value @enum-ok
       recommendedInterventions: ['immediate_protection' as any],
       priorityRank: 1,
     },
@@ -278,7 +283,9 @@ const mockUnifiedCriticalIndexResponse: UnifiedCriticalIndexResponse = {
   contributingFactors: {
     contingency: 0.4,
     epidemiology: 0.25,
+    /* eslint-disable @typescript-eslint/naming-convention -- enum value key @enum-ok */
     hub_centrality: 0.35,
+    /* eslint-enable @typescript-eslint/naming-convention */
   },
   trend: 'stable',
   topConcerns: ['Dr. Smith requires immediate protection'],
@@ -293,6 +300,7 @@ const mockBlastRadiusResponse: BlastRadiusReportResponse = {
   zonesDegraded: 1,
   zonesCritical: 0,
   containmentActive: false,
+  /* eslint-disable @typescript-eslint/no-explicit-any -- enum values not in TS type */
   containmentLevel: 'none' as any,
   zonesIsolated: 0,
   activeBorrowingRequests: 0,
@@ -305,6 +313,7 @@ const mockBlastRadiusResponse: BlastRadiusReportResponse = {
       checkedAt: '2026-02-06T12:00:00Z',
       status: 'green' as any,
       containmentLevel: 'none' as any,
+  /* eslint-enable @typescript-eslint/no-explicit-any */
       isSelfSufficient: true,
       hasSurplus: true,
       availableFaculty: 8,
@@ -417,7 +426,7 @@ describe('useVulnerabilityReport', () => {
     const params = {
       startDate: '2026-02-01',
       endDate: '2026-02-28',
-      include_n2: true,
+      includeN2: true,
     }
 
     const { result } = renderHook(() => useVulnerabilityReport(params), {
@@ -516,8 +525,8 @@ describe('useUtilizationThreshold', () => {
     mockedApi.post.mockResolvedValueOnce(mockUtilizationResponse)
 
     const params = {
-      available_faculty: 10,
-      required_blocks: 65,
+      availableFaculty: 10,
+      requiredBlocks: 65,
     }
 
     const { result } = renderHook(() => useUtilizationThreshold(params), {
@@ -539,10 +548,10 @@ describe('useUtilizationThreshold', () => {
     mockedApi.post.mockResolvedValueOnce(mockUtilizationResponse)
 
     const params = {
-      available_faculty: 10,
-      required_blocks: 65,
-      blocks_per_faculty_per_day: 2,
-      days_in_period: 28,
+      availableFaculty: 10,
+      requiredBlocks: 65,
+      blocksPerFacultyPerDay: 2,
+      daysInPeriod: 28,
     }
 
     const { result } = renderHook(() => useUtilizationThreshold(params), {
@@ -559,10 +568,10 @@ describe('useUtilizationThreshold', () => {
     )
   })
 
-  it('should not fetch when available_faculty is zero', async () => {
+  it('should not fetch when availableFaculty is zero', async () => {
     const params = {
-      available_faculty: 0,
-      required_blocks: 65,
+      availableFaculty: 0,
+      requiredBlocks: 65,
     }
 
     const { result } = renderHook(() => useUtilizationThreshold(params), {
@@ -573,10 +582,10 @@ describe('useUtilizationThreshold', () => {
     expect(mockedApi.post).not.toHaveBeenCalled()
   })
 
-  it('should not fetch when required_blocks is negative', async () => {
+  it('should not fetch when requiredBlocks is negative', async () => {
     const params = {
-      available_faculty: 10,
-      required_blocks: -5,
+      availableFaculty: 10,
+      requiredBlocks: -5,
     }
 
     const { result } = renderHook(() => useUtilizationThreshold(params), {
@@ -608,8 +617,8 @@ describe('useBurnoutRt', () => {
 
     expect(result.current.data).toEqual(mockBurnoutRtResponse)
     expect(mockedApi.post).toHaveBeenCalledWith('/resilience/burnout/rt', {
-      burned_out_provider_ids: providerIds,
-      time_window_days: 28,
+      burnedOutProviderIds: providerIds,
+      timeWindowDays: 28,
     })
   })
 
@@ -628,8 +637,8 @@ describe('useBurnoutRt', () => {
     })
 
     expect(mockedApi.post).toHaveBeenCalledWith('/resilience/burnout/rt', {
-      burned_out_provider_ids: providerIds,
-      time_window_days: timeWindow,
+      burnedOutProviderIds: providerIds,
+      timeWindowDays: timeWindow,
     })
   })
 

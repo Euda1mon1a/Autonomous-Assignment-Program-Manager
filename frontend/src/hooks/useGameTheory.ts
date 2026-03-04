@@ -162,8 +162,8 @@ export function useCreateTournament() {
 export function useRunTournamentSync(tournamentId: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<{ tournament_id: string; status: string; winner: string }, ApiError, void>({
-    mutationFn: () => post<{ tournament_id: string; status: string; winner: string }>(`${BASE_URL}/tournaments/${tournamentId}/run`),
+  return useMutation<{ tournamentId: string; status: string; winner: string }, ApiError, void>({
+    mutationFn: () => post<{ tournamentId: string; status: string; winner: string }>(`${BASE_URL}/tournaments/${tournamentId}/run`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game-theory', 'tournaments'] });
       queryClient.invalidateQueries({ queryKey: ['game-theory', 'tournaments', tournamentId] });

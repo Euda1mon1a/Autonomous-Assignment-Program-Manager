@@ -9,11 +9,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import {
   useScheduleRuns,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- imported for future test expansion
   useScheduleRun,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- imported for future test expansion
   useConstraintConfigs,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- imported for future test expansion
   useValidateConfiguration,
   useGenerateScheduleRun,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- imported for future test expansion
   useQueueExperiments,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- imported for future test expansion
   useRunQueue,
   useLockedAssignments,
   useLockAssignment,
@@ -36,8 +41,8 @@ const mockRunLogEntry = {
     utilization: 0.75,
     violations: 0,
   },
-  started_at: '2024-01-01T00:00:00Z',
-  completed_at: '2024-01-01T00:05:00Z',
+  startedAt: '2024-01-01T00:00:00Z',
+  completedAt: '2024-01-01T00:05:00Z',
   createdAt: '2024-01-01T00:00:00Z',
 };
 
@@ -101,7 +106,7 @@ describe('useScheduleRuns', () => {
 describe('useGenerateScheduleRun', () => {
   it('generates schedule successfully', async () => {
     const mockResult = {
-      run_id: 'run-456',
+      runId: 'run-456',
       status: 'completed',
       metrics: { coverage: 0.95 },
     };

@@ -43,6 +43,7 @@ export const pecQueryKeys = {
 const MOCK_DASHBOARD: PecDashboard = {
   academicYear: 'AY25-26',
   totalResidents: 18,
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- PGY level keys are numeric data identifiers
   residentsByPgy: { '1': 6, '2': 6, '3': 6 },
   upcomingMeetings: [],
   recentDecisions: [],
