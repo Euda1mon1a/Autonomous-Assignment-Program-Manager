@@ -446,7 +446,8 @@ class XMLToXlsxConverter:
             main_sheet = wb.active
         actual_days = (block_end - block_start).days + 1
         schedule_end_col = BT2_COL_SCHEDULE_START + (actual_days * COLS_PER_DAY) - 1
-        self._apply_tamc_presentation(main_sheet, schedule_end_col)
+        if self.use_block_template2:
+            self._apply_tamc_presentation(main_sheet, schedule_end_col)
 
         # Apply Arial 16 base font to non-schedule sheets (QA, etc.)
         base_font = Font(name="Arial", size=16)
@@ -827,10 +828,12 @@ class XMLToXlsxConverter:
             # Row 92: Total Attendings Needed = ROUNDUP(clinic + proc)
             sheet.cell(row=92, column=col_idx).value = f"=ROUNDUP(SUM({c}88:{c}89),0)"
 
-            # Row 93: # Attendings Assigned (AT + PCAT in faculty rows)
+            # Row 93: # Attendings Assigned (AT + PCAT + DO in faculty rows)
             sheet.cell(
                 row=93, column=col_idx
-            ).value = f'=COUNTIF({r_fac},"AT")+COUNTIF({r_fac},"PCAT")'
+            ).value = (
+                f'=COUNTIF({r_fac},"AT")+COUNTIF({r_fac},"PCAT")+COUNTIF({r_fac},"DO")'
+            )
 
             # Row 94: # Primary Care Appts (placeholder — manual input)
             sheet.cell(row=94, column=col_idx).value = ""
