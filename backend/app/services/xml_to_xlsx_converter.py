@@ -807,9 +807,10 @@ class XMLToXlsxConverter:
             # Row 88: Attendings Needed = interns×0.5 + residents×0.25
             sheet.cell(row=88, column=col_idx).value = f"={c}86*0.5+{c}87*0.25"
 
-            # Row 89: Residents in PROC (VAS + PR + OPR in resident rows)
+            # Row 89: Residents in PROC (VAS + PR + OPR + PROC in resident rows)
             sheet.cell(row=89, column=col_idx).value = (
-                f'=COUNTIF({r_res},"VAS")+COUNTIF({r_res},"PR")+COUNTIF({r_res},"OPR")'
+                f'=COUNTIF({r_res},"VAS")+COUNTIF({r_res},"PR")'
+                f'+COUNTIF({r_res},"OPR")+COUNTIF({r_res},"PROC")'
             )
 
             # Row 90: Residents in V Clinic
@@ -827,9 +828,9 @@ class XMLToXlsxConverter:
             sheet.cell(row=92, column=col_idx).value = f"=ROUNDUP(SUM({c}88:{c}89),0)"
 
             # Row 93: # Attendings Assigned (AT + PCAT in faculty rows)
-            sheet.cell(row=93, column=col_idx).value = (
-                f'=COUNTIF({r_fac},"AT")+COUNTIF({r_fac},"PCAT")'
-            )
+            sheet.cell(
+                row=93, column=col_idx
+            ).value = f'=COUNTIF({r_fac},"AT")+COUNTIF({r_fac},"PCAT")'
 
             # Row 94: # Primary Care Appts (placeholder — manual input)
             sheet.cell(row=94, column=col_idx).value = ""
@@ -841,9 +842,9 @@ class XMLToXlsxConverter:
             sheet.cell(row=96, column=col_idx).value = f'=COUNTIF({r_res},"VAS")'
 
             # Row 97: PR/VAS Conflict detector
-            sheet.cell(row=97, column=col_idx).value = (
-                f'=IF(OR({c}95>1,{c}96>1,AND({c}95>=1,{c}96>=1)),"\u26a0","")'
-            )
+            sheet.cell(
+                row=97, column=col_idx
+            ).value = f'=IF(OR({c}95>1,{c}96>1,AND({c}95>=1,{c}96>=1)),"\u26a0","")'
 
     def _call_last_name_token(self, raw_name: Any) -> str:
         if not raw_name:
@@ -1223,9 +1224,9 @@ class XMLToXlsxConverter:
         for row in range(6, 8):
             sheet.row_dimensions[row].height = 20  # Label/spacer rows
         sheet.row_dimensions[8].height = 21  # Row 8 matches resident height
-        for row in range(9, 30):
+        for row in range(9, 31):
             sheet.row_dimensions[row].height = 21  # Resident rows
-        for row in range(30, 70):
+        for row in range(31, 81):
             sheet.row_dimensions[row].height = 20  # Faculty rows
 
         # --- Fonts and borders for all cells ---
