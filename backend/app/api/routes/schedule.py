@@ -857,7 +857,7 @@ async def parse_block_schedule_endpoint(
         )
     except ValueError as e:
         logger.debug("Validation error: %s", e)
-        raise HTTPException(status_code=422, detail="Internal server error")
+        raise HTTPException(status_code=422, detail="Invalid schedule data")
     finally:
         os.unlink(tmp_path)
 

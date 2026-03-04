@@ -219,7 +219,7 @@ async def calculate_equity_metrics(
         logger.warning("Invalid equity metrics request", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Internal server error",
+            detail="Invalid request parameters",
         ) from e
     except Exception as e:
         logger.exception("Error calculating equity metrics", exc_info=True)
@@ -273,7 +273,7 @@ async def generate_lorenz_curve_endpoint(
         logger.warning("Invalid Lorenz curve request", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Internal server error",
+            detail="Invalid request parameters",
         ) from e
     except Exception as e:
         logger.exception("Error generating Lorenz curve", exc_info=True)
@@ -424,7 +424,7 @@ async def calculate_shapley_workload(
         logger.warning("Invalid Shapley workload request", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Internal server error",
+            detail="Invalid request parameters",
         ) from e
     except Exception as e:
         logger.exception("Error calculating Shapley workload", exc_info=True)
