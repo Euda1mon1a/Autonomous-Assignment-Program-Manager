@@ -214,7 +214,7 @@ automation-preflight:
 	@echo "=== 0100 Automation Preflight ==="
 	@stack_rc=0; codex_rc=0; \
 	python3 scripts/ops/stack_audit.py --quick --no-report || stack_rc=$$?; \
-	./scripts/ops/codex_daily_health.sh --skip-scans || codex_rc=$$?; \
+	./.codex/scripts/codex_daily_health.sh --skip-scans || codex_rc=$$?; \
 	if [ $$stack_rc -ne 0 ] || [ $$codex_rc -ne 0 ]; then \
 		echo ""; \
 		echo "Preflight detected issues (stack_audit=$$stack_rc, codex_daily_health=$$codex_rc)."; \

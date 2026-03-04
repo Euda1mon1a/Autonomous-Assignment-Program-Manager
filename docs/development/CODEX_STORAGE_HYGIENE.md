@@ -17,47 +17,47 @@ Codex App keeps local worktrees, sessions, and logs. In this repo, storage press
 ## One-Command Audit
 
 ```bash
-scripts/ops/codex_storage_hygiene.sh --audit
+.codex/scripts/codex_storage_hygiene.sh --audit
 ```
 
 ## Safe Cleanup (Dry-Run First)
 
 ```bash
 # Show what would be removed
-scripts/ops/codex_storage_hygiene.sh --clean-caches
+.codex/scripts/codex_storage_hygiene.sh --clean-caches
 
 # Execute cache cleanup
-scripts/ops/codex_storage_hygiene.sh --clean-caches --apply
+.codex/scripts/codex_storage_hygiene.sh --clean-caches --apply
 ```
 
 ## Archive / Session Retention
 
 ```bash
 # List old session files
-scripts/ops/codex_storage_hygiene.sh --list-old-sessions --session-days 30
+.codex/scripts/codex_storage_hygiene.sh --list-old-sessions --session-days 30
 
 # Prune old session files
-scripts/ops/codex_storage_hygiene.sh --prune-old-sessions --session-days 30 --apply
+.codex/scripts/codex_storage_hygiene.sh --prune-old-sessions --session-days 30 --apply
 ```
 
 ## Stale Worktree Retention
 
 ```bash
 # List clean stale worktrees older than 14 days
-scripts/ops/codex_storage_hygiene.sh --list-stale --days 14
+.codex/scripts/codex_storage_hygiene.sh --list-stale --days 14
 
 # Prune clean stale worktrees older than 14 days
-scripts/ops/codex_storage_hygiene.sh --prune-stale --days 14 --apply
+.codex/scripts/codex_storage_hygiene.sh --prune-stale --days 14 --apply
 ```
 
 ## Safe Prune Plan (Exclude bad1 by Default)
 
 ```bash
 # Generate a human-readable safe prune plan (no deletes)
-scripts/ops/codex_safe_prune_plan.sh --save
+.codex/scripts/codex_safe_prune_plan.sh --save
 
 # Optional execution of only prune-ready worktrees
-scripts/ops/codex_safe_prune_plan.sh --apply --exclude-ids bad1
+.codex/scripts/codex_safe_prune_plan.sh --apply --exclude-ids bad1
 ```
 
 ## Cherry-Pick Protection (Critical)
@@ -65,7 +65,7 @@ scripts/ops/codex_safe_prune_plan.sh --apply --exclude-ids bad1
 Before stale-worktree prune, run:
 
 ```bash
-scripts/ops/codex_cherry_pick_hunter.sh --save
+.codex/scripts/codex_cherry_pick_hunter.sh --save
 ```
 
 `--prune-stale` is now fail-closed:

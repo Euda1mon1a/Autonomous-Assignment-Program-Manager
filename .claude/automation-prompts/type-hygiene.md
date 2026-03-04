@@ -30,7 +30,7 @@
    - Async functions: Return Awaitable[T] or just T with async def
 
 5. Verify after changes:
-   python3 scripts/ops/codex_worktree_env_exec.py -- python -m mypy <directory> --ignore-missing-imports
+   python3 .codex/scripts/codex_worktree_env_exec.py -- python -m mypy <directory> --ignore-missing-imports
 
 6. Lint suppression comments:
    - NEVER remove `# noqa`, `# type: ignore`, `// eslint-disable`, or `@ts-expect-error` comments

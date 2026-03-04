@@ -5,7 +5,7 @@
 
 ## Purpose
 
-`scripts/ops/codex_daily_health.sh` is a unified check that runs:
+`.codex/scripts/codex_daily_health.sh` is a unified check that runs:
 
 - MCP visibility (`codex mcp list`)
 - local MCP server health (`http://127.0.0.1:8081/health`)
@@ -18,10 +18,10 @@
 
 ```bash
 # Full run with scanner checks
-scripts/ops/codex_daily_health.sh --save
+.codex/scripts/codex_daily_health.sh --save
 
 # Faster run without scanners
-scripts/ops/codex_daily_health.sh --save --skip-scans
+.codex/scripts/codex_daily_health.sh --save --skip-scans
 ```
 
 ## Exit Behavior

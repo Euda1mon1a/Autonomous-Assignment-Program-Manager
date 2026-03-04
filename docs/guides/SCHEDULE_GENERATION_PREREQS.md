@@ -84,14 +84,14 @@ VALUES (
 
 FMIT (Family Medicine Inpatient Team) is a high-priority rotation that must be assigned BEFORE the solver runs.
 
-**Script:** `scripts/seed_inpatient_rotations.py`
+**Script:** `scripts/seed/seed_inpatient_rotations.py`
 - Pre-assigns FMIT rotation slots
 - Creates assignments for Family Medicine Inpatient Team
 
 **Usage:**
 ```bash
 docker compose -f docker-compose.local.yml exec backend \
-  python scripts/seed_inpatient_rotations.py --block 10
+  python scripts/seed/seed_inpatient_rotations.py --block 10
 ```
 
 ### Step 4: Run Solver

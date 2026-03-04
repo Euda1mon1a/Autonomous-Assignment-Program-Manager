@@ -65,9 +65,9 @@ Expected: 30+ migrations applied.
 pip3 install requests
 
 # Run seed scripts
-python scripts/seed_people.py     # 28 people
-python scripts/seed_blocks.py     # 730 blocks
-python scripts/seed_templates.py  # 32 templates
+python scripts/seed/seed_people.py     # 28 people
+python scripts/seed/seed_blocks.py     # 730 blocks
+python scripts/seed/seed_templates.py  # 32 templates
 ```
 
 ### Step 7: Verify

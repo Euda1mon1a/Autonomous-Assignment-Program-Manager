@@ -78,13 +78,13 @@ done
 ## Quick Status Command
 
 ```bash
-scripts/ops/codex_app_schedule_status.sh
+.codex/scripts/codex_app_schedule_status.sh
 ```
 
 To enforce minute fan-out limits in automation checks:
 
 ```bash
-scripts/ops/codex_app_schedule_status.sh --fail-on-collision --max-per-minute 5
+.codex/scripts/codex_app_schedule_status.sh --fail-on-collision --max-per-minute 5
 ```
 
 ## Quick Preflight Command

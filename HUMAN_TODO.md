@@ -680,7 +680,7 @@ Comprehensive hooks and scripts consolidation addressing:
 |----------|-------|
 | Pre-commit config | `.pre-commit-config.yaml` |
 | PII scanner | `scripts/pii-scan.sh` |
-| Backup scripts | `scripts/backup_full_stack.sh`, `scripts/full-stack-backup.sh`, `scripts/stack-backup.sh` |
+| Backup scripts | `scripts/archived/backup_full_stack.sh`, `scripts/archived/full-stack-backup.sh`, `scripts/stack-backup.sh` |
 | Claude Code hooks | `.claude/hooks/*.sh` |
 | CI workflows | `.github/workflows/security.yml`, `.github/workflows/quality-gates.yml` |
 

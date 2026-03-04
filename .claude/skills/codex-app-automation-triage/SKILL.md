@@ -14,7 +14,7 @@ Use this skill to consolidate Codex macOS app automation output and sort wheat f
 From the repo root:
 
 ```bash
-python scripts/ops/codex_automation_report.py
+python .codex/scripts/codex_automation_report.py
 ```
 
 This generates a Markdown report under `docs/reports/automation/` and prints the path.
@@ -59,13 +59,13 @@ For each worktree with signal:
 Include clean worktrees:
 
 ```bash
-python scripts/ops/codex_automation_report.py --include-clean
+python .codex/scripts/codex_automation_report.py --include-clean
 ```
 
 Custom worktree root:
 
 ```bash
-python scripts/ops/codex_automation_report.py --root /custom/path
+python .codex/scripts/codex_automation_report.py --root /custom/path
 ```
 
 ## Output

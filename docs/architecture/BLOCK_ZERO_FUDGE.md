@@ -19,7 +19,7 @@ Medical residency programs operate on an **Academic Year (AY)** that starts July
 
 This calculation touches multiple layers:
 
-1. **Seed Script** (`backend/scripts/seed_antigravity.py`)
+1. **Seed Script** (`backend/scripts/seed/seed_antigravity.py`)
    - `_calculate_block_number()` method
    - Block generation in `_seed_blocks()`
 

@@ -6,13 +6,13 @@ Run the full stack backup script:
 
 ```bash
 # Basic backup (database + volumes + frontend)
-./scripts/backup_full_stack.sh
+./scripts/archived/backup_full_stack.sh
 
 # Include Redis data
-./scripts/backup_full_stack.sh --include-redis
+./scripts/archived/backup_full_stack.sh --include-redis
 
 # Custom output directory
-./scripts/backup_full_stack.sh --output-dir /path/to/backups
+./scripts/archived/backup_full_stack.sh --output-dir /path/to/backups
 ```
 
 ## Backup Contents
@@ -89,5 +89,5 @@ To schedule daily backups:
 
 ```bash
 # Add to crontab (crontab -e)
-0 2 * * * /path/to/project/scripts/backup_full_stack.sh >> /var/log/scheduler_backup.log 2>&1
+0 2 * * * /path/to/project/scripts/archived/backup_full_stack.sh >> /var/log/scheduler_backup.log 2>&1
 ```

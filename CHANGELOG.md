@@ -931,8 +931,8 @@ agent, model = match_task_to_agent("Validate ACGME compliance")
 - `session-documentation`: Comprehensive session documentation generator
 
 **Seeding Scripts:**
-- `scripts/seed_rotation_templates.py`: 55 rotation templates by activity type
-- `scripts/seed_inpatient_rotations.py`: Block-by-block inpatient assignment loader
+- `scripts/seed/seed_rotation_templates.py`: 55 rotation templates by activity type
+- `scripts/seed/seed_inpatient_rotations.py`: Block-by-block inpatient assignment loader
 
 ### Fixed
 
