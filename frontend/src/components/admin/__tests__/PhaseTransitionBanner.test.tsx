@@ -53,8 +53,8 @@ jest.mock('@/hooks/usePhaseTransitionRisk', () => ({
 
 function makeSignal(overrides?: Partial<CriticalSignal>): CriticalSignal {
   return {
-    signal_type: 'variance_increase',
-    metric_name: 'workload_variance',
+    signalType: 'variance_increase',
+    metricName: 'workload_variance',
     severity: 'elevated',
     value: 2.5,
     threshold: 2.0,
@@ -70,7 +70,7 @@ function makeResponse(
   return {
     overallSeverity: 'elevated',
     signals: [makeSignal()],
-    time_to_transition: 48,
+    timeToTransition: 48,
     confidence: 0.75,
     recommendations: ['Review current workload distribution'],
     source: 'test',
@@ -205,7 +205,7 @@ describe('PhaseTransitionBanner', () => {
     it('renders signal count', () => {
       mockUsePhaseTransitionRisk.mockReturnValue({
         data: makeResponse({
-          signals: [makeSignal(), makeSignal({ signal_type: 'flickering' })],
+          signals: [makeSignal(), makeSignal({ signalType: 'flickering' })],
         }),
         isLoading: false,
         error: null,
@@ -236,7 +236,7 @@ describe('PhaseTransitionBanner', () => {
 
     it('renders time to transition', () => {
       mockUsePhaseTransitionRisk.mockReturnValue({
-        data: makeResponse({ time_to_transition: 24 }),
+        data: makeResponse({ timeToTransition: 24 }),
         isLoading: false,
         error: null,
       });
@@ -412,9 +412,9 @@ describe('PhaseTransitionBanner', () => {
       expect(screen.queryByTitle('Expand details')).not.toBeInTheDocument();
     });
 
-    it('handles null time_to_transition', () => {
+    it('handles null timeToTransition', () => {
       mockUsePhaseTransitionRisk.mockReturnValue({
-        data: makeResponse({ time_to_transition: null }),
+        data: makeResponse({ timeToTransition: null }),
         isLoading: false,
         error: null,
       });

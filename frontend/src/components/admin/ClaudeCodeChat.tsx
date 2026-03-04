@@ -26,6 +26,7 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
   } = useClaudeChatContext();
 
   const [input, setInput] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- _setContext reserved for future context configuration UI
   const [_context, _setContext] = useState<Partial<ClaudeCodeExecutionContext> | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [selectedArtifact, setSelectedArtifact] = useState<ChatArtifact | null>(null);

@@ -45,10 +45,10 @@ interface VoxelVisual {
 }
 
 interface VoxelState {
-  is_occupied: boolean;
+  isOccupied: boolean;
   isConflict: boolean;
   isViolation: boolean;
-  violation_details: string[];
+  violationDetails: string[];
 }
 
 interface VoxelMetadata {
@@ -66,12 +66,12 @@ interface Voxel {
 }
 
 interface VoxelGridDimensions {
-  x_size: number;
-  y_size: number;
-  z_size: number;
-  xLabels: string[];
-  yLabels: string[];
-  zLabels: string[];
+  x_size: number; // @gorgon-ok — fetch().json() bypasses axios interceptor
+  y_size: number; // @gorgon-ok — fetch().json() bypasses axios interceptor
+  z_size: number; // @gorgon-ok — fetch().json() bypasses axios interceptor
+  x_labels: string[]; // @gorgon-ok — fetch().json() bypasses axios interceptor
+  y_labels: string[]; // @gorgon-ok — fetch().json() bypasses axios interceptor
+  z_labels: string[]; // @gorgon-ok — fetch().json() bypasses axios interceptor
 }
 
 interface VoxelGridStatistics {
@@ -389,23 +389,23 @@ export function VoxelScheduleView({
     ctx.translate(-offsetX, -offsetY);
 
     // Draw grid floor
-    const { x_size, y_size, z_size } = data.dimensions;
+    const { x_size: xSize, y_size: ySize, z_size: zSize } = data.dimensions; // @gorgon-ok
     ctx.strokeStyle = "#333";
     ctx.lineWidth = 0.5;
 
     // Draw x-z plane grid lines
-    for (let x = 0; x <= x_size; x++) {
-      const start = isoProject(x, y_size, 0, offsetX, offsetY);
-      const end = isoProject(x, y_size, z_size, offsetX, offsetY);
+    for (let x = 0; x <= xSize; x++) {
+      const start = isoProject(x, ySize, 0, offsetX, offsetY);
+      const end = isoProject(x, ySize, zSize, offsetX, offsetY);
       ctx.beginPath();
       ctx.moveTo(start.screenX, start.screenY);
       ctx.lineTo(end.screenX, end.screenY);
       ctx.stroke();
     }
 
-    for (let z = 0; z <= z_size; z++) {
-      const start = isoProject(0, y_size, z, offsetX, offsetY);
-      const end = isoProject(x_size, y_size, z, offsetX, offsetY);
+    for (let z = 0; z <= zSize; z++) {
+      const start = isoProject(0, ySize, z, offsetX, offsetY);
+      const end = isoProject(xSize, ySize, z, offsetX, offsetY);
       ctx.beginPath();
       ctx.moveTo(start.screenX, start.screenY);
       ctx.lineTo(end.screenX, end.screenY);
@@ -442,29 +442,29 @@ export function VoxelScheduleView({
     ctx.font = "12px monospace";
 
     // X-axis labels (time)
-    const xLabelCount = Math.min(data.dimensions.xLabels.length, 10);
-    const xStep = Math.ceil(data.dimensions.xLabels.length / xLabelCount);
-    for (let i = 0; i < data.dimensions.xLabels.length; i += xStep) {
-      const pos = isoProject(i, y_size + 1, 0, offsetX, offsetY);
+    const xLabelCount = Math.min(data.dimensions.x_labels.length, 10);
+    const xStep = Math.ceil(data.dimensions.x_labels.length / xLabelCount);
+    for (let i = 0; i < data.dimensions.x_labels.length; i += xStep) {
+      const pos = isoProject(i, ySize + 1, 0, offsetX, offsetY);
       ctx.save();
       ctx.translate(pos.screenX, pos.screenY);
       ctx.rotate(-Math.PI / 6);
-      ctx.fillText(data.dimensions.xLabels[i]?.slice(5) || "", 0, 0);
+      ctx.fillText(data.dimensions.x_labels[i]?.slice(5) || "", 0, 0);
       ctx.restore();
     }
 
     // Y-axis labels (people)
-    const yLabelCount = Math.min(data.dimensions.yLabels.length, 10);
-    const yStep = Math.ceil(data.dimensions.yLabels.length / yLabelCount);
-    for (let i = 0; i < data.dimensions.yLabels.length; i += yStep) {
+    const yLabelCount = Math.min(data.dimensions.y_labels.length, 10);
+    const yStep = Math.ceil(data.dimensions.y_labels.length / yLabelCount);
+    for (let i = 0; i < data.dimensions.y_labels.length; i += yStep) {
       const pos = isoProject(-1, i, 0, offsetX, offsetY);
-      ctx.fillText(data.dimensions.yLabels[i]?.slice(0, 10) || "", pos.screenX - 80, pos.screenY);
+      ctx.fillText(data.dimensions.y_labels[i]?.slice(0, 10) || "", pos.screenX - 80, pos.screenY);
     }
 
     // Z-axis labels (activity types)
-    for (let i = 0; i < data.dimensions.zLabels.length; i++) {
-      const pos = isoProject(-1, y_size, i, offsetX, offsetY);
-      ctx.fillText(data.dimensions.zLabels[i] || "", pos.screenX - 80, pos.screenY);
+    for (let i = 0; i < data.dimensions.z_labels.length; i++) {
+      const pos = isoProject(-1, ySize, i, offsetX, offsetY);
+      ctx.fillText(data.dimensions.z_labels[i] || "", pos.screenX - 80, pos.screenY);
     }
 
     ctx.restore();

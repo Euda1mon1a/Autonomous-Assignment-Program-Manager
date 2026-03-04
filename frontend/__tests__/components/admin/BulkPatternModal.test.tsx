@@ -67,17 +67,17 @@ const mockTemplates: RotationTemplate[] = [
 const mockPatterns: SchedulePattern[] = [
   {
     id: 'pattern-1',
-    pattern_type: 'regular',
+    patternType: 'regular',
     setting: 'outpatient',
-    days_of_week: [1, 2, 3, 4, 5],
-    recurrence_weeks: 1,
+    daysOfWeek: [1, 2, 3, 4, 5],
+    recurrenceWeeks: 1,
   },
   {
     id: 'pattern-2',
-    pattern_type: 'alternating',
+    patternType: 'alternating',
     setting: 'inpatient',
-    days_of_week: [1, 3, 5],
-    recurrence_weeks: 2,
+    daysOfWeek: [1, 3, 5],
+    recurrenceWeeks: 2,
   },
 ];
 
@@ -388,7 +388,7 @@ describe('BulkPatternModal', () => {
       const [templateIds, patterns] = onApply.mock.calls[0] as [string[], SchedulePattern[]];
       expect(templateIds).toEqual(['1', '2']);
       expect(patterns).toHaveLength(1);
-      expect(patterns[0].pattern_type).toBe('regular');
+      expect(patterns[0].patternType).toBe('regular');
       expect(patterns[0].setting).toBe('outpatient');
     });
 

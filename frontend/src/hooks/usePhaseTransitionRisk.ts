@@ -93,8 +93,8 @@ export const phaseTransitionQueryKeys = {
  *       <AlertTitle>Phase Transition Warning</AlertTitle>
  *       <p>System approaching critical point</p>
  *       <p>Confidence: {(data.confidence * 100).toFixed(0)}%</p>
- *       {data.time_to_transition && (
- *         <p>Estimated time: {data.time_to_transition} hours</p>
+ *       {data.timeToTransition && (
+ *         <p>Estimated time: {data.timeToTransition} hours</p>
  *       )}
  *       <ul>
  *         {data.recommendations.map((rec, i) => (

@@ -65,15 +65,16 @@ interface VoxelScheduleView3DProps {
 // Constants
 // ============================================================================
 
+// eslint-disable-next-line @typescript-eslint/naming-convention -- display labels used as lookup keys
 const ACTIVITY_COLORS: Record<string, string> = {
-  'Clinic': '#3B82F6',
-  'Inpatient': '#8B5CF6',
-  'Procedures': '#EF4444',
-  'Call': '#F97316',
-  'Leave': '#F59E0B',
-  'Conference': '#10B981',
-  'Night Float': '#6366F1',
-  'Off': '#6B7280',
+  'Clinic': '#3B82F6', // eslint-disable-line @typescript-eslint/naming-convention
+  'Inpatient': '#8B5CF6', // eslint-disable-line @typescript-eslint/naming-convention
+  'Procedures': '#EF4444', // eslint-disable-line @typescript-eslint/naming-convention
+  'Call': '#F97316', // eslint-disable-line @typescript-eslint/naming-convention
+  'Leave': '#F59E0B', // eslint-disable-line @typescript-eslint/naming-convention
+  'Conference': '#10B981', // eslint-disable-line @typescript-eslint/naming-convention
+  'Night Float': '#6366F1', // eslint-disable-line @typescript-eslint/naming-convention
+  'Off': '#6B7280', // eslint-disable-line @typescript-eslint/naming-convention
 };
 
 // Demo data - will be replaced with real data from hooks
@@ -496,9 +497,9 @@ export default function VoxelScheduleView3D({ userTier, startDate, endDate }: Vo
     queryFn: async () => {
       const response = await api.get('/visualization/voxel-grid', {
         params: {
-          start_date: effectiveStartDate,
-          end_date: effectiveEndDate,
-          include_violations: true,
+          start_date: effectiveStartDate, // eslint-disable-line @typescript-eslint/naming-convention -- URL query param @couatl-ok
+          end_date: effectiveEndDate, // eslint-disable-line @typescript-eslint/naming-convention -- URL query param @couatl-ok
+          include_violations: true, // eslint-disable-line @typescript-eslint/naming-convention -- URL query param @couatl-ok
         },
       });
       return response.data;

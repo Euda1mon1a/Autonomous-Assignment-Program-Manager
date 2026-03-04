@@ -28,12 +28,12 @@ import type {
 
 export interface SchedulePattern {
   id?: string;
-  pattern_type: PatternType;
+  patternType: PatternType;
   setting: SettingType;
-  days_of_week: number[];
-  start_block?: number;
-  end_block?: number;
-  recurrence_weeks?: number;
+  daysOfWeek: number[];
+  startBlock?: number;
+  endBlock?: number;
+  recurrenceWeeks?: number;
   notes?: string;
 }
 
@@ -83,10 +83,10 @@ const DAYS_OF_WEEK = [
 ];
 
 const DEFAULT_PATTERN: SchedulePattern = {
-  pattern_type: 'regular',
+  patternType: 'regular',
   setting: 'outpatient',
-  days_of_week: [1, 2, 3, 4, 5], // Mon-Fri
-  recurrence_weeks: 1,
+  daysOfWeek: [1, 2, 3, 4, 5], // Mon-Fri
+  recurrenceWeeks: 1,
 };
 
 // ============================================================================
@@ -323,13 +323,13 @@ export function BulkPatternModal({
                         className="p-2 bg-slate-800 rounded border border-slate-700 text-sm"
                       >
                         <span className="text-white font-medium">
-                          {PATTERN_TYPES.find((pt) => pt.value === p.pattern_type)?.label}
+                          {PATTERN_TYPES.find((pt) => pt.value === p.patternType)?.label}
                         </span>
                         <span className="text-slate-400 ml-2">
                           ({SETTING_TYPES.find((st) => st.value === p.setting)?.label})
                         </span>
                         <span className="text-slate-500 ml-2">
-                          {p.days_of_week.map((d) => DAYS_OF_WEEK[d].short).join('')}
+                          {p.daysOfWeek.map((d) => DAYS_OF_WEEK[d].short).join('')}
                         </span>
                       </div>
                     ))}
@@ -357,10 +357,10 @@ export function BulkPatternModal({
                     Pattern Type
                   </label>
                   <select
-                    value={customPattern.pattern_type}
+                    value={customPattern.patternType}
                     onChange={(e) =>
                       handleUpdatePattern({
-                        pattern_type: e.target.value as PatternType,
+                        patternType: e.target.value as PatternType,
                       })
                     }
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -400,8 +400,8 @@ export function BulkPatternModal({
                   Days of Week
                 </label>
                 <DaySelector
-                  selected={customPattern.days_of_week}
-                  onChange={(days) => handleUpdatePattern({ days_of_week: days })}
+                  selected={customPattern.daysOfWeek}
+                  onChange={(days) => handleUpdatePattern({ daysOfWeek: days })}
                 />
               </div>
 
@@ -412,10 +412,10 @@ export function BulkPatternModal({
                   </label>
                   <input
                     type="number"
-                    value={customPattern.recurrence_weeks ?? 1}
+                    value={customPattern.recurrenceWeeks ?? 1}
                     onChange={(e) =>
                       handleUpdatePattern({
-                        recurrence_weeks: parseInt(e.target.value) || 1,
+                        recurrenceWeeks: parseInt(e.target.value) || 1,
                       })
                     }
                     min={1}

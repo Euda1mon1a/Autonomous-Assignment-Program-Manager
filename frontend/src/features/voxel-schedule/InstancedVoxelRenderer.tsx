@@ -111,6 +111,7 @@ export interface InstancedVoxelRendererProps {
 /**
  * Activity layer colors matching backend ActivityLayer enum.
  */
+/* eslint-disable @typescript-eslint/naming-convention -- numeric enum indices as keys */
 export const ACTIVITY_COLORS: Record<number, string> = {
   0: '#3B82F6', // CLINIC - Blue
   1: '#8B5CF6', // INPATIENT - Purple
@@ -135,6 +136,7 @@ export const ACTIVITY_NAMES: Record<number, string> = {
   6: 'Admin',
   7: 'Supervision',
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 // Default maximum instances per layer (can grow dynamically)
 const DEFAULT_MAX_INSTANCES = 5000;

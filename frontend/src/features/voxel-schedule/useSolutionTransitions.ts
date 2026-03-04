@@ -227,7 +227,6 @@ export function useSolutionTransitions(
       }
 
       const newTransitions = new Map<string, TransitionState>();
-      const _newCompleted: string[] = [];
 
       // Process added voxels (drop in from above)
       delta.added.forEach((assignment) => {
@@ -314,7 +313,6 @@ export function useSolutionTransitions(
 
         setTransitions((prev) => {
           const updated = new Map(prev);
-          let _allComplete = true;
           const nowCompleted: string[] = [];
 
           let index = 0;
@@ -322,18 +320,13 @@ export function useSolutionTransitions(
             const staggeredStart = index * staggerDelay;
             const localElapsed = elapsed - staggeredStart;
 
-            if (localElapsed < 0) {
-              // Not started yet
-              _allComplete = false;
-            } else {
+            if (localElapsed >= 0) {
               const rawProgress = Math.min(localElapsed / animationDuration, 1);
               const easedProgress = easingFn(rawProgress);
 
               updated.set(id, { ...transition, progress: easedProgress });
 
-              if (rawProgress < 1) {
-                _allComplete = false;
-              } else {
+              if (rawProgress >= 1) {
                 // This transition is complete
                 nowCompleted.push(id);
               }

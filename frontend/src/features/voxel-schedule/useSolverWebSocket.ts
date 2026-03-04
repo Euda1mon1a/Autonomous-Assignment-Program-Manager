@@ -500,7 +500,7 @@ export function useSolverProgressPolling(
             intervalRef.current = null;
           }
         }
-      } catch (_error) {
+      } catch {
         // Polling error - continue trying
       }
     };
