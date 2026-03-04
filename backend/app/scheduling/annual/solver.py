@@ -21,6 +21,7 @@ from app.scheduling.annual.pgy_config import (
     FIXED_ASSIGNMENTS,
     SEQUENCING_RULES,
     Rotation,
+    canonical_capacity_name,
     get_capacity,
     get_eligible_blocks,
 )
@@ -85,6 +86,8 @@ def solve(
     pgy_rot_indices: dict[int, list[tuple[int, Rotation]]] = {}
     all_rotation_names: list[str] = []
     rotation_name_to_global_idx: dict[str, list[int]] = {}  # name -> [global indices]
+    # Canonical capacity groups: aliases share one pool
+    capacity_group_to_global_idx: dict[str, list[int]] = {}
 
     global_rot_idx = 0
     for pgy in sorted(context.rotations_by_pgy.keys()):
@@ -93,6 +96,8 @@ def solve(
             pgy_rot_indices[pgy].append((global_rot_idx, rot))
             all_rotation_names.append(rot.name)
             rotation_name_to_global_idx.setdefault(rot.name, []).append(global_rot_idx)
+            cap_name = canonical_capacity_name(rot.name)
+            capacity_group_to_global_idx.setdefault(cap_name, []).append(global_rot_idx)
             global_rot_idx += 1
 
     num_rotations = global_rot_idx
@@ -169,11 +174,11 @@ def solve(
             if vars_for_rot:
                 model.Add(sum(vars_for_rot) == 1)
 
-    # ── H4: Capacity per block (cross-PGY) ──────────────────────────────────
+    # ── H4: Capacity per block (cross-PGY, alias-aware) ─────────────────────
 
-    # Group rotation names that share capacity
-    for rot_name, global_indices in rotation_name_to_global_idx.items():
-        cap = get_capacity(rot_name)
+    # Group by canonical capacity name so aliases share one pool
+    for cap_group, global_indices in capacity_group_to_global_idx.items():
+        cap = get_capacity(cap_group)
         for block in block_numbers:
             vars_in_block = []
             for g_idx in global_indices:

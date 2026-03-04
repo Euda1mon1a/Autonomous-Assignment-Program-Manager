@@ -168,6 +168,12 @@ def parse_leave_excel(
     parse_errors: list[str] = []
     current_pgy: int | None = None
 
+    # Build PGY-aware index: (name, pgy) -> (person_id, pgy)
+    # Disambiguates duplicate last names across PGY groups
+    pgy_lookup: dict[tuple[str, int], tuple[UUID, int]] = {
+        (name, pgy): val for name, val in resident_lookup.items() if (pgy := val[1])
+    }
+
     for row in ws.iter_rows(min_row=1, max_row=ws.max_row, values_only=False):
         a_val = row[0].value
         if not a_val:
@@ -191,13 +197,13 @@ def parse_leave_excel(
 
         # This is a resident row
         name_text = a_str.rstrip()
-        name_lower = name_text.lower().rstrip()
+        name_lower = name_text.lower().strip()
 
-        # Strict name matching — exact last name, case-insensitive
-        match = resident_lookup.get(name_lower)
+        # PGY-aware matching first (disambiguates duplicate last names)
+        match = pgy_lookup.get((name_lower, current_pgy))
         if match is None:
-            # Try without trailing spaces
-            match = resident_lookup.get(name_lower.strip())
+            # Fall back to name-only matching
+            match = resident_lookup.get(name_lower)
 
         leave_texts = [str(c.value).strip() for c in row[1:] if c.value]
 

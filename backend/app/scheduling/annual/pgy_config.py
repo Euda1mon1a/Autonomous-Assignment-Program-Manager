@@ -142,6 +142,10 @@ SEQUENCING_RULES: dict[int, list[tuple[str, str]]] = {
 # Capacity overrides (max residents per rotation per block, cross-PGY)
 # Default is 1 per rotation per block (across all PGY levels sharing that name)
 CAPACITY_OVERRIDES: dict[str, int] = {
+    # Canonical group names (used by solver capacity constraint)
+    "FMIT": 3,
+    "FMIT2_canonical": 3,
+    # Original names (used by get_capacity for direct lookups)
     "FMIT1": 3,
     "FMIT 1": 3,
     "FMIT 2": 3,
@@ -185,6 +189,21 @@ def get_eligible_blocks(rotation: Rotation, pgy: int) -> set[int]:
     if rotation.blocked_blocks is not None:
         return all_blocks - set(rotation.blocked_blocks)
     return all_blocks
+
+
+# Canonical names for capacity grouping (aliases → single pool)
+CAPACITY_CANONICAL: dict[str, str] = {
+    "FMIT1": "FMIT",
+    "FMIT 1": "FMIT",
+    "FMIT 2": "FMIT2_canonical",
+    "FMIT2": "FMIT2_canonical",
+    "[FMIT 2 + NF]": "FMIT2_canonical",
+}
+
+
+def canonical_capacity_name(rotation_name: str) -> str:
+    """Return the canonical capacity group name for a rotation."""
+    return CAPACITY_CANONICAL.get(rotation_name, rotation_name)
 
 
 def get_capacity(rotation_name: str) -> int:
