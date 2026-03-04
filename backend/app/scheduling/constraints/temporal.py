@@ -545,11 +545,33 @@ class InvertedWednesdayConstraint(SoftConstraint):
                         objective_terms.append((both_on, penalty_weight))
 
     def add_to_pulp(self, model, variables, context) -> None:
-        pass  # CP-SAT only
+        # PuLP path is a no-op — the final Wednesday pattern is enforced by
+        # the post-solve pipeline (_backfill_last_wednesday_clinic) regardless
+        # of solver backend.  The CP-SAT constraint above is advisory
+        # optimization only (penalizes >1 faculty clinic per half-day).
+        pass
+
+    @staticmethod
+    def _get_activity_code(assignment) -> str | None:
+        """Safely extract activity code from any assignment-like object.
+
+        Handles ORM objects (activity relationship), solver results
+        (activity_code attr), and SimpleNamespace test doubles.
+        """
+        # Direct attribute (solver results, SimpleNamespace)
+        code = getattr(assignment, "activity_code", None)
+        if code:
+            return code
+        # ORM relationship (HalfDayAssignment.activity.code)
+        activity = getattr(assignment, "activity", None)
+        if activity:
+            return getattr(activity, "code", None)
+        return None
 
     def validate(self, assignments, context) -> ConstraintResult:
         violations = []
         faculty_ids = {f.id for f in context.faculty}
+        _CLINIC_CODES = {"C", "c", "fm_clinic", "cv", "sm_clinic", "c40"}
 
         final_wed_dates = {}
         for block in context.blocks:
@@ -568,21 +590,21 @@ class InvertedWednesdayConstraint(SoftConstraint):
 
             for block in blocks_by_time.get("AM", []):
                 for a in assignments:
+                    code = self._get_activity_code(a)
                     if (
                         a.block_id == block.id
                         and a.person_id in faculty_ids
-                        and a.activity_code
-                        in ("C", "fm_clinic", "cv", "sm_clinic", "c40")
+                        and code in _CLINIC_CODES
                     ):
                         am_faculty.add(a.person_id)
 
             for block in blocks_by_time.get("PM", []):
                 for a in assignments:
+                    code = self._get_activity_code(a)
                     if (
                         a.block_id == block.id
                         and a.person_id in faculty_ids
-                        and a.activity_code
-                        in ("C", "fm_clinic", "cv", "sm_clinic", "c40")
+                        and code in _CLINIC_CODES
                     ):
                         pm_faculty.add(a.person_id)
 
