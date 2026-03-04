@@ -328,7 +328,7 @@ class ScenarioAnalyzer:
         window_days: int,
     ) -> dict:
         """Calculate comprehensive fatigue metrics for a schedule."""
-        metrics = {
+        metrics: dict[str, Any] = {
             "total_assignments": len(assignments),
             "persons_analyzed": len(persons),
             "analysis_window_days": window_days,
@@ -340,13 +340,18 @@ class ScenarioAnalyzer:
 
         for person in persons:
             person_id = person.get("id")
+            if person_id is None:
+                continue
             person_assignments = [
                 a for a in assignments if a.get("person_id") == person_id
             ]
 
             # Create alertness state
+            resolved_pid: UUID = (
+                UUID(person_id) if isinstance(person_id, str) else person_id
+            )
             state = self.model.create_state(
-                person_id=UUID(person_id) if isinstance(person_id, str) else person_id,
+                person_id=resolved_pid,
                 timestamp=datetime.now(),
             )
 
@@ -366,7 +371,7 @@ class ScenarioAnalyzer:
             )
             prediction = self.predictor.predict(
                 features,
-                UUID(person_id) if isinstance(person_id, str) else person_id,
+                resolved_pid,
             )
 
             person_scores[person_id] = {
@@ -396,9 +401,9 @@ class ScenarioAnalyzer:
         metrics["avg_fatigue_score"] = 100 - metrics["avg_effectiveness"]
 
         # Risk distribution
-        risk_counts = {"low": 0, "moderate": 0, "high": 0, "severe": 0}
+        risk_counts: dict[str, int] = {"low": 0, "moderate": 0, "high": 0, "severe": 0}
         for person_id, scores in person_scores.items():
-            risk = scores.get("risk_level", "low")
+            risk = str(scores.get("risk_level", "low"))
             if risk in risk_counts:
                 risk_counts[risk] += 1
             elif "high" in risk or "severe" in risk:
@@ -433,12 +438,13 @@ class ScenarioAnalyzer:
 
             if action == "add":
                 # Add new assignment
+                block_id_str = str(change.get("block_id", ""))
                 new_assignment = {
                     "id": str(uuid4()),
                     "person_id": change.get("person_id"),
                     "block_id": change.get("block_id"),
                     "rotation_type": change.get("rotation_type", "general"),
-                    "date": self._get_block_date(blocks, change.get("block_id")),
+                    "date": self._get_block_date(blocks, block_id_str),
                 }
                 result.append(new_assignment)
 
@@ -451,10 +457,11 @@ class ScenarioAnalyzer:
                 # Move assignment to different block
                 assignment_id = change.get("assignment_id")
                 new_block_id = change.get("new_block_id")
+                new_block_id_str = str(new_block_id) if new_block_id is not None else ""
                 for a in result:
                     if a.get("id") == assignment_id:
                         a["block_id"] = new_block_id
-                        a["date"] = self._get_block_date(blocks, new_block_id)
+                        a["date"] = self._get_block_date(blocks, new_block_id_str)
                         break
 
             elif action == "swap":

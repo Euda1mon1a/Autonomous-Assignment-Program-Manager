@@ -484,7 +484,7 @@ class FatigueMonitor:
         stable = 0
         degrading = 0
 
-        highest_risk = []
+        highest_risk: list[dict[str, Any]] = []
 
         for person_id, state in self._resident_states.items():
             if not state.effectiveness:
@@ -628,8 +628,8 @@ class FatigueMonitor:
             a for a in self._alert_history if start_date <= a.created_at <= end_date
         ]
 
-        by_severity = {}
-        by_person = {}
+        by_severity: dict[str, int] = {}
+        by_person: dict[str, dict[str, Any]] = {}
 
         for alert in relevant_alerts:
             # By severity

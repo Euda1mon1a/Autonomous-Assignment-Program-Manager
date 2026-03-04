@@ -235,7 +235,7 @@ class FatigueConstraint(HardConstraint):
             return
 
             # Initialize states if not done
-        if not self._alertness_states:
+        if not self._alertness_states and context.start_date is not None:
             self.initialize_states(
                 context, datetime.combine(context.start_date, datetime.min.time())
             )
@@ -299,7 +299,7 @@ class FatigueConstraint(HardConstraint):
         if x is None:
             return
 
-        if not self._alertness_states:
+        if not self._alertness_states and context.start_date is not None:
             self.initialize_states(
                 context, datetime.combine(context.start_date, datetime.min.time())
             )
@@ -822,7 +822,7 @@ def create_fatigue_constraints(
     Returns:
         List of configured constraint objects
     """
-    constraints = []
+    constraints: list[Constraint] = []
 
     if enable_hard:
         constraints.append(FatigueConstraint(threshold=hard_threshold))
