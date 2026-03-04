@@ -417,11 +417,11 @@ describe('Schedule Management Flow - Integration Tests', () => {
         downloadUrl: '/api/exports/schedule-123.pdf',
       })
 
-      const result: any = await mockedApi.post('/api/exports/pdf', {
+      const result = await mockedApi.post('/api/exports/pdf', {
         startDate: '2024-01-01',
         endDate: '2024-01-07',
         format: 'weekly',
-      })
+      }) as { downloadUrl: string }
 
       expect(result.downloadUrl).toContain('.pdf')
     })
@@ -458,11 +458,11 @@ describe('Schedule Management Flow - Integration Tests', () => {
         downloadUrl: '/api/exports/schedule-123.xlsx',
       })
 
-      const result: any = await mockedApi.post('/api/exports/excel', {
+      const result = await mockedApi.post('/api/exports/excel', {
         startDate: '2024-01-01',
         endDate: '2024-01-07',
         format: 'weekly',
-      })
+      }) as { downloadUrl: string }
 
       expect(result.downloadUrl).toContain('.xlsx')
     })
@@ -475,12 +475,12 @@ describe('Schedule Management Flow - Integration Tests', () => {
         rowsExported: 2,
       })
 
-      const result: any = await mockedApi.post('/api/exports/excel', {
+      const result = await mockedApi.post('/api/exports/excel', {
         startDate: '2024-01-01',
         endDate: '2024-01-07',
         includeNotes: true,
         includeMetadata: true,
-      })
+      }) as { downloadUrl: string; rowsExported: number }
 
       expect(result.rowsExported).toBe(2)
     })
@@ -611,7 +611,7 @@ describe('Schedule Management Flow - Integration Tests', () => {
       setupApiMock()
 
       // Retry succeeds
-      const result: any = await mockedApi.get('/api/blocks?startDate=2024-01-01')
+      const result = await mockedApi.get('/api/blocks?startDate=2024-01-01') as { items: typeof mockBlocks; total: number }
       expect(result.items).toBeDefined()
     })
   })
@@ -748,9 +748,9 @@ describe('Schedule Management Flow - Integration Tests', () => {
 
       mockedApi.del = jest.fn().mockResolvedValueOnce({ deleted: 2 })
 
-      const result: any = await mockedApi.del('/api/assignments/bulk', {
+      const result = await mockedApi.del('/api/assignments/bulk', {
         data: { ids: ['assignment-1', 'assignment-2'] },
-      } as any)
+      }) as { deleted: number }
 
       expect(result.deleted).toBe(2)
     })

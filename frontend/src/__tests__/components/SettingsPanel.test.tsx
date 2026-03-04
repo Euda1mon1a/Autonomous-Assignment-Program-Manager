@@ -43,11 +43,11 @@ function SettingsPanel({ onSave }: SettingsPanelProps) {
   const [hasChanges, setHasChanges] = React.useState(false)
   const [isSaving, setIsSaving] = React.useState(false)
 
-  const handleChange = (section: string, field: string, value: any) => {
+  const handleChange = (section: keyof typeof mockSettings, field: string, value: string | number) => {
     setSettings((prev) => ({
       ...prev,
       [section]: {
-        ...(prev as any)[section],
+        ...prev[section],
         [field]: value,
       },
     }))

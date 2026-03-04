@@ -70,6 +70,229 @@ interface ComplianceListResponse<T> {
   total: number;
 }
 
+interface GaugeStatus {
+  totalHours: number;
+  maxHours: number;
+  gaugeColor: string;
+}
+
+interface WarningStatus {
+  totalHours: number;
+  maxHours: number;
+  warning: string;
+}
+
+interface DaysOffCompliance {
+  personId: string;
+  daysOffCount: number;
+  compliant: boolean;
+  violation?: string;
+}
+
+interface SupervisionCompliance {
+  blockId: string;
+  residents?: number;
+  faculty?: number;
+  ratio?: number;
+  requiredRatio?: number;
+  compliant: boolean;
+  pgy1Count?: number;
+  pgy1Faculty?: number;
+  pgy1Ratio?: number;
+  pgy1Required?: number;
+  pgy1Compliant?: boolean;
+}
+
+interface RealtimeStatus {
+  personId: string;
+  currentHours: number;
+  lastUpdated: string;
+}
+
+interface ComplianceCheckResult {
+  alert: boolean;
+  message: string;
+}
+
+interface NotificationResult {
+  notificationSent: boolean;
+  recipients: string[];
+}
+
+interface EscalationResult {
+  escalated: boolean;
+  escalationLevel: string;
+  recipients: string[];
+}
+
+interface ForecastResult {
+  personId: string;
+  currentHours: number;
+  projectedHours: number;
+  violationRisk: string;
+}
+
+interface RecommendationEntry {
+  action: string;
+  blocks?: string[];
+  toPerson?: string;
+}
+
+interface RecommendationsResult {
+  recommendations: RecommendationEntry[];
+}
+
+interface ViolationResolution {
+  id: string;
+  resolved: boolean;
+  resolvedAt: string;
+  resolvedBy: string;
+}
+
+interface ResolutionAction {
+  action: string;
+  blocksModified?: number;
+  timestamp?: string;
+}
+
+interface ResolutionActionsResult {
+  violationId: string;
+  actions: ResolutionAction[];
+}
+
+interface CompliancePeriod {
+  period: string;
+  complianceRate: number;
+}
+
+interface ComplianceTrendsResult {
+  periods: CompliancePeriod[];
+}
+
+interface TrendDirectionResult {
+  trend: string;
+  changePercentage: number;
+}
+
+interface ComparisonEntry {
+  personId: string;
+  totalHours: number;
+  rank: number;
+}
+
+interface ComparisonResult {
+  items: ComparisonEntry[];
+}
+
+interface AverageComparisonResult {
+  personHours: number;
+  programAverage: number;
+  difference: number;
+}
+
+interface AuditCheck {
+  checkId: string;
+  timestamp: string;
+  result: string;
+  rule: string;
+}
+
+interface AuditResult {
+  items: AuditCheck[];
+}
+
+interface StatusChange {
+  from: string;
+  to: string;
+  timestamp: string;
+}
+
+interface StatusHistoryResult {
+  changes: StatusChange[];
+}
+
+interface ExemptionResult {
+  exemptionId: string;
+  personId: string;
+  rule: string;
+  reason: string;
+  approvedBy: string;
+}
+
+interface ExemptionAppliedStatus {
+  totalHours: number;
+  maxHours: number;
+  exemptionApplied: boolean;
+  complianceStatus: string;
+}
+
+interface PgyFilterEntry {
+  personId: string;
+  pgyLevel: number;
+}
+
+interface ComplianceSummary {
+  totalResidents: number;
+  compliant: number;
+  warnings: number;
+  violations: number;
+  complianceRate: number;
+}
+
+interface TopViolationEntry {
+  rule: string;
+  count: number;
+}
+
+interface TopViolationsResult {
+  topViolations: TopViolationEntry[];
+}
+
+interface ExportResult {
+  downloadUrl: string;
+  format: string;
+  rows: number;
+}
+
+interface AutoResolveResult {
+  autoResolved: number;
+  manualReviewRequired: number;
+}
+
+interface ComplianceScoreFactor {
+  hours: number;
+  daysOff: number;
+  violations: number;
+}
+
+interface ComplianceScoreResult {
+  personId: string;
+  score: number;
+  factors: ComplianceScoreFactor;
+}
+
+interface ComplianceReport {
+  reportId: string;
+  type: string;
+  generatedAt?: string;
+  downloadUrl?: string;
+  month?: string;
+  summary?: {
+    totalViolations: number;
+    resolvedViolations: number;
+    activeViolations: number;
+  };
+}
+
+interface ReportExportResult {
+  downloadUrl: string;
+  format: string;
+}
+
+// ============================================================================
+// Mock Data
+// ============================================================================
+
 // Mock compliance data
 const mockComplianceStatus: ComplianceStatus = {
   personId: 'person-1',
@@ -160,7 +383,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should load compliance dashboard data', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/status?personId=person-1') as ComplianceStatus
       expect(result.complianceStatus).toBe('green')
       expect(result.totalHours).toBe(75)
     })
@@ -176,7 +399,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/status') as ComplianceListResponse<ComplianceStatus>
+      const result = await mockedApi.get('/api/compliance/status') as ComplianceListResponse<ComplianceStatus>
       expect(result.items).toHaveLength(3)
       expect(result.items.some((s: { complianceStatus: string }) => s.complianceStatus === 'red')).toBe(true)
     })
@@ -193,7 +416,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/status') as ComplianceListResponse<ComplianceStatus>
+      const result = await mockedApi.get('/api/compliance/status') as ComplianceListResponse<ComplianceStatus>
       const green = result.items.filter((s: { complianceStatus: string }) => s.complianceStatus === 'green')
       const yellow = result.items.filter((s: { complianceStatus: string }) => s.complianceStatus === 'yellow')
       const red = result.items.filter((s: { complianceStatus: string }) => s.complianceStatus === 'red')
@@ -208,7 +431,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should display current weekly hours', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/status?personId=person-1') as ComplianceStatus
       expect(result.totalHours).toBe(75)
       expect(result.maxHours).toBe(80)
     })
@@ -216,14 +439,14 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should show hours remaining in week', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/status?personId=person-1') as ComplianceStatus
       expect(result.hoursRemaining).toBe(5)
     })
 
     it('should calculate percentage of max hours', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/status?personId=person-1') as ComplianceStatus
       const percentage = (result.totalHours / result.maxHours) * 100
       expect(percentage).toBeCloseTo(93.75, 1)
     })
@@ -237,7 +460,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         gaugeColor: 'red',
       })
 
-      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/status?personId=person-1') as GaugeStatus
       expect(result.gaugeColor).toBe('red')
     })
 
@@ -250,7 +473,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         warning: 'Approaching 80-hour limit',
       })
 
-      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/status?personId=person-1') as WarningStatus
       expect(result.warning).toBeDefined()
     })
   })
@@ -259,7 +482,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should display active violations', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/compliance/violations?resolved=false')
+      const result = await mockedApi.get('/api/compliance/violations?resolved=false') as ComplianceListResponse<ComplianceViolation>
       expect(result.items).toHaveLength(1)
       expect(result.items[0].resolved).toBe(false)
     })
@@ -274,7 +497,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     })
 
     it('should filter violations by severity', async () => {
-      const violations = [
+      const violations: ComplianceViolation[] = [
         { ...mockViolations[0], severity: 'high' as const },
         { ...mockViolations[0], id: 'violation-2', severity: 'medium' as const },
         { ...mockViolations[0], id: 'violation-3', severity: 'low' as const },
@@ -282,13 +505,13 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       setupApiMock({ violations })
 
-      const result: any = await mockedApi.get('/api/compliance/violations') as ComplianceListResponse<ComplianceViolation>
+      const result = await mockedApi.get('/api/compliance/violations') as ComplianceListResponse<ComplianceViolation>
       const highSeverity = result.items.filter((v: { severity: string }) => v.severity === 'high')
       expect(highSeverity).toHaveLength(1)
     })
 
     it('should sort violations by severity', async () => {
-      const violations = [
+      const violations: ComplianceViolation[] = [
         { ...mockViolations[0], id: 'v1', severity: 'low' as const },
         { ...mockViolations[0], id: 'v2', severity: 'high' as const },
         { ...mockViolations[0], id: 'v3', severity: 'medium' as const },
@@ -296,7 +519,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       setupApiMock({ violations })
 
-      const result: any = await mockedApi.get('/api/compliance/violations')
+      const result = await mockedApi.get('/api/compliance/violations') as ComplianceListResponse<ComplianceViolation>
       // In real implementation, would be sorted by severity
       expect(result.items).toHaveLength(3)
     })
@@ -310,7 +533,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/violations?severity=critical')
+      const result = await mockedApi.get('/api/compliance/violations?severity=critical') as ComplianceListResponse<ComplianceViolation>
       expect(result.items[0].requiresImmediateAction).toBe(true)
     })
   })
@@ -326,11 +549,11 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         downloadUrl: '/api/reports/compliance-weekly-1.pdf',
       })
 
-      const result: any = await mockedApi.post('/api/compliance/reports', {
+      const result = await mockedApi.post('/api/compliance/reports', {
         type: 'weekly',
         startDate: '2024-01-01',
         endDate: '2024-01-07',
-      })
+      }) as ComplianceReport
 
       expect(result.type).toBe('weekly')
       expect(result.downloadUrl).toContain('.pdf')
@@ -345,10 +568,10 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         month: '2024-01',
       })
 
-      const result: any = await mockedApi.post('/api/compliance/reports', {
+      const result = await mockedApi.post('/api/compliance/reports', {
         type: 'monthly',
         month: '2024-01',
-      })
+      }) as ComplianceReport
 
       expect(result.type).toBe('monthly')
     })
@@ -365,8 +588,8 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         },
       })
 
-      const result: any = await mockedApi.post('/api/compliance/reports', {})
-      expect(result.summary.totalViolations).toBe(5)
+      const result = await mockedApi.post('/api/compliance/reports', {}) as ComplianceReport
+      expect(result.summary!.totalViolations).toBe(5)
     })
 
     it('should export report to PDF', async () => {
@@ -377,9 +600,9 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         format: 'pdf',
       })
 
-      const result: any = await mockedApi.post('/api/compliance/reports/export', {
+      const result = await mockedApi.post('/api/compliance/reports/export', {
         format: 'pdf',
-      })
+      }) as ReportExportResult
 
       expect(result.format).toBe('pdf')
     })
@@ -392,9 +615,9 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         format: 'excel',
       })
 
-      const result: any = await mockedApi.post('/api/compliance/reports/export', {
+      const result = await mockedApi.post('/api/compliance/reports/export', {
         format: 'excel',
-      })
+      }) as ReportExportResult
 
       expect(result.format).toBe('excel')
     })
@@ -404,20 +627,20 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should display compliance history for resident', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/compliance/work-hours?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/work-hours?personId=person-1') as ComplianceListResponse<WorkHours>
       expect(result.items).toHaveLength(2)
     })
 
     it('should show weekly hour trends', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/compliance/work-hours?personId=person-1') as ComplianceListResponse<WorkHours>
+      const result = await mockedApi.get('/api/compliance/work-hours?personId=person-1') as ComplianceListResponse<WorkHours>
       const hours = result.items.map((w: { totalHours: number }) => w.totalHours)
       expect(hours).toEqual([78, 75])
     })
 
     it('should identify patterns of near-violations', async () => {
-      const workHours = [
+      const workHours: WorkHours[] = [
         { ...mockWorkHours[0], totalHours: 79 },
         { ...mockWorkHours[0], weekStart: '2024-01-08', totalHours: 78 },
         { ...mockWorkHours[0], weekStart: '2024-01-15', totalHours: 79 },
@@ -425,7 +648,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
 
       setupApiMock({ workHours })
 
-      const result: any = await mockedApi.get('/api/compliance/work-hours?personId=person-1') as ComplianceListResponse<WorkHours>
+      const result = await mockedApi.get('/api/compliance/work-hours?personId=person-1') as ComplianceListResponse<WorkHours>
       const nearViolations = result.items.filter((w: { totalHours: number }) => w.totalHours >= 78)
       expect(nearViolations).toHaveLength(3)
     })
@@ -433,7 +656,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should calculate average weekly hours', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/compliance/work-hours?personId=person-1') as ComplianceListResponse<WorkHours>
+      const result = await mockedApi.get('/api/compliance/work-hours?personId=person-1') as ComplianceListResponse<WorkHours>
       const total = result.items.reduce((sum: number, w: { totalHours: number }) => sum + w.totalHours, 0)
       const average = total / result.items.length
       expect(average).toBeCloseTo(76.5, 1)
@@ -450,7 +673,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         compliant: true,
       })
 
-      const result: any = await mockedApi.get('/api/compliance/days-off?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/days-off?personId=person-1') as DaysOffCompliance
       expect(result.compliant).toBe(true)
       expect(result.daysOffCount).toBeGreaterThanOrEqual(1)
     })
@@ -465,7 +688,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         violation: '1-in-7 rule violated',
       })
 
-      const result: any = await mockedApi.get('/api/compliance/days-off?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/days-off?personId=person-1') as DaysOffCompliance
       expect(result.compliant).toBe(false)
     })
   })
@@ -483,7 +706,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         compliant: true,
       })
 
-      const result: any = await mockedApi.get('/api/compliance/supervision?blockId=block-1')
+      const result = await mockedApi.get('/api/compliance/supervision?blockId=block-1') as SupervisionCompliance
       expect(result.compliant).toBe(true)
     })
 
@@ -499,7 +722,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         compliant: false,
       })
 
-      const result: any = await mockedApi.get('/api/compliance/supervision?blockId=block-1')
+      const result = await mockedApi.get('/api/compliance/supervision?blockId=block-1') as SupervisionCompliance
       expect(result.compliant).toBe(false)
     })
 
@@ -515,7 +738,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         pgy1Compliant: true,
       })
 
-      const result: any = await mockedApi.get('/api/compliance/supervision?blockId=block-1&pgy=1')
+      const result = await mockedApi.get('/api/compliance/supervision?blockId=block-1&pgy=1') as SupervisionCompliance
       expect(result.pgy1Compliant).toBe(true)
     })
   })
@@ -531,7 +754,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         lastUpdated: new Date().toISOString(),
       })
 
-      const result: any = await mockedApi.get('/api/compliance/status/realtime?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/status/realtime?personId=person-1') as RealtimeStatus
       expect(result.currentHours).toBe(75)
     })
 
@@ -543,10 +766,10 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         message: 'Hours exceeded 80-hour limit',
       })
 
-      const result: any = await mockedApi.post('/api/compliance/check', {
+      const result = await mockedApi.post('/api/compliance/check', {
         personId: 'person-1',
         hours: 82,
-      })
+      }) as ComplianceCheckResult
 
       expect(result.alert).toBe(true)
     })
@@ -561,11 +784,11 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         recipients: ['person-1', 'coordinator-1'],
       })
 
-      const result: any = await mockedApi.post('/api/compliance/notify', {
+      const result = await mockedApi.post('/api/compliance/notify', {
         personId: 'person-1',
         type: 'warning',
         message: 'Approaching 80-hour limit',
-      })
+      }) as NotificationResult
 
       expect(result.notificationSent).toBe(true)
     })
@@ -579,9 +802,9 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         recipients: ['coordinator-1', 'program_director'],
       })
 
-      const result: any = await mockedApi.post('/api/compliance/escalate', {
+      const result = await mockedApi.post('/api/compliance/escalate', {
         violationId: 'violation-1',
-      })
+      }) as EscalationResult
 
       expect(result.escalated).toBe(true)
     })
@@ -598,7 +821,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         violationRisk: 'high',
       })
 
-      const result: any = await mockedApi.get('/api/compliance/forecast?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/forecast?personId=person-1') as ForecastResult
       expect(result.violationRisk).toBe('high')
     })
 
@@ -612,7 +835,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/recommendations?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/recommendations?personId=person-1') as RecommendationsResult
       expect(result.recommendations).toHaveLength(2)
     })
   })
@@ -628,9 +851,9 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         resolvedBy: 'coordinator-1',
       })
 
-      const result: any = await mockedApi.patch('/api/compliance/violations/violation-1/resolve', {
+      const result = await mockedApi.patch('/api/compliance/violations/violation-1/resolve', {
         resolutionNotes: 'Hours adjusted in schedule',
-      })
+      }) as ViolationResolution
 
       expect(result.resolved).toBe(true)
     })
@@ -646,7 +869,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/violations/violation-1/actions')
+      const result = await mockedApi.get('/api/compliance/violations/violation-1/actions') as ResolutionActionsResult
       expect(result.actions).toHaveLength(2)
     })
   })
@@ -663,7 +886,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/trends')
+      const result = await mockedApi.get('/api/compliance/trends') as ComplianceTrendsResult
       expect(result.periods).toHaveLength(3)
     })
 
@@ -675,7 +898,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         changePercentage: 3,
       })
 
-      const result: any = await mockedApi.get('/api/compliance/trends/direction')
+      const result = await mockedApi.get('/api/compliance/trends/direction') as TrendDirectionResult
       expect(result.trend).toBe('improving')
     })
   })
@@ -692,7 +915,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/comparison')
+      const result = await mockedApi.get('/api/compliance/comparison') as ComparisonResult
       expect(result.items).toHaveLength(3)
     })
 
@@ -705,7 +928,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         difference: 5,
       })
 
-      const result: any = await mockedApi.get('/api/compliance/compare-to-average?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/compare-to-average?personId=person-1') as AverageComparisonResult
       expect(result.difference).toBe(5)
     })
   })
@@ -725,7 +948,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/audit?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/audit?personId=person-1') as AuditResult
       expect(result.items).toHaveLength(1)
     })
 
@@ -739,7 +962,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/status-history?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/status-history?personId=person-1') as StatusHistoryResult
       expect(result.changes).toHaveLength(2)
     })
   })
@@ -756,11 +979,11 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         approvedBy: 'program_director',
       })
 
-      const result: any = await mockedApi.post('/api/compliance/exemptions', {
+      const result = await mockedApi.post('/api/compliance/exemptions', {
         personId: 'person-1',
         rule: '80_hour_limit',
         reason: 'Research project deadline',
-      })
+      }) as ExemptionResult
 
       expect(result.exemptionId).toBeDefined()
     })
@@ -775,7 +998,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         complianceStatus: 'green',
       })
 
-      const result: any = await mockedApi.get('/api/compliance/status?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/status?personId=person-1') as ExemptionAppliedStatus
       expect(result.exemptionApplied).toBe(true)
       expect(result.complianceStatus).toBe('green')
     })
@@ -792,14 +1015,14 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/status?pgyLevel=1') as ComplianceListResponse<ComplianceStatus>
+      const result = await mockedApi.get('/api/compliance/status?pgyLevel=1') as ComplianceListResponse<PgyFilterEntry>
       expect(result.items.every((s: { pgyLevel: number }) => s.pgyLevel === 1)).toBe(true)
     })
 
     it('should filter by date range', async () => {
       setupApiMock()
 
-      const _result: any = await mockedApi.get('/api/compliance/status?start=2024-01-01&end=2024-01-31')
+      const _result = await mockedApi.get('/api/compliance/status?start=2024-01-01&end=2024-01-31') as ComplianceStatus
       expect(mockedApi.get).toHaveBeenCalledWith(
         expect.stringContaining('start=2024-01-01')
       )
@@ -818,7 +1041,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         complianceRate: 80,
       })
 
-      const result: any = await mockedApi.get('/api/compliance/summary')
+      const result = await mockedApi.get('/api/compliance/summary') as ComplianceSummary
       expect(result.complianceRate).toBe(80)
     })
 
@@ -832,7 +1055,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/compliance/top-violations')
+      const result = await mockedApi.get('/api/compliance/top-violations') as TopViolationsResult
       expect(result.topViolations).toHaveLength(2)
     })
   })
@@ -847,9 +1070,9 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         rows: 100,
       })
 
-      const result: any = await mockedApi.post('/api/compliance/export', {
+      const result = await mockedApi.post('/api/compliance/export', {
         format: 'csv',
-      })
+      }) as ExportResult
 
       expect(result.format).toBe('csv')
       expect(result.rows).toBe(100)
@@ -865,7 +1088,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         manualReviewRequired: 1,
       })
 
-      const result: any = await mockedApi.post('/api/compliance/auto-resolve', {})
+      const result = await mockedApi.post('/api/compliance/auto-resolve', {}) as AutoResolveResult
       expect(result.autoResolved).toBe(3)
     })
   })
@@ -884,7 +1107,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
         },
       })
 
-      const result: any = await mockedApi.get('/api/compliance/score?personId=person-1')
+      const result = await mockedApi.get('/api/compliance/score?personId=person-1') as ComplianceScoreResult
       expect(result.score).toBe(95)
     })
   })
