@@ -102,7 +102,7 @@ class WorkloadOptimizer:
         Returns:
             DataFrame with feature columns
         """
-        features = {}
+        features: dict[str, Any] = {}
 
         # Person characteristics
         features["is_faculty"] = 1 if person_data.get("type") == "faculty" else 0
@@ -200,7 +200,7 @@ class WorkloadOptimizer:
         X: pd.DataFrame,
         y: np.ndarray,
         validation_split: float = 0.2,
-    ) -> dict[str, float]:
+    ) -> dict[str, Any]:
         """
         Train the workload optimization model.
 
@@ -213,6 +213,9 @@ class WorkloadOptimizer:
             Training metrics
         """
         logger.info(f"Training workload optimizer on {len(X)} samples")
+        assert self.scaler is not None, "Model not initialized"
+        assert self.workload_model is not None, "Model not initialized"
+        assert self.clusterer is not None, "Model not initialized"
 
         # Store feature names
         self.feature_names = list(X.columns)
@@ -249,7 +252,7 @@ class WorkloadOptimizer:
         )
         logger.info(f"Top features: {top_features}")
 
-        return {
+        metrics: dict[str, Any] = {
             "train_r2": float(train_score),
             "val_r2": float(val_score),
             "n_samples": len(X),
@@ -257,6 +260,7 @@ class WorkloadOptimizer:
             "n_clusters": int(self.clusterer.n_clusters),
             "top_features": top_features,
         }
+        return metrics
 
     def predict_optimal_workload(
         self,
@@ -356,7 +360,7 @@ class WorkloadOptimizer:
         suggestions = []
 
         # Calculate current workload for everyone
-        workloads = []
+        workloads: list[dict[str, Any]] = []
         for person in people_data:
             workload = self.predict_optimal_workload(
                 person_data=person.get("person", {}),

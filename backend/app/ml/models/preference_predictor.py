@@ -96,7 +96,7 @@ class PreferencePredictor:
         Returns:
             DataFrame with feature columns
         """
-        features = {}
+        features: dict[str, Any] = {}
 
         # Person features
         features["is_faculty"] = 1 if person_data.get("type") == "faculty" else 0
@@ -174,7 +174,7 @@ class PreferencePredictor:
         X: pd.DataFrame,
         y: np.ndarray,
         validation_split: float = 0.2,
-    ) -> dict[str, float]:
+    ) -> dict[str, Any]:
         """
         Train the preference prediction model.
 
@@ -187,6 +187,8 @@ class PreferencePredictor:
             Dictionary with training metrics
         """
         logger.info(f"Training preference predictor on {len(X)} samples")
+        assert self.scaler is not None, "Model not initialized"
+        assert self.model is not None, "Model not initialized"
 
         # Store feature names
         self.feature_names = list(X.columns)
@@ -220,13 +222,14 @@ class PreferencePredictor:
         )
         logger.info(f"Top features: {top_features}")
 
-        return {
+        metrics: dict[str, Any] = {
             "train_r2": float(train_score),
             "val_r2": float(val_score),
             "n_samples": len(X),
             "n_features": len(self.feature_names),
             "top_features": top_features,
         }
+        return metrics
 
     def predict(
         self,

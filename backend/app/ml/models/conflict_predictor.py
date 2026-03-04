@@ -101,7 +101,7 @@ class ConflictPredictor:
         Returns:
             DataFrame with feature columns
         """
-        features = {}
+        features: dict[str, Any] = {}
 
         # Person characteristics
         features["is_faculty"] = 1 if person_data.get("type") == "faculty" else 0
@@ -253,7 +253,7 @@ class ConflictPredictor:
         X: pd.DataFrame,
         y: np.ndarray,
         validation_split: float = 0.2,
-    ) -> dict[str, float]:
+    ) -> dict[str, Any]:
         """
         Train the conflict prediction model.
 
@@ -266,6 +266,8 @@ class ConflictPredictor:
             Training metrics
         """
         logger.info(f"Training conflict predictor on {len(X)} samples")
+        assert self.scaler is not None, "Model not initialized"
+        assert self.model is not None, "Model not initialized"
 
         # Store feature names
         self.feature_names = list(X.columns)
@@ -317,7 +319,7 @@ class ConflictPredictor:
         logger.info(f"Precision: {precision:.3f}, Recall: {recall:.3f}, F1: {f1:.3f}")
         logger.info(f"Top features: {top_features}")
 
-        return {
+        metrics: dict[str, Any] = {
             "train_accuracy": float(train_score),
             "val_accuracy": float(val_score),
             "precision": float(precision),
@@ -327,6 +329,7 @@ class ConflictPredictor:
             "n_features": len(self.feature_names),
             "top_features": top_features,
         }
+        return metrics
 
     def predict_conflict_probability(
         self,
@@ -414,7 +417,7 @@ class ConflictPredictor:
         Returns:
             List of high-risk assignments with details
         """
-        high_risk = []
+        high_risk: list[dict[str, Any]] = []
 
         for assignment in assignments:
             prob = self.predict_conflict_probability(
@@ -470,6 +473,12 @@ class ConflictPredictor:
         feature_values = X.iloc[0].to_dict()
 
         # Get feature importances
+        if self.model is None:
+            return {
+                "conflict_probability": prob,
+                "risk_level": self._risk_level(prob),
+                "risk_factors": [],
+            }
         importances = dict(zip(self.feature_names, self.model.feature_importances_))
 
         # Identify risk factors (features with high values and high importance)
