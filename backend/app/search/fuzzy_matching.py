@@ -11,6 +11,7 @@ Provides multiple fuzzy matching algorithms:
 
 import re
 import time
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -117,7 +118,7 @@ class FuzzyMatcher:
         ]
 
         # Compute matches
-        matches = []
+        matches: list[dict[str, Any]] = []
         for candidate in candidates:
             score, algorithm_scores = self._compute_similarity(
                 query, candidate, request.algorithm
