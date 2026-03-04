@@ -121,7 +121,7 @@ class FacultyOutpatientAssignmentService:
 
         # Step 1: Get block date range
         block_start, block_end = self._get_block_dates(block_number)
-        if not block_start:
+        if not block_start or not block_end:
             return FacultyOutpatientResult(
                 success=False,
                 message=f"Could not determine dates for block {block_number}",
