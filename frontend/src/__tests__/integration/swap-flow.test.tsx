@@ -798,8 +798,8 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.get.mockResolvedValueOnce({
         compliant: true,
         checks: {
-          hours_80: 'pass', // @gorgon-ok — numeric suffix not converted by interceptor
-          daysOff_1in7: 'pass', // @gorgon-ok — numeric suffix not converted by interceptor
+          hours80: 'pass',
+          daysOff1In7: 'pass',
         },
       })
 

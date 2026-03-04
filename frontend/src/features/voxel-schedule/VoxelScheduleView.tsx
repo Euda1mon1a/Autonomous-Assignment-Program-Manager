@@ -65,14 +65,16 @@ interface Voxel {
   metadata: VoxelMetadata;
 }
 
+/* eslint-disable @typescript-eslint/naming-convention -- fetch().json() bypasses axios interceptor; wire format is snake_case (@gorgon-ok) */
 interface VoxelGridDimensions {
-  x_size: number; // @gorgon-ok — fetch().json() bypasses axios interceptor
-  y_size: number; // @gorgon-ok — fetch().json() bypasses axios interceptor
-  z_size: number; // @gorgon-ok — fetch().json() bypasses axios interceptor
-  x_labels: string[]; // @gorgon-ok — fetch().json() bypasses axios interceptor
-  y_labels: string[]; // @gorgon-ok — fetch().json() bypasses axios interceptor
-  z_labels: string[]; // @gorgon-ok — fetch().json() bypasses axios interceptor
+  x_size: number;
+  y_size: number;
+  z_size: number;
+  x_labels: string[];
+  y_labels: string[];
+  z_labels: string[];
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 interface VoxelGridStatistics {
   totalAssignments: number;

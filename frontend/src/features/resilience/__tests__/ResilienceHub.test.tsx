@@ -31,19 +31,19 @@ jest.mock("../components/NaturalSwapsPanel", () => ({
 describe("ResilienceHub", () => {
   const mockHealthData = {
     timestamp: new Date().toISOString(),
-    overall_status: OverallStatus.HEALTHY,
+    overallStatus: OverallStatus.HEALTHY,
     defenseLevel: "CONTROL",
     utilization: {
       utilizationRate: 0.5,
       level: UtilizationLevel.GREEN,
-      current_demand: 50,
-      safe_capacity: 100,
+      currentDemand: 50,
+      safeCapacity: 100,
     },
-    active_fallbacks: [],
+    activeFallbacks: [],
     n1Pass: true,
     n2Pass: true,
-    immediate_actions: [],
-    watch_items: [],
+    immediateActions: [],
+    watchItems: [],
   };
 
   beforeEach(() => {

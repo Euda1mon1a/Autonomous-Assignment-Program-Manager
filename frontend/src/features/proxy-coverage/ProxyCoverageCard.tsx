@@ -8,6 +8,7 @@ interface ProxyCoverageCardProps {
   compact?: boolean;
 }
 
+/* eslint-disable @typescript-eslint/naming-convention -- keys are CoverageType enum values (snake_case by design, @enum-ok) */
 const COVERAGE_TYPE_CONFIG: Record<CoverageType, {
   label: string;
   icon: typeof Shield;
@@ -58,6 +59,7 @@ const COVERAGE_TYPE_CONFIG: Record<CoverageType, {
     borderColor: 'border-slate-200',
   },
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 const STATUS_CONFIG: Record<CoverageStatus, {
   label: string;

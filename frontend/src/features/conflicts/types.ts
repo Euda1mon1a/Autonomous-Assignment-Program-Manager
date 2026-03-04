@@ -57,7 +57,7 @@ export interface Conflict {
   // Detection metadata
   detectedAt: string;
   detectedBy: 'system' | 'manual' | 'validation';
-  rule_id?: string;
+  ruleId?: string;
 
   // Resolution info
   resolvedAt?: string;
@@ -107,7 +107,7 @@ export interface SupervisionMissingDetails {
     name: string;
     pgyLevel?: number;
   }>;
-  required_supervisionRatio: number;
+  requiredSupervisionRatio: number;
 }
 
 export interface CapacityExceededDetails {
@@ -193,8 +193,8 @@ export interface ResolutionChange {
 
   // For modification
   field?: string;
-  old_value?: unknown;
-  new_value?: unknown;
+  oldValue?: unknown;
+  newValue?: unknown;
 }
 
 // ============================================================================
@@ -207,15 +207,15 @@ export interface ManualOverride {
   reason: string;
   justification: string;
   expiresAt?: string; // For temporary overrides
-  approved_by?: string;
-  approved_at?: string;
+  approvedBy?: string;
+  approvedAt?: string;
 
   // Audit fields for ACGME compliance
   isAcgmeRelated: boolean;
-  acgme_exception_type?: string;
+  acgmeExceptionType?: string;
   supervisorApprovalRequired: boolean;
   supervisorApproved: boolean;
-  supervisor_id?: string;
+  supervisorId?: string;
 }
 
 // ============================================================================
@@ -255,7 +255,7 @@ export interface ConflictPattern {
 export interface BatchResolutionRequest {
   conflictIds: string[];
   resolutionMethod: ResolutionMethod;
-  apply_suggestionId?: string;
+  applySuggestionId?: string;
   notes?: string;
 }
 

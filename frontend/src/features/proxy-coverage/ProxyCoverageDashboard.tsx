@@ -17,6 +17,7 @@ import { useProxyCoverage } from './hooks';
 import { ProxyCoverageCard } from './ProxyCoverageCard';
 import type { CoverageType, PersonCoverageSummary } from './types';
 
+/* eslint-disable @typescript-eslint/naming-convention -- keys are CoverageType enum values (snake_case by design, @enum-ok) */
 const TYPE_LABELS: Record<CoverageType, string> = {
   remote_surrogate: 'Remote',
   swap_absorb: 'Absorb',
@@ -25,6 +26,7 @@ const TYPE_LABELS: Record<CoverageType, string> = {
   absence_coverage: 'Absence',
   temporary_proxy: 'Proxy',
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 /**
  * ProxyCoverageDashboard - Who is covering for whom

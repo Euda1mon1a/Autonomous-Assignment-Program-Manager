@@ -84,8 +84,8 @@ const EXPORT_FORMATS: Array<{
 
 const CSV_COLUMNS: Column[] = [
   { key: 'timestamp', header: 'Timestamp' },
-  { key: 'user.name', header: 'User' },
-  { key: 'user.email', header: 'User Email' },
+  { key: 'userName', header: 'User' },
+  { key: 'userEmail', header: 'User Email' },
   { key: 'action', header: 'Action' },
   { key: 'entityType', header: 'Entity Type' },
   { key: 'entityId', header: 'Entity ID' },
@@ -175,8 +175,8 @@ function generateFilename(
 function exportLogsToCSV(logs: AuditLogEntry[], filename: string): void {
   const transformedLogs = logs.map((log) => ({
     ...transformForExport(log),
-    'user.name': log.user.name,
-    'user.email': log.user.email || '',
+    userName: log.user.name,
+    userEmail: log.user.email || '',
   }));
 
   exportToCSV(transformedLogs, filename, CSV_COLUMNS);

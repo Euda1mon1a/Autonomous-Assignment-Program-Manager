@@ -12,7 +12,8 @@ import {
 import type { TemplateCategory } from '../types';
 import { TEMPLATE_CATEGORIES, CATEGORY_COLORS } from '../constants';
 
-// Icon mapping
+// Icon mapping — keys are PascalCase Lucide component names matched by category.icon
+/* eslint-disable @typescript-eslint/naming-convention */
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Calendar,
   ClipboardList,
@@ -21,6 +22,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Building2,
   Puzzle,
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 interface TemplateCategoriesProps {
   selectedCategory?: TemplateCategory;

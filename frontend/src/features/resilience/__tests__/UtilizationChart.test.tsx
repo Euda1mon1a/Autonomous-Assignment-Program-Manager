@@ -248,8 +248,8 @@ describe("UtilizationChart", () => {
     // Verify the hook was called with correct params
     expect(useUtilizationThreshold).toHaveBeenCalledWith(
       {
-        available_faculty: 100,
-        required_blocks: 65,
+        availableFaculty: 100,
+        requiredBlocks: 65,
       },
       expect.objectContaining({
         enabled: true,

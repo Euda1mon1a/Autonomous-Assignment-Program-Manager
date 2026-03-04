@@ -53,6 +53,7 @@ function getMethodIcon(method: string) {
 }
 
 function getMethodLabel(method: string): string {
+  /* eslint-disable @typescript-eslint/naming-convention -- keys are resolution method enum values (snake_case by design, @enum-ok) */
   const labels: Record<string, string> = {
     auto_resolved: 'Auto-resolve',
     manual_reassign: 'Reassign',
@@ -62,6 +63,7 @@ function getMethodLabel(method: string): string {
     add_coverage: 'Add Coverage',
     ignored: 'Ignore',
   };
+  /* eslint-enable @typescript-eslint/naming-convention */
   return labels[method] || method;
 }
 

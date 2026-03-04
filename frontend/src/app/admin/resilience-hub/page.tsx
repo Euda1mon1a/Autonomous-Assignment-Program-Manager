@@ -108,7 +108,7 @@ const STATUS_COLORS: Record<StatusString, string> = {
 const CIRCUIT_STATE_COLORS: Record<CircuitState, string> = {
   closed: 'text-green-500 bg-green-500/10',
   open: 'text-red-500 bg-red-500/10',
-  half_open: 'text-amber-500 bg-amber-500/10',
+  half_open: 'text-amber-500 bg-amber-500/10', // eslint-disable-line @typescript-eslint/naming-convention -- enum value key
 };
 
 // ============================================================================

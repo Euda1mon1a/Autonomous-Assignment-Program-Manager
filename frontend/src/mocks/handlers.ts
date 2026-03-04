@@ -130,8 +130,8 @@ export const mockValidation = {
   coverageRate: 100,
   statistics: {
     totalBlocks: 100,
-    assigned_blocks: 100,
-    unassigned_blocks: 0,
+    assigned_blocks: 100, // eslint-disable-line @typescript-eslint/naming-convention -- mock API response (snake_case wire format)
+    unassigned_blocks: 0, // eslint-disable-line @typescript-eslint/naming-convention -- mock API response (snake_case wire format)
   },
 }
 
@@ -669,6 +669,7 @@ export const handlers = [
       )
     }
 
+    /* eslint-disable @typescript-eslint/naming-convention -- mock API response matches wire format (snake_case) */
     return HttpResponse.json({
       status: 'success',
       message: 'Schedule generated successfully',
@@ -677,6 +678,7 @@ export const handlers = [
       validation: mockValidation,
       run_id: `run-${Date.now()}`,
     })
+    /* eslint-enable @typescript-eslint/naming-convention */
   }),
 
   http.get(`${API_BASE_URL}/schedule/validate`, ({ request }) => {

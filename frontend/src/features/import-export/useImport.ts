@@ -50,7 +50,7 @@ interface BackendXlsxResponse {
 interface BackendXlsxError {
   success: boolean;
   error: string;
-  error_code: string;
+  errorCode: string;
 }
 
 // ============================================================================

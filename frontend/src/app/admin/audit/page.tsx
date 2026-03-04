@@ -63,7 +63,7 @@ const MOCK_ENTRIES: AuditEntry[] = [
     targetType: 'Schedule',
     targetName: 'December 2024',
     success: true,
-    details: { algorithm: 'hybrid', duration_ms: 12500 },
+    details: { algorithm: 'hybrid', durationMs: 12500 },
   },
   {
     id: '3',
@@ -163,7 +163,7 @@ const MOCK_ENTRIES: AuditEntry[] = [
     userName: 'System',
     targetType: 'Backup',
     success: true,
-    details: { size_mb: 45.2, tables: 15 },
+    details: { sizeMb: 45.2, tables: 15 },
   },
 ];
 

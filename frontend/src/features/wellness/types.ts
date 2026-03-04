@@ -329,6 +329,7 @@ export interface WellnessPageState {
 // Achievement Definitions (for UI display)
 // ============================================================================
 
+/* eslint-disable @typescript-eslint/naming-convention -- Record keys are AchievementCode enum values, must stay snake_case */
 export const ACHIEVEMENT_DEFINITIONS: Record<
   AchievementCode,
   { name: string; description: string; icon: string; criteria: string }
@@ -394,6 +395,7 @@ export const ACHIEVEMENT_DEFINITIONS: Record<
     criteria: 'Accumulate 1000 points',
   },
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 // ============================================================================
 // Survey Type Display

@@ -13,9 +13,9 @@ interface Settings {
   workHoursPerWeek: number
   maxConsecutiveDays: number
   minDaysOffPerWeek: number
-  pgy1_supervisionRatio: string  // Format: "1:2"
-  pgy2_supervisionRatio: string  // Format: "1:4"
-  pgy3_supervisionRatio: string  // Format: "1:4"
+  pgy1SupervisionRatio: string  // Format: "1:2"
+  pgy2SupervisionRatio: string  // Format: "1:4"
+  pgy3SupervisionRatio: string  // Format: "1:4"
   enableWeekendScheduling: boolean
   enableHolidayScheduling: boolean
   defaultBlockDurationHours: number
@@ -27,9 +27,9 @@ const defaultSettings: Settings = {
   workHoursPerWeek: 80,
   maxConsecutiveDays: 6,
   minDaysOffPerWeek: 1,
-  pgy1_supervisionRatio: '1:2',
-  pgy2_supervisionRatio: '1:4',
-  pgy3_supervisionRatio: '1:4',
+  pgy1SupervisionRatio: '1:2',
+  pgy2SupervisionRatio: '1:4',
+  pgy3SupervisionRatio: '1:4',
   enableWeekendScheduling: true,
   enableHolidayScheduling: false,
   defaultBlockDurationHours: 4,
@@ -237,9 +237,9 @@ export default function SettingsPage() {
                 </label>
                 <select
                   className="input-field w-full"
-                  value={settings.pgy1_supervisionRatio}
+                  value={settings.pgy1SupervisionRatio}
                   onChange={(e) =>
-                    updateSetting('pgy1_supervisionRatio', e.target.value)
+                    updateSetting('pgy1SupervisionRatio', e.target.value)
                   }
                 >
                   <option value="1:1">1:1 (1 faculty per resident)</option>
@@ -252,9 +252,9 @@ export default function SettingsPage() {
                 </label>
                 <select
                   className="input-field w-full"
-                  value={settings.pgy2_supervisionRatio}
+                  value={settings.pgy2SupervisionRatio}
                   onChange={(e) =>
-                    updateSetting('pgy2_supervisionRatio', e.target.value)
+                    updateSetting('pgy2SupervisionRatio', e.target.value)
                   }
                 >
                   <option value="1:2">1:2 (1 faculty per 2 residents)</option>
@@ -268,9 +268,9 @@ export default function SettingsPage() {
                 </label>
                 <select
                   className="input-field w-full"
-                  value={settings.pgy3_supervisionRatio}
+                  value={settings.pgy3SupervisionRatio}
                   onChange={(e) =>
-                    updateSetting('pgy3_supervisionRatio', e.target.value)
+                    updateSetting('pgy3SupervisionRatio', e.target.value)
                   }
                 >
                   <option value="1:2">1:2 (1 faculty per 2 residents)</option>

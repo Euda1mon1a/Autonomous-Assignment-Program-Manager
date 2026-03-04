@@ -147,8 +147,8 @@ export interface SavedSession {
  */
 interface WsConnectedMessage {
   type: 'connected';
-  session_id: string; // @gorgon-ok — WebSocket bypasses axios interceptor
-  history_count: number; // @gorgon-ok — WebSocket bypasses axios interceptor
+  session_id: string; // eslint-disable-line @typescript-eslint/naming-convention -- WebSocket wire format, no axios interceptor
+  history_count: number; // eslint-disable-line @typescript-eslint/naming-convention -- WebSocket wire format, no axios interceptor
 }
 
 interface WsTokenMessage {

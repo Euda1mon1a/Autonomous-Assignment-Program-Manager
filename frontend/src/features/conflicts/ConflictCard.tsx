@@ -98,6 +98,7 @@ function getSeverityIcon(severity: ConflictSeverity) {
 }
 
 function getTypeLabel(type: ConflictType): string {
+  /* eslint-disable @typescript-eslint/naming-convention -- Record keys are ConflictType enum values, must stay snake_case */
   const labels: Record<ConflictType, string> = {
     scheduling_overlap: 'Scheduling Overlap',
     acgmeViolation: 'ACGME Violation',
@@ -109,6 +110,7 @@ function getTypeLabel(type: ConflictType): string {
     rest_period: 'Rest Period Violation',
     coverage_gap: 'Coverage Gap',
   };
+  /* eslint-enable @typescript-eslint/naming-convention */
   return labels[type] || type;
 }
 
@@ -171,12 +173,14 @@ function getStatusStyles(status: ConflictStatus): {
 }
 
 function getStatusLabel(status: ConflictStatus): string {
+  /* eslint-disable @typescript-eslint/naming-convention -- Record keys are ConflictStatus enum values, must stay snake_case */
   const labels: Record<ConflictStatus, string> = {
     unresolved: 'Unresolved',
     pending_review: 'Pending Review',
     resolved: 'Resolved',
     ignored: 'Ignored',
   };
+  /* eslint-enable @typescript-eslint/naming-convention */
   return labels[status] || status;
 }
 

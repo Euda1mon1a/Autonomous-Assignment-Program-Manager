@@ -66,9 +66,9 @@ export async function getBatchPreview(
 export async function applyBatch(
   batchId: string,
   options?: {
-    conflict_resolution?: ConflictResolutionMode;
+    conflictResolution?: ConflictResolutionMode;
     dryRun?: boolean;
-    validate_acgme?: boolean;
+    validateAcgme?: boolean;
   }
 ): Promise<ImportApplyResponse> {
   return post<ImportApplyResponse>(

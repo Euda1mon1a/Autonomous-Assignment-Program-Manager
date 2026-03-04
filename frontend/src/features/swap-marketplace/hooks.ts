@@ -25,19 +25,19 @@ import type {
 interface SwapRequestApiResponse {
   id: string;
   sourceFacultyId: string;
-  source_faculty?: { name: string };
+  sourceFaculty?: { name: string };
   sourceWeek: string;
   targetFacultyId?: string;
-  target_faculty?: { name: string };
+  targetFaculty?: { name: string };
   targetWeek?: string;
   swapType: string;
   status: string;
   requestedAt: string;
   requestedById: string;
-  approved_at?: string;
-  approved_by_id?: string;
+  approvedAt?: string;
+  approvedById?: string;
   executedAt?: string;
-  executed_by_id?: string;
+  executedById?: string;
   reason?: string;
   notes?: string;
 }
@@ -66,16 +66,16 @@ interface MySwapsApiResponse {
 
 interface FacultyPreferenceApiResponse {
   facultyId: string;
-  preferred_weeks?: string[];
-  blocked_weeks?: string[];
-  max_weeks_per_month?: number;
-  max_consecutive_weeks?: number;
-  min_gap_between_weeks?: number;
-  targetWeeks_per_year?: number;
-  notify_swap_requests?: boolean;
-  notify_schedule_changes?: boolean;
-  notify_conflict_alerts?: boolean;
-  notify_reminder_days?: number;
+  preferredWeeks?: string[];
+  blockedWeeks?: string[];
+  maxWeeksPerMonth?: number;
+  maxConsecutiveWeeks?: number;
+  minGapBetweenWeeks?: number;
+  targetWeeksPerYear?: number;
+  notifySwapRequests?: boolean;
+  notifyScheduleChanges?: boolean;
+  notifyConflictAlerts?: boolean;
+  notifyReminderDays?: number;
   notes?: string;
   updatedAt: string;
 }
@@ -126,19 +126,19 @@ function transformSwapRequest(backendSwap: SwapRequestApiResponse, currentUserId
   return {
     id: backendSwap.id,
     sourceFacultyId: backendSwap.sourceFacultyId,
-    sourceFacultyName: backendSwap.source_faculty?.name || 'Unknown',
+    sourceFacultyName: backendSwap.sourceFaculty?.name || 'Unknown',
     sourceWeek: backendSwap.sourceWeek,
     targetFacultyId: backendSwap.targetFacultyId,
-    targetFacultyName: backendSwap.target_faculty?.name,
+    targetFacultyName: backendSwap.targetFaculty?.name,
     targetWeek: backendSwap.targetWeek,
     swapType: backendSwap.swapType as SwapType,
     status: backendSwap.status as SwapStatus,
     requestedAt: backendSwap.requestedAt,
     requestedById: backendSwap.requestedById,
-    approvedAt: backendSwap.approved_at,
-    approvedById: backendSwap.approved_by_id,
+    approvedAt: backendSwap.approvedAt,
+    approvedById: backendSwap.approvedById,
     executedAt: backendSwap.executedAt,
-    executedById: backendSwap.executed_by_id,
+    executedById: backendSwap.executedById,
     reason: backendSwap.reason,
     notes: backendSwap.notes,
     isIncoming,
@@ -170,16 +170,16 @@ function transformMarketplaceEntry(entry: MarketplaceEntryApiResponse): Marketpl
 function transformFacultyPreference(pref: FacultyPreferenceApiResponse): FacultyPreference {
   return {
     facultyId: pref.facultyId,
-    preferredWeeks: pref.preferred_weeks || [],
-    blockedWeeks: pref.blocked_weeks || [],
-    maxWeeksPerMonth: pref.max_weeks_per_month || 0,
-    maxConsecutiveWeeks: pref.max_consecutive_weeks || 0,
-    minGapBetweenWeeks: pref.min_gap_between_weeks || 0,
-    targetWeeksPerYear: pref.targetWeeks_per_year || 0,
-    notifySwapRequests: pref.notify_swap_requests ?? false,
-    notifyScheduleChanges: pref.notify_schedule_changes ?? false,
-    notifyConflictAlerts: pref.notify_conflict_alerts ?? false,
-    notifyReminderDays: pref.notify_reminder_days || 0,
+    preferredWeeks: pref.preferredWeeks || [],
+    blockedWeeks: pref.blockedWeeks || [],
+    maxWeeksPerMonth: pref.maxWeeksPerMonth || 0,
+    maxConsecutiveWeeks: pref.maxConsecutiveWeeks || 0,
+    minGapBetweenWeeks: pref.minGapBetweenWeeks || 0,
+    targetWeeksPerYear: pref.targetWeeksPerYear || 0,
+    notifySwapRequests: pref.notifySwapRequests ?? false,
+    notifyScheduleChanges: pref.notifyScheduleChanges ?? false,
+    notifyConflictAlerts: pref.notifyConflictAlerts ?? false,
+    notifyReminderDays: pref.notifyReminderDays || 0,
     notes: pref.notes,
     updatedAt: pref.updatedAt,
   };
@@ -312,7 +312,7 @@ export function useCreateSwapRequest() {
     mutationFn: async (request: CreateSwapRequest) => {
       const response = await post<CreateSwapApiResponse>('/portal/my/swaps', {
         weekToOffload: request.weekToOffload,
-        preferred_targetFacultyId: request.preferredTargetFacultyId,
+        preferredTargetFacultyId: request.preferredTargetFacultyId,
         reason: request.reason,
         autoFindCandidates: request.autoFindCandidates ?? true,
       });
