@@ -959,11 +959,16 @@ class WorkflowEngine:
             return tuple(self._eval_ast_node(elt, context) for elt in node.elts)
 
         if isinstance(node, ast.Dict):
-            return {
-                self._eval_ast_node(k, context): self._eval_ast_node(v, context)
-                for k, v in zip(node.keys, node.values)
-                if k is not None
-            }
+            result: dict[object, object] = {}
+            for k, v in zip(node.keys, node.values):
+                if k is None:
+                    raise ConditionEvaluationError(
+                        "Dict unpacking (**) is not supported in conditions"
+                    )
+                result[self._eval_ast_node(k, context)] = self._eval_ast_node(
+                    v, context
+                )
+            return result
 
         if isinstance(node, ast.UnaryOp):
             operand = self._eval_ast_node(node.operand, context)
