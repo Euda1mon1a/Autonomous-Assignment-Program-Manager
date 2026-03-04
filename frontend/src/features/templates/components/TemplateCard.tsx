@@ -69,6 +69,10 @@ export function TemplateCard({
     <div
       className={`card hover:shadow-lg transition-all cursor-pointer border ${categoryColors.border}`}
       onClick={() => onPreview?.(template)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPreview?.(template); } }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Template: ${template.name}`}
     >
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
@@ -108,6 +112,10 @@ export function TemplateCard({
                 <div
                   className="fixed inset-0 z-10"
                   onClick={() => setShowMenu(false)}
+                  onKeyDown={(e) => { if (e.key === 'Escape') { setShowMenu(false); } }}
+                  role="button"
+                  tabIndex={-1}
+                  aria-label="Close menu"
                 />
                 <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border z-20 py-1" role="menu">
                   {onPreview && (

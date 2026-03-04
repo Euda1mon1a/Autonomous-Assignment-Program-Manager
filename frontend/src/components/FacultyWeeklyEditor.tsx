@@ -140,6 +140,7 @@ function SlotCell({
         ${activity ? bgColor : 'bg-slate-700'}
       `}
       onClick={handleClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!readOnly) onClick(); } }}
       role="button"
       tabIndex={readOnly ? -1 : 0}
       aria-label={`${DAY_LABELS_SHORT[slot.dayOfWeek]} ${slot.timeOfDay}: ${

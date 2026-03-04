@@ -26,7 +26,10 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
       {/* Header */}
       <div
         className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+        role="button"
+        tabIndex={0}
         onClick={() => setShowDetails(!showDetails)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowDetails(!showDetails); } }}
       >
         <div className="flex items-center justify-between">
           <div>

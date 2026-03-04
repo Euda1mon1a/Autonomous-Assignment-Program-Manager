@@ -65,7 +65,11 @@ function Dropdown({ trigger, children, isOpen, onOpenChange }: DropdownProps) {
         <>
           <div
             className="fixed inset-0 z-40"
+            role="button"
+            tabIndex={-1}
+            aria-label="Close menu"
             onClick={() => onOpenChange(false)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenChange(false); } }}
           />
           <div className="absolute bottom-full left-0 mb-2 z-50 bg-slate-700 border border-slate-600 rounded-lg shadow-xl py-1 min-w-[160px]">
             {children}

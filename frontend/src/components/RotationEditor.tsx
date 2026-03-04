@@ -266,6 +266,7 @@ function SlotCell({
         ${bgColor}
       `}
       onClick={handleClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!readOnly) onClick(); } }}
       role="button"
       tabIndex={readOnly ? -1 : 0}
       title={`${activity?.name ?? 'Empty'}${isProtected ? ' (protected)' : ''}\nShift+click to toggle protection`}

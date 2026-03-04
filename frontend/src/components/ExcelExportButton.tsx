@@ -151,7 +151,11 @@ export function ExcelExportDropdown() {
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-40"
+            role="button"
+            tabIndex={-1}
+            aria-label="Close export menu"
             onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(false); } }}
           />
 
           {/* Dropdown */}

@@ -531,6 +531,7 @@ export function ConflictList({
                 style={{ animationDelay: `${index * 50}ms` }}
                 onFocus={() => setFocusedIndex(index)}
                 onClick={() => setFocusedIndex(index)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFocusedIndex(index); } }}
                 role="button"
                 aria-label={`Conflict: ${conflict.description}`}
               >

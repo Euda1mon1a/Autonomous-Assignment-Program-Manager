@@ -270,7 +270,11 @@ export function ConfigurationPresets({
                 {/* Backdrop */}
                 <div
                   className="fixed inset-0 z-40"
+                  role="button"
+                  tabIndex={-1}
+                  aria-label="Close preset menu"
                   onClick={() => setIsDropdownOpen(false)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsDropdownOpen(false); } }}
                 />
 
                 {/* Dropdown */}

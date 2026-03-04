@@ -44,8 +44,12 @@ export function CallCalendarDay({
         ${isToday ? 'ring-2 ring-blue-500 ring-inset' : ''}
       `}
       onClick={handleClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
       onMouseEnter={() => setShowPopover(assignments.length > 0)}
       onMouseLeave={() => setShowPopover(false)}
+      role="button"
+      tabIndex={0}
+      aria-label={`${format(date, 'MMMM d')} - ${assignments.length} assignment${assignments.length !== 1 ? 's' : ''}`}
     >
       {/* Day Number */}
       <div className="flex justify-between items-start mb-2">

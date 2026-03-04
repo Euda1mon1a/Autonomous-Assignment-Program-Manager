@@ -761,7 +761,11 @@ export default function AdminAuditPage() {
         <>
           <div
             className="fixed inset-0 bg-black/30 z-40"
+            role="button"
+            tabIndex={-1}
+            aria-label="Close detail sidebar"
             onClick={() => setSelectedEntry(null)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedEntry(null); } }}
           />
           <EntryDetail
             entry={selectedEntry}

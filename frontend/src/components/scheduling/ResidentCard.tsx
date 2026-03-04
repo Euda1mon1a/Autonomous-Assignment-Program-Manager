@@ -62,7 +62,10 @@ export function ResidentCard({
       className={`bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow ${
         onClick ? 'cursor-pointer' : ''
       } ${className}`}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
     >
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
@@ -148,7 +151,10 @@ export function ResidentListItem({
       className={`flex items-center gap-3 p-2 rounded hover:bg-gray-50 ${
         onClick ? 'cursor-pointer' : ''
       } ${className}`}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
     >
       <Avatar src={avatar} name={name} size="sm" />
       <div className="flex-1 min-w-0">

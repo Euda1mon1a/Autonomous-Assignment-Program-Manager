@@ -24,7 +24,10 @@ export function StrategyCard({ strategy, isSelected, onToggle, onValidate }: Str
       className={`relative bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-2 transition-colors cursor-pointer ${
         isSelected ? 'border-blue-500' : 'border-transparent hover:border-gray-300'
       }`}
+      role="button"
+      tabIndex={0}
       onClick={onToggle}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
     >
       {/* Selection indicator */}
       {isSelected && (

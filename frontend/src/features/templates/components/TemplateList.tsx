@@ -160,6 +160,10 @@ function TemplateListItem({
     <div
       className="flex items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => onPreview?.(template)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPreview?.(template); } }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Template: ${template.name}`}
     >
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <span className={`px-2 py-1 rounded text-xs font-medium ${colorClass}`}>

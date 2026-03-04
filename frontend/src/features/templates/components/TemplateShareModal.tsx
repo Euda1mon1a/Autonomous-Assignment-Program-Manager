@@ -66,7 +66,7 @@ export function TemplateShareModal({
   if (mode === 'duplicate') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+        <div className="absolute inset-0 bg-black/50" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') { onClose(); } }} role="button" tabIndex={-1} aria-label="Close dialog" />
         <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4" role="dialog" aria-labelledby="duplicate-dialog-title" aria-modal="true">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
@@ -153,7 +153,7 @@ export function TemplateShareModal({
   // Share mode
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') { onClose(); } }} role="button" tabIndex={-1} aria-label="Close dialog" />
       <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4" role="dialog" aria-labelledby="share-dialog-title" aria-modal="true">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">

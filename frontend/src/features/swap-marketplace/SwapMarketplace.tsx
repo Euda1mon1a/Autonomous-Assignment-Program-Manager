@@ -220,6 +220,7 @@ export function SwapMarketplace() {
                         `}
                         onFocus={() => setSelectedIndex(index)}
                         onClick={() => setSelectedIndex(index)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedIndex(index); } }}
                         role="button"
                         aria-label={`Swap request from ${entry.requestingFacultyName}`}
                       >

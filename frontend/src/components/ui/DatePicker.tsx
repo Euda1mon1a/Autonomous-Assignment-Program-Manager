@@ -152,7 +152,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-10"
+            role="button"
+            tabIndex={-1}
+            aria-label="Close calendar"
             onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(false); } }}
           />
 
           {/* Calendar */}

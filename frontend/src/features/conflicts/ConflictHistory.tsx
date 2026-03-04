@@ -361,6 +361,10 @@ function PatternCard({ pattern, onClick }: PatternCardProps) {
     <div
       className="border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-0.5 animate-fadeInUp"
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Pattern: ${getTypeLabel(pattern.type)} - ${pattern.frequency} occurrences`}
     >
       <div className="p-4">
         <div className="flex items-start justify-between gap-4">

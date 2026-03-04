@@ -249,7 +249,11 @@ function ConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        role="button"
+        tabIndex={-1}
+        aria-label="Close dialog"
         onClick={onCancel}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCancel(); } }}
       />
       <div className="relative bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
         <h2 className="text-lg font-semibold text-white mb-2">{title}</h2>
@@ -383,7 +387,11 @@ function UserRow({
             <>
               <div
                 className="fixed inset-0 z-10"
+                role="button"
+                tabIndex={-1}
+                aria-label="Close menu"
                 onClick={() => setShowMenu(false)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowMenu(false); } }}
               />
               <div className="absolute right-0 top-full mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20">
                 {canViewAs && (
@@ -509,7 +517,11 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        role="button"
+        tabIndex={-1}
+        aria-label="Close dialog"
         onClick={onClose}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose(); } }}
       />
       <div className="relative bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="px-6 py-4 border-b border-slate-700">

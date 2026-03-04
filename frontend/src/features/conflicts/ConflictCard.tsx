@@ -225,7 +225,9 @@ export function ConflictCard({
           hover:shadow-md
         `}
         onClick={handleCardClick}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
         role="button"
+        tabIndex={0}
         aria-label={`${conflict.title} - ${conflict.severity} severity conflict`}
       >
         <div className={`flex-shrink-0 ${severityStyles.icon}`} aria-hidden="true">
@@ -263,7 +265,9 @@ export function ConflictCard({
       <div
         className="p-4 cursor-pointer"
         onClick={handleCardClick}
-        role="article"
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
+        role="button"
+        tabIndex={0}
         aria-label={`Conflict: ${conflict.title}`}
       >
         <div className="flex items-start gap-3">
@@ -350,6 +354,7 @@ export function ConflictCard({
                 <div
                   className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border z-10"
                   role="menu"
+                  tabIndex={-1}
                   aria-label="Conflict actions menu"
                   onMouseLeave={() => setShowActions(false)}
                 >

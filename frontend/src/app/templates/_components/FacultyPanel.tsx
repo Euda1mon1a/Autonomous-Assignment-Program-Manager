@@ -72,7 +72,11 @@ export function FacultyPanel() {
           {/* Search/Select Input */}
           <div
             className="relative cursor-pointer"
+            role="button"
+            tabIndex={0}
+            aria-label="Select faculty member"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsDropdownOpen(!isDropdownOpen); } }}
           >
             <div className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg bg-white flex items-center gap-3">
               {selectedFaculty ? (
@@ -173,10 +177,14 @@ export function FacultyPanel() {
         {isDropdownOpen && (
           <div
             className="fixed inset-0 z-40"
+            role="button"
+            tabIndex={-1}
+            aria-label="Close dropdown"
             onClick={() => {
               setIsDropdownOpen(false);
               setSearchTerm('');
             }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsDropdownOpen(false); setSearchTerm(''); } }}
           />
         )}
       </div>

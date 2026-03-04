@@ -278,7 +278,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
       {/* Editor Modal */}
       {showEditor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowEditor(false)} />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowEditor(false)} onKeyDown={(e) => { if (e.key === 'Escape') { setShowEditor(false); } }} role="button" tabIndex={-1} aria-label="Close editor" />
           <div className="relative w-full max-w-3xl max-h-[90vh]">
             <TemplateEditor
               template={editingTemplate}
@@ -296,7 +296,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
       {/* Preview Modal */}
       {previewTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setPreviewTemplate(null)} />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setPreviewTemplate(null)} onKeyDown={(e) => { if (e.key === 'Escape') { setPreviewTemplate(null); } }} role="button" tabIndex={-1} aria-label="Close preview" />
           <div className="relative">
             <TemplatePreview
               template={previewTemplate}
@@ -333,7 +333,7 @@ export function TemplateLibrary({ onTemplateApplied }: TemplateLibraryProps) {
       {/* Delete Confirmation */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setDeleteConfirm(null)} />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setDeleteConfirm(null)} onKeyDown={(e) => { if (e.key === 'Escape') { setDeleteConfirm(null); } }} role="button" tabIndex={-1} aria-label="Close dialog" />
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6" role="dialog" aria-labelledby="delete-dialog-title" aria-modal="true">
             <h3 id="delete-dialog-title" className="text-lg font-semibold mb-2">Delete Template</h3>
             <p className="text-gray-600 mb-4">
