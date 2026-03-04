@@ -13,7 +13,7 @@
 | MUST | `docs/planning/TECHNICAL_DEBT.md` | Open debt items |
 | SHOULD | `docs/development/BEST_PRACTICES_AND_GOTCHAS.md` | Common bugs, debugging flowcharts |
 | SHOULD | `docs/architecture/DOW_CONVENTION_BUG.md` | Critical: Python weekday vs PG DOW |
-| SHOULD | `docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md` | Frontend hub consolidation status |
+| SHOULD | `docs/planning/FRONTEND_REWIRING_ROADMAP.md` | Frontend rewiring master plan (active) |
 | REF | `.claude/dontreadme/INDEX.md` | AI agent deep context |
 
 ## Active Directories
