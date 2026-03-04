@@ -101,7 +101,7 @@ function TemplateRowForm({
         role="button"
         tabIndex={0}
         onClick={() => onToggleExpand(template.id)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleExpand(template.id); } }}
+        onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onToggleExpand(template.id); } }}
       >
         <button
           type="button"

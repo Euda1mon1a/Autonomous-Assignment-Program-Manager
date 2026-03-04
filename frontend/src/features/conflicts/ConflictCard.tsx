@@ -225,7 +225,7 @@ export function ConflictCard({
           hover:shadow-md
         `}
         onClick={handleCardClick}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
+        onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleCardClick(); } }}
         role="button"
         tabIndex={0}
         aria-label={`${conflict.title} - ${conflict.severity} severity conflict`}
@@ -265,7 +265,7 @@ export function ConflictCard({
       <div
         className="p-4 cursor-pointer"
         onClick={handleCardClick}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
+        onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleCardClick(); } }}
         role="button"
         tabIndex={0}
         aria-label={`Conflict: ${conflict.title}`}

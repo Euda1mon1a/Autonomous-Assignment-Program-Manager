@@ -114,7 +114,7 @@ function PreferenceCard({
         role="button"
         tabIndex={0}
         onClick={onToggleExpand}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleExpand(); } }}
+        onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onToggleExpand(); } }}
       >
         <button className="p-1 text-slate-400">
           {isExpanded ? (

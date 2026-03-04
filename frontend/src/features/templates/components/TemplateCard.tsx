@@ -69,7 +69,7 @@ export function TemplateCard({
     <div
       className={`card hover:shadow-lg transition-all cursor-pointer border ${categoryColors.border}`}
       onClick={() => onPreview?.(template)}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPreview?.(template); } }}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onPreview?.(template); } }}
       role="button"
       tabIndex={0}
       aria-label={`Template: ${template.name}`}
