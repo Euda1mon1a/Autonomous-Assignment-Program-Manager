@@ -303,6 +303,8 @@ class ValidationStudy:
         absolute_errors = []
 
         for dp in data_points:
+            if dp.actual_fatigue_score is None:
+                continue
             # Convert actual fatigue score to effectiveness
             # fatigue 1-10 -> effectiveness 100-0
             actual_effectiveness = 100 - (dp.actual_fatigue_score - 1) * (100 / 9)
@@ -311,6 +313,8 @@ class ValidationStudy:
             squared_errors.append(error**2)
             absolute_errors.append(abs(error))
 
+        if not squared_errors:
+            return 0.0, 0.0
         rmse = math.sqrt(sum(squared_errors) / len(squared_errors))
         mae = sum(absolute_errors) / len(absolute_errors)
 
@@ -324,9 +328,17 @@ class ValidationStudy:
         if len(data_points) < 2:
             return 0.0
 
-            # Extract values
-        predicted = [dp.predicted_effectiveness for dp in data_points]
-        actual = [100 - (dp.actual_fatigue_score - 1) * (100 / 9) for dp in data_points]
+            # Extract values (filtered data points always have actual_fatigue_score set)
+        predicted = [
+            dp.predicted_effectiveness
+            for dp in data_points
+            if dp.actual_fatigue_score is not None
+        ]
+        actual = [
+            100 - (dp.actual_fatigue_score - 1) * (100 / 9)
+            for dp in data_points
+            if dp.actual_fatigue_score is not None
+        ]
 
         # Calculate means
         mean_pred = sum(predicted) / len(predicted)
@@ -354,6 +366,8 @@ class ValidationStudy:
     ) -> None:
         """Calculate TP, TN, FP, FN and derived metrics."""
         for dp in data_points:
+            if dp.actual_fatigue_score is None:
+                continue
             # FRMS prediction: at-risk if below threshold
             predicted_at_risk = (
                 dp.predicted_effectiveness < self.effectiveness_threshold
@@ -417,8 +431,16 @@ class ValidationStudy:
         if len(data_points) < 2:
             return 1.0, 0.0
 
-        predicted = [dp.predicted_effectiveness for dp in data_points]
-        actual = [100 - (dp.actual_fatigue_score - 1) * (100 / 9) for dp in data_points]
+        predicted = [
+            dp.predicted_effectiveness
+            for dp in data_points
+            if dp.actual_fatigue_score is not None
+        ]
+        actual = [
+            100 - (dp.actual_fatigue_score - 1) * (100 / 9)
+            for dp in data_points
+            if dp.actual_fatigue_score is not None
+        ]
 
         n = len(predicted)
         sum_x = sum(predicted)
@@ -452,7 +474,10 @@ class ValidationStudy:
 
         # Calculate TPR and FPR at each threshold
         n_positive = sum(
-            1 for dp in data_points if dp.actual_fatigue_score >= self.fatigue_threshold
+            1
+            for dp in data_points
+            if dp.actual_fatigue_score is not None
+            and dp.actual_fatigue_score >= self.fatigue_threshold
         )
         n_negative = len(data_points) - n_positive
 
@@ -464,7 +489,10 @@ class ValidationStudy:
         fp = 0
 
         for dp in sorted_points:
-            actual_fatigued = dp.actual_fatigue_score >= self.fatigue_threshold
+            actual_fatigued = (
+                dp.actual_fatigue_score is not None
+                and dp.actual_fatigue_score >= self.fatigue_threshold
+            )
             if actual_fatigued:
                 tp += 1
             else:
@@ -549,7 +577,8 @@ class ValidationStudy:
                     dp.predicted_effectiveness for dp in bin_points
                 ) / len(bin_points)
                 avg_actual = sum(
-                    100 - (dp.actual_fatigue_score - 1) * (100 / 9) for dp in bin_points
+                    100 - ((dp.actual_fatigue_score or 0) - 1) * (100 / 9)
+                    for dp in bin_points
                 ) / len(bin_points)
 
                 bins.append(

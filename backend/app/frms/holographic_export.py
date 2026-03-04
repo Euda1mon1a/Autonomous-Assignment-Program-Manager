@@ -108,8 +108,8 @@ class TemporalDynamicsData:
     # Aggregate time series
     aggregate_time_series: list[dict] = field(default_factory=list)
 
-    # Heatmap data (hour x day matrix)
-    heatmap_data: list[list[float]] = field(default_factory=list)
+    # Heatmap data (hour x day matrix, None for no data)
+    heatmap_data: list[list[float | None]] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Serialize for JSON export."""
@@ -376,9 +376,9 @@ class HolographicExporter:
                 )
 
                 # Build heatmap matrix
-        heatmap_data = []
+        heatmap_data: list[list[float | None]] = []
         for day in range(7):
-            row = []
+            row: list[float | None] = []
             for hour in range(24):
                 values = heatmap.get((hour, day), [])
                 if values:
@@ -468,7 +468,10 @@ class HolographicExporter:
 
                 # Get effectiveness
             if effectiveness_data:
-                effectiveness = effectiveness_data.get(assignment.get("id"), 85.0)
+                aid = assignment.get("id", "")
+                effectiveness = effectiveness_data.get(
+                    aid, effectiveness_data.get(str(aid), 85.0)
+                )
             else:
                 effectiveness = 85.0  # Default
 
@@ -522,6 +525,8 @@ class HolographicExporter:
 
         for person in persons:
             person_id = person.get("id")
+            if person_id is None:
+                continue
             person_name = person.get("name", "Unknown")
 
             # Get person's assignments
@@ -530,8 +535,11 @@ class HolographicExporter:
             ]
 
             # Create initial state
+            resolved_pid: UUID = (
+                UUID(person_id) if isinstance(person_id, str) else person_id
+            )
             state = self.model.create_state(
-                UUID(person_id) if isinstance(person_id, str) else person_id,
+                resolved_pid,
                 timestamp=now,
             )
 
