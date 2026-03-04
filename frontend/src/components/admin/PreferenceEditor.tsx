@@ -111,7 +111,10 @@ function PreferenceCard({
       {/* Header */}
       <div
         className="flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-700/30 transition-colors"
+        role="button"
+        tabIndex={0}
         onClick={onToggleExpand}
+        onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onToggleExpand(); } }}
       >
         <button className="p-1 text-slate-400">
           {isExpanded ? (

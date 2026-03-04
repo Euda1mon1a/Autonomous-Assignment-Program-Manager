@@ -98,7 +98,10 @@ function TemplateRowForm({
       {/* Row header */}
       <div
         className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-700/30 transition-colors"
+        role="button"
+        tabIndex={0}
         onClick={() => onToggleExpand(template.id)}
+        onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onToggleExpand(template.id); } }}
       >
         <button
           type="button"

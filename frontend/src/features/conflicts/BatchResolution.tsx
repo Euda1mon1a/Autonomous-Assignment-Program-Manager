@@ -351,6 +351,10 @@ export function BatchResolution({
                   `}
                   style={{ animationDelay: `${index * 30}ms` }}
                   onClick={() => handleToggleSelect(conflict.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggleSelect(conflict.id); } }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${isSelected ? 'Deselect' : 'Select'} ${conflict.title}`}
                 >
                   <button
                     onClick={(e) => {

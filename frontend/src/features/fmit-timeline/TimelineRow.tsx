@@ -181,6 +181,10 @@ export function TimelineRow({
                       onAssignmentClick(assignment);
                     }
                   }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAssignmentClick?.(assignment); } }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Assignment: ${assignment.rotationName}`}
                 >
                   {/* Assignment label (only show if wide enough) */}
                   <div className="px-2 py-1 h-full flex items-center justify-center overflow-hidden">

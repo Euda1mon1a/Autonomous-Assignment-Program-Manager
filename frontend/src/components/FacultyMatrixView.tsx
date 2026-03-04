@@ -190,7 +190,11 @@ function RoleFilter({
         <>
           <div
             className="fixed inset-0 z-10"
+            role="button"
+            tabIndex={-1}
+            aria-label="Close role filter"
             onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(false); } }}
           />
           <div className="absolute left-0 top-full mt-1 z-20 w-56 bg-slate-800 rounded-lg shadow-xl border border-slate-700">
             <div className="p-2 border-b border-slate-700 flex gap-2">
@@ -445,7 +449,11 @@ function EditorModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/70"
+        role="button"
+        tabIndex={-1}
+        aria-label="Close editor"
         onClick={onClose}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose(); } }}
       />
       <div className="relative z-10 w-full max-w-3xl">
         <FacultyWeeklyEditor

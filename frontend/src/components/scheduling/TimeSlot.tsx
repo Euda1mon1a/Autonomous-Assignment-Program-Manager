@@ -58,6 +58,7 @@ export function TimeSlot({
     <div
       className={`${baseStyles} ${stateStyles} ${className}`}
       onClick={!isDisabled ? onClick : undefined}
+      onKeyDown={onClick && !isDisabled ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick && !isDisabled ? 0 : undefined}
     >

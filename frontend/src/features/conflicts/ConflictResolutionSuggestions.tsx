@@ -245,7 +245,9 @@ export function ConflictResolutionSuggestions({
               `}
               style={{ animationDelay: `${index * 100}ms` }}
               onClick={() => setSelectedSuggestion(suggestion.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedSuggestion(suggestion.id); } }}
               role="option"
+              tabIndex={0}
               aria-selected={isSelected}
               aria-label={`${suggestion.title} - ${suggestion.recommended ? 'Recommended' : ''} ${suggestion.method}`}
             >

@@ -205,7 +205,9 @@ function TimelineEventCard({
         before:bg-gray-200 last:before:hidden
       `}
       onClick={onClick}
-      role="listitem"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
+      role="button"
+      tabIndex={0}
     >
       {/* Timeline dot */}
       <div
