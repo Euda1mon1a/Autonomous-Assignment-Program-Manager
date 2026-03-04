@@ -3841,28 +3841,39 @@ class SchedulingEngine:
             .all()
         )
 
-        # Pick AM clinic faculty
+        # Pick AM clinic faculty — rotate selection across blocks for equity.
+        # Sort by person_id for deterministic order, then shift by a hash of
+        # the date so a different faculty member covers each block's final Wed.
         am_chosen_pid = None
         if am_hdas:
-            am_hdas[0].activity_id = c_activity_id
-            am_chosen_pid = am_hdas[0].person_id
+            am_hdas.sort(key=lambda x: str(x.person_id))
+            shift = hash(last_wed.isoformat()) % len(am_hdas)
+            chosen_am = am_hdas[shift]
+            chosen_am.activity_id = c_activity_id
+            am_chosen_pid = chosen_am.person_id
             modified += 1
             am_name = next(
                 (f.name for f in core_faculty if f.id == am_chosen_pid),
                 str(am_chosen_pid),
             )
             logger.info(
-                "Final Wednesday %s: %s AM → C (clinic coverage)",
+                "Final Wednesday %s: %s AM → C (clinic coverage, slot %d/%d)",
                 last_wed,
                 am_name,
+                shift + 1,
+                len(am_hdas),
             )
 
-        # Pick PM clinic faculty (different from AM)
+        # Pick PM clinic faculty (different from AM, same rotation logic)
         if pm_hdas:
+            pm_hdas.sort(key=lambda x: str(x.person_id))
+            shift = hash(last_wed.isoformat()) % len(pm_hdas)
+            # Start from shifted position, skip AM pick
             pm_chosen = None
-            for hda in pm_hdas:
-                if hda.person_id != am_chosen_pid:
-                    pm_chosen = hda
+            for i in range(len(pm_hdas)):
+                candidate = pm_hdas[(shift + i) % len(pm_hdas)]
+                if candidate.person_id != am_chosen_pid:
+                    pm_chosen = candidate
                     break
             if pm_chosen is None:
                 pm_chosen = pm_hdas[0]

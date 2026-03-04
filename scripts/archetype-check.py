@@ -11,6 +11,7 @@ ARCH-003 (Doppelganger):   Call constraint uses context.faculty instead of
                            call_eligible_faculty
 ARCH-004 (Silent Killer):  add_to_cpsat() missing constraint count logging
 ARCH-005 (Revenant's Memory): Call coverage constraint without spacing guard
+ARCH-006 (Basilisk's Gaze):    Activity query ORs code with display_abbreviation
 
 Usage:
     python3 scripts/archetype-check.py [--staged] [files...]
@@ -40,6 +41,7 @@ MAGENTA = "\033[0;35m"
 NC = "\033[0m"
 
 CONSTRAINT_DIR = Path("backend/app/scheduling/constraints")
+ENGINE_FILE = Path("backend/app/scheduling/engine.py")
 EXCLUDED_FILES = {"__init__.py", "base.py", "config.py", "manager.py"}
 
 
@@ -462,38 +464,121 @@ def check_call_coverage_without_spacing(
 
 
 # ---------------------------------------------------------------------------
+# ARCH-006: Ambiguous activity lookup (code OR display_abbreviation)
+# ---------------------------------------------------------------------------
+
+
+def check_ambiguous_activity_lookup(
+    tree: ast.Module, filepath: str
+) -> list[Violation]:
+    """
+    Detect Activity queries that OR code with display_abbreviation.
+
+    Pattern: select(Activity).where(
+        (Activity.code == x) | (Activity.display_abbreviation == x)
+    )
+
+    When multiple activities share a display_abbreviation (e.g., code='C'
+    and code='fm_clinic' both have display='C'), .first() returns whichever
+    the DB gives first — nondeterministic.
+
+    Fix: two-step lookup — try code first, fall back to display_abbreviation.
+    """
+    violations = []
+
+    for node in ast.walk(tree):
+        # Look for BinOp with | (bitwise OR) operator
+        if not isinstance(node, ast.BinOp):
+            continue
+        if not isinstance(node.op, ast.BitOr):
+            continue
+
+        # Check if both sides reference Activity.code and
+        # Activity.display_abbreviation (in either order)
+        left_str = ast.dump(node.left)
+        right_str = ast.dump(node.right)
+        combined = left_str + right_str
+
+        has_code = "code" in combined.lower()
+        has_display = "display_abbreviation" in combined.lower()
+
+        if has_code and has_display:
+            if not _has_suppression(filepath, node.lineno):
+                violations.append(
+                    Violation(
+                        file=filepath,
+                        line=node.lineno,
+                        rule="ARCH-006",
+                        message=(
+                            "Activity query ORs code with display_abbreviation. "
+                            "Multiple activities can share a display_abbreviation "
+                            "(e.g., C and fm_clinic both display 'C'). "
+                            ".first() picks nondeterministically."
+                        ),
+                        fix=(
+                            "Use two-step lookup: try code first, "
+                            "then fall back to display_abbreviation"
+                        ),
+                    )
+                )
+
+    return violations
+
+
+# ---------------------------------------------------------------------------
 # File discovery
 # ---------------------------------------------------------------------------
 
 
-def get_files_to_check(args: list[str]) -> list[Path]:
-    """Get constraint files to check. Supports --staged flag."""
+def get_files_to_check(args: list[str]) -> tuple[list[Path], list[Path]]:
+    """Get constraint files and engine files to check. Supports --staged flag.
+
+    Returns:
+        (constraint_files, engine_files) — constraint files get ARCH-001..005,
+        engine files get ARCH-006.
+    """
     if "--staged" in args:
         result = subprocess.run(
             ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
             capture_output=True,
             text=True,
         )
-        files = [
+        staged = [f.strip() for f in result.stdout.strip().split("\n") if f.strip()]
+        constraint_files = [
             Path(f)
-            for f in result.stdout.strip().split("\n")
+            for f in staged
             if f.startswith(str(CONSTRAINT_DIR)) and f.endswith(".py")
+        ]
+        engine_files = [
+            Path(f)
+            for f in staged
+            if f == str(ENGINE_FILE)
         ]
     else:
         # Check all constraint files or specific files passed as args
         explicit = [a for a in args[1:] if not a.startswith("--")]
         if explicit:
-            files = [Path(a) for a in explicit]
+            constraint_files = [
+                Path(a) for a in explicit
+                if str(CONSTRAINT_DIR) in a
+            ]
+            engine_files = [
+                Path(a) for a in explicit
+                if a == str(ENGINE_FILE)
+            ]
         else:
-            files = sorted(CONSTRAINT_DIR.rglob("*.py"))
+            constraint_files = sorted(CONSTRAINT_DIR.rglob("*.py"))
+            engine_files = [ENGINE_FILE] if ENGINE_FILE.exists() else []
 
-    return [
+    constraint_files = [
         f
-        for f in files
+        for f in constraint_files
         if f.name not in EXCLUDED_FILES
         and "/templates/" not in str(f)
         and f.exists()
     ]
+
+    return constraint_files, engine_files
 
 
 # ---------------------------------------------------------------------------
@@ -502,15 +587,17 @@ def get_files_to_check(args: list[str]) -> list[Path]:
 
 
 def main() -> int:
-    files = get_files_to_check(sys.argv)
-    if not files:
+    constraint_files, engine_files = get_files_to_check(sys.argv)
+    all_files = constraint_files + engine_files
+    if not all_files:
         return 0
 
     print(f"{MAGENTA}Mind Flayer's Probe: Scanning constraint archetypes...{NC}")
 
     all_violations: list[Violation] = []
 
-    for filepath in files:
+    # ARCH-001..005: constraint files only
+    for filepath in constraint_files:
         try:
             source = filepath.read_text()
             tree = ast.parse(source, filename=str(filepath))
@@ -538,6 +625,28 @@ def main() -> int:
             check_call_coverage_without_spacing(tree, str(filepath))
         )
 
+    # ARCH-006: engine files (activity lookup disambiguation)
+    for filepath in engine_files:
+        try:
+            source = filepath.read_text()
+            tree = ast.parse(source, filename=str(filepath))
+        except SyntaxError as e:
+            print(f"{RED}SYNTAX ERROR: {filepath}:{e.lineno}: {e.msg}{NC}")
+            all_violations.append(
+                Violation(
+                    file=str(filepath),
+                    line=e.lineno or 0,
+                    rule="PARSE",
+                    message=f"SyntaxError: {e.msg}",
+                )
+            )
+            continue
+
+        _line_cache.pop(str(filepath), None)
+        all_violations.extend(
+            check_ambiguous_activity_lookup(tree, str(filepath))
+        )
+
     # Report
     errors = 0
     warnings = 0
@@ -554,7 +663,7 @@ def main() -> int:
             warnings += 1
 
     # Summary
-    checked = len(files)
+    checked = len(all_files)
     if errors > 0:
         print()
         print(
