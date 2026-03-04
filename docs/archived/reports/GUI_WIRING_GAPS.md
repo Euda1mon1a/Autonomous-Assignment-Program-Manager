@@ -31,7 +31,7 @@ Many admin GUI pages exist but cannot modify scheduling-critical data because:
 | `frontend/src/components/AddPersonModal.tsx` | No form fields for these values |
 
 ### Impact
-- Cannot change Montgomery from APD → PD via GUI
+- Cannot change faculty role (e.g. APD → PD) via GUI
 - Cannot adjust faculty clinic caps when duties change
 - Must use raw SQL or migrations to update these values
 

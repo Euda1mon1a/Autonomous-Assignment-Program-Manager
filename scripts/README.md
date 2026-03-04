@@ -156,7 +156,7 @@ python ../scripts/verify_schedule.py --block 10 --no-save
 9. Weekend coverage
 10. ACGME compliance
 
-**Output:** Markdown report saved to `docs/reports/schedule-verification-block{N}-{date}.md`
+**Output:** Markdown report saved to `docs/reviews/schedule-verification-block{N}-{date}.md`
 
 ### verify_constraints.py
 

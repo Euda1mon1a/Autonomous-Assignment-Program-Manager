@@ -10,10 +10,10 @@
 **Priority:** Low
 **Status:** Blocked (needs non-empty export data)
 
-**Context:** Chrome MCP Visual QA Script 4 (`docs/prompts/CHROME_MCP_VISUAL_QA.md`) verifies conditional formatting renders correctly when an exported `.xlsx` is opened in macOS Excel/Numbers. Browser agents cannot launch native desktop apps or screenshot them.
+**Context:** Chrome MCP Visual QA Script 4 (`docs/archived/prompts/CHROME_MCP_VISUAL_QA.md`) verifies conditional formatting renders correctly when an exported `.xlsx` is opened in macOS Excel/Numbers. Browser agents cannot launch native desktop apps or screenshot them.
 
 **Steps (human):**
-1. Ensure Export tab has data (Phase C of `docs/prompts/E2E_UNBLOCK_AND_EXPORT_WIRING.md`)
+1. Ensure Export tab has data (Phase C of `docs/archived/prompts/E2E_UNBLOCK_AND_EXPORT_WIRING.md`)
 2. Export a block schedule as `.xlsx` from `/hub/import-export`
 3. Open the downloaded file in Microsoft Excel or Numbers
 4. Verify: colored cells, header rows, conditional formatting, data validation dropdowns
@@ -48,7 +48,7 @@
 
 Codex-side safety and triage scaffolding is in place. These are the remaining human decisions.
 
-- [ ] Optional: review `docs/reports/automation/codex_bad1_final_salvage_20260205-2247.md` and cherry-pick from `codex/salvage/bad1-final-20260205-2247` if you want to keep any residual ideas.
+- [ ] Optional: review `docs/archived/reports/automation/codex_bad1_final_salvage_20260205-2247.md` and cherry-pick from `codex/salvage/bad1-final-20260205-2247` if you want to keep any residual ideas.
 - [ ] Keep nightly Codex hook scan automation enabled (`hook-pii-health-check` at `01:00`) unless replaced with an equivalent gate.
 - [ ] Confirm canonical keychain service names for local API keys (`OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, optional `MCP_API_KEY`) for long-term setup stability.
 - [ ] Decide whether to keep duplicated skills in both `.codex/skills` and `.claude/skills` or consolidate to one canonical root.

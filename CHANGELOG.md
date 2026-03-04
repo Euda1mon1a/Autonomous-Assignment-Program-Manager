@@ -99,7 +99,7 @@ All tests use **pure-logic isolation** (`--noconftest`, no DB/Redis) for instant
 - AuthContext cleanup leak (#1055)
 - JSONB tests not marked PostgreSQL-only (#1058)
 
-Full report: `docs/reports/autonomous-test-marathon-2026-02-09.md`
+Full report: `docs/archived/reports/autonomous-test-marathon-2026-02-09.md`
 
 #### Session 154 - Security & Testing Improvements (2026-01-31)
 
