@@ -81,11 +81,8 @@ const statusConfig = {
   },
 };
 
-const typeIcons = {
-  'one-to-one': '🔄',
-  'absorb': '📥',
-  'give-away': '📤',
-};
+// eslint-disable-next-line @typescript-eslint/naming-convention -- swap type display keys are hyphenated domain values
+const typeIcons: Record<string, string> = { 'one-to-one': '🔄', absorb: '📥', 'give-away': '📤' };
 
 export const SwapCard: React.FC<SwapCardProps> = ({
   swap,

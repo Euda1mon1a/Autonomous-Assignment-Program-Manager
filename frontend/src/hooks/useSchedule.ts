@@ -178,7 +178,7 @@ export function useSchedule(
  *       endDate: '2024-06-30',
  *       pgyLevels: [1, 2, 3],
  *       algorithm: 'hybrid',
- *       timeout_seconds: 300,
+ *       timeoutSeconds: 300,
  *     }, {
  *       onSuccess: (result) => {
  *         if (result.status === 'success') {

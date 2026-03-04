@@ -58,7 +58,7 @@ interface AbsenceWithImpact {
   id: string
   personId: string
   personName: string
-  person_role?: string
+  personRole?: string
   absenceType: string
   startDate: string
   endDate: string
@@ -144,7 +144,7 @@ export function UpcomingAbsences() {
           id: absence.id,
           personId: absence.personId,
           personName: person?.name ?? 'Unknown',
-          person_role: person?.type,
+          personRole: person?.type,
           absenceType: absence.absenceType,
           startDate: absence.startDate,
           endDate: absence.endDate,

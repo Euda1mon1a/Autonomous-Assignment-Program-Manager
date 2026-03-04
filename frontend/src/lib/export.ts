@@ -105,10 +105,8 @@ export async function exportToLegacyXlsx(
   blockNumber?: number,
   federalHolidays?: string[]
 ): Promise<void> {
-  const params = new URLSearchParams({
-    start_date: startDate,
-    end_date: endDate,
-  });
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- Couatl Killer: URL query params must be snake_case
+  const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
 
   if (blockNumber !== undefined) {
     params.append('block_number', blockNumber.toString());

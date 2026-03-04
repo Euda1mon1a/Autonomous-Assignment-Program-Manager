@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@/test-utils';
+import { render, screen } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { ComplianceAlert } from '../ComplianceAlert';
 
@@ -32,7 +32,7 @@ jest.mock('next/link', () => {
 jest.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => {
-      const { initial, animate, transition, ...rest } = props;
+      const { initial: _initial, animate: _animate, transition: _transition, ...rest } = props;
       return <div {...rest}>{children}</div>;
     },
   },

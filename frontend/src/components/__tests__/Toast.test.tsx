@@ -1,11 +1,10 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Toast Component
  * Component: 37 - Toast notifications
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@/test-utils';
+import { render, screen, fireEvent, act } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { Toast, ToastContainer } from '../Toast';
 
@@ -288,7 +287,6 @@ describe('Toast', () => {
       );
 
       const toast = container.firstChild as HTMLElement;
-      const styles = window.getComputedStyle(toast);
 
       expect(toast).toHaveStyle({ minWidth: '320px', maxWidth: '420px' });
     });

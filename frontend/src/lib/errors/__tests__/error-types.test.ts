@@ -43,27 +43,27 @@ describe('isRFC7807Error', () => {
   });
 
   it('returns false when missing type', () => {
-    const { type, ...rest } = makeRFC7807();
+    const { type: _type, ...rest } = makeRFC7807();
     expect(isRFC7807Error(rest)).toBe(false);
   });
 
   it('returns false when missing title', () => {
-    const { title, ...rest } = makeRFC7807();
+    const { title: _title, ...rest } = makeRFC7807();
     expect(isRFC7807Error(rest)).toBe(false);
   });
 
   it('returns false when missing status', () => {
-    const { status, ...rest } = makeRFC7807();
+    const { status: _status, ...rest } = makeRFC7807();
     expect(isRFC7807Error(rest)).toBe(false);
   });
 
   it('returns false when missing detail', () => {
-    const { detail, ...rest } = makeRFC7807();
+    const { detail: _detail, ...rest } = makeRFC7807();
     expect(isRFC7807Error(rest)).toBe(false);
   });
 
   it('returns false when missing errorCode', () => {
-    const { errorCode, ...rest } = makeRFC7807();
+    const { errorCode: _errorCode, ...rest } = makeRFC7807();
     expect(isRFC7807Error(rest)).toBe(false);
   });
 });

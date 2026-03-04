@@ -215,13 +215,8 @@ export function ErrorToastContainer({
     setToasts((prev) => prev.filter((toast) => toast.id !== id))
   }
 
-  const positionStyles = {
-    'top-right': 'top-4 right-4',
-    'top-left': 'top-4 left-4',
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-left': 'bottom-4 left-4',
-    'top-center': 'top-4 left-1/2 transform -translate-x-1/2',
-  }
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- CSS position keys are inherently hyphenated
+  const positionStyles: Record<string, string> = { 'top-right': 'top-4 right-4', 'top-left': 'top-4 left-4', 'bottom-right': 'bottom-4 right-4', 'bottom-left': 'bottom-4 left-4', 'top-center': 'top-4 left-1/2 transform -translate-x-1/2' }
 
   return (
     <div

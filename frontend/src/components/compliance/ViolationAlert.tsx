@@ -44,6 +44,8 @@ const severityConfig = {
   },
 };
 
+// @gorgon-ok — violation type keys are backend enum values (snake_case), must match API responses
+/* eslint-disable @typescript-eslint/naming-convention */
 const typeLabels: Record<string, string> = {
   work_hours: '80-Hour Violation',
   days_off: '1-in-7 Violation',
@@ -51,6 +53,7 @@ const typeLabels: Record<string, string> = {
   continuous_duty: 'Continuous Duty Violation',
   rest_period: 'Rest Period Violation',
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export const ViolationAlert: React.FC<ViolationAlertProps> = ({
   violation,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention -- strategy names are PascalCase domain data */
 /**
  * Tests for EvolutionChart Component
  * Component: game-theory/EvolutionChart - Strategy evolution visualization

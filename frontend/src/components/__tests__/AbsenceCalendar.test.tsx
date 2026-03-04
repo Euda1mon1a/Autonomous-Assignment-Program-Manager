@@ -4,10 +4,9 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@/test-utils';
+import { render, screen, fireEvent } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { AbsenceCalendar } from '../AbsenceCalendar';
-import { mockData } from '@/test-utils';
 import { PersonType, AbsenceType } from '@/types/api';
 import type { Absence, Person } from '@/types/api';
 

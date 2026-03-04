@@ -27,10 +27,8 @@ global.fetch = jest.fn(() =>
 
 describe('ScheduleCalendar', () => {
   const mockWeekStart = new Date('2024-01-01');
-  const mockSchedule = {
-    '2024-01-01': { AM: [], PM: [] },
-    '2024-01-02': { AM: [], PM: [] },
-  };
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- date and AM/PM keys are domain data
+  const mockSchedule = { '2024-01-01': { AM: [], PM: [] }, '2024-01-02': { AM: [], PM: [] } };
 
   beforeEach(() => {
     jest.clearAllMocks();

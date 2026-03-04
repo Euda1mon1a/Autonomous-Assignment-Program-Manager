@@ -7,7 +7,6 @@ import React from 'react';
 import { render, screen, fireEvent } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { AbsenceList } from '../AbsenceList';
-import { mockData } from '@/test-utils';
 import { AbsenceType, PersonType, type Absence, type Person } from '@/types/api';
 
 describe('AbsenceList', () => {

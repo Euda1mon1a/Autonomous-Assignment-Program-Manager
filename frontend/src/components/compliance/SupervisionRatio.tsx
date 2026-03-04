@@ -13,6 +13,7 @@ export interface SupervisionRatioProps {
   className?: string;
 }
 
+/* eslint-disable @typescript-eslint/naming-convention -- keys are PGY level identifiers (domain-specific format) */
 const pgyRequirements: Record<string, { maxRatio: number; description: string }> = {
   'PGY-1': {
     maxRatio: 2,
@@ -27,6 +28,7 @@ const pgyRequirements: Record<string, { maxRatio: number; description: string }>
     description: 'Senior residents (max 1:4 faculty:resident ratio)',
   },
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export const SupervisionRatio: React.FC<SupervisionRatioProps> = ({
   current,

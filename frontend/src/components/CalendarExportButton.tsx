@@ -112,10 +112,8 @@ export function CalendarExportButton({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          personId: personId,
-          expires_days: null, // Never expires
-        }),
+        // eslint-disable-next-line @typescript-eslint/naming-convention -- raw fetch bypasses axios interceptor, key must match backend
+        body: JSON.stringify({ personId, expires_days: null }),
       })
 
       if (!response.ok) {

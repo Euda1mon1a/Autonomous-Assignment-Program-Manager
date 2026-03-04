@@ -1,4 +1,3 @@
-import { renderWithProviders } from '@/test-utils';
 /**
  * Tests for Tabs Component
  * Component: 47 - Tab navigation
@@ -161,7 +160,7 @@ describe('Tabs', () => {
         { id: 'tab2', label: 'Tab 2', content: <div>Content 2</div>, disabled: true },
       ];
 
-      const { container } = render(<Tabs tabs={tabsWithDisabled} />);
+      render(<Tabs tabs={tabsWithDisabled} />);
 
       const disabledTab = screen.getByText('Tab 2');
       expect(disabledTab).toHaveClass('disabled:opacity-50', 'disabled:cursor-not-allowed');

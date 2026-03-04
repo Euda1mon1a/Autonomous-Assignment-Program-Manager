@@ -246,7 +246,7 @@ describe('EmptyState', () => {
 
     it('renders children below action button', () => {
       const action = { label: 'Add item', onClick: jest.fn() };
-      const { container } = render(
+      render(
         <EmptyState
           title="No items"
           action={action}
