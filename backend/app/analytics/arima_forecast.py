@@ -34,7 +34,7 @@ import logging
 import warnings
 from dataclasses import dataclass, field
 from datetime import UTC, date, timedelta
-from typing import TypedDict
+from typing import Any, TypedDict
 
 import numpy as np
 from numpy.typing import NDArray
@@ -181,7 +181,7 @@ class ARIMAForecaster:
         self.manual_order = order
         self.config = config or ARIMAConfig()
 
-        self.model_ = None
+        self.model_: Any = None
         self.order_: tuple[int, int, int] | None = None
         self.fitted_values_: NDArray[np.float64] | None = None
         self.residuals_: NDArray[np.float64] | None = None
@@ -248,6 +248,7 @@ class ARIMAForecaster:
 
     def _fit_fallback(self) -> None:
         """Fit simple fallback model when statsmodels unavailable."""
+        assert self._series is not None, "fit() must be called before _fit_fallback()"
         self.order_ = (0, 0, 0)
         self.fitted_values_ = np.full_like(
             self._series.values, np.mean(self._series.values)
@@ -265,6 +266,7 @@ class ARIMAForecaster:
         if not HAS_STATSMODELS:
             return 1  # Default fallback
 
+        assert self._series is not None
         series = self._series.values.copy()
 
         for d in range(self.config.max_d + 1):
@@ -305,6 +307,7 @@ class ARIMAForecaster:
         best_score = float("inf")
         best_order = (1, 1)
 
+        assert self._series is not None
         series = self._series.values
 
         for p in range(self.config.max_p + 1):
@@ -354,6 +357,7 @@ class ARIMAForecaster:
         """
         if self.order_ is None:
             raise ValueError("Model not fitted. Call fit() first.")
+        assert self._series is not None, "Model not fitted. Call fit() first."
 
         confidence = confidence_level or self.config.confidence_level
         alpha = 1 - confidence
@@ -422,7 +426,8 @@ class ARIMAForecaster:
 
     def _forecast_fallback(self, periods: int, alpha: float) -> list[ForecastPoint]:
         """Generate fallback forecasts using simple methods."""
-        forecasts = []
+        assert self._series is not None
+        forecasts: list[ForecastPoint] = []
 
         # Use last 14 values (or available) for simple forecasting
         recent = self._series.values[-min(14, len(self._series.values)) :]
@@ -456,6 +461,8 @@ class ARIMAForecaster:
 
     def _get_diagnostics(self) -> ModelDiagnostics:
         """Get model diagnostics."""
+        assert self._series is not None
+        assert self.order_ is not None
         if self.model_ is not None and HAS_STATSMODELS:
             aic = float(self.model_.aic)
             bic = float(self.model_.bic)
@@ -466,8 +473,8 @@ class ARIMAForecaster:
                 float(np.sum(self.residuals_**2)) if self.residuals_ is not None else 0
             )
             k = sum(self.order_) + 1  # Number of parameters
-            aic = n * np.log(rss / n) + 2 * k
-            bic = n * np.log(rss / n) + k * np.log(n)
+            aic = float(n * np.log(rss / n) + 2 * k)
+            bic = float(n * np.log(rss / n) + k * np.log(n))
 
             # Check stationarity
         is_stationary = True

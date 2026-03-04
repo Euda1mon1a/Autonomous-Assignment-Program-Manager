@@ -22,7 +22,7 @@ class ResidentReport:
         self.report_builder = ReportBuilder()
 
     async def generate(
-        self, start_date: date, end_date: date, resident_id: str = None
+        self, start_date: date, end_date: date, resident_id: str | None = None
     ) -> dict[str, Any]:
         """Generate resident hours report."""
         metrics = await self.analytics_engine.calculate_all_metrics(

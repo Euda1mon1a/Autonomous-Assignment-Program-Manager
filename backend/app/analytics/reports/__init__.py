@@ -7,8 +7,10 @@ from pathlib import Path
 # Import from reports.py file (shadowed by this package directory)
 _reports_file = Path(__file__).parent.parent / "reports.py"
 _spec = importlib.util.spec_from_file_location("reports_base", _reports_file)
+assert _spec is not None, f"Could not find module spec for {_reports_file}"
 _reports_base = importlib.util.module_from_spec(_spec)
 sys.modules["reports_base"] = _reports_base
+assert _spec.loader is not None, f"No loader for {_reports_file}"
 _spec.loader.exec_module(_reports_base)
 
 # Re-export ReportGenerator from reports.py

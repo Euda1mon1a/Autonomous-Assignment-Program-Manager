@@ -16,7 +16,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy.orm import Session
 from sqlalchemy_continuum import version_class
@@ -580,7 +580,7 @@ class StabilityMetricsComputer:
             return 0.0
 
             # Count assignments and unique rotations per person
-        person_stats = defaultdict(
+        person_stats: dict[Any, dict[str, Any]] = defaultdict(
             lambda: {
                 "assignment_count": 0,
                 "rotations": set(),
@@ -890,4 +890,4 @@ def compute_stability_metrics(
     result["is_stable"] = metrics.is_stable
     result["stability_grade"] = metrics.stability_grade
 
-    return result
+    return cast(StabilityMetricsDict, result)
