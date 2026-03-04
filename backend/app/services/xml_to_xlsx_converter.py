@@ -435,6 +435,42 @@ class XMLToXlsxConverter:
         if self.use_block_template2:
             self._prune_empty_sheets(wb, keep={"Block Template2", "Export_QA"})
 
+        # Apply Arial 16 font to all cells and set column widths
+        base_font = Font(name="Arial", size=16)
+        for ws in wb.worksheets:
+            for row in ws.iter_rows():
+                for cell in row:
+                    if cell.font and (cell.font.color or cell.font.bold):
+                        cell.font = Font(
+                            name="Arial",
+                            size=16,
+                            bold=cell.font.bold,
+                            color=cell.font.color,
+                        )
+                    else:
+                        cell.font = base_font
+
+        # Set column widths for Arial 16 on main schedule sheet
+        if self.use_block_template2:
+            main_sheet = (
+                wb["Block Template2"]
+                if "Block Template2" in wb.sheetnames
+                else wb.active
+            )
+        else:
+            main_sheet = wb.active
+        # Label columns A-E
+        main_sheet.column_dimensions["A"].width = 15  # Rotation1
+        main_sheet.column_dimensions["B"].width = 9  # Rotation2
+        main_sheet.column_dimensions["C"].width = 7  # Template
+        main_sheet.column_dimensions["D"].width = 10  # Role/PGY
+        main_sheet.column_dimensions["E"].width = 35  # Name
+        # Schedule columns (F onward): 2 cols per day, need ~9 for "FMIT"
+        actual_days = (block_end - block_start).days + 1
+        schedule_end = BT2_COL_SCHEDULE_START + (actual_days * COLS_PER_DAY)
+        for col in range(BT2_COL_SCHEDULE_START, schedule_end + 1):
+            main_sheet.column_dimensions[get_column_letter(col)].width = 9
+
         # Save to bytes
         buffer = BytesIO()
         wb.save(buffer)
@@ -1244,6 +1280,7 @@ class XMLToXlsxConverter:
             day_cell.value = day_full.get(weekday, "")
             abbrev_cell.value = day_abbrev.get(weekday, "")
             date_cell.value = datetime(current.year, current.month, current.day)
+            date_cell.number_format = "m/d"
 
             current += timedelta(days=1)
             col += 2
