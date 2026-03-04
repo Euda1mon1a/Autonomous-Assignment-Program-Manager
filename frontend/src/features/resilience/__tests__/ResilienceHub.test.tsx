@@ -1,4 +1,4 @@
-import { useSystemHealth, useVulnerabilityReport, useBurnoutRt, useUtilizationThreshold } from "@/hooks/useResilience";
+import { useSystemHealth } from "@/hooks/useResilience";
 import { OverallStatus, UtilizationLevel } from "@/types/resilience";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { ResilienceHub } from "../ResilienceHub";

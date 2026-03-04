@@ -5,9 +5,6 @@
  * Covers compliance dashboards, work hour tracking, violation alerts,
  * and compliance report generation.
  */
-import { render, screen, waitFor } from '@/test-utils'
-import userEvent from '@testing-library/user-event'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as api from '@/lib/api'
 
 // Mock the API module
@@ -24,32 +21,6 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/compliance',
   useSearchParams: () => new URLSearchParams(),
 }))
-
-// Create test query client
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-        staleTime: 0,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  })
-}
-
-// Test wrapper
-function renderWithProviders(ui: React.ReactElement) {
-  const queryClient = createTestQueryClient()
-  return render(
-    <QueryClientProvider client={queryClient}>
-      {ui}
-    </QueryClientProvider>
-  )
-}
 
 // ============================================================================
 // Type Definitions
@@ -97,25 +68,6 @@ interface WorkHours {
 interface ComplianceListResponse<T> {
   items: T[];
   total: number;
-}
-
-interface ComplianceReport {
-  reportId: string;
-  type: string;
-  generatedAt?: string;
-  downloadUrl?: string;
-  month?: string;
-  format?: string;
-  summary?: {
-    totalViolations: number;
-    resolvedViolations: number;
-    activeViolations: number;
-  };
-}
-
-interface ApiError {
-  message: string;
-  status: number;
 }
 
 // Mock compliance data
@@ -847,7 +799,7 @@ describe('Compliance Monitoring Flow - Integration Tests', () => {
     it('should filter by date range', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/compliance/status?start=2024-01-01&end=2024-01-31')
+      const _result: any = await mockedApi.get('/api/compliance/status?start=2024-01-01&end=2024-01-31')
       expect(mockedApi.get).toHaveBeenCalledWith(
         expect.stringContaining('start=2024-01-01')
       )

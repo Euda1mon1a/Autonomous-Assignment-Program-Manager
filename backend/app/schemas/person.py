@@ -57,6 +57,21 @@ class PersonBase(BaseModel):
     faculty_role: FacultyRoleSchema | None = Field(
         None, description="Faculty role type"
     )
+    min_clinic_halfdays_per_week: int | None = Field(
+        None, ge=0, le=10, description="Minimum clinic half-days per week"
+    )
+    max_clinic_halfdays_per_week: int | None = Field(
+        None, ge=0, le=10, description="Maximum clinic half-days per week"
+    )
+    admin_type: str | None = Field(None, description="Admin type: GME, DFM, SM")
+
+    @field_validator("admin_type")
+    @classmethod
+    def validate_admin_type(cls, v: str | None) -> str | None:
+        """Validate admin_type is a known value."""
+        if v is not None and v not in ("GME", "DFM", "SM"):
+            raise ValueError("admin_type must be GME, DFM, or SM")
+        return v
 
     @field_validator("name")
     @classmethod
@@ -107,6 +122,13 @@ class PersonUpdate(BaseModel):
     faculty_role: FacultyRoleSchema | None = Field(
         None, description="Faculty role type"
     )
+    min_clinic_halfdays_per_week: int | None = Field(
+        None, ge=0, le=10, description="Minimum clinic half-days per week"
+    )
+    max_clinic_halfdays_per_week: int | None = Field(
+        None, ge=0, le=10, description="Maximum clinic half-days per week"
+    )
+    admin_type: str | None = Field(None, description="Admin type: GME, DFM, SM")
 
     @field_validator("name")
     @classmethod
@@ -173,6 +195,13 @@ class PersonResponse(PersonBase):
             "specialties": get_attr(person, "specialties"),
             "primary_duty": get_attr(person, "primary_duty"),
             "faculty_role": get_attr(person, "faculty_role"),
+            "min_clinic_halfdays_per_week": get_attr(
+                person, "min_clinic_halfdays_per_week"
+            ),
+            "max_clinic_halfdays_per_week": get_attr(
+                person, "max_clinic_halfdays_per_week"
+            ),
+            "admin_type": get_attr(person, "admin_type"),
             "created_at": get_attr(person, "created_at"),
             "updated_at": get_attr(person, "updated_at"),
             "sunday_call_count": get_attr(person, "sunday_call_count", 0),

@@ -4,9 +4,7 @@
  * Tests complete user journeys for viewing, navigating, and managing schedules.
  * Covers weekly/monthly views, filtering, assignment details, and exports.
  */
-import { render, screen, waitFor, within } from '@/test-utils'
-import userEvent from '@testing-library/user-event'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
 import * as api from '@/lib/api'
 
 // Mock the API module
@@ -38,16 +36,6 @@ function createTestQueryClient() {
       },
     },
   })
-}
-
-// Test wrapper
-function renderWithProviders(ui: React.ReactElement) {
-  const queryClient = createTestQueryClient()
-  return render(
-    <QueryClientProvider client={queryClient}>
-      {ui}
-    </QueryClientProvider>
-  )
 }
 
 // Mock data
@@ -235,7 +223,7 @@ describe('Schedule Management Flow - Integration Tests', () => {
       // This test would render the actual schedule page component
       // For now, we'll test the data flow
 
-      const queryClient = createTestQueryClient()
+      const _queryClient = createTestQueryClient()
 
       // Simulate fetching schedule data
       mockedApi.get.mockResolvedValueOnce({ items: mockBlocks, total: mockBlocks.length })

@@ -390,8 +390,8 @@ export const handlers = [
   http.get(`${API_BASE_URL}/assignments`, ({ request }) => {
     const url = new URL(request.url)
     const personId = url.searchParams.get('personId')
-    const startDate = url.searchParams.get('startDate')
-    const endDate = url.searchParams.get('endDate')
+    const _startDate = url.searchParams.get('startDate')
+    const _endDate = url.searchParams.get('endDate')
 
     let filteredAssignments = [...mockAssignments]
 

@@ -5,9 +5,6 @@
  * Covers defense levels, utilization gauges, N-1/N-2 contingency analysis,
  * early warning systems, and resilience reports.
  */
-import { render, screen, waitFor } from '@/test-utils'
-import userEvent from '@testing-library/user-event'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as api from '@/lib/api'
 
 // Mock the API module
@@ -24,22 +21,6 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/admin/health',
   useSearchParams: () => new URLSearchParams(),
 }))
-
-// Create test query client
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        gcTime: 0,
-        staleTime: 0,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  })
-}
 
 // Mock resilience data - use wider type to allow overrides in tests
 type DefenseLevel = 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED' | 'BLACK'

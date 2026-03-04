@@ -463,7 +463,7 @@ export async function waitForElement(
       { timeout }
     );
     return element!;
-  } catch (error) {
+  } catch (_error) {
     throw new Error(errorMessage);
   }
 }
@@ -517,7 +517,7 @@ export async function typeIntoField(user: ReturnType<typeof userEvent.setup>, in
 export async function selectOption(
   user: ReturnType<typeof userEvent.setup>,
   select: HTMLElement,
-  optionText: string
+  _optionText: string
 ): Promise<void> {
   await user.click(select);
   await user.click(await waitForElement(() => document.querySelector(`[role="option"]`)));
