@@ -246,7 +246,6 @@ docs/scheduling/*.csv
 docs/scheduling/BLOCK12_SCHEDULE_LOAD.md
 
 # Local archival docs (may contain PII)
-archived/expansion/
 docs/archives/
 docs/analysis/
 

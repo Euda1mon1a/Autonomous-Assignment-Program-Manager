@@ -47,9 +47,7 @@ This document maps all executable scripts in the repository to their owning agen
 |--------|-------------|-------------|---------|-------------------|
 | `scripts/stack-backup.sh` | DBA | COORD_PLATFORM | **Unified** backup/restore with immaculate fallback | Before risky operations, recovery, emergency |
 | `scripts/backup-db.sh` | DBA | COORD_PLATFORM | Create compressed PostgreSQL backups with rotation | Scheduled backups, before destructive operations |
-| `scripts/archived/backup_full_stack.sh` | DBA | COORD_PLATFORM | **DEPRECATED** - Use stack-backup.sh | Legacy |
-| `scripts/archived/full-stack-backup.sh` | DBA | COORD_PLATFORM | **DEPRECATED** - Use stack-backup.sh | Legacy |
-| `scripts/archived/restore_full_stack.sh` | DBA | COORD_PLATFORM | **DEPRECATED** - Use stack-backup.sh | Legacy |
+| ~~`scripts/archived/`~~ | — | — | **DELETED** — deprecated backup scripts removed (Mar 2026) | — |
 
 ### Security Scripts (SECURITY_AUDITOR Domain)
 

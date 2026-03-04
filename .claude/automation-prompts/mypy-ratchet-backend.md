@@ -17,7 +17,7 @@ cd backend
 
 | Batch | Directory | ~Errors | Top Error Types |
 |-------|-----------|---------|-----------------|
-| 1 | `app/services/_archived/` | 74 | arg-type, assignment |
+| ~~1~~ | ~~`app/services/_archived/`~~ | ~~74~~ | **DELETED** — dead code removed Mar 2026 |
 | 2 | `app/testing/` | 126 | arg-type, assignment |
 | 3 | `app/analytics/` | 63 | arg-type, str |
 | 4 | `app/exports/` | 59 | arg-type, assignment |

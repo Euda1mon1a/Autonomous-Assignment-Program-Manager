@@ -2,18 +2,20 @@
 
 ## Quick Backup
 
-Run the full stack backup script:
+Run the unified stack backup script:
 
 ```bash
 # Basic backup (database + volumes + frontend)
-./scripts/archived/backup_full_stack.sh
+./scripts/stack-backup.sh
 
 # Include Redis data
-./scripts/archived/backup_full_stack.sh --include-redis
+./scripts/stack-backup.sh --include-redis
 
 # Custom output directory
-./scripts/archived/backup_full_stack.sh --output-dir /path/to/backups
+./scripts/stack-backup.sh --output-dir /path/to/backups
 ```
+
+> **Note:** Legacy scripts (`backup_full_stack.sh`, `full-stack-backup.sh`, `restore_full_stack.sh`) were removed in Mar 2026. Use `stack-backup.sh` instead.
 
 ## Backup Contents
 
@@ -89,5 +91,5 @@ To schedule daily backups:
 
 ```bash
 # Add to crontab (crontab -e)
-0 2 * * * /path/to/project/scripts/archived/backup_full_stack.sh >> /var/log/scheduler_backup.log 2>&1
+0 2 * * * /path/to/project/scripts/stack-backup.sh >> /var/log/scheduler_backup.log 2>&1
 ```
