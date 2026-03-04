@@ -4,10 +4,10 @@ Triage Codex macOS app worktrees, produce a plan, and optionally apply it.
 
 Usage:
   # Create a triage plan (JSON)
-  python3 scripts/ops/codex_automation_triage.py --plan
+  python3 .codex/scripts/codex_automation_triage.py --plan
 
   # Apply a plan (cherry-pick/archive), requires clean repo
-  python3 scripts/ops/codex_automation_triage.py --apply-plan <plan.json>
+  python3 .codex/scripts/codex_automation_triage.py --apply-plan <plan.json>
 """
 
 from __future__ import annotations

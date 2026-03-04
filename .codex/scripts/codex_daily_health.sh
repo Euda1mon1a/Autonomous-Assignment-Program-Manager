@@ -7,8 +7,8 @@
 # - automation schedule snapshot
 #
 # Usage:
-#   scripts/ops/codex_daily_health.sh
-#   scripts/ops/codex_daily_health.sh --save
+#   .codex/scripts/codex_daily_health.sh
+#   .codex/scripts/codex_daily_health.sh --save
 
 set -euo pipefail
 
@@ -20,7 +20,7 @@ SKIP_SCANS=false
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/ops/codex_daily_health.sh [options]
+  .codex/scripts/codex_daily_health.sh [options]
 
 Options:
   --save            Save markdown report to docs/reports/automation/
@@ -146,7 +146,7 @@ if [[ "${SKIP_SCANS}" == false ]]; then
   hook_args=(--hooks-only --with-scans --save)
 fi
 set +e
-hook_output="$(scripts/ops/codex_safety_audit.sh "${hook_args[@]}" 2>&1)"
+hook_output="$(.codex/scripts/codex_safety_audit.sh "${hook_args[@]}" 2>&1)"
 hook_rc=$?
 set -e
 if [[ ${hook_rc} -eq 0 ]]; then
@@ -168,7 +168,7 @@ append ""
 append "## Cherry-Pick Risk"
 append ""
 set +e
-hunter_output="$(scripts/ops/codex_cherry_pick_hunter.sh --save 2>&1)"
+hunter_output="$(.codex/scripts/codex_cherry_pick_hunter.sh --save 2>&1)"
 hunter_rc=$?
 set -e
 hunter_report_path="$(printf '%s\n' "${hunter_output}" | tail -n1)"
@@ -179,7 +179,7 @@ else
   overall_rc=1
 fi
 set +e
-scripts/ops/codex_cherry_pick_hunter.sh --risk-check >/dev/null 2>&1
+.codex/scripts/codex_cherry_pick_hunter.sh --risk-check >/dev/null 2>&1
 risk_rc=$?
 set -e
 if [[ ${risk_rc} -eq 0 ]]; then
@@ -196,7 +196,7 @@ append ""
 append "## Skill Drift"
 append ""
 set +e
-skill_output="$(scripts/ops/codex_skill_audit.sh --save 2>&1)"
+skill_output="$(.codex/scripts/codex_skill_audit.sh --save 2>&1)"
 skill_rc=$?
 set -e
 if [[ ${skill_rc} -eq 0 ]]; then
@@ -212,7 +212,7 @@ append ""
 append "## Automation Schedule Snapshot"
 append ""
 set +e
-schedule_output="$(scripts/ops/codex_app_schedule_status.sh --fail-on-collision --max-per-minute 5 2>&1)"
+schedule_output="$(.codex/scripts/codex_app_schedule_status.sh --fail-on-collision --max-per-minute 5 2>&1)"
 schedule_rc=$?
 set -e
 if [[ ${schedule_rc} -eq 0 ]]; then
@@ -231,7 +231,7 @@ if [[ "${INCLUDE_STORAGE}" == true ]]; then
   append "## Storage Snapshot"
   append ""
   set +e
-  storage_output="$(scripts/ops/codex_storage_hygiene.sh --audit 2>&1)"
+  storage_output="$(.codex/scripts/codex_storage_hygiene.sh --audit 2>&1)"
   storage_rc=$?
   set -e
   if [[ ${storage_rc} -eq 0 ]]; then
