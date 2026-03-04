@@ -293,7 +293,7 @@ Each [BUG] from Prototype 2 becomes a regression test in:
 
 ### ACGME Alerts → ADRs
 Regulatory changes from Prototype 3 become ADRs in:
-- `docs/decisions/ADR-YYYY-MM-DD-acgme-{change}.md`
+- `docs/architecture/decisions/ADR-YYYY-MM-DD-acgme-{change}.md`
 
 With corresponding validator updates in:
 - `backend/app/scheduling/validators/`

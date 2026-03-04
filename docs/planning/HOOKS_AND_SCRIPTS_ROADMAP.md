@@ -302,7 +302,7 @@
 
 | ID | Task | Effort | Files | Verification |
 |----|------|--------|-------|--------------|
-| P4.1 | Evaluate GPG signing requirements | 1h | `docs/decisions/GPG_SIGNING_DECISION.md` | Decision documented |
+| P4.1 | Evaluate GPG signing requirements | 1h | `docs/architecture/decisions/GPG_SIGNING_DECISION.md` | Decision documented |
 | P4.2 | Add weekly Gitleaks history scan | 2h | `.github/workflows/security.yml` | Weekly scan runs |
 | P4.3 | Create hook effectiveness dashboard | 3h | `scripts/hook-metrics.sh` | Metrics visible |
 | P4.4 | (If approved) Implement GPG signing enforcement | 2h | `.pre-commit-config.yaml` | Unsigned commits blocked |
@@ -362,7 +362,7 @@
 | `.pii-scan-config.yaml` | 1 | External personnel names list |
 | `.claude/hooks/bypass-audit.log` | 3 | Hook bypass tracking |
 | `scripts/hook-metrics.sh` | 4 | Effectiveness dashboard |
-| `docs/decisions/GPG_SIGNING_DECISION.md` | 4 | GPG policy decision |
+| `docs/architecture/decisions/GPG_SIGNING_DECISION.md` | 4 | GPG policy decision |
 
 ### Scripts to Remove
 

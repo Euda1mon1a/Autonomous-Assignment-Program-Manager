@@ -1,6 +1,6 @@
 # Control Theory Service Specification - Summary
 
-**File:** `/home/user/Autonomous-Assignment-Program-Manager/docs/specs/CONTROL_THEORY_SERVICE_SPEC.md`
+**File:** `/home/user/Autonomous-Assignment-Program-Manager/docs/architecture/CONTROL_THEORY_SERVICE_SPEC.md`
 **Lines:** 2,928
 **Created:** 2025-12-26
 **Status:** Implementation Ready

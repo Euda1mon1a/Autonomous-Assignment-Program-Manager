@@ -145,5 +145,5 @@ Add approval fields:
 ---
 
 ## References
-- Roadmap: `docs/roadmaps/LOCK_WINDOW_BREAK_GLASS_ROADMAP.md`
-- Supplemental policy: `docs/resilience/LOCK_WINDOW_BREAK_GLASS_POLICY.md`
+- Roadmap: `docs/planning/LOCK_WINDOW_BREAK_GLASS_ROADMAP.md`
+- Supplemental policy: `docs/architecture/LOCK_WINDOW_BREAK_GLASS_POLICY.md`

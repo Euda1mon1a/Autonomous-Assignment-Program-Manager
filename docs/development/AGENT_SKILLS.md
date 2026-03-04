@@ -476,7 +476,7 @@ Every time this skill runs, it MUST:
 1. Print visible PASS/FAIL for each check
 2. Show actual data found (not just "checked")
 3. Generate summary table
-4. Save report to `docs/reports/schedule-verification-{block}-{date}.md`
+4. Save report to `docs/archived/reports/schedule-verification-{block}-{date}.md`
 
 **CLI Tool**:
 ```bash

@@ -17,7 +17,7 @@ This tool finds:
 # Human-readable report in terminal
 scripts/ops/codex_cherry_pick_hunter.sh
 
-# Save report to docs/reports/automation/
+# Save report to docs/archived/reports/automation/
 scripts/ops/codex_cherry_pick_hunter.sh --save
 ```
 

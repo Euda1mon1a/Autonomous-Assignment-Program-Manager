@@ -238,7 +238,7 @@ class ScheduleGenerator:
 
 ## References
 
-- `docs/constraints/SLOT_TYPE_INVARIANTS.md` - Detailed invariant documentation
+- `docs/architecture/SLOT_TYPE_INVARIANTS.md` - Detailed invariant documentation
 - `backend/app/models/credential.py` - Credential model
 - `backend/app/services/credential_validator.py` - Validation service
 - `backend/app/scheduling/constraints/credentials.py` - Scheduler integration

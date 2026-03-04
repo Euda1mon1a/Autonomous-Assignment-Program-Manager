@@ -59,7 +59,7 @@ Codex-side safety and triage scaffolding is in place. These are the remaining hu
 
 **Priority:** Low (deferred)
 **Status:** DEFERRED - Research archived
-**ADR:** `docs/decisions/ADR-2026-01-28-latex-generation.md`
+**ADR:** `docs/architecture/decisions/ADR-2026-01-28-latex-generation.md`
 
 **Summary:** PR #772 evaluated LaTeX libraries for military MFR generation.
 - Recommendation: Jinja2 + pylatexenc when needed
@@ -74,7 +74,7 @@ Codex-side safety and triage scaffolding is in place. These are the remaining hu
 
 **Priority:** High (improves schedule quality)
 **Status:** Analysis complete, implementation pending
-**Analysis:** `docs/analysis/excel-vs-cpsat-block10-comparison.md`
+**Analysis:** `docs/architecture/excel-vs-cpsat-block10-comparison.md`
 
 **Findings:** Excel hand-tuned schedule differs significantly from CP-SAT output:
 - CP-SAT assigns more clinic days to outpatient residents (+11 to +25 half-days)
@@ -744,7 +744,7 @@ Comprehensive hooks and scripts consolidation addressing:
 - **MCP Server Tests Failing in CI** -- Resolved 2026-02-04. CI-lite workflow (`.github/workflows/ci-lite.yml`) created for repo-only validation with mocked API client.
 - **Faculty Assignments Missing rotation_template_id** -- Fixed 2025-12-23. Added `_get_primary_template_for_block()` to engine; all 430 faculty assignments now have template IDs.
 - **Solver Template Distribution Bugs** -- Fixed 2025-12-24, verified 2025-12-29. Three bugs (greedy, CP-SAT, template filter) fixed; all 4 solvers operational with balance tests.
-- **Documentation Cleanup (Celery Checklist)** -- Completed 2025-12-21. Moved from archived to `docs/deployment/CELERY_PRODUCTION_CHECKLIST.md`.
+- **Documentation Cleanup (Celery Checklist)** -- Completed 2025-12-21. Moved from archived to `docs/operations/CELERY_PRODUCTION_CHECKLIST.md`.
 - **Admin Email Invitations** -- Verified 2026-01-03. Was a phantom task; full email infrastructure already implemented (Celery task, SMTP service, route wiring).
 - **Activity Logging Infrastructure** -- Verified 2026-01-04. Full ActivityLog model with 26 action types, 8 admin call sites, activity-log endpoint deployed.
 - **Frontend WebSocket Client** -- Resolved. `useWebSocket.ts` implemented with reconnection, JWT auth, typed events.

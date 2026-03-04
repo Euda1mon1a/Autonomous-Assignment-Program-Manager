@@ -82,7 +82,7 @@ This roadmap starts at the beginning (inputs + preloads) and walks forward to ex
 - `backend/app/scheduling/constraints/overnight_call.py`
 - `backend/app/scheduling/constraints/call_coverage.py`
 - `backend/app/scheduling/constraints/call_equity.py`
-- `docs/reports/block10-cpsat-run-20260126.md`
+- `docs/archived/reports/block10-cpsat-run-20260126.md`
 
 ---
 

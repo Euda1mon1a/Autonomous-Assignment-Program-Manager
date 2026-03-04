@@ -510,7 +510,7 @@ Dashboards can be customized by:
 - **Logging Configuration**: See `backend/app/monitoring/logging_config.py`
 - **Alert System**: See `backend/app/monitoring/alerts.py`
 - **Health Checks**: See `backend/app/monitoring/health_checks.py`
-- **Observability Guide**: See `docs/monitoring/OBSERVABILITY_GUIDE.md`
+- **Observability Guide**: See `docs/operations/OBSERVABILITY_GUIDE.md`
 
 ---
 

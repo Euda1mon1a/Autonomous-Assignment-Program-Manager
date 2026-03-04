@@ -10,8 +10,8 @@ Protect near-term schedules with a lock date and break-glass approval while pres
 ---
 
 ## Phase 0 - Documentation (Now)
-- [x] Spec document: `docs/specs/LOCK_WINDOW_BREAK_GLASS_SPEC.md`
-- [x] Policy supplement: `docs/resilience/LOCK_WINDOW_BREAK_GLASS_POLICY.md`
+- [x] Spec document: `docs/architecture/LOCK_WINDOW_BREAK_GLASS_SPEC.md`
+- [x] Policy supplement: `docs/architecture/LOCK_WINDOW_BREAK_GLASS_POLICY.md`
 - [x] Priority list updated
 
 ---

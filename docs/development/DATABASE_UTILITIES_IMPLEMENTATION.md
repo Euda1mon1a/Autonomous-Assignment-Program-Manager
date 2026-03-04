@@ -494,7 +494,7 @@ Task 8: Transaction Management ✅
 
 ### Files Created
 
-9. **`docs/database/DATABASE_UTILITIES_GUIDE.md`** (850+ lines)
+9. **`docs/development/DATABASE_UTILITIES_GUIDE.md`** (850+ lines)
 
 Comprehensive guide covering:
 - Async Repository Base usage
@@ -546,7 +546,7 @@ async with UnitOfWork(db_session) as uow:
 - Table growth
 - Deadlock detection
 
-10. **`docs/database/MIGRATION_PROCEDURES.md`** (800+ lines)
+10. **`docs/development/MIGRATION_PROCEDURES.md`** (800+ lines)
 
 Comprehensive migration guide covering:
 - Schema vs data migrations
@@ -627,7 +627,7 @@ backend/tests/repositories/
 
 ### Documentation
 ```
-docs/database/
+docs/development/
 ├── DATABASE_UTILITIES_GUIDE.md      ✅ (850+ lines)
 ├── MIGRATION_PROCEDURES.md          ✅ (800+ lines)
 └── DATABASE_UTILITIES_IMPLEMENTATION.md (this file)

@@ -423,7 +423,7 @@ See [PIPELINE_MONITORING.md](PIPELINE_MONITORING.md) → Troubleshooting section
 |------|------|--------|--------|
 | `.pre-commit-config.yaml` | 5.7 KB | Enhanced | ✅ Updated |
 
-### Documentation (`docs/ci-cd/`)
+### Documentation (`docs/operations/`)
 
 | File | Size | Content | Status |
 |------|------|---------|--------|

@@ -167,10 +167,10 @@ This document summarizes the conversion of three research areas into working MCP
 | `backend/tests/services/test_shapley_values.py` | 436 | Shapley tests |
 | `backend/tests/resilience/test_soc_predictor.py` | 189 | SOC tests |
 | `backend/tests/analytics/test_changepoint_detection.py` | 245 | Changepoint tests |
-| `docs/examples/shapley_value_usage.md` | 366 | Usage guide |
-| `docs/examples/changepoint_detection_usage.md` | 380 | Usage guide |
-| `docs/implementation/SOC_PREDICTOR_IMPLEMENTATION.md` | 497 | Implementation docs |
-| `docs/implementation/RESEARCH_TO_TOOLS_SUMMARY.md` | - | This document |
+| `docs/development/shapley_value_usage.md` | 366 | Usage guide |
+| `docs/development/changepoint_detection_usage.md` | 380 | Usage guide |
+| `docs/development/SOC_PREDICTOR_IMPLEMENTATION.md` | 497 | Implementation docs |
+| `docs/development/RESEARCH_TO_TOOLS_SUMMARY.md` | - | This document |
 
 ### Modified Files
 

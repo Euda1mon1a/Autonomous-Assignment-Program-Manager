@@ -851,7 +851,7 @@ print(f"Utilization: {utilization_rate._value}")
 - **Alerting Implementation**: `backend/app/monitoring/alerts.py`
 - **Health Checks**: `backend/app/monitoring/health_checks.py`
 - **Tracing Implementation**: `backend/app/monitoring/tracing.py`
-- **Dashboard Specifications**: `docs/monitoring/DASHBOARD_SPECS.md`
+- **Dashboard Specifications**: `docs/operations/DASHBOARD_SPECS.md`
 
 ---
 

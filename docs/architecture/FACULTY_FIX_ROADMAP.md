@@ -1,3 +1,6 @@
+> **Status:** HISTORICAL — All phases complete. Retained for architectural context.
+> **Current status:** See `docs/planning/ROADMAP.md`
+
 # Faculty Scheduling Fix Roadmap
 
 > **Status:** Phase 1 COMPLETED, Phase 2 COMPLETED, Phase 3 COMPLETED, Phase 4 COMPLETED, Phase 5 IN PROGRESS

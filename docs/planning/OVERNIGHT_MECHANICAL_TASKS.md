@@ -248,32 +248,32 @@ ruff check app/ --fix && ruff format app/
 
 ## Task 5: Documentation Staleness Report (Read-Only) ✅
 
-**Status:** COMPLETE — Report at `docs/reports/doc-staleness-20260304.md`
+**Status:** COMPLETE — Report at `docs/archived/reports/doc-staleness-20260304.md`
 
 **What:** Generate a report of stale/broken documentation. NO changes — report only.
 **Risk:** Zero — read-only analysis
-**Success:** Report generated at `docs/reports/doc-staleness-$(date +%Y%m%d).md`
+**Success:** Report generated at `docs/archived/reports/doc-staleness-$(date +%Y%m%d).md`
 
 **Script:**
 ```bash
 cd /Users/aaronmontgomery/Autonomous-Assignment-Program-Manager
 
-echo "# Documentation Staleness Report — $(date +%Y-%m-%d)" > docs/reports/doc-staleness-$(date +%Y%m%d).md
-echo "" >> docs/reports/doc-staleness-$(date +%Y%m%d).md
+echo "# Documentation Staleness Report — $(date +%Y-%m-%d)" > docs/archived/reports/doc-staleness-$(date +%Y%m%d).md
+echo "" >> docs/archived/reports/doc-staleness-$(date +%Y%m%d).md
 
 # Files not modified in 60+ days
-echo "## Files Not Modified in 60+ Days" >> docs/reports/doc-staleness-$(date +%Y%m%d).md
-find docs/ -name '*.md' -mtime +60 -type f | sort >> docs/reports/doc-staleness-$(date +%Y%m%d).md
+echo "## Files Not Modified in 60+ Days" >> docs/archived/reports/doc-staleness-$(date +%Y%m%d).md
+find docs/ -name '*.md' -mtime +60 -type f | sort >> docs/archived/reports/doc-staleness-$(date +%Y%m%d).md
 
 # Files with TODO/FIXME/PENDING
-echo "" >> docs/reports/doc-staleness-$(date +%Y%m%d).md
-echo "## Files with TODO/FIXME/PENDING" >> docs/reports/doc-staleness-$(date +%Y%m%d).md
-grep -rl 'TODO\|FIXME\|PENDING' docs/ --include='*.md' | sort >> docs/reports/doc-staleness-$(date +%Y%m%d).md
+echo "" >> docs/archived/reports/doc-staleness-$(date +%Y%m%d).md
+echo "## Files with TODO/FIXME/PENDING" >> docs/archived/reports/doc-staleness-$(date +%Y%m%d).md
+grep -rl 'TODO\|FIXME\|PENDING' docs/ --include='*.md' | sort >> docs/archived/reports/doc-staleness-$(date +%Y%m%d).md
 
 # Broken internal links (files referenced but missing)
-echo "" >> docs/reports/doc-staleness-$(date +%Y%m%d).md
-echo "## Potentially Broken Links" >> docs/reports/doc-staleness-$(date +%Y%m%d).md
-grep -roh '\[.*\]([^http][^)]*\.md)' docs/ --include='*.md' | sort -u >> docs/reports/doc-staleness-$(date +%Y%m%d).md
+echo "" >> docs/archived/reports/doc-staleness-$(date +%Y%m%d).md
+echo "## Potentially Broken Links" >> docs/archived/reports/doc-staleness-$(date +%Y%m%d).md
+grep -roh '\[.*\]([^http][^)]*\.md)' docs/ --include='*.md' | sort -u >> docs/archived/reports/doc-staleness-$(date +%Y%m%d).md
 ```
 
 **Estimated time:** 5 minutes

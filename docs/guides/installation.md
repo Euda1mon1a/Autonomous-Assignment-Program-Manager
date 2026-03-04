@@ -1712,7 +1712,7 @@ After successful installation:
 
 For production deployment:
 
-1. **Review Security Checklist**: [docs/deployment/security.md](../deployment/security.md)
+1. **Review Security Checklist**: [docs/operations/security.md](../deployment/security.md)
 2. **Configure SSL/TLS**: Set up reverse proxy (nginx/Caddy)
 3. **Set up monitoring**: Prometheus + Grafana
 4. **Configure backups**: Database backup strategy

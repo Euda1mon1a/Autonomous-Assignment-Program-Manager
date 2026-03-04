@@ -464,7 +464,7 @@ detected 'bcrypt' backend, version '<unknown>'
 
 **Why it's OK:** Login still works. The workaround is automatically enabled.
 
-**Reference:** See `docs/deployment/LESSONS_LEARNED_ROUND1.md` for full bcrypt/passlib history.
+**Reference:** See `docs/operations/LESSONS_LEARNED_ROUND1.md` for full bcrypt/passlib history.
 
 ---
 

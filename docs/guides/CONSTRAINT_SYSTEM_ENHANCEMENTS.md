@@ -27,7 +27,7 @@ Comprehensive enhancement of the scheduler's constraint system with 50 tasks exe
 ### 1. Documentation (Tasks 1-12)
 
 #### ✅ CONSTRAINT_CATALOG.md
-**Location:** `/home/user/Autonomous-Assignment-Program-Manager/docs/constraints/CONSTRAINT_CATALOG.md`
+**Location:** `/home/user/Autonomous-Assignment-Program-Manager/docs/architecture/CONSTRAINT_CATALOG.md`
 
 Comprehensive master reference with:
 - All 47 constraints (27 hard, 20 soft)
@@ -422,7 +422,7 @@ backend/app/scheduling/
     │   ├── exclusion_constraint_template.py
     │   └── README.md                 (600+ lines)
 
-docs/constraints/
+docs/architecture/
 ├── CONSTRAINT_CATALOG.md             (5,000+ lines)
 
 backend/tests/scheduling/
@@ -598,7 +598,7 @@ with open("constraint.json") as f:
 ## Files Modified/Created
 
 ### Documentation
-- ✅ Created: `/docs/constraints/CONSTRAINT_CATALOG.md` (5,000+ lines)
+- ✅ Created: `/docs/architecture/CONSTRAINT_CATALOG.md` (5,000+ lines)
 - ✅ Created: `/backend/app/scheduling/constraints/templates/README.md` (600+ lines)
 
 ### Core Modules

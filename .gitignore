@@ -339,3 +339,4 @@ docs/planning/ml_context_dump/e2e_results_summary.json
 # Test result artifacts (ephemeral)
 frontend/test-results/
 frontend/e2e/test-results/
+docs/data-local/

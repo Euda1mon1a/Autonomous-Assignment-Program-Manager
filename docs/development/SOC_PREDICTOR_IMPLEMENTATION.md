@@ -460,7 +460,7 @@ From research document:
    - Frontend component example
    - Celery task example
 
-5. `/docs/implementation/SOC_PREDICTOR_IMPLEMENTATION.md` (this file)
+5. `/docs/development/SOC_PREDICTOR_IMPLEMENTATION.md` (this file)
    - Complete documentation
    - Usage examples
    - Integration checklist

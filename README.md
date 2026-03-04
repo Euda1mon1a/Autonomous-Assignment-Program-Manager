@@ -439,7 +439,7 @@ Autonomous-Assignment-Program-Manager/
 | Document | Description |
 |----------|-------------|
 | [Cross-Disciplinary Bridges](docs/architecture/bridges/) | 10+ integration specifications |
-| [Service Specifications](docs/specs/) | Implementation-ready service designs |
+| [Service Specifications](docs/architecture/) | Implementation-ready service designs |
 | [Mathematical Unification](docs/architecture/MATHEMATICAL_UNIFICATION.md) | Common foundations across domains |
 | [Control Theory Tuning](docs/architecture/CONTROL_THEORY_TUNING_GUIDE.md) | PID controller calibration |
 
@@ -471,7 +471,7 @@ Autonomous-Assignment-Program-Manager/
 ### Reference Materials
 | Document | Description |
 |----------|-------------|
-| [Schedule Abbreviations](docs/reference/SCHEDULE_ABBREVIATIONS.md) | Activity code reference |
+| [Schedule Abbreviations](docs/scheduling/SCHEDULE_ABBREVIATIONS.md) | Activity code reference |
 | [Debugging Workflow](docs/development/DEBUGGING_WORKFLOW.md) | Systematic debugging guide |
 | [CI/CD Troubleshooting](docs/development/CI_CD_TROUBLESHOOTING.md) | Error codes and fixes |
 
