@@ -441,19 +441,13 @@ class CanonicalScheduleExportService:
             include_overrides=include_overrides,
         )
 
-        # Filter out placeholder and excluded faculty
+        # Filter out excluded faculty (e.g. departed faculty not yet deleted)
         if data.get("faculty"):
             data["faculty"] = [
                 f
                 for f in data["faculty"]
-                if not f.get("name", "").startswith("Dr. Faculty-")
-                and f.get("name", "") not in self._EXCLUDED_FACULTY_NAMES
+                if f.get("name", "") not in self._EXCLUDED_FACULTY_NAMES
             ]
-
-        # Keep all call assignments (including placeholder faculty) so the
-        # call row shows complete 28-night coverage. CALL/SUN summary formulas
-        # only work for named faculty rows, but the call row itself needs all
-        # entries for visual verification by coordinators.
 
         # Ensure adjunct faculty appear even without assignments (blank rows)
         if include_faculty:

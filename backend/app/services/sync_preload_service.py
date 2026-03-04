@@ -920,9 +920,10 @@ class SyncPreloadService:
         rather than seeing patients. The solver skips preloaded slots, so this
         prevents faculty from being scheduled into clinic on Wednesday PM.
 
-        Skips 4th Wednesdays (day >= 22) — those use an inverted schedule where
-        one faculty covers clinic. Also skips faculty on FMIT rotation (they
-        follow their own FMIT schedule).
+        Skips the final Wednesday of the block (within 7 days of end_date) —
+        that uses an inverted schedule where one faculty covers clinic AM and
+        a different faculty covers PM. Also skips faculty on FMIT rotation
+        (they follow their own FMIT schedule).
         """
         count = 0
         lec_id = self._activity_cache.get("LEC", required=False)
@@ -967,8 +968,10 @@ class SyncPreloadService:
         # Iterate over all dates in range, find regular Wednesdays
         current = start_date
         while current <= end_date:
-            if current.weekday() == 2 and current.day < 22:
-                # Regular Wednesday (not 4th) — preload LEC for PM
+            is_wednesday = current.weekday() == 2
+            is_final_wednesday = is_wednesday and (end_date - current).days < 7
+            if is_wednesday and not is_final_wednesday:
+                # Regular Wednesday (not final) — preload LEC for PM
                 for faculty in core_faculty:
                     if (faculty.id, current) in fmit_faculty_dates:
                         continue

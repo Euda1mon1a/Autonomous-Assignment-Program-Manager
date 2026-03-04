@@ -1372,6 +1372,12 @@ class CPSATSolver(BaseSolver):
             for term_var, weight in objective_terms:
                 objective_expr -= term_var * int(weight)
 
+        # Discourage unneeded faculty supervision (phantom AT)
+        # Without this, the solver may arbitrarily assign AT to fill empty slots
+        # even when there are no residents in clinic (e.g. final Wednesday PM LEC).
+        if fac_supervise:
+            objective_expr -= sum(fac_supervise.values())
+
         model.Maximize(objective_expr)
 
         # ==================================================

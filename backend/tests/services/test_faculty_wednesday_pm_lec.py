@@ -44,20 +44,20 @@ def _get_assignment(
 
 
 def _find_regular_wednesday(start_date: date, end_date: date) -> date | None:
-    """Find a Wednesday with day < 22 (not 4th Wednesday)."""
+    """Find a Wednesday that is NOT the final Wednesday (>= 7 days before end_date)."""
     current = start_date
     while current <= end_date:
-        if current.weekday() == 2 and current.day < 22:
+        if current.weekday() == 2 and (end_date - current).days >= 7:
             return current
         current += timedelta(days=1)
     return None
 
 
-def _find_fourth_wednesday(start_date: date, end_date: date) -> date | None:
-    """Find a Wednesday with day >= 22 (4th Wednesday)."""
+def _find_final_wednesday(start_date: date, end_date: date) -> date | None:
+    """Find the final Wednesday (within 7 days of end_date)."""
     current = start_date
     while current <= end_date:
-        if current.weekday() == 2 and current.day >= 22:
+        if current.weekday() == 2 and (end_date - current).days < 7:
             return current
         current += timedelta(days=1)
     return None
@@ -96,34 +96,73 @@ def test_faculty_wednesday_pm_lec(db):
     assert assignment.source == AssignmentSource.PRELOAD.value
 
 
-def test_faculty_fourth_wednesday_not_overridden(db):
-    """Faculty should NOT get LEC on 4th Wednesday (inverted schedule)."""
+def test_faculty_final_wednesday_not_overridden(db):
+    """Faculty should NOT get LEC on the final Wednesday (inverted schedule)."""
     _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
 
     faculty = Person(
         id=uuid4(),
-        name="Test Faculty 4th Wed",
+        name="Test Faculty Final Wed",
         type="faculty",
         faculty_role=FacultyRole.CORE.value,
     )
     db.add(faculty)
     db.commit()
 
-    # Use a date range that includes a 4th Wednesday (day >= 22)
-    # Jan 2026: Wed Jan 28 (day=28, 4th Wed)
+    # Use a date range where the only Wednesday is the final one
+    # Jan 2026: Wed Jan 28 — within 7 days of end_date Jan 31
     start_date = date(2026, 1, 26)
     end_date = date(2026, 1, 31)
 
     service = SyncPreloadService(db)
     count = service._load_faculty_wednesday_pm_lec(start_date, end_date)
 
-    # The only Wednesday in range is Jan 28 (day=28), which is 4th — should be skipped
-    fourth_wed = _find_fourth_wednesday(start_date, end_date)
-    assert fourth_wed is not None
+    final_wed = _find_final_wednesday(start_date, end_date)
+    assert final_wed is not None
+    assert final_wed == date(2026, 1, 28)
 
-    assignment = _get_assignment(db, faculty.id, fourth_wed, "PM")
-    assert assignment is None, f"4th Wednesday {fourth_wed} should NOT get LEC preload"
+    assignment = _get_assignment(db, faculty.id, final_wed, "PM")
+    assert assignment is None, f"Final Wednesday {final_wed} should NOT get LEC preload"
     assert count == 0
+
+
+def test_final_wednesday_early_in_month(db):
+    """Final Wednesday with day < 22 must still be skipped (Block 12 scenario).
+
+    Block 12: May 7 – Jun 3, 2026. Jun 3 is a Wednesday with day=3,
+    but it IS the final Wednesday (within 7 days of end_date).
+    The old day >= 22 heuristic failed here.
+    """
+    _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
+
+    faculty = Person(
+        id=uuid4(),
+        name="Test Faculty Block12",
+        type="faculty",
+        faculty_role=FacultyRole.CORE.value,
+    )
+    db.add(faculty)
+    db.commit()
+
+    # Block 12: May 7 – Jun 3, 2026
+    start_date = date(2026, 5, 7)
+    end_date = date(2026, 6, 3)
+
+    service = SyncPreloadService(db)
+    count = service._load_faculty_wednesday_pm_lec(start_date, end_date)
+
+    # Jun 3 (day=3) is the final Wednesday — should be skipped
+    final_wed = _find_final_wednesday(start_date, end_date)
+    assert final_wed == date(2026, 6, 3)
+    assignment = _get_assignment(db, faculty.id, final_wed, "PM")
+    assert assignment is None, "Jun 3 final Wednesday should NOT get LEC preload"
+
+    # Earlier Wednesdays (May 7, 14, 21, 28) should all get LEC
+    regular_wed = _find_regular_wednesday(start_date, end_date)
+    assert regular_wed is not None
+    assignment = _get_assignment(db, faculty.id, regular_wed, "PM")
+    assert assignment is not None, f"Regular Wednesday {regular_wed} should get LEC"
+    assert assignment.activity.code == "LEC"
 
 
 def test_no_faculty_means_no_preloads(db):

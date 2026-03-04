@@ -1,8 +1,8 @@
 # Stateful Round-Trip and Schema Hardening Roadmap
 
-> **Status:** Planning — Excel phases unstarted; Schema Track A partially implemented; Track E (ARO) architecture documented
+> **Status:** Planning — Excel phases unstarted; Schema Track A partially implemented; Track E (ARO) solver core implemented
 > **Created:** 2026-02-24
-> **Updated:** 2026-03-03 — Track E (Annual Rotation Optimizer) architecture documented. Track A call equity done (PRs #1199, #1202, #1217). Excel phases 1-4 remain backlog.
+> **Updated:** 2026-03-03 — Track E (ARO) solver core implemented with 48/48 tests passing. DB models, service layer, and API wiring pending. Track A call equity done (PRs #1199, #1202, #1217). Excel phases 1-4 remain backlog.
 > **Origin:** Architectural proposal from external review of Excel import/export pipeline and database schema
 
 ---
@@ -458,7 +458,11 @@ stmt = select(Absence).where(
 
 **Priority: HIGH — AY 2026-27 planning needs to begin while AY 25-26 blocks 12-13 are still active**
 
-> **Architecture documented:** Mar 3, 2026. Full design at `docs/architecture/ANNUAL_ROTATION_OPTIMIZER.md`.
+> **Solver core implemented:** Mar 3, 2026. 48/48 tests passing. Full design at `docs/architecture/ANNUAL_ROTATION_OPTIMIZER.md`.
+>
+> **Implemented:** `pgy_config.py` (static rotation requirements), `context.py` (AnnualContext dataclass), `leave_parser.py` (Excel date parser with strict name matching), `solver.py` (CP-SAT model with H1/H3/H4/H6 hard constraints, S1/S2 soft constraints). Verified: feasibility with 6 residents/PGY, all constraint categories, leave satisfaction optimization, <0.05s solve time.
+>
+> **Remaining:** DB staging models (`AnnualRotationPlan`, `AnnualRotationAssignment`), Alembic migration, service layer (orchestration lifecycle, publish-to-block-assignments), API routes, rotation name → `rotation_template_id` mapping, Excel export of solution grid.
 
 **Goal:** CP-SAT-based optimizer that assigns rotations to blocks for all 18 residents across an entire academic year, maximizing leave preference satisfaction while respecting PGY-level constraints (sequencing, capacity, block eligibility).
 
@@ -493,19 +497,21 @@ Coordinators currently assign rotations to blocks manually. With 75 leave reques
 - `docs/architecture/aro/AY2627_LEAVE_REQUESTS.md` — 75 parsed leave requests mapped to blocks
 - `docs/architecture/aro/AY2627_BLOCK_CALENDAR.md` — AY 26-27 block calendar
 
-### New Files (Implementation)
+### Files
 
-| File | Purpose |
-|------|---------|
-| `backend/app/models/annual_rotation_plan.py` | Staging models |
-| `backend/app/scheduling/annual/solver.py` | CP-SAT model |
-| `backend/app/scheduling/annual/context.py` | AnnualContext dataclass |
-| `backend/app/scheduling/annual/pgy_config.py` | PGY rotation requirements as code |
-| `backend/app/scheduling/annual/constraints/*.py` | 7 constraint classes |
-| `backend/app/services/annual_rotation_service.py` | Orchestration |
-| `backend/app/services/annual_leave_import_service.py` | Excel leave import |
-| `backend/app/schemas/annual_rotation.py` | Pydantic schemas |
-| `backend/app/api/routes/annual_rotation.py` | REST endpoints |
+| File | Status | Purpose |
+|------|--------|---------|
+| `backend/app/scheduling/annual/__init__.py` | ✅ Done | Package init |
+| `backend/app/scheduling/annual/pgy_config.py` | ✅ Done | Static PGY rotation requirements as code |
+| `backend/app/scheduling/annual/context.py` | ✅ Done | AnnualContext, ResidentInfo, LeaveRequest, map_leave_to_blocks |
+| `backend/app/scheduling/annual/leave_parser.py` | ✅ Done | Excel date parser + strict name matching |
+| `backend/app/scheduling/annual/solver.py` | ✅ Done | Monolithic CP-SAT solver (all constraints inline) |
+| `backend/tests/scheduling/annual/test_annual_solver.py` | ✅ Done | 27 solver tests |
+| `backend/tests/scheduling/annual/test_leave_parser.py` | ✅ Done | 21 parser/mapping tests |
+| `backend/app/models/annual_rotation_plan.py` | ⏳ Pending | Staging models (plan + assignments) |
+| `backend/app/services/annual_rotation_service.py` | ⏳ Pending | Orchestration lifecycle |
+| `backend/app/schemas/annual_rotation.py` | ⏳ Pending | Pydantic schemas |
+| `backend/app/api/routes/annual_rotation.py` | ⏳ Pending | REST endpoints |
 
 ---
 

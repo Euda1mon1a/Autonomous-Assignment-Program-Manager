@@ -167,11 +167,13 @@ type SwapType = 'oneToOne' | 'absorb';
 
 **Before writing a new scheduling constraint:** Read `.claude/archetypes/constraint.py` for the correct pattern.
 
-Pre-commit hook `scripts/archetype-check.py` uses AST analysis to catch anti-patterns in `backend/app/scheduling/constraints/`:
+Pre-commit hook `scripts/archetype-check.py` uses AST analysis to catch anti-patterns in `backend/app/scheduling/constraints/` and `engine.py`:
 - **ARCH-001:** `resident_idx` in call constraints (dead code — returns None for faculty)
 - **ARCH-002:** Initializing `variables["call_assignments"]` (solver owns creation)
 - **ARCH-003:** `context.faculty` in call constraints (should be `call_eligible_faculty`)
 - **ARCH-004:** Missing logging in `add_to_cpsat()` (warning only)
+- **ARCH-005:** Call coverage constraint without spacing guard (warning only)
+- **ARCH-006:** Activity query ORs `code` with `display_abbreviation` — nondeterministic `.first()` when multiple activities share a display abbreviation (e.g., `C` and `fm_clinic` both display `'C'`)
 
 Suppress false positives with `# @archetype-ok` comment.
 

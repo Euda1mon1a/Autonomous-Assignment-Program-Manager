@@ -410,68 +410,67 @@ class WednesdayPMSingleFacultyConstraint(SoftConstraint):
         )
 
 
-class InvertedWednesdayConstraint(HardConstraint):
+class InvertedWednesdayConstraint(SoftConstraint):
     """
-    Ensures 4th Wednesday has single faculty AM and different faculty PM.
+    Ensures final Wednesday has single faculty AM and different faculty PM.
 
-    On inverted (4th) Wednesday:
+    On the final Wednesday (often called "inverted" or "5th Wednesday"):
     - Residents have Lecture AM, Advising PM (no clinic)
     - AM: Exactly 1 faculty in clinic
     - PM: Exactly 1 DIFFERENT faculty in clinic
 
-    Faculty assignments should be equitable across the year.
+    This is implemented as a soft constraint so it doesn't cause INFEASIBLE states
+    if leave or other hard constraints prevent the exact coverage.
     """
 
     WEDNESDAY = 2
 
-    def __init__(self) -> None:
+    def __init__(self, weight: float = 50.0) -> None:
         """Initialize the constraint."""
         super().__init__(
             name="InvertedWednesday",
             constraint_type=ConstraintType.ROTATION,
+            weight=weight,
             priority=ConstraintPriority.HIGH,
         )
 
-    def _is_fourth_wednesday(self, block: Any) -> bool:
-        """Check if block is exactly the 4th Wednesday of month."""
+    def _is_final_wednesday(self, block, context) -> bool:
+        """Check if block is exactly the final Wednesday of the scheduling context."""
         if not hasattr(block, "date"):
             return False
         if block.date.weekday() != self.WEDNESDAY:
             return False
-        # 4th Wednesday: day 22-28 only (5th would be 29-31)
-        return 22 <= block.date.day <= 28
+        if not context.end_date:
+            return False
+        # If it's a Wednesday in the last 7 days of the context
+        return (context.end_date - block.date).days < 7
 
     def add_to_cpsat(
         self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
+        model,
+        variables,
+        context,
     ) -> None:
-        """Enforce 1 faculty AM, 1 different faculty PM on 4th Wednesday."""
-        faculty_template_vars = variables.get("faculty_template_assignments", {})
-        if not faculty_template_vars:
+        """Enforce 1 faculty AM, 1 different faculty PM on final Wednesday."""
+        fac_clinic = variables.get("fac_clinic", {})
+        if not fac_clinic:
             return
 
-        clinic_template_ids = {
-            t.id
-            for t in context.templates
-            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
-        }
-        if not clinic_template_ids:
-            return
-
-        # Group 4th Wednesday blocks by date and time
-        fourth_wed_groups: dict[str, dict[str, list]] = {}
+        # Group final Wednesday blocks by date and time
+        final_wed_groups = {}
         for block in context.blocks:
-            if not self._is_fourth_wednesday(block):
+            if not self._is_final_wednesday(block, context):
                 continue
             date_str = str(block.date)
-            if date_str not in fourth_wed_groups:
-                fourth_wed_groups[date_str] = {"AM": [], "PM": []}
+            if date_str not in final_wed_groups:
+                final_wed_groups[date_str] = {"AM": [], "PM": []}
             tod = getattr(block, "time_of_day", "AM")
-            fourth_wed_groups[date_str][tod].append(block)
+            final_wed_groups[date_str][tod].append(block)
 
-        for date_str, blocks_by_time in fourth_wed_groups.items():
+        objective_terms = variables.setdefault("objective_terms", [])
+        penalty_weight = int(self.weight)
+
+        for date_str, blocks_by_time in final_wed_groups.items():
             am_blocks = blocks_by_time.get("AM", [])
             pm_blocks = blocks_by_time.get("PM", [])
 
@@ -480,199 +479,143 @@ class InvertedWednesdayConstraint(HardConstraint):
 
             # Collect AM faculty clinic variables
             for block in am_blocks:
-                b_i = context.block_idx[block.id]
-                for template in context.templates:
-                    if template.id not in clinic_template_ids:
-                        continue
-                    t_i = context.template_idx[template.id]
-                    for f in context.faculty:
-                        f_i = context.faculty_idx.get(f.id)
-                        if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
-                            am_vars.append((f.id, faculty_template_vars[f_i, b_i, t_i]))
+                b_i = context.block_idx.get(block.id)
+                if b_i is None:
+                    continue
+                for f in context.faculty:
+                    f_i = context.faculty_idx.get(f.id)
+                    if f_i is not None and (f_i, b_i) in fac_clinic:
+                        am_vars.append(fac_clinic[f_i, b_i])
 
             # Collect PM faculty clinic variables
             for block in pm_blocks:
-                b_i = context.block_idx[block.id]
-                for template in context.templates:
-                    if template.id not in clinic_template_ids:
-                        continue
-                    t_i = context.template_idx[template.id]
-                    for f in context.faculty:
-                        f_i = context.faculty_idx.get(f.id)
-                        if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
-                            pm_vars.append((f.id, faculty_template_vars[f_i, b_i, t_i]))
+                b_i = context.block_idx.get(block.id)
+                if b_i is None:
+                    continue
+                for f in context.faculty:
+                    f_i = context.faculty_idx.get(f.id)
+                    if f_i is not None and (f_i, b_i) in fac_clinic:
+                        pm_vars.append(fac_clinic[f_i, b_i])
 
             # Exactly 1 faculty AM
             if am_vars:
-                model.Add(sum(v for _, v in am_vars) == 1)
+                am_sum = model.NewIntVar(
+                    0, len(am_vars), f"final_wed_am_sum_{date_str}"
+                )
+                model.Add(am_sum == sum(am_vars))
+                am_dev = model.NewIntVar(
+                    0, len(am_vars), f"final_wed_am_dev_{date_str}"
+                )
+                model.AddAbsEquality(am_dev, am_sum - 1)
+                objective_terms.append((am_dev, penalty_weight))
 
             # Exactly 1 faculty PM
             if pm_vars:
-                model.Add(sum(v for _, v in pm_vars) == 1)
-
-            # Different faculty AM vs PM (if same faculty in both, sum <= 1)
-            if am_vars and pm_vars:
-                faculty_in_both = set(f for f, _ in am_vars) & set(
-                    f for f, _ in pm_vars
+                pm_sum = model.NewIntVar(
+                    0, len(pm_vars), f"final_wed_pm_sum_{date_str}"
                 )
-                for fac_id in faculty_in_both:
-                    am_v = [v for f, v in am_vars if f == fac_id]
-                    pm_v = [v for f, v in pm_vars if f == fac_id]
-                    if am_v and pm_v:
-                        # Cannot have same faculty both AM and PM
-                        model.Add(sum(am_v) + sum(pm_v) <= 1)
-
-        logger.info(
-            "Added InvertedWednesday constraints for %d 4th-Wednesday dates",
-            len(fourth_wed_groups),
-        )
-
-    def add_to_pulp(
-        self,
-        model: Any,
-        variables: dict[str, Any],
-        context: SchedulingContext,
-    ) -> None:
-        """Enforce 1 faculty AM, 1 different faculty PM on 4th Wednesday (PuLP)."""
-        import pulp
-
-        faculty_template_vars = variables.get("faculty_template_assignments", {})
-        if not faculty_template_vars:
-            return
-
-        clinic_template_ids = {
-            t.id
-            for t in context.templates
-            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
-        }
-        if not clinic_template_ids:
-            return
-
-        fourth_wed_groups: dict[str, dict[str, list]] = {}
-        for block in context.blocks:
-            if not self._is_fourth_wednesday(block):
-                continue
-            date_str = str(block.date)
-            if date_str not in fourth_wed_groups:
-                fourth_wed_groups[date_str] = {"AM": [], "PM": []}
-            tod = getattr(block, "time_of_day", "AM")
-            fourth_wed_groups[date_str][tod].append(block)
-
-        for date_str, blocks_by_time in fourth_wed_groups.items():
-            am_blocks = blocks_by_time.get("AM", [])
-            pm_blocks = blocks_by_time.get("PM", [])
-
-            am_vars = []
-            pm_vars = []
-
-            for block in am_blocks:
-                b_i = context.block_idx[block.id]
-                for template in context.templates:
-                    if template.id not in clinic_template_ids:
-                        continue
-                    t_i = context.template_idx[template.id]
-                    for f in context.faculty:
-                        f_i = context.faculty_idx.get(f.id)
-                        if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
-                            am_vars.append((f.id, faculty_template_vars[f_i, b_i, t_i]))
-
-            for block in pm_blocks:
-                b_i = context.block_idx[block.id]
-                for template in context.templates:
-                    if template.id not in clinic_template_ids:
-                        continue
-                    t_i = context.template_idx[template.id]
-                    for f in context.faculty:
-                        f_i = context.faculty_idx.get(f.id)
-                        if f_i is not None and (f_i, b_i, t_i) in faculty_template_vars:
-                            pm_vars.append((f.id, faculty_template_vars[f_i, b_i, t_i]))
-
-            # Exactly 1 faculty AM
-            if am_vars:
-                model += (
-                    pulp.lpSum(v for _, v in am_vars) == 1,
-                    f"inv_wed_am_{date_str}",
+                model.Add(pm_sum == sum(pm_vars))
+                pm_dev = model.NewIntVar(
+                    0, len(pm_vars), f"final_wed_pm_dev_{date_str}"
                 )
-
-            # Exactly 1 faculty PM
-            if pm_vars:
-                model += (
-                    pulp.lpSum(v for _, v in pm_vars) == 1,
-                    f"inv_wed_pm_{date_str}",
-                )
+                model.AddAbsEquality(pm_dev, pm_sum - 1)
+                objective_terms.append((pm_dev, penalty_weight))
 
             # Different faculty AM vs PM
             if am_vars and pm_vars:
-                fac_both = set(f for f, _ in am_vars) & set(f for f, _ in pm_vars)
-                for fac_id in fac_both:
-                    am_v = [v for f, v in am_vars if f == fac_id]
-                    pm_v = [v for f, v in pm_vars if f == fac_id]
-                    if am_v and pm_v:
-                        model += (
-                            pulp.lpSum(am_v) + pulp.lpSum(pm_v) <= 1,
-                            f"inv_wed_diff_{date_str}_{fac_id}",
-                        )
+                am_b_i = context.block_idx[am_blocks[0].id]
+                pm_b_i = context.block_idx[pm_blocks[0].id]
+                for f in context.faculty:
+                    f_i = context.faculty_idx.get(f.id)
+                    if (
+                        f_i is not None
+                        and (f_i, am_b_i) in fac_clinic
+                        and (f_i, pm_b_i) in fac_clinic
+                    ):
+                        both_on = model.NewBoolVar(f"final_wed_both_{f_i}_{date_str}")
+                        model.AddBoolAnd(
+                            [fac_clinic[f_i, am_b_i], fac_clinic[f_i, pm_b_i]]
+                        ).OnlyEnforceIf(both_on)
+                        model.AddBoolOr(
+                            [
+                                fac_clinic[f_i, am_b_i].Not(),
+                                fac_clinic[f_i, pm_b_i].Not(),
+                            ]
+                        ).OnlyEnforceIf(both_on.Not())
+                        objective_terms.append((both_on, penalty_weight))
 
-    def validate(
-        self,
-        assignments: list[Any],
-        context: SchedulingContext,
-    ) -> ConstraintResult:
-        """Check 4th Wed has 1 faculty AM, 1 different faculty PM."""
-        violations: list[ConstraintViolation] = []
+    def add_to_pulp(self, model, variables, context) -> None:
+        # PuLP path is a no-op — the final Wednesday pattern is enforced by
+        # the post-solve pipeline (_backfill_last_wednesday_clinic) regardless
+        # of solver backend.  The CP-SAT constraint above is advisory
+        # optimization only (penalizes >1 faculty clinic per half-day).
+        pass
 
-        clinic_template_ids = {
-            t.id
-            for t in context.templates
-            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
-        }
+    @staticmethod
+    def _get_activity_code(assignment) -> str | None:
+        """Safely extract activity code from any assignment-like object.
 
-        # Early return if no clinic templates
-        if not clinic_template_ids:
-            return ConstraintResult(satisfied=True, violations=[])
+        Handles ORM objects (activity relationship), solver results
+        (activity_code attr), and SimpleNamespace test doubles.
+        """
+        # Direct attribute (solver results, SimpleNamespace)
+        code = getattr(assignment, "activity_code", None)
+        if code:
+            return code
+        # ORM relationship (HalfDayAssignment.activity.code)
+        activity = getattr(assignment, "activity", None)
+        if activity:
+            return getattr(activity, "code", None)
+        return None
 
+    def validate(self, assignments, context) -> ConstraintResult:
+        violations = []
         faculty_ids = {f.id for f in context.faculty}
+        _CLINIC_CODES = {"C", "c", "fm_clinic", "cv", "sm_clinic", "c40"}
 
-        # Group 4th Wednesday blocks by date
-        fourth_wed_dates: dict[str, dict[str, list]] = {}
+        final_wed_dates = {}
         for block in context.blocks:
-            if not self._is_fourth_wednesday(block):
+            if not self._is_final_wednesday(block, context):
                 continue
             date_str = str(block.date)
-            if date_str not in fourth_wed_dates:
-                fourth_wed_dates[date_str] = {"AM": [], "PM": []}
-            fourth_wed_dates[date_str][block.time_of_day].append(block)
+            if date_str not in final_wed_dates:
+                final_wed_dates[date_str] = {"AM": [], "PM": []}
+            final_wed_dates[date_str][block.time_of_day].append(block)
 
-        for date_str, blocks_by_time in fourth_wed_dates.items():
+        total_penalty = 0.0
+
+        for date_str, blocks_by_time in final_wed_dates.items():
             am_faculty = set()
             pm_faculty = set()
 
             for block in blocks_by_time.get("AM", []):
                 for a in assignments:
+                    code = self._get_activity_code(a)
                     if (
                         a.block_id == block.id
                         and a.person_id in faculty_ids
-                        and a.rotation_template_id in clinic_template_ids
+                        and code in _CLINIC_CODES
                     ):
                         am_faculty.add(a.person_id)
 
             for block in blocks_by_time.get("PM", []):
                 for a in assignments:
+                    code = self._get_activity_code(a)
                     if (
                         a.block_id == block.id
                         and a.person_id in faculty_ids
-                        and a.rotation_template_id in clinic_template_ids
+                        and code in _CLINIC_CODES
                     ):
                         pm_faculty.add(a.person_id)
 
-            # Check AM = exactly 1
             if len(am_faculty) != 1:
+                total_penalty += self.weight * abs(len(am_faculty) - 1)
                 violations.append(
                     ConstraintViolation(
                         constraint_name=self.name,
                         constraint_type=self.constraint_type,
-                        severity="HIGH",
-                        message=f"4th Wed {date_str} AM: {len(am_faculty)} faculty (need 1)",
+                        severity="MEDIUM",
+                        message=f"Final Wed {date_str} AM: {len(am_faculty)} faculty (need 1)",
                         details={
                             "date": date_str,
                             "time": "AM",
@@ -681,14 +624,14 @@ class InvertedWednesdayConstraint(HardConstraint):
                     )
                 )
 
-            # Check PM = exactly 1
             if len(pm_faculty) != 1:
+                total_penalty += self.weight * abs(len(pm_faculty) - 1)
                 violations.append(
                     ConstraintViolation(
                         constraint_name=self.name,
                         constraint_type=self.constraint_type,
-                        severity="HIGH",
-                        message=f"4th Wed {date_str} PM: {len(pm_faculty)} faculty (need 1)",
+                        severity="MEDIUM",
+                        message=f"Final Wed {date_str} PM: {len(pm_faculty)} faculty (need 1)",
                         details={
                             "date": date_str,
                             "time": "PM",
@@ -697,19 +640,20 @@ class InvertedWednesdayConstraint(HardConstraint):
                     )
                 )
 
-            # Check AM != PM (different faculty)
             if am_faculty and pm_faculty and am_faculty == pm_faculty:
+                total_penalty += self.weight
                 violations.append(
                     ConstraintViolation(
                         constraint_name=self.name,
                         constraint_type=self.constraint_type,
-                        severity="HIGH",
-                        message=f"4th Wed {date_str}: Same faculty AM and PM (must be different)",
+                        severity="MEDIUM",
+                        message=f"Final Wed {date_str}: Same faculty AM and PM",
                         details={"date": date_str, "faculty": list(am_faculty)},
                     )
                 )
 
         return ConstraintResult(
-            satisfied=len(violations) == 0,
+            satisfied=True,  # Soft constraint
             violations=violations,
+            penalty=total_penalty,
         )
