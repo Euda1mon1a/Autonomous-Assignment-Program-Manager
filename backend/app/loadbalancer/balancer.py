@@ -439,7 +439,7 @@ class LoadBalancer:
         self._failover_count = 0
         logger.info("Reset load balancer statistics")
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "LoadBalancer":
         """Async context manager entry."""
         await self.start()
         return self

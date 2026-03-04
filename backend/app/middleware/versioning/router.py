@@ -193,7 +193,7 @@ class VersionedAPIRouter(APIRouter):
         versions: list[APIVersion],
         path: str,
         **route_kwargs,
-    ):
+    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         """
         Decorator for version-specific endpoints.
 
@@ -220,7 +220,7 @@ class VersionedAPIRouter(APIRouter):
                 pass
         """
 
-        def decorator(func: Callable):
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
             # Determine min/max versions from list
             min_ver = min(versions)
             max_ver = max(versions)
@@ -244,7 +244,7 @@ class VersionedAPIRouter(APIRouter):
 def version_route(
     versions: list[APIVersion],
     router: VersionedAPIRouter | None = None,
-):
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Decorator for creating version-specific route handlers.
 
@@ -265,7 +265,7 @@ def version_route(
             return {"format": "new", "metadata": {...}}
     """
 
-    def decorator(func: Callable):
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         # Store version metadata on function
         func.__api_versions__ = versions
         func.__min_version__ = min(versions)

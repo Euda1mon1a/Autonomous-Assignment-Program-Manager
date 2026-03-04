@@ -101,7 +101,6 @@ def record_opus_usage(
         input_tokens: Number of input tokens consumed.
         output_tokens: Number of output tokens consumed.
         job_id: Optional job/request identifier for tracing.
-        status: Task completion status ('success', 'error', etc.).
 
     Returns:
         Dict with usage summary including estimated cost.
