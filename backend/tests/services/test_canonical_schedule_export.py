@@ -25,7 +25,18 @@ def _mock_db_with_codes():
     rot_query.distinct.return_value.all.return_value = [("SURG",), ("MED",)]
     act_query = MagicMock()
     act_query.distinct.return_value.all.return_value = [("CLI",), ("LV",)]
-    mock_db.query.side_effect = [rot_query, act_query]
+    person_query = MagicMock()
+    person_query.filter.return_value.all.return_value = []
+
+    # Needs to handle export_block_xlsx: Rotation, Activity, Person
+    mock_db.query.side_effect = [
+        rot_query,
+        act_query,
+        person_query,
+        rot_query,
+        act_query,
+        person_query,
+    ]
     return mock_db
 
 

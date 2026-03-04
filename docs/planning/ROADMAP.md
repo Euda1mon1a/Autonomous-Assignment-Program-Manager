@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last Updated:** 2026-02-19
+> **Last Updated:** 2026-03-03
 
 This document outlines the planned features and improvements for the Residency Scheduler project, including detailed implementation notes, technical requirements, database schema changes, API modifications, and migration considerations for each milestone.
 
@@ -19,6 +19,46 @@ The current release includes:
 - ✅ Audit logging system
 - ✅ Rate limiting and security hardening
 - ✅ Export functionality (Excel, PDF, ICS)
+
+### March 2026 (v1.0.5) - Block 12 Schedule Generation & XLSX Last-Mile
+
+> **Status**: In progress. PRs #1214-#1219, #1231-#1236 merged. XLSX export now matches TAMC hand-jammed reference format.
+
+**Schedule Engine Fixes (PRs #1214-#1219, #1231-#1234):**
+- ✅ 17 constraints re-enabled (41/50 total), CALL pipeline sync (PR #1215)
+- ✅ Stale CALL preload overwrite + faculty gap backfill + cross-block guard (PR #1216)
+- ✅ Call equity tuning: overnight call generation revived, availability-normalized prior_calls, equity weights (PR #1217)
+- ✅ Integrated workload constraint revived, YTD_SUMMARY faculty union bug fixed (PR #1219)
+- ✅ Hilo return clinic + last-Wednesday faculty clinic backfill (PR #1231)
+- ✅ Category-gate AT/C template resolution Phase 4A/4B/4D (PR #1233)
+- ✅ Final Wednesday faculty inverted schedule + activity code disambiguation (PR #1234)
+- ✅ Faculty weekend OFF→W conversion in post-solve pipeline
+
+**XLSX Export — TAMC Reference Format Match (PRs #1235-#1236):**
+- ✅ Color opacity fix: preserved FF alpha prefix in ARGB colors (was stripping → transparent fills)
+- ✅ ADV/DFM added to white font color group in color scheme XML
+- ✅ Blocked-time colors inverted: white background + black text (was black bg + white text)
+- ✅ Date format: `d-mmm` (e.g. "7-May") — fixes #### display in narrow columns
+- ✅ Arial 16 base font across all cells, preserving bold/color styling
+- ✅ Row-specific font sizes: Arial 18 day names, Arial 20 staff call, Arial 14 resident call
+- ✅ Column widths matched to reference (A=10.2, B=12.2, C=9.2, D=11.8, E=40.5, schedule=10.2)
+- ✅ Row heights: 15-25 headers, 21 resident rows, 20 faculty rows
+- ✅ Borders removed from body cells (reference has none)
+- ✅ AM/PM column merges in header rows 1-5
+- ✅ Row 6 labels: Arial 11 bold (TEMPLATE, ROLE, PROVIDER)
+
+**XLSX Calculator Formulas — Reference Parity:**
+- ✅ Screeners Needed: counts all clinic codes (C, C30, C40, CC, C-I, VAS, PR, SM, etc.) across all provider rows
+- ✅ Providers Virtual: CV + CV10 + half-weight CF2V/CV2F
+- ✅ Interns/Residents in Clinic: expanded to include C30, C40, C60, CC codes
+- ✅ Attendings Needed: ratio-based (interns×0.5 + residents×0.25) matching reference
+- ✅ Total Attendings Needed: ROUNDUP(SUM(clinic+proc))
+- ✅ PR/VAS Conflict detector added (⚠ warning)
+- ✅ V Clinic: V1+V2+V3+CV matching reference codes
+
+**Mind Flayer's Probe (PR #1217):**
+- ✅ AST-based pre-commit hook for constraint archetype enforcement (4 rules)
+- ✅ ARCH-006: activity code disambiguation guard added
 
 ### February 2026 Additions (v1.0.2) - Quality & Build Hardening
 
