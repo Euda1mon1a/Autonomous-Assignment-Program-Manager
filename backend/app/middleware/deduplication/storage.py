@@ -171,11 +171,13 @@ class DeduplicationStorage:
 
         try:
             # Try to acquire lock with expiry
-            acquired = await self.redis.set(
-                lock_key,
-                lock_id,
-                nx=True,
-                ex=int(timeout),
+            acquired = bool(
+                await self.redis.set(
+                    lock_key,
+                    lock_id,
+                    nx=True,
+                    ex=int(timeout),
+                )
             )
 
             if acquired:

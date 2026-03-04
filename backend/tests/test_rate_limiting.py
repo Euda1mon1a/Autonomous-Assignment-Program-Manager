@@ -20,6 +20,7 @@ from fastapi import Request
 from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
+from app.core import rate_limit as rate_limit_module
 from app.core.rate_limit import (
     RateLimiter,
     get_client_ip,
@@ -191,11 +192,22 @@ class TestRateLimiter:
 class TestRateLimiterWithRealRedis:
     """Test rate limiter with actual Redis connection."""
 
-    def test_sliding_window_behavior(self, real_redis_limiter):
+    def test_sliding_window_behavior(self, real_redis_limiter, monkeypatch):
         """Test sliding window allows requests after time passes."""
         key = "test:sliding:192.168.1.1"
         max_requests = 3
         window_seconds = 2  # Short window for testing
+        start_time = 1_000.0
+        times = iter(
+            [
+                start_time,
+                start_time,
+                start_time,
+                start_time,
+                start_time + window_seconds + 0.1,
+            ]
+        )
+        monkeypatch.setattr(rate_limit_module.time, "time", lambda: next(times))
 
         # Make 3 requests (at limit)
         for i in range(max_requests):
@@ -217,9 +229,6 @@ class TestRateLimiterWithRealRedis:
             window_seconds=window_seconds,
         )
         assert is_limited, "Request should be limited after hitting max"
-
-        # Wait for window to pass
-        time.sleep(window_seconds + 0.5)
 
         # Should be allowed again
         is_limited, info = real_redis_limiter.is_rate_limited(

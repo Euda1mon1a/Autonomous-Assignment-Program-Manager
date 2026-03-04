@@ -129,7 +129,7 @@ class APIKey(Base):
         Index("idx_api_key_owner", "owner_id", "is_active"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<APIKey(name='{self.name}', prefix='{self.key_prefix}', active={self.is_active})>"
 
     @property
@@ -243,7 +243,7 @@ class OAuth2Client(Base):
         Index("idx_oauth2_client_owner", "owner_id", "is_active"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<OAuth2Client(name='{self.name}', client_id='{self.client_id}')>"
 
     def get_scopes(self) -> list[str]:
@@ -312,7 +312,7 @@ class IPWhitelist(Base):
         Index("idx_ip_whitelist_applies_to", "applies_to", "is_active"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<IPWhitelist(ip='{self.ip_address}', applies_to='{self.applies_to}')>"
 
     @property
@@ -397,7 +397,7 @@ class IPBlacklist(Base):
         Index("idx_ip_blacklist_detection", "detection_method", "is_active"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<IPBlacklist(ip='{self.ip_address}', reason='{self.reason[:50]}')>"
 
     @property
@@ -470,5 +470,5 @@ class RequestSignature(Base):
         Index("idx_request_signature_api_key", "api_key_id", "verified_at"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<RequestSignature(method='{self.request_method}', path='{self.request_path[:50]}', valid={self.is_valid})>"

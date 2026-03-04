@@ -9,13 +9,15 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import date, datetime
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
 from app.middleware.versioning.middleware import APIVersion, get_api_version
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T", bound=type["ResponseTransformer"])
 
 
 class ResponseTransformer(ABC):
@@ -389,7 +391,7 @@ def get_transform_registry() -> TransformRegistry:
 def register_transformer(
     name: str,
     transformer: ResponseTransformer | None = None,
-) -> Callable:
+) -> Callable[[T], T]:
     """
     Decorator to register a transformer.
 
@@ -410,7 +412,7 @@ def register_transformer(
                 return True
     """
 
-    def decorator(cls):
+    def decorator(cls: T) -> T:
         if transformer is not None:
             instance = transformer
         else:

@@ -55,16 +55,20 @@ def validate_search_path(search_path: str) -> str:
         elif _IDENTIFIER_RE.match(part):
             # Unquoted valid identifier — quote it for safety
             safe_parts.append(f'"{part}"')
-        elif _QUOTED_IDENTIFIER_RE.match(part):
-            # Already double-quoted identifier (e.g. "MySchema") — validate inner
-            inner = _QUOTED_IDENTIFIER_RE.match(part).group(1)
-            if _IDENTIFIER_RE.match(inner):
-                safe_parts.append(f'"{inner}"')
-            else:
-                raise ValueError(f"Invalid quoted identifier in search_path: {part!r}.")
         else:
-            raise ValueError(
-                f"Invalid search_path component: {part!r}. "
-                "Must be a valid identifier or a special variable."
-            )
+            match = _QUOTED_IDENTIFIER_RE.match(part)
+            if match:
+                # Already double-quoted identifier (e.g. "MySchema") — validate inner
+                inner = match.group(1)
+                if _IDENTIFIER_RE.match(inner):
+                    safe_parts.append(f'"{inner}"')
+                else:
+                    raise ValueError(
+                        f"Invalid quoted identifier in search_path: {part!r}."
+                    )
+            else:
+                raise ValueError(
+                    f"Invalid search_path component: {part!r}. "
+                    "Must be a valid identifier or a special variable."
+                )
     return ", ".join(safe_parts)
