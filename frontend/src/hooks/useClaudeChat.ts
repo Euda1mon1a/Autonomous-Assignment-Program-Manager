@@ -147,8 +147,8 @@ export interface SavedSession {
  */
 interface WsConnectedMessage {
   type: 'connected';
-  sessionId: string;
-  historyCount: number;
+  session_id: string; // @gorgon-ok — WebSocket bypasses axios interceptor
+  history_count: number; // @gorgon-ok — WebSocket bypasses axios interceptor
 }
 
 interface WsTokenMessage {
@@ -357,7 +357,7 @@ export const useClaudeChat = () => {
     switch (data.type) {
       case 'connected':
         // Update session ID if we got a new one from server
-        setSession(prev => prev ? { ...prev, id: data.sessionId } : prev);
+        setSession(prev => prev ? { ...prev, id: data.session_id } : prev); // @gorgon-ok — WebSocket bypasses axios interceptor
         break;
 
       case 'token': {
