@@ -316,12 +316,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     const { error, errorInfo, errorCategory } = this.state;
 
     console.group('%c Error Report', 'color: #3b82f6; font-weight: bold');
-    console.log('Category:', errorCategory);
-    console.log('Error:', error);
-    console.log('Error Info:', errorInfo);
-    console.log('Timestamp:', new Date().toISOString());
-    console.log('User Agent:', navigator.userAgent);
-    console.log('URL:', window.location.href);
+    console.error('Category:', errorCategory);
+    console.error('Error:', error);
+    console.error('Error Info:', errorInfo);
+    console.error('Timestamp:', new Date().toISOString());
+    console.error('User Agent:', navigator.userAgent);
+    console.error('URL:', window.location.href);
     console.groupEnd();
 
     // In production, this would be sent to an error reporting service (e.g., Sentry, LogRocket)
