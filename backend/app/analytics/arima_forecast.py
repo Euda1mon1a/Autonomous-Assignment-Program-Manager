@@ -537,7 +537,7 @@ def forecast_workload(
             periods=7
         )
         for f in result["forecasts"]:
-            print(f"Period {f['period']}: {f['value']:.1f} hours")
+            logger.info("Period %s: %.1f hours", f['period'], f['value'])
     """
     forecaster = ARIMAForecaster(auto_order=auto_order, order=order)
     forecaster.fit(np.array(workload_history, dtype=np.float64), dates=dates)

@@ -4,9 +4,12 @@ Quantum Zeno Effect Dashboard Metrics.
 Provides visualization and reporting for Zeno effect monitoring.
 """
 
+import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from app.scheduling.zeno_governor import (
     InterventionPolicy,
@@ -79,7 +82,7 @@ class ZenoDashboard:
         Example:
             dashboard = ZenoDashboard(governor)
             summary = await dashboard.get_summary()
-            print(f"Risk: {summary.current_risk}")
+            logger.info("Risk: %s", summary.current_risk)
         """
         metrics = self.governor.get_current_metrics()
 
@@ -379,7 +382,7 @@ def format_policy_for_display(policy: InterventionPolicy) -> str:
 
     Example:
         text = format_policy_for_display(policy)
-        print(text)
+        logger.info(text)
     """
     lines = [
         "📋 Recommended Intervention Policy",

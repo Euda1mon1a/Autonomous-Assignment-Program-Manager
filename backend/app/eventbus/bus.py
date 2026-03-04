@@ -652,7 +652,7 @@ class EventBus:
 
         # Subscribe to events with wildcard
         async def handler(event: Event):
-            print(f"Received: {event.topic} - {event.data}")
+            logger.info("Received: %s - %s", event.topic, event.data)
 
         await bus.subscribe("user.*", handler)
 

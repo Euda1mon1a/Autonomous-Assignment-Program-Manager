@@ -550,7 +550,7 @@ class MultiLevelCache:
 
         Example:
             stats = cache.get_stats()
-            print(f"Hit rate: {stats['hit_rate']:.2%}")
+            logger.info("Hit rate: %.2f%%", stats['hit_rate'] * 100)
         """
         with self._stats_lock:
             stats_dict = self.stats.to_dict()

@@ -193,10 +193,10 @@ USAGE EXAMPLES
         num_sweeps=5000,
     )
 
-    print(f"Valid solution: {solution.is_valid}")
-    print(f"Assignments: {len(solution.assignments)}")
-    print(f"Energy: {solution.energy:.2f}")
-    print(f"Runtime: {solution.runtime_seconds:.2f}s")
+    logger.info("Valid solution: %s", solution.is_valid)
+    logger.info("Assignments: %s", len(solution.assignments))
+    logger.info("Energy: %.2f", solution.energy)
+    logger.info("Runtime: %.2fs", solution.runtime_seconds)
 
 **Example 2: Manual QUBO Construction**
 
@@ -209,8 +209,8 @@ USAGE EXAMPLES
     qubo = CallAssignmentQUBO(call_nights, candidates)
     Q = qubo.build()
 
-    print(f"Variables: {qubo.num_variables}")
-    print(f"Non-zero terms: {len(Q)}")
+    logger.debug("Variables: %s", qubo.num_variables)
+    logger.debug("Non-zero terms: %s", len(Q))
 
     # Solve with custom parameters
     solver = QuantumTunnelingAnnealingSolver(
@@ -224,8 +224,8 @@ USAGE EXAMPLES
 
     # Analyze constraint breakdown
     breakdown = qubo.get_constraint_breakdown(solution.sample)
-    print(f"Coverage penalty: {breakdown['coverage']:.2f}")
-    print(f"Equity penalty: {breakdown['equity']:.2f}")
+    logger.debug("Coverage penalty: %.2f", breakdown['coverage'])
+    logger.debug("Equity penalty: %.2f", breakdown['equity'])
 
 **Example 3: Benchmarking vs OR-Tools**
 
@@ -238,15 +238,15 @@ USAGE EXAMPLES
         ortools_timeout=60.0,
     )
 
-    print("QUBO Results:")
-    print(f"  Runtime: {results['qubo']['runtime_seconds']:.2f}s")
-    print(f"  Valid: {results['qubo']['is_valid']}")
+    logger.info("QUBO Results:")
+    logger.info("  Runtime: %.2fs", results['qubo']['runtime_seconds'])
+    logger.info("  Valid: %s", results['qubo']['is_valid'])
 
-    print("OR-Tools Results:")
-    print(f"  Runtime: {results['ortools']['runtime_seconds']:.2f}s")
+    logger.info("OR-Tools Results:")
+    logger.info("  Runtime: %.2fs", results['ortools']['runtime_seconds'])
 
-    print("Comparison:")
-    print(f"  Runtime ratio: {results['comparison']['runtime_ratio']:.2f}x")
+    logger.info("Comparison:")
+    logger.info("  Runtime ratio: %.2fx", results['comparison']['runtime_ratio'])
 
 ===============================================================================
 PROBLEM SIZE ANALYSIS

@@ -196,8 +196,8 @@ def get_response_metrics() -> dict[str, Any]:
 
     Example:
         metrics = get_response_metrics()
-        print(f"Total requests: {metrics['total_requests']}")
-        print(f"Error rate: {metrics['status_codes'].get('500', 0)}")
+        logger.info("Total requests: %s", metrics['total_requests'])
+        logger.info("Error rate: %s", metrics['status_codes'].get('500', 0))
     """
     return global_metrics.get_metrics()
 

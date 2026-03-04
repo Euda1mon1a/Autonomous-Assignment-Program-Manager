@@ -62,7 +62,7 @@ def generate_block_quality_report(
 
         # Check result
         if result.ready():
-            print(result.get())
+            logger.info("Report result: %s", result.get())
     """
     try:
         if academic_year is None:

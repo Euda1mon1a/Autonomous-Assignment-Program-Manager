@@ -25,7 +25,7 @@ Usage:
 
     # Subscribe to events
     async def handler(event: Event):
-        print(f"Received: {event.topic}")
+        logger.info("Received: %s", event.topic)
 
     await bus.subscribe("user.created", handler)
     await bus.subscribe("user.*", handler)  # Wildcard matching
