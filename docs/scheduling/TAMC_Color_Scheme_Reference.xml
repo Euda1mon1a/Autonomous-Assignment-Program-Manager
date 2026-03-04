@@ -11,7 +11,7 @@
       <code value="PedW" description="Pediatrics Ward" sample_count="0"/>
       <code value="SURG" description="Surgery rotation" sample_count="0"/>
     </color_group>
-    <color_group name="blocked_protected" display_name="Blocked/Protected Time" hex_color="FF000000" emoji="⚫">
+    <color_group name="blocked_protected" display_name="Blocked/Protected Time" hex_color="FFFFFFFF" emoji="⬜">
       <code value="HOL" description="Holiday" sample_count="617"/>
       <code value="LEC" description="Lecture/Conference" sample_count="70"/>
       <code value="TNG" description="Training" sample_count="59"/>
@@ -86,13 +86,15 @@
       <code value="C" description="Clinic" sample_count="119"/>
       <code value="AT" description="Attending Time" sample_count="115"/>
     </font_color_group>
-    <font_color_group name="white" display_name="White - On dark backgrounds" hex_color="FFFFFFFF" actual_rgb="FFFFFFFF" usage="Used with black fill for contrast">
-      <code value="HOL" description="Holiday (on black fill)" sample_count="735"/>
-      <code value="TNG" description="Training (on black)" sample_count="81"/>
-      <code value="MM" description="M&amp;M (on black)" sample_count="19"/>
+    <font_color_group name="blocked_text" display_name="Black - On white backgrounds" hex_color="FF000000" actual_rgb="FF000000" usage="Used with white fill for blocked/protected time">
+      <code value="HOL" description="Holiday (on white fill)" sample_count="735"/>
+      <code value="TNG" description="Training (on white)" sample_count="81"/>
+      <code value="MM" description="M&amp;M (on white)" sample_count="19"/>
       <code value="FED" description="Federal holiday" sample_count="10"/>
-      <code value="LEC" description="Lecture (on black fill)" sample_count="266"/>
-      <code value="GME" description="GME admin (on black fill)" sample_count="177"/>
+      <code value="LEC" description="Lecture (on white fill)" sample_count="266"/>
+      <code value="GME" description="GME admin (on white fill)" sample_count="177"/>
+      <code value="ADV" description="Advising (on white fill)" sample_count="0"/>
+      <code value="DFM" description="DFM admin (on white fill)" sample_count="0"/>
     </font_color_group>
     <font_color_group name="black" display_name="Black - Default text" hex_color="FF000000" actual_rgb="FF000000">
       <code value="R1" description="Row labels" sample_count="125"/>
