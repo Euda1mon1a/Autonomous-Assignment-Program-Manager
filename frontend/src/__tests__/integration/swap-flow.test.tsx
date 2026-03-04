@@ -91,10 +91,10 @@ const mockAssignments = [
 type SwapStatus = 'pending' | 'approved' | 'rejected' | 'completed' | 'expired' | 'cancelled'
 const mockSwapRequests: Array<{
   id: string
-  requester_id: string
-  requester_assignmentId: string
-  target_personId: string
-  target_assignmentId: string
+  requesterId: string
+  requesterAssignmentId: string
+  targetPersonId: string
+  targetAssignmentId: string
   status: SwapStatus
   swapType: 'one_to_one' | 'one_to_many' | 'many_to_one' // @gorgon-ok values must match backend snake_case
   reason: string
@@ -104,10 +104,10 @@ const mockSwapRequests: Array<{
 }> = [
   {
     id: 'swap-1',
-    requester_id: 'person-1',
-    requester_assignmentId: 'assignment-1',
-    target_personId: 'person-2',
-    target_assignmentId: 'assignment-2',
+    requesterId: 'person-1',
+    requesterAssignmentId: 'assignment-1',
+    targetPersonId: 'person-2',
+    targetAssignmentId: 'assignment-2',
     status: 'pending',
     swapType: 'one_to_one',
     reason: 'Family emergency',
@@ -171,8 +171,8 @@ describe('Swap Request Flow - Integration Tests', () => {
       })
 
       const result: any = await mockedApi.post('/api/swaps', {
-        requester_assignmentId: 'assignment-1',
-        target_assignmentId: 'assignment-2',
+        requesterAssignmentId: 'assignment-1',
+        targetAssignmentId: 'assignment-2',
         swapType: 'one_to_one',
         reason: 'Need to attend conference',
       })
@@ -191,7 +191,7 @@ describe('Swap Request Flow - Integration Tests', () => {
       })
 
       const result: any = await mockedApi.post('/api/swaps', {
-        requester_assignmentId: 'assignment-1',
+        requesterAssignmentId: 'assignment-1',
         swapType: 'absorb',
         reason: 'Emergency leave',
       })
@@ -230,8 +230,8 @@ describe('Swap Request Flow - Integration Tests', () => {
       })
 
       const result: any = await mockedApi.post('/api/swaps', {
-        requester_assignmentId: 'assignment-1',
-        target_assignmentId: 'assignment-2',
+        requesterAssignmentId: 'assignment-1',
+        targetAssignmentId: 'assignment-2',
         swapType: 'one_to_one',
         expiresAt: expiresAt,
       })
@@ -255,7 +255,7 @@ describe('Swap Request Flow - Integration Tests', () => {
       const swap = mockSwapRequests[0]
       expect(swap.reason).toBe('Family emergency')
       expect(swap.swapType).toBe('one_to_one')
-      expect(swap.requester_id).toBe('person-1')
+      expect(swap.requesterId).toBe('person-1')
     })
 
     it('should filter swaps by status', async () => {
@@ -278,7 +278,7 @@ describe('Swap Request Flow - Integration Tests', () => {
 
       const result: any = await mockedApi.get('/api/swaps?requester_id=person-1')
       expect(result.items).toHaveLength(1)
-      expect(result.items[0].requester_id).toBe('person-1')
+      expect(result.items[0].requesterId).toBe('person-1')
     })
   })
 
@@ -291,7 +291,7 @@ describe('Swap Request Flow - Integration Tests', () => {
           {
             personId: 'person-2',
             assignmentId: 'assignment-2',
-            compatibility_score: 0.95,
+            compatibilityScore: 0.95,
             reasons: ['Same rotation type', 'Compatible dates'],
           },
         ],
@@ -299,7 +299,7 @@ describe('Swap Request Flow - Integration Tests', () => {
 
       const result: any = await mockedApi.get('/api/swaps/swap-1/matches')
       expect(result.matches).toHaveLength(1)
-      expect(result.matches[0].compatibility_score).toBeGreaterThan(0.9)
+      expect(result.matches[0].compatibilityScore).toBeGreaterThan(0.9)
     })
 
     it('should rank matches by compatibility', async () => {
@@ -307,15 +307,15 @@ describe('Swap Request Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         matches: [
-          { personId: 'person-2', compatibility_score: 0.95 },
-          { personId: 'person-3', compatibility_score: 0.75 },
-          { personId: 'person-4', compatibility_score: 0.60 },
+          { personId: 'person-2', compatibilityScore: 0.95 },
+          { personId: 'person-3', compatibilityScore: 0.75 },
+          { personId: 'person-4', compatibilityScore: 0.60 },
         ],
       })
 
       const result: any = await mockedApi.get('/api/swaps/swap-1/matches')
-      expect(result.matches[0].compatibility_score).toBeGreaterThan(
-        result.matches[1].compatibility_score
+      expect(result.matches[0].compatibilityScore).toBeGreaterThan(
+        result.matches[1].compatibilityScore
       )
     })
 
@@ -324,12 +324,12 @@ describe('Swap Request Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         matches: [
-          { personId: 'person-2', rotation_type: 'clinic' },
+          { personId: 'person-2', rotationType: 'clinic' },
         ],
       })
 
       const result: any = await mockedApi.get('/api/swaps/swap-1/matches?rotation_type=clinic')
-      expect(result.matches[0].rotation_type).toBe('clinic')
+      expect(result.matches[0].rotationType).toBe('clinic')
     })
 
     it('should check ACGME compliance for matches', async () => {
@@ -339,10 +339,10 @@ describe('Swap Request Flow - Integration Tests', () => {
         matches: [
           {
             personId: 'person-2',
-            acgme_compliant: true,
-            compliance_checks: {
+            acgmeCompliant: true,
+            complianceChecks: {
               hours: 'pass',
-              days_off: 'pass',
+              daysOff: 'pass',
               supervision: 'pass',
             },
           },
@@ -350,7 +350,7 @@ describe('Swap Request Flow - Integration Tests', () => {
       })
 
       const result: any = await mockedApi.get('/api/swaps/swap-1/matches')
-      expect(result.matches[0].acgme_compliant).toBe(true)
+      expect(result.matches[0].acgmeCompliant).toBe(true)
     })
   })
 
@@ -388,11 +388,11 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.patch = jest.fn().mockResolvedValueOnce({
         id: 'swap-1',
         status: 'accepted',
-        notification_sent: true,
+        notificationSent: true,
       })
 
       const result: any = await mockedApi.patch('/api/swaps/swap-1/accept', {})
-      expect(result.notification_sent).toBe(true)
+      expect(result.notificationSent).toBe(true)
     })
   })
 
@@ -418,14 +418,14 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.patch = jest.fn().mockResolvedValueOnce({
         id: 'swap-1',
         status: 'rejected',
-        rejection_reason: 'Scheduling conflict',
+        rejectionReason: 'Scheduling conflict',
       })
 
       const result: any = await mockedApi.patch('/api/swaps/swap-1/reject', {
         reason: 'Scheduling conflict',
       })
 
-      expect(result.rejection_reason).toBe('Scheduling conflict')
+      expect(result.rejectionReason).toBe('Scheduling conflict')
     })
 
     it('should notify requester of rejection', async () => {
@@ -434,11 +434,11 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.patch = jest.fn().mockResolvedValueOnce({
         id: 'swap-1',
         status: 'rejected',
-        notification_sent: true,
+        notificationSent: true,
       })
 
       const result: any = await mockedApi.patch('/api/swaps/swap-1/reject', {})
-      expect(result.notification_sent).toBe(true)
+      expect(result.notificationSent).toBe(true)
     })
   })
 
@@ -461,12 +461,12 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.patch = jest.fn().mockResolvedValueOnce({
         id: 'swap-1',
         status: 'approved',
-        approved_by: 'coordinator-1',
+        approvedBy: 'coordinator-1',
       })
 
       const result: any = await mockedApi.patch('/api/swaps/swap-1/approve', {})
       expect(result.status).toBe('approved')
-      expect(result.approved_by).toBeDefined()
+      expect(result.approvedBy).toBeDefined()
     })
 
     it('should execute swap after approval', async () => {
@@ -475,12 +475,12 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.post = jest.fn().mockResolvedValueOnce({
         swapId: 'swap-1',
         executed: true,
-        assignments_updated: 2,
+        assignmentsUpdated: 2,
       })
 
       const result: any = await mockedApi.post('/api/swaps/swap-1/execute', {})
       expect(result.executed).toBe(true)
-      expect(result.assignments_updated).toBe(2)
+      expect(result.assignmentsUpdated).toBe(2)
     })
 
     it('should validate swap before execution', async () => {
@@ -507,12 +507,12 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.post = jest.fn().mockResolvedValueOnce({
         swapId: 'swap-1',
         status: 'rolled_back',
-        assignments_restored: 2,
+        assignmentsRestored: 2,
       })
 
       const result: any = await mockedApi.post('/api/swaps/swap-1/rollback', {})
       expect(result.status).toBe('rolled_back')
-      expect(result.assignments_restored).toBe(2)
+      expect(result.assignmentsRestored).toBe(2)
     })
 
     it('should reject rollback after 24-hour window', async () => {
@@ -535,10 +535,8 @@ describe('Swap Request Flow - Integration Tests', () => {
 
       mockedApi.get.mockResolvedValueOnce({
         swapId: 'swap-1',
-        originalAssignments: {
-          'person-1': 'assignment-1',
-          'person-2': 'assignment-2',
-        },
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        originalAssignments: { 'person-1': 'assignment-1', 'person-2': 'assignment-2' },
       })
 
       const result: any = await mockedApi.get('/api/swaps/swap-1/original')
@@ -586,29 +584,29 @@ describe('Swap Request Flow - Integration Tests', () => {
 
       mockedApi.post = jest.fn().mockResolvedValueOnce({
         id: 'swap-new',
-        notification_sent: true,
-        notified_users: ['person-2'],
+        notificationSent: true,
+        notifiedUsers: ['person-2'],
       })
 
       const result: any = await mockedApi.post('/api/swaps', {
-        requester_assignmentId: 'assignment-1',
-        target_assignmentId: 'assignment-2',
+        requesterAssignmentId: 'assignment-1',
+        targetAssignmentId: 'assignment-2',
       })
 
-      expect(result.notification_sent).toBe(true)
+      expect(result.notificationSent).toBe(true)
     })
 
     it('should notify all parties on swap acceptance', async () => {
       setupApiMock()
 
       mockedApi.patch = jest.fn().mockResolvedValueOnce({
-        notification_sent: true,
-        notified_users: ['person-1', 'person-2', 'coordinator-1'],
+        notificationSent: true,
+        notifiedUsers: ['person-1', 'person-2', 'coordinator-1'],
       })
 
       const result: any = await mockedApi.patch('/api/swaps/swap-1/accept', {})
-      expect(result.notified_users).toContain('person-1')
-      expect(result.notified_users).toContain('coordinator-1')
+      expect(result.notifiedUsers).toContain('person-1')
+      expect(result.notifiedUsers).toContain('coordinator-1')
     })
   })
 
@@ -619,7 +617,7 @@ describe('Swap Request Flow - Integration Tests', () => {
       const openSwaps = [
         {
           ...mockSwapRequests[0],
-          target_personId: null, // Open to anyone
+          targetPersonId: null, // Open to anyone
           status: 'open' as const,
         },
       ]
@@ -640,13 +638,13 @@ describe('Swap Request Flow - Integration Tests', () => {
         items: [
           {
             ...mockSwapRequests[0],
-            rotation_type: 'clinic',
+            rotationType: 'clinic',
           },
         ],
       })
 
       const result: any = await mockedApi.get('/api/swaps/marketplace?rotation_type=clinic')
-      expect(result.items[0].rotation_type).toBe('clinic')
+      expect(result.items[0].rotationType).toBe('clinic')
     })
 
     it('should allow user to claim marketplace swap', async () => {
@@ -654,7 +652,7 @@ describe('Swap Request Flow - Integration Tests', () => {
 
       mockedApi.post = jest.fn().mockResolvedValueOnce({
         swapId: 'swap-1',
-        claimed_by: 'person-3',
+        claimedBy: 'person-3',
         status: 'pending',
       })
 
@@ -662,7 +660,7 @@ describe('Swap Request Flow - Integration Tests', () => {
         assignmentId: 'assignment-3',
       })
 
-      expect(result.claimed_by).toBe('person-3')
+      expect(result.claimedBy).toBe('person-3')
     })
   })
 
@@ -686,14 +684,14 @@ describe('Swap Request Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        average_hours: 24,
-        median_hours: 18,
-        fastest_hours: 2,
-        slowest_hours: 72,
+        averageHours: 24,
+        medianHours: 18,
+        fastestHours: 2,
+        slowestHours: 72,
       })
 
       const result: any = await mockedApi.get('/api/swaps/analytics/processing-time')
-      expect(result.average_hours).toBe(24)
+      expect(result.averageHours).toBe(24)
     })
   })
 
@@ -766,11 +764,11 @@ describe('Swap Request Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.post = jest.fn().mockResolvedValueOnce({
-        expired_count: 5,
+        expiredCount: 5,
       })
 
       const result: any = await mockedApi.post('/api/swaps/expire-old', {})
-      expect(result.expired_count).toBeGreaterThan(0)
+      expect(result.expiredCount).toBeGreaterThan(0)
     })
   })
 
@@ -787,7 +785,7 @@ describe('Swap Request Flow - Integration Tests', () => {
       const result: any = await mockedApi.post('/api/swaps/templates', {
         name: 'Weekend Call Swap',
         swapType: 'one_to_one',
-        default_reason: 'Weekend coverage needed',
+        defaultReason: 'Weekend coverage needed',
       })
 
       expect(result.name).toBe('Weekend Call Swap')
@@ -802,7 +800,7 @@ describe('Swap Request Flow - Integration Tests', () => {
       })
 
       const result: any = await mockedApi.post('/api/swaps/from-template/template-1', {
-        requester_assignmentId: 'assignment-1',
+        requesterAssignmentId: 'assignment-1',
       })
 
       expect(result.templateId).toBe('template-1')
@@ -814,8 +812,8 @@ describe('Swap Request Flow - Integration Tests', () => {
       setupApiMock()
 
       mockedApi.get.mockResolvedValueOnce({
-        requester: { hours_before: 60, hours_after: 70, change: 10 },
-        target: { hours_before: 65, hours_after: 55, change: -10 },
+        requester: { hoursBefore: 60, hoursAfter: 70, change: 10 },
+        target: { hoursBefore: 65, hoursAfter: 55, change: -10 },
       })
 
       const result: any = await mockedApi.get('/api/swaps/swap-1/impact')
@@ -829,8 +827,8 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.get.mockResolvedValueOnce({
         compliant: true,
         checks: {
-          hours_80: 'pass',
-          days_off_1in7: 'pass',
+          hours_80: 'pass', // @gorgon-ok — numeric suffix not converted by interceptor
+          daysOff_1in7: 'pass', // @gorgon-ok — numeric suffix not converted by interceptor
         },
       })
 
@@ -882,11 +880,11 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.patch = jest.fn().mockResolvedValueOnce({
         id: 'swap-1',
         status: 'approved',
-        force_approved: true,
+        forceApproved: true,
       })
 
       const result: any = await mockedApi.patch('/api/swaps/swap-1/force-approve', {})
-      expect(result.force_approved).toBe(true)
+      expect(result.forceApproved).toBe(true)
     })
   })
 
@@ -897,12 +895,12 @@ describe('Swap Request Flow - Integration Tests', () => {
       mockedApi.post = jest.fn().mockRejectedValueOnce({
         message: 'Overlapping swap request exists',
         status: 409,
-        conflicting_swapId: 'swap-2',
+        conflictingSwapId: 'swap-2',
       })
 
       await expect(
         mockedApi.post('/api/swaps', {
-          requester_assignmentId: 'assignment-1',
+          requesterAssignmentId: 'assignment-1',
         })
       ).rejects.toMatchObject({
         status: 409,
@@ -916,16 +914,16 @@ describe('Swap Request Flow - Integration Tests', () => {
 
       mockedApi.patch = jest.fn().mockResolvedValueOnce({
         personId: 'person-1',
-        auto_accept_from: ['person-2'],
-        rotation_preferences: ['clinic'],
+        autoAcceptFrom: ['person-2'],
+        rotationPreferences: ['clinic'],
       })
 
       const result: any = await mockedApi.patch('/api/people/person-1/swap-preferences', {
-        auto_accept_from: ['person-2'],
-        rotation_preferences: ['clinic'],
+        autoAcceptFrom: ['person-2'],
+        rotationPreferences: ['clinic'],
       })
 
-      expect(result.auto_accept_from).toContain('person-2')
+      expect(result.autoAcceptFrom).toContain('person-2')
     })
   })
 })

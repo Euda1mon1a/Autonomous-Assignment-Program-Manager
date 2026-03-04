@@ -484,17 +484,17 @@ describe('Schedule Management Flow - Integration Tests', () => {
 
       mockedApi.post = jest.fn().mockResolvedValueOnce({
         downloadUrl: '/api/exports/schedule-detailed.xlsx',
-        rows_exported: 2,
+        rowsExported: 2,
       })
 
       const result: any = await mockedApi.post('/api/exports/excel', {
         startDate: '2024-01-01',
         endDate: '2024-01-07',
-        include_notes: true,
-        include_metadata: true,
+        includeNotes: true,
+        includeMetadata: true,
       })
 
-      expect(result.rows_exported).toBe(2)
+      expect(result.rowsExported).toBe(2)
     })
   })
 
