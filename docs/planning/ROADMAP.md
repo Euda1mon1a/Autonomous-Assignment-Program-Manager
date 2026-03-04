@@ -60,6 +60,52 @@ The current release includes:
 - ✅ AST-based pre-commit hook for constraint archetype enforcement (4 rules)
 - ✅ ARCH-006: activity code disambiguation guard added
 
+### Upcoming: Scheduling Engine — Last-Mile Coordinator Rules
+
+> **Status**: Documented. Extracted from coordinator transcript (Mar 3, 2026) and untracked design docs. Not yet implemented.
+> **Source**: `docs/planning/TRANSCRIPT_ACTION_ITEMS.md`, `docs/architecture/SM_DETERMINISTIC_PRELOAD.md`
+
+**Call Spacing — Graduated Penalty (replaces binary NoConsecutiveCall):**
+- [ ] Replace flat penalty=50 for consecutive-only with exponential decay across 1-4 day gaps
+- [ ] 1 day apart: penalty ~100, 2 days: ~50, 3 days: ~25, 4+: 0
+- [ ] Covers coordinator's "15th and 17th is back-to-back" expectation (Item #3 from transcript)
+- [ ] File: `backend/app/scheduling/constraints/overnight_call.py` — extend `NoConsecutiveCallConstraint` or create `GraduatedCallSpacingConstraint`
+
+**C30/C40 PGY Booking Rule (CRITICAL for front-desk operations):**
+- [ ] Post-processing in `engine.py` to auto-translate generic `C` → `C40` (PGY-1) / `C30` (PGY-2/3)
+- [ ] Fix `C30` in database (`display_abbreviation` currently `None`)
+- [ ] Add `C30` background color to `TAMC_Color_Scheme_Reference.xml`
+
+**Night Float Continuity Touchpoint (`C-N`):**
+- [ ] Preloader or constraint to assign `C-N` code to first Thursday PM of a Night Float block
+- [ ] Ensures onboarding NF resident has continuity clinic touchpoint
+
+**Final Wednesday Continuity Loss:**
+- [ ] `FinalWednesdayContinuityConstraint` (SoftConstraint) — penalize if PGY-1/2 reaches final Wednesday without at least one `C` or `C-I` that day
+- [ ] Protects ACGME continuity tally for residents on IM Wards and similar rotations
+
+**HC & CLC Template Immunity:**
+- [ ] Seed `HC` (Hospital Committee) into activities table (`is_protected=True`)
+- [ ] Verify `CLC` is `is_protected=True`
+- [ ] Solver and import engine must treat these as locked structural blocks that override rotation logic
+
+**SM Deterministic Preload (design doc complete):**
+- [ ] Remove SM from solver optimization — preload from weekly templates with exclusion logic
+- [ ] Exclusion rules: skip FMIT weeks, skip Mondays (Sunday call risk), skip post-call days
+- [ ] Two-pass approach: preload SM first, post-solver cleanup for post-call conflicts
+- [ ] Eliminate SM dual-classification problem (clinic vs admin) by sidestepping solver entirely
+- [ ] Design: `docs/architecture/SM_DETERMINISTIC_PRELOAD.md` (6 implementation steps, 8 test cases)
+
+### Upcoming: Frontend Rewiring (Post-Backend Sprint)
+
+> **Status**: Documented. See `docs/planning/frontend_rewiring/README.md`
+
+**Phase 1 — Type Safety:** Regenerate OpenAPI types, fix `api-generated.ts` fallouts, wire `expand_block_assignments` toggle
+**Phase 2 — Draft & Publish Lifecycle:** Stage/Preview/Publish flow replacing destructive "Generate & Pray"
+**Phase 3 — ARO UI Hub:** New `/hub/annual-planning` page for Annual Rotation Optimizer (separate solver)
+**Phase 4 — Import/Export Last Mile:** Annual Workbook (14-sheet) export, `BLOCK_MISMATCH` error handling
+**Phase 5 — Cosmetic & UX Debt:** Dynamic enum fetches replacing hardcoded dropdowns, color scheme parity with XML
+
 ### February 2026 Additions (v1.0.2) - Quality & Build Hardening
 
 > **Status**: Merged to main. Frontend builds with strict checks enabled.
