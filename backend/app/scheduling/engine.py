@@ -4186,6 +4186,13 @@ class SchedulingEngine:
                 skipped_locked += 1
                 continue
 
+            # Solver outputs OFF for weekends — convert to W (Weekend).
+            # The solver doesn't distinguish weekday-off from weekend;
+            # templates have W for Sat/Sun but _resolve_template_activity
+            # only overrides C/AT types.
+            if activity_type == "OFF" and block.is_weekend:
+                activity_type = "W"
+
             # Get activity ID — template-aware for C/AT types
             resolved_code = _resolve_template_activity(
                 faculty_id, block.date, block.time_of_day, activity_type

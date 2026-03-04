@@ -93,9 +93,9 @@ class TAMCColorScheme:
 
             for group in color_groups:
                 hex_color = group.get("hex_color", "")
-                # Remove leading "FF" (alpha channel) for openpyxl
-                if hex_color.startswith("FF") and len(hex_color) == 8:
-                    hex_color = hex_color[2:]
+                # Ensure 8-char ARGB for openpyxl (FF prefix = opaque)
+                if len(hex_color) == 6:
+                    hex_color = "FF" + hex_color
 
                 for code_elem in group.findall("code"):
                     code = code_elem.get("value", "")
@@ -108,9 +108,9 @@ class TAMCColorScheme:
                 # Handle theme references (theme:1 → use actual_rgb)
                 if hex_color.startswith("theme:"):
                     hex_color = font_group.get("actual_rgb", "FF000000")
-                    # Remove leading "FF" (alpha channel) for openpyxl
-                if hex_color.startswith("FF") and len(hex_color) == 8:
-                    hex_color = hex_color[2:]
+                    # Ensure 8-char ARGB for openpyxl (FF prefix = opaque)
+                if len(hex_color) == 6:
+                    hex_color = "FF" + hex_color
 
                 for code_elem in font_group.findall("code"):
                     code = code_elem.get("value", "")

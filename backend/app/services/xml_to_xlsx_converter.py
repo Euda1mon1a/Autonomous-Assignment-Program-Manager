@@ -1138,9 +1138,12 @@ class XMLToXlsxConverter:
         font_color = self.color_scheme.get_font_color(code)
         if font_color:
             cell.font = Font(color=font_color)
-        elif hex_color in ("000000", "FF0000"):
-            # Fallback: white text on dark backgrounds
-            cell.font = Font(color="FFFFFF")
+        elif hex_color:
+            # Fallback: white text on dark fills (e.g., red).
+            # Colors are 8-char ARGB (FF prefix = opaque).
+            raw = hex_color[-6:]
+            if raw == "FF0000":
+                cell.font = Font(color="FFFFFFFF")
 
     def _apply_header_color(self, cell, day_of_week: int) -> None:
         """Apply header background color based on day of week."""
