@@ -438,13 +438,13 @@ class ScenarioAnalyzer:
 
             if action == "add":
                 # Add new assignment
-                block_id_str = str(change.get("block_id", ""))
+                block_id = change.get("block_id")
                 new_assignment = {
                     "id": str(uuid4()),
                     "person_id": change.get("person_id"),
-                    "block_id": change.get("block_id"),
+                    "block_id": block_id,
                     "rotation_type": change.get("rotation_type", "general"),
-                    "date": self._get_block_date(blocks, block_id_str),
+                    "date": self._get_block_date(blocks, block_id),
                 }
                 result.append(new_assignment)
 
@@ -476,10 +476,10 @@ class ScenarioAnalyzer:
 
         return result
 
-    def _get_block_date(self, blocks: list[dict], block_id: str) -> date | None:
+    def _get_block_date(self, blocks: list[dict], block_id: object) -> date | None:
         """Get date for a block by ID."""
         for block in blocks:
-            if block.get("id") == block_id:
+            if str(block.get("id")) == str(block_id):
                 d = block.get("date")
                 if isinstance(d, date):
                     return d

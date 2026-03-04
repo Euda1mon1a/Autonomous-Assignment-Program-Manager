@@ -468,8 +468,9 @@ class HolographicExporter:
 
                 # Get effectiveness
             if effectiveness_data:
+                aid = assignment.get("id", "")
                 effectiveness = effectiveness_data.get(
-                    str(assignment.get("id", "")), 85.0
+                    aid, effectiveness_data.get(str(aid), 85.0)
                 )
             else:
                 effectiveness = 85.0  # Default
