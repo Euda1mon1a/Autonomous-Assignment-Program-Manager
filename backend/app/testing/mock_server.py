@@ -48,7 +48,10 @@ class MockRequest:
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def matches(
-        self, method: str = None, path: str = None, path_pattern: Pattern = None
+        self,
+        method: str | None = None,
+        path: str | None = None,
+        path_pattern: Pattern[Any] | None = None,
     ) -> bool:
         """
         Check if this request matches given criteria.
@@ -255,15 +258,15 @@ class MockAPIServer:
     def register_endpoint(
         self,
         method: str,
-        path: str = None,
-        path_pattern: str = None,
+        path: str | None = None,
+        path_pattern: str | None = None,
         response: Any = None,
         status_code: int = 200,
-        headers: dict[str, str] = None,
+        headers: dict[str, str] | None = None,
         delay_ms: int = 0,
-        error: Exception = None,
+        error: Exception | None = None,
         stateful: bool = False,
-        responses: list[MockResponse] = None,
+        responses: list[MockResponse] | None = None,
     ) -> MockEndpoint:
         """
         Register a mock endpoint.
@@ -311,8 +314,8 @@ class MockAPIServer:
         self,
         method: str,
         path: str,
-        query_params: dict[str, Any] = None,
-        headers: dict[str, str] = None,
+        query_params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
         body: Any = None,
     ) -> MockResponse:
         """
@@ -360,9 +363,9 @@ class MockAPIServer:
 
     def get_requests(
         self,
-        method: str = None,
-        path: str = None,
-        path_pattern: str = None,
+        method: str | None = None,
+        path: str | None = None,
+        path_pattern: str | None = None,
     ) -> list[MockRequest]:
         """
         Get recorded requests matching criteria.
@@ -385,8 +388,8 @@ class MockAPIServer:
 
     def get_last_request(
         self,
-        method: str = None,
-        path: str = None,
+        method: str | None = None,
+        path: str | None = None,
     ) -> MockRequest | None:
         """
         Get most recent request matching criteria.
@@ -438,8 +441,8 @@ class MockAPIServer:
     def verify_request_count(
         self,
         expected: int,
-        method: str = None,
-        path: str = None,
+        method: str | None = None,
+        path: str | None = None,
     ) -> bool:
         """
         Verify number of requests matching criteria.
@@ -458,7 +461,7 @@ class MockAPIServer:
     def verify_request_order(
         self,
         expected_paths: list[str],
-        method: str = None,
+        method: str | None = None,
     ) -> bool:
         """
         Verify requests were made in expected order.
@@ -559,8 +562,8 @@ class MockAPIServer:
     def simulate_errors(
         self,
         error: Exception,
-        method: str = None,
-        path_pattern: str = None,
+        method: str | None = None,
+        path_pattern: str | None = None,
     ) -> None:
         """
         Configure endpoints to raise errors.
@@ -609,7 +612,7 @@ class MockServerContext:
         ```
     """
 
-    def __init__(self, server: MockAPIServer = None) -> None:
+    def __init__(self, server: MockAPIServer | None = None) -> None:
         """
         Initialize context.
 
