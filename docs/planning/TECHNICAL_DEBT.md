@@ -1,7 +1,7 @@
 # Technical Debt Tracker
 
-> **Last Updated:** 2026-02-12
-> **Source:** Full-Stack MVP Review (16-layer inspection) + 2026-02-08 Repo-Wide Scan
+> **Last Updated:** 2026-03-04
+> **Source:** Full-Stack MVP Review (16-layer inspection) + 2026-02-08 Repo-Wide Scan + 2026-03-04 Codex GPT-5 Full-Stack Assessment
 
 This document tracks identified technical debt, prioritized by severity and impact.
 
@@ -300,14 +300,76 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 
 ---
 
+### DEBT-026: Python Dependency CVEs
+**Location:** `backend/requirements*.txt`
+**Category:** Security
+**Found:** 2026-03-04 (Codex GPT-5 full-stack assessment)
+**Status:** Open
+
+3 CVEs found by `pip-audit`:
+- `langchain-core 0.3.83` → `CVE-2026-26013` (fix: `1.2.11`)
+- `langgraph-checkpoint 3.0.1` → `CVE-2026-27794` (fix: `4.0.0`)
+- `ecdsa 0.19.1` → `CVE-2024-23342` (no fix listed)
+
+---
+
+### DEBT-027: npm Dependency Vulnerabilities
+**Location:** `frontend/package-lock.json`
+**Category:** Security
+**Found:** 2026-03-04 (Codex GPT-5 full-stack assessment)
+**Status:** Open
+
+`minimatch` (high), `undici` (moderate). Run `cd frontend && npm audit` for current state.
+
+---
+
+### DEBT-028: Heavy Frontend Route Bundles
+**Location:** `frontend/src/app/`
+**Category:** Performance
+**Found:** 2026-03-04 (Codex GPT-5 full-stack assessment)
+**Status:** Open
+
+Routes exceeding 300kB first-load JS:
+- `/absences`: 345 kB
+- `/hub/import-export`: 332 kB
+- `/admin/import`: 318 kB
+- `/admin/labs/optimization`: 315 kB (178 kB route-specific)
+
+Candidates for route-level code splitting and lazy-loading boundaries.
+
+---
+
+### DEBT-029: Load-Test Workflow Missing Scripts
+**Location:** `.github/workflows/load-tests.yml`
+**Category:** Infrastructure
+**Found:** 2026-03-04 (Codex GPT-5 full-stack assessment)
+**Status:** Open
+
+Workflow references scripts not present in repo:
+- `load-tests/scripts/compare-baselines.py`
+- `load-tests/scripts/report-generator.py`
+- `load-tests/scripts/performance-regression-detector.py`
+
+---
+
+### DEBT-030: Playwright Config Port Conflict
+**Location:** `frontend/playwright.config.ts`, `frontend/e2e/playwright.config.ts`
+**Category:** Testing
+**Found:** 2026-03-04 (Codex GPT-5 full-stack assessment)
+**Status:** Open
+
+Two Playwright configs with port 3000 conflict. Responsive test run fails before executing due to webServer readiness timeout (port occupied, Next.js falls back to 3002). Need unified config with reserved fixed port strategy.
+
+---
+
 ## Summary by Category
 
 | Category | Open | Resolved | Total |
 |----------|------|----------|-------|
-| Security | 0 | 1 | 1 |
-| Infrastructure | 0 | 1 | 1 |
+| Security | 2 | 1 | 3 |
+| Infrastructure | 1 | 1 | 2 |
 | Configuration | 0 | 3 | 3 |
-| Performance | 0 | 3 | 3 |
+| Performance | 1 | 3 | 4 |
 | Feature Incomplete | 1 | 2 | 3 |
 | API Quality | 0 | 1 | 1 |
 | Authentication | 0 | 1 | 1 |
@@ -316,13 +378,13 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 | Code Quality | 0 | 1 | 1 |
 | Data / OPSEC | 0 | 1 | 1 |
 | Frontend Quality | 0 | 1 | 1 |
-| Testing | 1 | 2 | 3 |
+| Testing | 2 | 2 | 4 |
 | Error Handling | 0 | 2 | 2 |
 | Observability | 1 | 0 | 1 |
 | Real-time Features | 0 | 1 | 1 |
-| **Total** | **4** | **21** | **25** |
+| **Total** | **9** | **21** | **30** |
 
-> 21 of 25 items resolved (84%). Remaining 4 open items: accessibility gaps, MCP placeholders, telemetry config, known failing tests.
+> 21 of 30 items resolved (70%). 9 open items: a11y gaps, MCP placeholders, telemetry, failing tests, 2 dep CVE sets, heavy bundles, broken load-test scripts, Playwright port conflict.
 
 ---
 
@@ -355,6 +417,11 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 | DEBT-023 | ✅ Resolved | 2026-02-08 | Confirmed DEBT-011 resolved |
 | DEBT-024 | ✅ Resolved | 2026-02-09 | PR #1100 |
 | DEBT-025 | Open | - | - |
+| DEBT-026 | Open | - | Python dep CVEs |
+| DEBT-027 | Open | - | npm dep CVEs |
+| DEBT-028 | Open | - | Heavy route bundles |
+| DEBT-029 | Open | - | Load-test missing scripts |
+| DEBT-030 | Open | - | Playwright port conflict |
 
 ---
 
