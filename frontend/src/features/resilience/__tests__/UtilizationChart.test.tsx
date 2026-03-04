@@ -1,5 +1,5 @@
 import { useSystemHealth, useUtilizationThreshold } from "@/hooks/useResilience";
-import { OverallStatus, UtilizationLevel } from "@/types/resilience";
+import { OverallStatus, UtilizationLevel, DefenseLevel, LoadSheddingLevel } from "@/types/resilience";
 import { render, screen } from "@testing-library/react";
 import { UtilizationChart } from "../components/UtilizationChart";
 
@@ -12,7 +12,7 @@ describe("UtilizationChart", () => {
   const mockHealthData = {
     timestamp: new Date().toISOString(),
     overallStatus: OverallStatus.HEALTHY,
-    defenseLevel: "PREVENTION" as any,
+    defenseLevel: DefenseLevel.PREVENTION,
     utilization: {
       utilizationRate: 0.65,
       level: UtilizationLevel.YELLOW,
@@ -27,7 +27,7 @@ describe("UtilizationChart", () => {
     n2Pass: true,
     phaseTransitionRisk: "low",
     redundancyStatus: [],
-    loadSheddingLevel: "NORMAL" as any,
+    loadSheddingLevel: LoadSheddingLevel.NORMAL,
     crisisMode: false,
     immediateActions: [],
     watchItems: [],

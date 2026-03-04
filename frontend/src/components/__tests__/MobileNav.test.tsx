@@ -17,7 +17,7 @@ jest.mock('next/navigation', () => ({
 
 // Mock Next.js Link
 jest.mock('next/link', () => {
-  const MockLink = ({ children, href, ...props }: any) => {
+  const MockLink = ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: React.ReactNode }) => {
     return <a href={href} {...props}>{children}</a>;
   };
   MockLink.displayName = 'Link';
@@ -40,7 +40,13 @@ describe('MobileNav', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     document.body.style.overflow = '';
-    mockedUseAuth.mockReturnValue(mockAuth as any);
+    mockedUseAuth.mockReturnValue({
+      ...mockAuth,
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+      refreshUser: jest.fn(),
+    } as ReturnType<typeof useAuth>);
   });
 
   describe('Rendering', () => {
@@ -148,10 +154,11 @@ describe('MobileNav', () => {
       mockedUseAuth.mockReturnValue({
         user: null,
         isAuthenticated: false,
+        isLoading: false,
+        login: jest.fn(),
         logout: jest.fn(),
-        hasPermission: jest.fn(),
-        hasRole: jest.fn(),
-      } as any);
+        refreshUser: jest.fn(),
+      } as ReturnType<typeof useAuth>);
 
       render(<MobileNav />);
 
@@ -175,10 +182,11 @@ describe('MobileNav', () => {
       mockedUseAuth.mockReturnValue({
         user: { ...mockAuth.user, role: 'admin' },
         isAuthenticated: true,
+        isLoading: false,
+        login: jest.fn(),
         logout: jest.fn(),
-        hasPermission: jest.fn(),
-        hasRole: jest.fn(),
-      } as any);
+        refreshUser: jest.fn(),
+      } as ReturnType<typeof useAuth>);
 
       render(<MobileNav />);
 

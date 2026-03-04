@@ -1,5 +1,5 @@
 import { useSystemHealth, useBurnoutRt } from "@/hooks/useResilience";
-import { OverallStatus, UtilizationLevel } from "@/types/resilience";
+import { OverallStatus, UtilizationLevel, DefenseLevel, LoadSheddingLevel } from "@/types/resilience";
 import { render, screen } from "@testing-library/react";
 import { BurnoutDashboard } from "../components/BurnoutDashboard";
 
@@ -12,7 +12,7 @@ describe("BurnoutDashboard", () => {
   const mockHealthData = {
     timestamp: new Date().toISOString(),
     overallStatus: OverallStatus.HEALTHY,
-    defenseLevel: "PREVENTION" as any,
+    defenseLevel: DefenseLevel.PREVENTION,
     utilization: {
       utilizationRate: 0.5,
       level: UtilizationLevel.GREEN,
@@ -27,7 +27,7 @@ describe("BurnoutDashboard", () => {
     n2Pass: true,
     phaseTransitionRisk: "low",
     redundancyStatus: [],
-    loadSheddingLevel: "NORMAL" as any,
+    loadSheddingLevel: LoadSheddingLevel.NORMAL,
     crisisMode: false,
     immediateActions: ["Monitor utilization levels"],
     watchItems: ["Review N-2 coverage"],

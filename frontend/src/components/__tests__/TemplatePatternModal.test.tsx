@@ -80,17 +80,17 @@ describe('TemplatePatternModal', () => {
       isLoading: false,
       error: null,
       refetch: jest.fn(),
-    } as any);
+    } as ReturnType<typeof useWeeklyPattern>);
 
     mockUseUpdateWeeklyPattern.mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false,
-    } as any);
+    } as ReturnType<typeof useUpdateWeeklyPattern>);
 
     mockUseAvailableTemplates.mockReturnValue({
       data: mockTemplateRefs,
       isLoading: false,
-    } as any);
+    } as ReturnType<typeof useAvailableTemplates>);
   });
 
   describe('Rendering', () => {
@@ -122,7 +122,7 @@ describe('TemplatePatternModal', () => {
         isLoading: true,
         error: null,
         refetch: jest.fn(),
-      } as any);
+      } as ReturnType<typeof useWeeklyPattern>);
 
       render(<TemplatePatternModal {...defaultProps} />);
 
@@ -137,7 +137,7 @@ describe('TemplatePatternModal', () => {
         isLoading: false,
         error: { message: 'Template not found' },
         refetch: jest.fn(),
-      } as any);
+      } as ReturnType<typeof useWeeklyPattern>);
 
       render(<TemplatePatternModal {...defaultProps} />);
 
@@ -150,7 +150,7 @@ describe('TemplatePatternModal', () => {
         isLoading: false,
         error: { message: 'Server error' },
         refetch: jest.fn(),
-      } as any);
+      } as ReturnType<typeof useWeeklyPattern>);
 
       render(<TemplatePatternModal {...defaultProps} />);
 

@@ -22,9 +22,14 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }))
 
-// Mock resilience data - use wider type to allow overrides in tests
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
 type DefenseLevel = 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED' | 'BLACK'
-const mockResilienceStatus: {
+type WarningSeverity = 'low' | 'medium' | 'high' | 'critical'
+
+interface ResilienceStatus {
   defenseLevel: DefenseLevel
   utilizationRate: number
   criticalIndex: number
@@ -32,17 +37,9 @@ const mockResilienceStatus: {
   nMinus2Viable: boolean
   burnoutRt: number
   earlyWarnings: unknown[]
-} = {
-  defenseLevel: 'GREEN',
-  utilizationRate: 0.75,
-  criticalIndex: 0.25,
-  nMinus1Viable: true,
-  nMinus2Viable: false,
-  burnoutRt: 0.8,
-  earlyWarnings: [],
 }
 
-const mockContingencyAnalysis: {
+interface ContingencyAnalysis {
   analysisType: string
   scenario: string
   viable: boolean
@@ -53,7 +50,310 @@ const mockContingencyAnalysis: {
     affectedBlocks: number
   }
   recommendations: string[]
-} = {
+}
+
+interface EarlyWarning {
+  id: string
+  type: string
+  severity: WarningSeverity
+  personId: string
+  message: string
+  detectedAt: string
+}
+
+interface WarningsResponse {
+  items: EarlyWarning[]
+  total: number
+}
+
+interface ResourceUtilization {
+  type: string
+  utilization: number
+}
+
+interface UtilizationBreakdownResponse {
+  resources: ResourceUtilization[]
+}
+
+interface CoverageMapEntry {
+  person: string
+  nMinus1Viable: boolean
+  riskScore: number
+}
+
+interface CoverageMapResponse {
+  coverageMap: CoverageMapEntry[]
+}
+
+interface NMinus2Analysis {
+  analysisType: string
+  personsLost: string[]
+  viable: boolean
+  impact: {
+    coverageDrop: number
+    maxUtilization: number
+  }
+}
+
+interface WorstPairEntry {
+  pair: string[]
+  riskScore: number
+}
+
+interface WorstPairsResponse {
+  worstPairs: WorstPairEntry[]
+}
+
+interface SimulateN2Response {
+  scenario: string
+  deployed: string[]
+  coverageViable: boolean
+  mitigationRequired: boolean
+}
+
+interface BurnoutIndicators {
+  staLtaRatio: number
+  consecutiveHighLoadDays: number
+}
+
+interface BurnoutWarning {
+  type: string
+  personId: string
+  indicators: BurnoutIndicators
+}
+
+interface BurnoutWarningsResponse {
+  items: BurnoutWarning[]
+}
+
+interface WarningAcknowledgment {
+  warningId: string
+  acknowledged: boolean
+  acknowledgedBy: string
+  acknowledgedAt: string
+}
+
+interface ResilienceReport {
+  reportId: string
+  type: string
+  sections: string[]
+  downloadUrl: string
+}
+
+interface TrendEntry {
+  date: string
+  criticalIndex: number
+}
+
+interface TrendsResponse {
+  trends: TrendEntry[]
+}
+
+interface ExportResponse {
+  downloadUrl: string
+  format: string
+}
+
+interface RtHistoryEntry {
+  date: string
+  rt: number
+}
+
+interface RtHistoryResponse {
+  rtHistory: RtHistoryEntry[]
+}
+
+interface FallbackSchedule {
+  fallbackId: string
+  createdAt: string
+  coverageLevel: number
+}
+
+interface FallbackActivation {
+  activated: boolean
+  fallbackId: string
+  activatedAt: string
+}
+
+interface BlastRadiusResponse {
+  affectedPeople: number
+  affectedBlocks: number
+  blastRadius: string
+}
+
+interface IsolationZone {
+  zone: string
+  isolated: boolean
+}
+
+interface IsolationZonesResponse {
+  isolationZones: IsolationZone[]
+}
+
+interface HomeostasisResponse {
+  balanceScore: number
+  variance: number
+  homeostasisStatus: string
+}
+
+interface RebalanceResponse {
+  rebalanceTriggered: boolean
+  targetVariance: number
+}
+
+interface SpcViolation {
+  rule: string
+  description: string
+}
+
+interface SpcViolationsResponse {
+  violations: SpcViolation[]
+}
+
+interface ProcessCapabilityResponse {
+  cp: number
+  cpk: number
+  capabilityStatus: string
+}
+
+interface ErlangCoverageResponse {
+  requiredAgents: number
+  serviceLevel: number
+  waitTimeP50: number
+}
+
+interface StaffingGapEntry {
+  blockId: string
+  shortfall: number
+}
+
+interface StaffingGapsResponse {
+  understaffedBlocks: StaffingGapEntry[]
+}
+
+interface TimeCrystalResponse {
+  detectedCycles: number[]
+  dominantPeriod: number
+}
+
+interface RigidityResponse {
+  rigidityScore: number
+  stabilityStatus: string
+}
+
+interface SacrificePriority {
+  tier: number
+  activity: string
+  shed: boolean
+}
+
+interface SacrificeHierarchyResponse {
+  priorities: SacrificePriority[]
+}
+
+interface ShedLoadResponse {
+  shedCount: number
+  activitiesReduced: string[]
+}
+
+interface HubEntry {
+  personId: string
+  betweenness: number
+  isHub: boolean
+}
+
+interface HubAnalysisResponse {
+  hubs: HubEntry[]
+}
+
+interface HubLossResponse {
+  hubId: string
+  networkFragmentation: number
+  criticalImpact: boolean
+}
+
+interface MetastabilityResponse {
+  metastability: number
+  escapeProbability: number
+}
+
+interface TopologicalFeature {
+  dimension: number
+  birth: number
+  death: number
+}
+
+interface PersistentHomologyResponse {
+  topologicalFeatures: TopologicalFeature[]
+}
+
+interface AlertResponse {
+  alertSent: boolean
+  recipients: string[]
+  newLevel: string
+}
+
+interface EscalationResponse {
+  escalated: boolean
+  escalationChain: string[]
+}
+
+interface DisasterScenarioResponse {
+  scenario: string
+  availabilityDrop: number
+  recoveryTimeDays: number
+  mitigationSuccess: boolean
+}
+
+interface MassCasualtyResponse {
+  scenario: string
+  surgeCapacity: number
+  responseAdequate: boolean
+}
+
+interface OptimizationSuggestion {
+  action: string
+  persons?: string[]
+  count?: number
+  specialty?: string
+}
+
+interface OptimizationResponse {
+  suggestions: OptimizationSuggestion[]
+}
+
+interface InvestmentRoiResponse {
+  investment: number
+  riskReduction: number
+  roi: number
+}
+
+interface CriticalIndexComponents {
+  utilization: number
+  burnoutRt: number
+  nMinus1Risk: number
+}
+
+interface CriticalIndexResponse {
+  criticalIndex: number
+  components: CriticalIndexComponents
+}
+
+// ============================================================================
+// Mock Data
+// ============================================================================
+
+const mockResilienceStatus: ResilienceStatus = {
+  defenseLevel: 'GREEN',
+  utilizationRate: 0.75,
+  criticalIndex: 0.25,
+  nMinus1Viable: true,
+  nMinus2Viable: false,
+  burnoutRt: 0.8,
+  earlyWarnings: [],
+}
+
+const mockContingencyAnalysis: ContingencyAnalysis = {
   analysisType: 'nMinus1',
   scenario: 'Loss of PGY2-01',
   viable: true,
@@ -68,15 +368,7 @@ const mockContingencyAnalysis: {
   ],
 }
 
-type WarningSeverity = 'low' | 'medium' | 'high' | 'critical'
-const mockEarlyWarnings: Array<{
-  id: string
-  type: string
-  severity: WarningSeverity
-  personId: string
-  message: string
-  detectedAt: string
-}> = [
+const mockEarlyWarnings: EarlyWarning[] = [
   {
     id: 'warning-1',
     type: 'burnout_precursor',
@@ -89,9 +381,9 @@ const mockEarlyWarnings: Array<{
 
 // API mock helper
 function setupApiMock(options: {
-  status?: typeof mockResilienceStatus | 'error'
-  contingency?: typeof mockContingencyAnalysis | 'error'
-  warnings?: typeof mockEarlyWarnings | 'error'
+  status?: ResilienceStatus | 'error'
+  contingency?: ContingencyAnalysis | 'error'
+  warnings?: EarlyWarning[] | 'error'
 } = {}) {
   mockedApi.get.mockImplementation((url: string) => {
     if (url.includes('/resilience/status')) {
@@ -129,14 +421,14 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
     it('should display current defense level', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.defenseLevel).toBe('GREEN')
     })
 
     it('should show GREEN level characteristics', async () => {
       setupApiMock({ status: { ...mockResilienceStatus, defenseLevel: 'GREEN' } })
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.defenseLevel).toBe('GREEN')
       expect(result.utilizationRate).toBeLessThan(0.8)
     })
@@ -150,7 +442,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         },
       })
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.defenseLevel).toBe('YELLOW')
     })
 
@@ -163,7 +455,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         },
       })
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.defenseLevel).toBe('ORANGE')
     })
 
@@ -176,7 +468,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         },
       })
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.defenseLevel).toBe('RED')
     })
 
@@ -189,7 +481,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         },
       })
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.defenseLevel).toBe('BLACK')
     })
   })
@@ -198,14 +490,14 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
     it('should display current utilization rate', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.utilizationRate).toBe(0.75)
     })
 
     it('should show utilization as percentage', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       const percentage = result.utilizationRate * 100
       expect(percentage).toBe(75)
     })
@@ -215,7 +507,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         status: { ...mockResilienceStatus, utilizationRate: 0.79 },
       })
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.utilizationRate).toBeCloseTo(0.79, 2)
     })
 
@@ -224,7 +516,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         status: { ...mockResilienceStatus, utilizationRate: 0.92 },
       })
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.utilizationRate).toBeGreaterThan(0.9)
     })
 
@@ -239,7 +531,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/utilization-breakdown')
+      const result = await mockedApi.get('/api/resilience/utilization-breakdown') as UtilizationBreakdownResponse
       expect(result.resources).toHaveLength(3)
     })
   })
@@ -248,7 +540,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
     it('should analyze N-1 scenario for each person', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/resilience/contingency?type=nMinus1&person=person-1')
+      const result = await mockedApi.get('/api/resilience/contingency?type=nMinus1&person=person-1') as ContingencyAnalysis
       expect(result.analysisType).toBe('nMinus1')
       expect(result.viable).toBe(true)
     })
@@ -262,7 +554,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         },
       })
 
-      const result: any = await mockedApi.get('/api/resilience/contingency?type=nMinus1&person=person-2')
+      const result = await mockedApi.get('/api/resilience/contingency?type=nMinus1&person=person-2') as ContingencyAnalysis
       expect(result.viable).toBe(false)
       expect(result.critical).toBe(true)
     })
@@ -270,7 +562,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
     it('should calculate impact metrics for N-1 loss', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/resilience/contingency?type=nMinus1&person=person-1')
+      const result = await mockedApi.get('/api/resilience/contingency?type=nMinus1&person=person-1') as ContingencyAnalysis
       expect(result.impact.coverageDrop).toBe(0.15)
       expect(result.impact.maxUtilization).toBe(0.85)
     })
@@ -278,7 +570,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
     it('should provide recovery recommendations', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/resilience/contingency?type=nMinus1&person=person-1')
+      const result = await mockedApi.get('/api/resilience/contingency?type=nMinus1&person=person-1') as ContingencyAnalysis
       expect(result.recommendations).toHaveLength(2)
     })
 
@@ -292,7 +584,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/n-1-map')
+      const result = await mockedApi.get('/api/resilience/n-1-map') as CoverageMapResponse
       expect(result.coverageMap).toHaveLength(2)
     })
   })
@@ -311,7 +603,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         },
       })
 
-      const result: any = await mockedApi.get('/api/resilience/contingency?type=nMinus2')
+      const result = await mockedApi.get('/api/resilience/contingency?type=nMinus2') as NMinus2Analysis
       expect(result.analysisType).toBe('nMinus2')
     })
 
@@ -325,7 +617,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/worst-n2-pairs')
+      const result = await mockedApi.get('/api/resilience/worst-n2-pairs') as WorstPairsResponse
       expect(result.worstPairs[0].riskScore).toBeGreaterThan(0.9)
     })
 
@@ -339,9 +631,9 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         mitigationRequired: true,
       })
 
-      const result: any = await mockedApi.post('/api/resilience/simulate-n2', {
+      const result = await mockedApi.post('/api/resilience/simulate-n2', {
         persons: ['person-1', 'person-3'],
-      })
+      }) as SimulateN2Response
 
       expect(result.mitigationRequired).toBe(true)
     })
@@ -351,12 +643,12 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
     it('should display active early warnings', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/resilience/warnings')
+      const result = await mockedApi.get('/api/resilience/warnings') as WarningsResponse
       expect(result.items).toHaveLength(1)
     })
 
     it('should categorize warnings by type', async () => {
-      const warnings = [
+      const warnings: EarlyWarning[] = [
         { ...mockEarlyWarnings[0], type: 'burnout_precursor' },
         { ...mockEarlyWarnings[0], id: 'w2', type: 'utilization_spike' },
         { ...mockEarlyWarnings[0], id: 'w3', type: 'coverage_gap' },
@@ -364,13 +656,13 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
 
       setupApiMock({ warnings })
 
-      const result: any = await mockedApi.get('/api/resilience/warnings')
-      const types = new Set(result.items.map((w: any) => w.type))
+      const result = await mockedApi.get('/api/resilience/warnings') as WarningsResponse
+      const types = new Set(result.items.map((w: EarlyWarning) => w.type))
       expect(types.size).toBe(3)
     })
 
     it('should prioritize warnings by severity', async () => {
-      const warnings = [
+      const warnings: EarlyWarning[] = [
         { ...mockEarlyWarnings[0], severity: 'low' as const },
         { ...mockEarlyWarnings[0], id: 'w2', severity: 'critical' as const },
         { ...mockEarlyWarnings[0], id: 'w3', severity: 'medium' as const },
@@ -378,8 +670,8 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
 
       setupApiMock({ warnings })
 
-      const result: any = await mockedApi.get('/api/resilience/warnings')
-      const critical = result.items.filter((w: any) => w.severity === 'critical')
+      const result = await mockedApi.get('/api/resilience/warnings') as WarningsResponse
+      const critical = result.items.filter((w: EarlyWarning) => w.severity === 'critical')
       expect(critical).toHaveLength(1)
     })
 
@@ -399,7 +691,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/warnings?type=burnout_precursor')
+      const result = await mockedApi.get('/api/resilience/warnings?type=burnout_precursor') as BurnoutWarningsResponse
       expect(result.items[0].indicators.staLtaRatio).toBeGreaterThan(3)
     })
 
@@ -413,7 +705,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         acknowledgedAt: '2024-01-29T00:00:00Z',
       })
 
-      const result: any = await mockedApi.patch('/api/resilience/warnings/warning-1/acknowledge', {})
+      const result = await mockedApi.patch('/api/resilience/warnings/warning-1/acknowledge', {}) as WarningAcknowledgment
       expect(result.acknowledged).toBe(true)
     })
   })
@@ -434,9 +726,9 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         downloadUrl: '/api/reports/resilience-1.pdf',
       })
 
-      const result: any = await mockedApi.post('/api/resilience/reports', {
+      const result = await mockedApi.post('/api/resilience/reports', {
         type: 'comprehensive',
-      })
+      }) as ResilienceReport
 
       expect(result.sections).toHaveLength(4)
     })
@@ -452,7 +744,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/critical-index-trends')
+      const result = await mockedApi.get('/api/resilience/critical-index-trends') as TrendsResponse
       expect(result.trends).toHaveLength(3)
     })
 
@@ -464,7 +756,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         format: 'pdf',
       })
 
-      const result: any = await mockedApi.post('/api/resilience/export', { format: 'pdf' })
+      const result = await mockedApi.post('/api/resilience/export', { format: 'pdf' }) as ExportResponse
       expect(result.format).toBe('pdf')
     })
   })
@@ -473,7 +765,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
     it('should display burnout reproduction number', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.burnoutRt).toBe(0.8)
     })
 
@@ -482,7 +774,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         status: { ...mockResilienceStatus, burnoutRt: 1.2 },
       })
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.burnoutRt).toBeGreaterThan(1.0)
     })
 
@@ -497,7 +789,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/burnout-rt-trends')
+      const result = await mockedApi.get('/api/resilience/burnout-rt-trends') as RtHistoryResponse
       expect(result.rtHistory[2].rt).toBeGreaterThan(1.0)
     })
   })
@@ -512,7 +804,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         coverageLevel: 0.85,
       })
 
-      const result: any = await mockedApi.get('/api/resilience/fallback-schedule')
+      const result = await mockedApi.get('/api/resilience/fallback-schedule') as FallbackSchedule
       expect(result.fallbackId).toBeDefined()
     })
 
@@ -525,7 +817,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         activatedAt: '2024-01-29T00:00:00Z',
       })
 
-      const result: any = await mockedApi.post('/api/resilience/activate-fallback', {})
+      const result = await mockedApi.post('/api/resilience/activate-fallback', {}) as FallbackActivation
       expect(result.activated).toBe(true)
     })
   })
@@ -540,10 +832,10 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         blastRadius: 'medium',
       })
 
-      const result: any = await mockedApi.post('/api/resilience/blast-radius', {
+      const result = await mockedApi.post('/api/resilience/blast-radius', {
         changeType: 'person_removal',
         personId: 'person-1',
-      })
+      }) as BlastRadiusResponse
 
       expect(result.blastRadius).toBe('medium')
     })
@@ -558,7 +850,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/isolation-zones')
+      const result = await mockedApi.get('/api/resilience/isolation-zones') as IsolationZonesResponse
       expect(result.isolationZones).toHaveLength(2)
     })
   })
@@ -573,7 +865,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         homeostasisStatus: 'balanced',
       })
 
-      const result: any = await mockedApi.get('/api/resilience/homeostasis')
+      const result = await mockedApi.get('/api/resilience/homeostasis') as HomeostasisResponse
       expect(result.homeostasisStatus).toBe('balanced')
     })
 
@@ -585,7 +877,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         targetVariance: 0.10,
       })
 
-      const result: any = await mockedApi.post('/api/resilience/rebalance', {})
+      const result = await mockedApi.post('/api/resilience/rebalance', {}) as RebalanceResponse
       expect(result.rebalanceTriggered).toBe(true)
     })
   })
@@ -600,7 +892,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/spc-violations')
+      const result = await mockedApi.get('/api/resilience/spc-violations') as SpcViolationsResponse
       expect(result.violations).toHaveLength(1)
     })
 
@@ -613,7 +905,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         capabilityStatus: 'capable',
       })
 
-      const result: any = await mockedApi.get('/api/resilience/process-capability')
+      const result = await mockedApi.get('/api/resilience/process-capability') as ProcessCapabilityResponse
       expect(result.cp).toBeGreaterThan(1.0)
     })
   })
@@ -628,7 +920,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         waitTimeP50: 2.5,
       })
 
-      const result: any = await mockedApi.get('/api/resilience/erlang-coverage')
+      const result = await mockedApi.get('/api/resilience/erlang-coverage') as ErlangCoverageResponse
       expect(result.requiredAgents).toBe(8)
     })
 
@@ -641,7 +933,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/staffing-gaps')
+      const result = await mockedApi.get('/api/resilience/staffing-gaps') as StaffingGapsResponse
       expect(result.understaffedBlocks).toHaveLength(1)
     })
   })
@@ -655,7 +947,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         dominantPeriod: 7,
       })
 
-      const result: any = await mockedApi.get('/api/resilience/time-crystal-patterns')
+      const result = await mockedApi.get('/api/resilience/time-crystal-patterns') as TimeCrystalResponse
       expect(result.dominantPeriod).toBe(7)
     })
 
@@ -667,7 +959,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         stabilityStatus: 'high',
       })
 
-      const result: any = await mockedApi.get('/api/resilience/rigidity')
+      const result = await mockedApi.get('/api/resilience/rigidity') as RigidityResponse
       expect(result.rigidityScore).toBeGreaterThan(0.8)
     })
   })
@@ -684,7 +976,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/sacrifice-hierarchy')
+      const result = await mockedApi.get('/api/resilience/sacrifice-hierarchy') as SacrificeHierarchyResponse
       expect(result.priorities).toHaveLength(3)
     })
 
@@ -696,9 +988,9 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         activitiesReduced: ['elective_clinic', 'research_time'],
       })
 
-      const result: any = await mockedApi.post('/api/resilience/shed-load', {
+      const result = await mockedApi.post('/api/resilience/shed-load', {
         targetReduction: 0.15,
-      })
+      }) as ShedLoadResponse
 
       expect(result.shedCount).toBe(5)
     })
@@ -715,8 +1007,8 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/hub-analysis')
-      const hubs = result.hubs.filter((h: any) => h.isHub)
+      const result = await mockedApi.get('/api/resilience/hub-analysis') as HubAnalysisResponse
+      const hubs = result.hubs.filter((h: HubEntry) => h.isHub)
       expect(hubs).toHaveLength(1)
     })
 
@@ -729,9 +1021,9 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         criticalImpact: true,
       })
 
-      const result: any = await mockedApi.post('/api/resilience/simulate-hub-loss', {
+      const result = await mockedApi.post('/api/resilience/simulate-hub-loss', {
         personId: 'person-2',
-      })
+      }) as HubLossResponse
 
       expect(result.criticalImpact).toBe(true)
     })
@@ -746,7 +1038,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         escapeProbability: 0.08,
       })
 
-      const result: any = await mockedApi.get('/api/resilience/metastability')
+      const result = await mockedApi.get('/api/resilience/metastability') as MetastabilityResponse
       expect(result.metastability).toBeDefined()
     })
 
@@ -760,7 +1052,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/persistent-homology')
+      const result = await mockedApi.get('/api/resilience/persistent-homology') as PersistentHomologyResponse
       expect(result.topologicalFeatures).toHaveLength(2)
     })
   })
@@ -775,10 +1067,10 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         newLevel: 'ORANGE',
       })
 
-      const result: any = await mockedApi.post('/api/resilience/alert', {
+      const result = await mockedApi.post('/api/resilience/alert', {
         event: 'defenseLevel_change',
         newLevel: 'ORANGE',
-      })
+      }) as AlertResponse
 
       expect(result.alertSent).toBe(true)
     })
@@ -791,9 +1083,9 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         escalationChain: ['coordinator', 'program_director', 'dean'],
       })
 
-      const result: any = await mockedApi.post('/api/resilience/escalate', {
+      const result = await mockedApi.post('/api/resilience/escalate', {
         event: 'nMinus1_failure',
-      })
+      }) as EscalationResponse
 
       expect(result.escalated).toBe(true)
     })
@@ -810,9 +1102,9 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         mitigationSuccess: true,
       })
 
-      const result: any = await mockedApi.post('/api/resilience/scenarios/disaster', {
+      const result = await mockedApi.post('/api/resilience/scenarios/disaster', {
         type: 'pandemic_outbreak',
-      })
+      }) as DisasterScenarioResponse
 
       expect(result.mitigationSuccess).toBe(true)
     })
@@ -826,7 +1118,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         responseAdequate: true,
       })
 
-      const result: any = await mockedApi.post('/api/resilience/scenarios/mass-casualty', {})
+      const result = await mockedApi.post('/api/resilience/scenarios/mass-casualty', {}) as MassCasualtyResponse
       expect(result.responseAdequate).toBe(true)
     })
   })
@@ -842,7 +1134,7 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/resilience/optimization-suggestions')
+      const result = await mockedApi.get('/api/resilience/optimization-suggestions') as OptimizationResponse
       expect(result.suggestions).toHaveLength(2)
     })
 
@@ -855,9 +1147,9 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         roi: 2.5,
       })
 
-      const result: any = await mockedApi.post('/api/resilience/investment-roi', {
+      const result = await mockedApi.post('/api/resilience/investment-roi', {
         investmentType: 'additional_backup_staff',
-      })
+      }) as InvestmentRoiResponse
 
       expect(result.roi).toBeGreaterThan(2.0)
     })
@@ -876,14 +1168,14 @@ describe('Resilience Dashboard Flow - Integration Tests', () => {
         },
       })
 
-      const result: any = await mockedApi.get('/api/resilience/critical-index')
+      const result = await mockedApi.get('/api/resilience/critical-index') as CriticalIndexResponse
       expect(result.criticalIndex).toBe(0.25)
     })
 
     it('should show real-time defense level widget', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.get('/api/resilience/status')
+      const result = await mockedApi.get('/api/resilience/status') as ResilienceStatus
       expect(result.defenseLevel).toBeDefined()
     })
   })

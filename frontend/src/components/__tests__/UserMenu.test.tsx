@@ -26,7 +26,7 @@ const mockedUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 // Mock Next.js Link
 jest.mock('next/link', () => {
-  const MockLink = ({ children, href, ...props }: any) => {
+  const MockLink = ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: React.ReactNode }) => {
     return <a href={href} {...props}>{children}</a>;
   };
   MockLink.displayName = 'Link';
@@ -40,9 +40,10 @@ describe('UserMenu', () => {
       user: mockUser,
       logout: mockLogout,
       isAuthenticated: true,
-      hasPermission: jest.fn(),
-      hasRole: jest.fn(),
-    } as any);
+      isLoading: false,
+      login: jest.fn(),
+      refreshUser: jest.fn(),
+    } as ReturnType<typeof useAuth>);
   });
 
   describe('Rendering', () => {
@@ -61,9 +62,10 @@ describe('UserMenu', () => {
         user: null,
         logout: mockLogout,
         isAuthenticated: false,
-        hasPermission: jest.fn(),
-        hasRole: jest.fn(),
-      } as any);
+        isLoading: false,
+        login: jest.fn(),
+        refreshUser: jest.fn(),
+      } as ReturnType<typeof useAuth>);
 
       const { container } = render(<UserMenu />);
       expect(container).toBeEmptyDOMElement();
@@ -156,9 +158,10 @@ describe('UserMenu', () => {
         user: { ...mockUser, role: 'admin' },
         logout: mockLogout,
         isAuthenticated: true,
-        hasPermission: jest.fn(),
-        hasRole: jest.fn(),
-      } as any);
+        isLoading: false,
+        login: jest.fn(),
+        refreshUser: jest.fn(),
+      } as ReturnType<typeof useAuth>);
 
       render(<UserMenu />);
       fireEvent.click(screen.getByRole('button'));
@@ -219,9 +222,10 @@ describe('UserMenu', () => {
         user: { ...mockUser, username: 'John Paul Smith' },
         logout: mockLogout,
         isAuthenticated: true,
-        hasPermission: jest.fn(),
-        hasRole: jest.fn(),
-      } as any);
+        isLoading: false,
+        login: jest.fn(),
+        refreshUser: jest.fn(),
+      } as ReturnType<typeof useAuth>);
 
       render(<UserMenu />);
       fireEvent.click(screen.getByRole('button'));
@@ -234,9 +238,10 @@ describe('UserMenu', () => {
         user: { ...mockUser, username: 'jane smith' },
         logout: mockLogout,
         isAuthenticated: true,
-        hasPermission: jest.fn(),
-        hasRole: jest.fn(),
-      } as any);
+        isLoading: false,
+        login: jest.fn(),
+        refreshUser: jest.fn(),
+      } as ReturnType<typeof useAuth>);
 
       render(<UserMenu />);
       expect(screen.getByText('JS')).toBeInTheDocument();

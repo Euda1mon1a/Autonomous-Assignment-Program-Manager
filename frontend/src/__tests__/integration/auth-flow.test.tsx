@@ -38,6 +38,8 @@ interface User {
   role: 'coordinator' | 'admin' | 'resident' | 'faculty';
   personId: string;
   requiresPasswordChange?: boolean;
+  sessionExpiresIn?: number;
+  showWarning?: boolean;
 }
 
 interface AuthResponse {
@@ -50,6 +52,7 @@ interface AuthResponse {
   mfaMethod?: string;
   mfaVerified?: boolean;
   ssoProvider?: string;
+  authMethod?: string;
 }
 
 interface RefreshTokenResponse {
@@ -63,6 +66,108 @@ interface ApiError {
   maxAttempts?: number;
   lockedUntil?: string;
   retryAfter?: number;
+}
+
+interface SuccessResponse {
+  success: boolean;
+}
+
+interface SessionExtendResponse {
+  sessionExtended: boolean;
+  newExpiresAt: string;
+}
+
+interface PasswordResetEmailResponse {
+  success: boolean;
+  emailSent: boolean;
+  resetTokenExpiresIn: number;
+}
+
+interface ResetTokenValidationResponse {
+  valid: boolean;
+  userEmail: string;
+}
+
+interface PasswordChangedResponse {
+  success: boolean;
+  passwordChanged: boolean;
+}
+
+interface SecurityEvent {
+  event: string;
+  timestamp: string;
+  ip?: string;
+  userId?: string;
+  email?: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+interface SecurityLogResponse {
+  events: SecurityEvent[];
+}
+
+interface Session {
+  id: string;
+  device: string;
+  lastActive: string;
+  current: boolean;
+}
+
+interface SessionListResponse {
+  sessions: Session[];
+}
+
+interface RevokeSessionsResponse {
+  revokedCount: number;
+}
+
+interface SsoInitiateResponse {
+  ssoUrl: string;
+  state: string;
+}
+
+interface PermissionsResponse {
+  permissions: string[];
+}
+
+interface TokenVerifyResponse {
+  valid: boolean;
+  userId: string;
+}
+
+interface ImpersonateResponse {
+  impersonationToken: string;
+  impersonatedUser: {
+    id: string;
+    name: string;
+    role: string;
+  };
+}
+
+interface EndImpersonationResponse {
+  restoredUser: User;
+}
+
+interface PasswordStrengthResponse {
+  strength: string;
+  score: number;
+  feedback: string[];
+}
+
+interface BiometricRegisterResponse {
+  credentialId: string;
+  registered: boolean;
+}
+
+interface MfaLoginResponse {
+  mfaRequired: boolean;
+  mfaMethod: string;
+}
+
+interface MfaVerifyResponse {
+  accessToken: string;
+  mfaVerified: boolean;
 }
 
 // Mock auth data
@@ -136,10 +241,10 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should successfully login with valid credentials', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.post('/api/auth/login', {
+      const result = await mockedApi.post('/api/auth/login', {
         email: 'test@hospital.org',
         password: 'password123',
-      })
+      }) as AuthResponse
 
       expect(result.accessToken).toBeDefined()
       expect(result.user.email).toBe('test@hospital.org')
@@ -162,10 +267,10 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should store JWT token on successful login', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.post('/api/auth/login', {
+      const result = await mockedApi.post('/api/auth/login', {
         email: 'test@hospital.org',
         password: 'password123',
-      })
+      }) as AuthResponse
 
       expect(result.accessToken).toBe('mock-jwt-token')
     })
@@ -216,7 +321,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should successfully logout', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.post('/api/auth/logout', {})
+      const result = await mockedApi.post('/api/auth/logout', {}) as SuccessResponse
       expect(result.success).toBe(true)
     })
 
@@ -241,7 +346,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should invalidate session on server', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.post('/api/auth/logout', {})
+      const result = await mockedApi.post('/api/auth/logout', {}) as SuccessResponse
       expect(result.success).toBe(true)
     })
   })
@@ -280,7 +385,7 @@ describe('Authentication Flow - Integration Tests', () => {
         showWarning: true,
       })
 
-      const result: any = await mockedApi.get('/api/auth/me')
+      const result = await mockedApi.get('/api/auth/me') as User
       expect(result.showWarning).toBe(true)
     })
 
@@ -292,7 +397,7 @@ describe('Authentication Flow - Integration Tests', () => {
         newExpiresAt: '2024-01-29T01:00:00Z',
       })
 
-      const result: any = await mockedApi.post('/api/auth/extend-session', {})
+      const result = await mockedApi.post('/api/auth/extend-session', {}) as SessionExtendResponse
       expect(result.sessionExtended).toBe(true)
     })
   })
@@ -301,7 +406,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should refresh access token', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.post('/api/auth/refresh', {})
+      const result = await mockedApi.post('/api/auth/refresh', {}) as RefreshTokenResponse
       expect(result.accessToken).toBe('new-token')
     })
 
@@ -344,7 +449,7 @@ describe('Authentication Flow - Integration Tests', () => {
 
       // Retry original request - setup mock will handle this
       setupApiMock()
-      const result: any = await mockedApi.get('/api/auth/me')
+      const result = await mockedApi.get('/api/auth/me') as User
       expect(result).toBeDefined()
     })
   })
@@ -353,9 +458,9 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should initiate password reset', async () => {
       setupApiMock()
 
-      const result: any = await mockedApi.post('/api/auth/password-reset', {
+      const result = await mockedApi.post('/api/auth/password-reset', {
         email: 'test@hospital.org',
-      })
+      }) as SuccessResponse
 
       expect(result.success).toBe(true)
     })
@@ -369,9 +474,9 @@ describe('Authentication Flow - Integration Tests', () => {
         resetTokenExpiresIn: 3600,
       })
 
-      const result: any = await mockedApi.post('/api/auth/password-reset', {
+      const result = await mockedApi.post('/api/auth/password-reset', {
         email: 'test@hospital.org',
-      })
+      }) as PasswordResetEmailResponse
 
       expect(result.emailSent).toBe(true)
     })
@@ -384,9 +489,9 @@ describe('Authentication Flow - Integration Tests', () => {
         userEmail: 'test@hospital.org',
       })
 
-      const result: any = await mockedApi.post('/api/auth/validate-reset-token', {
+      const result = await mockedApi.post('/api/auth/validate-reset-token', {
         token: 'reset-token-123',
-      })
+      }) as ResetTokenValidationResponse
 
       expect(result.valid).toBe(true)
     })
@@ -399,10 +504,10 @@ describe('Authentication Flow - Integration Tests', () => {
         passwordChanged: true,
       })
 
-      const result: any = await mockedApi.post('/api/auth/reset-password', {
+      const result = await mockedApi.post('/api/auth/reset-password', {
         token: 'reset-token-123',
         newPassword: 'NewSecurePassword123!',
-      })
+      }) as PasswordChangedResponse
 
       expect(result.passwordChanged).toBe(true)
     })
@@ -437,7 +542,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should allow coordinator access to admin pages', async () => {
       setupApiMock()
 
-      const user: any = await mockedApi.get('/api/auth/me')
+      const user = await mockedApi.get('/api/auth/me') as User
       expect(user.role).toBe('coordinator')
 
       // Coordinator can access admin pages
@@ -448,7 +553,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should restrict resident access to admin pages', async () => {
       setupApiMock({ user: { ...mockUser, role: 'resident' } })
 
-      const user: any = await mockedApi.get('/api/auth/me')
+      const user = await mockedApi.get('/api/auth/me') as User
       expect(user.role).toBe('resident')
 
       // Resident cannot access admin pages
@@ -459,7 +564,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should show role-specific menu items', async () => {
       setupApiMock()
 
-      const _user: any = await mockedApi.get('/api/auth/me')
+      const _user = await mockedApi.get('/api/auth/me') as User
 
       const menuItems = {
         coordinator: ['dashboard', 'schedule', 'people', 'admin', 'compliance'],
@@ -474,7 +579,7 @@ describe('Authentication Flow - Integration Tests', () => {
     it('should redirect unauthorized users', async () => {
       setupApiMock({ user: { ...mockUser, role: 'resident' } })
 
-      const user: any = await mockedApi.get('/api/auth/me')
+      const user = await mockedApi.get('/api/auth/me') as User
 
       if (!['coordinator', 'admin'].includes(user.role)) {
         // Would trigger redirect in real implementation
@@ -530,10 +635,10 @@ describe('Authentication Flow - Integration Tests', () => {
         mfaMethod: 'totp',
       })
 
-      const result: any = await mockedApi.post('/api/auth/login', {
+      const result = await mockedApi.post('/api/auth/login', {
         email: 'admin@hospital.org',
         password: 'password123',
-      })
+      }) as MfaLoginResponse
 
       expect(result.mfaRequired).toBe(true)
     })
@@ -546,10 +651,10 @@ describe('Authentication Flow - Integration Tests', () => {
         mfaVerified: true,
       })
 
-      const result: any = await mockedApi.post('/api/auth/verify-mfa', {
+      const result = await mockedApi.post('/api/auth/verify-mfa', {
         sessionId: 'session-123',
         code: '123456',
-      })
+      }) as MfaVerifyResponse
 
       expect(result.mfaVerified).toBe(true)
     })
@@ -582,7 +687,7 @@ describe('Authentication Flow - Integration Tests', () => {
         requiresPasswordChange: true,
       })
 
-      const user: any = await mockedApi.get('/api/auth/me')
+      const user = await mockedApi.get('/api/auth/me') as User
       expect(user.requiresPasswordChange).toBe(true)
     })
 
@@ -636,7 +741,7 @@ describe('Authentication Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/auth/security-log')
+      const result = await mockedApi.get('/api/auth/security-log') as SecurityLogResponse
       expect(result.events).toHaveLength(2)
     })
   })
@@ -652,7 +757,7 @@ describe('Authentication Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/auth/sessions')
+      const result = await mockedApi.get('/api/auth/sessions') as SessionListResponse
       expect(result.sessions).toHaveLength(2)
     })
 
@@ -673,7 +778,7 @@ describe('Authentication Flow - Integration Tests', () => {
         revokedCount: 3,
       })
 
-      const result: any = await mockedApi.post('/api/auth/revoke-all-sessions', {})
+      const result = await mockedApi.post('/api/auth/revoke-all-sessions', {}) as RevokeSessionsResponse
       expect(result.revokedCount).toBe(3)
     })
   })
@@ -688,11 +793,11 @@ describe('Authentication Flow - Integration Tests', () => {
         expiresIn: 2592000, // 30 days
       })
 
-      const result: any = await mockedApi.post('/api/auth/login', {
+      const result = await mockedApi.post('/api/auth/login', {
         email: 'test@hospital.org',
         password: 'password123',
         rememberMe: true,
-      })
+      }) as AuthResponse
 
       expect(result.rememberToken).toBeDefined()
     })
@@ -718,9 +823,9 @@ describe('Authentication Flow - Integration Tests', () => {
         return Promise.reject({ status: 401 })
       })
 
-      const result: unknown = await mockedApi.get('/api/auth/me', {
+      const result = await mockedApi.get('/api/auth/me', {
         headers: { 'X-API-Key': 'valid-api-key' },
-      })
+      }) as User
 
       expect(result).toBeDefined()
     })
@@ -752,7 +857,7 @@ describe('Authentication Flow - Integration Tests', () => {
         state: 'random-state-token',
       })
 
-      const result: any = await mockedApi.get('/api/auth/sso/initiate')
+      const result = await mockedApi.get('/api/auth/sso/initiate') as SsoInitiateResponse
       expect(result.ssoUrl).toContain('sso.provider.com')
     })
 
@@ -764,10 +869,10 @@ describe('Authentication Flow - Integration Tests', () => {
         ssoProvider: 'microsoft',
       })
 
-      const result: any = await mockedApi.post('/api/auth/sso/callback', {
+      const result = await mockedApi.post('/api/auth/sso/callback', {
         code: 'auth-code',
         state: 'random-state-token',
-      })
+      }) as AuthResponse
 
       expect(result.accessToken).toBeDefined()
     })
@@ -786,7 +891,7 @@ describe('Authentication Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/auth/permissions')
+      const result = await mockedApi.get('/api/auth/permissions') as PermissionsResponse
       expect(result.permissions).toContain('admin:access')
     })
 
@@ -797,7 +902,7 @@ describe('Authentication Flow - Integration Tests', () => {
         permissions: ['schedule:read'],
       })
 
-      const result: any = await mockedApi.get('/api/auth/permissions')
+      const result = await mockedApi.get('/api/auth/permissions') as PermissionsResponse
       const canWrite = result.permissions.includes('schedule:write')
       expect(canWrite).toBe(false)
     })
@@ -831,9 +936,9 @@ describe('Authentication Flow - Integration Tests', () => {
         userId: 'user-1',
       })
 
-      const result: any = await mockedApi.post('/api/auth/verify-token', {
+      const result = await mockedApi.post('/api/auth/verify-token', {
         token: 'jwt-token',
-      })
+      }) as TokenVerifyResponse
 
       expect(result.valid).toBe(true)
     })
@@ -852,9 +957,9 @@ describe('Authentication Flow - Integration Tests', () => {
         },
       })
 
-      const result: any = await mockedApi.post('/api/auth/impersonate', {
+      const result = await mockedApi.post('/api/auth/impersonate', {
         userId: 'user-2',
-      })
+      }) as ImpersonateResponse
 
       expect(result.impersonatedUser.role).toBe('resident')
     })
@@ -866,7 +971,7 @@ describe('Authentication Flow - Integration Tests', () => {
         restoredUser: mockUser,
       })
 
-      const result: any = await mockedApi.post('/api/auth/end-impersonation', {})
+      const result = await mockedApi.post('/api/auth/end-impersonation', {}) as EndImpersonationResponse
       expect(result.restoredUser.role).toBe('coordinator')
     })
   })
@@ -881,9 +986,9 @@ describe('Authentication Flow - Integration Tests', () => {
         feedback: [],
       })
 
-      const result: any = await mockedApi.post('/api/auth/check-password-strength', {
+      const result = await mockedApi.post('/api/auth/check-password-strength', {
         password: 'V3ryStr0ng!Pass@2024',
-      })
+      }) as PasswordStrengthResponse
 
       expect(result.strength).toBe('strong')
     })
@@ -918,7 +1023,7 @@ describe('Authentication Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/auth/audit-log')
+      const result = await mockedApi.get('/api/auth/audit-log') as SecurityLogResponse
       expect(result.events).toHaveLength(3)
     })
 
@@ -935,7 +1040,7 @@ describe('Authentication Flow - Integration Tests', () => {
         ],
       })
 
-      const result: any = await mockedApi.get('/api/auth/audit-log')
+      const result = await mockedApi.get('/api/auth/audit-log') as SecurityLogResponse
       expect(result.events[0].ipAddress).toBeDefined()
     })
   })
@@ -986,9 +1091,9 @@ describe('Authentication Flow - Integration Tests', () => {
         registered: true,
       })
 
-      const result: any = await mockedApi.post('/api/auth/register-biometric', {
+      const result = await mockedApi.post('/api/auth/register-biometric', {
         publicKey: 'biometric-public-key',
-      })
+      }) as BiometricRegisterResponse
 
       expect(result.registered).toBe(true)
     })
@@ -1001,10 +1106,10 @@ describe('Authentication Flow - Integration Tests', () => {
         authMethod: 'biometric',
       })
 
-      const result: any = await mockedApi.post('/api/auth/biometric-login', {
+      const result = await mockedApi.post('/api/auth/biometric-login', {
         credentialId: 'biometric-credential-1',
         signature: 'biometric-signature',
-      })
+      }) as AuthResponse
 
       expect(result.accessToken).toBeDefined()
     })
