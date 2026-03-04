@@ -541,7 +541,9 @@ class DisasterRecoveryService:
                 return 0.0
 
         except Exception as e:
-            logger.error(f"Error checking replication lag for {resource}: {e}")
+            logger.error(
+                f"Error checking replication lag for {resource}", exc_info=True
+            )
             return float("inf")  # Return infinite lag on error
 
             # ========================================================================
@@ -761,10 +763,10 @@ class DisasterRecoveryService:
             event.services_restored = event.services_affected.copy()
 
         except Exception as e:
-            logger.error(f"Failover failed: {e}", exc_info=True)
+            logger.error("Failover failed", exc_info=True)
             event.status = FailoverStatus.FAILED
             event.successful = False
-            event.issues.append(str(e))
+            event.issues.append("Failover failed")
 
             # Attempt rollback if configured
             if self.config.rollback_on_failure:
@@ -868,7 +870,7 @@ class DisasterRecoveryService:
             logger.info("Failover rollback completed")
 
         except Exception as e:
-            logger.error(f"Rollback failed: {e}", exc_info=True)
+            logger.error("Rollback failed", exc_info=True)
             event.resolution_notes = f"Rollback failed: {e}"
 
             # ========================================================================
@@ -939,12 +941,12 @@ class DisasterRecoveryService:
             )
 
         except Exception as e:
-            logger.error(f"Sync verification failed for {resource}: {e}")
+            logger.error(f"Sync verification failed for {resource}", exc_info=True)
             return SyncVerificationResult(
                 resource=resource,
                 status=SyncStatus.FAILED,
                 is_healthy=False,
-                error=str(e),
+                error="Operation failed",
             )
 
             # ========================================================================
@@ -1095,10 +1097,10 @@ class DisasterRecoveryService:
             metrics.rpo_achieved = True
 
         except Exception as e:
-            logger.error(f"Recovery plan execution failed: {e}", exc_info=True)
+            logger.error("Recovery plan execution failed", exc_info=True)
             plan.status = RecoveryPlanStatus.FAILED
             plan.last_execution_successful = False
-            metrics.issues_encountered.append(str(e))
+            metrics.issues_encountered.append("Recovery failed")
 
             # Attempt rollback of completed steps
             await self._rollback_recovery_steps(plan)
@@ -1169,9 +1171,9 @@ class DisasterRecoveryService:
                 self._active_recovery.health_check_passes += 1
 
         except Exception as e:
-            logger.error(f"Step '{step.name}' failed: {e}", exc_info=True)
+            logger.error(f"Step '{step.name}' failed", exc_info=True)
             step.status = RecoveryPlanStatus.FAILED
-            step.error = str(e)
+            step.error = "Operation failed"
             step.validation_result = False
 
             if self._active_recovery:
@@ -1216,7 +1218,7 @@ class DisasterRecoveryService:
                         self._active_recovery.rollback_count += 1
 
                 except Exception as e:
-                    logger.error(f"Rollback of '{step.name}' failed: {e}")
+                    logger.error(f"Rollback of '{step.name}' failed", exc_info=True)
 
                     # ========================================================================
                     # Testing
@@ -1337,7 +1339,7 @@ class DisasterRecoveryService:
                     health["issues"].append(f"Sync issue: {resource}")
 
         except Exception as e:
-            logger.error(f"Health monitoring failed: {e}", exc_info=True)
+            logger.error("Health monitoring failed", exc_info=True)
             health["issues"].append(f"Health check error: {e}")
 
         return health
@@ -1486,7 +1488,7 @@ class DisasterRecoveryService:
                 else:
                     handler(data)
             except Exception as e:
-                logger.error(f"Event handler error ({event_type}): {e}", exc_info=True)
+                logger.error(f"Event handler error ({event_type})", exc_info=True)
 
                 # ========================================================================
                 # Status and Reporting

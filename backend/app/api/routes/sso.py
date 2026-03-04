@@ -78,7 +78,7 @@ def validate_redirect_url(url: str | None) -> str:
             logger.warning(f"SECURITY: Blocked redirect with scheme: {parsed.scheme}")
             return "/dashboard"
     except (ValueError, TypeError, AttributeError) as e:
-        logger.warning(f"SECURITY: Invalid redirect URL: {e}", exc_info=True)
+        logger.warning("SECURITY: Invalid redirect URL", exc_info=True)
         return "/dashboard"
 
     return url
@@ -188,11 +188,11 @@ async def get_or_create_user(
 
         return new_user
     except (SQLAlchemyError, ValueError) as e:
-        logger.error(f"Failed to create user from SAML: {e}", exc_info=True)
+        logger.error("Failed to create user from SAML", exc_info=True)
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create user: {str(e)}",
+            detail="Failed to create user",
         )
 
 
@@ -328,7 +328,7 @@ async def saml_acs(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"SAML response validation failed: {str(e)}",
+            detail="SAML response validation failed",
         )
 
     # Extract user attributes
@@ -453,7 +453,7 @@ async def oauth2_callback(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Token exchange failed: {str(e)}",
+            detail="Token exchange failed",
         )
 
     # Validate ID token if present (OIDC)
@@ -464,7 +464,7 @@ async def oauth2_callback(
         except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"ID token validation failed: {str(e)}",
+                detail="ID token validation failed",
             )
     else:
         id_token_claims = {}

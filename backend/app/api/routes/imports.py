@@ -98,7 +98,7 @@ async def parse_xlsx_file(
     try:
         content = await file.read()
     except OSError as e:
-        logger.error(f"Failed to read uploaded file: {e}", exc_info=True)
+        logger.error("Failed to read uploaded file", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
@@ -107,7 +107,7 @@ async def parse_xlsx_file(
             },
         )
     except ValueError as e:
-        logger.error(f"Invalid file content: {e}", exc_info=True)
+        logger.error("Invalid file content", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
@@ -134,7 +134,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "error": str(e),
+                "error": "Operation failed",
                 "error_code": "SECURITY_VALIDATION_FAILED",
             },
         )
@@ -143,20 +143,20 @@ async def parse_xlsx_file(
     try:
         wb = load_workbook(io.BytesIO(content), data_only=True, read_only=True)
     except OSError as e:
-        logger.error(f"File I/O error parsing Excel file: {e}", exc_info=True)
+        logger.error("File I/O error parsing Excel file", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
-                "error": f"Failed to parse Excel file: {str(e)}",
+                "error": "Operation failed",
                 "error_code": "PARSE_ERROR",
             },
         )
     except (ValueError, TypeError) as e:
-        logger.error(f"Invalid Excel file format: {e}", exc_info=True)
+        logger.error("Invalid Excel file format", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
-                "error": f"Invalid Excel file format: {str(e)}",
+                "error": "Operation failed",
                 "error_code": "INVALID_FORMAT",
             },
         )
@@ -182,11 +182,11 @@ async def parse_xlsx_file(
     except HTTPException:
         raise
     except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Failed to access worksheet: {e}", exc_info=True)
+        logger.error("Failed to access worksheet", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
-                "error": f"Failed to access worksheet: {str(e)}",
+                "error": "Operation failed",
                 "error_code": "WORKSHEET_ERROR",
             },
         )
@@ -210,11 +210,11 @@ async def parse_xlsx_file(
                 else:
                     headers.append(f"Column_{len(headers) + 1}")
     except (ValueError, TypeError, AttributeError) as e:
-        logger.error(f"Failed to read header row: {e}", exc_info=True)
+        logger.error("Failed to read header row", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
-                "error": f"Failed to read header row {header_row}: {str(e)}",
+                "error": "Operation failed",
                 "error_code": "HEADER_READ_ERROR",
             },
         )
@@ -305,11 +305,11 @@ async def parse_xlsx_file(
             rows.append(row_data)
 
     except (ValueError, TypeError, AttributeError) as e:
-        logger.error(f"Failed to parse data rows: {e}", exc_info=True)
+        logger.error("Failed to parse data rows", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
-                "error": f"Failed to parse data rows: {str(e)}",
+                "error": "Operation failed",
                 "error_code": "DATA_PARSE_ERROR",
             },
         )
@@ -371,20 +371,20 @@ async def list_xlsx_sheets(
             "default": sheets[0] if sheets else None,
         }
     except OSError as e:
-        logger.error(f"File I/O error listing sheets: {e}", exc_info=True)
+        logger.error("File I/O error listing sheets", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
-                "error": f"Failed to read Excel file: {str(e)}",
+                "error": "Operation failed",
                 "error_code": "READ_ERROR",
             },
         )
     except (ValueError, TypeError) as e:
-        logger.error(f"Invalid Excel file format listing sheets: {e}", exc_info=True)
+        logger.error("Invalid Excel file format listing sheets", exc_info=True)
         raise HTTPException(
             status_code=400,
             detail={
-                "error": f"Invalid Excel file format: {str(e)}",
+                "error": "Operation failed",
                 "error_code": "INVALID_FORMAT",
             },
         )

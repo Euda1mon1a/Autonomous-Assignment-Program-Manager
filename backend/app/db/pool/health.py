@@ -81,7 +81,7 @@ class PoolHealthChecker:
             cursor.close()
             return True
         except Exception as e:
-            logger.warning(f"Connection health check failed: {e}")
+            logger.warning("Connection health check failed", exc_info=True)
             return False
 
     def perform_health_check(self) -> HealthCheckResult:
@@ -118,19 +118,19 @@ class PoolHealthChecker:
 
             except OperationalError as e:
                 failed_pings += 1
-                errors.append(f"Database operational error: {str(e)}")
-                logger.error(f"Health check operational error: {e}", exc_info=True)
+                errors.append("Operation failed")
+                logger.error("Health check operational error", exc_info=True)
             except SQLAlchemyError as e:
                 failed_pings += 1
-                errors.append(f"Database error: {str(e)}")
-                logger.error(f"Health check SQLAlchemy error: {e}", exc_info=True)
+                errors.append("Operation failed")
+                logger.error("Health check SQLAlchemy error", exc_info=True)
             finally:
                 session.close()
 
         except Exception as e:
             failed_pings += 1
-            errors.append(f"Failed to acquire connection: {str(e)}")
-            logger.error(f"Health check connection error: {e}", exc_info=True)
+            errors.append("Operation failed")
+            logger.error("Health check connection error", exc_info=True)
 
             # Calculate metrics
         avg_ping_time = sum(ping_times) / len(ping_times) if ping_times else 0.0
@@ -231,7 +231,7 @@ class ConnectionValidator:
             session.execute(text("SELECT 1"))
             return True
         except Exception as e:
-            logger.warning(f"Connection validation failed: {e}")
+            logger.warning("Connection validation failed", exc_info=True)
             return False
 
     @staticmethod
@@ -261,7 +261,7 @@ class ConnectionValidator:
             # Timeout worked correctly
             return True
         except Exception as e:
-            logger.error(f"Query timeout test failed: {e}")
+            logger.error("Query timeout test failed", exc_info=True)
             return False
         finally:
             # Reset timeout
@@ -346,7 +346,7 @@ class AutoRecovery:
             return True
 
         except Exception as e:
-            logger.error(f"Pool recovery failed: {e}", exc_info=True)
+            logger.error("Pool recovery failed", exc_info=True)
             return False
 
     def reset_recovery_counter(self) -> None:

@@ -87,7 +87,7 @@ async def generate_schedule_report(
         )
 
     except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error generating schedule report: {str(e)}", exc_info=True)
+        logger.error("Error generating schedule report", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to generate schedule report",
@@ -153,7 +153,7 @@ async def generate_compliance_report(
         )
 
     except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error generating compliance report: {str(e)}", exc_info=True)
+        logger.error("Error generating compliance report", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to generate compliance report",
@@ -219,7 +219,7 @@ async def generate_analytics_report(
         )
 
     except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error generating analytics report: {str(e)}", exc_info=True)
+        logger.error("Error generating analytics report", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to generate analytics report",
@@ -289,9 +289,7 @@ async def generate_faculty_summary_report(
         )
 
     except (ValueError, KeyError, AttributeError) as e:
-        logger.error(
-            f"Error generating faculty summary report: {str(e)}", exc_info=True
-        )
+        logger.error("Error generating faculty summary report", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to generate faculty summary report",
@@ -336,7 +334,7 @@ async def get_block_quality_report(
         return report.model_dump()
 
     except Exception as e:
-        logger.error(f"Error generating block quality report: {e}", exc_info=True)
+        logger.error("Error generating block quality report", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate block quality report"
         )
@@ -399,7 +397,7 @@ async def get_multi_block_quality_report(
         }
 
     except Exception as e:
-        logger.error(f"Error generating multi-block quality report: {e}", exc_info=True)
+        logger.error("Error generating multi-block quality report", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate multi-block quality report"
         )

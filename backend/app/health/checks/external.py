@@ -102,11 +102,13 @@ class ExternalServiceHealthCheck:
 
         except Exception as e:
             response_time_ms = (time.time() - start_time) * 1000
-            logger.error(f"External service '{self.name}' health check failed: {e}")
+            logger.error(
+                f"External service '{self.name}' health check failed", exc_info=True
+            )
             return {
                 "status": "unhealthy",
                 "url": self.url,
-                "error": str(e),
+                "error": "Operation failed",
                 "response_time_ms": round(response_time_ms, 2),
             }
 
@@ -141,15 +143,15 @@ class ExternalServiceHealthCheck:
                 }
 
         except httpx.ConnectError as e:
-            logger.error(f"Connection error for {self.url}: {e}")
+            logger.error(f"Connection error for {self.url}", exc_info=True)
             return {
                 "status": "unhealthy",
                 "url": self.url,
-                "error": f"Connection error: {str(e)}",
+                "error": "Operation failed",
             }
 
         except httpx.TimeoutException as e:
-            logger.error(f"Timeout error for {self.url}: {e}")
+            logger.error(f"Timeout error for {self.url}", exc_info=True)
             return {
                 "status": "unhealthy",
                 "url": self.url,
@@ -157,7 +159,7 @@ class ExternalServiceHealthCheck:
             }
 
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error for {self.url}: {e}")
+            logger.error(f"HTTP error for {self.url}", exc_info=True)
             return {
                 "status": "unhealthy",
                 "url": self.url,
@@ -166,11 +168,11 @@ class ExternalServiceHealthCheck:
             }
 
         except Exception as e:
-            logger.error(f"Unexpected error for {self.url}: {e}")
+            logger.error(f"Unexpected error for {self.url}", exc_info=True)
             return {
                 "status": "unhealthy",
                 "url": self.url,
-                "error": f"Unexpected error: {str(e)}",
+                "error": "Operation failed",
             }
 
     async def check_with_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
@@ -204,11 +206,11 @@ class ExternalServiceHealthCheck:
                 }
 
         except Exception as e:
-            logger.error(f"POST health check failed for {self.url}: {e}")
+            logger.error(f"POST health check failed for {self.url}", exc_info=True)
             return {
                 "status": "unhealthy",
                 "url": self.url,
-                "error": str(e),
+                "error": "Operation failed",
                 "method": "POST",
             }
 
@@ -273,10 +275,10 @@ class DNSHealthCheck:
 
         except Exception as e:
             response_time_ms = (time.time() - start_time) * 1000
-            logger.error(f"DNS resolution failed for {self.hostname}: {e}")
+            logger.error(f"DNS resolution failed for {self.hostname}", exc_info=True)
             return {
                 "status": "unhealthy",
                 "hostname": self.hostname,
-                "error": str(e),
+                "error": "Operation failed",
                 "response_time_ms": round(response_time_ms, 2),
             }

@@ -136,7 +136,7 @@ class HealthChecker:
                 is_healthy=is_healthy,
                 lag_seconds=None,
                 last_check=datetime.now(UTC),
-                error_message=str(e),
+                error_message="Operation failed",
                 consecutive_failures=consecutive_failures,
             )
 
@@ -151,7 +151,9 @@ class HealthChecker:
 
         except Exception as e:
             # Unexpected error
-            logger.error(f"Unexpected error checking health of {replica_name}: {e}")
+            logger.error(
+                f"Unexpected error checking health of {replica_name}", exc_info=True
+            )
 
             health = ReplicaHealth(
                 is_healthy=False,
@@ -212,7 +214,7 @@ class HealthChecker:
             return None
 
         except Exception as e:
-            logger.warning(f"Could not measure replication lag: {e}")
+            logger.warning("Could not measure replication lag", exc_info=True)
             return None
 
     def get_cached_health(

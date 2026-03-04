@@ -258,9 +258,11 @@ class PerformancePredictor:
             # Sort assignments by date
         sorted_assignments = sorted(
             assignments,
-            key=lambda a: a.get("date", date.min)
-            if isinstance(a.get("date"), date)
-            else date.fromisoformat(str(a.get("date", "2000-01-01"))),
+            key=lambda a: (
+                a.get("date", date.min)
+                if isinstance(a.get("date"), date)
+                else date.fromisoformat(str(a.get("date", "2000-01-01")))
+            ),
         )
 
         current_date = current_time.date()

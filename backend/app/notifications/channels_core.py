@@ -199,7 +199,7 @@ class InAppChannel(NotificationChannel):
             return DeliveryResult(
                 success=False,
                 channel=self.channel_name,
-                message=f"Failed to store notification: {str(e)}",
+                message="Operation failed",
             )
 
 
@@ -268,7 +268,7 @@ class EmailChannel(NotificationChannel):
             return DeliveryResult(
                 success=False,
                 channel=self.channel_name,
-                message=f"Failed to prepare email: {str(e)}",
+                message="Operation failed",
             )
 
     def _format_html(self, payload: NotificationPayload) -> str:
@@ -380,7 +380,7 @@ class WebhookChannel(NotificationChannel):
             return DeliveryResult(
                 success=False,
                 channel=self.channel_name,
-                message=f"Failed to prepare webhook: {str(e)}",
+                message="Operation failed",
             )
 
             # Channel registry

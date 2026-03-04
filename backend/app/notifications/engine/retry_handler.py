@@ -193,7 +193,7 @@ class RetryHandler:
                     e,
                     exc_info=True,
                 )
-                await self._handle_retry_failure(retry, str(e))
+                await self._handle_retry_failure(retry, "Retry failed")
 
         return processed
 

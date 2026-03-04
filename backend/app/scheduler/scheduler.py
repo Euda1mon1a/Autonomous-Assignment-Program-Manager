@@ -114,7 +114,7 @@ class JobScheduler:
                     self._add_job_to_scheduler(job)
                     loaded_count += 1
                 except Exception as e:
-                    logger.error(f"Failed to load job '{job.name}': {e}", exc_info=True)
+                    logger.error(f"Failed to load job '{job.name}'", exc_info=True)
 
             logger.info(f"Loaded {loaded_count} jobs from database")
             return loaded_count
@@ -153,7 +153,7 @@ class JobScheduler:
                         self._add_job_to_scheduler(job)
                         added += 1
                     except Exception as e:
-                        logger.error(f"Failed to add job '{job.name}': {e}")
+                        logger.error(f"Failed to add job '{job.name}'", exc_info=True)
 
                         # Remove deleted jobs
             for job_id, job in scheduler_jobs.items():
@@ -162,7 +162,7 @@ class JobScheduler:
                         self.scheduler.remove_job(job_id)
                         removed += 1
                     except Exception as e:
-                        logger.error(f"Failed to remove job '{job_id}': {e}")
+                        logger.error(f"Failed to remove job '{job_id}'", exc_info=True)
 
             logger.info(
                 f"Scheduler sync: {added} added, {removed} removed, {updated} updated"
@@ -261,7 +261,7 @@ class JobScheduler:
             try:
                 self.scheduler.remove_job(str(job_id))
             except Exception as e:
-                logger.warning(f"Job not in scheduler: {e}")
+                logger.warning("Job not in scheduler", exc_info=True)
 
                 # Delete from database
             return persistence.delete_job(job_id)
@@ -293,7 +293,7 @@ class JobScheduler:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to pause job: {e}")
+            logger.error("Failed to pause job", exc_info=True)
             return False
 
     def resume_job(self, job_id: UUID | str) -> bool:
@@ -320,7 +320,7 @@ class JobScheduler:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to resume job: {e}")
+            logger.error("Failed to resume job", exc_info=True)
             return False
 
     def get_job_info(self, job_id: UUID | str) -> dict[str, Any] | None:
@@ -444,10 +444,10 @@ class JobScheduler:
                 # Record failure
                 if execution_id:
                     persistence.record_execution_failure(
-                        execution_id, str(e), traceback.format_exc()
+                        execution_id, "Execution failed", traceback.format_exc()
                     )
 
-                logger.error(f"Job '{job_name}' failed: {e}", exc_info=True)
+                logger.error(f"Job '{job_name}' failed", exc_info=True)
                 raise
 
             finally:

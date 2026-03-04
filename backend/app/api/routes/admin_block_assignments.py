@@ -329,10 +329,10 @@ async def parse_block_sheet(
         }
 
     except Exception as e:
-        logger.error(f"Failed to parse block sheet: {e}")
+        logger.error("Failed to parse block sheet", exc_info=True)
         raise HTTPException(
             status_code=400,
-            detail=f"Failed to parse file: {str(e)}",
+            detail="Failed to parse file",
         )
 
 

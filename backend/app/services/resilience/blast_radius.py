@@ -235,7 +235,7 @@ class BlastRadiusService:
             )
 
         except Exception as e:
-            logger.error(f"Blast radius calculation failed: {e}")
+            logger.error("Blast radius calculation failed", exc_info=True)
             raise
 
     def _determine_severity(self, report: BlastRadiusReport) -> str:
@@ -371,10 +371,10 @@ class BlastRadiusService:
             )
 
         except Exception as e:
-            logger.error(f"Failed to create zone: {e}")
+            logger.error("Failed to create zone", exc_info=True)
             return ZoneCreationResult(
                 success=False,
-                message=f"Failed to create zone: {str(e)}",
+                message="Operation failed",
                 error_code="ZONE_CREATION_FAILED",
             )
 
@@ -475,10 +475,10 @@ class BlastRadiusService:
             )
 
         except Exception as e:
-            logger.error(f"Failed to record incident: {e}")
+            logger.error("Failed to record incident", exc_info=True)
             return IncidentRecordResult(
                 success=False,
-                message=f"Failed to record incident: {str(e)}",
+                message="Operation failed",
                 error_code="INCIDENT_RECORD_FAILED",
             )
 

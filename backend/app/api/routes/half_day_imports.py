@@ -63,7 +63,7 @@ async def stage_half_day_import(
     try:
         validate_excel_upload(file_bytes, file.filename, file.content_type or "")
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
     service = HalfDayImportService(db)
     try:
@@ -76,8 +76,8 @@ async def stage_half_day_import(
             filename=file.filename,
         )
     except Exception as e:
-        logger.error(f"Half-day import staging failed: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error("Half-day import staging failed", exc_info=True)
+        raise HTTPException(status_code=400, detail="Invalid request")
 
     return HalfDayImportStageResponse(
         success=True,

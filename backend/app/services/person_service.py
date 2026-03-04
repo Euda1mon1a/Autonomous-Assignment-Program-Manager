@@ -467,7 +467,7 @@ class PersonService:
                         "index": idx,
                         "person_id": None,
                         "success": False,
-                        "error": str(e),
+                        "error": "Operation failed",
                     }
                 )
 

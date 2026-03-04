@@ -503,11 +503,11 @@ class ScheduleDraftService:
             )
 
         except Exception as e:
-            logger.exception(f"Failed to create draft: {e}")
+            logger.exception("Failed to create draft", exc_info=True)
             self.db.rollback()
             return CreateDraftResult(
                 success=False,
-                message=f"Failed to create draft: {str(e)}",
+                message="Operation failed",
                 error_code="CREATE_FAILED",
             )
 
@@ -602,7 +602,9 @@ class ScheduleDraftService:
             return draft_assignment.id
 
         except Exception as e:
-            logger.exception(f"Failed to add assignment to draft {draft_id}: {e}")
+            logger.exception(
+                f"Failed to add assignment to draft {draft_id}", exc_info=True
+            )
             self.db.rollback()
             return None
 
@@ -659,7 +661,7 @@ class ScheduleDraftService:
             return flag.id
 
         except Exception as e:
-            logger.exception(f"Failed to add flag to draft {draft_id}: {e}")
+            logger.exception(f"Failed to add flag to draft {draft_id}", exc_info=True)
             self.db.rollback()
             return None
 
@@ -711,7 +713,7 @@ class ScheduleDraftService:
             return True
 
         except Exception as e:
-            logger.exception(f"Failed to acknowledge flag {flag_id}: {e}")
+            logger.exception(f"Failed to acknowledge flag {flag_id}", exc_info=True)
             self.db.rollback()
             return False
 
@@ -1042,7 +1044,7 @@ class ScheduleDraftService:
                                 "draft_assignment_id": str(da.id),
                                 "person_id": str(da.person_id),
                                 "date": da.assignment_date.isoformat(),
-                                "error": str(e),
+                                "error": "Operation failed",
                             }
                         )
 
@@ -1094,7 +1096,9 @@ class ScheduleDraftService:
                             f"{v.severity}: {v.message}" for v in result.violations
                         ]
                     except Exception as e:
-                        logger.warning(f"ACGME validation after publish failed: {e}")
+                        logger.warning(
+                            "ACGME validation after publish failed", exc_info=True
+                        )
 
                 # Activity log for schedule publish audit trail
                 from app.models.activity_log import ActivityActionType, ActivityLog
@@ -1138,12 +1142,12 @@ class ScheduleDraftService:
                 )
 
         except Exception as e:
-            logger.exception(f"Failed to publish draft {draft_id}: {e}")
+            logger.exception(f"Failed to publish draft {draft_id}", exc_info=True)
             return PublishResult(
                 success=False,
                 draft_id=draft_id,
                 status=ScheduleDraftStatus.DRAFT,
-                message=f"Publish failed: {str(e)}",
+                message="Publish failed",
                 error_code="PUBLISH_FAILED",
             )
 
@@ -1485,7 +1489,7 @@ class ScheduleDraftService:
                             f"Failed to rollback draft assignment {da.id}: {e}"
                         )
                         failed_count += 1
-                        errors.append(str(e))
+                        errors.append("Operation failed")
 
                         # Update draft status based on success
                 if rolled_back_count == 0 and failed_count > 0:
@@ -1543,12 +1547,12 @@ class ScheduleDraftService:
                 )
 
         except Exception as e:
-            logger.exception(f"Failed to rollback draft {draft_id}: {e}")
+            logger.exception(f"Failed to rollback draft {draft_id}", exc_info=True)
             return RollbackResult(
                 success=False,
                 draft_id=draft_id,
                 status=ScheduleDraftStatus.PUBLISHED,
-                message=f"Rollback failed: {str(e)}",
+                message="Operation failed",
                 error_code="ROLLBACK_FAILED",
             )
 
@@ -1585,7 +1589,7 @@ class ScheduleDraftService:
             return True
 
         except Exception as e:
-            logger.exception(f"Failed to discard draft {draft_id}: {e}")
+            logger.exception(f"Failed to discard draft {draft_id}", exc_info=True)
             self.db.rollback()
             return False
 
@@ -1909,11 +1913,11 @@ class ScheduleDraftService:
             )
 
         except Exception as e:
-            logger.exception(f"Failed to create draft: {e}")
+            logger.exception("Failed to create draft", exc_info=True)
             self.db.rollback()
             return CreateDraftResult(
                 success=False,
-                message=f"Failed to create draft: {str(e)}",
+                message="Failed to create draft",
                 error_code="CREATE_FAILED",
             )
 
@@ -2023,7 +2027,9 @@ class ScheduleDraftService:
             return draft_assignment.id
 
         except Exception as e:
-            logger.exception(f"Failed to add assignment to draft {draft_id}: {e}")
+            logger.exception(
+                f"Failed to add assignment to draft {draft_id}", exc_info=True
+            )
             self.db.rollback()
             return None
 

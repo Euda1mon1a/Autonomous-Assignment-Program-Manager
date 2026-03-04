@@ -394,7 +394,7 @@ class QueueManager:
             dlq_entry = {
                 "job_id": job_id,
                 "job_data": job_data,
-                "error": str(error),
+                "error": "Operation failed",
                 "retry_count": retry_count,
                 "failed_at": datetime.now(UTC).isoformat(),
                 "status": "failed",
@@ -427,7 +427,7 @@ class QueueManager:
             logger.info(f"Stored job {job_id} in DLQ (file)")
             return True
         except Exception as e:
-            logger.error(f"Failed to store job in DLQ: {e}")
+            logger.error("Failed to store job in DLQ", exc_info=True)
             return False
 
     def get_queue_stats(self, queue_name: str | None = None) -> dict[str, Any]:

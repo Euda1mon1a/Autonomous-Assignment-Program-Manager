@@ -154,7 +154,7 @@ async def _log_activity(
     except Exception as e:
         # Log the error but don't fail the main operation
         # Audit logging should not break admin functionality
-        logger.error(f"Failed to log activity: {action.value} - {e}", exc_info=True)
+        logger.error(f"Failed to log activity: {action.value}", exc_info=True)
 
 
 @router.get("", response_model=AdminUserListResponse)
@@ -841,8 +841,8 @@ async def bulk_user_action(
 
         except (ValueError, KeyError, AttributeError) as e:
             failed_ids.append(uid)
-            errors.append(f"Failed to process user {uid}: {str(e)}")
-            logger.error(f"Bulk action error for user {uid}: {e}", exc_info=True)
+            errors.append("Operation failed")
+            logger.error(f"Bulk action error for user {uid}", exc_info=True)
 
             # Determine activity action
     activity_action = {

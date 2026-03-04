@@ -368,7 +368,7 @@ async def optimize_template_selection(
         logger.exception("QUBO optimization failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Optimization failed: {str(e)}",
+            detail="Optimization failed",
         )
 
 
@@ -586,7 +586,7 @@ async def explore_energy_landscape(
         logger.exception("Landscape exploration failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Exploration failed: {str(e)}",
+            detail="Exploration failed",
         )
 
 
@@ -647,7 +647,7 @@ async def explore_pareto_frontier(
         logger.exception("Pareto exploration failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Exploration failed: {str(e)}",
+            detail="Exploration failed",
         )
 
 
@@ -701,5 +701,5 @@ async def run_benchmark(
         logger.exception("Benchmark failed")
         raise HTTPException(
             status_code=500,
-            detail=f"Benchmark failed: {str(e)}",
+            detail="Benchmark failed",
         )

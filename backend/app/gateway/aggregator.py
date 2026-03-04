@@ -206,7 +206,7 @@ class ResponseAggregator:
                         service_name=service_name,
                         data=None,
                         success=False,
-                        error=str(e),
+                        error="Operation failed",
                         latency_ms=latency,
                     )
                 )

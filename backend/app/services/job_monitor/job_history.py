@@ -96,9 +96,9 @@ class JobHistoryService:
             }
 
         except Exception as e:
-            logger.error(f"Error getting task history: {e}")
+            logger.error("Error getting task history", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "tasks": [],
                 "total_count": 0,
                 "timestamp": datetime.now(UTC).isoformat(),
@@ -156,7 +156,9 @@ class JobHistoryService:
             return details
 
         except Exception as e:
-            logger.error(f"Error getting task execution details for {task_id}: {e}")
+            logger.error(
+                f"Error getting task execution details for {task_id}", exc_info=True
+            )
             return None
 
     def get_task_timeline(
@@ -205,9 +207,9 @@ class JobHistoryService:
             }
 
         except Exception as e:
-            logger.error(f"Error getting task timeline: {e}")
+            logger.error("Error getting task timeline", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "buckets": [],
                 "timestamp": datetime.now(UTC).isoformat(),
             }
@@ -253,7 +255,7 @@ class JobHistoryService:
             ]
 
         except Exception as e:
-            logger.error(f"Error getting recent failures: {e}")
+            logger.error("Error getting recent failures", exc_info=True)
             return []
 
     def get_slow_tasks(
@@ -295,7 +297,7 @@ class JobHistoryService:
             ]
 
         except Exception as e:
-            logger.error(f"Error getting slow tasks: {e}")
+            logger.error("Error getting slow tasks", exc_info=True)
             return []
 
     def get_task_success_rate_history(
@@ -346,9 +348,9 @@ class JobHistoryService:
             }
 
         except Exception as e:
-            logger.error(f"Error getting success rate history: {e}")
+            logger.error("Error getting success rate history", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
@@ -386,7 +388,7 @@ class JobHistoryService:
             ]
 
         except Exception as e:
-            logger.error(f"Error searching tasks: {e}")
+            logger.error("Error searching tasks", exc_info=True)
             return []
 
     def get_retry_history(self, task_id: str) -> list[dict[str, Any]]:
@@ -427,5 +429,5 @@ class JobHistoryService:
             ]
 
         except Exception as e:
-            logger.error(f"Error getting retry history for {task_id}: {e}")
+            logger.error(f"Error getting retry history for {task_id}", exc_info=True)
             return []

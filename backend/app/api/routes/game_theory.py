@@ -353,7 +353,7 @@ def run_tournament_background(tournament_id: UUID, db: Session) -> None:
         service = get_game_theory_service(db)
         service.run_tournament(tournament_id)
     except Exception as e:
-        logger.exception(f"Background tournament {tournament_id} failed: {e}")
+        logger.exception(f"Background tournament {tournament_id} failed", exc_info=True)
 
 
 @router.get("/tournaments/{tournament_id}", response_model=TournamentResponse)
@@ -562,7 +562,7 @@ def run_evolution_background(evolution_id: UUID, db: Session) -> None:
         service = get_game_theory_service(db)
         service.run_evolution(evolution_id)
     except Exception as e:
-        logger.exception(f"Background evolution {evolution_id} failed: {e}")
+        logger.exception(f"Background evolution {evolution_id} failed", exc_info=True)
 
 
 @router.get("/evolution/{evolution_id}", response_model=EvolutionResponse)
@@ -668,7 +668,7 @@ async def validate_strategy(
             pass_threshold=request.pass_threshold,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
     return ValidationResponse(
         id=validation.id,

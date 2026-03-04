@@ -405,13 +405,14 @@ class RollbackManager:
                         f"Restored {snapshot.entity_type} {snapshot.entity_id}"
                     )
                 except Exception as e:
-                    error_msg = str(e)
+                    error_msg = "Restore failed"
                     entities_failed.append(
                         (snapshot.entity_type, snapshot.entity_id, error_msg)
                     )
                     logger.error(
                         f"Failed to restore {snapshot.entity_type} "
-                        f"{snapshot.entity_id}: {error_msg}"
+                        f"{snapshot.entity_id}",
+                        exc_info=True,
                     )
 
                     # Commit transaction if not dry run
@@ -482,9 +483,9 @@ class RollbackManager:
                 rollback_point.status = RollbackStatus.FAILED
                 self._persist_rollback_point(rollback_point)
 
-            logger.error(f"Rollback execution failed: {str(e)}", exc_info=True)
+            logger.error("Rollback execution failed", exc_info=True)
             raise AppException(
-                f"Rollback execution failed: {str(e)}",
+                "Rollback execution failed",
                 status_code=500,
             )
 
@@ -572,12 +573,13 @@ class RollbackManager:
                     {
                         "entity_type": snapshot.entity_type,
                         "entity_id": str(snapshot.entity_id),
-                        "error": str(e),
+                        "error": "Operation failed",
                     }
                 )
                 logger.error(
                     f"Verification failed for {snapshot.entity_type} "
-                    f"{snapshot.entity_id}: {str(e)}"
+                    f"{snapshot.entity_id}",
+                    exc_info=True,
                 )
 
                 # Determine verification result
@@ -854,7 +856,8 @@ class RollbackManager:
 
         except Exception as e:
             logger.error(
-                f"Failed to create snapshot for {entity_type} {entity_id}: {str(e)}"
+                f"Failed to create snapshot for {entity_type} {entity_id}",
+                exc_info=True,
             )
             return None
 
@@ -883,7 +886,9 @@ class RollbackManager:
                     snapshots.append(snapshot)
 
         except Exception as e:
-            logger.error(f"Failed to snapshot entities of type {entity_type}: {str(e)}")
+            logger.error(
+                f"Failed to snapshot entities of type {entity_type}", exc_info=True
+            )
 
         return snapshots
 
@@ -1313,10 +1318,14 @@ class RollbackManager:
             return rollback_point
 
         except json.JSONDecodeError as e:
-            logger.error(f"Corrupted rollback point file {rollback_point_id}: {e}")
+            logger.error(
+                f"Corrupted rollback point file {rollback_point_id}", exc_info=True
+            )
             return None
         except Exception as e:
-            logger.error(f"Failed to load rollback point {rollback_point_id}: {e}")
+            logger.error(
+                f"Failed to load rollback point {rollback_point_id}", exc_info=True
+            )
             return None
 
     def _list_persisted_rollback_points(self, limit: int = 100) -> list[RollbackPoint]:
@@ -1347,7 +1356,9 @@ class RollbackManager:
                         rollback_points.append(point)
 
                 except (ValueError, Exception) as e:
-                    logger.warning(f"Skipping invalid rollback file {file_path}: {e}")
+                    logger.warning(
+                        f"Skipping invalid rollback file {file_path}", exc_info=True
+                    )
                     continue
 
                     # Sort by created_at descending (newest first)
@@ -1356,7 +1367,7 @@ class RollbackManager:
             return rollback_points[:limit]
 
         except Exception as e:
-            logger.error(f"Failed to list rollback points: {e}")
+            logger.error("Failed to list rollback points", exc_info=True)
             return []
 
     def _delete_persisted_rollback_point(self, rollback_point_id: UUID) -> None:

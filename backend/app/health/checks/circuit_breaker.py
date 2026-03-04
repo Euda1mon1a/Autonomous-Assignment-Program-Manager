@@ -84,10 +84,10 @@ class CircuitBreakerHealthCheck:
 
         except Exception as e:
             response_time_ms = (time.time() - start_time) * 1000
-            logger.error(f"Circuit breaker health check failed: {e}", exc_info=True)
+            logger.error("Circuit breaker health check failed", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": str(e),
+                "error": "Operation failed",
                 "response_time_ms": round(response_time_ms, 2),
             }
 
@@ -134,10 +134,10 @@ class CircuitBreakerHealthCheck:
             return result
 
         except Exception as e:
-            logger.error(f"Circuit breaker health check failed: {e}", exc_info=True)
+            logger.error("Circuit breaker health check failed", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": f"Failed to check circuit breakers: {str(e)}",
+                "error": "Failed to check circuit breakers",
             }
 
     def _determine_status(self, health_data: dict[str, Any]) -> str:
@@ -272,8 +272,8 @@ class CircuitBreakerHealthCheck:
             }
 
         except Exception as e:
-            logger.error(f"Critical breaker check failed: {e}", exc_info=True)
+            logger.error("Critical breaker check failed", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": str(e),
+                "error": "Operation failed",
             }

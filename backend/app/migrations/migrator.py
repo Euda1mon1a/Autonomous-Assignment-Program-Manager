@@ -184,7 +184,7 @@ class DataMigrator:
 
         except SQLAlchemyError as e:
             self.db.rollback()
-            logger.error(f"Failed to create migration: {e}")
+            logger.error("Failed to create migration", exc_info=True)
             raise
 
     def get_migration(self, migration_id: UUID) -> MigrationRecord | None:
@@ -327,7 +327,7 @@ class DataMigrator:
 
                         # Store first error
                         if not error_message:
-                            error_message = str(e)
+                            error_message = "Migration failed"
 
                             # Commit batch if not dry run
                 if not dry_run:
@@ -372,11 +372,13 @@ class DataMigrator:
             )
 
         except Exception as e:
-            logger.error(f"Migration {migration_id} failed: {e}", exc_info=True)
+            logger.error(f"Migration {migration_id} failed", exc_info=True)
             self.db.rollback()
 
             if not dry_run:
-                self.update_status(migration_id, MigrationStatus.FAILED, str(e))
+                self.update_status(
+                    migration_id, MigrationStatus.FAILED, "Migration failed"
+                )
 
             return MigrationResult(
                 migration_id=migration_id,
@@ -384,7 +386,7 @@ class DataMigrator:
                 total_records=total_records,
                 processed_records=processed_records,
                 failed_records=failed_records,
-                error_message=str(e),
+                error_message="Operation failed",
                 dry_run=dry_run,
             )
 
@@ -449,16 +451,18 @@ class DataMigrator:
             )
 
         except Exception as e:
-            logger.error(f"Custom migration {migration_id} failed: {e}", exc_info=True)
+            logger.error(f"Custom migration {migration_id} failed", exc_info=True)
             self.db.rollback()
 
             if not dry_run:
-                self.update_status(migration_id, MigrationStatus.FAILED, str(e))
+                self.update_status(
+                    migration_id, MigrationStatus.FAILED, "Migration failed"
+                )
 
             return MigrationResult(
                 migration_id=migration_id,
                 success=False,
-                error_message=str(e),
+                error_message="Operation failed",
                 dry_run=dry_run,
             )
 

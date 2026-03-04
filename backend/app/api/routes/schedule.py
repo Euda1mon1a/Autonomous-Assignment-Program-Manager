@@ -310,7 +310,7 @@ async def generate_schedule(
                 request_params=request_params,
             )
         except (SQLAlchemyError, ValueError) as e:
-            logger.warning(f"Failed to create idempotency record: {e}", exc_info=True)
+            logger.warning("Failed to create idempotency record", exc_info=True)
             # Continue without idempotency tracking
 
     # Issue #1: Double-submit / Re-entrancy protection
@@ -463,14 +463,14 @@ async def generate_schedule(
         if idempotency_request:
             idempotency_service.mark_failed(
                 idempotency_request,
-                error_message=str(e),
+                error_message="Operation failed",
                 response_body={"detail": error_msg},
                 response_status_code=500,
             )
             try:
                 db.commit()
             except (SQLAlchemyError, DBAPIError) as e:
-                logger.error(f"Failed to commit error audit log: {e}", exc_info=True)
+                logger.error("Failed to commit error audit log", exc_info=True)
                 db.rollback()
         raise HTTPException(status_code=500, detail=error_msg)
 
@@ -597,7 +597,7 @@ async def analyze_imported_schedules(
     try:
         fmit_bytes = fmit_file.file.read()
     except (OSError, ValueError) as e:
-        logger.error(f"Failed to read FMIT uploaded file: {e}", exc_info=True)
+        logger.error("Failed to read FMIT uploaded file", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate FMIT file
@@ -611,7 +611,7 @@ async def analyze_imported_schedules(
         try:
             clinic_bytes = clinic_file.file.read()
         except (OSError, ValueError) as e:
-            logger.error(f"Failed to read clinic uploaded file: {e}", exc_info=True)
+            logger.error("Failed to read clinic uploaded file", exc_info=True)
             raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
         # Validate clinic file
@@ -686,7 +686,7 @@ async def analyze_single_file(
     try:
         file_bytes = file.file.read()
     except (OSError, ValueError) as e:
-        logger.error(f"Failed to read clinic schedule file: {e}", exc_info=True)
+        logger.error("Failed to read clinic schedule file", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate uploaded file
@@ -824,7 +824,7 @@ async def parse_block_schedule_endpoint(
     try:
         file_bytes = file.file.read()
     except (OSError, ValueError) as e:
-        logger.error(f"Failed to read block parse file: {e}", exc_info=True)
+        logger.error("Failed to read block parse file", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     try:
@@ -857,7 +857,7 @@ async def parse_block_schedule_endpoint(
         )
     except ValueError as e:
         logger.debug("Validation error: %s", e)
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail="Internal server error")
     finally:
         os.unlink(tmp_path)
 
@@ -964,7 +964,7 @@ async def find_swap_candidates(
     try:
         fmit_bytes = fmit_file.file.read()
     except (OSError, ValueError) as e:
-        logger.error(f"Failed to read FMIT file for swap finder: {e}", exc_info=True)
+        logger.error("Failed to read FMIT file for swap finder", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to read uploaded file")
 
     # Validate FMIT file
@@ -1003,7 +1003,7 @@ async def find_swap_candidates(
             external_conflicts.extend(absence_conflicts)
         except (SQLAlchemyError, ValueError, KeyError) as e:
             # Log but don't fail - absence integration is optional
-            logger.warning(f"Failed to load absence conflicts: {e}", exc_info=True)
+            logger.warning("Failed to load absence conflicts", exc_info=True)
 
     try:
         # Create SwapFinder from file
@@ -1016,7 +1016,7 @@ async def find_swap_candidates(
             schedule_release_days=request.schedule_release_days,
         )
     except ValueError as e:
-        logger.error(f"Invalid swap finder request: {e}", exc_info=True)
+        logger.error("Invalid swap finder request", exc_info=True)
         raise HTTPException(status_code=422, detail="Invalid request parameters")
 
     # Validate target faculty exists in schedule

@@ -126,8 +126,8 @@ def periodic_health_check(self) -> dict:
             return result
 
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        metrics.record_health_check_failure(str(e))
+        logger.error("Health check failed", exc_info=True)
+        metrics.record_health_check_failure("Operation failed")
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -235,7 +235,7 @@ def run_contingency_analysis(
             return result
 
     except Exception as e:
-        logger.error(f"Contingency analysis failed: {e}")
+        logger.error("Contingency analysis failed", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -299,8 +299,8 @@ def precompute_fallback_schedules(
                 }
                 logger.info(f"Precomputed fallback: {scenario.value}")
             except Exception as e:
-                logger.error(f"Failed to precompute {scenario.value}: {e}")
-                results[scenario.value] = {"error": str(e)}
+                logger.error(f"Failed to precompute {scenario.value}", exc_info=True)
+                results[scenario.value] = {"error": "Operation failed"}
 
         return {
             "timestamp": datetime.now().isoformat(),
@@ -316,7 +316,7 @@ def precompute_fallback_schedules(
         }
 
     except Exception as e:
-        logger.error(f"Fallback precomputation failed: {e}")
+        logger.error("Fallback precomputation failed", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -431,7 +431,7 @@ def generate_utilization_forecast(
         return result
 
     except Exception as e:
-        logger.error(f"Utilization forecast failed: {e}")
+        logger.error("Utilization forecast failed", exc_info=True)
         raise self.retry(exc=e)
     finally:
         db.close()
@@ -487,7 +487,9 @@ def send_resilience_alert(
         logger.info(f"In-app alert: {message}")
         results.append({"channel": "in_app", "success": True})
     except Exception as e:
-        results.append({"channel": "in_app", "success": False, "error": str(e)})
+        results.append(
+            {"channel": "in_app", "success": False, "error": "Operation failed"}
+        )
 
     # Email for warning and above
     if level in ("warning", "critical", "emergency"):
@@ -495,7 +497,9 @@ def send_resilience_alert(
             logger.info(f"Email alert queued: {message}")
             results.append({"channel": "email", "success": True})
         except Exception as e:
-            results.append({"channel": "email", "success": False, "error": str(e)})
+            results.append(
+                {"channel": "email", "success": False, "error": "Operation failed"}
+            )
 
     return {
         "timestamp": datetime.now().isoformat(),
@@ -559,7 +563,7 @@ def activate_crisis_response(
         return result
 
     except Exception as e:
-        logger.error(f"Crisis activation failed: {e}")
+        logger.error("Crisis activation failed", exc_info=True)
         raise
     finally:
         db.close()

@@ -370,7 +370,7 @@ def verify_audience_token(
         raise
     except Exception as e:
         # Catch-all for unexpected errors
-        logger.error(f"Unexpected error validating audience token: {e}", exc_info=True)
+        logger.error("Unexpected error validating audience token", exc_info=True)
         if obs_metrics:
             obs_metrics.record_auth_failure("audience_validation_error")
         raise HTTPException(

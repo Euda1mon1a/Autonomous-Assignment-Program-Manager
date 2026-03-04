@@ -78,7 +78,9 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
                 )
                 logger.info("Deduplication middleware connected to Redis")
             except Exception as e:
-                logger.error(f"Deduplication middleware: Redis connection failed: {e}")
+                logger.error(
+                    "Deduplication middleware: Redis connection failed", exc_info=True
+                )
                 self.redis = None
                 self.enabled = False
         else:
@@ -190,7 +192,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
             await self.service.fail_processing(
                 idempotency_key,
                 lock_id,
-                str(e),
+                "Operation failed",
             )
             raise
 
@@ -205,7 +207,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
             body_bytes = await request.body()
             request.state.body_bytes = body_bytes
         except Exception as e:
-            logger.warning(f"Failed to read request body: {e}")
+            logger.warning("Failed to read request body", exc_info=True)
             request.state.body_bytes = b""
 
     async def _handle_duplicate(
@@ -344,12 +346,12 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
             )
 
         except Exception as e:
-            logger.error(f"Failed to cache response: {e}", exc_info=True)
+            logger.error("Failed to cache response", exc_info=True)
             # Don't fail the request, just log the error
             await self.service.fail_processing(
                 idempotency_key,
                 lock_id,
-                f"Failed to cache response: {str(e)}",
+                "Failed to cache response",
             )
 
     async def cleanup(self) -> None:

@@ -53,7 +53,7 @@ async def get_enhanced_openapi(request: Request) -> JSONResponse:
 
         return JSONResponse(content=schema)
     except Exception as e:
-        logger.error(f"Failed to generate enhanced OpenAPI schema: {e}", exc_info=True)
+        logger.error("Failed to generate enhanced OpenAPI schema", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate enhanced OpenAPI schema"
         )
@@ -78,7 +78,7 @@ async def get_markdown_docs(request: Request) -> PlainTextResponse:
 
         return PlainTextResponse(content=markdown)
     except Exception as e:
-        logger.error(f"Failed to generate Markdown documentation: {e}", exc_info=True)
+        logger.error("Failed to generate Markdown documentation", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate Markdown documentation"
         )
@@ -123,7 +123,7 @@ async def get_endpoint_documentation(
             return PlainTextResponse(content=docs)
 
     except Exception as e:
-        logger.error(f"Failed to generate endpoint documentation: {e}", exc_info=True)
+        logger.error("Failed to generate endpoint documentation", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate endpoint documentation"
         )
@@ -167,7 +167,7 @@ async def get_code_examples(
         return JSONResponse(content=examples)
 
     except Exception as e:
-        logger.error(f"Failed to generate code examples: {e}", exc_info=True)
+        logger.error("Failed to generate code examples", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to generate code examples")
 
 
@@ -191,7 +191,7 @@ async def get_error_documentation(request: Request) -> JSONResponse:
         return JSONResponse(content=errors)
 
     except Exception as e:
-        logger.error(f"Failed to generate error documentation: {e}", exc_info=True)
+        logger.error("Failed to generate error documentation", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate error documentation"
         )
@@ -217,7 +217,7 @@ async def get_changelog(request: Request) -> PlainTextResponse:
         return PlainTextResponse(content=changelog)
 
     except Exception as e:
-        logger.error(f"Failed to generate changelog: {e}", exc_info=True)
+        logger.error("Failed to generate changelog", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to generate changelog")
 
 
@@ -251,7 +251,7 @@ async def get_version_info(request: Request) -> JSONResponse:
         return JSONResponse(content=version_info)
 
     except Exception as e:
-        logger.error(f"Failed to get version info: {e}", exc_info=True)
+        logger.error("Failed to get version info", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get version information")
 
 
@@ -294,7 +294,7 @@ async def get_documentation_stats(request: Request) -> JSONResponse:
         return JSONResponse(content=stats)
 
     except Exception as e:
-        logger.error(f"Failed to generate documentation stats: {e}", exc_info=True)
+        logger.error("Failed to generate documentation stats", exc_info=True)
         raise HTTPException(
             status_code=500, detail="Failed to generate documentation statistics"
         )
@@ -335,10 +335,8 @@ async def export_openapi_schema(
         )
 
     except Exception as e:
-        logger.error(f"Failed to export OpenAPI schema: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to export OpenAPI schema: {str(e)}"
-        )
+        logger.error("Failed to export OpenAPI schema", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to export OpenAPI schema")
 
 
 @router.get("/export/markdown")
@@ -376,9 +374,9 @@ async def export_markdown_documentation(
         )
 
     except Exception as e:
-        logger.error(f"Failed to export Markdown documentation: {e}", exc_info=True)
+        logger.error("Failed to export Markdown documentation", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to export Markdown documentation: {str(e)}"
+            status_code=500, detail="Failed to export Markdown documentation"
         )
 
 

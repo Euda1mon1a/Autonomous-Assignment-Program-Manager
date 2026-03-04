@@ -155,11 +155,11 @@ class HealthAggregator:
             }
 
         except Exception as e:
-            logger.error(f"Readiness check failed: {e}", exc_info=True)
+            logger.error("Readiness check failed", exc_info=True)
             return {
                 "status": "unhealthy",
                 "timestamp": datetime.now(UTC).isoformat(),
-                "error": str(e),
+                "error": "Operation failed",
             }
 
     async def check_detailed(self) -> AggregatedHealthResult:
@@ -255,13 +255,13 @@ class HealthAggregator:
             )
 
         except Exception as e:
-            logger.error(f"Health check failed for {service_name}: {e}", exc_info=True)
+            logger.error(f"Health check failed for {service_name}", exc_info=True)
             return HealthCheckResult(
                 service=service_name,
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=0.0,
                 timestamp=datetime.now(UTC),
-                error=str(e),
+                error="Operation failed",
             )
 
     def _aggregate_status(

@@ -78,10 +78,12 @@ async def create_webhook(
         )
         return webhook
     except ValueError as e:
-        logger.error(f"Validation error creating webhook: {e}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        logger.error("Validation error creating webhook", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Internal server error"
+        )
     except (TypeError, KeyError) as e:
-        logger.error(f"Data error creating webhook: {e}", exc_info=True)
+        logger.error("Data error creating webhook", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid webhook data"
         )

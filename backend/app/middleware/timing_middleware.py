@@ -18,6 +18,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.logging.performance_logger import get_performance_logger
 from loguru import logger
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class TimingMiddleware(BaseHTTPMiddleware):
     """
@@ -124,7 +128,7 @@ class TimingMiddleware(BaseHTTPMiddleware):
                 path=request.url.path,
                 duration_ms=round(duration_ms, 2),
                 request_id=request_id,
-                error=str(e),
+                error="Operation failed",
             )
 
             raise
@@ -242,7 +246,7 @@ class DetailedTimingMiddleware(TimingMiddleware):
                 method=request.method,
                 path=request.url.path,
                 total_time=round(total_time, 2),
-                error=str(e),
+                error="Operation failed",
             )
 
             raise

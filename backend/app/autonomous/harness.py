@@ -392,7 +392,7 @@ class ResilienceHarness:
             )
 
         except Exception as e:
-            logger.error(f"Scenario {scenario.name} failed: {e}")
+            logger.error(f"Scenario {scenario.name} failed", exc_info=True)
             self._revert_scenario(scenario)  # Ensure cleanup
             return ScenarioResult(
                 scenario=scenario,
@@ -403,7 +403,7 @@ class ResilienceHarness:
                 recovery_iterations=0,
                 recovery_time=time.time() - start_time,
                 evaluation=None,
-                errors=[str(e)],
+                errors=["Operation failed"],
             )
 
     def run_all_scenarios(

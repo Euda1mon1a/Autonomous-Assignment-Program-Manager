@@ -103,7 +103,7 @@ async def submit_fatigue_assessment(
         )
         return assessment.to_dict()
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 # =============================================================================
@@ -172,7 +172,7 @@ async def get_resident_fatigue_profile(
         )
         return profile.to_dict()
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="Internal server error")
 
 
 @router.get(
@@ -218,7 +218,7 @@ async def get_alertness_prediction(
             "recommendations": profile.required_mitigations,
         }
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="Internal server error")
 
 
 @router.post(
@@ -289,7 +289,7 @@ async def get_current_hazard(
             "notes": None,
         }
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="Internal server error")
 
 
 @router.get("/hazards/scan", response_model=HazardScanResponse)
@@ -377,7 +377,7 @@ async def get_sleep_debt_state(
             "impairment_equivalent_bac": min(0.15, profile.sleep_debt_hours * 0.005),
         }
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="Internal server error")
 
 
 @router.post(
@@ -532,7 +532,7 @@ async def validate_acgme_with_fatigue(
     try:
         profile = await service.get_resident_profile(resident_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="Internal server error")
 
     # Calculate ACGME metrics
     hours_summary = {

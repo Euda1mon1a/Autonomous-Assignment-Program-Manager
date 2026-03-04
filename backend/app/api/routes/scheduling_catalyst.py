@@ -175,7 +175,7 @@ async def detect_barriers(
         logger.exception("Barrier detection failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Barrier detection failed: {str(e)}",
+            detail="Barrier detection failed",
         )
 
 
@@ -210,7 +210,7 @@ async def optimize_pathway(
         logger.exception("Pathway optimization failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Pathway optimization failed: {str(e)}",
+            detail="Pathway optimization failed",
         )
 
 
@@ -280,7 +280,7 @@ async def analyze_swap_barriers(
         logger.exception("Swap barrier analysis failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Swap barrier analysis failed: {str(e)}",
+            detail="Swap barrier analysis failed",
         )
 
 
@@ -338,7 +338,7 @@ async def get_catalyst_capacity(
         logger.exception("Catalyst capacity check failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Capacity check failed: {str(e)}",
+            detail="Capacity check failed",
         )
 
 
@@ -387,7 +387,7 @@ async def optimize_batch(
                 PathwayResultResponse(
                     success=False,
                     blocking_barriers=[],
-                    recommendations=[f"Optimization failed: {str(e)}"],
+                    recommendations=["Operation failed"],
                 )
             )
 

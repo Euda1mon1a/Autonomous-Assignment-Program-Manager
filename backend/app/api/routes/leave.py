@@ -97,7 +97,7 @@ async def verify_webhook_signature(
                 detail="Webhook timestamp outside acceptable range (possible replay attack)",
             )
     except (ValueError, TypeError) as e:
-        logger.error(f"Invalid webhook timestamp format: {e}", exc_info=True)
+        logger.error("Invalid webhook timestamp format", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid timestamp format",
@@ -558,7 +558,7 @@ async def bulk_import_leave(
             imported += 1
 
         except Exception as e:
-            errors.append(f"Failed to import record for {record.faculty_id}: {str(e)}")
+            errors.append("Operation failed")
 
     db.commit()
 

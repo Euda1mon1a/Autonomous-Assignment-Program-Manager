@@ -151,7 +151,7 @@ class BatchService:
             )
 
         except Exception as e:
-            logger.error(f"Batch create failed: {e}", exc_info=True)
+            logger.error("Batch create failed", exc_info=True)
             _batch_operations[operation_id]["status"] = BatchOperationStatus.FAILED
             return BatchResponse(
                 operation_id=operation_id,
@@ -160,7 +160,7 @@ class BatchService:
                 total=len(request.assignments),
                 succeeded=0,
                 failed=len(request.assignments),
-                errors=[f"Batch operation failed: {str(e)}"],
+                errors=["Operation failed"],
                 dry_run=request.dry_run,
                 created_at=start_time,
             )
@@ -280,7 +280,7 @@ class BatchService:
             )
 
         except Exception as e:
-            logger.error(f"Batch update failed: {e}", exc_info=True)
+            logger.error("Batch update failed", exc_info=True)
             _batch_operations[operation_id]["status"] = BatchOperationStatus.FAILED
             return BatchResponse(
                 operation_id=operation_id,
@@ -289,7 +289,7 @@ class BatchService:
                 total=len(request.assignments),
                 succeeded=0,
                 failed=len(request.assignments),
-                errors=[f"Batch operation failed: {str(e)}"],
+                errors=["Operation failed"],
                 dry_run=request.dry_run,
                 created_at=start_time,
             )
@@ -405,7 +405,7 @@ class BatchService:
             )
 
         except Exception as e:
-            logger.error(f"Batch delete failed: {e}", exc_info=True)
+            logger.error("Batch delete failed", exc_info=True)
             _batch_operations[operation_id]["status"] = BatchOperationStatus.FAILED
             return BatchResponse(
                 operation_id=operation_id,
@@ -414,7 +414,7 @@ class BatchService:
                 total=len(request.assignments),
                 succeeded=0,
                 failed=len(request.assignments),
-                errors=[f"Batch operation failed: {str(e)}"],
+                errors=["Operation failed"],
                 dry_run=request.dry_run,
                 created_at=start_time,
             )

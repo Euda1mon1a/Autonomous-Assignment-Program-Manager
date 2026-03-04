@@ -151,7 +151,9 @@ def db_timeout(timeout: float) -> Callable[[Callable[..., Any]], Callable[..., A
                 # Check if it's a timeout error
                 error_str = str(e).lower()
                 if "timeout" in error_str or "canceling statement" in error_str:
-                    logger.warning(f"Database query timeout in {func.__name__}: {e}")
+                    logger.warning(
+                        f"Database query timeout in {func.__name__}", exc_info=True
+                    )
                     raise TimeoutError(
                         f"Database query exceeded timeout of {timeout}s",
                         timeout=timeout,
@@ -202,7 +204,9 @@ def db_timeout(timeout: float) -> Callable[[Callable[..., Any]], Callable[..., A
                 # Check if it's a timeout error
                 error_str = str(e).lower()
                 if "timeout" in error_str or "canceling statement" in error_str:
-                    logger.warning(f"Database query timeout in {func.__name__}: {e}")
+                    logger.warning(
+                        f"Database query timeout in {func.__name__}", exc_info=True
+                    )
                     raise TimeoutError(
                         f"Database query exceeded timeout of {timeout}s",
                         timeout=timeout,

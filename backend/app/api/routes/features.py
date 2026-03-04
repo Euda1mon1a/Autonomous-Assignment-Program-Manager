@@ -29,6 +29,10 @@ from app.schemas.feature_flag import (
     FeatureFlagUpdate,
 )
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
@@ -65,7 +69,9 @@ async def create_feature_flag(
         )
         return flag
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Internal server error"
+        )
 
 
 @router.get("/", response_model=FeatureFlagListResponse)
@@ -182,7 +188,9 @@ async def update_feature_flag(
         )
         return flag
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Internal server error"
+        )
 
 
 @router.delete("/{key}", status_code=status.HTTP_204_NO_CONTENT)
@@ -308,7 +316,9 @@ async def enable_feature_flag(
         )
         return flag
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Internal server error"
+        )
 
 
 @router.post("/{key}/disable", response_model=FeatureFlagResponse)
@@ -335,7 +345,9 @@ async def disable_feature_flag(
         )
         return flag
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Internal server error"
+        )
 
 
 async def _get_flags_by_environment(db: Session) -> dict[str, Any]:

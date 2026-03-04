@@ -128,15 +128,15 @@ def archive_old_audit_logs(
 
     except ValueError as e:
         # No logs to archive - this is normal, not an error
-        logger.info(f"No logs to archive: {e}")
+        logger.info("No logs to archive", exc_info=True)
         return {
             "status": "no_action",
-            "message": str(e),
+            "message": "Internal server error",
             "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
-        logger.error(f"Audit log archival failed: {e}", exc_info=True)
+        logger.error("Audit log archival failed", exc_info=True)
 
         # Retry task
         raise self.retry(exc=e)
@@ -210,7 +210,7 @@ def generate_audit_compliance_report(
         return report
 
     except Exception as e:
-        logger.error(f"Compliance report generation failed: {e}", exc_info=True)
+        logger.error("Compliance report generation failed", exc_info=True)
         raise self.retry(exc=e)
 
     finally:
@@ -285,7 +285,7 @@ def cleanup_old_archives(
                     logger.info(f"Deleted old archive: {archive_id}")
 
             except Exception as e:
-                logger.warning(f"Failed to delete archive {archive_id}: {e}")
+                logger.warning(f"Failed to delete archive {archive_id}", exc_info=True)
                 continue
 
         logger.info(
@@ -303,7 +303,7 @@ def cleanup_old_archives(
         }
 
     except Exception as e:
-        logger.error(f"Archive cleanup failed: {e}", exc_info=True)
+        logger.error("Archive cleanup failed", exc_info=True)
         raise self.retry(exc=e)
 
 
@@ -364,16 +364,16 @@ def archive_by_entity_type(
         }
 
     except ValueError as e:
-        logger.info(f"No {entity_type} logs to archive: {e}")
+        logger.info(f"No {entity_type} logs to archive", exc_info=True)
         return {
             "status": "no_action",
             "entity_type": entity_type,
-            "message": str(e),
+            "message": "Internal server error",
             "completed_at": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
-        logger.error(f"Failed to archive {entity_type} logs: {e}", exc_info=True)
+        logger.error(f"Failed to archive {entity_type} logs", exc_info=True)
         raise self.retry(exc=e)
 
     finally:
@@ -437,7 +437,7 @@ def verify_archive_integrity(
 
             except Exception as e:
                 error_count += 1
-                error_msg = f"Archive {aid}: {str(e)}"
+                error_msg = f"Archive {aid}"
                 errors.append(error_msg)
                 logger.error(error_msg)
 
@@ -455,7 +455,7 @@ def verify_archive_integrity(
         }
 
     except Exception as e:
-        logger.error(f"Archive verification failed: {e}", exc_info=True)
+        logger.error("Archive verification failed", exc_info=True)
         raise self.retry(exc=e)
 
 

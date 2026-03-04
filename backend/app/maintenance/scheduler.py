@@ -41,7 +41,7 @@ class BackupScheduler:
             self.config = self._load_config()
             logger.info(f"Initialized BackupScheduler with config: {self.config_path}")
         except Exception as e:
-            logger.error(f"Error loading scheduler configuration: {e}")
+            logger.error("Error loading scheduler configuration", exc_info=True)
             raise ScheduleConfigurationError(
                 f"Failed to load scheduler configuration: {e}"
             ) from e
@@ -85,7 +85,7 @@ class BackupScheduler:
             logger.info(f"Daily backup scheduled successfully at {backup_time}")
             return schedule
         except Exception as e:
-            logger.error(f"Error saving daily backup schedule: {e}")
+            logger.error("Error saving daily backup schedule", exc_info=True)
             raise ScheduleConfigurationError(
                 f"Failed to save daily backup schedule: {e}"
             ) from e
@@ -156,7 +156,7 @@ class BackupScheduler:
             )
             return schedule
         except Exception as e:
-            logger.error(f"Error saving weekly backup schedule: {e}")
+            logger.error("Error saving weekly backup schedule", exc_info=True)
             raise ScheduleConfigurationError(
                 f"Failed to save weekly backup schedule: {e}"
             ) from e
@@ -208,7 +208,7 @@ class BackupScheduler:
             logger.info("Retention policy saved successfully")
             return policy
         except Exception as e:
-            logger.error(f"Error saving retention policy: {e}")
+            logger.error("Error saving retention policy", exc_info=True)
             raise ScheduleConfigurationError(
                 f"Failed to save retention policy: {e}"
             ) from e
@@ -309,23 +309,23 @@ class BackupScheduler:
                     f"Daily backup completed successfully: {backup_result['backup_id']}"
                 )
             except BackupError as e:
-                logger.error(f"Backup error during daily backup: {e}")
+                logger.error("Backup error during daily backup", exc_info=True)
                 results.append(
                     {
                         "type": "daily",
                         "status": "failed",
-                        "error": str(e),
+                        "error": "Operation failed",
                         "error_type": type(e).__name__,
                         "timestamp": now.isoformat(),
                     }
                 )
             except OSError as e:
-                logger.error(f"File I/O error during daily backup: {e}", exc_info=True)
+                logger.error("File I/O error during daily backup", exc_info=True)
                 results.append(
                     {
                         "type": "daily",
                         "status": "failed",
-                        "error": str(e),
+                        "error": "Operation failed",
                         "error_type": type(e).__name__,
                         "timestamp": now.isoformat(),
                     }
@@ -338,7 +338,7 @@ class BackupScheduler:
                     {
                         "type": "daily",
                         "status": "failed",
-                        "error": str(e),
+                        "error": "Operation failed",
                         "error_type": type(e).__name__,
                         "timestamp": now.isoformat(),
                     }
@@ -365,23 +365,23 @@ class BackupScheduler:
                     f"Weekly backup completed successfully: {backup_result['backup_id']}"
                 )
             except BackupError as e:
-                logger.error(f"Backup error during weekly backup: {e}")
+                logger.error("Backup error during weekly backup", exc_info=True)
                 results.append(
                     {
                         "type": "weekly",
                         "status": "failed",
-                        "error": str(e),
+                        "error": "Operation failed",
                         "error_type": type(e).__name__,
                         "timestamp": now.isoformat(),
                     }
                 )
             except OSError as e:
-                logger.error(f"File I/O error during weekly backup: {e}", exc_info=True)
+                logger.error("File I/O error during weekly backup", exc_info=True)
                 results.append(
                     {
                         "type": "weekly",
                         "status": "failed",
-                        "error": str(e),
+                        "error": "Operation failed",
                         "error_type": type(e).__name__,
                         "timestamp": now.isoformat(),
                     }
@@ -394,7 +394,7 @@ class BackupScheduler:
                     {
                         "type": "weekly",
                         "status": "failed",
-                        "error": str(e),
+                        "error": "Operation failed",
                         "error_type": type(e).__name__,
                         "timestamp": now.isoformat(),
                     }
@@ -411,7 +411,7 @@ class BackupScheduler:
                     f"File I/O error applying retention policy: {e}", exc_info=True
                 )
             except RuntimeError as e:
-                logger.error(f"Error applying retention policy: {e}", exc_info=True)
+                logger.error("Error applying retention policy", exc_info=True)
                 # Don't fail the whole operation if retention policy fails
 
         if not results:
@@ -500,12 +500,12 @@ class BackupScheduler:
                 logger.debug(f"Loaded scheduler configuration from {self.config_path}")
                 return config
             except json.JSONDecodeError as e:
-                logger.error(f"Invalid JSON in scheduler config file: {e}")
+                logger.error("Invalid JSON in scheduler config file", exc_info=True)
                 raise ScheduleConfigurationError(
                     f"Scheduler configuration file contains invalid JSON: {e}"
                 ) from e
             except OSError as e:
-                logger.error(f"Error reading scheduler config file: {e}")
+                logger.error("Error reading scheduler config file", exc_info=True)
                 raise ScheduleConfigurationError(
                     f"Failed to read scheduler configuration: {e}"
                 ) from e
@@ -528,12 +528,12 @@ class BackupScheduler:
                 json.dump(self.config, f, indent=2)
             logger.debug(f"Saved scheduler configuration to {self.config_path}")
         except PermissionError as e:
-            logger.error(f"Permission denied writing scheduler config: {e}")
+            logger.error("Permission denied writing scheduler config", exc_info=True)
             raise ScheduleConfigurationError(
                 f"Permission denied writing scheduler configuration: {e}"
             ) from e
         except OSError as e:
-            logger.error(f"Error writing scheduler config file: {e}")
+            logger.error("Error writing scheduler config file", exc_info=True)
             raise ScheduleConfigurationError(
                 f"Failed to save scheduler configuration: {e}"
             ) from e

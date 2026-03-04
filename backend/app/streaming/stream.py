@@ -414,7 +414,7 @@ class DataStream(Generic[T]):
                     self.metrics.messages_filtered += 1
                     return 0
             except Exception as e:
-                logger.error(f"Filter error in stream {self.stream_id}: {e}")
+                logger.error(f"Filter error in stream {self.stream_id}", exc_info=True)
                 self.metrics.errors_count += 1
 
                 # Apply transformations
@@ -427,7 +427,9 @@ class DataStream(Generic[T]):
                     transformed_data = transform_func(transformed_data)
                 self.metrics.messages_transformed += 1
             except Exception as e:
-                logger.error(f"Transform error in stream {self.stream_id}: {e}")
+                logger.error(
+                    f"Transform error in stream {self.stream_id}", exc_info=True
+                )
                 self.metrics.errors_count += 1
                 # Continue with untransformed data
                 transformed_data = data
@@ -530,7 +532,9 @@ class DataStream(Generic[T]):
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Heartbeat error in stream {self.stream_id}: {e}")
+                logger.error(
+                    f"Heartbeat error in stream {self.stream_id}", exc_info=True
+                )
 
     def get_metrics(self) -> dict[str, Any]:
         """
@@ -661,10 +665,10 @@ class SSEStreamManager:
                     stream.metrics.bytes_sent += len(sse_data.encode())
                     yield sse_data
             except Exception as e:
-                logger.error(f"Error in SSE generator for {consumer_id}: {e}")
+                logger.error(f"Error in SSE generator for {consumer_id}", exc_info=True)
                 error_event = StreamEvent(
                     event_type=StreamEventType.ERROR,
-                    data={"error": str(e)},
+                    data={"error": "Operation failed"},
                 )
                 yield error_event.to_sse_format(data_format=data_format)
 
@@ -760,13 +764,15 @@ class WebSocketStreamWrapper:
         except WebSocketDisconnect:
             logger.info(f"WebSocket consumer {self.consumer_id} disconnected")
         except Exception as e:
-            logger.error(f"WebSocket stream error for {self.consumer_id}: {e}")
+            logger.error(
+                f"WebSocket stream error for {self.consumer_id}", exc_info=True
+            )
             # Send error event
             try:
                 await self.websocket.send_json(
                     {
                         "event": StreamEventType.ERROR.value,
-                        "error": str(e),
+                        "error": "Operation failed",
                         "timestamp": time.time(),
                     }
                 )

@@ -413,7 +413,7 @@ class ContractVerifier:
                         self.provider_states[interaction.provider_state], setup_db
                     )
                 except Exception as e:
-                    errors.append(f"Provider state setup failed: {str(e)}")
+                    errors.append("Operation failed")
                     return InteractionVerificationResult(
                         interaction_id=interaction.id,
                         description=interaction.description,
@@ -431,7 +431,7 @@ class ContractVerifier:
         try:
             actual_response = await self._make_request(interaction.request)
         except Exception as e:
-            errors.append(f"Request failed: {str(e)}")
+            errors.append("Operation failed")
             return InteractionVerificationResult(
                 interaction_id=interaction.id,
                 description=interaction.description,
@@ -534,7 +534,7 @@ class ContractVerifier:
             try:
                 expected.body_schema(**actual["body"])
             except Exception as e:
-                errors.append(f"Response body validation failed: {str(e)}")
+                errors.append("Operation failed")
 
                 # Check body structure if no schema
         elif expected.body is not None:
@@ -552,7 +552,7 @@ class ContractVerifier:
                 if not matcher(value):
                     errors.append(f"Custom matcher failed for path '{json_path}'")
             except Exception as e:
-                errors.append(f"Matcher error for path '{json_path}': {str(e)}")
+                errors.append("Operation failed")
 
         return len(errors) == 0, errors
 
@@ -795,9 +795,9 @@ class ContractPublisher:
                 )
 
         except httpx.HTTPError as e:
-            errors.append(f"HTTP error publishing contract: {str(e)}")
+            errors.append("Operation failed")
         except Exception as e:
-            errors.append(f"Error publishing contract: {str(e)}")
+            errors.append("Operation failed")
 
         return PublishResult(
             success=False,
@@ -818,7 +818,7 @@ class ContractPublisher:
                 async with httpx.AsyncClient() as client:
                     await client.put(url, headers=self.headers, timeout=10.0)
             except Exception as e:
-                logger.warning(f"Failed to apply tag '{tag}': {str(e)}")
+                logger.warning(f"Failed to apply tag '{tag}'", exc_info=True)
 
     async def fetch_contract(
         self,
@@ -896,9 +896,9 @@ class ContractPublisher:
                 return contract
 
         except httpx.HTTPError as e:
-            logger.error(f"HTTP error fetching contract: {str(e)}")
+            logger.error("HTTP error fetching contract", exc_info=True)
         except Exception as e:
-            logger.error(f"Error fetching contract: {str(e)}")
+            logger.error("Error fetching contract", exc_info=True)
 
         return None
 

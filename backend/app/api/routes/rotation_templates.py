@@ -186,7 +186,7 @@ async def batch_delete_rotation_templates(
     except Exception as e:
         logger.exception("Batch delete rotation templates failed")
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.put("/batch", response_model=BatchTemplateResponse)
@@ -265,7 +265,7 @@ async def batch_update_rotation_templates(
     except Exception as e:
         logger.exception("Batch update rotation templates failed")
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.post("/batch", response_model=BatchTemplateResponse, status_code=201)
@@ -333,7 +333,7 @@ async def batch_create_rotation_templates(
     except Exception as e:
         logger.exception("Batch create rotation templates failed")
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.post("/batch/conflicts", response_model=ConflictCheckResponse)
@@ -472,7 +472,7 @@ async def batch_archive_rotation_templates(
     except Exception as e:
         logger.exception("Batch archive rotation templates failed")
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.put("/batch/restore", response_model=BatchTemplateResponse)
@@ -525,7 +525,7 @@ async def batch_restore_rotation_templates(
     except Exception as e:
         logger.exception("Batch restore rotation templates failed")
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.put("/batch/patterns", response_model=BatchPatternUpdateResponse)
@@ -619,7 +619,7 @@ async def batch_update_patterns(
     except Exception as e:
         logger.exception("Batch update patterns failed")
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.put("/batch/preferences", response_model=BatchTemplateResponse)
@@ -690,7 +690,7 @@ async def batch_apply_preferences(
     except Exception as e:
         logger.exception("Batch apply preferences failed")
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
         # =============================================================================
         # Single Template Endpoints (parametric paths)
@@ -745,7 +745,7 @@ async def archive_rotation_template(
     except ValueError as e:
         logger.debug("Validation error: %s", e)
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.put("/{template_id}/restore", response_model=RotationTemplateResponse)
@@ -780,7 +780,7 @@ async def restore_rotation_template(
     except ValueError as e:
         logger.debug("Validation error: %s", e)
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.get("/{template_id}/history")
@@ -843,7 +843,8 @@ async def get_rotation_template_history(
         # If versioning not configured or error accessing versions
         logger = get_logger(__name__)
         logger.warning(
-            f"Error accessing version history for template {template_id}: {str(e)}"
+            f"Error accessing version history for template {template_id}",
+            exc_info=True,
         )
         versions = []
 
@@ -966,7 +967,7 @@ async def replace_weekly_patterns(
     except ValueError as e:
         logger.debug("Validation error: %s", e)
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
         # =============================================================================
         # Half-Day Requirement Endpoints
@@ -1055,7 +1056,7 @@ async def upsert_halfday_requirements(
     except ValueError as e:
         logger.debug("Validation error: %s", e)
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
         # =============================================================================
         # Rotation Preference Endpoints
@@ -1140,7 +1141,7 @@ async def replace_rotation_preferences(
     except ValueError as e:
         logger.debug("Validation error: %s", e)
         await service.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
         # =============================================================================
         # Activity Requirement Endpoints (Dynamic per-activity requirements)
@@ -1231,7 +1232,7 @@ async def replace_activity_requirements(
     except ValueError as e:
         logger.debug("Validation error: %s", e)
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.post(
@@ -1271,7 +1272,7 @@ async def add_activity_requirement(
     except ValueError as e:
         logger.debug("Validation error: %s", e)
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
 
 
 @router.delete(

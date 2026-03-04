@@ -96,12 +96,14 @@ class BatchProcessor:
                     )
 
                 except Exception as e:
-                    logger.error(f"Error creating assignment at index {idx}: {e}")
+                    logger.error(
+                        f"Error creating assignment at index {idx}", exc_info=True
+                    )
                     results.append(
                         BatchOperationResult(
                             index=idx,
                             success=False,
-                            error=str(e),
+                            error="Operation failed",
                         )
                     )
 
@@ -132,7 +134,7 @@ class BatchProcessor:
                 self.db.rollback()
 
         except Exception as e:
-            logger.error(f"Batch create failed: {e}")
+            logger.error("Batch create failed", exc_info=True)
             self.db.rollback()
             raise
 
@@ -239,13 +241,15 @@ class BatchProcessor:
                     )
 
                 except Exception as e:
-                    logger.error(f"Error updating assignment at index {idx}: {e}")
+                    logger.error(
+                        f"Error updating assignment at index {idx}", exc_info=True
+                    )
                     results.append(
                         BatchOperationResult(
                             index=idx,
                             success=False,
                             assignment_id=assignment_data.assignment_id,
-                            error=str(e),
+                            error="Operation failed",
                         )
                     )
 
@@ -272,7 +276,7 @@ class BatchProcessor:
                 self.db.rollback()
 
         except Exception as e:
-            logger.error(f"Batch update failed: {e}")
+            logger.error("Batch update failed", exc_info=True)
             self.db.rollback()
             raise
 
@@ -344,13 +348,15 @@ class BatchProcessor:
                     )
 
                 except Exception as e:
-                    logger.error(f"Error deleting assignment at index {idx}: {e}")
+                    logger.error(
+                        f"Error deleting assignment at index {idx}", exc_info=True
+                    )
                     results.append(
                         BatchOperationResult(
                             index=idx,
                             success=False,
                             assignment_id=assignment_data.assignment_id,
-                            error=str(e),
+                            error="Operation failed",
                         )
                     )
 
@@ -374,7 +380,7 @@ class BatchProcessor:
                 self.db.rollback()
 
         except Exception as e:
-            logger.error(f"Batch delete failed: {e}")
+            logger.error("Batch delete failed", exc_info=True)
             self.db.rollback()
             raise
 

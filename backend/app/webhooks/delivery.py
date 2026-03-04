@@ -128,8 +128,8 @@ class WebhookDeliveryManager:
             return success
 
         except Exception as e:
-            logger.error(f"Error delivering webhook {delivery_id}: {e}", exc_info=True)
-            delivery.error_message = str(e)
+            logger.error(f"Error delivering webhook {delivery_id}", exc_info=True)
+            delivery.error_message = "Operation failed"
             await self._handle_delivery_failure(db, delivery, webhook)
             await db.commit()
 
@@ -202,15 +202,15 @@ class WebhookDeliveryManager:
                 return False
 
         except httpx.TimeoutException as e:
-            logger.warning(f"Webhook timeout for {webhook.url}: {e}")
+            logger.warning(f"Webhook timeout for {webhook.url}", exc_info=True)
             delivery.error_message = f"Request timeout after {webhook.timeout_seconds}s"
             if raise_on_error:
                 raise
             return False
 
         except httpx.RequestError as e:
-            logger.warning(f"Webhook request error for {webhook.url}: {e}")
-            delivery.error_message = f"Request error: {str(e)}"
+            logger.warning(f"Webhook request error for {webhook.url}", exc_info=True)
+            delivery.error_message = "Request error"
             if raise_on_error:
                 raise
             return False
@@ -219,7 +219,7 @@ class WebhookDeliveryManager:
             logger.error(
                 f"Unexpected error sending webhook to {webhook.url}: {e}", exc_info=True
             )
-            delivery.error_message = f"Unexpected error: {str(e)}"
+            delivery.error_message = "Operation failed"
             if raise_on_error:
                 raise
             return False

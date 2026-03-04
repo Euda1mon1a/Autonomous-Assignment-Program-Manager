@@ -114,7 +114,7 @@ def validate_url(
         return True, None
 
     except Exception as e:
-        return False, f"Invalid URL format: {str(e)}"
+        return False, "Invalid URL format"
 
 
 def validate_json(
@@ -143,9 +143,9 @@ def validate_json(
         return True, None, parsed
 
     except json.JSONDecodeError as e:
-        return False, f"Invalid JSON: {str(e)}", None
+        return False, "Invalid JSON", None
     except Exception as e:
-        return False, f"JSON validation error: {str(e)}", None
+        return False, "JSON validation error", None
 
 
 def validate_password_strength(

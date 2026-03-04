@@ -549,13 +549,13 @@ class WorkflowEngine:
             return instance
 
         except Exception as e:
-            logger.error(f"Workflow {instance_id} failed: {str(e)}", exc_info=True)
+            logger.error(f"Workflow {instance_id} failed", exc_info=True)
 
             instance = self.get_instance(instance_id)
             if instance:
                 instance.status = WorkflowStatus.FAILED.value
                 instance.completed_at = datetime.now(UTC)
-                instance.error_message = str(e)
+                instance.error_message = "Operation failed"
                 instance.error_details = {
                     "error_type": type(e).__name__,
                     "traceback": traceback.format_exc(),
@@ -698,14 +698,12 @@ class WorkflowEngine:
                     await asyncio.sleep(delay)
 
             except Exception as e:
-                logger.error(
-                    f"Step {step_id} attempt {attempt} failed: {str(e)}", exc_info=True
-                )
+                logger.error(f"Step {step_id} attempt {attempt} failed", exc_info=True)
 
                 if attempt >= max_attempts:
                     raise StepExecutionError(
-                        f"Step {step_id} failed after {max_attempts} attempts: {str(e)}"
-                    )
+                        f"Step {step_id} failed after {max_attempts} attempts"
+                    ) from e
 
         raise StepExecutionError(f"Step {step_id} failed after all retry attempts")
 
@@ -823,7 +821,7 @@ class WorkflowEngine:
         except Exception as e:
             step_exec.status = StepStatus.FAILED.value
             step_exec.completed_at = datetime.now(UTC)
-            step_exec.error_message = str(e)
+            step_exec.error_message = "Operation failed"
             step_exec.error_details = {"error_type": type(e).__name__}
             step_exec.error_traceback = traceback.format_exc()
             self.db.commit()
@@ -902,8 +900,8 @@ class WorkflowEngine:
 
         except Exception as e:
             raise ConditionEvaluationError(
-                f"Failed to evaluate condition '{condition}': {str(e)}"
-            )
+                f"Failed to evaluate condition '{condition}'"
+            ) from e
 
     def _safe_eval_condition(self, condition: str, context: dict[str, Any]) -> Any:
         """
@@ -1127,7 +1125,7 @@ class WorkflowEngine:
             return handler
 
         except Exception as e:
-            raise ImportError(f"Failed to load handler '{handler_path}': {str(e)}")
+            raise ImportError(f"Failed to load handler '{handler_path}'") from e
 
             # ========================================================================
             # Query Methods

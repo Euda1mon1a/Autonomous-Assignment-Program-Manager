@@ -634,7 +634,7 @@ class AutocompleteService:
             )
             return []
         except redis.RedisError as e:
-            logger.error(f"Redis error getting popular suggestions: {e}", exc_info=True)
+            logger.error("Redis error getting popular suggestions", exc_info=True)
             return []
 
     async def _get_personalized_suggestions(
@@ -768,7 +768,7 @@ class AutocompleteService:
             return suggestions[:limit]
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error getting typo suggestions: {e}", exc_info=True)
+            logger.warning("Redis error getting typo suggestions", exc_info=True)
             return []
         except (ValueError, TypeError) as e:
             logger.error(
@@ -776,7 +776,7 @@ class AutocompleteService:
             )
             return []
         except redis.RedisError as e:
-            logger.error(f"Redis error getting typo suggestions: {e}", exc_info=True)
+            logger.error("Redis error getting typo suggestions", exc_info=True)
             return []
 
     def _levenshtein_distance(self, s1: str, s2: str) -> int:
@@ -871,11 +871,11 @@ class AutocompleteService:
             redis_client.expire(history_key, self.USER_HISTORY_TTL)
 
         except redis.ConnectionError as e:
-            logger.warning(f"Redis error tracking query: {e}", exc_info=True)
+            logger.warning("Redis error tracking query", exc_info=True)
         except (ValueError, TypeError) as e:
-            logger.error(f"Data validation error tracking query: {e}", exc_info=True)
+            logger.error("Data validation error tracking query", exc_info=True)
         except redis.RedisError as e:
-            logger.error(f"Redis error tracking query: {e}", exc_info=True)
+            logger.error("Redis error tracking query", exc_info=True)
 
     async def _record_analytics(
         self,
@@ -928,7 +928,7 @@ class AutocompleteService:
             )
 
         except (redis.ConnectionError, redis.RedisError) as e:
-            logger.error(f"Redis error recording analytics: {e}", exc_info=True)
+            logger.error("Redis error recording analytics", exc_info=True)
         except (ValueError, TypeError) as e:
             logger.error(
                 f"Data validation error recording analytics: {e}", exc_info=True
@@ -1016,15 +1016,15 @@ class AutocompleteService:
             }
 
         except (redis.ConnectionError, redis.RedisError) as e:
-            logger.error(f"Redis error getting analytics: {e}", exc_info=True)
+            logger.error("Redis error getting analytics", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "total_queries": 0,
             }
         except (ValueError, TypeError, KeyError) as e:
-            logger.error(f"Data processing error getting analytics: {e}", exc_info=True)
+            logger.error("Data processing error getting analytics", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "total_queries": 0,
             }
 

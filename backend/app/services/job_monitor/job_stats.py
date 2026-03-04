@@ -74,9 +74,9 @@ class JobStatsService:
             }
 
         except Exception as e:
-            logger.error(f"Error getting task statistics: {e}")
+            logger.error("Error getting task statistics", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
@@ -135,7 +135,7 @@ class JobStatsService:
             return stats
 
         except Exception as e:
-            logger.error(f"Error getting queue statistics: {e}")
+            logger.error("Error getting queue statistics", exc_info=True)
             return {}
 
     def get_retry_statistics(self, task_name: str | None = None) -> dict[str, Any]:
@@ -170,9 +170,9 @@ class JobStatsService:
             }
 
         except Exception as e:
-            logger.error(f"Error getting retry statistics: {e}")
+            logger.error("Error getting retry statistics", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
@@ -219,9 +219,9 @@ class JobStatsService:
             }
 
         except Exception as e:
-            logger.error(f"Error getting performance metrics: {e}")
+            logger.error("Error getting performance metrics", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
@@ -254,7 +254,7 @@ class JobStatsService:
             }
 
         except Exception as e:
-            logger.error(f"Error getting task distribution: {e}")
+            logger.error("Error getting task distribution", exc_info=True)
             return {}
 
     def get_failure_analysis(
@@ -296,9 +296,9 @@ class JobStatsService:
             }
 
         except Exception as e:
-            logger.error(f"Error analyzing failures: {e}")
+            logger.error("Error analyzing failures", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
@@ -338,9 +338,9 @@ class JobStatsService:
             }
 
         except Exception as e:
-            logger.error(f"Error getting throughput metrics: {e}")
+            logger.error("Error getting throughput metrics", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
@@ -383,9 +383,9 @@ class JobStatsService:
             }
 
         except Exception as e:
-            logger.error(f"Error getting scheduled tasks summary: {e}")
+            logger.error("Error getting scheduled tasks summary", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
@@ -446,8 +446,8 @@ class JobStatsService:
             }
 
         except Exception as e:
-            logger.error(f"Error calculating worker utilization: {e}")
+            logger.error("Error calculating worker utilization", exc_info=True)
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "timestamp": datetime.now(UTC).isoformat(),
             }

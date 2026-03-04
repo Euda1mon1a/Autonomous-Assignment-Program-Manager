@@ -129,7 +129,7 @@ class NotificationDispatcher:
             return DeliveryResult(
                 success=False,
                 channel=channel_name,
-                message=f"Delivery error: {str(e)}",
+                message="Operation failed",
             )
 
     def _get_channel(self, channel_name: str) -> Any:

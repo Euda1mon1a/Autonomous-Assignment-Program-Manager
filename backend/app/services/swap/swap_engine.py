@@ -160,10 +160,10 @@ class SwapEngine:
 
         except Exception as e:
             await self.db.rollback()
-            logger.exception(f"Failed to create swap request: {e}")
+            logger.exception("Failed to create swap request", exc_info=True)
             return SwapEngineResult(
                 success=False,
-                message=f"Failed to create swap request: {str(e)}",
+                message="Operation failed",
                 error_code="CREATION_FAILED",
             )
 
@@ -210,7 +210,7 @@ class SwapEngine:
                         {
                             "validator": validator.__class__.__name__,
                             "valid": False,
-                            "error": str(e),
+                            "error": "Operation failed",
                         }
                     )
 
@@ -228,10 +228,10 @@ class SwapEngine:
             )
 
         except Exception as e:
-            logger.exception(f"Validation error for swap {swap_id}: {e}")
+            logger.exception(f"Validation error for swap {swap_id}", exc_info=True)
             return SwapEngineResult(
                 success=False,
-                message=f"Validation error: {str(e)}",
+                message="Validation error",
                 error_code="VALIDATION_ERROR",
             )
 
@@ -325,10 +325,10 @@ class SwapEngine:
 
         except Exception as e:
             await self.db.rollback()
-            logger.exception(f"Failed to execute swap {swap_id}: {e}")
+            logger.exception(f"Failed to execute swap {swap_id}", exc_info=True)
             return SwapEngineResult(
                 success=False,
-                message=f"Execution failed: {str(e)}",
+                message="Operation failed",
                 error_code="EXECUTION_FAILED",
             )
 
@@ -397,10 +397,10 @@ class SwapEngine:
 
         except Exception as e:
             await self.db.rollback()
-            logger.exception(f"Failed to rollback swap {swap_id}: {e}")
+            logger.exception(f"Failed to rollback swap {swap_id}", exc_info=True)
             return SwapEngineResult(
                 success=False,
-                message=f"Rollback failed: {str(e)}",
+                message="Operation failed",
                 error_code="ROLLBACK_FAILED",
             )
 
@@ -570,7 +570,9 @@ class SwapEngine:
             try:
                 await notifier.notify_executed(swap)
             except Exception as e:
-                logger.warning(f"Notifier {notifier.__class__.__name__} failed: {e}")
+                logger.warning(
+                    f"Notifier {notifier.__class__.__name__} failed", exc_info=True
+                )
 
     async def _notify_swap_rolled_back(self, swap: SwapRecord) -> None:
         """Send notifications for rolled back swap."""
@@ -578,7 +580,9 @@ class SwapEngine:
             try:
                 await notifier.notify_rolled_back(swap)
             except Exception as e:
-                logger.warning(f"Notifier {notifier.__class__.__name__} failed: {e}")
+                logger.warning(
+                    f"Notifier {notifier.__class__.__name__} failed", exc_info=True
+                )
 
     def register_validator(self, validator: Any) -> None:
         """Register a swap validator."""

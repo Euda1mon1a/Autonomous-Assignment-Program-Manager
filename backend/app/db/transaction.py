@@ -124,10 +124,10 @@ def transactional(
         # Rollback on any exception
         if savepoint:
             savepoint.rollback()
-            logger.warning(f"Rolled back savepoint: {e}")
+            logger.warning("Rolled back savepoint", exc_info=True)
         else:
             session.rollback()
-            logger.warning(f"Rolled back transaction: {e}")
+            logger.warning("Rolled back transaction", exc_info=True)
         raise
 
 

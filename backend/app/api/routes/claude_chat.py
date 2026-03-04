@@ -676,7 +676,7 @@ Be concise but thorough. If there are issues, suggest solutions."""
 
     except Exception as e:
         logger.exception("Claude streaming error")
-        await websocket.send_json({"type": "error", "message": str(e)})
+        await websocket.send_json({"type": "error", "message": "Internal server error"})
 
         # =============================================================================
         # WebSocket Endpoint
@@ -806,7 +806,9 @@ async def claude_chat_websocket(
     except Exception as e:
         logger.exception("WebSocket error")
         try:
-            await websocket.send_json({"type": "error", "message": str(e)})
+            await websocket.send_json(
+                {"type": "error", "message": "Internal server error"}
+            )
         except Exception:
             logger.debug("Failed to send error to WebSocket client (connection closed)")
     finally:

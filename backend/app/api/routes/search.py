@@ -73,7 +73,7 @@ async def search(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception:
         logger.exception("Search failed")
         raise HTTPException(status_code=500, detail="Search failed")
@@ -108,7 +108,7 @@ async def quick_search(
             entity_type=entity_type,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception:
         logger.exception("Quick search failed")
         raise HTTPException(status_code=500, detail="Quick search failed")
@@ -150,7 +150,7 @@ async def search_people(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception:
         logger.exception("People search failed")
         raise HTTPException(status_code=500, detail="People search failed")
@@ -188,7 +188,7 @@ async def search_rotations(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception:
         logger.exception("Rotation search failed")
         raise HTTPException(status_code=500, detail="Rotation search failed")
@@ -225,7 +225,7 @@ async def search_procedures(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception:
         logger.exception("Procedure search failed")
         raise HTTPException(status_code=500, detail="Procedure search failed")
@@ -264,7 +264,7 @@ async def global_search(
             query=results["query"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception:
         logger.exception("Global search failed")
         raise HTTPException(status_code=500, detail="Global search failed")
@@ -296,7 +296,7 @@ async def get_suggestions(
             entity_type=request.entity_type,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception:
         logger.exception("Suggestion request failed (POST)")
         raise HTTPException(status_code=500, detail="Suggestion request failed")
@@ -334,7 +334,7 @@ async def get_suggestions_get(
             entity_type=entity_type,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Invalid request")
     except Exception:
         logger.exception("Suggestion request failed (GET)")
         raise HTTPException(status_code=500, detail="Suggestion request failed")

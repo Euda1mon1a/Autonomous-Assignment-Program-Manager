@@ -124,13 +124,13 @@ class RAGService:
 
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Error ingesting document: {str(e)}", exc_info=True)
+            logger.error("Error ingesting document", exc_info=True)
             return IngestResponse(
                 status="error",
                 chunks_created=0,
                 chunk_ids=[],
                 doc_type=doc_type,
-                message=f"Error: {str(e)}",
+                message="Operation failed",
             )
 
         retry_count = 0
@@ -177,20 +177,20 @@ class RAGService:
                         doc_type,
                         retry_count + 1,
                         self.MAX_TRANSIENT_DB_RETRIES,
-                        str(e),
+                        "Operation failed",
                         delay_seconds,
                     )
                     time.sleep(delay_seconds)
                     retry_count += 1
                     continue
 
-                logger.error(f"Error ingesting document: {str(e)}", exc_info=True)
+                logger.error("Error ingesting document", exc_info=True)
                 return IngestResponse(
                     status="error",
                     chunks_created=0,
                     chunk_ids=[],
                     doc_type=doc_type,
-                    message=f"Error: {str(e)}",
+                    message="Operation failed",
                 )
 
     async def retrieve(
@@ -288,7 +288,7 @@ class RAGService:
             )
 
         except Exception as e:
-            logger.error(f"Error retrieving documents: {str(e)}", exc_info=True)
+            logger.error("Error retrieving documents", exc_info=True)
             raise
 
     async def build_context(
@@ -451,7 +451,7 @@ class RAGService:
             )
 
         except Exception as e:
-            logger.error(f"Error checking RAG health: {str(e)}", exc_info=True)
+            logger.error("Error checking RAG health", exc_info=True)
             return RAGHealthResponse(
                 status="error",
                 total_documents=0,
@@ -459,7 +459,7 @@ class RAGService:
                 embedding_model=self.embedding_service.MODEL_NAME,
                 embedding_dimensions=self.embedding_service.EMBEDDING_DIM,
                 vector_index_status="unknown",
-                recommendations=[f"Error checking health: {str(e)}"],
+                recommendations=["Operation failed"],
             )
 
     def _is_transient_db_error(self, error: Exception) -> bool:
@@ -599,7 +599,7 @@ class RAGService:
             return count
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Error deleting documents: {str(e)}", exc_info=True)
+            logger.error("Error deleting documents", exc_info=True)
             raise
 
     def delete_all_documents(self) -> int:
@@ -616,7 +616,7 @@ class RAGService:
             return deleted_count
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Error deleting all documents: {str(e)}", exc_info=True)
+            logger.error("Error deleting all documents", exc_info=True)
             raise
 
     def delete_by_source_filename(self, filename: str) -> int:
@@ -648,7 +648,7 @@ class RAGService:
         except Exception as e:
             self.db.rollback()
             logger.error(
-                f"Error deleting documents by source filename: {str(e)}",
+                "Error deleting documents by source filename",
                 exc_info=True,
             )
             raise
@@ -674,5 +674,5 @@ class RAGService:
             return False
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Error deleting document: {str(e)}", exc_info=True)
+            logger.error("Error deleting document", exc_info=True)
             raise

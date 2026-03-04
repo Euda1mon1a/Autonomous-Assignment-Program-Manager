@@ -339,9 +339,9 @@ class EmergencyDeploymentService:
             success = slots_remaining == 0 or fallback_activated is not None
 
         except Exception as e:
-            logger.error(f"Emergency repair failed: {e}")
+            logger.error("Emergency repair failed", exc_info=True)
             success = False
-            details.append(f"Repair error: {str(e)}")
+            details.append("Operation failed")
             slots_remaining = assessment.affected_slots
 
         return RepairOutcome(

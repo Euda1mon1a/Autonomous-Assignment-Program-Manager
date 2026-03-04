@@ -513,7 +513,7 @@ class GameTheoryService:
         except Exception as e:
             logger.exception(f"Tournament {tournament_id} failed")
             tournament.status = SimulationStatus.FAILED.value  # type: ignore[assignment]
-            tournament.error_message = str(e)  # type: ignore[assignment]
+            tournament.error_message = "Operation failed"  # type: ignore[assignment]
             self.db.commit()
             raise
 
@@ -682,7 +682,7 @@ class GameTheoryService:
         except Exception as e:
             logger.exception(f"Evolution {evolution_id} failed")
             evolution.status = SimulationStatus.FAILED.value
-            evolution.error_message = str(e)
+            evolution.error_message = "Operation failed"
             self.db.commit()
             raise
 

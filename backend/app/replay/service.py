@@ -451,8 +451,8 @@ class ReplayService:
 
         except Exception as e:
             result.success = False
-            result.error_message = str(e)
-            logger.error(f"Failed to replay request {request_id}: {e}")
+            result.error_message = "Operation failed"
+            logger.error(f"Failed to replay request {request_id}", exc_info=True)
 
             # Store result
         await self.storage.store_result(request_id, result)
@@ -705,8 +705,8 @@ class ReplayService:
 
                 except Exception as e:
                     report.failed += 1
-                    report.errors.append(str(e))
-                    logger.error(f"Error replaying request {req.id}: {e}")
+                    report.errors.append("Operation failed")
+                    logger.error(f"Error replaying request {req.id}", exc_info=True)
                     if stop_on_error:
                         raise
 

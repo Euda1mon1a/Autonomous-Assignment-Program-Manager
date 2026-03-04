@@ -375,11 +375,11 @@ class SecretRotationService:
             )
 
         except Exception as e:
-            logger.error(f"Rotation failed for {secret_type.value}: {e}", exc_info=True)
+            logger.error(f"Rotation failed for {secret_type.value}", exc_info=True)
 
             # Update history
             history.status = RotationStatus.FAILED
-            history.error_message = str(e)
+            history.error_message = "Operation failed"
             history.completed_at = datetime.now(UTC)
             self.db.commit()
 
@@ -405,7 +405,7 @@ class SecretRotationService:
                         priority=RotationPriority.CRITICAL,
                         details={
                             "rotation_id": str(rotation_id),
-                            "error": str(e),
+                            "error": "Operation failed",
                             "rollback_error": str(rollback_error),
                             "action_required": "Manual intervention required immediately",
                         },
@@ -422,7 +422,7 @@ class SecretRotationService:
                 priority=RotationPriority.HIGH,
                 details={
                     "rotation_id": str(rotation_id),
-                    "error": str(e),
+                    "error": "Operation failed",
                     "rolled_back": config.rollback_on_failure,
                 },
             )
@@ -435,7 +435,7 @@ class SecretRotationService:
                 new_secret_hash=history.new_secret_hash,
                 started_at=started_at,
                 completed_at=datetime.now(UTC),
-                error_message=str(e),
+                error_message="Operation failed",
                 rolled_back=config.rollback_on_failure,
             )
 
@@ -712,7 +712,7 @@ class SecretRotationService:
             logger.info(f"Rollback completed for {secret_type.value}")
 
         except Exception as e:
-            logger.error(f"Rollback failed for {secret_type.value}: {e}", exc_info=True)
+            logger.error(f"Rollback failed for {secret_type.value}", exc_info=True)
             raise RuntimeError(f"Rollback failed: {e}") from e
 
     async def _send_rotation_notification(
@@ -748,7 +748,7 @@ class SecretRotationService:
             )
 
         except Exception as e:
-            logger.error(f"Failed to send rotation notification: {e}", exc_info=True)
+            logger.error("Failed to send rotation notification", exc_info=True)
 
     async def _notify_secret_rotation_result(
         self,
@@ -834,7 +834,7 @@ class SecretRotationService:
             #         )
 
         except Exception as e:
-            logger.warning(f"Failed to send rotation notification: {e}", exc_info=True)
+            logger.warning("Failed to send rotation notification", exc_info=True)
 
             # Rotation handlers for each secret type
 
@@ -1073,7 +1073,7 @@ async def rotate_api_keys(
             )
             results.append(result)
         except Exception as e:
-            logger.error(f"Failed to rotate {secret_type.value}: {e}")
+            logger.error(f"Failed to rotate {secret_type.value}", exc_info=True)
 
     return results
 

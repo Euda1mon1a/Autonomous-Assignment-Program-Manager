@@ -365,7 +365,7 @@ class DeadLetterQueue:
             event_id=event.metadata.event_id,
             topic=event.topic,
             event_data=event.to_dict(),
-            error_message=str(error),
+            error_message="Operation failed",
             retry_count=event.metadata.retry_count,
             subscription_id=subscription_id,
         )
@@ -381,7 +381,7 @@ class DeadLetterQueue:
                 # Set TTL on the list (7 days)
                 await self._redis_client.expire(self._dlq_key, 7 * 24 * 3600)
             except Exception as e:
-                logger.error(f"Failed to add to Redis DLQ: {e}")
+                logger.error("Failed to add to Redis DLQ", exc_info=True)
 
         logger.error(
             f"Event {event.metadata.event_id} added to dead letter queue. "
@@ -408,7 +408,7 @@ class DeadLetterQueue:
                     if dle not in events:
                         events.append(dle)
             except Exception as e:
-                logger.error(f"Failed to get from Redis DLQ: {e}")
+                logger.error("Failed to get from Redis DLQ", exc_info=True)
 
         return events
 
@@ -457,7 +457,7 @@ class DeadLetterQueue:
                     if dle.event_id != event_id:
                         await self._redis_client.lpush(self._dlq_key, event_data)
             except Exception as e:
-                logger.error(f"Failed to remove from Redis DLQ: {e}")
+                logger.error("Failed to remove from Redis DLQ", exc_info=True)
 
         return removed
 
@@ -475,7 +475,7 @@ class DeadLetterQueue:
             try:
                 await self._redis_client.delete(self._dlq_key)
             except Exception as e:
-                logger.error(f"Failed to clear Redis DLQ: {e}")
+                logger.error("Failed to clear Redis DLQ", exc_info=True)
 
         logger.info(f"Cleared {count} events from dead letter queue")
         return count
@@ -542,7 +542,9 @@ class EventStore:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to store event {event.metadata.event_id}: {e}")
+            logger.error(
+                f"Failed to store event {event.metadata.event_id}", exc_info=True
+            )
             return False
 
     async def replay(
@@ -599,7 +601,7 @@ class EventStore:
             return events
 
         except Exception as e:
-            logger.error(f"Failed to replay events: {e}")
+            logger.error("Failed to replay events", exc_info=True)
             return []
 
     async def get_event(self, event_id: str) -> Event | None:
@@ -624,7 +626,7 @@ class EventStore:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to get event {event_id}: {e}")
+            logger.error(f"Failed to get event {event_id}", exc_info=True)
             return None
 
             # =============================================================================
@@ -902,7 +904,7 @@ class EventBus:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to publish event: {e}")
+            logger.error("Failed to publish event", exc_info=True)
             return False
 
     async def publish_batch(self, events: list[Event]) -> int:
@@ -1128,7 +1130,7 @@ class EventBus:
             logger.info("Redis initialized for distributed event bus")
 
         except Exception as e:
-            logger.error(f"Failed to initialize Redis: {e}")
+            logger.error("Failed to initialize Redis", exc_info=True)
             raise EventBusException(f"Failed to connect to Redis: {e}")
 
     async def _start_pubsub_listener(self) -> None:
@@ -1157,12 +1159,12 @@ class EventBus:
                         await self._publish_in_memory(event)
 
                     except Exception as e:
-                        logger.error(f"Error processing pub/sub message: {e}")
+                        logger.error("Error processing pub/sub message", exc_info=True)
 
         except asyncio.CancelledError:
             logger.info("Pub/sub listener cancelled")
         except Exception as e:
-            logger.error(f"Pub/sub listener error: {e}")
+            logger.error("Pub/sub listener error", exc_info=True)
 
     async def _publish_in_memory(self, event: Event) -> None:
         """
@@ -1201,7 +1203,7 @@ class EventBus:
             await self._redis_client.publish(channel, message)
 
         except Exception as e:
-            logger.error(f"Failed to publish to Redis: {e}")
+            logger.error("Failed to publish to Redis", exc_info=True)
 
     def _get_matching_subscriptions(self, topic: str) -> list[EventSubscription]:
         """

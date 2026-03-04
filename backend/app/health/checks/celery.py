@@ -92,10 +92,10 @@ class CeleryHealthCheck:
 
         except Exception as e:
             response_time_ms = (time.time() - start_time) * 1000
-            logger.error(f"Celery health check failed: {e}", exc_info=True)
+            logger.error("Celery health check failed", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": str(e),
+                "error": "Operation failed",
                 "response_time_ms": round(response_time_ms, 2),
             }
 
@@ -154,10 +154,10 @@ class CeleryHealthCheck:
             }
 
         except Exception as e:
-            logger.error(f"Celery health check failed: {e}")
+            logger.error("Celery health check failed", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": f"Celery error: {str(e)}",
+                "error": "Operation failed",
             }
 
     def _get_queue_stats(self) -> dict[str, Any]:
@@ -180,7 +180,7 @@ class CeleryHealthCheck:
             return queue_info
 
         except Exception as e:
-            logger.warning(f"Failed to get queue stats: {e}")
+            logger.warning("Failed to get queue stats", exc_info=True)
             return {}
 
     async def check_worker_ping(self) -> dict[str, Any]:
@@ -218,10 +218,10 @@ class CeleryHealthCheck:
             }
 
         except Exception as e:
-            logger.error(f"Celery worker ping failed: {e}")
+            logger.error("Celery worker ping failed", exc_info=True)
             return {
                 "status": "unhealthy",
-                "error": str(e),
+                "error": "Operation failed",
             }
 
     async def check_scheduled_tasks(self) -> dict[str, Any]:
@@ -256,10 +256,10 @@ class CeleryHealthCheck:
             }
 
         except Exception as e:
-            logger.error(f"Scheduled task check failed: {e}")
+            logger.error("Scheduled task check failed", exc_info=True)
             return {
                 "status": "degraded",
-                "error": str(e),
+                "error": "Operation failed",
             }
 
     async def check_queue_health(self) -> dict[str, Any]:
@@ -299,8 +299,8 @@ class CeleryHealthCheck:
             }
 
         except Exception as e:
-            logger.error(f"Queue health check failed: {e}")
+            logger.error("Queue health check failed", exc_info=True)
             return {
                 "status": "degraded",
-                "error": str(e),
+                "error": "Operation failed",
             }

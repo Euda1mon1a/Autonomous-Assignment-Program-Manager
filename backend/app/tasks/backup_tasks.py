@@ -137,7 +137,7 @@ def create_full_backup(
         }
 
     except Exception as e:
-        logger.error(f"Full backup failed: {e}", exc_info=True)
+        logger.error("Full backup failed", exc_info=True)
         # Retry task
         raise self.retry(exc=e)
 
@@ -250,11 +250,11 @@ def create_incremental_backup(
             )
             return create_full_backup.apply().get()
         else:
-            logger.error(f"Incremental backup failed: {e}", exc_info=True)
+            logger.error("Incremental backup failed", exc_info=True)
             raise self.retry(exc=e)
 
     except Exception as e:
-        logger.error(f"Incremental backup failed: {e}", exc_info=True)
+        logger.error("Incremental backup failed", exc_info=True)
         raise self.retry(exc=e)
 
     finally:
@@ -331,7 +331,7 @@ def cleanup_old_backups(
         }
 
     except Exception as e:
-        logger.error(f"Backup cleanup failed: {e}", exc_info=True)
+        logger.error("Backup cleanup failed", exc_info=True)
         raise self.retry(exc=e)
 
 
@@ -395,7 +395,7 @@ def verify_all_backups(
 
             except Exception as e:
                 error_count += 1
-                error_msg = f"Backup {backup_id} ({backup_type}): {str(e)}"
+                error_msg = f"Backup {backup_id} ({backup_type}) failed"
                 errors.append(error_msg)
                 logger.error(error_msg)
 
@@ -414,7 +414,7 @@ def verify_all_backups(
         }
 
     except Exception as e:
-        logger.error(f"Backup verification failed: {e}", exc_info=True)
+        logger.error("Backup verification failed", exc_info=True)
         raise self.retry(exc=e)
 
 
@@ -461,7 +461,7 @@ def generate_backup_report(self) -> dict[str, Any]:
         return stats
 
     except Exception as e:
-        logger.error(f"Backup report generation failed: {e}", exc_info=True)
+        logger.error("Backup report generation failed", exc_info=True)
         raise self.retry(exc=e)
 
 
@@ -513,7 +513,7 @@ def verify_backup_chain(
         return result
 
     except Exception as e:
-        logger.error(f"Backup chain verification failed: {e}", exc_info=True)
+        logger.error("Backup chain verification failed", exc_info=True)
         raise self.retry(exc=e)
 
 

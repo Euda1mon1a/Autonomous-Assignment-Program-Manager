@@ -11,6 +11,7 @@ import redis
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # HEALTH STATUS ENUMS
@@ -173,7 +174,7 @@ async def check_database_health(db: AsyncSession) -> HealthCheckResult:
             name="database",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"Connection error: {str(e)}",
+            error="Operation failed",
         )
     except RuntimeError as e:
         response_time = (time.time() - start_time) * 1000
@@ -182,7 +183,7 @@ async def check_database_health(db: AsyncSession) -> HealthCheckResult:
             name="database",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"Database error: {str(e)}",
+            error="Operation failed",
         )
 
         # ============================================================================
@@ -246,7 +247,7 @@ async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
             name="redis",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"Redis error: {str(e)}",
+            error="Operation failed",
         )
     except (ConnectionError, TimeoutError) as e:
         response_time = (time.time() - start_time) * 1000
@@ -255,7 +256,7 @@ async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
             name="redis",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"Connection error: {str(e)}",
+            error="Operation failed",
         )
 
         # ============================================================================
@@ -319,7 +320,7 @@ async def check_external_service(
             name=f"external_service_{service_name}",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"Network error: {str(e)}",
+            error="Operation failed",
         )
 
         # ============================================================================
@@ -378,7 +379,7 @@ async def check_disk_space(
             name="disk_space",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"File system error: {str(e)}",
+            error="Operation failed",
         )
     except ValueError as e:
         response_time = (time.time() - start_time) * 1000
@@ -387,7 +388,7 @@ async def check_disk_space(
             name="disk_space",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"Invalid path: {str(e)}",
+            error="Operation failed",
         )
 
 
@@ -435,7 +436,7 @@ async def check_memory_usage(max_percent: float = 90.0) -> HealthCheckResult:
             name="memory",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"Memory check error: {str(e)}",
+            error="Operation failed",
         )
     except (OSError, ValueError) as e:
         response_time = (time.time() - start_time) * 1000
@@ -444,7 +445,7 @@ async def check_memory_usage(max_percent: float = 90.0) -> HealthCheckResult:
             name="memory",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"System error: {str(e)}",
+            error="Operation failed",
         )
 
 
@@ -492,7 +493,7 @@ async def check_cpu_usage(max_percent: float = 80.0) -> HealthCheckResult:
             name="cpu",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"CPU check error: {str(e)}",
+            error="Operation failed",
         )
     except (OSError, ValueError) as e:
         response_time = (time.time() - start_time) * 1000
@@ -501,7 +502,7 @@ async def check_cpu_usage(max_percent: float = 80.0) -> HealthCheckResult:
             name="cpu",
             status=HealthStatus.UNHEALTHY,
             response_time_ms=response_time,
-            error=f"System error: {str(e)}",
+            error="Operation failed",
         )
 
         # ============================================================================
@@ -582,13 +583,13 @@ class HealthCheckCoordinator:
                 return await loop.run_in_executor(None, check_func)
 
         except (ValueError, TypeError, RuntimeError) as e:
-            self.logger.error(f"Error running health check {name}: {e}", exc_info=True)
+            self.logger.error(f"Error running health check {name}", exc_info=True)
 
             return HealthCheckResult(
                 name=name,
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=0,
-                error=str(e),
+                error="Operation failed",
             )
 
     def get_status_summary(self, result: OverallHealthResult) -> dict[str, Any]:

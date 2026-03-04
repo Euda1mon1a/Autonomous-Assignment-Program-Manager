@@ -221,7 +221,7 @@ async def train_models(
                 results[model_type] = TrainingResultResponse(
                     model_name=model_type,
                     status="failed",
-                    error=str(e),
+                    error="Operation failed",
                 )
 
         trained_count = sum(1 for r in results.values() if r.status == "trained")
@@ -237,7 +237,7 @@ async def train_models(
         logger.exception("Training failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Training failed: {str(e)}",
+            detail="Training failed",
         )
 
 
@@ -273,7 +273,7 @@ async def train_models_async(
         logger.exception("Failed to start async training task")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to start training task: {str(e)}",
+            detail="Failed to start training task",
         )
 
 
@@ -394,7 +394,7 @@ async def score_schedule(
         logger.exception("Schedule scoring failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Scoring failed: {str(e)}",
+            detail="Scoring failed",
         )
 
 
@@ -472,7 +472,7 @@ async def predict_conflict(
         logger.exception("Conflict prediction failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Prediction failed: {str(e)}",
+            detail="Prediction failed",
         )
 
 
@@ -536,7 +536,7 @@ async def predict_preference(
         logger.exception("Preference prediction failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Prediction failed: {str(e)}",
+            detail="Prediction failed",
         )
 
 
@@ -617,5 +617,5 @@ async def analyze_workload(
         logger.exception("Workload analysis failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Analysis failed: {str(e)}",
+            detail="Analysis failed",
         )

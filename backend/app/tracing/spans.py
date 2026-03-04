@@ -13,6 +13,10 @@ from typing import Any, Callable
 
 from loguru import logger
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 try:
     from opentelemetry import trace
     from opentelemetry.trace import Status, StatusCode
@@ -65,7 +69,7 @@ def trace_function(
                     span.set_status(Status(StatusCode.OK))
                     return result
                 except Exception as e:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
+                    span.set_status(Status(StatusCode.ERROR, "Operation failed"))
                     span.record_exception(e)
                     raise
 
@@ -88,7 +92,7 @@ def trace_function(
                     span.set_status(Status(StatusCode.OK))
                     return result
                 except Exception as e:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
+                    span.set_status(Status(StatusCode.ERROR, "Operation failed"))
                     span.record_exception(e)
                     raise
 
@@ -182,4 +186,4 @@ def record_exception(exception: Exception) -> None:
     span = trace.get_current_span()
     if span:
         span.record_exception(exception)
-        span.set_status(Status(StatusCode.ERROR, str(exception)))
+        span.set_status(Status(StatusCode.ERROR, "Operation failed"))
