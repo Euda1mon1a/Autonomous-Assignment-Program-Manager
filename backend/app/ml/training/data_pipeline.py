@@ -443,7 +443,7 @@ class TrainingDataPipeline:
         historical_data: dict[str, Any],
     ) -> dict[str, Any]:
         """Build features for workload optimization."""
-        features = {}
+        features: dict[str, Any] = {}
 
         # Person characteristics
         features["is_faculty"] = 1 if person_data.get("type") == "faculty" else 0
@@ -528,7 +528,7 @@ class TrainingDataPipeline:
         context_data: dict[str, Any],
     ) -> dict[str, Any]:
         """Build features for conflict prediction (simplified)."""
-        features = {}
+        features: dict[str, Any] = {}
 
         # Person characteristics
         features["is_faculty"] = 1 if person_data.get("type") == "faculty" else 0

@@ -1001,11 +1001,15 @@ class WorkloadSignalProcessor:
         var_detrended = np.var(ts.values - trend)
         var_deseasoned = np.var(ts.values - seasonal_component)
 
-        trend_strength = (
-            max(0, 1 - var_residual / var_deseasoned) if var_deseasoned > 0 else 0
+        trend_strength: float = (
+            max(0.0, float(1 - var_residual / var_deseasoned))
+            if var_deseasoned > 0
+            else 0.0
         )
-        seasonal_strength = (
-            max(0, 1 - var_residual / var_detrended) if var_detrended > 0 else 0
+        seasonal_strength: float = (
+            max(0.0, float(1 - var_residual / var_detrended))
+            if var_detrended > 0
+            else 0.0
         )
 
         return {
@@ -1602,7 +1606,7 @@ class WorkloadSignalProcessor:
 
                         # Estimate confidence based on effect size
                     effect_size = mean_change / ((pre_std + post_std) / 2 + 1e-10)
-                    confidence = min(1.0, effect_size / 3.0)
+                    confidence = min(1.0, float(effect_size / 3.0))
 
                     change_points.append(
                         {
@@ -1771,8 +1775,8 @@ class WorkloadSignalProcessor:
 
         logger.info(
             f"Change point analysis completed: "
-            f"CUSUM={len(results.get('cusum', {}).get('change_points', []))}, "
-            f"PELT={len(results.get('pelt', {}).get('change_points', []))}"
+            f"CUSUM={len(results['cusum']['change_points']) if 'cusum' in results else 0}, "
+            f"PELT={len(results['pelt']['change_points']) if 'pelt' in results else 0}"
         )
 
         return results
@@ -1804,12 +1808,12 @@ class WorkloadSignalProcessor:
         for i in range(len(breakpoints) - 1):
             segment = series[breakpoints[i] : breakpoints[i + 1]]
             if len(segment) > 1:
-                segment_var += np.var(segment) * len(segment)
+                segment_var += float(np.var(segment)) * len(segment)
 
         segment_var /= len(series)
 
         # Variance reduction
-        quality = 1.0 - (segment_var / total_var)
+        quality = 1.0 - (segment_var / float(total_var))
         return float(max(0.0, min(1.0, quality)))
 
         # =========================================================================
@@ -2037,42 +2041,44 @@ class WorkloadSignalProcessor:
         }
 
         # Add filtered version if available
-        if result.get("adaptive_filtered"):
-            time_domain["filtered"] = result["adaptive_filtered"]["filtered_values"]
+        adaptive = result.get("adaptive_filtered")
+        if adaptive:
+            time_domain["filtered"] = adaptive["filtered_values"]
 
             # Frequency domain data
-        frequency_domain = {}
-        if result.get("fft_analysis"):
-            fft = result["fft_analysis"]
+        frequency_domain: dict[str, object] = {}
+        fft_data = result.get("fft_analysis")
+        if fft_data:
             frequency_domain = {
-                "frequencies": fft["frequencies"],
-                "magnitudes": fft["magnitudes"],
-                "phases": fft["phases"],
-                "dominant_peaks": fft["dominant_frequencies"],
+                "frequencies": fft_data["frequencies"],
+                "magnitudes": fft_data["magnitudes"],
+                "phases": fft_data["phases"],
+                "dominant_peaks": fft_data["dominant_frequencies"],
             }
 
             # Wavelet domain data
-        wavelet_domain = {}
-        if result.get("cwt_analysis"):
-            cwt = result["cwt_analysis"]
+        wavelet_domain: dict[str, object] = {}
+        cwt_data = result.get("cwt_analysis")
+        if cwt_data:
             wavelet_domain["cwt"] = {
-                "coefficients": cwt["coefficients"],
-                "scales": cwt["scales"],
-                "frequencies": cwt["frequencies"],
-                "power": cwt["power"],
+                "coefficients": cwt_data["coefficients"],
+                "scales": cwt_data["scales"],
+                "frequencies": cwt_data["frequencies"],
+                "power": cwt_data["power"],
             }
-        if result.get("wavelet_analysis"):
-            dwt = result["wavelet_analysis"]
+        dwt_data = result.get("wavelet_analysis")
+        if dwt_data:
             wavelet_domain["dwt"] = {
-                "approximation": dwt["approximation"],
-                "details": dwt["details"],
-                "frequency_bands": dwt["frequency_bands"],
+                "approximation": dwt_data["approximation"],
+                "details": dwt_data["details"],
+                "frequency_bands": dwt_data["frequency_bands"],
             }
 
             # Anomalies
         anomalies = []
-        if result.get("sta_lta_analysis"):
-            for a in result["sta_lta_analysis"].get("anomalies", []):
+        sta_lta = result.get("sta_lta_analysis")
+        if sta_lta:
+            for a in sta_lta.get("anomalies", []):
                 anomalies.append(
                     {
                         "type": a["type"],
@@ -2098,8 +2104,9 @@ class WorkloadSignalProcessor:
             )
 
             # Add change points
-        if result.get("changepoint_analysis"):
-            for method_name, method_result in result["changepoint_analysis"].items():
+        cp_analysis = result.get("changepoint_analysis")
+        if cp_analysis:
+            for method_name, method_result in cp_analysis.items():
                 for cp in method_result.get("change_points", []):
                     anomalies.append(
                         {
@@ -2121,16 +2128,16 @@ class WorkloadSignalProcessor:
         }
 
         # Add spectral decomposition if available
-        if result.get("spectral_decomposition"):
-            spectral = result["spectral_decomposition"]
+        spectral = result.get("spectral_decomposition")
+        if spectral:
             time_domain["trend"] = spectral["trend"]
             time_domain["seasonal"] = spectral["seasonal"]
             time_domain["residual"] = spectral["residual"]
             metadata["spectral_statistics"] = spectral["statistics"]
 
             # Add harmonic analysis if available
-        if result.get("harmonic_analysis"):
-            harmonic = result["harmonic_analysis"]
+        harmonic = result.get("harmonic_analysis")
+        if harmonic:
             frequency_domain["harmonics"] = harmonic.get("harmonics", [])
             frequency_domain["resonances"] = harmonic.get("resonances", [])
             metadata["harmonic_distortion"] = harmonic.get(

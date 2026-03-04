@@ -918,7 +918,7 @@ class WorkflowEngine:
         return self._eval_ast_node(parsed.body, context)
 
     def _eval_ast_node(self, node: ast.AST, context: dict[str, Any]) -> Any:
-        allowed_functions = {
+        allowed_functions: dict[str, Callable[..., Any]] = {
             "len": len,
             "any": any,
             "all": all,
@@ -957,10 +957,16 @@ class WorkflowEngine:
             return tuple(self._eval_ast_node(elt, context) for elt in node.elts)
 
         if isinstance(node, ast.Dict):
-            return {
-                self._eval_ast_node(k, context): self._eval_ast_node(v, context)
-                for k, v in zip(node.keys, node.values)
-            }
+            result: dict[object, object] = {}
+            for k, v in zip(node.keys, node.values):
+                if k is None:
+                    raise ConditionEvaluationError(
+                        "Dict unpacking (**) is not supported in conditions"
+                    )
+                result[self._eval_ast_node(k, context)] = self._eval_ast_node(
+                    v, context
+                )
+            return result
 
         if isinstance(node, ast.UnaryOp):
             operand = self._eval_ast_node(node.operand, context)
@@ -1065,7 +1071,7 @@ class WorkflowEngine:
             step = self._eval_ast_node(node.step, context) if node.step else None
             return slice(lower, upper, step)
         if isinstance(node, ast.Index):  # pragma: no cover - py<3.9 compatibility
-            return self._eval_ast_node(node.value, context)
+            return self._eval_ast_node(node.value, context)  # type: ignore[attr-defined]  # ast.Index removed in 3.9
         return self._eval_ast_node(node, context)
 
     def _prepare_step_input(

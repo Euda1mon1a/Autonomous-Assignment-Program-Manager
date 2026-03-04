@@ -22,7 +22,7 @@ class FacultyReport:
         self.report_builder = ReportBuilder()
 
     async def generate(
-        self, start_date: date, end_date: date, faculty_id: str = None
+        self, start_date: date, end_date: date, faculty_id: str | None = None
     ) -> dict[str, Any]:
         """Generate faculty workload report."""
         workload = await self.aggregator.get_workload_distribution(

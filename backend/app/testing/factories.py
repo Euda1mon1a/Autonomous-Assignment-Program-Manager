@@ -27,7 +27,7 @@ class MockResponseFactory:
     def success(
         data: Any = None,
         status_code: int = 200,
-        headers: dict[str, str] = None,
+        headers: dict[str, str] | None = None,
     ) -> MockResponse:
         """
         Create a successful response.
@@ -51,7 +51,7 @@ class MockResponseFactory:
         message: str = "An error occurred",
         status_code: int = 400,
         error_type: str = "ValidationError",
-        details: dict[str, Any] = None,
+        details: dict[str, Any] | None = None,
     ) -> MockResponse:
         """
         Create an error response.
@@ -65,7 +65,7 @@ class MockResponseFactory:
         Returns:
             MockResponse with error status
         """
-        body = {
+        body: dict[str, Any] = {
             "detail": message,
             "type": error_type,
         }
@@ -80,7 +80,7 @@ class MockResponseFactory:
     @staticmethod
     def paginated(
         items: list[Any],
-        total: int = None,
+        total: int | None = None,
         page: int = 1,
         page_size: int = 20,
         item_key: str = "items",
@@ -114,8 +114,8 @@ class MockResponseFactory:
     @staticmethod
     def created(
         resource: dict[str, Any],
-        resource_id: str = None,
-        location: str = None,
+        resource_id: str | None = None,
+        location: str | None = None,
     ) -> MockResponse:
         """
         Create a 201 Created response.
@@ -142,7 +142,7 @@ class MockResponseFactory:
 
     @staticmethod
     def accepted(
-        job_id: str = None,
+        job_id: str | None = None,
         message: str = "Request accepted",
     ) -> MockResponse:
         """
@@ -182,7 +182,7 @@ class MockResponseFactory:
     @staticmethod
     def not_found(
         resource_type: str = "Resource",
-        resource_id: str = None,
+        resource_id: str | None = None,
     ) -> MockResponse:
         """
         Create a 404 Not Found response.
@@ -207,7 +207,7 @@ class MockResponseFactory:
     def validation_error(
         field: str,
         message: str,
-        additional_errors: list[dict[str, str]] = None,
+        additional_errors: list[dict[str, str]] | None = None,
     ) -> MockResponse:
         """
         Create a validation error response.
@@ -236,7 +236,7 @@ class MockResponseFactory:
 def create_mock_response(
     status_code: int = 200,
     body: Any = None,
-    headers: dict[str, str] = None,
+    headers: dict[str, str] | None = None,
     delay_ms: int = 0,
 ) -> MockResponse:
     """
@@ -287,7 +287,7 @@ def create_error_response(
 
 def create_paginated_response(
     items: list[Any],
-    total: int = None,
+    total: int | None = None,
     page: int = 1,
     page_size: int = 20,
 ) -> MockResponse:
@@ -312,7 +312,7 @@ def create_paginated_response(
 
 
 def create_person_response(
-    person_id: str = None,
+    person_id: str | None = None,
     name: str = "Dr. Test Person",
     person_type: str = "resident",
     pgy_level: int = 2,
@@ -331,7 +331,7 @@ def create_person_response(
     """
     person_id = person_id or str(uuid4())
 
-    person = {
+    person: dict[str, Any] = {
         "id": person_id,
         "name": name,
         "type": person_type,
@@ -348,10 +348,10 @@ def create_person_response(
 
 
 def create_assignment_response(
-    assignment_id: str = None,
-    person_id: str = None,
-    block_id: str = None,
-    rotation_template_id: str = None,
+    assignment_id: str | None = None,
+    person_id: str | None = None,
+    block_id: str | None = None,
+    rotation_template_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Create an assignment resource response.
@@ -375,8 +375,8 @@ def create_assignment_response(
 
 
 def create_block_response(
-    block_id: str = None,
-    block_date: date = None,
+    block_id: str | None = None,
+    block_date: date | None = None,
     time_of_day: str = "AM",
 ) -> dict[str, Any]:
     """
@@ -404,7 +404,7 @@ def create_block_response(
 
 def create_acgme_validation_response(
     is_compliant: bool = True,
-    violations: list[dict[str, Any]] = None,
+    violations: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """
     Create ACGME validation response.
@@ -430,7 +430,7 @@ def create_acgme_validation_response(
 
 
 def create_swap_request_response(
-    swap_id: str = None,
+    swap_id: str | None = None,
     status: str = "pending",
     swap_type: str = "one_to_one",
 ) -> dict[str, Any]:
@@ -456,7 +456,7 @@ def create_swap_request_response(
 
 
 def create_schedule_generation_response(
-    job_id: str = None,
+    job_id: str | None = None,
     status: str = "pending",
 ) -> dict[str, Any]:
     """
