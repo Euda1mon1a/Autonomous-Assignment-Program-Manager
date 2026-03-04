@@ -368,7 +368,7 @@ The architecture demonstrates mature engineering practices with strong security,
 
 - `HUMAN_TODO.md` - Human action items
 - `docs/planning/TECHNICAL_DEBT.md` - Tracked issues
-- `docs/sessions/SESSION_020_HANDOFF.md` - Latest session notes
+- `docs/archived/sessions/SESSION_020_HANDOFF.md` - Latest session notes
 - `CHANGELOG.md` - Release history
 
 ---

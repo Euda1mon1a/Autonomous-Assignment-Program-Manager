@@ -243,7 +243,7 @@ For detailed architectural decision records with implementation examples and cod
 
 **Status:** ✅ Adopted
 
-**Reference:** `docs/constraints/SLOT_TYPE_INVARIANTS.md`
+**Reference:** `docs/architecture/SLOT_TYPE_INVARIANTS.md`
 
 ---
 

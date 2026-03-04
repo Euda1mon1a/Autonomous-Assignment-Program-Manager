@@ -275,7 +275,7 @@ WHERE source = 'preload'
 If MCP results differ from direct Docker runs:
 - **Use Docker as the source of truth** for critical CP‑SAT regeneration runs.
 - Update MCP/API tooling **after** Docker behavior is confirmed stable.
-- Log the discrepancy and link to the relevant report (e.g., `docs/reports/cpsat-call-preload-and-schema-drift-20260205.md`).
+- Log the discrepancy and link to the relevant report (e.g., `docs/archived/reports/cpsat-call-preload-and-schema-drift-20260205.md`).
 
 ### Long-Running Operations
 

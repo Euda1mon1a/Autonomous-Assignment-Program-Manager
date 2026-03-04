@@ -829,7 +829,7 @@ frontend/playwright.config.ci.ts
 ### Architecture Docs
 ```
 docs/architecture/excel-stateful-roundtrip-roadmap.md      ← Phase 1-4 + Track A/C roadmap
-docs/roadmaps/E2E_GUI_TESTING_ROADMAP.md                   ← E2E testing roadmap (Phases 0-5)
+docs/planning/E2E_GUI_TESTING_ROADMAP.md                   ← E2E testing roadmap (Phases 0-5)
 docs/prompts/E2E_GUI_TESTING_REFINEMENT.md                 ← Prior Gemini prompt (E2E testing)
 ```
 

@@ -620,7 +620,7 @@ db.close()
 
 ### Cross-reference with Block 12 Analysis
 
-Compare solver output against `docs/analysis/BLOCK_12_ANALYSIS.md`:
+Compare solver output against `docs/architecture/BLOCK_12_ANALYSIS.md`:
 - 16 residents should match the rotation matrix (Section 2)
 - 8 absences should produce leave HDAs (Section 4)
 - FMIT coverage: 3 residents (full, wk 1-2, NF+FMIT) (Section 6)
@@ -1006,7 +1006,7 @@ If `training` is needed as a distinct type in the future, requires Alembic migra
 | `backend/app/services/preload/constants.py` | NF_COMBINED_ACTIVITY_MAP, ROTATION_ALIASES |
 | `backend/app/models/half_day_assignment.py` | HDA model, source field enum |
 | `backend/app/services/half_day_json_exporter.py` | What the export queries from HDAs |
-| `docs/analysis/BLOCK_12_ANALYSIS.md` | Roster, rotation matrix, coverage expectations |
+| `docs/architecture/BLOCK_12_ANALYSIS.md` | Roster, rotation matrix, coverage expectations |
 | `docs/architecture/excel-stateful-roundtrip-roadmap.md` | Phase 1–4 architecture context |
 
 ---

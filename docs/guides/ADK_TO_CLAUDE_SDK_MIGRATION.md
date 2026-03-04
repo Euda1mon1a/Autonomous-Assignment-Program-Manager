@@ -1423,7 +1423,7 @@ async with httpx.AsyncClient() as client:
 
 ### Internal Docs
 - `/.antigravity/ROADMAP_SDK_ORCHESTRATION.md` - Full orchestration roadmap
-- `/docs/sessions/SESSION_13_PROTOCOL.md` - Signal Transduction protocol
+- `/docs/archived/sessions/SESSION_13_PROTOCOL.md` - Signal Transduction protocol
 - `/docs/guides/AI_AGENT_USER_GUIDE.md` - Existing agent patterns
 - `/docs/development/AGENT_SKILLS.md` - Skill reference
 

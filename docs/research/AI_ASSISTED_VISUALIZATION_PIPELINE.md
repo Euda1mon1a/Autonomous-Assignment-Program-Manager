@@ -203,7 +203,7 @@ Human reviews output → identifies gaps → returns to appropriate AI:
 | ResilienceOverseerDashboard | Component | `frontend/src/components/scheduling/ResilienceOverseerDashboard.tsx` |
 | Foam Topology Admin Page | Route | `frontend/src/app/admin/foam-topology/page.tsx` |
 | Resilience Overseer Admin Page | Route | `frontend/src/app/admin/resilience-overseer/page.tsx` |
-| Design Document | Doc | `docs/exotic/FOAM_TOPOLOGY_SCHEDULER.md` |
+| Design Document | Doc | `docs/architecture/FOAM_TOPOLOGY_SCHEDULER.md` |
 | Philosophy Document | Doc | `docs/research/FOAM_TOPOLOGY_AND_DIMENSIONAL_DATA_REPRESENTATION.md` |
 | This Pipeline Document | Doc | `docs/research/AI_ASSISTED_VISUALIZATION_PIPELINE.md` |
 

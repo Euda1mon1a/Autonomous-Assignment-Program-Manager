@@ -1041,7 +1041,7 @@ Integration Management (Internal):
 - Features tested: call-roster (123 tests), daily-manifest (131 tests), heatmap (144 tests), my-dashboard (229 tests), templates (400+ tests)
 - Component tests: 22 new test files for modals, schedule, and calendar components
 - E2E tests: 3 new Playwright specs with Page Object Models (resilience, templates, heatmap)
-- See `docs/sessions/SESSION_13_FRONTEND_TEST_COVERAGE.md` for details
+- See `docs/archived/sessions/SESSION_13_FRONTEND_TEST_COVERAGE.md` for details
 
 **Consolidate documentation:**
 - Current state: Documentation scattered across `docs/`, `wiki/`, inline JSDoc, OpenAPI specs

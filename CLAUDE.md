@@ -625,7 +625,8 @@ YYYYMMDD_short_description
 
 ### Documentation
 
-**Humans:** `docs/` (user-guide, admin-manual, architecture, api)
+**Start here:** `docs/DOC_MAP.md` — Master navigation for all docs
+**Humans:** `docs/admin-manual/`, `docs/user-guide/`
 **AI Agents:** `.claude/dontreadme/INDEX.md` (start here)
 
 ### Key References

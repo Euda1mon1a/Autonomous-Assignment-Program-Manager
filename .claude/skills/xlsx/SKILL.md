@@ -483,5 +483,5 @@ Before finalizing any Excel export:
 ## References
 
 - [openpyxl Documentation](https://openpyxl.readthedocs.io/)
-- [pandas Excel Support](https://pandas.pydata.org/docs/reference/api/pandas.read_excel.html)
+- [pandas Excel Support](https://pandas.pydata.org/docs/scheduling/api/pandas.read_excel.html)
 - Project exports: `backend/app/services/exports/`

@@ -131,13 +131,17 @@ docs/archived/reports/block10-postmortem-*.md
 docs/archived/reports/cpsat-call-preload-and-schema-drift-*.md
 
 # Other PII-containing local docs
-docs/archived/reports/GUI_WIRING_GAPS.md
 docs/archived/reports/SKIPPED_TESTS_INVENTORY.csv
 
 # Archived analysis reports, automation output, and schedule data (PII/OPSEC)
 docs/archived/reports/analysis/
 docs/archived/automation/
 docs/archived/data/
+# Allow sanitized copies back in
+!docs/archived/data/BLOCK_12_ANALYSIS.md
+!docs/archived/data/block12_after.txt
+!docs/archived/data/block12_before.txt
+!docs/archived/reports/GUI_WIRING_GAPS.md
 
 docs/domain/TAMC_SCHEDULING_CONTEXT.md
 
@@ -258,6 +262,13 @@ frontend/src/types/api-generated-check.ts
 
 # Session scratchpads with PII (real resident names - local only)
 docs/scratchpad/session-132-rotation-template-import.md
+docs/scratchpad/block10-pre-regeneration-snapshot.md
+docs/scratchpad/session-143-faculty-clinic-cv-backfill.md
+docs/scratchpad/session-cpsat-phase2-20260128.md
+
+# PII-containing planning/report docs (sanitized copies in docs/archived/)
+docs/planning/PII_HISTORY_PURGE_PLAN.md
+docs/reports/GUI_WIRING_GAPS.md
 
 # Schedule-vision ML research (large data, training artifacts)
 scripts/schedule-vision/data/
@@ -339,3 +350,4 @@ docs/planning/ml_context_dump/e2e_results_summary.json
 # Test result artifacts (ephemeral)
 frontend/test-results/
 frontend/e2e/test-results/
+docs/data-local/

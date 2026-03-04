@@ -73,5 +73,5 @@ The following documentation files have been annotated to clarify that these feat
 
 ## Related
 
-- `docs/tasks/GEMINI_DOC_ARCHIVAL_TASK.md` — 77-file archival sweep (completed PR #1146)
+- `docs/archived/tasks/GEMINI_DOC_ARCHIVAL_TASK.md` — 77-file archival sweep (completed PR #1146)
 - `CLAUDE.md` → "Files and Patterns to Never Modify" (model changes require migration)

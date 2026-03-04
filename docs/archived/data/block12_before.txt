@@ -1,0 +1,26 @@
+Block 12 Null-Activity Before-State (2026-02-24 09:07 HST)
+==========================================================
+
+Total null-activity half-day assignments: 277
+All 277 have source='solver'
+
+Per-resident breakdown:
+        name         | null_count
+---------------------+------------
+ Resident R08        |         48   (Cat 2: NF + Cardiology)
+ Resident R02       |         48   (Cat 2: NF + FMIT Intern)
+ Resident R11          |         48   (Cat 2: NF + Dermatology)
+ Resident R14 |         36   (Cat 1: Peds EM off-site)
+ Resident R03        |         35   (Cat 3: MSK Selective)
+ Resident R16             |         35   (Cat 1: Japan Off-Site)
+ Resident R07        |         27   (Cat 3: FM Clinic)
+
+Category totals:
+  Cat 1 (off-site):        71  (Resident R16 + Resident R14)
+  Cat 2 (NF combined):   144  (Resident R08 + Resident R02 + Resident R11)
+  Cat 3 (clinic/selective): 62  (Resident R03 + Resident R07)
+
+DB backup: backups/20260224_090709_pre-blk12-rerun/
+  db.dump: 3.3 MB (custom format)
+  db.sql: 24.2 MB (plain text)
+  Row counts: 17,557 half_day_assignments, 116 activities

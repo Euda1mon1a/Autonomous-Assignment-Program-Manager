@@ -454,7 +454,7 @@ sequenceDiagram
 
 ## N8N_WORKFLOW_SUMMARY
 
-**Source:** `docs/data/N8N_WORKFLOW_SUMMARY.md`
+**Source:** `docs/archived/data/N8N_WORKFLOW_SUMMARY.md`
 **Diagrams:** 1
 
 
@@ -741,7 +741,7 @@ graph TD
 
 ## MCP_META_TOOLS_SPEC
 
-**Source:** `docs/specs/MCP_META_TOOLS_SPEC.md`
+**Source:** `docs/architecture/MCP_META_TOOLS_SPEC.md`
 **Diagrams:** 2
 
 

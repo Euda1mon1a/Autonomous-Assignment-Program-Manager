@@ -19,7 +19,7 @@
 ## PENDING REVIEW
 
 ### PAI² Governance Revision Proposal
-**File:** [`docs/proposals/PAI2_GOVERNANCE_REVISION_PROPOSAL.md`](proposals/PAI2_GOVERNANCE_REVISION_PROPOSAL.md)
+**File:** [`docs/planning/PAI2_GOVERNANCE_REVISION_PROPOSAL.md`](proposals/PAI2_GOVERNANCE_REVISION_PROPOSAL.md)
 **Date:** 2026-01-18
 **Source:** PLAN_PARTY (10 probes) analysis of HUMAN_REPORT
 
@@ -146,7 +146,7 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 
 ### 3.1. CP-SAT Infeasible With 98% Preassigned (NEW - Feb 2026)
 **Status:** Fix implemented — verification pending
-**Report:** [`docs/reports/cpsat-call-preload-and-schema-drift-20260205.md`](reports/cpsat-call-preload-and-schema-drift-20260205.md)
+**Report:** [`docs/archived/reports/cpsat-call-preload-and-schema-drift-20260205.md`](reports/cpsat-call-preload-and-schema-drift-20260205.md)
 
 **Symptom:** CP-SAT returns **INFEASIBLE** for 2026-03-12 → 2026-04-08.
 
@@ -217,7 +217,7 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 - 15-min coordinator checklist for expected vs actual alignment
 
 **References:**
-- `docs/reports/block10-cpsat-run-20260127.md`
+- `docs/archived/reports/block10-cpsat-run-20260127.md`
 - `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`
 - `docs/guides/SCHEDULE_ALIGNMENT_QUESTIONNAIRE.md` (NEW - verification checklist)
 
@@ -225,7 +225,7 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 1. Review **activity min shortfall** (1 total) and decide if acceptable.
 2. Address **post-call PCAT/DO** gap (Step 4 in `cpsat-open-questions`).
 3. Address **1-in-7/rest-period** warnings (time-off templates not in solver context).
-4. Continue policy decisions in `docs/reports/cpsat-open-questions-20260127.md`.
+4. Continue policy decisions in `docs/archived/reports/cpsat-open-questions-20260127.md`.
 
 ### 5. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:
@@ -238,7 +238,7 @@ Call duty and performance profiling have edge cases:
 
 ### 6. Faculty Scheduling Pipeline Gaps
 
-**Doc:** [`docs/reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md`](reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md)
+**Doc:** [`docs/archived/reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md`](reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md)
 
 Status update:
 - ✅ Canonical faculty schedule table = `half_day_assignments`
@@ -265,9 +265,9 @@ Remaining faculty-specific gaps:
 - Break-glass requires reason + Coordinator/Admin approval + full re-validation.
 
 **Docs:**
-- `docs/specs/LOCK_WINDOW_BREAK_GLASS_SPEC.md`
-- `docs/roadmaps/LOCK_WINDOW_BREAK_GLASS_ROADMAP.md`
-- `docs/resilience/LOCK_WINDOW_BREAK_GLASS_POLICY.md`
+- `docs/architecture/LOCK_WINDOW_BREAK_GLASS_SPEC.md`
+- `docs/planning/LOCK_WINDOW_BREAK_GLASS_ROADMAP.md`
+- `docs/architecture/LOCK_WINDOW_BREAK_GLASS_POLICY.md`
 
 **Immediate Action:**
 1. Phase 3: Resilience workflows (stage + gated publish)
@@ -455,7 +455,7 @@ Integrate Kimi K2.5 Agent Swarm as a managed execution asset for parallel bulk w
 
 ### 17. Local-First Runtime Refactor (Mac mini) (NEW - Feb 2026)
 **Status:** Proposed
-**Roadmap:** [`docs/roadmaps/LOCAL_FIRST_REFACTOR_ROADMAP.md`](roadmaps/LOCAL_FIRST_REFACTOR_ROADMAP.md)
+**Roadmap:** [`docs/planning/LOCAL_FIRST_REFACTOR_ROADMAP.md`](roadmaps/LOCAL_FIRST_REFACTOR_ROADMAP.md)
 
 Mac mini is now the primary execution environment. Runtime defaults should be
 local-first, with Docker/Render paths treated as optional compatibility only.
@@ -699,7 +699,7 @@ Database Inspector now supports multiple data types but Activities view has upst
 
 ### 25. Activity Solver Physical Capacity Overflow (NEW - Session 142)
 **Added:** 2026-01-26
-**Source:** Block 10 regen report (`docs/reports/block10-cpsat-run-20260126.md`)
+**Source:** Block 10 regen report (`docs/archived/reports/block10-cpsat-run-20260126.md`)
 
 Activity solver now skips physical-capacity constraints for most slots because
 minimum clinic demand exceeds the hard cap of 6 (e.g., 15–16 required).
@@ -717,7 +717,7 @@ minimum clinic demand exceeds the hard cap of 6 (e.g., 15–16 required).
 
 ### 26. Supervision Activity Metadata Validation (NEW - Session 142)
 **Added:** 2026-01-26
-**Source:** Block 10 regen report (`docs/reports/block10-cpsat-run-20260126.md`)
+**Source:** Block 10 regen report (`docs/archived/reports/block10-cpsat-run-20260126.md`)
 
 AT coverage now uses `Activity.requires_supervision` + `Activity.provides_supervision`
 instead of narrow code lists. If these flags are incorrect or incomplete, AT
@@ -901,7 +901,7 @@ Office.js add-in that reads the veryHidden metadata sheets (`__SYS_META__`, `__R
 
 ### 34. E2E GUI Testing Refinement (NEW - Feb 2026)
 **Added:** 2026-02-25
-**Roadmap:** [`docs/roadmaps/E2E_GUI_TESTING_ROADMAP.md`](../roadmaps/E2E_GUI_TESTING_ROADMAP.md)
+**Roadmap:** [`docs/planning/E2E_GUI_TESTING_ROADMAP.md`](../roadmaps/E2E_GUI_TESTING_ROADMAP.md)
 **Prompt:** [`docs/prompts/E2E_GUI_TESTING_REFINEMENT.md`](../prompts/E2E_GUI_TESTING_REFINEMENT.md)
 **Source:** Gemini Pro 3.1 extended-thinking analysis + Claude synthesis
 
@@ -987,7 +987,7 @@ Excel-like grid editor for schedule verification.
 | Keyboard nav | ~3-4 days implementation |
 
 ### 20. Experimental Analytics Platform (PR #752)
-**Roadmap:** [`docs/roadmaps/EXPERIMENTAL_ANALYTICS_ROADMAP.md`](roadmaps/EXPERIMENTAL_ANALYTICS_ROADMAP.md)
+**Roadmap:** [`docs/planning/EXPERIMENTAL_ANALYTICS_ROADMAP.md`](roadmaps/EXPERIMENTAL_ANALYTICS_ROADMAP.md)
 
 | Phase | Focus |
 |-------|-------|
@@ -1003,7 +1003,7 @@ Excel-like grid editor for schedule verification.
 - React/Next.js performance patterns
 
 ### 22. String Theory Scheduling (PR #737)
-**Design:** [`docs/exotic/STRING_THEORY_SCHEDULING.md`](exotic/STRING_THEORY_SCHEDULING.md)
+**Design:** [`docs/architecture/STRING_THEORY_SCHEDULING.md`](exotic/STRING_THEORY_SCHEDULING.md)
 - Minimal surface optimization for scheduling
 - Research/exploration priority
 
@@ -1021,7 +1021,7 @@ Excel-like grid editor for schedule verification.
 - Genetic algorithm scheduling with cooperative fitness
 
 ### 26. Foam Topology Scheduler (PR #730)
-**Document:** [`docs/exotic/FOAM_TOPOLOGY_SCHEDULER.md`](exotic/FOAM_TOPOLOGY_SCHEDULER.md)
+**Document:** [`docs/architecture/FOAM_TOPOLOGY_SCHEDULER.md`](exotic/FOAM_TOPOLOGY_SCHEDULER.md)
 - Foam dynamics for perpetual soft reorganization
 
 ### 27. Jupyter IDE Integration for Empirical Evaluation

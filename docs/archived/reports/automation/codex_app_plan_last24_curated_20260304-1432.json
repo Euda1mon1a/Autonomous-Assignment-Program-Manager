@@ -1,0 +1,241 @@
+{
+  "generated_from": "docs/reports/automation/codex_app_plan_20260304-0428.json",
+  "generated_at": "2026-03-04T04:28:15.560495",
+  "scope": "last_24h_focus_curated",
+  "entries": [
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/40da/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 2,
+      "signal": 1,
+      "noise": 1,
+      "buckets": {
+        "frontend": 1,
+        "rontend": 1
+      },
+      "status": [
+        "M frontend/src/types/.api-generated.hash",
+        " M frontend/src/types/api-generated.ts"
+      ],
+      "paths": [
+        "rontend/src/types/.api-generated.hash",
+        "frontend/src/types/api-generated.ts"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)",
+      "action": "ignore",
+      "triage_note": "CHAFF: generated type/hash churn without paired contract change"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/d8ee/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 1,
+      "signal": 1,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1
+      },
+      "status": [
+        "M backend/tests/test_rate_limiting.py"
+      ],
+      "paths": [
+        "ackend/tests/test_rate_limiting.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)",
+      "action": "cherry-pick",
+      "triage_note": "WHEAT: deterministic rate limit sliding-window test"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/4183/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 6,
+      "signal": 6,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 5
+      },
+      "status": [
+        "M backend/app/db/replicas/balancer.py",
+        " M backend/app/db/sql_identifiers.py",
+        " M backend/app/middleware/deduplication/storage.py",
+        " M backend/app/monitoring/health_checks.py",
+        " M backend/app/monitoring/logging_config.py",
+        " M backend/app/profiling/profiler.py"
+      ],
+      "paths": [
+        "ackend/app/db/replicas/balancer.py",
+        "backend/app/db/sql_identifiers.py",
+        "backend/app/middleware/deduplication/storage.py",
+        "backend/app/monitoring/health_checks.py",
+        "backend/app/monitoring/logging_config.py",
+        "backend/app/profiling/profiler.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)",
+      "action": "ignore",
+      "triage_note": "REVIEW: typing/cast hardening; include only if running typing cleanup batch"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/9e17/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 1,
+      "signal": 1,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1
+      },
+      "status": [
+        "M backend/tests/api/routes/test_dev.py"
+      ],
+      "paths": [
+        "ackend/tests/api/routes/test_dev.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)",
+      "action": "cherry-pick",
+      "triage_note": "WHEAT: adds missing dev cleanup endpoint tests"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/dfd9/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 2,
+      "signal": 2,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 1
+      },
+      "status": [
+        "M backend/app/middleware/versioning/router.py",
+        " M backend/app/middleware/versioning/transformers.py"
+      ],
+      "paths": [
+        "ackend/app/middleware/versioning/router.py",
+        "backend/app/middleware/versioning/transformers.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)",
+      "action": "ignore",
+      "triage_note": "REVIEW: versioning decorator type annotations only"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/52bb/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 2,
+      "signal": 2,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 1
+      },
+      "status": [
+        "M backend/app/loadbalancer/balancer.py",
+        " M backend/app/models/gateway_auth.py"
+      ],
+      "paths": [
+        "ackend/app/loadbalancer/balancer.py",
+        "backend/app/models/gateway_auth.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)",
+      "action": "ignore",
+      "triage_note": "CHAFF: minimal annotation-only edits"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/095e/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 30,
+      "signal": 30,
+      "noise": 0,
+      "buckets": {
+        "EADME.md": 1,
+        "backend": 1,
+        "docs": 28
+      },
+      "status": [
+        "M README.md",
+        " M backend/app/tasks/budget_tasks.py",
+        " M docs/api/APPROVAL_CHAIN_API.md",
+        " M docs/api/ASSIGNMENTS_API.md",
+        " M docs/api/AUTH_API.md",
+        " M docs/api/BLOCKS_API.md",
+        " M docs/api/CALENDAR_API.md",
+        " M docs/api/CERTIFICATIONS_API.md",
+        " M docs/api/CONSTRAINTS_API.md",
+        " M docs/api/ENDPOINT_CATALOG.md",
+        " M docs/api/FMIT_HEALTH_API.md",
+        " M docs/api/METRICS_API.md",
+        " M docs/api/PEOPLE_API.md",
+        " M docs/api/README.md",
+        " M docs/api/RESILIENCE_API.md",
+        " M docs/api/SCHEDULE_API.md",
+        " M docs/api/SWAPS_API.md",
+        " M docs/api/authentication.md",
+        " M docs/api/block-scheduler.md",
+        " M docs/api/error-codes.md",
+        " M docs/api/experiments.md",
+        " M docs/api/index.md",
+        " M docs/api/ml.md",
+        " M docs/api/routes/assignments.md",
+        " M docs/api/routes/blocks.md",
+        " M docs/api/routes/call_assignments.md",
+        " M docs/api/routes/half_day_imports.md",
+        " M docs/api/routes/people.md",
+        " M docs/api/routes/schedule.md",
+        " M docs/api/visualization.md"
+      ],
+      "paths": [
+        "EADME.md",
+        "backend/app/tasks/budget_tasks.py",
+        "docs/api/APPROVAL_CHAIN_API.md",
+        "docs/api/ASSIGNMENTS_API.md",
+        "docs/api/AUTH_API.md",
+        "docs/api/BLOCKS_API.md",
+        "docs/api/CALENDAR_API.md",
+        "docs/api/CERTIFICATIONS_API.md",
+        "docs/api/CONSTRAINTS_API.md",
+        "docs/api/ENDPOINT_CATALOG.md",
+        "docs/api/FMIT_HEALTH_API.md",
+        "docs/api/METRICS_API.md",
+        "docs/api/PEOPLE_API.md",
+        "docs/api/README.md",
+        "docs/api/RESILIENCE_API.md",
+        "docs/api/SCHEDULE_API.md",
+        "docs/api/SWAPS_API.md",
+        "docs/api/authentication.md",
+        "docs/api/block-scheduler.md",
+        "docs/api/error-codes.md",
+        "docs/api/experiments.md",
+        "docs/api/index.md",
+        "docs/api/ml.md",
+        "docs/api/routes/assignments.md",
+        "docs/api/routes/blocks.md",
+        "docs/api/routes/call_assignments.md",
+        "docs/api/routes/half_day_imports.md",
+        "docs/api/routes/people.md",
+        "docs/api/routes/schedule.md",
+        "docs/api/visualization.md"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)",
+      "action": "ignore",
+      "triage_note": "REVIEW: large docs sweep; defer to dedicated docs sync"
+    }
+  ]
+}

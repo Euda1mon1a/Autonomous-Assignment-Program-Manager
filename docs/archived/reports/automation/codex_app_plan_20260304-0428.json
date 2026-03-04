@@ -1,0 +1,1232 @@
+{
+  "generated_at": "2026-03-04T04:28:15.560495",
+  "worktree_root": "/Users/aaronmontgomery/.codex/worktrees",
+  "origin": "github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager",
+  "entries": [
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/40da/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 2,
+      "signal": 1,
+      "noise": 1,
+      "buckets": {
+        "frontend": 1,
+        "rontend": 1
+      },
+      "status": [
+        "M frontend/src/types/.api-generated.hash",
+        " M frontend/src/types/api-generated.ts"
+      ],
+      "paths": [
+        "rontend/src/types/.api-generated.hash",
+        "frontend/src/types/api-generated.ts"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/abfb/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "db79a332 docs: staleness audit \u2014 update 6 priority items + faculty roadmap (#1212) (#1211)",
+      "head_sha": "db79a332f6ab684e21094ad9b7f623f14a4d20d8",
+      "status_count": 6,
+      "signal": 6,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 5
+      },
+      "status": [
+        "M backend/app/db/sql_identifiers.py",
+        " M backend/app/middleware/content/parsers.py",
+        " M backend/app/middleware/logging/storage.py",
+        " M backend/app/monitoring/logging_config.py",
+        " M backend/app/privacy/strategies.py",
+        " M backend/app/profiling/profiler.py"
+      ],
+      "paths": [
+        "ackend/app/db/sql_identifiers.py",
+        "backend/app/middleware/content/parsers.py",
+        "backend/app/middleware/logging/storage.py",
+        "backend/app/monitoring/logging_config.py",
+        "backend/app/privacy/strategies.py",
+        "backend/app/profiling/profiler.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/7cbf/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "db79a332 docs: staleness audit \u2014 update 6 priority items + faculty roadmap (#1212) (#1211)",
+      "head_sha": "db79a332f6ab684e21094ad9b7f623f14a4d20d8",
+      "status_count": 1,
+      "signal": 1,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1
+      },
+      "status": [
+        "M backend/tests/test_faculty_preference_service.py"
+      ],
+      "paths": [
+        "ackend/tests/test_faculty_preference_service.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/9c1d/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "2a4c80d0 feat: re-enable 17 constraints + soft FacultySupervision + CALL/LEC pipeline (#1215)",
+      "head_sha": "2a4c80d0a666b4eb1e1597882bbdcdf25d23ed70",
+      "status_count": 1,
+      "signal": 1,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1
+      },
+      "status": [
+        "M backend/tests/test_rate_limiting.py"
+      ],
+      "paths": [
+        "ackend/tests/test_rate_limiting.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/d8ee/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 1,
+      "signal": 1,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1
+      },
+      "status": [
+        "M backend/tests/test_rate_limiting.py"
+      ],
+      "paths": [
+        "ackend/tests/test_rate_limiting.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/b896/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "db79a332 docs: staleness audit \u2014 update 6 priority items + faculty roadmap (#1212) (#1211)",
+      "head_sha": "db79a332f6ab684e21094ad9b7f623f14a4d20d8",
+      "status_count": 1,
+      "signal": 1,
+      "noise": 0,
+      "buckets": {
+        "async_sync_type_mismatch_report.md": 1
+      },
+      "status": [
+        "?? async_sync_type_mismatch_report.md"
+      ],
+      "paths": [
+        "async_sync_type_mismatch_report.md"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/c6d3/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "2a4c80d0 feat: re-enable 17 constraints + soft FacultySupervision + CALL/LEC pipeline (#1215)",
+      "head_sha": "2a4c80d0a666b4eb1e1597882bbdcdf25d23ed70",
+      "status_count": 1,
+      "signal": 1,
+      "noise": 0,
+      "buckets": {
+        "async_sync_type_mismatch_report.md": 1
+      },
+      "status": [
+        "?? async_sync_type_mismatch_report.md"
+      ],
+      "paths": [
+        "async_sync_type_mismatch_report.md"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/4183/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 6,
+      "signal": 6,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 5
+      },
+      "status": [
+        "M backend/app/db/replicas/balancer.py",
+        " M backend/app/db/sql_identifiers.py",
+        " M backend/app/middleware/deduplication/storage.py",
+        " M backend/app/monitoring/health_checks.py",
+        " M backend/app/monitoring/logging_config.py",
+        " M backend/app/profiling/profiler.py"
+      ],
+      "paths": [
+        "ackend/app/db/replicas/balancer.py",
+        "backend/app/db/sql_identifiers.py",
+        "backend/app/middleware/deduplication/storage.py",
+        "backend/app/monitoring/health_checks.py",
+        "backend/app/monitoring/logging_config.py",
+        "backend/app/profiling/profiler.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/9e17/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 1,
+      "signal": 1,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1
+      },
+      "status": [
+        "M backend/tests/api/routes/test_dev.py"
+      ],
+      "paths": [
+        "ackend/tests/api/routes/test_dev.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/15ff/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "5c4f71ca docs: audit 9 remaining disabled constraints in scheduling engine (#1224)",
+      "head_sha": "5c4f71caaeb9a89f65fe1ae466c0016d1eb1299d",
+      "status_count": 2,
+      "signal": 1,
+      "noise": 1,
+      "buckets": {
+        "frontend": 1,
+        "rontend": 1
+      },
+      "status": [
+        "M frontend/src/types/.api-generated.hash",
+        " M frontend/src/types/api-generated.ts"
+      ],
+      "paths": [
+        "rontend/src/types/.api-generated.hash",
+        "frontend/src/types/api-generated.ts"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/c801/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "10e45c27 chore: Next.js 15 upgrade + 19-doc staleness sweep (#1206)",
+      "head_sha": "10e45c27e0a9b84321790eb5a2d9dc8a3b1871fa",
+      "status_count": 3,
+      "signal": 3,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "frontend": 2
+      },
+      "status": [
+        "M backend/tests/routes/test_backup.py",
+        " M frontend/src/__tests__/hooks/useAssignmentsForRange.test.tsx",
+        "?? frontend/src/__tests__/hooks/useBoardReview.test.tsx"
+      ],
+      "paths": [
+        "ackend/tests/routes/test_backup.py",
+        "frontend/src/__tests__/hooks/useAssignmentsForRange.test.tsx",
+        "frontend/src/__tests__/hooks/useBoardReview.test.tsx"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/fb6e/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "aa557ec5 fix: exclude absent faculty from call eligibility + FMIT preservation (#1218)",
+      "head_sha": "aa557ec5875d6fc2943991aca158cbe248bc01c4",
+      "status_count": 30,
+      "signal": 30,
+      "noise": 0,
+      "buckets": {
+        "EADME.md": 1,
+        "docs": 29
+      },
+      "status": [
+        "M README.md",
+        " M docs/api/APPROVAL_CHAIN_API.md",
+        " M docs/api/ASSIGNMENTS_API.md",
+        " M docs/api/AUTH_API.md",
+        " M docs/api/BLOCKS_API.md",
+        " M docs/api/CALENDAR_API.md",
+        " M docs/api/CERTIFICATIONS_API.md",
+        " M docs/api/CONSTRAINTS_API.md",
+        " M docs/api/ENDPOINT_CATALOG.md",
+        " M docs/api/FMIT_HEALTH_API.md",
+        " M docs/api/METRICS_API.md",
+        " M docs/api/PEOPLE_API.md",
+        " M docs/api/RESILIENCE_API.md",
+        " M docs/api/SCHEDULE_API.md",
+        " M docs/api/SWAPS_API.md",
+        " M docs/api/authentication.md",
+        " M docs/api/block-scheduler.md",
+        " M docs/api/collections/postman-collection.json",
+        " M docs/api/error-codes.md",
+        " M docs/api/examples/request-examples.json",
+        " M docs/api/experiments.md",
+        " M docs/api/index.md",
+        " M docs/api/ml.md",
+        " M docs/api/postman_collection.json",
+        " M docs/api/routes/assignments.md",
+        " M docs/api/routes/blocks.md",
+        " M docs/api/routes/call_assignments.md",
+        " M docs/api/routes/half_day_imports.md",
+        " M docs/api/routes/people.md",
+        " M docs/api/routes/schedule.md"
+      ],
+      "paths": [
+        "EADME.md",
+        "docs/api/APPROVAL_CHAIN_API.md",
+        "docs/api/ASSIGNMENTS_API.md",
+        "docs/api/AUTH_API.md",
+        "docs/api/BLOCKS_API.md",
+        "docs/api/CALENDAR_API.md",
+        "docs/api/CERTIFICATIONS_API.md",
+        "docs/api/CONSTRAINTS_API.md",
+        "docs/api/ENDPOINT_CATALOG.md",
+        "docs/api/FMIT_HEALTH_API.md",
+        "docs/api/METRICS_API.md",
+        "docs/api/PEOPLE_API.md",
+        "docs/api/RESILIENCE_API.md",
+        "docs/api/SCHEDULE_API.md",
+        "docs/api/SWAPS_API.md",
+        "docs/api/authentication.md",
+        "docs/api/block-scheduler.md",
+        "docs/api/collections/postman-collection.json",
+        "docs/api/error-codes.md",
+        "docs/api/examples/request-examples.json",
+        "docs/api/experiments.md",
+        "docs/api/index.md",
+        "docs/api/ml.md",
+        "docs/api/postman_collection.json",
+        "docs/api/routes/assignments.md",
+        "docs/api/routes/blocks.md",
+        "docs/api/routes/call_assignments.md",
+        "docs/api/routes/half_day_imports.md",
+        "docs/api/routes/people.md",
+        "docs/api/routes/schedule.md"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/4e2d/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "2a4c80d0 feat: re-enable 17 constraints + soft FacultySupervision + CALL/LEC pipeline (#1215)",
+      "head_sha": "2a4c80d0a666b4eb1e1597882bbdcdf25d23ed70",
+      "status_count": 3,
+      "signal": 3,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 2
+      },
+      "status": [
+        "M backend/tests/services/test_half_day_json_exporter.py",
+        " M backend/tests/services/test_half_day_xml_exporter.py",
+        "?? backend/tests/routes/test_db_admin.py"
+      ],
+      "paths": [
+        "ackend/tests/services/test_half_day_json_exporter.py",
+        "backend/tests/services/test_half_day_xml_exporter.py",
+        "backend/tests/routes/test_db_admin.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/0bfa/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "aa557ec5 fix: exclude absent faculty from call eligibility + FMIT preservation (#1218)",
+      "head_sha": "aa557ec5875d6fc2943991aca158cbe248bc01c4",
+      "status_count": 3,
+      "signal": 3,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 1,
+        "frontend": 1
+      },
+      "status": [
+        "M backend/tests/services/test_person_service.py",
+        " M backend/tests/test_people_routes.py",
+        " M frontend/src/__tests__/hooks/useResilience.test.tsx"
+      ],
+      "paths": [
+        "ackend/tests/services/test_person_service.py",
+        "backend/tests/test_people_routes.py",
+        "frontend/src/__tests__/hooks/useResilience.test.tsx"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/6588/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "2a4c80d0 feat: re-enable 17 constraints + soft FacultySupervision + CALL/LEC pipeline (#1215)",
+      "head_sha": "2a4c80d0a666b4eb1e1597882bbdcdf25d23ed70",
+      "status_count": 17,
+      "signal": 17,
+      "noise": 0,
+      "buckets": {
+        "EADME.md": 1,
+        "backend": 1,
+        "docs": 15
+      },
+      "status": [
+        "M README.md",
+        " M backend/app/tasks/budget_tasks.py",
+        " M docs/api/APPROVAL_CHAIN_API.md",
+        " M docs/api/ASSIGNMENTS_API.md",
+        " M docs/api/AUTH_API.md",
+        " M docs/api/CALENDAR_API.md",
+        " M docs/api/ENDPOINT_CATALOG.md",
+        " M docs/api/PEOPLE_API.md",
+        " M docs/api/README.md",
+        " M docs/api/SCHEDULE_API.md",
+        " M docs/api/SWAPS_API.md",
+        " M docs/api/authentication.md",
+        " M docs/api/error-codes.md",
+        " M docs/api/experiments.md",
+        " M docs/api/index.md",
+        " M docs/api/ml.md",
+        " M docs/api/visualization.md"
+      ],
+      "paths": [
+        "EADME.md",
+        "backend/app/tasks/budget_tasks.py",
+        "docs/api/APPROVAL_CHAIN_API.md",
+        "docs/api/ASSIGNMENTS_API.md",
+        "docs/api/AUTH_API.md",
+        "docs/api/CALENDAR_API.md",
+        "docs/api/ENDPOINT_CATALOG.md",
+        "docs/api/PEOPLE_API.md",
+        "docs/api/README.md",
+        "docs/api/SCHEDULE_API.md",
+        "docs/api/SWAPS_API.md",
+        "docs/api/authentication.md",
+        "docs/api/error-codes.md",
+        "docs/api/experiments.md",
+        "docs/api/index.md",
+        "docs/api/ml.md",
+        "docs/api/visualization.md"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/54e4/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "db79a332 docs: staleness audit \u2014 update 6 priority items + faculty roadmap (#1212) (#1211)",
+      "head_sha": "db79a332f6ab684e21094ad9b7f623f14a4d20d8",
+      "status_count": 5,
+      "signal": 5,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 3,
+        "frontend": 1
+      },
+      "status": [
+        "M backend/tests/routes/test_half_day_imports.py",
+        "?? backend/tests/routes/test_agent_matcher_routes.py",
+        "?? backend/tests/routes/test_import_staging_yearly.py",
+        "?? backend/tests/routes/test_pareto_routes.py",
+        "?? frontend/src/__tests__/hooks/useCopyGridSelection.test.tsx"
+      ],
+      "paths": [
+        "ackend/tests/routes/test_half_day_imports.py",
+        "backend/tests/routes/test_agent_matcher_routes.py",
+        "backend/tests/routes/test_import_staging_yearly.py",
+        "backend/tests/routes/test_pareto_routes.py",
+        "frontend/src/__tests__/hooks/useCopyGridSelection.test.tsx"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/dfd9/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 2,
+      "signal": 2,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 1
+      },
+      "status": [
+        "M backend/app/middleware/versioning/router.py",
+        " M backend/app/middleware/versioning/transformers.py"
+      ],
+      "paths": [
+        "ackend/app/middleware/versioning/router.py",
+        "backend/app/middleware/versioning/transformers.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/3c1e/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "2a4c80d0 feat: re-enable 17 constraints + soft FacultySupervision + CALL/LEC pipeline (#1215)",
+      "head_sha": "2a4c80d0a666b4eb1e1597882bbdcdf25d23ed70",
+      "status_count": 6,
+      "signal": 6,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 5
+      },
+      "status": [
+        "M backend/app/db/sql_identifiers.py",
+        " M backend/app/middleware/content/parsers.py",
+        " M backend/app/middleware/logging/storage.py",
+        " M backend/app/monitoring/logging_config.py",
+        " M backend/app/privacy/strategies.py",
+        " M backend/app/profiling/profiler.py"
+      ],
+      "paths": [
+        "ackend/app/db/sql_identifiers.py",
+        "backend/app/middleware/content/parsers.py",
+        "backend/app/middleware/logging/storage.py",
+        "backend/app/monitoring/logging_config.py",
+        "backend/app/privacy/strategies.py",
+        "backend/app/profiling/profiler.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/aeec/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "10e45c27 chore: Next.js 15 upgrade + 19-doc staleness sweep (#1206)",
+      "head_sha": "10e45c27e0a9b84321790eb5a2d9dc8a3b1871fa",
+      "status_count": 2,
+      "signal": 1,
+      "noise": 1,
+      "buckets": {
+        "frontend": 1,
+        "rontend": 1
+      },
+      "status": [
+        "M frontend/src/types/.api-generated.hash",
+        " M frontend/src/types/api-generated.ts"
+      ],
+      "paths": [
+        "rontend/src/types/.api-generated.hash",
+        "frontend/src/types/api-generated.ts"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/f590/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "2a4c80d0 feat: re-enable 17 constraints + soft FacultySupervision + CALL/LEC pipeline (#1215)",
+      "head_sha": "2a4c80d0a666b4eb1e1597882bbdcdf25d23ed70",
+      "status_count": 2,
+      "signal": 2,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 1
+      },
+      "status": [
+        "M backend/app/api/routes/daily_manifest.py",
+        " M backend/app/api/routes/export.py"
+      ],
+      "paths": [
+        "ackend/app/api/routes/daily_manifest.py",
+        "backend/app/api/routes/export.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/36b3/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "5c4f71ca docs: audit 9 remaining disabled constraints in scheduling engine (#1224)",
+      "head_sha": "5c4f71caaeb9a89f65fe1ae466c0016d1eb1299d",
+      "status_count": 3,
+      "signal": 3,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 2
+      },
+      "status": [
+        "M backend/app/services/faculty_activity_service.py",
+        " M backend/app/services/faculty_weekly_template_report.py",
+        " M backend/app/services/rotation_template_service.py"
+      ],
+      "paths": [
+        "ackend/app/services/faculty_activity_service.py",
+        "backend/app/services/faculty_weekly_template_report.py",
+        "backend/app/services/rotation_template_service.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/4b41/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "10e45c27 chore: Next.js 15 upgrade + 19-doc staleness sweep (#1206)",
+      "head_sha": "10e45c27e0a9b84321790eb5a2d9dc8a3b1871fa",
+      "status_count": 3,
+      "signal": 3,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 2
+      },
+      "status": [
+        "M backend/app/db/query_builder_examples.py",
+        " M backend/app/ml/training/data_pipeline.py",
+        " M backend/app/timeout/handler.py"
+      ],
+      "paths": [
+        "ackend/app/db/query_builder_examples.py",
+        "backend/app/ml/training/data_pipeline.py",
+        "backend/app/timeout/handler.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/b5b9/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "2a4c80d0 feat: re-enable 17 constraints + soft FacultySupervision + CALL/LEC pipeline (#1215)",
+      "head_sha": "2a4c80d0a666b4eb1e1597882bbdcdf25d23ed70",
+      "status_count": 2,
+      "signal": 1,
+      "noise": 1,
+      "buckets": {
+        "frontend": 1,
+        "rontend": 1
+      },
+      "status": [
+        "M frontend/src/types/.api-generated.hash",
+        " M frontend/src/types/api-generated.ts"
+      ],
+      "paths": [
+        "rontend/src/types/.api-generated.hash",
+        "frontend/src/types/api-generated.ts"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/ec77/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "5c4f71ca docs: audit 9 remaining disabled constraints in scheduling engine (#1224)",
+      "head_sha": "5c4f71caaeb9a89f65fe1ae466c0016d1eb1299d",
+      "status_count": 3,
+      "signal": 3,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 2
+      },
+      "status": [
+        "M backend/app/db/sql_identifiers.py",
+        " M backend/app/privacy/strategies.py",
+        " M backend/app/profiling/profiler.py"
+      ],
+      "paths": [
+        "ackend/app/db/sql_identifiers.py",
+        "backend/app/privacy/strategies.py",
+        "backend/app/profiling/profiler.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/a20b/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "5c4f71ca docs: audit 9 remaining disabled constraints in scheduling engine (#1224)",
+      "head_sha": "5c4f71caaeb9a89f65fe1ae466c0016d1eb1299d",
+      "status_count": 21,
+      "signal": 21,
+      "noise": 0,
+      "buckets": {
+        "EADME.md": 1,
+        "backend": 2,
+        "docs": 18
+      },
+      "status": [
+        "M README.md",
+        " M backend/app/core/security.py",
+        " M backend/app/tasks/budget_tasks.py",
+        " M docs/api/APPROVAL_CHAIN_API.md",
+        " M docs/api/ASSIGNMENTS_API.md",
+        " M docs/api/AUTH_API.md",
+        " M docs/api/CALENDAR_API.md",
+        " M docs/api/ENDPOINT_CATALOG.md",
+        " M docs/api/PEOPLE_API.md",
+        " M docs/api/SCHEDULE_API.md",
+        " M docs/api/SWAPS_API.md",
+        " M docs/api/authentication.md",
+        " M docs/api/block-scheduler.md",
+        " M docs/api/collections/postman-collection.json",
+        " M docs/api/error-codes.md",
+        " M docs/api/examples/request-examples.json",
+        " M docs/api/experiments.md",
+        " M docs/api/index.md",
+        " M docs/api/ml.md",
+        " M docs/api/postman_collection.json",
+        " M docs/api/visualization.md"
+      ],
+      "paths": [
+        "EADME.md",
+        "backend/app/core/security.py",
+        "backend/app/tasks/budget_tasks.py",
+        "docs/api/APPROVAL_CHAIN_API.md",
+        "docs/api/ASSIGNMENTS_API.md",
+        "docs/api/AUTH_API.md",
+        "docs/api/CALENDAR_API.md",
+        "docs/api/ENDPOINT_CATALOG.md",
+        "docs/api/PEOPLE_API.md",
+        "docs/api/SCHEDULE_API.md",
+        "docs/api/SWAPS_API.md",
+        "docs/api/authentication.md",
+        "docs/api/block-scheduler.md",
+        "docs/api/collections/postman-collection.json",
+        "docs/api/error-codes.md",
+        "docs/api/examples/request-examples.json",
+        "docs/api/experiments.md",
+        "docs/api/index.md",
+        "docs/api/ml.md",
+        "docs/api/postman_collection.json",
+        "docs/api/visualization.md"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/2439/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "10e45c27 chore: Next.js 15 upgrade + 19-doc staleness sweep (#1206)",
+      "head_sha": "10e45c27e0a9b84321790eb5a2d9dc8a3b1871fa",
+      "status_count": 28,
+      "signal": 28,
+      "noise": 0,
+      "buckets": {
+        "EADME.md": 1,
+        "docs": 27
+      },
+      "status": [
+        "M README.md",
+        " M docs/api/APPROVAL_CHAIN_API.md",
+        " M docs/api/ASSIGNMENTS_API.md",
+        " M docs/api/AUTH_API.md",
+        " M docs/api/BLOCKS_API.md",
+        " M docs/api/CALENDAR_API.md",
+        " M docs/api/CERTIFICATIONS_API.md",
+        " M docs/api/CONSTRAINTS_API.md",
+        " M docs/api/ENDPOINT_CATALOG.md",
+        " M docs/api/FMIT_HEALTH_API.md",
+        " M docs/api/METRICS_API.md",
+        " M docs/api/PEOPLE_API.md",
+        " M docs/api/RESILIENCE_API.md",
+        " M docs/api/SCHEDULE_API.md",
+        " M docs/api/SWAPS_API.md",
+        " M docs/api/authentication.md",
+        " M docs/api/block-scheduler.md",
+        " M docs/api/error-codes.md",
+        " M docs/api/experiments.md",
+        " M docs/api/index.md",
+        " M docs/api/ml.md",
+        " M docs/api/routes/assignments.md",
+        " M docs/api/routes/blocks.md",
+        " M docs/api/routes/call_assignments.md",
+        " M docs/api/routes/half_day_imports.md",
+        " M docs/api/routes/people.md",
+        " M docs/api/routes/schedule.md",
+        " M docs/api/visualization.md"
+      ],
+      "paths": [
+        "EADME.md",
+        "docs/api/APPROVAL_CHAIN_API.md",
+        "docs/api/ASSIGNMENTS_API.md",
+        "docs/api/AUTH_API.md",
+        "docs/api/BLOCKS_API.md",
+        "docs/api/CALENDAR_API.md",
+        "docs/api/CERTIFICATIONS_API.md",
+        "docs/api/CONSTRAINTS_API.md",
+        "docs/api/ENDPOINT_CATALOG.md",
+        "docs/api/FMIT_HEALTH_API.md",
+        "docs/api/METRICS_API.md",
+        "docs/api/PEOPLE_API.md",
+        "docs/api/RESILIENCE_API.md",
+        "docs/api/SCHEDULE_API.md",
+        "docs/api/SWAPS_API.md",
+        "docs/api/authentication.md",
+        "docs/api/block-scheduler.md",
+        "docs/api/error-codes.md",
+        "docs/api/experiments.md",
+        "docs/api/index.md",
+        "docs/api/ml.md",
+        "docs/api/routes/assignments.md",
+        "docs/api/routes/blocks.md",
+        "docs/api/routes/call_assignments.md",
+        "docs/api/routes/half_day_imports.md",
+        "docs/api/routes/people.md",
+        "docs/api/routes/schedule.md",
+        "docs/api/visualization.md"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/0509/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "10e45c27 chore: Next.js 15 upgrade + 19-doc staleness sweep (#1206)",
+      "head_sha": "10e45c27e0a9b84321790eb5a2d9dc8a3b1871fa",
+      "status_count": 7,
+      "signal": 7,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 6
+      },
+      "status": [
+        "M backend/app/db/replicas/balancer.py",
+        " M backend/app/db/replicas/router.py",
+        " M backend/app/db/sql_identifiers.py",
+        " M backend/app/monitoring/__init__.py",
+        " M backend/app/monitoring/health_checks.py",
+        " M backend/app/monitoring/logging_config.py",
+        " M backend/app/profiling/profiler.py"
+      ],
+      "paths": [
+        "ackend/app/db/replicas/balancer.py",
+        "backend/app/db/replicas/router.py",
+        "backend/app/db/sql_identifiers.py",
+        "backend/app/monitoring/__init__.py",
+        "backend/app/monitoring/health_checks.py",
+        "backend/app/monitoring/logging_config.py",
+        "backend/app/profiling/profiler.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/a283/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "db79a332 docs: staleness audit \u2014 update 6 priority items + faculty roadmap (#1212) (#1211)",
+      "head_sha": "db79a332f6ab684e21094ad9b7f623f14a4d20d8",
+      "status_count": 3,
+      "signal": 3,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 2
+      },
+      "status": [
+        "M backend/app/migrations/rollback.py",
+        " M backend/app/migrations/runner.py",
+        " M backend/app/migrations/validators.py"
+      ],
+      "paths": [
+        "ackend/app/migrations/rollback.py",
+        "backend/app/migrations/runner.py",
+        "backend/app/migrations/validators.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/227a/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "db79a332 docs: staleness audit \u2014 update 6 priority items + faculty roadmap (#1212) (#1211)",
+      "head_sha": "db79a332f6ab684e21094ad9b7f623f14a4d20d8",
+      "status_count": 1,
+      "signal": 1,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1
+      },
+      "status": [
+        "M backend/app/services/half_day_import_service.py"
+      ],
+      "paths": [
+        "ackend/app/services/half_day_import_service.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/2bc2/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "aa557ec5 fix: exclude absent faculty from call eligibility + FMIT preservation (#1218)",
+      "head_sha": "aa557ec5875d6fc2943991aca158cbe248bc01c4",
+      "status_count": 3,
+      "signal": 3,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 2
+      },
+      "status": [
+        "M backend/app/db/query_builder_examples.py",
+        " M backend/app/ml/training/data_pipeline.py",
+        " M backend/app/tracing/spans.py"
+      ],
+      "paths": [
+        "ackend/app/db/query_builder_examples.py",
+        "backend/app/ml/training/data_pipeline.py",
+        "backend/app/tracing/spans.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/c6ab/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "10e45c27 chore: Next.js 15 upgrade + 19-doc staleness sweep (#1206)",
+      "head_sha": "10e45c27e0a9b84321790eb5a2d9dc8a3b1871fa",
+      "status_count": 2,
+      "signal": 2,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 1
+      },
+      "status": [
+        "M backend/app/resilience/circuit_breaker/decorators.py",
+        " M backend/app/resilience/retry/decorator.py"
+      ],
+      "paths": [
+        "ackend/app/resilience/circuit_breaker/decorators.py",
+        "backend/app/resilience/retry/decorator.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/52bb/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 2,
+      "signal": 2,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 1
+      },
+      "status": [
+        "M backend/app/loadbalancer/balancer.py",
+        " M backend/app/models/gateway_auth.py"
+      ],
+      "paths": [
+        "ackend/app/loadbalancer/balancer.py",
+        "backend/app/models/gateway_auth.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/977b/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "db79a332 docs: staleness audit \u2014 update 6 priority items + faculty roadmap (#1212) (#1211)",
+      "head_sha": "db79a332f6ab684e21094ad9b7f623f14a4d20d8",
+      "status_count": 2,
+      "signal": 1,
+      "noise": 1,
+      "buckets": {
+        "frontend": 1,
+        "rontend": 1
+      },
+      "status": [
+        "M frontend/src/types/.api-generated.hash",
+        " M frontend/src/types/api-generated.ts"
+      ],
+      "paths": [
+        "rontend/src/types/.api-generated.hash",
+        "frontend/src/types/api-generated.ts"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/2136/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "10e45c27 chore: Next.js 15 upgrade + 19-doc staleness sweep (#1206)",
+      "head_sha": "10e45c27e0a9b84321790eb5a2d9dc8a3b1871fa",
+      "status_count": 1,
+      "signal": 1,
+      "noise": 0,
+      "buckets": {
+        "async_sync_type_mismatch_report.md": 1
+      },
+      "status": [
+        "?? async_sync_type_mismatch_report.md"
+      ],
+      "paths": [
+        "async_sync_type_mismatch_report.md"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/218c/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "aa557ec5 fix: exclude absent faculty from call eligibility + FMIT preservation (#1218)",
+      "head_sha": "aa557ec5875d6fc2943991aca158cbe248bc01c4",
+      "status_count": 2,
+      "signal": 2,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 1
+      },
+      "status": [
+        "M backend/app/api/routes/fairness.py",
+        " M backend/app/api/routes/mcp_proxy.py"
+      ],
+      "paths": [
+        "ackend/app/api/routes/fairness.py",
+        "backend/app/api/routes/mcp_proxy.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/6bd5/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "aa557ec5 fix: exclude absent faculty from call eligibility + FMIT preservation (#1218)",
+      "head_sha": "aa557ec5875d6fc2943991aca158cbe248bc01c4",
+      "status_count": 9,
+      "signal": 9,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 8
+      },
+      "status": [
+        "M backend/app/async_utils/batch_processor.py",
+        " M backend/app/async_utils/parallel_executor.py",
+        " M backend/app/db/sql_identifiers.py",
+        " M backend/app/monitoring/logging_config.py",
+        " M backend/app/privacy/strategies.py",
+        " M backend/app/profiling/profiler.py",
+        " M backend/app/testing/mock_server.py",
+        " M backend/app/timeout/handler.py",
+        " M backend/app/utils/async_helpers.py"
+      ],
+      "paths": [
+        "ackend/app/async_utils/batch_processor.py",
+        "backend/app/async_utils/parallel_executor.py",
+        "backend/app/db/sql_identifiers.py",
+        "backend/app/monitoring/logging_config.py",
+        "backend/app/privacy/strategies.py",
+        "backend/app/profiling/profiler.py",
+        "backend/app/testing/mock_server.py",
+        "backend/app/timeout/handler.py",
+        "backend/app/utils/async_helpers.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/8101/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "aa557ec5 fix: exclude absent faculty from call eligibility + FMIT preservation (#1218)",
+      "head_sha": "aa557ec5875d6fc2943991aca158cbe248bc01c4",
+      "status_count": 2,
+      "signal": 1,
+      "noise": 1,
+      "buckets": {
+        "frontend": 1,
+        "rontend": 1
+      },
+      "status": [
+        "M frontend/src/types/.api-generated.hash",
+        " M frontend/src/types/api-generated.ts"
+      ],
+      "paths": [
+        "rontend/src/types/.api-generated.hash",
+        "frontend/src/types/api-generated.ts"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/2c1f/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "db79a332 docs: staleness audit \u2014 update 6 priority items + faculty roadmap (#1212) (#1211)",
+      "head_sha": "db79a332f6ab684e21094ad9b7f623f14a4d20d8",
+      "status_count": 13,
+      "signal": 13,
+      "noise": 0,
+      "buckets": {
+        "EADME.md": 1,
+        "docs": 12
+      },
+      "status": [
+        "M README.md",
+        " M docs/api/APPROVAL_CHAIN_API.md",
+        " M docs/api/ASSIGNMENTS_API.md",
+        " M docs/api/AUTH_API.md",
+        " M docs/api/CALENDAR_API.md",
+        " M docs/api/ENDPOINT_CATALOG.md",
+        " M docs/api/PEOPLE_API.md",
+        " M docs/api/SCHEDULE_API.md",
+        " M docs/api/SWAPS_API.md",
+        " M docs/api/authentication.md",
+        " M docs/api/error-codes.md",
+        " M docs/api/index.md",
+        " M docs/api/visualization.md"
+      ],
+      "paths": [
+        "EADME.md",
+        "docs/api/APPROVAL_CHAIN_API.md",
+        "docs/api/ASSIGNMENTS_API.md",
+        "docs/api/AUTH_API.md",
+        "docs/api/CALENDAR_API.md",
+        "docs/api/ENDPOINT_CATALOG.md",
+        "docs/api/PEOPLE_API.md",
+        "docs/api/SCHEDULE_API.md",
+        "docs/api/SWAPS_API.md",
+        "docs/api/authentication.md",
+        "docs/api/error-codes.md",
+        "docs/api/index.md",
+        "docs/api/visualization.md"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/181a/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "aa557ec5 fix: exclude absent faculty from call eligibility + FMIT preservation (#1218)",
+      "head_sha": "aa557ec5875d6fc2943991aca158cbe248bc01c4",
+      "status_count": 2,
+      "signal": 2,
+      "noise": 0,
+      "buckets": {
+        "ackend": 1,
+        "backend": 1
+      },
+      "status": [
+        "M backend/tests/test_migration_runner.py",
+        " M backend/tests/test_settings_routes.py"
+      ],
+      "paths": [
+        "ackend/tests/test_migration_runner.py",
+        "backend/tests/test_settings_routes.py"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    },
+    {
+      "path": "/Users/aaronmontgomery/.codex/worktrees/095e/Autonomous-Assignment-Program-Manager",
+      "branch": "HEAD",
+      "head": "0fc236b7 feat: add Annual Rotation Optimizer (ARO) CP-SAT solver (#1238)",
+      "head_sha": "0fc236b7cc0db68992abd3bb296e66512c9d0309",
+      "status_count": 30,
+      "signal": 30,
+      "noise": 0,
+      "buckets": {
+        "EADME.md": 1,
+        "backend": 1,
+        "docs": 28
+      },
+      "status": [
+        "M README.md",
+        " M backend/app/tasks/budget_tasks.py",
+        " M docs/api/APPROVAL_CHAIN_API.md",
+        " M docs/api/ASSIGNMENTS_API.md",
+        " M docs/api/AUTH_API.md",
+        " M docs/api/BLOCKS_API.md",
+        " M docs/api/CALENDAR_API.md",
+        " M docs/api/CERTIFICATIONS_API.md",
+        " M docs/api/CONSTRAINTS_API.md",
+        " M docs/api/ENDPOINT_CATALOG.md",
+        " M docs/api/FMIT_HEALTH_API.md",
+        " M docs/api/METRICS_API.md",
+        " M docs/api/PEOPLE_API.md",
+        " M docs/api/README.md",
+        " M docs/api/RESILIENCE_API.md",
+        " M docs/api/SCHEDULE_API.md",
+        " M docs/api/SWAPS_API.md",
+        " M docs/api/authentication.md",
+        " M docs/api/block-scheduler.md",
+        " M docs/api/error-codes.md",
+        " M docs/api/experiments.md",
+        " M docs/api/index.md",
+        " M docs/api/ml.md",
+        " M docs/api/routes/assignments.md",
+        " M docs/api/routes/blocks.md",
+        " M docs/api/routes/call_assignments.md",
+        " M docs/api/routes/half_day_imports.md",
+        " M docs/api/routes/people.md",
+        " M docs/api/routes/schedule.md",
+        " M docs/api/visualization.md"
+      ],
+      "paths": [
+        "EADME.md",
+        "backend/app/tasks/budget_tasks.py",
+        "docs/api/APPROVAL_CHAIN_API.md",
+        "docs/api/ASSIGNMENTS_API.md",
+        "docs/api/AUTH_API.md",
+        "docs/api/BLOCKS_API.md",
+        "docs/api/CALENDAR_API.md",
+        "docs/api/CERTIFICATIONS_API.md",
+        "docs/api/CONSTRAINTS_API.md",
+        "docs/api/ENDPOINT_CATALOG.md",
+        "docs/api/FMIT_HEALTH_API.md",
+        "docs/api/METRICS_API.md",
+        "docs/api/PEOPLE_API.md",
+        "docs/api/README.md",
+        "docs/api/RESILIENCE_API.md",
+        "docs/api/SCHEDULE_API.md",
+        "docs/api/SWAPS_API.md",
+        "docs/api/authentication.md",
+        "docs/api/block-scheduler.md",
+        "docs/api/error-codes.md",
+        "docs/api/experiments.md",
+        "docs/api/index.md",
+        "docs/api/ml.md",
+        "docs/api/routes/assignments.md",
+        "docs/api/routes/blocks.md",
+        "docs/api/routes/call_assignments.md",
+        "docs/api/routes/half_day_imports.md",
+        "docs/api/routes/people.md",
+        "docs/api/routes/schedule.md",
+        "docs/api/visualization.md"
+      ],
+      "recommended_action": "review",
+      "note": "Potential signal (manual review recommended)"
+    }
+  ]
+}

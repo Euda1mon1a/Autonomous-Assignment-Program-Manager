@@ -1,0 +1,42 @@
+Block 12 Null-Activity After-State (2026-02-24 ~15:00 HST)
+===========================================================
+
+Total null-activity half-day assignments: 0 (was 277)
+
+Fix applied via:
+  1. Preload handler code: commit 63314cab
+     - NF_COMBINED_ACTIVITY_MAP (NF-first half-block pattern)
+     - REVERSE_NF_COMBINED_MAP (mirror/specialty-first pattern)
+     - ROTATION_ALIASES: D+N -> DERM-NF, C+N -> CARDS-NF
+  2. Migration 20260224_blk12_act_reqs (already committed):
+     - Cat 1: PEM activity for PEDS-EM
+     - Cat 3: Non-zero min_halfdays for clinic activities
+  3. Migration 20260225_fix_nf_combo_reqs (commit a3934ba7):
+     - Removed dead Cat 2 rotation_activity_requirements
+     - Persisted Resident R11 block_assignment fix (NF-DERM-PG -> D+N)
+
+Per-resident resolution:
+
+        name         | was_null | category | resolution
+---------------------+----------+----------+-----------
+ Resident R08        |       48 | Cat 2    | NF-CARDIO half-block: OFF/NF (d1-14), recovery (d15), CARDS/CARDS (d16-28)
+ Resident R02       |       48 | Cat 2    | NF-FMIT-PG half-block: OFF/NF (d1-14), recovery (d15), FMIT/FMIT (d16-28)
+ Resident R11          |       48 | Cat 2    | DERM-NF mirror: DERM/DERM (d1-14), recovery (d15), OFF/NF (d16-28)
+ Resident R14 |       36 | Cat 1    | PEDS-EM off-site: PEM/PEM all days
+ Resident R03        |       35 | Cat 3    | MSK Selective: solver uses non-zero min_halfdays
+ Resident R16             |       35 | Cat 1    | Japan off-site: TDY/TDY all days
+ Resident R07        |       27 | Cat 3    | FM Clinic: solver uses non-zero min_halfdays
+
+Category totals resolved:
+  Cat 1 (off-site):          71 -> 0
+  Cat 2 (NF combined):     144 -> 0
+  Cat 3 (clinic/selective):  62 -> 0
+
+Note on Resident R11's template correction:
+  Original block_assignment had rotation_template NF-DERM-PG (NF-first).
+  Corrected to D+N / DERM-NF (specialty-first mirror) so that paired
+  NF coverage with Resident R08 (NF-CARDIO, NF-first) provides
+  continuous Night Float coverage across the full 28-day block.
+
+Before-state: docs/analysis/block12_before.txt
+DB backup:    backups/20260224_090709_pre-blk12-rerun/
