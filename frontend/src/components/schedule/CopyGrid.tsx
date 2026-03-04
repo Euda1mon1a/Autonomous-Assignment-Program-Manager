@@ -37,10 +37,12 @@ interface ProcessedAssignment {
 }
 
 function formatFacultyRole(role: string): string {
+  /* eslint-disable @typescript-eslint/naming-convention -- enum value keys @enum-ok */
   const roleMap: Record<string, string> = {
     pd: 'PD', apd: 'APD', oic: 'OIC', dept_chief: 'Chief',
     sports_med: 'SM', core: 'Core', adjunct: 'Adj',
   }
+  /* eslint-enable @typescript-eslint/naming-convention */
   return roleMap[role] || role.toUpperCase()
 }
 
@@ -81,6 +83,7 @@ const rotationColors: Record<string, string> = {
   default: 'bg-slate-100 text-slate-700',
 }
 
+/* eslint-disable @typescript-eslint/naming-convention -- Tailwind color keys use hyphens */
 const tailwindToHex: Record<string, string> = {
   'black': '#000000', 'white': '#ffffff',
   'gray-100': '#f3f4f6', 'gray-200': '#e5e7eb', 'gray-400': '#9ca3af', 'gray-800': '#1f2937',
@@ -88,6 +91,7 @@ const tailwindToHex: Record<string, string> = {
   'blue-300': '#93c5fd', 'sky-500': '#0ea5e9', 'purple-700': '#7c3aed',
   'amber-100': '#fef3c7', 'amber-800': '#92400e', 'yellow-300': '#fde047', 'emerald-200': '#a7f3d0',
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 function getActivityColorClass(activityType: string | undefined): string {
   if (!activityType) return rotationColors.default

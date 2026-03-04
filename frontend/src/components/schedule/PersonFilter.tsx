@@ -149,6 +149,7 @@ export function PersonFilter({ selectedPersonId, onSelect }: PersonFilterProps) 
         <div
           id={listboxId}
           role="listbox"
+          tabIndex={0}
           aria-label="Filter by person"
           onKeyDown={handleKeyDown}
           className="absolute z-50 mt-1 w-72 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"

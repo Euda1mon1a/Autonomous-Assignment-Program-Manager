@@ -164,7 +164,7 @@ describe('ScheduleHeader', () => {
     it('applies sticky positioning to person header', () => {
       const days = createDays(7);
 
-      const { container } = render(
+      render(
         <table>
           <ScheduleHeader days={days} />
         </table>

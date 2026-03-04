@@ -36,11 +36,13 @@ const rotationColors: Record<string, string> = {
   default: 'bg-slate-100 border-slate-300 text-slate-800',
 };
 
+/* eslint-disable @typescript-eslint/naming-convention -- ShiftType keys */
 const shiftIcons: Record<string, string> = {
   AM: '☀️',
   PM: '🌤️',
   Night: '🌙',
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export const BlockCard: React.FC<BlockCardProps> = ({
   blockId,

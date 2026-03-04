@@ -53,6 +53,7 @@ export interface MonthViewProps {
 }
 
 // US Federal Holidays for reference (can be passed in via holidays prop)
+/* eslint-disable @typescript-eslint/naming-convention -- date string keys */
 const FEDERAL_HOLIDAYS_2024: Record<string, string> = {
   '2024-01-01': "New Year's Day",
   '2024-01-15': 'Martin Luther King Jr. Day',
@@ -66,6 +67,7 @@ const FEDERAL_HOLIDAYS_2024: Record<string, string> = {
   '2024-11-28': 'Thanksgiving Day',
   '2024-12-25': 'Christmas Day',
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 /**
  * Activity type colors for mini indicators
@@ -244,7 +246,10 @@ export function MonthView({
               return (
                 <div
                   key={dateStr}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onDayClick(day)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDayClick(day); } }}
                   className={`
                     min-h-[100px] p-2 cursor-pointer transition-colors
                     ${isCurrentMonth ? 'bg-white' : 'bg-gray-50'}

@@ -53,6 +53,7 @@ export function useCellActions(options: UseCellActionsOptions = {}): UseCellActi
   const {
     onEditModalOpen,
     onQuickMenuOpen,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for long-press feature
     longPressDelay: _longPressDelay = 500,
   } = options;
 
@@ -347,8 +348,8 @@ export function getRecentRotations(): string[] {
   try {
     const stored = localStorage.getItem(RECENT_ROTATIONS_KEY);
     return stored ? JSON.parse(stored) : [];
-  } catch (_error) {
-    // console.error('Failed to read recent rotations from localStorage:', _error);
+  } catch {
+    // Silently fail if localStorage is not available
     return [];
   }
 }
@@ -361,9 +362,8 @@ export function addRecentRotation(rotationId: string): void {
     const filtered = recent.filter((id) => id !== rotationId);
     const updated = [rotationId, ...filtered].slice(0, MAX_RECENT_ROTATIONS);
     localStorage.setItem(RECENT_ROTATIONS_KEY, JSON.stringify(updated));
-  } catch (_error) {
+  } catch {
     // Silently fail if localStorage is not available
-    // console.error('Failed to save recent rotation to localStorage:', _error);
   }
 }
 
@@ -371,9 +371,8 @@ export function clearRecentRotations(): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.removeItem(RECENT_ROTATIONS_KEY);
-  } catch (_error) {
+  } catch {
     // Silently fail if localStorage is not available
-    // console.error('Failed to clear recent rotations from localStorage:', _error);
   }
 }
 

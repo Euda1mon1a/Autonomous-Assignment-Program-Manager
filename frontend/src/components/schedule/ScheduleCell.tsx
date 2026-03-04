@@ -54,6 +54,7 @@ interface CellAssignment {
   notes?: string
 }
 
+/* eslint-disable @typescript-eslint/naming-convention -- HTML data and aria attributes */
 interface GridCellProps {
   tabIndex: number
   'data-row': number
@@ -63,6 +64,7 @@ interface GridCellProps {
   role: 'gridcell'
   'aria-selected': boolean
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 interface ScheduleCellProps {
   assignment?: CellAssignment
@@ -72,6 +74,7 @@ interface ScheduleCellProps {
   gridCellProps?: GridCellProps
 }
 
+/* eslint-disable @typescript-eslint/naming-convention -- Tailwind color keys use hyphens */
 const tailwindToHex: Record<string, string> = {
   'black': '#000000',
   'white': '#ffffff',
@@ -91,6 +94,7 @@ const tailwindToHex: Record<string, string> = {
   'yellow-300': '#fde047',
   'emerald-200': '#a7f3d0',
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 /**
  * Individual cell in the schedule grid

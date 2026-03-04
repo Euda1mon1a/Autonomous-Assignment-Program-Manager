@@ -226,6 +226,7 @@ function SlotCell({
         ${bgColor}
       `}
       onClick={handleClick}
+      onKeyDown={(e) => { if (!readOnly && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleClick(e as unknown as React.MouseEvent); } }}
       role="button"
       tabIndex={readOnly ? -1 : 0}
       title={`${activity?.name ?? 'Empty'}${isProtected ? ' (protected)' : ''}${isInpatient ? ' - preloaded' : ''}\nShift+click to toggle protection`}

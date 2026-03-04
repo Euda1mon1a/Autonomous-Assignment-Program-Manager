@@ -158,7 +158,7 @@ describe('ScheduleCell', () => {
         backgroundColor: 'white',
       };
 
-      const { container } = render(
+      render(
         <table>
           <tbody>
             <tr>

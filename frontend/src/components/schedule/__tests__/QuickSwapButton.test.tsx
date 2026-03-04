@@ -53,14 +53,14 @@ describe('QuickSwapButton', () => {
     });
 
     it('renders small size by default', () => {
-      const { container } = renderComponent();
+      renderComponent();
 
       const button = screen.getByRole('button');
       expect(button).toHaveClass('p-1.5', 'text-xs');
     });
 
     it('renders medium size when specified', () => {
-      const { container } = renderComponent({ size: 'md' });
+      renderComponent({ size: 'md' });
 
       const button = screen.getByRole('button');
       expect(button).toHaveClass('p-2', 'text-sm');
@@ -89,8 +89,9 @@ describe('QuickSwapButton', () => {
     it('prevents event propagation when opening', () => {
       const mockHandler = jest.fn();
 
-      const { container } = render(
+      render(
         <QueryClientProvider client={queryClient}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- test wrapper */}
           <div onClick={mockHandler}>
             <QuickSwapButton {...defaultProps} />
           </div>

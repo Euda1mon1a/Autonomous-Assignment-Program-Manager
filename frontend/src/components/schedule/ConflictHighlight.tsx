@@ -45,12 +45,14 @@ const severityConfig = {
   },
 };
 
+/* eslint-disable @typescript-eslint/naming-convention -- enum value keys @enum-ok */
 const typeLabels = {
   overlap: 'Schedule Overlap',
   acgmeViolation: 'ACGME Violation',
   coverage_gap: 'Coverage Gap',
   credential_missing: 'Missing Credentials',
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export const ConflictHighlight: React.FC<ConflictHighlightProps> = ({
   conflicts,

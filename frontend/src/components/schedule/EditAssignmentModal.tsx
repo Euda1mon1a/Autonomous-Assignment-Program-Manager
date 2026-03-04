@@ -206,8 +206,7 @@ export function EditAssignmentModal({
         month: 'long',
         day: 'numeric',
       });
-    } catch (_error) {
-      // console.error('Failed to format date:', _error);
+    } catch {
       return date;
     }
   }, [date]);

@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext'
 interface SwapRequestData {
   assignmentId: string
   reason?: string
-  preferred_dates?: string[]
+  preferredDates?: string[]
 }
 
 interface QuickSwapButtonProps {
@@ -51,6 +51,7 @@ export function QuickSwapButton({
 }: QuickSwapButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [reason, setReason] = useState('')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for auth-gated UI
   const { user: _user } = useAuth()
   const queryClient = useQueryClient()
 
