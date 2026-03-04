@@ -9,7 +9,7 @@
 |----------|----------|---------|
 | MUST | `CLAUDE.md` (root) | Project guidelines, code style, boundaries — auto-loaded |
 | MUST | `docs/planning/ROADMAP.md` | Current work, phase status, what's next |
-| MUST | `docs/planning/MASTER_PRIORITY_LIST.md` | Strategic prioritization |
+| MUST | `docs/archived/planning/MASTER_PRIORITY_LIST.md` | Strategic prioritization |
 | MUST | `docs/planning/TECHNICAL_DEBT.md` | Open debt items |
 | SHOULD | `docs/development/BEST_PRACTICES_AND_GOTCHAS.md` | Common bugs, debugging flowcharts |
 | SHOULD | `docs/architecture/DOW_CONVENTION_BUG.md` | Critical: Python weekday vs PG DOW |
@@ -48,7 +48,7 @@
 
 ### Excel Import/Export
 - `docs/architecture/excel-stateful-roundtrip-roadmap.md` — Phases 1-4
-- `docs/planning/BLOCK_12_ANNUAL_WORKBOOK_ROADMAP.md` — Annual workbook pipeline
+- `docs/archived/planning/BLOCK_12_ANNUAL_WORKBOOK_ROADMAP.md` — Annual workbook pipeline
 - `docs/architecture/annual-workbook-architecture.md` — 14-sheet workbook spec
 
 ### Security & Compliance

@@ -49,4 +49,4 @@
 
 ## Reference
 - Spec: `docs/architecture/LOCK_WINDOW_BREAK_GLASS_SPEC.md`
-- Roadmap: `docs/planning/LOCK_WINDOW_BREAK_GLASS_ROADMAP.md`
+- Roadmap: `docs/archived/planning/LOCK_WINDOW_BREAK_GLASS_ROADMAP.md`
