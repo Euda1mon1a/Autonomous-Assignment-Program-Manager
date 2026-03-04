@@ -241,13 +241,13 @@ describe('useCreateUser', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    // Hook transforms to snake_case for API
+    // Mock captures camelCase (axios interceptor converts to snake_case on the wire)
     expect(mockedApi.post).toHaveBeenCalledWith('/admin/users', {
       email: 'new@example.com',
       firstName: 'New',
       lastName: 'User',
       role: 'resident',
-      send_invite: true,
+      sendInvite: true,
     });
   });
 

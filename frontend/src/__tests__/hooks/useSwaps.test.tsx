@@ -717,7 +717,7 @@ describe('useAutoMatch', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(result.current.data?.total_candidates).toBe(0)
+    expect(result.current.data?.totalCandidates).toBe(0)
   })
 
   it('should handle auto-match error', async () => {

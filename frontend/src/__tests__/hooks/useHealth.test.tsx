@@ -405,7 +405,7 @@ describe('useHealthDetailed', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(result.current.data?.uptime_seconds).toBe(86400)
+    expect(result.current.data?.uptimeSeconds).toBe(86400)
     expect(result.current.data?.version).toBe('1.0.0')
   })
 

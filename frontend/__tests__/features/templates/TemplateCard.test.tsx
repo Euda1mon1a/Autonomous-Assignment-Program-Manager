@@ -496,13 +496,16 @@ describe('TemplateCard', () => {
         />
       );
 
-      // Tab order: actions menu button first (top right of card), then Apply button (bottom)
+      // Tab order: card (tabindex=0) first, then actions menu button, then Apply button
+      await user.tab();
+      expect(screen.getByRole('button', { name: /template: standard clinic schedule/i })).toHaveFocus();
+
       await user.tab();
       expect(screen.getByLabelText('Template actions')).toHaveFocus();
 
       // Tab to Apply button
       await user.tab();
-      expect(screen.getByText('Apply')).toHaveFocus();
+      expect(screen.getByRole('button', { name: /apply template/i })).toHaveFocus();
     });
   });
 });

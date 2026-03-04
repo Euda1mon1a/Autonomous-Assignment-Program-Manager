@@ -404,8 +404,9 @@ describe('HolidayEditModal', () => {
         <HolidayEditModal {...defaultProps} />
       )
 
-      const closeButton = screen.getByRole('button', { name: /close dialog/i })
-      await user.click(closeButton)
+      // Two elements match: backdrop (role="button") and X button — pick the X button (second)
+      const closeButtons = screen.getAllByRole('button', { name: /close dialog/i })
+      await user.click(closeButtons[1])
 
       expect(mockOnClose).toHaveBeenCalledTimes(1)
     })

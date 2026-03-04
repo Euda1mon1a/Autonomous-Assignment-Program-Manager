@@ -49,9 +49,9 @@ const mockVoxelGridData = {
     xSize: 4,
     ySize: 3,
     zSize: 2,
-    xLabels: ["2024-01-15 AM", "2024-01-15 PM", "2024-01-16 AM", "2024-01-16 PM"],
-    yLabels: ["Dr. Smith", "Resident A", "Resident B"],
-    zLabels: ["clinic", "inpatient"],
+    x_labels: ["2024-01-15 AM", "2024-01-15 PM", "2024-01-16 AM", "2024-01-16 PM"],
+    y_labels: ["Dr. Smith", "Resident A", "Resident B"],
+    z_labels: ["clinic", "inpatient"],
   },
   voxels: [
     {
