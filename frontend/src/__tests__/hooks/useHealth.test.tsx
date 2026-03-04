@@ -49,22 +49,22 @@ const mockDetailedResponse: HealthDetailedResponse = {
       status: 'healthy',
       latencyMs: 5,
       message: 'PostgreSQL connection active',
-      last_checked: '2026-02-05T12:00:00Z',
+      lastChecked: '2026-02-05T12:00:00Z',
     },
     redis: {
       status: 'healthy',
       latencyMs: 2,
       message: 'Redis connection active',
-      last_checked: '2026-02-05T12:00:00Z',
+      lastChecked: '2026-02-05T12:00:00Z',
     },
     celery: {
       status: 'healthy',
       latencyMs: 10,
       message: '3 workers active',
-      last_checked: '2026-02-05T12:00:00Z',
+      lastChecked: '2026-02-05T12:00:00Z',
     },
   },
-  uptime_seconds: 86400,
+  uptimeSeconds: 86400,
   version: '1.0.0',
 }
 
@@ -92,7 +92,7 @@ const mockServiceHealth: ServiceHealth = {
   status: 'healthy',
   latencyMs: 5,
   message: 'PostgreSQL connection active',
-  last_checked: '2026-02-05T12:00:00Z',
+  lastChecked: '2026-02-05T12:00:00Z',
 }
 
 const mockDashboardResponse: HealthDashboardResponse = {

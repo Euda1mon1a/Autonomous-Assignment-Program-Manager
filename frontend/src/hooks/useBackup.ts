@@ -18,10 +18,10 @@ export interface SnapshotRequest {
 }
 
 export interface SnapshotResponse {
-  snapshot_id: string;
+  snapshotId: string;
   table: string;
-  row_count: number;
-  file_path: string;
+  rowCount: number;
+  filePath: string;
   createdAt: string;
   createdBy: string;
   reason: string;
@@ -33,14 +33,14 @@ export interface SnapshotListResponse {
 }
 
 export interface RestoreRequest {
-  snapshot_id: string;
+  snapshotId: string;
   dryRun?: boolean;
 }
 
 export interface RestoreResponse {
-  snapshot_id: string;
+  snapshotId: string;
   table: string;
-  rows_restored: number;
+  rowsRestored: number;
   dryRun: boolean;
   message: string;
 }

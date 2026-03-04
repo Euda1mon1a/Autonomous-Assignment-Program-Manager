@@ -48,13 +48,13 @@ export const resilienceQueryKeys = {
   vulnerability: (params?: {
     startDate?: string;
     endDate?: string;
-    include_n2?: boolean;
+    includeN2?: boolean;
   }) => ["resilience", "vulnerability", params] as const,
   defenseLevel: (coverageRate: number) =>
     ["resilience", "defense-level", coverageRate] as const,
   utilization: (params?: {
-    available_faculty: number;
-    required_blocks: number;
+    availableFaculty: number;
+    requiredBlocks: number;
   }) => ["resilience", "utilization", params] as const,
   burnoutRt: (providerIds: string[]) =>
     ["resilience", "burnout-rt", providerIds] as const,
@@ -147,7 +147,7 @@ export function useSystemHealth(
  * ```tsx
  * function VulnerabilityPanel() {
  *   const { data, isLoading, error } = useVulnerabilityReport({
- *     include_n2: true,
+ *     includeN2: true,
  *   });
  *
  *   if (isLoading) return <Skeleton />;
@@ -167,7 +167,7 @@ export function useVulnerabilityReport(
   params?: {
     startDate?: string;
     endDate?: string;
-    include_n2?: boolean;
+    includeN2?: boolean;
   },
   options?: Omit<
     UseQueryOptions<VulnerabilityReportResponse, ApiError>,
@@ -249,8 +249,8 @@ export function useDefenseLevel(
  * ```tsx
  * function UtilizationGauge({ facultyCount, blockCount }: Props) {
  *   const { data, isLoading } = useUtilizationThreshold({
- *     available_faculty: facultyCount,
- *     required_blocks: blockCount,
+ *     availableFaculty: facultyCount,
+ *     requiredBlocks: blockCount,
  *   });
  *
  *   if (isLoading) return <Skeleton />;
@@ -269,10 +269,10 @@ export function useDefenseLevel(
  */
 export function useUtilizationThreshold(
   params: {
-    available_faculty: number;
-    required_blocks: number;
-    blocks_per_faculty_per_day?: number;
-    days_in_period?: number;
+    availableFaculty: number;
+    requiredBlocks: number;
+    blocksPerFacultyPerDay?: number;
+    daysInPeriod?: number;
   },
   options?: Omit<
     UseQueryOptions<UtilizationThresholdResponse, ApiError>,
@@ -282,19 +282,6 @@ export function useUtilizationThreshold(
   return useQuery<UtilizationThresholdResponse, ApiError>({
     queryKey: resilienceQueryKeys.utilization(params),
     queryFn: async () => {
-      const queryParams = new URLSearchParams();
-      queryParams.set("available_faculty", String(params.available_faculty));
-      queryParams.set("required_blocks", String(params.required_blocks));
-      if (params.blocks_per_faculty_per_day !== undefined) {
-        queryParams.set(
-          "blocks_per_faculty_per_day",
-          String(params.blocks_per_faculty_per_day)
-        );
-      }
-      if (params.days_in_period !== undefined) {
-        queryParams.set("days_in_period", String(params.days_in_period));
-      }
-
       const response = await post<UtilizationThresholdResponse>(
         "/resilience/utilization-threshold",
         params
@@ -303,7 +290,7 @@ export function useUtilizationThreshold(
     },
     staleTime: 60 * 1000, // 1 minute
     enabled:
-      params.available_faculty > 0 && params.required_blocks >= 0,
+      params.availableFaculty > 0 && params.requiredBlocks >= 0,
     ...options,
   });
 }
@@ -357,8 +344,8 @@ export function useBurnoutRt(
       const response = await post<BurnoutRtResponse>(
         "/resilience/burnout/rt",
         {
-          burned_out_provider_ids: providerIds,
-          time_window_days: timeWindowDays,
+          burnedOutProviderIds: providerIds,
+          timeWindowDays: timeWindowDays,
         }
       );
       return response;

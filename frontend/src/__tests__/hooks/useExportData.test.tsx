@@ -82,6 +82,7 @@ describe('useExportData', () => {
       expect(result.current.data?.length).toBe(1)
     })
 
+    /* eslint-disable @typescript-eslint/naming-convention -- URL query params must be snake_case */
     expect(mockedApi.get).toHaveBeenCalledWith('/export/schedule', {
       params: {
         format: 'json',
@@ -89,5 +90,6 @@ describe('useExportData', () => {
         end_date: '2026-02-28',
       },
     })
+    /* eslint-enable @typescript-eslint/naming-convention */
   })
 })

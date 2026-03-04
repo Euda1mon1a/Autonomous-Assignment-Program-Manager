@@ -69,11 +69,13 @@ export function useFairnessAudit(
       includeTitledFaculty
     ),
     queryFn: async () => {
+      /* eslint-disable @typescript-eslint/naming-convention -- URL query params must be snake_case */
       const params = new URLSearchParams({
         start_date: startDate!,
         end_date: endDate!,
         include_titled_faculty: String(includeTitledFaculty),
       });
+      /* eslint-enable @typescript-eslint/naming-convention */
       return get<FairnessAuditResponse>(`/fairness/audit?${params}`);
     },
     enabled: !!startDate && !!endDate,
@@ -93,10 +95,12 @@ export function useFairnessSummary(
   return useQuery<FairnessSummaryResponse, ApiError>({
     queryKey: fairnessQueryKeys.summary(startDate || '', endDate || ''),
     queryFn: async () => {
+      /* eslint-disable @typescript-eslint/naming-convention -- URL query params must be snake_case */
       const params = new URLSearchParams({
         start_date: startDate!,
         end_date: endDate!,
       });
+      /* eslint-enable @typescript-eslint/naming-convention */
       return get<FairnessSummaryResponse>(`/fairness/summary?${params}`);
     },
     enabled: !!startDate && !!endDate,
@@ -119,10 +123,12 @@ export function useFacultyWorkload(
       endDate || ''
     ),
     queryFn: async () => {
+      /* eslint-disable @typescript-eslint/naming-convention -- URL query params must be snake_case */
       const params = new URLSearchParams({
         start_date: startDate!,
         end_date: endDate!,
       });
+      /* eslint-enable @typescript-eslint/naming-convention */
       return get<FacultyWorkload>(
         `/fairness/faculty/${facultyId}/workload?${params}`
       );

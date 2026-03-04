@@ -51,7 +51,7 @@ const mockValidationResult = {
   coverageRate: 0.95,
   statistics: {
     totalBlocks: 100,
-    assigned_blocks: 95,
+    assignedBlocks: 95,
   },
 }
 
@@ -220,15 +220,15 @@ describe('useGenerateSchedule', () => {
     const generateResponse = {
       status: 'success' as const,
       message: 'Schedule generated successfully',
-      totalBlocks_assigned: 95,
+      totalBlocksAssigned: 95,
       totalBlocks: 100,
       validation: mockValidationResult,
-      run_id: 'run-123',
+      runId: 'run-123',
       solverStats: {
         totalBlocks: 100,
         totalResidents: 10,
         coverageRate: 0.95,
-        solve_time: 5.2,
+        solveTime: 5.2,
         iterations: 150,
         branches: null,
         conflicts: null,
@@ -256,9 +256,9 @@ describe('useGenerateSchedule', () => {
 
     // Check response
     expect(result.current.data?.status).toBe('success')
-    expect(result.current.data?.totalBlocks_assigned).toBe(95)
+    expect(result.current.data?.totalBlocksAssigned).toBe(95)
     expect(result.current.data?.totalBlocks).toBe(100)
-    expect(result.current.data?.run_id).toBe('run-123')
+    expect(result.current.data?.runId).toBe('run-123')
     expect(mockedApi.post).toHaveBeenCalledWith('/schedule/generate', expect.objectContaining({
       startDate: '2024-01-01',
       endDate: '2024-01-31',
@@ -270,7 +270,7 @@ describe('useGenerateSchedule', () => {
     const generateResponse = {
       status: 'partial' as const,
       message: 'Schedule partially generated',
-      totalBlocks_assigned: 70,
+      totalBlocksAssigned: 70,
       totalBlocks: 100,
       validation: {
         valid: false,
@@ -279,7 +279,7 @@ describe('useGenerateSchedule', () => {
         coverageRate: 0.7,
         statistics: null,
       },
-      run_id: 'run-124',
+      runId: 'run-124',
       solverStats: null,
     }
 
@@ -293,7 +293,7 @@ describe('useGenerateSchedule', () => {
       startDate: '2024-01-01',
       endDate: '2024-01-31',
       algorithm: 'cp_sat',
-      timeout_seconds: 60,
+      timeoutSeconds: 60,
     })
 
     await waitFor(() => {
@@ -301,7 +301,7 @@ describe('useGenerateSchedule', () => {
     })
 
     expect(result.current.data?.status).toBe('partial')
-    expect(result.current.data?.totalBlocks_assigned).toBe(70)
+    expect(result.current.data?.totalBlocksAssigned).toBe(70)
   })
 
   it('should handle API error during generation', async () => {
@@ -329,10 +329,10 @@ describe('useGenerateSchedule', () => {
     const generateResponse = {
       status: 'success' as const,
       message: 'Schedule generated with CP-SAT',
-      totalBlocks_assigned: 98,
+      totalBlocksAssigned: 98,
       totalBlocks: 100,
       validation: mockValidationResult,
-      run_id: 'run-125',
+      runId: 'run-125',
       solverStats: null,
     }
 
@@ -400,7 +400,7 @@ describe('useValidateSchedule', () => {
           personName: 'Dr. Smith',
           blockId: 'block-1',
           message: 'Weekly hours exceed 80',
-          details: { weekly_hours: 85 },
+          details: { weeklyHours: 85 },
         },
         {
           type: 'SUPERVISION',
@@ -454,9 +454,9 @@ describe('useValidateSchedule', () => {
       ...mockValidationResult,
       statistics: {
         totalBlocks: 100,
-        assigned_blocks: 95,
-        unassigned_blocks: 5,
-        coverage_by_pgy: {
+        assignedBlocks: 95,
+        unassignedBlocks: 5,
+        coverageByPgy: {
           pgy1: 0.92,
           pgy2: 0.96,
           pgy3: 0.98,

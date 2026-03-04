@@ -74,14 +74,14 @@ const mockCredentials: Credential[] = [
     procedureId: 'proc-1',
     status: 'active',
     competencyLevel: 'expert',
-    issued_date: '2025-01-01',
+    issuedDate: '2025-01-01',
     expirationDate: '2027-01-01',
-    last_verified_date: '2026-01-01',
-    max_concurrent_residents: 2,
-    max_per_week: 5,
-    max_per_academicYear: 100,
+    lastVerifiedDate: '2026-01-01',
+    maxConcurrentResidents: 2,
+    maxPerWeek: 5,
+    maxPerAcademicYear: 100,
     notes: 'Highly experienced',
-    is_valid: true,
+    isValid: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
   },
@@ -620,8 +620,8 @@ describe('useQualifiedFaculty', () => {
   it('should fetch qualified faculty for a procedure', async () => {
     const mockResponse: QualifiedFacultyResponse = {
       procedureId: 'proc-1',
-      procedure_name: 'Arthroscopy',
-      qualified_faculty: mockQualifiedFaculty,
+      procedureName: 'Arthroscopy',
+      qualifiedFaculty: mockQualifiedFaculty,
       total: 2,
     }
     mockedApi.get.mockResolvedValueOnce(mockResponse)
@@ -635,7 +635,7 @@ describe('useQualifiedFaculty', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(result.current.data?.qualified_faculty).toHaveLength(2)
+    expect(result.current.data?.qualifiedFaculty).toHaveLength(2)
     expect(result.current.data?.total).toBe(2)
     expect(mockedApi.get).toHaveBeenCalledWith('/credentials/qualified-faculty/proc-1')
   })
@@ -681,19 +681,19 @@ describe('useCreateCredential', () => {
       procedureId: 'proc-1',
       status: 'active',
       competencyLevel: 'qualified',
-      issued_date: '2026-02-01',
+      issuedDate: '2026-02-01',
       expirationDate: '2028-02-01',
     }
 
     const mockResponse: Credential = {
       id: 'cred-2',
       ...newCredential,
-      last_verified_date: null,
-      max_concurrent_residents: null,
-      max_per_week: null,
-      max_per_academicYear: null,
+      lastVerifiedDate: null,
+      maxConcurrentResidents: null,
+      maxPerWeek: null,
+      maxPerAcademicYear: null,
       notes: null,
-      is_valid: true,
+      isValid: true,
       createdAt: '2026-02-06T10:00:00Z',
       updatedAt: '2026-02-06T10:00:00Z',
     }

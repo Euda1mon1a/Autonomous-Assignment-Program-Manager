@@ -15,7 +15,7 @@ export interface ServiceHealth {
   status: 'healthy' | 'unhealthy' | 'degraded'
   latencyMs?: number
   message?: string
-  last_checked?: string
+  lastChecked?: string
 }
 
 export interface HealthLiveResponse {
@@ -39,7 +39,7 @@ export interface HealthDetailedResponse {
     redis: ServiceHealth
     celery: ServiceHealth
   }
-  uptime_seconds?: number
+  uptimeSeconds?: number
   version?: string
 }
 

@@ -137,7 +137,7 @@ export function EquityIndicator({
           </span>
           <span
             className={`text-xs px-2 py-0.5 rounded ${
-              currentEquity.is_equitable
+              currentEquity.isEquitable
                 ? 'bg-green-500/20 text-green-400'
                 : 'bg-yellow-500/20 text-yellow-400'
             }`}

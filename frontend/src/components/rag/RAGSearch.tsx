@@ -40,7 +40,7 @@ interface ResultCardProps {
  */
 function ResultCard({ chunk, index }: ResultCardProps) {
   // Format similarity score as percentage
-  const similarityPercent = (chunk.similarity_score * 100).toFixed(1);
+  const similarityPercent = (chunk.similarityScore * 100).toFixed(1);
 
   // Determine badge color based on similarity score
   const getBadgeColor = (score: number): string => {
@@ -65,7 +65,7 @@ function ResultCard({ chunk, index }: ResultCardProps) {
           <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getBadgeColor(
-              chunk.similarity_score
+              chunk.similarityScore
             )}`}
           >
             {similarityPercent}% match
@@ -84,14 +84,14 @@ function ResultCard({ chunk, index }: ResultCardProps) {
       {/* Metadata (if available) */}
       {chunk.metadata && (
         <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
-          {chunk.metadata.source_file && (
-            <span className="mr-4">Source: {chunk.metadata.source_file}</span>
+          {chunk.metadata.sourceFile && (
+            <span className="mr-4">Source: {chunk.metadata.sourceFile}</span>
           )}
-          {chunk.metadata.section_title && (
-            <span className="mr-4">Section: {chunk.metadata.section_title}</span>
+          {chunk.metadata.sectionTitle && (
+            <span className="mr-4">Section: {chunk.metadata.sectionTitle}</span>
           )}
-          {chunk.metadata.page_number && (
-            <span>Page: {chunk.metadata.page_number}</span>
+          {chunk.metadata.pageNumber && (
+            <span>Page: {chunk.metadata.pageNumber}</span>
           )}
         </div>
       )}
@@ -179,7 +179,7 @@ export function RAGSearch({ className = '', defaultTopK = 5 }: RAGSearchProps) {
     search({
       query: query.trim(),
       category: category || undefined,
-      top_k: defaultTopK,
+      topK: defaultTopK,
     });
   }, [query, category, defaultTopK, search]);
 
@@ -206,7 +206,7 @@ export function RAGSearch({ className = '', defaultTopK = 5 }: RAGSearchProps) {
         {!isHealthLoading && healthData && (
           <HealthIndicator
             status={healthData.status}
-            documentCount={healthData.document_count}
+            documentCount={healthData.documentCount}
           />
         )}
       </div>
@@ -277,16 +277,16 @@ export function RAGSearch({ className = '', defaultTopK = 5 }: RAGSearchProps) {
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
               Found {searchData.chunks.length} result{searchData.chunks.length !== 1 ? 's' : ''}
-              {searchData.category_filter && ` in ${searchData.category_filter.replace('_', ' ')}`}
+              {searchData.categoryFilter && ` in ${searchData.categoryFilter.replace('_', ' ')}`}
             </span>
-            <span>Query time: {searchData.query_time_ms}ms</span>
+            <span>Query time: {searchData.queryTimeMs}ms</span>
           </div>
 
           {/* Results list */}
           {searchData.chunks.length > 0 ? (
             <div className="space-y-3">
               {searchData.chunks.map((chunk, index) => (
-                <ResultCard key={chunk.chunk_id} chunk={chunk} index={index} />
+                <ResultCard key={chunk.chunkId} chunk={chunk} index={index} />
               ))}
             </div>
           ) : (

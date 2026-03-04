@@ -45,8 +45,8 @@ const mockTournament = {
   rounds: 100,
   status: 'completed' as const,
   winner: 'strategy-1',
-  started_at: '2024-01-01T00:00:00Z',
-  completed_at: '2024-01-01T00:05:00Z',
+  startedAt: '2024-01-01T00:00:00Z',
+  completedAt: '2024-01-01T00:05:00Z',
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:05:00Z',
 };
@@ -278,7 +278,7 @@ describe('useEvolutions', () => {
       id: 'evolution-123',
       name: 'Evolution Test',
       generations: 50,
-      population_size: 100,
+      populationSize: 100,
       status: 'completed' as const,
       winner: 'strategy-1',
       createdAt: '2024-01-01T00:00:00Z',
@@ -306,7 +306,7 @@ describe('useValidateStrategy', () => {
   it('validates strategy against tit for tat', async () => {
     const mockValidationResult = {
       strategyId: 'strategy-123',
-      is_valid: true,
+      isValid: true,
       score: 85,
       cooperations: 90,
       defections: 10,
@@ -336,10 +336,10 @@ describe('useValidateStrategy', () => {
 describe('useAnalyzeConfig', () => {
   it('analyzes configuration using game theory', async () => {
     const mockAnalysisResult = {
-      config_id: 'config-123',
-      stability_score: 0.92,
-      nash_equilibrium: true,
-      pareto_optimal: true,
+      configId: 'config-123',
+      stabilityScore: 0.92,
+      nashEquilibrium: true,
+      paretoOptimal: true,
       recommendations: ['Increase timeout', 'Adjust priority weights'],
     };
     mockedApi.post.mockResolvedValueOnce(mockAnalysisResult);
@@ -366,11 +366,11 @@ describe('useAnalyzeConfig', () => {
 describe('useGameTheorySummary', () => {
   it('fetches game theory summary successfully', async () => {
     const mockSummary = {
-      total_strategies: 10,
-      total_tournaments: 25,
-      total_evolutions: 5,
-      active_simulations: 2,
-      recent_winners: ['Tit for Tat', 'Generous Tit for Tat'],
+      totalStrategies: 10,
+      totalTournaments: 25,
+      totalEvolutions: 5,
+      activeSimulations: 2,
+      recentWinners: ['Tit for Tat', 'Generous Tit for Tat'],
     };
     mockedApi.get.mockResolvedValueOnce(mockSummary);
 

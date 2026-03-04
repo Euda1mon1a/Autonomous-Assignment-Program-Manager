@@ -206,6 +206,7 @@ export function useFragilityData(
   return useQuery({
     queryKey: ['resilience', 'vulnerability', startDate, endDate],
     queryFn: async () => {
+      /* eslint-disable @typescript-eslint/naming-convention -- URL query params must be snake_case */
       const response = await api.get<VulnerabilityReportResponse>('/resilience/vulnerability', {
         params: {
           start_date: startDate,
@@ -213,6 +214,7 @@ export function useFragilityData(
           include_n2: true,
         },
       });
+      /* eslint-enable @typescript-eslint/naming-convention */
       return mapToFragilityDays(response.data);
     },
     enabled: enabled && !!startDate && !!endDate,
@@ -232,6 +234,7 @@ export function useVulnerabilityReport(
   return useQuery({
     queryKey: ['resilience', 'vulnerability', 'raw', startDate, endDate],
     queryFn: async () => {
+      /* eslint-disable @typescript-eslint/naming-convention -- URL query params must be snake_case */
       const response = await api.get<VulnerabilityReportResponse>('/resilience/vulnerability', {
         params: {
           start_date: startDate,
@@ -239,6 +242,7 @@ export function useVulnerabilityReport(
           include_n2: true,
         },
       });
+      /* eslint-enable @typescript-eslint/naming-convention */
       return response.data;
     },
     enabled: enabled && !!startDate && !!endDate,

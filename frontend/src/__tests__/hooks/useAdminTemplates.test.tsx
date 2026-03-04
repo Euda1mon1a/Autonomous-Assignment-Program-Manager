@@ -488,10 +488,12 @@ describe('useTemplatesMap', () => {
       expect(result.current).toBeDefined()
     })
 
+    /* eslint-disable @typescript-eslint/naming-convention -- ID keys */
     expect(result.current).toEqual({
       'template-1': templates[0],
       'template-2': templates[1],
     })
+    /* eslint-enable @typescript-eslint/naming-convention */
   })
 })
 

@@ -27,18 +27,18 @@ export type RAGCategory =
  */
 export interface RAGChunk {
   /** Unique identifier for the chunk */
-  chunk_id: string
+  chunkId: string
   /** The document category this chunk belongs to */
   category: RAGCategory
   /** The actual text content of the chunk */
   content: string
   /** Cosine similarity score (0-1, higher is more relevant) */
-  similarity_score: number
+  similarityScore: number
   /** Additional metadata about the chunk */
   metadata?: {
-    source_file?: string
-    section_title?: string
-    page_number?: number
+    sourceFile?: string
+    sectionTitle?: string
+    pageNumber?: number
   }
 }
 
@@ -51,7 +51,7 @@ export interface RAGRetrieveRequest {
   /** Optional category filter */
   category?: RAGCategory
   /** Maximum number of results to return (default: 5) */
-  top_k?: number
+  topK?: number
   /** Minimum similarity threshold (0-1, default: 0.5) */
   threshold?: number
 }
@@ -63,11 +63,11 @@ export interface RAGRetrieveResponse {
   /** Retrieved document chunks */
   chunks: RAGChunk[]
   /** Total chunks searched */
-  total_searched: number
+  totalSearched: number
   /** Time taken in milliseconds */
-  query_time_ms: number
+  queryTimeMs: number
   /** The category filter used (if any) */
-  category_filter?: RAGCategory
+  categoryFilter?: RAGCategory
 }
 
 /**
@@ -77,13 +77,13 @@ export interface RAGHealthResponse {
   /** Overall health status */
   status: 'healthy' | 'unhealthy' | 'degraded'
   /** Whether the vector store is available */
-  vector_store_available: boolean
+  vectorStoreAvailable: boolean
   /** Number of documents indexed */
-  document_count: number
+  documentCount: number
   /** Embedding model status */
-  embedding_model: string
+  embeddingModel: string
   /** Last index update timestamp */
-  last_updated?: string
+  lastUpdated?: string
 }
 
 // ============================================================================
@@ -122,7 +122,7 @@ export const ragQueryKeys = {
  *       <Badge color={data?.status === 'healthy' ? 'green' : 'red'}>
  *         {data?.status}
  *       </Badge>
- *       <p>Documents: {data?.document_count}</p>
+ *       <p>Documents: {data?.documentCount}</p>
  *     </div>
  *   );
  * }
@@ -162,7 +162,7 @@ export function useRAGHealth(options?: { enabled?: boolean; refetchInterval?: nu
  *
  *   const handleSearch = () => {
  *     mutate(
- *       { query, category: 'acgme_rules', top_k: 5 },
+ *       { query, category: 'acgme_rules', topK: 5 }, // eslint-disable-line @typescript-eslint/naming-convention -- enum value
  *       {
  *         onSuccess: (result) => {
  *           // console.log(`Found ${result.chunks.length} results`);
@@ -178,7 +178,7 @@ export function useRAGHealth(options?: { enabled?: boolean; refetchInterval?: nu
  *         {isPending ? 'Searching...' : 'Search'}
  *       </button>
  *       {data?.chunks.map((chunk) => (
- *         <ResultCard key={chunk.chunk_id} chunk={chunk} />
+ *         <ResultCard key={chunk.chunkId} chunk={chunk} />
  *       ))}
  *     </div>
  *   );

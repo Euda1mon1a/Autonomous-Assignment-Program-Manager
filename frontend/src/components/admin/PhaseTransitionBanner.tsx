@@ -101,10 +101,10 @@ export function PhaseTransitionBanner({
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               {data.signals.length} early warning signal{data.signals.length !== 1 ? 's' : ''} detected
-              {data.time_to_transition && (
+              {data.timeToTransition && (
                 <span className="ml-2 flex items-center gap-1 inline-flex">
                   <Clock className="w-3 h-3" aria-hidden="true" />
-                  ~{Math.round(data.time_to_transition)}h until transition
+                  ~{Math.round(data.timeToTransition)}h until transition
                 </span>
               )}
             </p>
@@ -161,7 +161,7 @@ export function PhaseTransitionBanner({
                           : 'text-yellow-400'
                       }`}
                     >
-                      {signal.signal_type}:
+                      {signal.signalType}:
                     </span>
                     <span className="text-slate-300 flex-1">
                       {signal.description}

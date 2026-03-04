@@ -4,7 +4,7 @@
  * Tests for debouncing utilities including useDebounce, useDebouncedCallback,
  * and useDebouncedState.
  */
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import {
   useDebounce,
   useDebouncedCallback,

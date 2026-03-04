@@ -55,7 +55,7 @@ const mockHealthDetailed = {
       message: 'Active',
     },
   },
-  uptime_seconds: 86400,
+  uptimeSeconds: 86400,
   version: '1.0.0',
 };
 

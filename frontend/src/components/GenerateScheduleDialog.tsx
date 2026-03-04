@@ -93,7 +93,7 @@ export function GenerateScheduleDialog({
         startDate: startDate,
         endDate: endDate,
         algorithm,
-        timeout_seconds: parseFloat(timeout),
+        timeoutSeconds: parseFloat(timeout),
         pgyLevels: pgyLevels,
       });
       setShowResults(true);
@@ -162,7 +162,7 @@ export function GenerateScheduleDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 rounded-lg p-3">
               <p className="text-sm text-gray-500">Blocks Assigned</p>
-              <p className="text-2xl font-bold">{result.totalBlocks_assigned}/{result.totalBlocks}</p>
+              <p className="text-2xl font-bold">{result.totalBlocksAssigned}/{result.totalBlocks}</p>
             </div>
             <div className="bg-gray-50 rounded-lg p-3">
               <p className="text-sm text-gray-500">Coverage Rate</p>

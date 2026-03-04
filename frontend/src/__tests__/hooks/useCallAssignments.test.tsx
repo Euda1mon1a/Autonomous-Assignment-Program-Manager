@@ -68,10 +68,12 @@ const mockCoverageReport: CallCoverageReport = {
     overnight: 20,
     weekend: 8,
   },
+  /* eslint-disable @typescript-eslint/naming-convention -- ID keys */
   assignmentsByPerson: {
     'person-1': 14,
     'person-2': 14,
   },
+  /* eslint-enable @typescript-eslint/naming-convention */
   gapDates: ['2024-03-10', '2024-03-15', '2024-03-22'],
 };
 

@@ -164,7 +164,7 @@ export function useUpsertTemplateSlot() {
           dayOfWeek: slot.dayOfWeek,
           timeOfDay: slot.timeOfDay,
           weekNumber: slot.weekNumber,
-          activity_id: slot.activityId,
+          activityId: slot.activityId,
           isLocked: slot.isLocked ?? false,
           priority: slot.priority ?? 50,
           notes: slot.notes,
@@ -259,10 +259,10 @@ export function useCreateFacultyOverride() {
       return post<FacultyOverride>(
         `/faculty/${personId}/weekly-overrides`,
         {
-          effective_date: override.effectiveDate,
+          effectiveDate: override.effectiveDate,
           dayOfWeek: override.dayOfWeek,
           timeOfDay: override.timeOfDay,
-          activity_id: override.activityId,
+          activityId: override.activityId,
           isLocked: override.isLocked ?? false,
           overrideReason: override.overrideReason,
         }

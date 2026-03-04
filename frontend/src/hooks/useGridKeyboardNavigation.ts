@@ -36,6 +36,7 @@ export interface UseGridKeyboardNavigationReturn {
     role: 'grid'
   }
   /** Get props for a specific cell */
+  /* eslint-disable @typescript-eslint/naming-convention -- HTML data-* and aria-* attributes require hyphenated names */
   getCellProps: (row: number, col: number) => {
     tabIndex: number
     'data-row': number
@@ -45,6 +46,7 @@ export interface UseGridKeyboardNavigationReturn {
     role: 'gridcell'
     'aria-selected': boolean
   }
+  /* eslint-enable @typescript-eslint/naming-convention */
   /** Set focus to a specific cell */
   setFocusedCell: (position: GridPosition | null) => void
 }
@@ -180,6 +182,7 @@ export function useGridKeyboardNavigation({
       const isFirstCell = row === 0 && col === 0
       const tabIndex = isFocused ? 0 : focusedCell === null && isFirstCell ? 0 : -1
 
+      /* eslint-disable @typescript-eslint/naming-convention -- HTML data-* and aria-* attributes */
       return {
         tabIndex,
         'data-row': row,
@@ -192,6 +195,7 @@ export function useGridKeyboardNavigation({
         role: 'gridcell' as const,
         'aria-selected': isFocused,
       }
+      /* eslint-enable @typescript-eslint/naming-convention */
     },
     [focusedCell, onCellActivate]
   )

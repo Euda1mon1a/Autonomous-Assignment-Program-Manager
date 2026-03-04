@@ -462,9 +462,9 @@ describe('useGenerateScheduleRun', () => {
       expect.objectContaining({
         algorithm: 'cp_sat',
         dryRun: false,
-        preserve_fmit: true,
-        nf_post_call: false,
-        timeout_seconds: 300,
+        preserveFmit: true,
+        nfPostCall: false,
+        timeoutSeconds: 300,
       })
     )
   })

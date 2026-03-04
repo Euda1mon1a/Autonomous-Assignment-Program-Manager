@@ -64,6 +64,7 @@ export interface ClaudeCodeContext {
  * Helper function to extract CodeBlock from streaming metadata.
  * Kept for potential future use with tool results.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for future tool result parsing
 function _extractCodeBlock(content: string, metadata?: StreamMetadata): CodeBlock | null {
   if (!metadata) return null;
   return {
@@ -90,6 +91,7 @@ function inferArtifactType(toolName?: string): ChatArtifact['type'] {
  * Helper function to extract ChatArtifact from streaming data.
  * Kept for potential future use with tool results.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for future tool result parsing
 function _extractArtifact(content: string, metadata?: StreamMetadata): ChatArtifact | null {
   if (!metadata) return null;
   const artifactType = typeof metadata.type === 'string' ? metadata.type : 'configuration';
@@ -145,8 +147,8 @@ export interface SavedSession {
  */
 interface WsConnectedMessage {
   type: 'connected';
-  session_id: string;
-  history_count: number;
+  sessionId: string;
+  historyCount: number;
 }
 
 interface WsTokenMessage {
@@ -170,8 +172,8 @@ interface WsToolResultMessage {
 interface WsCompleteMessage {
   type: 'complete';
   usage: {
-    input_tokens: number;
-    output_tokens: number;
+    inputTokens: number;
+    outputTokens: number;
   };
 }
 
@@ -183,7 +185,7 @@ interface WsErrorMessage {
 interface WsInterruptedMessage {
   type: 'interrupted';
   message: string;
-  partial_response?: boolean;
+  partialResponse?: boolean;
 }
 
 interface WsHistoryMessage {
@@ -192,7 +194,7 @@ interface WsHistoryMessage {
     role: string;
     content: string;
     timestamp: string;
-    tool_calls?: Array<Record<string, unknown>>;
+    toolCalls?: Array<Record<string, unknown>>;
   }>;
 }
 
@@ -355,7 +357,7 @@ export const useClaudeChat = () => {
     switch (data.type) {
       case 'connected':
         // Update session ID if we got a new one from server
-        setSession(prev => prev ? { ...prev, id: data.session_id } : prev);
+        setSession(prev => prev ? { ...prev, id: data.sessionId } : prev);
         break;
 
       case 'token': {
@@ -589,11 +591,13 @@ export const useClaudeChat = () => {
       setMessages(prev => [...prev, assistantMessage]);
 
       // Send message via WebSocket
+      /* eslint-disable @typescript-eslint/naming-convention -- WebSocket message keys sent directly, not through axios interceptor */
       wsRef.current.send(JSON.stringify({
         type: 'user_message',
         content: userInput,
         session_id: session.id,
       }));
+      /* eslint-enable @typescript-eslint/naming-convention */
     },
     [session, connect]
   );

@@ -46,6 +46,7 @@ describe('useStageImport', () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       // Backend stage endpoint returns snake_case; hook maps to batchId.
+      // eslint-disable-next-line @typescript-eslint/naming-convention -- raw API response
       json: async () => ({ batch_id: 'batch-1' }),
     });
 

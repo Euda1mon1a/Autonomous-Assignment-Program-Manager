@@ -19,8 +19,8 @@ export function UtilizationChart() {
   // Fetch detailed utilization threshold analysis when we have faculty/block data
   const { data: thresholdData } = useUtilizationThreshold(
     {
-      available_faculty: data?.utilization?.safeCapacity ?? 0,
-      required_blocks: data?.utilization?.currentDemand ?? 0,
+      availableFaculty: data?.utilization?.safeCapacity ?? 0,
+      requiredBlocks: data?.utilization?.currentDemand ?? 0,
     },
     {
       enabled: !!data && data.utilization.safeCapacity > 0,

@@ -99,14 +99,14 @@ export interface Credential {
   procedureId: string;
   status: CredentialStatus;
   competencyLevel: CompetencyLevel;
-  issued_date: string | null;
+  issuedDate: string | null;
   expirationDate: string | null;
-  last_verified_date: string | null;
-  max_concurrent_residents: number | null;
-  max_per_week: number | null;
-  max_per_academicYear: number | null;
+  lastVerifiedDate: string | null;
+  maxConcurrentResidents: number | null;
+  maxPerWeek: number | null;
+  maxPerAcademicYear: number | null;
   notes: string | null;
-  is_valid: boolean;
+  isValid: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -135,12 +135,12 @@ export interface CredentialCreate {
   procedureId: string;
   status?: CredentialStatus;
   competencyLevel?: CompetencyLevel;
-  issued_date?: string | null;
+  issuedDate?: string | null;
   expirationDate?: string | null;
-  last_verified_date?: string | null;
-  max_concurrent_residents?: number | null;
-  max_per_week?: number | null;
-  max_per_academicYear?: number | null;
+  lastVerifiedDate?: string | null;
+  maxConcurrentResidents?: number | null;
+  maxPerWeek?: number | null;
+  maxPerAcademicYear?: number | null;
   notes?: string | null;
 }
 
@@ -151,10 +151,10 @@ export interface CredentialUpdate {
   status?: CredentialStatus | null;
   competencyLevel?: CompetencyLevel | null;
   expirationDate?: string | null;
-  last_verified_date?: string | null;
-  max_concurrent_residents?: number | null;
-  max_per_week?: number | null;
-  max_per_academicYear?: number | null;
+  lastVerifiedDate?: string | null;
+  maxConcurrentResidents?: number | null;
+  maxPerWeek?: number | null;
+  maxPerAcademicYear?: number | null;
   notes?: string | null;
 }
 
@@ -175,8 +175,8 @@ export interface FacultyCredentialSummary {
  */
 export interface QualifiedFacultyResponse {
   procedureId: string;
-  procedure_name: string;
-  qualified_faculty: PersonSummary[];
+  procedureName: string;
+  qualifiedFaculty: PersonSummary[];
   total: number;
 }
 
@@ -517,7 +517,7 @@ export function useFacultyCredentials(
  *
  *   return (
  *     <Select label="Select Supervisor" onChange={onSelect}>
- *       {data.qualified_faculty.map(faculty => (
+ *       {data.qualifiedFaculty.map(faculty => (
  *         <option key={faculty.id} value={faculty.id}>
  *           {faculty.name}
  *         </option>

@@ -89,7 +89,7 @@ export type CertificationStatus = 'current' | 'expiringSoon' | 'expired' | 'pend
 export interface CertificationType {
   id: string
   name: string
-  full_name?: string
+  fullName?: string
 }
 
 /**
@@ -98,14 +98,14 @@ export interface CertificationType {
 export interface PersonCertification {
   id: string
   personId: string
-  certificationType_id: string
-  certification_number?: string
-  issued_date: string
+  certificationTypeId: string
+  certificationNumber?: string
+  issuedDate: string
   expirationDate: string
   status: CertificationStatus
-  verified_by?: string
-  verified_date?: string
-  document_url?: string
+  verifiedBy?: string
+  verifiedDate?: string
+  documentUrl?: string
   daysUntilExpiration: number
   isExpired: boolean
   isExpiringSoon: boolean

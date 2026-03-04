@@ -50,14 +50,14 @@ const mockCredential = {
   procedureId: 'proc-123',
   status: 'active' as const,
   competencyLevel: 'qualified' as const,
-  issued_date: '2024-01-01',
+  issuedDate: '2024-01-01',
   expirationDate: '2025-01-01',
-  last_verified_date: '2024-01-01',
-  max_concurrent_residents: 2,
-  max_per_week: 5,
-  max_per_academicYear: 200,
+  lastVerifiedDate: '2024-01-01',
+  maxConcurrentResidents: 2,
+  maxPerWeek: 5,
+  maxPerAcademicYear: 200,
   notes: null,
-  is_valid: true,
+  isValid: true,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 };
@@ -289,8 +289,8 @@ describe('useQualifiedFaculty', () => {
   it('fetches qualified faculty for procedure', async () => {
     const mockResponse = {
       procedureId: 'proc-123',
-      procedure_name: 'Knee Arthroscopy',
-      qualified_faculty: [
+      procedureName: 'Knee Arthroscopy',
+      qualifiedFaculty: [
         { id: 'faculty-1', name: 'Dr. Smith', type: 'FACULTY' },
         { id: 'faculty-2', name: 'Dr. Jones', type: 'FACULTY' },
       ],

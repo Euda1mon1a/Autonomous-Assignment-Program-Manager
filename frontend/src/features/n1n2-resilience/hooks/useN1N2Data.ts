@@ -163,8 +163,7 @@ export function useN1N2Data(): UseN1N2DataResult {
     data: vulnerabilityData,
     isLoading: isLoadingVulnerability,
     error: vulnerabilityError,
-    // eslint-disable-next-line @typescript-eslint/naming-convention -- API param is snake_case
-  } = useVulnerabilityReport({ include_n2: true });
+  } = useVulnerabilityReport({ includeN2: true });
 
   // Transform zone data into faculty format for visualizer
   const faculty = useMemo<Faculty[]>(() => {

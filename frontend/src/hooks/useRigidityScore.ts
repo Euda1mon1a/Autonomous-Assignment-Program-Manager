@@ -17,30 +17,30 @@ import type { ApiError } from '@/lib/api';
 
 export interface RigidityRequest {
   /** Current schedule ID */
-  current_scheduleId?: string | null;
+  currentScheduleId?: string | null;
   /** Proposed schedule ID to compare */
-  proposed_scheduleId?: string | null;
+  proposedScheduleId?: string | null;
   /** Alternative: provide assignment lists directly */
-  current_assignments?: Array<Record<string, string>> | null;
+  currentAssignments?: Array<Record<string, string>> | null;
   /** Alternative: provide assignment lists directly */
-  proposed_assignments?: Array<Record<string, string>> | null;
+  proposedAssignments?: Array<Record<string, string>> | null;
 }
 
 export interface RigidityResponse {
   /** Rigidity score (1.0 = no changes, 0.0 = complete overhaul) */
   rigidityScore: number;
   /** Number of assignments changed */
-  changed_assignments: number;
+  changedAssignments: number;
   /** Total assignments compared */
   totalAssignments: number;
   /** Fraction of assignments changed (0.0 - 1.0) */
-  change_rate: number;
+  changeRate: number;
   /** Faculty with changed assignments */
-  affected_faculty: string[];
+  affectedFaculty: string[];
   /** Detailed churn breakdown */
-  churn_analysis: Record<string, unknown>;
+  churnAnalysis: Record<string, unknown>;
   /** Stability rating: excellent, good, fair, poor, unstable */
-  stability_grade: string;
+  stabilityGrade: string;
   /** Data source */
   source: string;
 }
@@ -85,8 +85,8 @@ export const rigidityScoreQueryKeys = {
  *   return (
  *     <div className={getRigidityColor(data.rigidityScore)}>
  *       <span>Rigidity: {data.rigidityScore.toFixed(2)}</span>
- *       <p>{data.stability_grade}</p>
- *       <p>{data.changed_assignments} assignments changed</p>
+ *       <p>{data.stabilityGrade}</p>
+ *       <p>{data.changedAssignments} assignments changed</p>
  *     </div>
  *   );
  * }
@@ -109,19 +109,19 @@ export function useRigidityScore(
         // Return default values for empty input
         return {
           rigidityScore: 1.0,
-          changed_assignments: 0,
+          changedAssignments: 0,
           totalAssignments: 0,
-          change_rate: 0.0,
-          affected_faculty: [],
-          churn_analysis: {},
-          stability_grade: 'excellent',
+          changeRate: 0.0,
+          affectedFaculty: [],
+          churnAnalysis: {},
+          stabilityGrade: 'excellent',
           source: 'frontend',
         };
       }
 
       const request: RigidityRequest = {
-        current_assignments: currentAssignments,
-        proposed_assignments: proposedAssignments,
+        currentAssignments: currentAssignments,
+        proposedAssignments: proposedAssignments,
       };
 
       // Call exotic resilience API endpoint

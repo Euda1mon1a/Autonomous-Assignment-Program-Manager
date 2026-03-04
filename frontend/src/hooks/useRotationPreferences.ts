@@ -91,6 +91,8 @@ export const preferencesQueryKeys = {
 /**
  * Human-readable metadata for each preference type.
  */
+// @enum-ok — keys are PreferenceType enum values from API, must stay snake_case
+/* eslint-disable @typescript-eslint/naming-convention -- Record keys are API enum values */
 export const PREFERENCE_METADATA: Record<
   PreferenceType,
   {
@@ -134,6 +136,7 @@ export const PREFERENCE_METADATA: Record<
     configSchema: ["max_same_per_day"],
   },
 };
+/* eslint-enable @typescript-eslint/naming-convention */
 
 /**
  * Weight multipliers for optimization scoring.

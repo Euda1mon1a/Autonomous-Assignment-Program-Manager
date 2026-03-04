@@ -59,43 +59,29 @@ class MockWebSocket {
 }
 
 // Mock global WebSocket
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- WebSocket constructor override requires unsafe cast
 global.WebSocket = MockWebSocket as any;
 
-// Test event data
+/** Type-safe accessor for mock WebSocket instances created during tests */
+function getMockWsInstance(index: number): MockWebSocket | undefined {
+  const ctor = global.WebSocket as unknown as { instances?: MockWebSocket[] };
+  return ctor.instances?.[index];
+}
+
+// Test event data — these use camelCase because the hook's snakeToCamel converts
+// wire-format keys before returning them to consumers
 const mockScheduleUpdatedEvent = {
   eventType: 'schedule_updated',
   timestamp: '2024-01-01T00:00:00Z',
   scheduleId: 'schedule-123',
-  academicYear_id: 'year-2024',
+  academicYearId: 'year-2024',
   userId: 'user-456',
-  update_type: 'generated',
-  affected_blocks_count: 50,
+  updateType: 'generated',
+  affectedBlocksCount: 50,
   message: 'Schedule generated successfully',
 };
 
-const mockAssignmentChangedEvent = {
-  eventType: 'assignment_changed',
-  timestamp: '2024-01-01T00:00:00Z',
-  assignmentId: 'assignment-789',
-  personId: 'person-123',
-  blockId: 'block-456',
-  rotationTemplateId: 'template-789',
-  change_type: 'created',
-  changed_by: 'user-123',
-  message: 'Assignment created',
-};
-
-const mockConnectionAckEvent = {
-  eventType: 'connection_ack',
-  timestamp: '2024-01-01T00:00:00Z',
-  userId: 'user-123',
-  message: 'Connected successfully',
-};
-
 describe('useWebSocket', () => {
-  let mockWs: MockWebSocket;
-
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -167,10 +153,8 @@ describe('useWebSocket', () => {
     // Simulate receiving a message
     act(() => {
       // Get the mock WebSocket instance
-      const ws = (global as any).WebSocket.instances?.[0];
-      if (ws) {
-        ws.simulateMessage(mockScheduleUpdatedEvent);
-      }
+      const ws = getMockWsInstance(0);
+      ws?.simulateMessage(mockScheduleUpdatedEvent);
     });
 
     expect(onMessage).toHaveBeenCalledWith(mockScheduleUpdatedEvent);
@@ -219,10 +203,8 @@ describe('useWebSocket', () => {
 
     // Simulate an error
     act(() => {
-      const ws = (global as any).WebSocket.instances?.[0];
-      if (ws) {
-        ws.simulateError();
-      }
+      const ws = getMockWsInstance(0);
+      ws?.simulateError();
     });
 
     expect(onError).toHaveBeenCalled();
@@ -274,10 +256,8 @@ describe('useWebSocket', () => {
 
     // Simulate disconnection
     act(() => {
-      const ws = (global as any).WebSocket.instances?.[0];
-      if (ws) {
-        ws.close();
-      }
+      const ws = getMockWsInstance(0);
+      ws?.close();
     });
 
     expect(result.current.connectionState).toBe('reconnecting');
@@ -312,10 +292,8 @@ describe('useWebSocket', () => {
     // Simulate multiple disconnections to test exponential backoff
     for (let i = 0; i < 3; i++) {
       act(() => {
-        const ws = (global as any).WebSocket.instances?.[i];
-        if (ws) {
-          ws.close();
-        }
+        const ws = getMockWsInstance(i);
+        ws?.close();
       });
 
       act(() => {
@@ -346,10 +324,8 @@ describe('useWebSocket', () => {
     // Simulate multiple failed reconnections
     for (let i = 0; i <= 3; i++) {
       act(() => {
-        const ws = (global as any).WebSocket.instances?.[i];
-        if (ws) {
-          ws.close();
-        }
+        const ws = getMockWsInstance(i);
+        ws?.close();
       });
 
       act(() => {
