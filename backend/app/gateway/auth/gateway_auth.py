@@ -20,7 +20,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import HTTPException, Request, status
-from jose import jwt
+import jwt
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 

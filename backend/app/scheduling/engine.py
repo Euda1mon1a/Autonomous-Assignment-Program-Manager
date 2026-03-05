@@ -68,6 +68,14 @@ from app.scheduling.solvers import (
 from app.scheduling.validator import ACGMEValidator
 from app.services.sync_preload_service import SyncPreloadService
 from app.scheduling.activity_solver import CPSATActivitySolver
+
+# OpenTelemetry instrumentation — no-op when tracing is disabled
+try:
+    from app.telemetry import get_tracer
+
+    _tracer = get_tracer(__name__)
+except Exception:
+    _tracer = None
 from app.services.schedule_draft_service import ScheduleDraftService
 from app.models.schedule_draft import DraftSourceType
 from app.models.person_academic_year import PersonAcademicYear
@@ -1420,6 +1428,20 @@ class SchedulingEngine:
         constraint_manager: ConstraintManager | None = None,
     ) -> SolverResult:
         """Run the selected solver algorithm."""
+        span = (
+            _tracer.start_span(
+                "scheduling.run_solver",
+                attributes={
+                    "solver.algorithm": algorithm,
+                    "solver.timeout_seconds": timeout_seconds,
+                    "solver.num_residents": len(context.residents),
+                    "solver.num_blocks": len(context.blocks),
+                    "solver.num_templates": len(context.templates),
+                },
+            )
+            if _tracer
+            else None
+        )
         try:
             if algorithm not in self.ALGORITHMS:
                 logger.warning(
@@ -1441,9 +1463,19 @@ class SchedulingEngine:
             existing_assign = (
                 context.existing_assignments if context.existing_assignments else []
             )
-            return solver.solve(context, existing_assign)
+            result = solver.solve(context, existing_assign)
+            if span:
+                span.set_attribute("solver.success", result.success)
+                span.set_attribute("solver.status", result.status)
+                span.set_attribute("solver.num_assignments", len(result.assignments))
+                span.end()
+            return result
         except Exception as e:
             logger.error(f"Solver error: {e}")
+            if span:
+                span.set_attribute("solver.success", False)
+                span.set_attribute("solver.error", str(e))
+                span.end()
             return SolverResult(
                 success=False,
                 assignments=[],

@@ -354,6 +354,37 @@ class ConstraintConfigManager:
         """
         return self._configs.get(name)
 
+    def load_from_db(self) -> None:
+        """Load persisted constraint overrides from the database.
+
+        Applies stored enable/disable and weight changes on top of defaults.
+        Silently skips if the database is unavailable (e.g., during testing).
+        """
+        try:
+            from app.db.session import SessionLocal
+            from app.models.constraint_config import ConstraintConfiguration
+
+            db = SessionLocal()
+            try:
+                rows = db.query(ConstraintConfiguration).all()
+                for row in rows:
+                    config = self._configs.get(row.name)
+                    if config:
+                        config.enabled = row.enabled
+                        config.weight = row.weight
+                        logger.debug(
+                            f"Loaded persisted constraint config: {row.name} "
+                            f"(enabled={row.enabled}, weight={row.weight})"
+                        )
+                if rows:
+                    logger.info(
+                        f"Loaded {len(rows)} persisted constraint overrides from database"
+                    )
+            finally:
+                db.close()
+        except Exception as e:
+            logger.debug(f"Could not load constraint configs from DB: {e}")
+
     def is_enabled(self, name: str) -> bool:
         """
         Check if a constraint is enabled.
@@ -571,6 +602,9 @@ def get_constraint_config() -> ConstraintConfigManager:
         if preset:
             logger.info(f"Applying constraint preset from environment: {preset}")
             _constraint_config_manager.apply_preset(preset)
+
+        # Load persisted overrides from database
+        _constraint_config_manager.load_from_db()
 
     return _constraint_config_manager
 

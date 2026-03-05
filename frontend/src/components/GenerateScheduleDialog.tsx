@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { Modal } from './Modal';
 import { Select, DatePicker } from './forms';
 import { useGenerateSchedule } from '@/lib/hooks';
+import { useSchedulingAlgorithms, usePgyLevels } from '@/hooks/useEnums';
 import { SchedulingAlgorithm } from '@/types/api';
 import { CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
@@ -20,18 +21,24 @@ interface FormErrors {
   general?: string;
 }
 
-const algorithmOptions = [
-  { value: 'greedy', label: 'Greedy (Fast)', description: 'Quick heuristic, good for initial solutions' },
-  { value: 'cp_sat', label: 'CP-SAT (Optimal)', description: 'OR-Tools constraint solver, guarantees ACGME compliance' },
-  { value: 'pulp', label: 'PuLP (Large Scale)', description: 'Linear programming, efficient for large problems' },
-  { value: 'hybrid', label: 'Hybrid (Best Quality)', description: 'Combines solvers for optimal results' },
+const FALLBACK_ALGORITHM_OPTIONS = [
+  { value: 'greedy', label: 'Greedy (Fast)' },
+  { value: 'cp_sat', label: 'CP-SAT (Optimal)' },
+  { value: 'pulp', label: 'PuLP (Large Scale)' },
+  { value: 'hybrid', label: 'Hybrid (Best Quality)' },
 ];
 
-const pgyLevelOptions = [
-  { value: 'all', label: 'All PGY Levels' },
-  { value: '1', label: 'PGY-1 Only' },
-  { value: '2', label: 'PGY-2 Only' },
-  { value: '3', label: 'PGY-3 Only' },
+const ALGORITHM_DESCRIPTIONS: Record<string, string> = {
+  greedy: 'Quick heuristic, good for initial solutions',
+  cp_sat: 'OR-Tools constraint solver, guarantees ACGME compliance',
+  pulp: 'Linear programming, efficient for large problems',
+  hybrid: 'Combines solvers for optimal results',
+};
+
+const FALLBACK_PGY_LEVEL_OPTIONS = [
+  { value: '1', label: 'PGY-1' },
+  { value: '2', label: 'PGY-2' },
+  { value: '3', label: 'PGY-3' },
 ];
 
 const timeoutOptions = [
@@ -55,6 +62,16 @@ export function GenerateScheduleDialog({
   const [errors, setErrors] = useState<FormErrors>({});
   const [showResults, setShowResults] = useState(false);
 
+  const { data: apiAlgorithms } = useSchedulingAlgorithms();
+  const { data: apiPgyLevels } = usePgyLevels();
+  const algorithmOptions = apiAlgorithms ?? FALLBACK_ALGORITHM_OPTIONS;
+  const pgyLevelOptions = [
+    { value: 'all', label: 'All PGY Levels' },
+    ...(apiPgyLevels ?? FALLBACK_PGY_LEVEL_OPTIONS).map(p => ({
+      value: p.value,
+      label: `${p.label} Only`,
+    })),
+  ];
   const generateSchedule = useGenerateSchedule();
   const algorithmDescId = 'algorithm-description';
 
@@ -275,7 +292,7 @@ export function GenerateScheduleDialog({
               aria-describedby={algorithmDescId}
             />
             <p id={algorithmDescId} className="text-xs text-gray-500 mt-1">
-              {algorithmOptions.find(a => a.value === algorithm)?.description}
+              {ALGORITHM_DESCRIPTIONS[algorithm] || algorithmOptions.find(a => a.value === algorithm)?.label}
             </p>
           </div>
 

@@ -11,7 +11,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 logger = logging.getLogger(__name__)
 from fastapi.security import OAuth2PasswordRequestForm
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import PyJWTError as JWTError
 
 from app.controllers.auth_controller import AuthController
 from app.core.config import get_settings

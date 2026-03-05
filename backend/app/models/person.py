@@ -120,6 +120,16 @@ class Person(Base):
     sm_min = Column(Integer, comment="Min SM clinic half-days per week")
     sm_max = Column(Integer, comment="Max SM clinic half-days per week")
 
+    # Learner-specific fields (med students and rotating interns)
+    learner_type = Column(String(10))  # MS, TY, PSYCH (null for residents/faculty)
+    med_school = Column(String(255))  # e.g., "USUHS" (med students only)
+    ms_year = Column(Integer)  # 3 or 4 (MS3, MS4; null for interns)
+    rotation_start_date = Column(
+        "rotation_start", DateTime
+    )  # Start of rotation assignment
+    rotation_end_date = Column("rotation_end", DateTime)  # End of rotation assignment
+    requires_fmit = Column(Boolean, default=True)  # True for MS, False for TY/PSYCH
+
     # Screener-specific fields
     screener_role = Column(
         String(50)
@@ -202,9 +212,16 @@ class Person(Base):
     )
 
     __table_args__ = (
-        CheckConstraint("type IN ('resident', 'faculty')", name="check_person_type"),
         CheckConstraint(
-            "pgy_level IS NULL OR pgy_level BETWEEN 1 AND 3", name="check_pgy_level"
+            "type IN ('resident', 'faculty', 'med_student', 'rotating_intern')",
+            name="check_person_type",
+        ),
+        CheckConstraint(
+            "pgy_level IS NULL OR pgy_level BETWEEN 1 AND 8", name="check_pgy_level"
+        ),
+        CheckConstraint(
+            "learner_type IS NULL OR learner_type IN ('MS', 'TY', 'PSYCH')",
+            name="check_learner_type",
         ),
         CheckConstraint(
             "faculty_role IS NULL OR faculty_role IN ('pd', 'apd', 'oic', 'dept_chief', 'sports_med', 'core')",
@@ -232,6 +249,20 @@ class Person(Base):
     def is_faculty(self) -> bool:
         """Check if person is faculty."""
         return self.type == "faculty"
+
+    @property
+    def is_learner(self) -> bool:
+        """Check if person is a med student or rotating intern."""
+        return self.type in ("med_student", "rotating_intern")
+
+    @property
+    def can_supervise_learners(self) -> bool:
+        """Check if this person can supervise learners (faculty or PGY-2+)."""
+        if self.is_faculty:
+            return True
+        if self.is_resident and self.pgy_level and self.pgy_level >= 2:
+            return True
+        return False
 
     @property
     def supervision_ratio(self) -> int:

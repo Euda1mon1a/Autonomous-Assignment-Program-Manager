@@ -17,7 +17,8 @@ import time
 import redis
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import PyJWTError as JWTError
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import get_settings

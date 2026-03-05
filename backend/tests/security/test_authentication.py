@@ -147,7 +147,7 @@ class TestAccessTokenCreation:
         token, jti, expires_at = create_access_token(data, return_details=True)
 
         # Verify token (without database check)
-        from jose import jwt
+        import jwt
         from app.core.config import get_settings
 
         settings = get_settings()
@@ -178,7 +178,7 @@ class TestAccessTokenCreation:
         data = {"sub": str(uuid4())}
         token, jti, expires_at = create_access_token(data, return_details=True)
 
-        from jose import jwt
+        import jwt
         from app.core.config import get_settings
 
         settings = get_settings()
@@ -206,7 +206,7 @@ class TestRefreshTokenCreation:
         data = {"sub": str(uuid4())}
         token, jti, expires_at = create_refresh_token(data, return_details=True)
 
-        from jose import jwt
+        import jwt
         from app.core.config import get_settings
 
         settings = get_settings()

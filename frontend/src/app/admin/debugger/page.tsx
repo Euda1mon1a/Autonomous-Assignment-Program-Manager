@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useBlockRanges } from '@/hooks';
+import { useActivityCategories } from '@/hooks/useEnums';
 import {
   Bug,
   Database,
@@ -1125,6 +1126,7 @@ function ActivityInspector({ refreshKey }: { refreshKey: number }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const { data: enumCategories } = useActivityCategories();
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -1158,7 +1160,10 @@ function ActivityInspector({ refreshKey }: { refreshKey: number }) {
     fetchActivities();
   }, [refreshKey]);
 
-  const categories = ['all', ...new Set(activities.map(a => a.category).filter(Boolean))];
+  // Use API enum categories if available, fallback to deriving from fetched activities
+  const categories = enumCategories
+    ? ['all', ...enumCategories.map(c => c.value)]
+    : ['all', ...new Set(activities.map(a => a.category).filter(Boolean))];
   const filteredActivities = filterCategory === 'all'
     ? activities
     : activities.filter(a => a.category === filterCategory);
@@ -1183,7 +1188,11 @@ function ActivityInspector({ refreshKey }: { refreshKey: number }) {
           className="px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600"
         >
           {categories.map(cat => (
-            <option key={cat} value={cat}>{cat === 'all' ? 'All Categories' : cat}</option>
+            <option key={cat} value={cat}>
+              {cat === 'all'
+                ? 'All Categories'
+                : enumCategories?.find(c => c.value === cat)?.label ?? cat}
+            </option>
           ))}
         </select>
         <span className="ml-auto text-xs text-slate-500">{filteredActivities.length} activities</span>

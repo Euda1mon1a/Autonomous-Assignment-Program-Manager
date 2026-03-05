@@ -102,6 +102,7 @@ from app.models.schedule_override import ScheduleOverride
 from app.models.call_override import CallOverride
 from app.models.assignment_backup import AssignmentBackup
 from app.models.intern_stagger import InternStaggerPattern
+from app.models.learner import LearnerAssignment, LearnerToTrack, LearnerTrack
 from app.models.notification import (
     Notification,
     NotificationPreferenceRecord,
@@ -414,4 +415,8 @@ __all__ = [
     "AchievementType",
     # Person Academic Year model (AY-scoped PGY levels)
     "PersonAcademicYear",
+    # Learner models (med students / rotating interns)
+    "LearnerTrack",
+    "LearnerToTrack",
+    "LearnerAssignment",
 ]

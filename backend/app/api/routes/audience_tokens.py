@@ -26,7 +26,8 @@ import logging
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from jose import jwt, JWTError
+import jwt
+from jwt.exceptions import PyJWTError as JWTError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -355,7 +356,7 @@ async def revoke_token(
                     request.token,
                     settings.SECRET_KEY,
                     algorithms=[ALGORITHM],
-                    options={"verify_exp": False},  # Allow expired tokens
+                    options={"verify_exp": False, "verify_aud": False},
                 )
 
                 # Verify the JTI matches
