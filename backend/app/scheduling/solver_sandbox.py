@@ -106,6 +106,13 @@ def clamp_workers(requested: int, max_workers: int) -> int:
 def create_sandboxed_callback(watchdog, inner_callback=None):
     """Create a CP-SAT callback that monitors memory and delegates to inner.
 
+    The sandbox callback is the one passed to ``Solve()``, so OR-Tools
+    populates solver state (ObjectiveValue, BestObjectiveBound, etc.) on
+    *this* instance.  Before delegating to the inner callback we patch its
+    ``ObjectiveValue`` / ``BestObjectiveBound`` / ``WallTime`` methods to
+    proxy back to the sandbox instance so the inner callback can call
+    ``self.ObjectiveValue()`` as usual.
+
     Args:
         watchdog: MemoryWatchdog instance
         inner_callback: Optional existing CpSolverSolutionCallback
@@ -120,6 +127,17 @@ def create_sandboxed_callback(watchdog, inner_callback=None):
             super().__init__()
             self.solution_count = 0
             self.memory_aborted = False
+            self._inner_patched = False
+
+        def _patch_inner(self):
+            """Redirect solver-state methods on inner_callback to self."""
+            if self._inner_patched or inner_callback is None:
+                return
+            sandbox = self
+            inner_callback.ObjectiveValue = lambda: sandbox.ObjectiveValue()
+            inner_callback.BestObjectiveBound = lambda: sandbox.BestObjectiveBound()
+            inner_callback.WallTime = lambda: sandbox.WallTime()
+            self._inner_patched = True
 
         def on_solution_callback(self):
             self.solution_count += 1
@@ -131,6 +149,7 @@ def create_sandboxed_callback(watchdog, inner_callback=None):
 
             if inner_callback is not None:
                 try:
+                    self._patch_inner()
                     inner_callback.on_solution_callback()
                 except Exception as e:
                     logger.warning(f"Inner solver callback error: {e}")

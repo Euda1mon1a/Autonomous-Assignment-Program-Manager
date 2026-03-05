@@ -87,31 +87,6 @@ async def create_learner(
     return person
 
 
-@router.get("/{learner_id}", response_model=LearnerResponse)
-async def get_learner(learner_id: UUID, db: Session = Depends(get_db)):
-    """Get a learner by ID."""
-    person = db.query(Person).filter(Person.id == learner_id).first()
-    if not person or not person.is_learner:
-        raise HTTPException(status_code=404, detail="Learner not found")
-    return person
-
-
-@router.delete("/{learner_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_learner(
-    learner_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-    _: None = Depends(require_admin()),
-):
-    """Remove a learner."""
-    person = db.query(Person).filter(Person.id == learner_id).first()
-    if not person or not person.is_learner:
-        raise HTTPException(status_code=404, detail="Learner not found")
-    db.delete(person)
-    db.commit()
-    logger.info(f"Deleted learner: {person.name}")
-
-
 # ============================================================================
 # Learner Tracks
 # ============================================================================
@@ -312,3 +287,33 @@ async def generate_learner_schedule_endpoint(
         raise HTTPException(status_code=404, detail=result["error"])
 
     return result
+
+
+# ============================================================================
+# Learner by ID (dynamic routes MUST come after all static paths)
+# ============================================================================
+
+
+@router.get("/{learner_id}", response_model=LearnerResponse)
+async def get_learner(learner_id: UUID, db: Session = Depends(get_db)):
+    """Get a learner by ID."""
+    person = db.query(Person).filter(Person.id == learner_id).first()
+    if not person or not person.is_learner:
+        raise HTTPException(status_code=404, detail="Learner not found")
+    return person
+
+
+@router.delete("/{learner_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_learner(
+    learner_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
+):
+    """Remove a learner."""
+    person = db.query(Person).filter(Person.id == learner_id).first()
+    if not person or not person.is_learner:
+        raise HTTPException(status_code=404, detail="Learner not found")
+    db.delete(person)
+    db.commit()
+    logger.info(f"Deleted learner: {person.name}")
