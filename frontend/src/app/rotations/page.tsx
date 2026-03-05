@@ -1,31 +1,31 @@
 'use client';
 
 /**
- * Rotations Page
+ * Rotations Hub Page
  *
  * Consolidated rotation management interface combining:
- * - Rotation Templates: View rotations and edit their 4-week activity patterns (Tier 0+)
- * - Faculty Activities: Manage faculty weekly activity patterns (Tier 1+)
+ * - Outpatient Rotations (Flexible Targets) - View/Edit distribution targets (Tier 0/1)
+ * - Inpatient Rotations (Fixed Grids) - View/Edit the rigid 7x2 grid (Tier 0/1)
  *
  * Permission Tiers:
- * - Tier 0 (Green): View templates, view faculty patterns (read-only)
- * - Tier 1 (Amber): Create/edit templates and faculty patterns
- * - Tier 2 (Red): Delete templates and advanced operations
+ * - Tier 0 (Green): View rotation setups
+ * - Tier 1 (Amber): Create/edit rotations
+ * - Tier 2 (Red): Delete rotations
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { Calendar, Users, Layers } from 'lucide-react';
+import { Calendar, ClipboardList, Layers } from 'lucide-react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { RiskBar, type RiskTier, useRiskTierFromRoles } from '@/components/ui/RiskBar';
 import { useAuth } from '@/contexts/AuthContext';
-import { RotationTemplatesTab } from './components/RotationTemplatesTab';
-import { FacultyActivityTemplatesTab } from './components/FacultyActivityTemplatesTab';
+import { InpatientGridTab } from '@/features/rotations/components/InpatientGridTab';
+import { OutpatientTargetsTab } from '@/features/rotations/components/OutpatientTargetsTab';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type RotationsTab = 'templates' | 'faculty';
+type RotationsTab = 'outpatient' | 'inpatient';
 
 interface TabConfig {
   id: RotationsTab;
@@ -41,18 +41,18 @@ interface TabConfig {
 
 const TABS: TabConfig[] = [
   {
-    id: 'templates',
-    label: 'Rotation Templates',
-    icon: Calendar,
-    description: 'View and manage rotation activity templates',
+    id: 'outpatient',
+    label: 'Outpatient (Targets)',
+    icon: ClipboardList,
+    description: 'Set flexible volume targets for outpatient rotations',
     requiredTier: 0,
   },
   {
-    id: 'faculty',
-    label: 'Faculty Activities',
-    icon: Users,
-    description: 'Manage faculty weekly activity patterns',
-    requiredTier: 1,
+    id: 'inpatient',
+    label: 'Inpatient (Fixed Grid)',
+    icon: Calendar,
+    description: 'Lock activities into a rigid 7x2 weekly schedule',
+    requiredTier: 0,
   },
 ];
 
@@ -62,7 +62,7 @@ const TABS: TabConfig[] = [
 
 export default function RotationsPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<RotationsTab>('templates');
+  const [activeTab, setActiveTab] = useState<RotationsTab>('outpatient');
 
   // Determine user's permission tier from role
   const userTier: RiskTier = useRiskTierFromRoles(user?.role ? [user.role] : []);
@@ -72,16 +72,14 @@ export default function RotationsPage() {
     return TABS.filter((tab) => tab.requiredTier <= userTier);
   }, [userTier]);
 
-  // Determine current risk tier based on active tab and user permissions
-  const currentRiskTier: RiskTier = useMemo(() => {
-    if (activeTab === 'templates') {
-      return userTier;
-    }
-    if (activeTab === 'faculty') {
-      return userTier >= 2 ? 2 : 1;
-    }
-    return 0;
-  }, [activeTab, userTier]);
+  // Determine current risk tier based on user permissions (both tabs share tier)
+  const currentRiskTier: RiskTier = useTier(userTier);
+
+  function useTier(tier: RiskTier) {
+      return useMemo(() => {
+          return tier;
+      }, [tier]);
+  }
 
   // Generate appropriate label and tooltip for RiskBar
   const riskBarConfig = useMemo(() => {
@@ -89,28 +87,28 @@ export default function RotationsPage() {
       case 0:
         return {
           label: 'View Mode',
-          tooltip: 'You can browse rotation templates. Contact an administrator to make changes.',
+          tooltip: 'You can browse rotation definitions. Contact an administrator to make changes.',
         };
       case 1:
         return {
           label: 'Edit Mode',
-          tooltip: 'You can create and edit templates. Deletion requires admin access.',
+          tooltip: 'You can create and edit rotation definitions. Deletion requires admin access.',
         };
       case 2:
         return {
           label: 'Admin Mode',
-          tooltip: 'You have full access to create, edit, and delete templates.',
+          tooltip: 'You have full access to create, edit, and delete rotation definitions.',
         };
       default:
         return { label: undefined, tooltip: undefined };
     }
   }, [currentRiskTier]);
 
-  // Reset to templates if user doesn't have access to current tab
+  // Reset to outpatient if user doesn't have access to current tab
   useEffect(() => {
     const currentTabConfig = TABS.find((t) => t.id === activeTab);
     if (currentTabConfig && currentTabConfig.requiredTier > userTier) {
-      setActiveTab('templates');
+      setActiveTab('outpatient');
     }
   }, [activeTab, userTier]);
 
@@ -132,13 +130,13 @@ export default function RotationsPage() {
         <header className="bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
                 <Layers className="w-6 h-6 text-white" aria-hidden="true" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Rotations</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Rotations Hub</h1>
                 <p className="text-sm text-gray-600">
-                  Manage rotation templates and activity patterns
+                  Define 4-week resident rotation blueprints
                 </p>
               </div>
             </div>
@@ -158,7 +156,7 @@ export default function RotationsPage() {
                         group flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors
                         ${
                           isActive
-                            ? 'border-emerald-500 text-emerald-600'
+                            ? 'border-blue-500 text-blue-600'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                         }
                       `}
@@ -190,25 +188,25 @@ export default function RotationsPage() {
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          {/* Rotation Templates Tab */}
-          {activeTab === 'templates' && (
+          {/* Outpatient Tab */}
+          {activeTab === 'outpatient' && (
             <div
-              id="tabpanel-templates"
+              id="tabpanel-outpatient"
               role="tabpanel"
-              aria-labelledby="tab-templates"
+              aria-labelledby="tab-outpatient"
             >
-              <RotationTemplatesTab canEdit={canEdit} canDelete={canDelete} />
+              <OutpatientTargetsTab />
             </div>
           )}
 
-          {/* Faculty Activities Tab */}
-          {activeTab === 'faculty' && userTier >= 1 && (
+          {/* Inpatient Tab */}
+          {activeTab === 'inpatient' && (
             <div
-              id="tabpanel-faculty"
+              id="tabpanel-inpatient"
               role="tabpanel"
-              aria-labelledby="tab-faculty"
+              aria-labelledby="tab-inpatient"
             >
-              <FacultyActivityTemplatesTab canEdit={canEdit} canDelete={canDelete} />
+              <InpatientGridTab canEdit={canEdit} canDelete={canDelete} />
             </div>
           )}
         </main>

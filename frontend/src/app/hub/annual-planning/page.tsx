@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { AnticipatedLeaveGenerator } from './AnticipatedLeaveGenerator';
 
 export const metadata = {
   title: 'Annual Planning Hub | Residency Scheduler',
@@ -38,23 +39,7 @@ export default function AnnualPlanningHubPage() {
           </li>
 
           <li>
-            <div className="px-4 py-4 sm:px-6 hover:bg-gray-50 cursor-pointer">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <p className="text-sm font-medium text-blue-600 truncate">
-                    Anticipated Leave Placeholder Generator
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Pre-generate generic schedules that balance missing leave requests for incoming interns.
-                  </p>
-                </div>
-                <div className="ml-2 flex-shrink-0 flex">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                    Pending
-                  </span>
-                </div>
-              </div>
-            </div>
+            <AnticipatedLeaveGenerator />
           </li>
 
           <li>

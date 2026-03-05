@@ -20,13 +20,14 @@ import { RiskBar, type RiskTier } from '@/components/ui/RiskBar';
 import { useAuth, type UserRole } from '@/hooks/useAuth';
 import { PeopleDirectory } from '@/components/people/PeopleDirectory';
 import { PeopleAdminPanel } from '@/components/people/PeopleAdminPanel';
+import { FacultyWorkloadProfilesTab } from '@/features/people/components/FacultyWorkloadProfilesTab';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type ViewMode = 'directory' | 'admin';
+type ViewMode = 'directory' | 'admin' | 'workload';
 
 // ============================================================================
 // Utility Functions
@@ -43,8 +44,8 @@ function getRiskTier(role: UserRole | undefined, viewMode: ViewMode): RiskTier {
     return 2;
   }
 
-  // Tier 1: Coordinator/Admin in admin view (can edit roles/PGY)
-  if ((role === 'coordinator' || role === 'admin') && viewMode === 'admin') {
+  // Tier 1: Coordinator/Admin in admin view (can edit roles/PGY) or workload view
+  if ((role === 'coordinator' || role === 'admin') && (viewMode === 'admin' || viewMode === 'workload')) {
     return 1;
   }
 
@@ -65,7 +66,9 @@ function getRiskBarConfig(tier: RiskTier, viewMode: ViewMode): { label: string; 
     case 1:
       return {
         label: 'Scoped Changes',
-        tooltip: 'You can update role and PGY level for individuals. Changes are reversible.',
+        tooltip: viewMode === 'workload'
+          ? 'You can configure faculty workload boundaries used by the CP-SAT solver.'
+          : 'You can update role and PGY level for individuals. Changes are reversible.',
       };
     case 0:
     default:
@@ -202,6 +205,24 @@ export default function PeopleHubPage() {
                 >
                   Manage
                 </button>
+                <button
+                  role="tab"
+                  aria-selected={viewMode === 'workload'}
+                  aria-controls="workload-panel"
+                  onClick={() => handleTabChange('workload')}
+                  className={`
+                    px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                    dark:focus:ring-offset-slate-900
+                    ${
+                      viewMode === 'workload'
+                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                    }
+                  `}
+                >
+                  Faculty Workload
+                </button>
               </div>
             )}
           </div>
@@ -210,7 +231,7 @@ export default function PeopleHubPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {viewMode === 'directory' ? (
+        {viewMode === 'directory' && (
           <div
             id="directory-panel"
             role="tabpanel"
@@ -218,7 +239,9 @@ export default function PeopleHubPage() {
           >
             <PeopleDirectory />
           </div>
-        ) : (
+        )}
+
+        {viewMode === 'admin' && (
           <div
             id="admin-panel"
             role="tabpanel"
@@ -228,6 +251,16 @@ export default function PeopleHubPage() {
               canBulkDelete={hasBulkDeleteAccess}
               riskTier={riskTier}
             />
+          </div>
+        )}
+
+        {viewMode === 'workload' && (
+          <div
+            id="workload-panel"
+            role="tabpanel"
+            aria-labelledby="workload-tab"
+          >
+            <FacultyWorkloadProfilesTab />
           </div>
         )}
       </main>

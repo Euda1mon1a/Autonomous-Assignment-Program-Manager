@@ -1,446 +1,194 @@
-'use client'
+'use client';
 
-import { useState, useMemo } from 'react'
-import dynamic from 'next/dynamic'
-import { Plus, Calendar, List, RefreshCw, Upload, Grid } from 'lucide-react'
-import { format, addDays } from 'date-fns'
-import { useAbsences, usePeople, useDeleteAbsence, useUpdateAbsence } from '@/lib/hooks'
-import { CardSkeleton } from '@/components/skeletons'
-import { type PersonTypeFilter } from '@/components/absence/AbsenceGrid'
-import { BlockNavigation } from '@/components/schedule/BlockNavigation'
-import { Modal } from '@/components/Modal'
-import { Select, DatePicker, TextArea } from '@/components/forms'
-import { ExportButton } from '@/components/ExportButton'
-import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { useToast } from '@/contexts/ToastContext'
-import type { Absence } from '@/types/api'
+/**
+ * Absences Hub Page
+ *
+ * Consolidated absence management interface combining:
+ * - My Absences: Self-service absence view (Tier 0+)
+ * - Directory: View all absences (Tier 0+)
+ * - Approvals/Admin: Approve requests, view sick reasons (Tier 1+)
+ *
+ * Permission Tiers:
+ * - Tier 0 (Green): Read-only, self-service actions (all users)
+ * - Tier 1 (Amber): Approve operations, sensitive data (coordinator, admin)
+ * - Tier 2 (Red): Admin forced changes
+ */
 
-// Dynamically import heavy components
-const AddAbsenceModal = dynamic(() => import('@/components/AddAbsenceModal').then(mod => mod.AddAbsenceModal), {
-  loading: () => <div className="p-4 flex justify-center"><CardSkeleton /></div>,
-  ssr: false
-})
-const AbsenceCalendar = dynamic(() => import('@/components/AbsenceCalendar').then(mod => mod.AbsenceCalendar), {
-  loading: () => <div className="p-4 flex justify-center"><CardSkeleton /></div>,
-  ssr: false
-})
-const AbsenceList = dynamic(() => import('@/components/AbsenceList').then(mod => mod.AbsenceList), {
-  loading: () => <div className="p-4 flex justify-center"><CardSkeleton /></div>,
-  ssr: false
-})
-const AbsenceGrid = dynamic(() => import('@/components/absence/AbsenceGrid').then(mod => mod.AbsenceGrid), {
-  loading: () => <div className="p-4 flex justify-center"><CardSkeleton /></div>,
-  ssr: false
-})
-const BulkImportModal = dynamic(() => import('@/features/import-export/BulkImportModal').then(mod => mod.BulkImportModal), {
-  ssr: false
-})
+import { useState, useMemo, useEffect } from 'react';
+import { Calendar, User, Shield, Stethoscope } from 'lucide-react';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { RiskBar, type RiskTier, useRiskTierFromRoles } from '@/components/ui/RiskBar';
+import { useAuth } from '@/contexts/AuthContext';
+import { AllAbsencesTab } from '@/features/absences/components/AllAbsencesTab';
+import { MyAbsencesTab } from '@/features/absences/components/MyAbsencesTab';
+import { ApprovalsTab } from '@/features/absences/components/ApprovalsTab';
 
-const absenceExportColumns = [
-  { key: 'personName', header: 'Person' },
-  { key: 'absenceType', header: 'Type' },
-  { key: 'startDate', header: 'Start Date' },
-  { key: 'endDate', header: 'End Date' },
-  { key: 'notes', header: 'Notes' },
-]
+type AbsencesTab = 'my-absences' | 'directory' | 'approvals';
 
-type ViewMode = 'calendar' | 'list' | 'grid'
-type AbsenceTypeFilter = 'all' | 'vacation' | 'sick' | 'conference' | 'personal' | 'medical' | 'deployment' | 'tdy' | 'family_emergency' | 'bereavement' | 'emergency_leave' | 'convalescent' | 'maternity_paternity' | 'training' | 'military_duty'
-
-const absenceTypeOptions = [
-  // Planned leave
-  { value: 'vacation', label: 'Vacation' },
-  { value: 'conference', label: 'Conference' },
-  // Medical
-  { value: 'sick', label: 'Sick' },
-  { value: 'medical', label: 'Medical Leave' },
-  { value: 'convalescent', label: 'Convalescent' },
-  { value: 'maternity_paternity', label: 'Parental Leave' },
-  // Emergency (blocking - Hawaii reality: 7+ days travel)
-  { value: 'family_emergency', label: 'Family Emergency' },
-  { value: 'emergency_leave', label: 'Emergency Leave' },
-  { value: 'bereavement', label: 'Bereavement' },
-  // Military
-  { value: 'deployment', label: 'Deployment' },
-  { value: 'tdy', label: 'TDY' },
-  { value: 'training', label: 'Training' },
-  { value: 'military_duty', label: 'Military Duty' },
-]
-
-// Get initial date range (today + 27 days for a block period)
-function getInitialDateRange() {
-  const today = new Date()
-  return { start: today, end: addDays(today, 27) }
+interface TabConfig {
+  id: AbsencesTab;
+  label: string;
+  icon: typeof Calendar;
+  description: string;
+  requiredTier: RiskTier;
 }
 
-export default function AbsencesPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>('calendar')
-  const [typeFilter, setTypeFilter] = useState<AbsenceTypeFilter>('all')
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false)
-  const [editingAbsence, setEditingAbsence] = useState<Absence | null>(null)
-  const [absenceToDelete, setAbsenceToDelete] = useState<Absence | null>(null)
+const TABS: TabConfig[] = [
+  {
+    id: 'my-absences',
+    label: 'My Absences',
+    icon: User,
+    description: 'View and request your own absences',
+    requiredTier: 0,
+  },
+  {
+    id: 'directory',
+    label: 'All Absences',
+    icon: Calendar,
+    description: 'View the program-wide absence calendar',
+    requiredTier: 0,
+  },
+  {
+    id: 'approvals',
+    label: 'Approvals & Admin',
+    icon: Shield,
+    description: 'Manage absence requests and view sensitive details',
+    requiredTier: 1,
+  },
+];
 
-  // Grid view state
-  const [gridDateRange, setGridDateRange] = useState(getInitialDateRange)
-  const [personTypeFilter, setPersonTypeFilter] = useState<PersonTypeFilter>('all')
-  const [preselectedPersonId, setPreselectedPersonId] = useState<string | undefined>()
-  const [preselectedDate, setPreselectedDate] = useState<string | undefined>()
+export default function AbsencesHubPage() {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<AbsencesTab>('directory');
 
-  // Edit form state
-  const [editStartDate, setEditStartDate] = useState('')
-  const [editEndDate, setEditEndDate] = useState('')
-  const [editAbsenceType, setEditAbsenceType] = useState('')
-  const [editNotes, setEditNotes] = useState('')
+  const userTier: RiskTier = useRiskTierFromRoles(user?.role ? [user.role] : []);
 
-  const { toast } = useToast()
-  const { data: absencesData, isLoading: isAbsencesLoading, isError, error, refetch } = useAbsences()
-  const { data: peopleData, isLoading: isPeopleLoading } = usePeople()
-  const deleteAbsence = useDeleteAbsence()
-  const updateAbsence = useUpdateAbsence()
+  const availableTabs = useMemo(() => {
+    return TABS.filter((tab) => tab.requiredTier <= userTier);
+  }, [userTier]);
 
-  const people = useMemo(() => peopleData?.items || [], [peopleData?.items])
-  const allAbsences = useMemo(() => absencesData?.items || [], [absencesData?.items])
+  const currentRiskTier: RiskTier = useMemo(() => {
+    if (activeTab === 'my-absences' || activeTab === 'directory') return 0;
+    if (activeTab === 'approvals') return userTier >= 2 ? 2 : 1;
+    return 0;
+  }, [activeTab, userTier]);
 
-  // Prepare export data with person names resolved
-  const exportData = useMemo(() => {
-    const peopleMap = new Map(people.map(p => [p.id, p.name]))
-    return allAbsences.map(absence => ({
-      ...absence,
-      personName: peopleMap.get(absence.personId) || 'Unknown',
-    })) as unknown as Record<string, unknown>[]
-  }, [allAbsences, people])
-
-  // Filter absences by type
-  const absences = typeFilter === 'all'
-    ? allAbsences
-    : allAbsences.filter((a) => a.absenceType === typeFilter)
-
-  const handleDeleteClick = (absence: Absence) => {
-    setAbsenceToDelete(absence)
-  }
-
-  const handleConfirmDelete = () => {
-    if (absenceToDelete) {
-      deleteAbsence.mutate(absenceToDelete.id)
+  const riskBarConfig = useMemo(() => {
+    switch (currentRiskTier) {
+      case 0:
+        return {
+          label: 'View Mode & Self-Service',
+          tooltip: 'You can view program absences and manage your own requests.',
+        };
+      case 1:
+        return {
+          label: 'Program Operations',
+          tooltip: 'You can approve/deny requests and view sensitive leave details.',
+        };
+      case 2:
+        return {
+          label: 'System Admin',
+          tooltip: 'You have full administrative access to all absence records.',
+        };
+      default:
+        return { label: undefined, tooltip: undefined };
     }
-    setAbsenceToDelete(null)
-  }
+  }, [currentRiskTier]);
 
-  const handleEditClick = (absence: Absence) => {
-    setEditingAbsence(absence)
-    setEditStartDate(absence.startDate)
-    setEditEndDate(absence.endDate)
-    setEditAbsenceType(absence.absenceType)
-    setEditNotes(absence.notes || '')
-  }
-
-  const handleEditClose = () => {
-    setEditingAbsence(null)
-    setEditStartDate('')
-    setEditEndDate('')
-    setEditAbsenceType('')
-    setEditNotes('')
-  }
-
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingAbsence) return
-
-    try {
-      await updateAbsence.mutateAsync({
-        id: editingAbsence.id,
-        data: {
-          startDate: editStartDate,
-          endDate: editEndDate,
-          absenceType: editAbsenceType as Absence['absenceType'],
-          notes: editNotes || undefined,
-        },
-      })
-      handleEditClose()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to update absence')
+  useEffect(() => {
+    const currentTabConfig = TABS.find((t) => t.id === activeTab);
+    if (currentTabConfig && currentTabConfig.requiredTier > userTier) {
+      setActiveTab('directory');
     }
-  }
-
-  const isLoading = isAbsencesLoading || isPeopleLoading
+  }, [activeTab, userTier]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Absence Management</h1>
-          <p className="text-gray-600">Manage vacation, sick days, and other absences</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <ExportButton
-            data={exportData}
-            filename="absences"
-            columns={absenceExportColumns}
-          />
-          <button
-            onClick={() => setIsBulkImportModalOpen(true)}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Bulk Import
-          </button>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Absence
-          </button>
-        </div>
-      </div>
-
-      {/* Controls Row */}
-      <div className="flex flex-wrap items-center gap-4 mb-6">
-        {/* View Toggle */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setViewMode('calendar')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'calendar'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Calendar className="w-4 h-4" />
-            Calendar
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'list'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <List className="w-4 h-4" />
-            List
-          </button>
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'grid'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Grid className="w-4 h-4" />
-            Grid
-          </button>
-        </div>
-
-        {/* Type Filter (calendar/list only) */}
-        {viewMode !== 'grid' && (
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as AbsenceTypeFilter)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">All Types</option>
-            <option value="vacation">Vacation</option>
-            <option value="medical">Sick / Medical</option>
-            <option value="conference">Conference</option>
-            <option value="family_emergency">Personal / Family Emergency</option>
-            <option value="deployment">Deployment</option>
-            <option value="tdy">TDY</option>
-          </select>
-        )}
-
-        {/* Person Type Filter (grid only) */}
-        {viewMode === 'grid' && (
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => setPersonTypeFilter('all')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                personTypeFilter === 'all'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setPersonTypeFilter('residents')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                personTypeFilter === 'residents'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Residents
-            </button>
-            <button
-              onClick={() => setPersonTypeFilter('faculty')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                personTypeFilter === 'faculty'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Faculty
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      {isLoading ? (
-        <div className="grid gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <CardSkeleton key={i} />
-          ))}
-        </div>
-      ) : isError ? (
-        <div className="card flex flex-col items-center justify-center h-64 text-center">
-          <p className="text-gray-600 mb-4">
-            {error?.message || 'Failed to load absences'}
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="btn-primary flex items-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Retry
-          </button>
-        </div>
-      ) : viewMode === 'calendar' ? (
-        <AbsenceCalendar
-          absences={absences}
-          people={people}
-          onAbsenceClick={handleEditClick}
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50">
+        <RiskBar
+          tier={currentRiskTier}
+          label={riskBarConfig.label}
+          tooltip={riskBarConfig.tooltip}
         />
-      ) : viewMode === 'list' ? (
-        <AbsenceList
-          absences={absences}
-          people={people}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
-        />
-      ) : (
-        <div className="space-y-4">
-          <BlockNavigation
-            startDate={gridDateRange.start}
-            endDate={gridDateRange.end}
-            onDateRangeChange={(start, end) => setGridDateRange({ start, end })}
-          />
-          <AbsenceGrid
-            startDate={gridDateRange.start}
-            endDate={gridDateRange.end}
-            personTypeFilter={personTypeFilter}
-            onAddAbsence={(personId, date) => {
-              setPreselectedPersonId(personId)
-              setPreselectedDate(format(date, 'yyyy-MM-dd'))
-              setIsAddModalOpen(true)
-            }}
-            onEditAbsence={handleEditClick}
-          />
-        </div>
-      )}
 
-      {/* Add Absence Modal */}
-      <AddAbsenceModal
-        isOpen={isAddModalOpen}
-        onClose={() => {
-          setIsAddModalOpen(false)
-          setPreselectedPersonId(undefined)
-          setPreselectedDate(undefined)
-        }}
-        preselectedPersonId={preselectedPersonId}
-        preselectedStartDate={preselectedDate}
-        preselectedEndDate={preselectedDate}
-      />
+        <header className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
+                <Stethoscope className="w-6 h-6 text-white" aria-hidden="true" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Absences Hub</h1>
+                <p className="text-sm text-gray-600">
+                  Manage vacation, sick leave, TDY, and other schedule absences
+                </p>
+              </div>
+            </div>
 
-      {/* Edit Absence Modal */}
-      <Modal
-        isOpen={editingAbsence !== null}
-        onClose={handleEditClose}
-        title="Edit Absence"
-      >
-        <form onSubmit={handleEditSubmit} className="space-y-4">
-          <div className="text-sm text-gray-600 mb-4">
-            Editing absence for:{' '}
-            <span className="font-medium">
-              {people.find((p) => p.id === editingAbsence?.personId)?.name || 'Unknown'}
-            </span>
+            {availableTabs.length > 1 && (
+              <nav className="mt-4 -mb-px flex space-x-4 sm:space-x-8" aria-label="Tabs">
+                {availableTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`
+                        group flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors
+                        ${
+                          isActive
+                            ? 'border-indigo-500 text-indigo-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }
+                      `}
+                      role="tab"
+                      aria-selected={isActive}
+                      aria-controls={`tabpanel-${tab.id}`}
+                      title={tab.description}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                      <span>{tab.label}</span>
+                      {tab.requiredTier >= 1 && (
+                        <span
+                          className={`
+                            ml-1 px-1.5 py-0.5 text-xs rounded
+                            ${tab.requiredTier === 2 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}
+                          `}
+                          aria-label={tab.requiredTier === 2 ? 'Admin only' : 'Elevated permissions'}
+                        >
+                          {tab.requiredTier === 2 ? 'Admin' : 'Coord'}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            )}
           </div>
+        </header>
 
-          <Select
-            label="Absence Type"
-            value={editAbsenceType}
-            onChange={(e) => setEditAbsenceType(e.target.value)}
-            options={absenceTypeOptions}
-          />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {activeTab === 'directory' && (
+            <div id="tabpanel-directory" role="tabpanel" aria-labelledby="tab-directory">
+              <AllAbsencesTab />
+            </div>
+          )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <DatePicker
-              label="Start Date"
-              value={editStartDate}
-              onChange={setEditStartDate}
-            />
-            <DatePicker
-              label="End Date"
-              value={editEndDate}
-              onChange={setEditEndDate}
-            />
-          </div>
+          {activeTab === 'my-absences' && (
+            <div id="tabpanel-my-absences" role="tabpanel" aria-labelledby="tab-my-absences">
+              <MyAbsencesTab />
+            </div>
+          )}
 
-          <TextArea
-            label="Notes"
-            value={editNotes}
-            onChange={(e) => setEditNotes(e.target.value)}
-            placeholder="Optional notes..."
-            rows={3}
-          />
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={handleEditClose}
-              className="btn-secondary"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={updateAbsence.isPending}
-              className="btn-primary disabled:opacity-50"
-            >
-              {updateAbsence.isPending ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={absenceToDelete !== null}
-        onClose={() => setAbsenceToDelete(null)}
-        onConfirm={handleConfirmDelete}
-        title="Delete Absence"
-        message="Are you sure you want to delete this absence record? This action cannot be undone."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
-        variant="danger"
-        isLoading={deleteAbsence.isPending}
-      />
-
-      {/* Bulk Import Modal */}
-      <BulkImportModal
-        isOpen={isBulkImportModalOpen}
-        onClose={() => setIsBulkImportModalOpen(false)}
-        onSuccess={() => {
-          refetch()
-          toast.success('Absences imported successfully')
-        }}
-        defaultDataType="absences"
-        title="Bulk Import Absences"
-      />
-    </div>
-  )
+          {activeTab === 'approvals' && userTier >= 1 && (
+            <div id="tabpanel-approvals" role="tabpanel" aria-labelledby="tab-approvals">
+              <ApprovalsTab />
+            </div>
+          )}
+        </main>
+      </div>
+    </ProtectedRoute>
+  );
 }

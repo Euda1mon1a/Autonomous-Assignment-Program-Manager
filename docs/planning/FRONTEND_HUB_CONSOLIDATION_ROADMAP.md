@@ -100,7 +100,8 @@ The permission tier model determines what users can see and do across all hubs.
 
 | Hub | Route | Views/Tabs | Tier Access | Priority |
 |-----|-------|------------|-------------|----------|
-| **Activity Hub** | `/activities` | My Activities / Templates | 0: view all, 1: edit templates | 1 |
+| **Rotations Hub** | `/rotations` | Outpatient (Targets) / Inpatient (Grid) | 0: view, 1: edit | 1 |
+| **Activity Hub** | `/activities` | Activity Dictionary | 0: view all, 1: edit definitions | 2 |
 | **Absences Hub** | `/absences` | My Absences / Requests / Approvals | 0: view all + request, 1: approve + sick reasons | 2 |
 | **Procedures Hub** | `/procedures` | Catalog (view/edit modes) | 0: view, 1: edit | 4 |
 | **Ops Hub** | `/ops` | Manifest / Heatmap / Conflicts / Coverage | 0: view, 1: resolve conflicts | 5 |
@@ -324,8 +325,9 @@ const availableTabs = TABS.filter(t => t.requiredTier <= userTier);
 
 | Priority | Hub | Rationale |
 |----------|-----|-----------|
-| 1 | Activity Hub | Simplest model, clear tab structure |
-| 2 | Absences Hub | High user value, tiered RBAC understood |
+| 1 | Rotations Hub | Split into Inpatient (fixed grid) and Outpatient (flexible targets) |
+| 2 | Activities Hub | Pure dictionary definition of ACGME activities |
+| 2.5 | Absences Hub | High user value, tiered RBAC understood |
 | 3 | People Hub Enhancement | Add views to existing hub |
 | 4 | Procedures Hub | Small scope, critical for booking |
 | 5 | Ops Hub | Bundle operational views |
@@ -358,8 +360,9 @@ These pages stay in `/admin/` and are **NOT** hub-ified:
 
 | Current Route | Target Hub | Action |
 |---------------|------------|--------|
-| `/activities` | Activity Hub | Become default view |
-| `/admin/faculty-activities` | Activity Hub | Become Templates tab |
+| `/activities` | Activity Hub | Activity Dictionary view |
+| `/admin/faculty-activities` | People Hub | Become Faculty Workload Profiles tab |
+| `/rotations` | Rotations Hub | Split into Outpatient and Inpatient tabs |
 | `/absences` | Absences Hub | Become default view |
 | `/admin/credentials` | People Hub | Become Credentials tab |
 | `/admin/people` | People Hub | Merge with existing |
