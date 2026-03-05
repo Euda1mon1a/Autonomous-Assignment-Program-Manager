@@ -4,6 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { Modal } from '@/components/Modal';
 import { Input, Select } from '@/components/forms';
 import { useUpdatePerson } from '@/lib/hooks';
+import { usePersonTypes, usePgyLevels } from '@/hooks/useEnums';
 import { PersonType, FacultyRole, type Person, type PersonUpdate } from '@/types/api';
 
 interface EditPersonModalProps {
@@ -19,15 +20,20 @@ interface FormErrors {
   general?: string;
 }
 
-const typeOptions = [
+const FALLBACK_TYPE_OPTIONS = [
   { value: 'resident', label: 'Resident' },
   { value: 'faculty', label: 'Faculty' },
 ];
 
-const pgyOptions = [
+const FALLBACK_PGY_OPTIONS = [
   { value: '1', label: 'PGY-1' },
   { value: '2', label: 'PGY-2' },
   { value: '3', label: 'PGY-3' },
+  { value: '4', label: 'PGY-4' },
+  { value: '5', label: 'PGY-5' },
+  { value: '6', label: 'PGY-6' },
+  { value: '7', label: 'PGY-7' },
+  { value: '8', label: 'PGY-8' },
 ];
 
 const facultyRoleOptions = [
@@ -50,6 +56,10 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
   const [specialties, setSpecialties] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
 
+  const { data: personTypes } = usePersonTypes();
+  const { data: pgyLevels } = usePgyLevels();
+  const typeOptions = personTypes ?? FALLBACK_TYPE_OPTIONS;
+  const pgyOptions = pgyLevels ?? FALLBACK_PGY_OPTIONS;
   const updatePerson = useUpdatePerson();
 
   // Pre-populate form when person changes
@@ -78,8 +88,8 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
 
     if (type === PersonType.RESIDENT) {
       const pgyNum = parseInt(pgyLevel);
-      if (isNaN(pgyNum) || pgyNum < 1 || pgyNum > 3) {
-        newErrors.pgyLevel = 'PGY level must be between 1 and 3';
+      if (isNaN(pgyNum) || pgyNum < 1 || pgyNum > 8) {
+        newErrors.pgyLevel = 'PGY level must be between 1 and 8';
       }
     }
 
