@@ -1,22 +1,40 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { Plus, Calendar, List, RefreshCw, Upload, Grid } from 'lucide-react'
 import { format, addDays } from 'date-fns'
 import { useAbsences, usePeople, useDeleteAbsence, useUpdateAbsence } from '@/lib/hooks'
 import { CardSkeleton } from '@/components/skeletons'
-import { AddAbsenceModal } from '@/components/AddAbsenceModal'
-import { AbsenceCalendar } from '@/components/AbsenceCalendar'
-import { AbsenceList } from '@/components/AbsenceList'
-import { AbsenceGrid, type PersonTypeFilter } from '@/components/absence/AbsenceGrid'
+import { type PersonTypeFilter } from '@/components/absence/AbsenceGrid'
 import { BlockNavigation } from '@/components/schedule/BlockNavigation'
 import { Modal } from '@/components/Modal'
 import { Select, DatePicker, TextArea } from '@/components/forms'
 import { ExportButton } from '@/components/ExportButton'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useToast } from '@/contexts/ToastContext'
-import { BulkImportModal } from '@/features/import-export/BulkImportModal'
 import type { Absence } from '@/types/api'
+
+// Dynamically import heavy components
+const AddAbsenceModal = dynamic(() => import('@/components/AddAbsenceModal').then(mod => mod.AddAbsenceModal), {
+  loading: () => <div className="p-4 flex justify-center"><CardSkeleton /></div>,
+  ssr: false
+})
+const AbsenceCalendar = dynamic(() => import('@/components/AbsenceCalendar').then(mod => mod.AbsenceCalendar), {
+  loading: () => <div className="p-4 flex justify-center"><CardSkeleton /></div>,
+  ssr: false
+})
+const AbsenceList = dynamic(() => import('@/components/AbsenceList').then(mod => mod.AbsenceList), {
+  loading: () => <div className="p-4 flex justify-center"><CardSkeleton /></div>,
+  ssr: false
+})
+const AbsenceGrid = dynamic(() => import('@/components/absence/AbsenceGrid').then(mod => mod.AbsenceGrid), {
+  loading: () => <div className="p-4 flex justify-center"><CardSkeleton /></div>,
+  ssr: false
+})
+const BulkImportModal = dynamic(() => import('@/features/import-export/BulkImportModal').then(mod => mod.BulkImportModal), {
+  ssr: false
+})
 
 const absenceExportColumns = [
   { key: 'personName', header: 'Person' },

@@ -9,7 +9,6 @@
 import { ApiError, post } from "@/lib/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
-import * as XLSX from "xlsx";
 import type {
   ImportDataType,
   ImportFileFormat,
@@ -209,6 +208,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
       ];
 
       const arrayBuffer = await readFileAsArrayBuffer(file);
+      const XLSX = await import("xlsx");
       const workbook = XLSX.read(arrayBuffer, {
         type: "array",
         cellDates: true,
