@@ -128,6 +128,10 @@ class SyncPreloadService:
             logger.info("Skipping faculty call PCAT/DO (engine creates from NEW call)")
 
         total += self._load_sm_preloads(start_date, end_date)
+        total += self._load_nf_continuity(
+            block_number, academic_year, start_date, end_date
+        )
+        total += self._load_faculty_sm_clinic(start_date, end_date)
         total += self._load_faculty_wednesday_pm_lec(start_date, end_date)
 
         total += self._load_compound_rotation_weekends(
@@ -882,6 +886,132 @@ class SyncPreloadService:
                     count += 1
 
         logger.info(f"Loaded {count} faculty call preloads (PCAT/DO only)")
+        return count
+
+    def _load_nf_continuity(
+        self, block_number: int, academic_year: int, start_date: date, end_date: date
+    ) -> int:
+        """Preload C-N (Night Float Continuity) on the first Thursday PM of NF blocks."""
+        count = 0
+        cn_id = self._activity_cache.get("C-N", required=False)
+        if not cn_id:
+            logger.warning("C-N activity not found — skipping NF continuity preload")
+            return 0
+
+        # Find first Thursday in the block date range
+        first_thursday = start_date
+        while first_thursday <= end_date and first_thursday.weekday() != 3:
+            first_thursday += timedelta(days=1)
+
+        if first_thursday > end_date:
+            return 0
+
+        stmt = (
+            select(BlockAssignment)
+            .options(selectinload(BlockAssignment.rotation_template))
+            .where(
+                BlockAssignment.block_number == block_number,
+                BlockAssignment.academic_year == academic_year,
+            )
+        )
+        assignments = self.session.execute(stmt).scalars().all()
+
+        for assignment in assignments:
+            if not assignment.rotation_template:
+                continue
+
+            # Use rotation_codes.py NIGHT_FLOAT_ROTATIONS if imported, otherwise check abbrev
+            from app.services.preload.rotation_codes import canonical_rotation_code
+
+            code = canonical_rotation_code(
+                self._rotation_label(assignment.rotation_template)
+            )
+
+            # Simple check if it's a night float block
+            if code in ["NF", "PedNF"] or "NF" in code.upper():
+                if self._create_preload(
+                    assignment.resident_id, first_thursday, "PM", cn_id
+                ):
+                    count += 1
+
+        if count > 0:
+            logger.info(f"Loaded {count} NF continuity (C-N) preloads")
+        return count
+
+    def _load_faculty_sm_clinic(self, start_date: date, end_date: date) -> int:
+        """Preload SM clinic for SM faculty to avoid solver dual-classification issues.
+        Skips Mondays and FMIT weeks.
+        """
+        count = 0
+        sm_clinic_id = self._activity_cache.get("sm_clinic", required=False)
+        if not sm_clinic_id:
+            return 0
+
+        from app.models.person import Person
+        from app.models.faculty_weekly_template import FacultyWeeklyTemplate
+        from app.models.inpatient_preload import InpatientPreload, InpatientRotationType
+
+        # Find SM faculty (those with sm_clinic in their template)
+        sm_faculty_ids = (
+            self.session.query(FacultyWeeklyTemplate.person_id)
+            .join(Activity, FacultyWeeklyTemplate.activity_id == Activity.id)
+            .filter(Activity.code == "sm_clinic")
+            .distinct()
+            .all()
+        )
+        sm_faculty_ids = [fid for (fid,) in sm_faculty_ids]
+
+        if not sm_faculty_ids:
+            return 0
+
+        # Load their FMIT weeks to skip
+        fmit_faculty_dates: set[tuple[UUID, date]] = set()
+        fmit_stmt = select(InpatientPreload).where(
+            InpatientPreload.person_id.in_(sm_faculty_ids),
+            InpatientPreload.rotation_type == InpatientRotationType.FMIT,
+            InpatientPreload.start_date <= end_date,
+            InpatientPreload.end_date >= start_date,
+        )
+        fmit_preloads = self.session.execute(fmit_stmt).scalars().all()
+        for fp in fmit_preloads:
+            current = max(fp.start_date, start_date)
+            fmit_end = min(fp.end_date, end_date)
+            while current <= fmit_end:
+                fmit_faculty_dates.add((fp.person_id, current))
+                current += timedelta(days=1)
+
+        for person_id in sm_faculty_ids:
+            # Get their weekly template pattern for sm_clinic
+            template_rows = (
+                self.session.query(FacultyWeeklyTemplate)
+                .join(Activity, FacultyWeeklyTemplate.activity_id == Activity.id)
+                .filter(
+                    FacultyWeeklyTemplate.person_id == person_id,
+                    Activity.code == "sm_clinic",
+                )
+                .all()
+            )
+
+            # Map of (day_of_week, time_of_day) -> should_preload
+            pattern = {(t.day_of_week, t.time_of_day) for t in template_rows}
+
+            current = start_date
+            while current <= end_date:
+                py_wd = current.weekday()
+
+                # Rule 1: Skip Mondays
+                # Rule 2: Skip FMIT weeks
+                if py_wd != 0 and (person_id, current) not in fmit_faculty_dates:
+                    if (py_wd, "AM") in pattern:
+                        if self._create_preload(person_id, current, "AM", sm_clinic_id):
+                            count += 1
+                    if (py_wd, "PM") in pattern:
+                        if self._create_preload(person_id, current, "PM", sm_clinic_id):
+                            count += 1
+                current += timedelta(days=1)
+
+        if count > 0:
+            logger.info(f"Loaded {count} SM faculty deterministic preloads")
         return count
 
     def _load_sm_preloads(self, start_date: date, end_date: date) -> int:
