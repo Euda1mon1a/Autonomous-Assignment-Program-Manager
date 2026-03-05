@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from jose import jwt
+import jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings

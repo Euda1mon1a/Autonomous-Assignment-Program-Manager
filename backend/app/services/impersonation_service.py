@@ -17,7 +17,8 @@ import logging
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import PyJWTError as JWTError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings

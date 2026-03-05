@@ -1,36 +1,40 @@
 # Roadmap
 
-> **Last Updated:** 2026-03-04 (Planning Dissolve — trimmed from 1,308 lines)
+> **Last Updated:** 2026-03-04 (post-#1260 audit)
 > **Companion:** `TODO.md` (actionable items), `docs/planning/TECHNICAL_DEBT.md` (debt tracker)
 
 ---
 
-## Current Release: v1.0.0 (Production Ready)
+## Current Release: v1.0.5 — Block 12 Schedule Generation & XLSX Last-Mile (March 2026)
 
-- Complete scheduling engine with ACGME compliance
-- Role-based access control (8 roles)
-- Absence management with military-specific tracking
-- Procedure credentialing and certification tracking
-- 3-tier resilience framework
-- Analytics dashboard with fairness metrics
-- Swap marketplace with auto-matching
-- Audit logging, rate limiting, export (Excel, PDF, ICS)
+> **Status**: Stable. PRs #1214-#1219, #1231-#1236, #1243-#1260 merged.
 
-### v1.0.5 — Block 12 Schedule Generation & XLSX Last-Mile (March 2026)
-
-> **Status**: In progress. PRs #1214-#1219, #1231-#1236 merged.
-
-**Schedule Engine Fixes:**
-- 17 constraints re-enabled (41/50 → 47/50), CALL pipeline sync
-- Call equity tuning: overnight call generation revived, MAD formulation, equity weights
-- Integrated workload constraint revived, YTD_SUMMARY faculty union bug fixed
+**Schedule Engine:**
+- 47/50 constraints active, call equity tuning, category-gate resolution
+- CALL pipeline sync, overnight call generation, MAD formulation, equity weights
+- Integrated workload constraint, YTD_SUMMARY faculty union bug fixed
 - Category-gate AT/C template resolution Phase 4A/4B/4D
 - Final Wednesday faculty inverted schedule + activity code disambiguation
 - Mind Flayer's Probe: AST-based pre-commit hook for constraint archetype enforcement
+- ARO CP-SAT solver (#1238)
+- Solver checkpointing (Redis-backed `SolverSnapshotManager`)
+- Schedule diff guard (20% global max change ratio)
 
 **XLSX Export — TAMC Reference Format Match:**
 - Color, font, sizing, borders, column widths all matched to reference spreadsheet
 - Calculator formulas: Screeners, Providers Virtual, Attendings, V Clinic all implemented
+
+**Frontend:**
+- Frontend rewiring steps 1-5 (#1259) — type safety, OpenAPI types, expand_block_assignments toggle
+- 217 ESLint `any` warnings eliminated (#1256) — zero-warning frontend
+- Section 508 a11y: ARIA across 22 components, 47 jsx-a11y warnings resolved (#1110, #1251)
+- useEnums hooks wired into 4 components (#1260)
+- Repo hygiene: 48→25 dirs, 55→10 planning docs (#1255-#1258)
+
+**Infrastructure:**
+- mypy ratchet batches (#1243-#1245)
+- Load-test scripts (k6, locust, CI workflow)
+- DEBT-025 failing tests partially addressed (#1123, #1147)
 
 ### Upcoming: Last-Mile Coordinator Rules
 
@@ -39,7 +43,7 @@
 - [ ] Graduated call spacing (exponential decay 1-4 day gaps)
 - [ ] C30/C40 PGY booking rule (auto-translate `C` → `C40`/`C30` by PGY level)
 - [ ] NF continuity touchpoint (`C-N` code, first Thursday PM of NF blocks)
-- [ ] Final Wednesday continuity loss protection
+- [ ] Final Wednesday continuity loss protection (resident side)
 - [ ] HC & CLC template immunity (`is_protected=True`)
 - [ ] SM deterministic preload (DECISION NEEDED: Option A vs B)
 
@@ -47,11 +51,11 @@
 
 > **Doc**: `docs/planning/frontend_rewiring/README.md`
 
-- **Phase 1** — Type Safety: Regenerate OpenAPI types, wire `expand_block_assignments` toggle
+- **Phase 1** — Type Safety: ~~Regenerate OpenAPI types, wire `expand_block_assignments` toggle~~ **DONE** (#1259)
 - **Phase 2** — Draft & Publish Lifecycle: Stage/Preview/Publish flow
 - **Phase 3** — ARO UI Hub: `/hub/annual-planning` page
 - **Phase 4** — Import/Export Last Mile: Annual Workbook (14-sheet) export
-- **Phase 5** — Cosmetic & UX Debt: Dynamic enum fetches, color scheme parity
+- **Phase 5** — Cosmetic & UX Debt: ~~Dynamic enum fetches~~ **DONE** (#1260), color scheme parity
 
 ---
 

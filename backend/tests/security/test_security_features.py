@@ -456,7 +456,7 @@ class TestSessionExpiration:
         from uuid import uuid4
 
         from app.core.config import get_settings
-        from jose import jwt
+        import jwt
 
         settings = get_settings()
         data = {"sub": str(uuid4())}

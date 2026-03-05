@@ -138,17 +138,16 @@ from app.monitoring.health_checks import (
     health_check_coordinator,
 )
 
-# Tracing
-from app.monitoring.tracing import (
-    PerformanceTracer,
-    TraceContext,
-    TracingConfig,
-    TracingSetup,
-    create_span,
-    get_tracer,
-    performance_tracer,
-    trace_context,
-)
+# Tracing — legacy module superseded by app.telemetry package.
+# Kept as re-exports for backwards compatibility during migration.
+try:
+    from app.telemetry import (
+        TracerConfig as TracingConfig,
+        get_tracer,
+        traced,
+    )
+except ImportError:
+    pass
 
 __all__ = [
     # Metrics exports
@@ -269,13 +268,7 @@ __all__ = [
     "check_memory_usage",
     "check_redis_health",
     "health_check_coordinator",
-    # Tracing exports
-    "PerformanceTracer",
-    "TraceContext",
+    # Tracing (delegated to app.telemetry)
     "TracingConfig",
-    "TracingSetup",
-    "create_span",
     "get_tracer",
-    "performance_tracer",
-    "trace_context",
 ]

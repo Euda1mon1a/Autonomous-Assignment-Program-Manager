@@ -17,8 +17,8 @@ from typing import Any
 from urllib.parse import urlencode
 
 import httpx
-from jose import JWTError, jwk, jwt
-from jose.exceptions import JWKError
+import jwt
+from jwt.exceptions import InvalidKeyError as JWKError, PyJWTError as JWTError
 
 from app.auth.sso.config import OAuth2Config
 
@@ -379,10 +379,10 @@ class OAuth2Provider:
         if not matching_key:
             raise ValueError(f"Signing key not found for kid: {kid}")
 
-            # Convert JWK to PEM
+            # Convert JWK to key object
         try:
-            key_obj = jwk.construct(matching_key)
-            return str(key_obj)
+            key_obj = jwt.PyJWK(matching_key)
+            return key_obj.key
         except JWKError as e:
             raise ValueError(f"Failed to construct signing key: {e}")
 

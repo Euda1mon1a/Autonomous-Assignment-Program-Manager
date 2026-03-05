@@ -12,7 +12,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from jose import jwt
+import jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings

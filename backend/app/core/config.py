@@ -205,6 +205,11 @@ class Settings(BaseSettings):
     # instead of the monolithic SchedulingEngine.generate() method.
     USE_LANGGRAPH_PIPELINE: bool = True
 
+    # Solver Sandboxing — resource ceilings for pathological inputs
+    SOLVER_MAX_MEMORY_MB: int = 4096  # 4GB memory ceiling for solver process
+    SOLVER_MAX_WORKERS: int = 8  # Cap parallel search workers
+    SOLVER_MAX_WALL_TIME_SECONDS: float = 300.0  # 5-minute hard wall-time limit
+
     # OpenTelemetry / Distributed Tracing Configuration
     # Default: disabled for development to avoid performance impact
     # Enable in production for distributed tracing across services
