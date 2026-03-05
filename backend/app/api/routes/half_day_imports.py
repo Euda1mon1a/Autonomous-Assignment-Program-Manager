@@ -75,9 +75,21 @@ async def stage_half_day_import(
             notes=notes,
             filename=file.filename,
         )
+    except ValueError as e:
+        msg = str(e)
+        if "mismatch" in msg.lower():
+            raise HTTPException(
+                status_code=409, detail={"error": msg, "error_code": "BLOCK_MISMATCH"}
+            )
+        raise HTTPException(
+            status_code=400, detail={"error": msg, "error_code": "INVALID_REQUEST"}
+        )
     except Exception as e:
         logger.error("Half-day import staging failed", exc_info=True)
-        raise HTTPException(status_code=400, detail="Invalid request")
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "Invalid request", "error_code": "INTERNAL_ERROR"},
+        )
 
     return HalfDayImportStageResponse(
         success=True,
