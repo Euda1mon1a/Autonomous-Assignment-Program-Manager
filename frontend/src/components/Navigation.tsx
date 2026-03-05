@@ -57,6 +57,7 @@ const navItems: NavItem[] = [
   { href: "/compliance", label: "Compliance", icon: CheckCircle },
   { href: "/rotations", label: "Rotations", icon: FileText },
   { href: "/absences", label: "Absences", icon: CalendarOff },
+  { href: "/hub/annual-planning", label: "Annual Planning", icon: CalendarDays },
   { href: "/hub/import-export", label: "Import/Export", icon: FileUp },
   { href: "/help", label: "Help", icon: HelpCircle },
   // Core admin tools
