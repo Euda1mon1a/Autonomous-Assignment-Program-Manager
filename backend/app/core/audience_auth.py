@@ -38,7 +38,12 @@ from datetime import datetime, timedelta, timezone, UTC
 from typing import Callable
 
 from fastapi import Depends, HTTPException, status
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import (
+    ExpiredSignatureError,
+    ImmatureSignatureError,
+    PyJWTError as JWTError,
+)
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -232,8 +237,13 @@ def verify_audience_token(
         - Blacklisted tokens are rejected even if not expired
     """
     try:
-        # Decode and verify signature
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        # Decode and verify signature (audience validated manually below)
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_aud": False},
+        )
 
         # Verify this is an audience token (not access/refresh)
         token_type = payload.get("type")
@@ -348,15 +358,31 @@ def verify_audience_token(
             jti=jti,
         )
 
+    except ExpiredSignatureError:
+        logger.info(f"Audience token expired (PyJWT): audience={required_audience}")
+        if obs_metrics:
+            obs_metrics.record_auth_failure("audience_jwt_expired")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Token has expired",
+        )
+    except ImmatureSignatureError:
+        logger.warning(
+            f"Future-dated audience token (PyJWT): audience={required_audience}"
+        )
+        if obs_metrics:
+            obs_metrics.record_auth_failure("future_dated_token")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid token timestamp",
+        )
     except JWTError as e:
         # Categorize JWT errors
         error_str = str(e).lower()
         logger.warning(f"JWT verification failed: {error_str}")
 
         if obs_metrics:
-            if "expired" in error_str:
-                obs_metrics.record_auth_failure("audience_jwt_expired")
-            elif "signature" in error_str:
+            if "signature" in error_str:
                 obs_metrics.record_auth_failure("audience_invalid_signature")
             else:
                 obs_metrics.record_auth_failure("audience_malformed")

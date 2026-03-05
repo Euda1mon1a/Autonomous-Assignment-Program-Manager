@@ -24,8 +24,8 @@ email-validator==2.3.0
 jinja2==3.1.6  # Template rendering for notifications
 
 # Authentication & Security
-python-jose[cryptography]==3.5.0
-cryptography>=42.0.0  # Field-level encryption (Fernet) — explicit pin, also used by python-jose
+PyJWT[crypto]>=2.8.0  # JWT encode/decode (replaces python-jose to eliminate ecdsa CVE-2024-23342)
+cryptography>=42.0.0  # Field-level encryption (Fernet) — explicit pin, also used by PyJWT[crypto]
 passlib[bcrypt]==1.7.4
 bcrypt>=4.0.1,<5.0.0  # Pin bcrypt version for passlib 1.7.4 compatibility (prevents "password cannot be longer than 72 bytes" errors)
 keyring>=24.3.0  # macOS Keychain / OS credential store for local secret management

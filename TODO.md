@@ -1,6 +1,6 @@
 # TODO — Actionable Items
 
-> **Updated:** 2026-03-04 (post-#1260 audit)
+> **Updated:** 2026-03-04 (PyJWT migration, CVE corrections)
 > **Source:** Extracted from MASTER_PRIORITY_LIST.md, TECHNICAL_DEBT.md, GUI_WIRING_GAPS.md, SCHEDULER_HARDENING_TODO.md, TRANSCRIPT_ACTION_ITEMS.md, and 8 other archived planning docs.
 > **Companion:** `docs/planning/ROADMAP.md` (macro vision), `docs/planning/TECHNICAL_DEBT.md` (debt tracker)
 
@@ -9,7 +9,7 @@
 ## P0 — Critical / Blocking
 
 - [ ] **PII in git history** — Resident names in deleted files still in repo history. Requires `git filter-repo` + force push. All collaborators must re-clone after. **Human-only.**
-- [ ] **ecdsa CVE-2024-23342 (DEBT-026, residual)** — Transitive dep from `python-jose`. No upstream fix (maintainer won't patch). Not exercised — app uses `cryptography` backend. Accept risk or replace `python-jose` with `PyJWT`.
+- [x] **ecdsa CVE-2024-23342 (DEBT-026, residual)** — Eliminated by replacing `python-jose` with `PyJWT[crypto]`. 18 source/test files migrated. Key difference: PyJWT auto-validates `aud` claims (added `verify_aud: False` where needed). Caught `ExpiredSignatureError`/`ImmatureSignatureError` for correct error messages. All 31 audience auth tests pass.
 
 ## P1 — High / This Sprint
 
@@ -69,7 +69,7 @@
 ## Recently Completed
 
 - [x] **npm CVEs (DEBT-027)** (#1261) — minimatch ReDoS (high) + undici decompression (moderate) resolved. 4 remaining are low-severity dev-only (`jest-environment-jsdom` chain).
-- [x] **langchain-core CVE-2025-68664** (#1261) — Pinned `>=0.3.81`. Original "CVE-2026-26013" was a hallucinated ID from GPT-5 assessment.
+- [x] **langchain-core CVE-2025-68664** (#1261) — Pinned `>=0.3.81`. Original "CVE-2026-26013" cited by GPT-5 was a misattribution (real CVE exists but for a different vulnerability), not a fabricated ID.
 - [x] **Wire useEnums hooks** (#1260) — `usePersonTypes`, `usePgyLevels`, `useSchedulingAlgorithms`, `useActivityCategories` wired into 4 components. Backend PGY levels expanded 1-3 → 1-8. EditPersonModal validation fixed.
 - [x] **Solver checkpointing** — `SolverSnapshotManager` with Redis-backed storage, hash verification, TTL cleanup (`scheduling/solver_snapshot.py`).
 - [x] **Schedule diff guard** — `DiffGuard` with 20% global / 50% per-person / 30% high-churn thresholds (`scheduling/diff_guard.py`). Pure Python, tested.

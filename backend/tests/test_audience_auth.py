@@ -1,13 +1,13 @@
 """Tests for audience-scoped JWT authentication."""
 
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException, status
-from jose import jwt
+import jwt
 
 from app.core.audience_auth import (
     ALGORITHM,
@@ -68,7 +68,10 @@ class TestCreateAudienceToken:
 
         # Verify token can be decoded
         payload = jwt.decode(
-            response.token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+            response.token,
+            settings.SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_aud": False},
         )
         assert payload["sub"] == user_id
         assert payload["aud"] == audience
@@ -114,7 +117,7 @@ class TestCreateAudienceToken:
         assert response.ttl_seconds == 120
 
         # Verify expiration is approximately 120 seconds from now
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         expected_expiry = now + timedelta(seconds=120)
         time_diff = abs((response.expires_at - expected_expiry).total_seconds())
         assert time_diff < 5  # Allow 5 second tolerance
@@ -127,8 +130,18 @@ class TestCreateAudienceToken:
         token1 = create_audience_token(user_id=user_id, audience=audience)
         token2 = create_audience_token(user_id=user_id, audience=audience)
 
-        payload1 = jwt.decode(token1.token, settings.SECRET_KEY, algorithms=[ALGORITHM])
-        payload2 = jwt.decode(token2.token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload1 = jwt.decode(
+            token1.token,
+            settings.SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_aud": False},
+        )
+        payload2 = jwt.decode(
+            token2.token,
+            settings.SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_aud": False},
+        )
 
         assert payload1["jti"] != payload2["jti"]
 
@@ -211,7 +224,10 @@ class TestVerifyAudienceToken:
 
         # Decode to get jti
         payload = jwt.decode(
-            response.token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+            response.token,
+            settings.SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_aud": False},
         )
         jti = payload["jti"]
 
@@ -271,7 +287,7 @@ class TestVerifyAudienceToken:
     def test_verify_future_dated_token(self, db):
         """Test verification fails for future-dated tokens."""
         # Create token with future iat
-        future_time = datetime.utcnow() + timedelta(minutes=10)
+        future_time = datetime.now(UTC) + timedelta(minutes=10)
         payload = {
             "sub": str(uuid4()),
             "aud": "jobs.abort",
@@ -352,7 +368,10 @@ class TestRevokeAudienceToken:
 
         # Decode to get jti
         payload = jwt.decode(
-            response.token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+            response.token,
+            settings.SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_aud": False},
         )
 
         # Revoke immediately
@@ -564,7 +583,10 @@ class TestIntegrationScenarios:
 
         # Step 3: Token is revoked after use (good practice)
         token_payload = jwt.decode(
-            token_response.token, settings.SECRET_KEY, algorithms=[ALGORITHM]
+            token_response.token,
+            settings.SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_aud": False},
         )
         revoke_audience_token(
             db=db,
@@ -617,7 +639,7 @@ def db():
     # Mock TokenBlacklist.is_blacklisted to track blacklisted tokens
     blacklisted_tokens = set()
 
-    def is_blacklisted(jti):
+    def is_blacklisted(db_session, jti):
         return jti in blacklisted_tokens
 
     def add_to_blacklist(record):
