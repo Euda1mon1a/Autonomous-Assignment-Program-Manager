@@ -152,7 +152,7 @@ describe('My Dashboard Hooks', () => {
     it('should handle empty upcoming schedule', async () => {
       const emptyResponse = {
         ...mockDashboardApiResponse,
-        upcoming_schedule: [],
+        upcomingSchedule: [],
       };
       (api.get as jest.Mock).mockResolvedValue(emptyResponse);
 
@@ -217,13 +217,13 @@ describe('My Dashboard Hooks', () => {
     it('should handle assignments without IDs', async () => {
       const responseWithoutIds = {
         ...mockDashboardApiResponse,
-        upcoming_schedule: [
+        upcomingSchedule: [
           {
             date: '2025-02-15',
             timeOfDay: 'AM',
             activity: 'Test Activity',
             location: 'Ward',
-            can_trade: true,
+            canTrade: true,
           },
         ],
       };

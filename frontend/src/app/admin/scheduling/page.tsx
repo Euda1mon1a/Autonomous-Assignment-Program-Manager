@@ -7,6 +7,7 @@
  * Provides configuration, experimentation, metrics, history, and override controls.
  */
 import { useState, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Settings,
   Beaker,
@@ -37,6 +38,7 @@ import {
   Pause,
   Eye,
   Boxes,
+  FileCheck,
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import {
@@ -57,6 +59,7 @@ import {
   useSyncMetadata,
   useTriggerSync,
 } from '@/hooks/useAdminScheduling';
+import { useSchedulingAlgorithms } from '@/hooks/useEnums';
 import type {
   Algorithm,
   RunConfiguration,
@@ -83,7 +86,7 @@ const VoxelScheduleView3D = dynamic(
 // Constants
 // ============================================================================
 
-const ALGORITHMS: { value: Algorithm; label: string; description: string }[] = [
+const FALLBACK_ALGORITHMS: { value: Algorithm; label: string; description: string }[] = [
   { value: 'greedy', label: 'Greedy', description: 'Fast heuristic, assigns hardest blocks first' },
   { value: 'cp_sat', label: 'CP-SAT', description: 'Constraint programming, guarantees compliance' },
   { value: 'pulp', label: 'PuLP', description: 'Linear programming, fast for large problems' },
@@ -138,6 +141,21 @@ export default function AdminSchedulingPage() {
   const { data: holidays } = useEmergencyHolidays();
   const { data: rollbackPoints } = useRollbackPoints();
   const { data: syncMeta } = useSyncMetadata();
+  const { data: apiAlgorithms } = useSchedulingAlgorithms();
+
+  // Dynamic algorithms from API with hardcoded fallback
+  const algorithms = useMemo(() => {
+    if (apiAlgorithms && apiAlgorithms.length > 0) {
+      return apiAlgorithms.map(a => ({
+        value: a.value as Algorithm,
+        label: a.label.split(' (')[0], // "CP-SAT (Optimal, slower)" → "CP-SAT"
+        description: a.label.includes('(')
+          ? a.label.split('(')[1].replace(')', '')
+          : a.label,
+      }));
+    }
+    return FALLBACK_ALGORITHMS;
+  }, [apiAlgorithms]);
 
   // Mutations
   const validateConfig = useValidateConfiguration();
@@ -199,8 +217,15 @@ export default function AdminSchedulingPage() {
               </div>
             </div>
 
-            {/* Status Indicators */}
+            {/* Actions & Status */}
             <div className="flex items-center gap-4">
+              <Link
+                href="/admin/schedule-drafts"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors"
+              >
+                <FileCheck className="w-4 h-4" />
+                View Drafts
+              </Link>
               <StatusBadge
                 status={isRunning ? 'running' : 'idle'}
                 count={queue?.currentlyRunning}
@@ -246,6 +271,7 @@ export default function AdminSchedulingPage() {
             <ConfigurationPanel
               configuration={configuration}
               constraints={constraints || []}
+              algorithms={algorithms}
               isLoading={constraintsLoading}
               onChange={handleConfigChange}
               onRun={handleValidateAndRun}
@@ -253,6 +279,7 @@ export default function AdminSchedulingPage() {
               isRunning={isRunning}
               isValidating={validateConfig.isPending}
               validationResult={validateConfig.data}
+              generateSuccess={generateRun.isSuccess}
             />
           </SectionErrorBoundary>
         )}
@@ -421,6 +448,7 @@ function StatusBadge({
 function ConfigurationPanel({
   configuration,
   constraints,
+  algorithms,
   isLoading,
   onChange,
   onRun,
@@ -428,9 +456,11 @@ function ConfigurationPanel({
   isRunning,
   isValidating,
   validationResult,
+  generateSuccess,
 }: {
   configuration: RunConfiguration;
   constraints: ConstraintConfig[];
+  algorithms: { value: Algorithm; label: string; description: string }[];
   isLoading: boolean;
   onChange: (updates: Partial<RunConfiguration>) => void;
   onRun: () => void;
@@ -438,6 +468,7 @@ function ConfigurationPanel({
   isRunning: boolean;
   isValidating: boolean;
   validationResult?: { valid: boolean; violations?: Array<{ message: string }> };
+  generateSuccess: boolean;
 }) {
   const [expandedSections, setExpandedSections] = useState({
     algorithm: true,
@@ -470,7 +501,7 @@ function ConfigurationPanel({
           onToggle={() => toggleSection('algorithm')}
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {ALGORITHMS.map(algo => (
+            {algorithms.map(algo => (
               <button
                 key={algo.value}
                 onClick={() => onChange({ algorithm: algo.value })}
@@ -707,6 +738,25 @@ function ConfigurationPanel({
               )}
             </div>
           )}
+
+          {/* Post-generation: link to drafts */}
+          {generateSuccess && (
+            <div className="mt-4 p-4 rounded-lg border bg-emerald-500/10 border-emerald-500/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <span className="font-medium text-emerald-400">Schedule generated</span>
+                </div>
+                <Link
+                  href="/admin/schedule-drafts"
+                  className="flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+                >
+                  <FileCheck className="w-4 h-4" />
+                  View in Drafts
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Quick Stats */}
@@ -796,7 +846,7 @@ function ExperimentationPanel({
                 Algorithm Combinations
               </label>
               <div className="flex flex-wrap gap-2">
-                {ALGORITHMS.map(algo => (
+                {FALLBACK_ALGORITHMS.map(algo => (
                   <button
                     key={algo.value}
                     onClick={() => {
@@ -1180,7 +1230,7 @@ function HistoryPanel({
           className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
         >
           <option value="">All Algorithms</option>
-          {ALGORITHMS.map(a => (
+          {FALLBACK_ALGORITHMS.map(a => (
             <option key={a.value} value={a.value}>{a.label}</option>
           ))}
         </select>

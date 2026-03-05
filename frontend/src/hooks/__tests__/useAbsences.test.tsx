@@ -506,8 +506,8 @@ describe('useLeaveBalance', () => {
     });
 
     expect(mockGet).toHaveBeenCalledWith('/absences/balance/person-1');
-    expect(result.current.data?.vacation_days).toBe(15);
-    expect(result.current.data?.sick_days).toBe(10);
+    expect(result.current.data?.vacationDays).toBe(15);
+    expect(result.current.data?.sickDays).toBe(10);
   });
 
   it('should not fetch when personId is empty', () => {

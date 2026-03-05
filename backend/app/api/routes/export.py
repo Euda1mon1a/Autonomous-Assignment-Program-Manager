@@ -216,6 +216,12 @@ async def export_schedule_xlsx(
     federal_holidays: str | None = Query(
         None, description="Comma-separated federal holiday dates (YYYY-MM-DD)"
     ),
+    include_qa_sheet: bool = Query(
+        True, description="Include QA validation sheet in export"
+    ),
+    include_overrides: bool = Query(
+        True, description="Include override assignments in export"
+    ),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
@@ -231,6 +237,8 @@ async def export_schedule_xlsx(
         end_date: End date of the block
         block_number: Block number to display in header (1-13 for academic year)
         federal_holidays: Ignored (legacy parameter)
+        include_qa_sheet: Include QA validation sheet (default True)
+        include_overrides: Include override assignments (default True)
 
     Returns:
         Excel file (.xlsx) download
@@ -246,6 +254,8 @@ async def export_schedule_xlsx(
             block_number=block_number,
             academic_year=academic_year,
             include_faculty=True,
+            include_qa_sheet=include_qa_sheet,
+            include_overrides=include_overrides,
         )
     except Exception:
         logger.exception("Excel export failed")
@@ -268,6 +278,9 @@ async def export_schedule_xlsx(
 @router.get("/schedule/year/xlsx")
 async def export_schedule_year_xlsx(
     academic_year: int = Query(..., description="Target academic year (e.g. 2025)"),
+    include_overrides: bool = Query(
+        True, description="Include override assignments in export"
+    ),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
@@ -280,6 +293,7 @@ async def export_schedule_year_xlsx(
 
     Args:
         academic_year: Target academic year (e.g. 2025)
+        include_overrides: Include override assignments (default True)
 
     Returns:
         Excel file (.xlsx) download
@@ -289,6 +303,7 @@ async def export_schedule_year_xlsx(
         xlsx_bytes = exporter.export_year_xlsx(
             academic_year=academic_year,
             include_faculty=True,
+            include_overrides=include_overrides,
         )
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
