@@ -9,8 +9,7 @@
 ## P0 — Critical / Blocking
 
 - [ ] **PII in git history** — Resident names in deleted files still in repo history. Requires `git filter-repo` + force push. All collaborators must re-clone after. **Human-only.**
-- [ ] **Python CVEs (DEBT-026)** — `ecdsa 0.19.1` installed (CVE-2024-23342). `langchain-core` pinned `>=0.3.0,<1.0` (CVE-2026-26013 range). Run `pip-audit`, upgrade or remove deps.
-- [ ] **npm CVEs (DEBT-027)** — 6 vulns: `minimatch` ReDoS (high, 3 instances), `undici` decompression (moderate). `npm audit fix` available.
+- [ ] **ecdsa CVE-2024-23342 (DEBT-026, residual)** — Transitive dep from `python-jose`. No upstream fix (maintainer won't patch). Not exercised — app uses `cryptography` backend. Accept risk or replace `python-jose` with `PyJWT`.
 
 ## P1 — High / This Sprint
 
@@ -69,6 +68,8 @@
 
 ## Recently Completed
 
+- [x] **npm CVEs (DEBT-027)** (#1261) — minimatch ReDoS (high) + undici decompression (moderate) resolved. 4 remaining are low-severity dev-only (`jest-environment-jsdom` chain).
+- [x] **langchain-core CVE-2025-68664** (#1261) — Pinned `>=0.3.81`. Original "CVE-2026-26013" was a hallucinated ID from GPT-5 assessment.
 - [x] **Wire useEnums hooks** (#1260) — `usePersonTypes`, `usePgyLevels`, `useSchedulingAlgorithms`, `useActivityCategories` wired into 4 components. Backend PGY levels expanded 1-3 → 1-8. EditPersonModal validation fixed.
 - [x] **Solver checkpointing** — `SolverSnapshotManager` with Redis-backed storage, hash verification, TTL cleanup (`scheduling/solver_snapshot.py`).
 - [x] **Schedule diff guard** — `DiffGuard` with 20% global / 50% per-person / 30% high-churn thresholds (`scheduling/diff_guard.py`). Pure Python, tested.
