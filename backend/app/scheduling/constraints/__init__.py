@@ -178,6 +178,15 @@ from .fm_scheduling import (
     WednesdayPMLecConstraint,
 )
 
+# Learner (med student / rotating intern) constraints
+from .learner import (
+    LearnerASMWednesdayConstraint,
+    LearnerDoubleBookingConstraint,
+    LearnerFMITBlockingConstraint,
+    LearnerSupervisionConstraint,
+    LearnerTrackBalanceConstraint,
+)
+
 # Define __all__ for explicit exports
 __all__ = [
     # Base classes and types
@@ -277,6 +286,12 @@ __all__ = [
     "FacultyWeeklyTemplateConstraint",
     # Activity requirement constraint
     "ActivityRequirementConstraint",
+    # Learner constraints
+    "LearnerSupervisionConstraint",
+    "LearnerASMWednesdayConstraint",
+    "LearnerFMITBlockingConstraint",
+    "LearnerDoubleBookingConstraint",
+    "LearnerTrackBalanceConstraint",
     # Manager
     "ConstraintManager",
 ]

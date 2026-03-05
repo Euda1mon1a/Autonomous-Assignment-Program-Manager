@@ -19,8 +19,12 @@ from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from sqlalchemy.orm import Session
+
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
+from app.db.session import get_db
+from app.models.constraint_config import ConstraintConfiguration
 from app.models.user import User
 from app.scheduling.constraints.config import (
     ConstraintCategory,
@@ -381,6 +385,94 @@ async def apply_constraint_preset(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to apply preset",
         )
+
+
+class ConstraintUpdateRequest(BaseModel):
+    """Request model for updating constraint configuration."""
+
+    enabled: bool | None = None
+    weight: float | None = None
+
+
+class ConstraintUpdateResponse(BaseModel):
+    """Response model for constraint updates."""
+
+    success: bool
+    message: str
+    constraint: ConstraintStatusResponse
+
+
+@router.patch("/{name}", response_model=ConstraintUpdateResponse)
+async def update_constraint(
+    name: str,
+    body: ConstraintUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
+) -> ConstraintUpdateResponse:
+    """
+    Update constraint configuration (enable/disable, weight).
+
+    Persists changes to the database so they survive restarts.
+    """
+    config_manager = get_constraint_config()
+    constraint = config_manager.get(name)
+    if not constraint:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Constraint '{name}' not found",
+        )
+
+    # Apply in-memory changes
+    if body.enabled is not None:
+        if body.enabled:
+            config_manager.enable(name)
+        else:
+            config_manager.disable(name)
+
+    if body.weight is not None:
+        if body.weight < 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Weight must be non-negative",
+            )
+        constraint.weight = body.weight
+
+    # Persist to database
+    db_config = (
+        db.query(ConstraintConfiguration)
+        .filter(ConstraintConfiguration.name == name)
+        .first()
+    )
+    if db_config is None:
+        db_config = ConstraintConfiguration(
+            name=name,
+            enabled=constraint.enabled,
+            weight=constraint.weight,
+            priority=constraint.priority.name,
+            category=constraint.category.value,
+            description=constraint.description,
+            updated_by=current_user.username if current_user else None,
+        )
+        db.add(db_config)
+    else:
+        db_config.enabled = constraint.enabled
+        db_config.weight = constraint.weight
+        db_config.updated_by = current_user.username if current_user else None
+
+    db.commit()
+
+    updated = config_manager.get(name)
+    logger.info(
+        f"Constraint '{name}' updated by {current_user.username}: "
+        f"enabled={updated.enabled}, weight={updated.weight}"
+    )
+
+    return ConstraintUpdateResponse(
+        success=True,
+        message=f"Constraint '{name}' updated and persisted",
+        constraint=_constraint_to_response(updated),
+    )
 
 
 @router.get("/{name}", response_model=ConstraintStatusResponse)

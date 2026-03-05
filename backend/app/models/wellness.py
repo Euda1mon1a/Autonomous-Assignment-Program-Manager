@@ -37,7 +37,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
-from app.db.types import GUID, JSONType
+from app.db.types import GUID, EncryptedJSON, EncryptedString, JSONType
 
 
 class SurveyType(str, Enum):
@@ -201,7 +201,7 @@ class SurveyResponse(Base):
     academic_year = Column(Integer, nullable=True)  # e.g., 2025
 
     # Response data
-    response_data = Column(JSONType, nullable=False)  # {question_id: answer}
+    response_data = Column(EncryptedJSON, nullable=False)  # {question_id: answer}
     score = Column(Float, nullable=True)  # Computed score if applicable
     score_interpretation = Column(
         String(100), nullable=True
@@ -494,7 +494,7 @@ class HopfieldPosition(Base):
     confidence = Column(
         Integer, nullable=True
     )  # 1-5 how confident they are in positioning
-    notes = Column(Text, nullable=True)  # Optional user notes
+    notes = Column(EncryptedString, nullable=True)  # Optional user notes
 
     # Temporal scoping
     block_number = Column(Integer, nullable=True)  # 0-13

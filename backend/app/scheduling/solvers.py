@@ -1492,11 +1492,30 @@ class CPSATSolver(BaseSolver):
         logger.info("=" * 60)
 
         # ==================================================
-        # SOLVE
+        # SOLVE (sandboxed — resource limits enforced)
         # ==================================================
+        from app.scheduling.solver_sandbox import (
+            MemoryWatchdog,
+            SandboxMetrics,
+            SolverResourceLimits,
+            clamp_workers,
+            create_sandboxed_callback,
+        )
+
+        try:
+            from app.core.config import settings
+
+            limits = SolverResourceLimits.from_settings(settings)
+        except Exception:
+            limits = SolverResourceLimits()
+
         solver = cp_model.CpSolver()
-        solver.parameters.max_time_in_seconds = self.timeout_seconds
-        solver.parameters.num_search_workers = self.num_workers
+        solver.parameters.max_time_in_seconds = min(
+            self.timeout_seconds, limits.max_wall_time_seconds
+        )
+        solver.parameters.num_search_workers = clamp_workers(
+            self.num_workers, limits.max_workers
+        )
         # Disable symmetry detection — residents/faculty have heterogeneous
         # PGY levels, templates, and availability so few symmetries exist.
         # Saves O(n^2) presolve overhead.
@@ -1507,7 +1526,7 @@ class CPSATSolver(BaseSolver):
         solver.parameters.log_search_progress = True
 
         # Create progress callback if Redis client is available
-        callback = None
+        inner_callback = None
         if self.task_id and self.redis_client:
             try:
                 # Import broadcast function for real-time visualization
@@ -1518,16 +1537,38 @@ class CPSATSolver(BaseSolver):
                     self.redis_client,
                     broadcast_callback=broadcast_solver_event,
                 )
-                callback = callback_wrapper.get_callback()
+                inner_callback = callback_wrapper.get_callback()
                 logger.info(f"Progress tracking enabled for task {self.task_id}")
             except Exception as e:
                 logger.warning(f"Failed to create progress callback: {e}")
 
-        # Solve with or without callback
-        if callback:
-            status = solver.Solve(model, callback)
+        # Start memory watchdog and wrap callback with resource checks
+        watchdog = MemoryWatchdog(max_memory_mb=limits.max_memory_mb)
+        sandbox_callback = create_sandboxed_callback(watchdog, inner_callback)
+        sandbox_metrics = SandboxMetrics()
+
+        watchdog.start()
+        try:
+            status = solver.Solve(model, sandbox_callback)
+        finally:
+            watchdog.stop()
+            watchdog.join(timeout=2.0)
+            sandbox_metrics.peak_memory_mb = watchdog.peak_mb
+            sandbox_metrics.wall_time_seconds = time.time() - start_time
+
+        if sandbox_callback.memory_aborted:
+            sandbox_metrics.aborted = True
+            sandbox_metrics.abort_reason = (
+                f"memory exceeded {limits.max_memory_mb}MB "
+                f"(peak: {watchdog.peak_mb:.0f}MB)"
+            )
+            logger.warning(f"Solver aborted by sandbox: {sandbox_metrics.abort_reason}")
         else:
-            status = solver.Solve(model)
+            logger.info(
+                f"Solver sandbox metrics: peak_memory={sandbox_metrics.peak_memory_mb:.0f}MB, "
+                f"wall_time={sandbox_metrics.wall_time_seconds:.1f}s, "
+                f"solutions={sandbox_callback.solution_count}"
+            )
 
         runtime = time.time() - start_time
 
@@ -1536,7 +1577,9 @@ class CPSATSolver(BaseSolver):
             try:
                 status_name = solver.StatusName(status)
                 final_data = {
-                    "solutions_found": callback.solution_count if callback else 0,
+                    "solutions_found": sandbox_callback.solution_count
+                    if sandbox_callback
+                    else 0,
                     "current_objective": (
                         solver.ObjectiveValue()
                         if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]

@@ -58,13 +58,13 @@
 
 ## P3 — Low / Backlog
 
-- [ ] **OpenTelemetry (DEBT-018)** — `TELEMETRY_ENABLED=false` by default. Enable for production.
+- [x] **OpenTelemetry (DEBT-018)** — Wired `setup_telemetry(app)` in `main.py`, added tracing spans to solver path in `engine.py`.
 - [ ] **"No CLI" execution phases** — 3-phase plan: web-first daily ops → admin UI → never-CLI. Blocked by RED audit status.
-- [ ] **Med student scheduling** — 7 learner tracks (M3/M4 rotations, skill logs, longitudinal clinics). Complete spec archived.
-- [ ] **Constraint config GUI** — DB table for constraint enable/disable/weight. Currently hardcoded.
-- [ ] **Solver sandboxing** — Resource ceilings (memory/CPU) for pathological inputs.
-- [ ] **Field-level encryption** — `leave_type`, `accommodation_notes`, `military_status`.
-- [ ] **K2.5 swarm integration** — Kimi K2.5 for parallel bulk work. Docs only (#1128), no implementation.
+- [x] **Med student scheduling** — 7 learner tracks, overlay model (LearnerTrack/LearnerToTrack/LearnerAssignment models), CRUD API, 5 scheduling constraints (supervision, ASM Wednesday, FMIT blocking, double-booking, track balance), schedule generator with supervisor matching.
+- [x] **Constraint config GUI** — `ConstraintConfiguration` DB model, `PATCH /constraints/{name}` API, `load_from_db()` in config manager, frontend admin page with category filtering + weight editing.
+- [x] **Solver sandboxing** — `SolverResourceLimits`, `MemoryWatchdog` thread, `SandboxedCallback` with `StopSearch()`, `clamp_workers()`. Integrated into `solvers.py`.
+- [x] **Field-level encryption** — `EncryptedString`/`EncryptedJSON` TypeDecorators using Fernet. Applied to `absence.review_notes`, `absence.tdy_location`, `absence.notes`, `wellness.response_data`, `wellness.notes`.
+- [x] **K2.5 swarm integration** — `mcp-server/src/scheduler_mcp/k2_swarm/` with 3 MCP tools: spawn, get_result, apply_patches. Feature-flagged via `K2_SWARM_ENABLED`.
 
 ## Recently Completed
 

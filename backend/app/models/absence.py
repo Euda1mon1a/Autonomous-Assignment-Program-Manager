@@ -16,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
-from app.db.types import GUID
+from app.db.types import GUID, EncryptedString
 
 # Valid absence types with their default blocking behavior.
 # NOTE: Scheduling now treats ALL absences as blocking for assignment solving.
@@ -100,16 +100,16 @@ class Absence(Base):
     status = Column(String(20), nullable=False, default="approved")
     reviewed_at = Column(DateTime, nullable=True)
     reviewed_by_id = Column(GUID(), ForeignKey("users.id"), nullable=True)
-    review_notes = Column(Text, nullable=True)
+    review_notes = Column(EncryptedString, nullable=True)
 
     # Military-specific
     deployment_orders = Column(Boolean, default=False)
-    tdy_location = Column(String(255))
+    tdy_location = Column(EncryptedString)
 
     # Replacement activity (shown in schedule)
     replacement_activity = Column(String(255))  # e.g., "TDY - Korea"
 
-    notes = Column(Text)
+    notes = Column(EncryptedString)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships

@@ -16,7 +16,9 @@ export interface ConstraintConfig {
   name: string;
   description: string;
   enabled: boolean;
-  category: 'acgme' | 'coverage' | 'fairness' | 'custom';
+  weight: number;
+  priority: number;
+  category: 'acgme' | 'coverage' | 'fairness' | 'custom' | string;
   severity: 'hard' | 'soft';
 }
 

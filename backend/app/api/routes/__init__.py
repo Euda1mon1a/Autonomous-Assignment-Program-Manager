@@ -57,6 +57,7 @@ from app.api.routes import (
     imports,
     institutional_events,
     jobs,
+    learners,
     leave,
     mcp_proxy,
     me_dashboard,
@@ -300,3 +301,4 @@ api_router.include_router(claude_chat.router, tags=["claude-chat"])  # prefix in
 api_router.include_router(
     scheduler.router, prefix="/scheduler-jobs", tags=["scheduler-jobs"]
 )
+api_router.include_router(learners.router, prefix="/learners", tags=["learners"])

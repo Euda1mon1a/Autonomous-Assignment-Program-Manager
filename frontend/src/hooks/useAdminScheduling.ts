@@ -6,7 +6,7 @@
  * experimentation, metrics, and manual overrides.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { get, post, del, ApiError } from '@/lib/api';
+import { get, post, patch, del, ApiError } from '@/lib/api';
 import type {
   RunConfiguration,
   RunResult,
@@ -109,6 +109,25 @@ export function useConstraintConfigs() {
     queryKey: adminSchedulingKeys.constraints(),
     queryFn: () => get<ConstraintConfig[]>('/schedule/constraints'),
     staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+/**
+ * Updates a constraint's enabled state or weight.
+ * Persists to database so changes survive restarts.
+ */
+export function useUpdateConstraint() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    { success: boolean; message: string; constraint: ConstraintConfig },
+    ApiError,
+    { name: string; enabled?: boolean; weight?: number }
+  >({
+    mutationFn: ({ name, ...body }) =>
+      patch(`/schedule/constraints/${name}`, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminSchedulingKeys.constraints() });
+    },
   });
 }
 
