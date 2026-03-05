@@ -50,11 +50,16 @@ async def get_rotation_types() -> list[dict[str, str]]:
 
 @router.get("/pgy-levels")
 async def get_pgy_levels() -> list[dict[str, str]]:
-    """Get PGY levels for dropdown."""
+    """Get PGY levels for dropdown (1-8, supports fellowship levels)."""
     return [
         {"value": "1", "label": "PGY-1 (Intern)"},
         {"value": "2", "label": "PGY-2"},
         {"value": "3", "label": "PGY-3 (Chief)"},
+        {"value": "4", "label": "PGY-4"},
+        {"value": "5", "label": "PGY-5"},
+        {"value": "6", "label": "PGY-6"},
+        {"value": "7", "label": "PGY-7"},
+        {"value": "8", "label": "PGY-8"},
     ]
 
 

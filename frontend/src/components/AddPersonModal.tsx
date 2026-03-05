@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { Modal } from './Modal';
 import { Input, Select } from './forms';
 import { useCreatePerson } from '@/lib/hooks';
+import { usePersonTypes, usePgyLevels } from '@/hooks/useEnums';
 import { validateRequired, validateEmail, validateMinLength, validatePgyLevel } from '@/lib/validation';
 import { PersonType, FacultyRole, type PersonCreate } from '@/types/api';
 
@@ -19,12 +20,12 @@ interface FormErrors {
   general?: string;
 }
 
-const typeOptions = [
+const FALLBACK_TYPE_OPTIONS = [
   { value: 'resident', label: 'Resident' },
   { value: 'faculty', label: 'Faculty' },
 ];
 
-const pgyOptions = [
+const FALLBACK_PGY_OPTIONS = [
   { value: '1', label: 'PGY-1' },
   { value: '2', label: 'PGY-2' },
   { value: '3', label: 'PGY-3' },
@@ -55,6 +56,10 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
   const [specialties, setSpecialties] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
 
+  const { data: personTypes } = usePersonTypes();
+  const { data: pgyLevels } = usePgyLevels();
+  const typeOptions = personTypes ?? FALLBACK_TYPE_OPTIONS;
+  const pgyOptions = pgyLevels ?? FALLBACK_PGY_OPTIONS;
   const createPerson = useCreatePerson();
 
   const validateForm = (): boolean => {
