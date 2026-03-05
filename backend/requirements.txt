@@ -79,7 +79,7 @@ pymoo>=0.6.0
 
 # LangGraph Pipeline (Phase 1 - ADR-2026-02-17)
 langgraph>=0.3.0,<1.0
-langchain-core>=0.3.0,<1.0
+langchain-core>=0.3.81,<1.0  # >=0.3.81 for CVE-2025-68664 fix
 
 # Quantum-Inspired Optimization (optional)
 # Install these for quantum-inspired scheduling solvers:
