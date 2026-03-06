@@ -3,7 +3,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { startOfWeek, addDays, format, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
-import { Upload, Download } from 'lucide-react'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { BlockNavigation } from '@/components/schedule/BlockNavigation'
 import { ScheduleGrid } from '@/components/schedule/ScheduleGrid'
@@ -16,11 +15,8 @@ import { BlockWeekView } from '@/components/schedule/BlockWeekView'
 import { CopyGrid } from '@/components/schedule/CopyGrid'
 import { MultiSelectPersonFilter } from '@/components/schedule/MultiSelectPersonFilter'
 import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
-import { BlockAssignmentImportModal } from '@/components/admin/BlockAssignmentImportModal'
-import { BlockAssignmentExportModal } from '@/components/admin/BlockAssignmentExportModal'
 import { usePeople, useRotationTemplates, useBlockRanges } from '@/lib/hooks'
 import { useAssignmentsForRange, useBlocksForRange } from '@/hooks/useAssignmentsForRange'
-import { useRole } from '@/hooks/useAuth'
 import { useScheduleWebSocket } from '@/hooks/useWebSocket'
 import { WebSocketStatus } from '@/components/ui/WebSocketStatus'
 import type { Block, RotationTemplate } from '@/types/api'
@@ -70,14 +66,6 @@ export default function SchedulePage() {
 
   // Person filter for comparing schedules (multi-select)
   const [selectedPersonIds, setSelectedPersonIds] = useState<Set<string>>(new Set())
-
-  // Import/Export modal state
-  const [showImportModal, setShowImportModal] = useState(false)
-  const [showExportModal, setShowExportModal] = useState(false)
-
-  // Role check for admin/coordinator features
-  const { isAdmin, isCoordinator } = useRole()
-  const canManageAssignments = isAdmin || isCoordinator
 
   // WebSocket for live updates - invalidate queries when schedule changes
   // Backend now supports both token query param AND httpOnly cookie auth
@@ -247,8 +235,8 @@ export default function SchedulePage() {
         <div className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-full px-4 py-4">
             {/* Title row */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Schedule</h1>
                   <p className="text-sm text-gray-600 mt-1">
@@ -272,25 +260,6 @@ export default function SchedulePage() {
                   />
                 )}
 
-                {/* Import/Export buttons - admin/coordinator only, block views only */}
-                {canManageAssignments && ['block-annual', 'block', 'block-week', 'copy-grid'].includes(currentView) && (
-                  <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-300">
-                    <button
-                      onClick={() => setShowImportModal(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                    >
-                      <Upload className="w-4 h-4" />
-                      Import
-                    </button>
-                    <button
-                      onClick={() => setShowExportModal(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                      Export
-                    </button>
-                  </div>
-                )}
               </div>
 
               {/* View Toggle */}
@@ -444,15 +413,6 @@ export default function SchedulePage() {
         )}
       </div>
 
-      {/* Import/Export Modals */}
-      <BlockAssignmentImportModal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-      />
-      <BlockAssignmentExportModal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-      />
     </ProtectedRoute>
   )
 }

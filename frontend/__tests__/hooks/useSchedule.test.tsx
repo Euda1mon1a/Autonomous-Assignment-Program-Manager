@@ -333,7 +333,7 @@ describe('useGenerateSchedule', () => {
       const mockResponse = {
         status: 'success' as const,
         message: 'Schedule generated successfully',
-        totalBlocks_assigned: 100,
+        totalBlocksAssigned: 100,
         totalBlocks: 100,
         validation: {
           valid: true,
@@ -370,7 +370,7 @@ describe('useGenerateSchedule', () => {
       const mockResponse = {
         status: 'partial' as const,
         message: 'Partial schedule generated',
-        totalBlocks_assigned: 80,
+        totalBlocksAssigned: 80,
         totalBlocks: 100,
         validation: {
           valid: false,
@@ -399,7 +399,7 @@ describe('useGenerateSchedule', () => {
       })
 
       expect(result.current.data?.status).toBe('partial')
-      expect(result.current.data?.totalBlocks_assigned).toBe(80)
+      expect(result.current.data?.totalBlocksAssigned).toBe(80)
     })
   })
 
@@ -438,7 +438,7 @@ describe('useGenerateSchedule', () => {
         result.current.mutate({
           startDate: '2024-01-01',
           endDate: '2024-12-31',
-          timeout_seconds: 60,
+          timeoutSeconds: 60,
         })
       })
 
@@ -478,7 +478,7 @@ describe('useGenerateSchedule', () => {
         resolvePromise!({
           status: 'success',
           message: 'Done',
-          totalBlocks_assigned: 100,
+          totalBlocksAssigned: 100,
           totalBlocks: 100,
           validation: { valid: true, totalViolations: 0, violations: [], coverageRate: 1.0, statistics: null },
         })

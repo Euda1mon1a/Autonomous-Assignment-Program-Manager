@@ -526,7 +526,7 @@ function ConfigurationPanel({
           icon={Target}
           expanded={expandedSections.constraints}
           onToggle={() => toggleSection('constraints')}
-          badge={configuration.constraints.filter(c => c.enabled).length}
+          badge={constraints?.filter(c => configuration.constraints.find(cc => cc.id === c.id)?.enabled ?? c.enabled).length || 0}
         >
           <div className="space-y-2">
             {constraints.length === 0 ? (

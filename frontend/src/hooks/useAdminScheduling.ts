@@ -27,6 +27,19 @@ import type {
   SyncMetadata,
 } from '@/types/admin-scheduling';
 
+// Re-export types for consumers that import from this module
+export type {
+  RunConfiguration,
+  RunResult,
+  RunLogEntry,
+  ScheduleRunsResponse,
+  RunComparisonResponse,
+  ConstraintConfig,
+  ScenarioPreset,
+  LockedAssignment,
+  EmergencyHoliday,
+};
+
 // ============================================================================
 // Query Keys
 // ============================================================================

@@ -372,8 +372,10 @@ function MyScheduleContent() {
 
         {!isLoading && !error && !displayPerson && (
           <EmptyState
-            title="Profile Not Found"
-            description="We couldn't find a person profile linked to your account. Please contact your administrator."
+            title={tier >= 1 ? "Admin accounts don't have personal schedules" : "No Profile Linked"}
+            description={tier >= 1
+              ? "Admin accounts are for program management and aren't linked to a person profile. Use the person selector above to view any resident or faculty member's schedule, or go to the master schedule for a full overview."
+              : "Your account isn't linked to a person profile yet. Ask your program coordinator to link your account to your name in the People directory."}
             icon={Calendar}
           />
         )}

@@ -314,13 +314,29 @@ async def generate_schedule(
             # Continue without idempotency tracking
 
     # Issue #1: Double-submit / Re-entrancy protection
-    # Check for in-progress generations for overlapping date ranges
-    recent_cutoff = datetime.now(UTC) - timedelta(minutes=5)
+    # Auto-expire stale runs older than 2 minutes (crash recovery)
+    # Note: schedule_runs.created_at is timestamp WITHOUT time zone (naive UTC)
+    stale_cutoff = datetime.utcnow() - timedelta(minutes=2)
+    stale_runs = (
+        db.query(ScheduleRun)
+        .filter(
+            ScheduleRun.status == "in_progress",
+            ScheduleRun.created_at < stale_cutoff,
+        )
+        .all()
+    )
+    for stale in stale_runs:
+        stale.status = "failed"
+        logger.warning("Auto-expired stale schedule run %s", stale.id)
+    if stale_runs:
+        db.commit()
+
+    # Check for genuinely in-progress generations (created within last 2 min)
     in_progress_run = (
         db.query(ScheduleRun)
         .filter(
             ScheduleRun.status == "in_progress",
-            ScheduleRun.created_at >= recent_cutoff,
+            ScheduleRun.created_at >= stale_cutoff,
             # Check for overlapping date ranges
             ScheduleRun.start_date <= schedule_request.end_date,
             ScheduleRun.end_date >= schedule_request.start_date,
@@ -453,25 +469,41 @@ async def generate_schedule(
         return response
 
     except HTTPException:
-        # Re-raise HTTP exceptions
+        # Re-raise HTTP exceptions, but clean up stale in_progress runs first
+        try:
+            db.query(ScheduleRun).filter(
+                ScheduleRun.status == "in_progress",
+                ScheduleRun.start_date == schedule_request.start_date,
+                ScheduleRun.end_date == schedule_request.end_date,
+            ).update({"status": "failed"})
+            db.commit()
+        except Exception:
+            db.rollback()
         raise
     except (SQLAlchemyError, ValueError, KeyError, TypeError, ImportError) as e:
         if obs_metrics:
             obs_metrics.record_schedule_failure(algorithm)
         logger.error("Error generating schedule: {}", repr(e), exc_info=True)
         error_msg = "An error occurred generating the schedule"
-        if idempotency_request:
-            idempotency_service.mark_failed(
-                idempotency_request,
-                error_message="Operation failed",
-                response_body={"detail": error_msg},
-                response_status_code=500,
-            )
-            try:
-                db.commit()
-            except (SQLAlchemyError, DBAPIError) as e:
-                logger.error("Failed to commit error audit log", exc_info=True)
-                db.rollback()
+        # Mark any in-progress runs for this date range as failed
+        try:
+            db.rollback()
+            db.query(ScheduleRun).filter(
+                ScheduleRun.status == "in_progress",
+                ScheduleRun.start_date == schedule_request.start_date,
+                ScheduleRun.end_date == schedule_request.end_date,
+            ).update({"status": "failed"})
+            if idempotency_request:
+                idempotency_service.mark_failed(
+                    idempotency_request,
+                    error_message="Operation failed",
+                    response_body={"detail": error_msg},
+                    response_status_code=500,
+                )
+            db.commit()
+        except (SQLAlchemyError, DBAPIError):
+            logger.error("Failed to mark run as failed", exc_info=True)
+            db.rollback()
         raise HTTPException(status_code=500, detail=error_msg)
 
 

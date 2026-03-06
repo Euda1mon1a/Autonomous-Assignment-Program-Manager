@@ -39,6 +39,7 @@ import { RiskBar, useRiskTierFromRoles, type RiskTier } from '@/components/ui/Ri
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Alert } from '@/components/ui/Alert';
+import { Abbr } from '@/components/ui/Abbr';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -57,6 +58,7 @@ import {
 } from '@/hooks/useImport';
 import { useFmitImport } from '@/hooks/useFmitImport';
 import { useExportData, type ExportDataType, type ExportFilters } from '@/hooks/useExportData';
+import { useBlockRanges } from '@/hooks';
 import { formatLocalDate } from '@/lib/date-utils';
 import type {
   ResidentRosterItem,
@@ -100,7 +102,7 @@ const TAB_CONFIG: TabConfig[] = [
     id: 'fmit',
     label: 'FMIT Import',
     icon: <Calendar className="w-4 h-4" />,
-    description: 'FMIT attending schedules from Excel',
+    description: 'FMIT (Family Medicine Inpatient Team) attending schedules from Excel',
     tier: 1,
   },
   {
@@ -244,8 +246,8 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
       )}
 
       {/* Upload Section */}
-      <Card className="p-6 bg-slate-800 border-slate-700">
-        <h3 className="text-lg font-semibold text-white mb-4">Upload TRIPLER Block Schedule</h3>
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload TRIPLER Block Schedule</h3>
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <label className="block">
@@ -255,7 +257,7 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
                 accept=".xlsx,.xls"
                 onChange={handleFileChange}
                 disabled={isReadOnly}
-                className="block w-full text-sm text-slate-300
+                className="block w-full text-sm text-gray-700
                   file:mr-4 file:py-2 file:px-4
                   file:rounded-md file:border-0
                   file:text-sm file:font-semibold
@@ -284,7 +286,7 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
           </Button>
         </div>
         {file && (
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-gray-500">
             <FileSpreadsheet className="w-4 h-4 inline mr-1" />
             {file.name}
           </p>
@@ -295,25 +297,25 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
       {parseResult && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Panel: Source Data */}
-          <Card className="p-6 bg-slate-800 border-slate-700">
-            <h3 className="text-xl font-semibold text-white mb-4">Source Data</h3>
+          <Card className="p-6 border-gray-200">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Source Data</h3>
             <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
               <table className="min-w-full text-sm">
-                <thead className="bg-slate-700 sticky top-0">
+                <thead className="bg-gray-100 sticky top-0">
                   <tr>
-                    <th className="px-3 py-2 text-left text-slate-300">Rotation</th>
-                    <th className="px-3 py-2 text-left text-slate-300">Role</th>
-                    <th className="px-3 py-2 text-left text-slate-300">PGY</th>
-                    <th className="px-3 py-2 text-left text-slate-300">Name</th>
+                    <th className="px-3 py-2 text-left text-gray-600">Rotation</th>
+                    <th className="px-3 py-2 text-left text-gray-600">Role</th>
+                    <th className="px-3 py-2 text-left text-gray-600"><Abbr>PGY</Abbr></th>
+                    <th className="px-3 py-2 text-left text-gray-600">Name</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700">
+                <tbody className="divide-y divide-gray-200">
                   {parseResult.assignments.map((a, idx) => (
-                    <tr key={`${a.name}-${a.rotation}-${idx}`} className="hover:bg-slate-700/50">
-                      <td className="px-3 py-2 text-white font-medium">{a.rotation}</td>
-                      <td className="px-3 py-2 text-slate-300">{a.role}</td>
-                      <td className="px-3 py-2 text-slate-300">{a.pgyLevel}</td>
-                      <td className="px-3 py-2 text-slate-300">{a.name}</td>
+                    <tr key={`${a.name}-${a.rotation}-${idx}`} className="hover:bg-gray-100/50">
+                      <td className="px-3 py-2 text-gray-900 font-medium">{a.rotation}</td>
+                      <td className="px-3 py-2 text-gray-600">{a.role}</td>
+                      <td className="px-3 py-2 text-gray-600">{a.pgyLevel}</td>
+                      <td className="px-3 py-2 text-gray-600">{a.name}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -322,14 +324,14 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
           </Card>
 
           {/* Right Panel: Extracted Constraints */}
-          <Card className="p-6 bg-slate-800 border-slate-700">
+          <Card className="p-6 border-gray-200">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-white">Extracted Constraints</h3>
+              <h3 className="text-xl font-semibold text-gray-900">Extracted Constraints</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleReset}
-                className="text-slate-400"
+                className="text-gray-500"
               >
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Reset
@@ -338,20 +340,20 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
 
             {/* Rotations Summary */}
             <div className="mb-6">
-              <h4 className="text-lg font-medium text-blue-400 mb-2">
+              <h4 className="text-lg font-medium text-blue-600 mb-2">
                 Rotations ({parseResult.assignments.length})
               </h4>
               <div className="space-y-1 max-h-32 overflow-y-auto">
                 {parseResult.assignments.slice(0, 10).map((a) => (
                   <div key={`${a.name}-${a.rotation}`} className="flex items-center text-sm">
                     <CheckCircle2 className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-slate-300">{a.name}</span>
-                    <ArrowRight className="w-3 h-3 mx-2 text-slate-500" />
-                    <span className="text-white font-medium">{a.rotation}</span>
+                    <span className="text-gray-600">{a.name}</span>
+                    <ArrowRight className="w-3 h-3 mx-2 text-gray-400" />
+                    <span className="text-gray-900 font-medium">{a.rotation}</span>
                   </div>
                 ))}
                 {parseResult.assignments.length > 10 && (
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-gray-500">
                     ...and {parseResult.assignments.length - 10} more
                   </p>
                 )}
@@ -360,7 +362,7 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
 
             {/* Absences Summary */}
             <div className="mb-6">
-              <h4 className="text-lg font-medium text-amber-400 mb-2">
+              <h4 className="text-lg font-medium text-amber-700 mb-2">
                 Absences ({parseResult.absences.length})
               </h4>
               {parseResult.absences.length > 0 ? (
@@ -368,13 +370,13 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
                   {parseResult.absences.slice(0, 5).map((abs) => (
                     <div key={`${abs.name}-${abs.dates[0]}`} className="flex items-center text-sm">
                       <AlertTriangle className="w-4 h-4 text-amber-500 mr-2 flex-shrink-0" />
-                      <span className="text-slate-300">{abs.name}:</span>
-                      <span className="text-white ml-2">{abs.dates.join(', ')}</span>
+                      <span className="text-gray-600">{abs.name}:</span>
+                      <span className="text-gray-900 ml-2">{abs.dates.join(', ')}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">No absences detected</p>
+                <p className="text-sm text-gray-500">No absences detected</p>
               )}
             </div>
 
@@ -390,7 +392,7 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
             )}
 
             {/* Import Button */}
-            <div className="pt-4 border-t border-slate-700">
+            <div className="pt-4 border-t border-gray-200">
               {!importComplete ? (
                 <Button
                   onClick={handleImport}
@@ -419,9 +421,9 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
 
       {/* Block Info */}
       {parseResult && (
-        <Card className="p-4 bg-slate-800/50 border-slate-700">
-          <p className="text-sm text-slate-300">
-            <span className="font-medium text-white">Block {parseResult.blockNumber}</span>
+        <Card className="p-4 border-gray-200">
+          <p className="text-sm text-gray-600">
+            <span className="font-medium text-gray-900">Block {parseResult.blockNumber}</span>
             {' - '}
             {parseResult.assignments.length} residents
             {' - '}
@@ -449,19 +451,19 @@ function RosterSection({ title, residents, defaultExpanded = false }: RosterSect
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
-    <div className="border border-slate-700 rounded-lg overflow-hidden">
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/50 hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
       >
         <div className="flex items-center gap-2">
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-4 h-4 text-gray-500" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <ChevronRight className="w-4 h-4 text-gray-500" />
           )}
-          <span className="font-medium text-white">{title}</span>
-          <span className="text-sm text-slate-400">({residents.length} residents)</span>
+          <span className="font-medium text-gray-900">{title}</span>
+          <span className="text-sm text-gray-500">({residents.length} residents)</span>
         </div>
       </button>
       {isExpanded && (
@@ -469,16 +471,16 @@ function RosterSection({ title, residents, defaultExpanded = false }: RosterSect
           {residents.map((resident, idx) => (
             <div
               key={`${resident.name}-${idx}`}
-              className="flex items-center justify-between py-2 px-3 bg-slate-900/50 rounded"
+              className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded"
             >
               <div className="flex items-center gap-3">
-                <span className="text-white">{resident.name}</span>
-                <span className="text-xs px-2 py-0.5 bg-slate-700 text-slate-300 rounded">
+                <span className="text-gray-900">{resident.name}</span>
+                <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
                   {resident.role}
                 </span>
               </div>
               {resident.confidence < 1.0 && (
-                <span className="text-xs text-amber-400 flex items-center gap-1">
+                <span className="text-xs text-amber-700 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
                   {Math.round(resident.confidence * 100)}% match
                 </span>
@@ -498,7 +500,7 @@ interface FmitScheduleTableProps {
 function FmitScheduleTable({ schedule }: FmitScheduleTableProps) {
   if (schedule.length === 0) {
     return (
-      <div className="text-center py-8 text-slate-400">
+      <div className="text-center py-8 text-gray-500">
         No FMIT schedule found in this block
       </div>
     );
@@ -508,37 +510,37 @@ function FmitScheduleTable({ schedule }: FmitScheduleTableProps) {
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-slate-700">
-            <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Week</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Faculty</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Date Range</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Holiday Call</th>
+          <tr className="border-b border-gray-200">
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Week</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Faculty</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Date Range</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Holiday Call</th>
           </tr>
         </thead>
         <tbody>
           {schedule.map((week) => (
             <tr
               key={`${week.blockNumber}-${week.weekNumber}`}
-              className="border-b border-slate-800 hover:bg-slate-800/50"
+              className="border-b border-gray-100 hover:bg-gray-50"
             >
-              <td className="px-4 py-3 text-white">Week {week.weekNumber}</td>
+              <td className="px-4 py-3 text-gray-900">Week {week.weekNumber}</td>
               <td className="px-4 py-3">
-                <span className="font-medium text-white">
-                  {week.facultyName || <span className="text-slate-300 italic">Unassigned</span>}
+                <span className="font-medium text-gray-900">
+                  {week.facultyName || <span className="text-gray-600 italic">Unassigned</span>}
                 </span>
               </td>
-              <td className="px-4 py-3 text-slate-300">
+              <td className="px-4 py-3 text-gray-600">
                 {week.startDate && week.endDate
                   ? `${week.startDate} - ${week.endDate}`
-                  : <span className="text-slate-300">-</span>}
+                  : <span className="text-gray-600">-</span>}
               </td>
               <td className="px-4 py-3">
                 {week.isHolidayCall ? (
-                  <span className="text-xs px-2 py-1 bg-amber-500/20 text-amber-400 rounded">
+                  <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded">
                     Holiday
                   </span>
                 ) : (
-                  <span className="text-slate-300">-</span>
+                  <span className="text-gray-600">-</span>
                 )}
               </td>
             </tr>
@@ -660,12 +662,12 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {data.success ? (
-              <div className="flex items-center gap-2 text-green-400">
+              <div className="flex items-center gap-2 text-green-600">
                 <CheckCircle2 className="w-5 h-5" />
                 <span className="font-medium">Parse Successful</span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 text-red-400">
+              <div className="flex items-center gap-2 text-red-700">
                 <AlertCircle className="w-5 h-5" />
                 <span className="font-medium">Parse Completed with Errors</span>
               </div>
@@ -683,28 +685,28 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="p-4 bg-slate-800/50 border-slate-700">
-            <div className="text-2xl font-bold text-white">{data.blockNumber}</div>
-            <div className="text-sm text-slate-400">Block Number</div>
+          <Card className="p-4 border-gray-200">
+            <div className="text-2xl font-bold text-gray-900">{data.blockNumber}</div>
+            <div className="text-sm text-gray-500">Block Number</div>
           </Card>
-          <Card className="p-4 bg-slate-800/50 border-slate-700">
-            <div className="text-2xl font-bold text-white">{data.totalResidents}</div>
-            <div className="text-sm text-slate-400">Residents</div>
+          <Card className="p-4 border-gray-200">
+            <div className="text-2xl font-bold text-gray-900">{data.totalResidents}</div>
+            <div className="text-sm text-gray-500">Residents</div>
           </Card>
-          <Card className="p-4 bg-slate-800/50 border-slate-700">
-            <div className="text-2xl font-bold text-white">{data.fmitSchedule.length}</div>
-            <div className="text-sm text-slate-400">FMIT Weeks</div>
+          <Card className="p-4 border-gray-200">
+            <div className="text-2xl font-bold text-gray-900">{data.fmitSchedule.length}</div>
+            <div className="text-sm text-gray-500"><Abbr>FMIT</Abbr> Weeks</div>
           </Card>
-          <Card className="p-4 bg-slate-800/50 border-slate-700">
-            <div className="text-2xl font-bold text-white">{data.totalAssignments}</div>
-            <div className="text-sm text-slate-400">Assignments</div>
+          <Card className="p-4 border-gray-200">
+            <div className="text-2xl font-bold text-gray-900">{data.totalAssignments}</div>
+            <div className="text-sm text-gray-500">Assignments</div>
           </Card>
         </div>
 
         {/* Block Date Range */}
         {(data.startDate || data.endDate) && (
-          <div className="flex items-center gap-2 text-slate-300">
-            <Calendar className="w-4 h-4 text-slate-400" />
+          <div className="flex items-center gap-2 text-gray-600">
+            <Calendar className="w-4 h-4 text-gray-500" />
             <span>
               Block {data.blockNumber}: {data.startDate || '?'} - {data.endDate || '?'}
             </span>
@@ -712,14 +714,14 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
         )}
 
         {/* Tabs */}
-        <div className="border-b border-slate-700">
+        <div className="border-b border-gray-200">
           <div className="flex gap-1">
             <button
               onClick={() => setActiveResultTab('fmit')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeResultTab === 'fmit'
-                  ? 'border-blue-500 text-blue-400'
-                  : 'border-transparent text-slate-400 hover:text-white'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-900'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -731,8 +733,8 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
               onClick={() => setActiveResultTab('roster')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeResultTab === 'roster'
-                  ? 'border-blue-500 text-blue-400'
-                  : 'border-transparent text-slate-400 hover:text-white'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-900'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -744,8 +746,8 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
               onClick={() => setActiveResultTab('warnings')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeResultTab === 'warnings'
-                  ? 'border-blue-500 text-blue-400'
-                  : 'border-transparent text-slate-400 hover:text-white'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-900'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -759,7 +761,7 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
         {/* Tab Content */}
         <div className="min-h-[300px]">
           {activeResultTab === 'fmit' && (
-            <Card className="bg-slate-800/30 border-slate-700 overflow-hidden">
+            <Card className="border-gray-200 overflow-hidden">
               <FmitScheduleTable schedule={data.fmitSchedule} />
             </Card>
           )}
@@ -775,7 +777,7 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
                 />
               ))}
               {Object.keys(data.residentsByTemplate).length === 0 && (
-                <div className="text-center py-8 text-slate-400">
+                <div className="text-center py-8 text-gray-500">
                   No residents found in this block
                 </div>
               )}
@@ -785,12 +787,12 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
           {activeResultTab === 'warnings' && (
             <div className="space-y-4">
               {data.errors.length > 0 && (
-                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-                  <h4 className="font-medium text-red-400 mb-2 flex items-center gap-2">
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <h4 className="font-medium text-red-700 mb-2 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4" />
                     Errors ({data.errors.length})
                   </h4>
-                  <ul className="space-y-1 text-sm text-red-300">
+                  <ul className="space-y-1 text-sm text-red-600">
                     {data.errors.map((err) => (
                       <li key={err}>{err}</li>
                     ))}
@@ -798,12 +800,12 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
                 </div>
               )}
               {data.warnings.length > 0 && (
-                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                  <h4 className="font-medium text-amber-400 mb-2 flex items-center gap-2">
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <h4 className="font-medium text-amber-700 mb-2 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" />
                     Warnings ({data.warnings.length})
                   </h4>
-                  <ul className="space-y-1 text-sm text-amber-300">
+                  <ul className="space-y-1 text-sm text-amber-600">
                     {data.warnings.map((warning) => (
                       <li key={warning}>{warning}</li>
                     ))}
@@ -811,7 +813,7 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
                 </div>
               )}
               {data.errors.length === 0 && data.warnings.length === 0 && (
-                <div className="text-center py-8 text-green-400 flex flex-col items-center gap-2">
+                <div className="text-center py-8 text-green-600 flex flex-col items-center gap-2">
                   <CheckCircle2 className="w-8 h-8" />
                   <span>No warnings or errors</span>
                 </div>
@@ -833,14 +835,14 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
       )}
 
       {/* Block Number Selection */}
-      <Card className="p-6 bg-slate-800/50 border-slate-700">
-        <h3 className="text-lg font-semibold text-white mb-4">Block Settings</h3>
+      <Card className="p-6 border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Block Settings</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label
               htmlFor="blockNumber"
-              className="block text-sm font-medium text-slate-300 mb-2"
+              className="block text-sm font-medium text-gray-600 mb-2"
             >
               Block Number
             </label>
@@ -849,7 +851,7 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
               value={blockNumber}
               onChange={(e) => setBlockNumber(Number(e.target.value))}
               disabled={isReadOnly}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
               {Array.from({ length: 13 }, (_, i) => i + 1).map((num) => (
                 <option key={num} value={num}>
@@ -866,17 +868,17 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
                 checked={includeFmit}
                 onChange={(e) => setIncludeFmit(e.target.checked)}
                 disabled={isReadOnly}
-                className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                className="w-4 h-4 rounded border-gray-300 bg-white text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
               />
-              <span className="text-slate-300">Include FMIT attending schedule</span>
+              <span className="text-gray-600">Include <Abbr>FMIT</Abbr> attending schedule</span>
             </label>
           </div>
         </div>
       </Card>
 
       {/* File Upload */}
-      <Card className="p-6 bg-slate-800/50 border-slate-700">
-        <h3 className="text-lg font-semibold text-white mb-4">Upload Schedule</h3>
+      <Card className="p-6 border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload Schedule</h3>
 
         <div
           onDrop={handleDrop}
@@ -884,7 +886,7 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
           onDragLeave={handleDragLeave}
           className={`
             border-2 border-dashed rounded-lg p-8 text-center transition-colors
-            ${dragActive ? 'border-blue-500 bg-blue-500/10' : 'border-slate-600 hover:border-slate-500'}
+            ${dragActive ? 'border-blue-500 bg-blue-500/10' : 'border-gray-300 hover:border-gray-400'}
             ${error ? 'border-red-500/50 bg-red-500/5' : ''}
             ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}
           `}
@@ -902,10 +904,10 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
           {file ? (
             <div className="space-y-4">
               <div className="flex items-center justify-center gap-3">
-                <FileSpreadsheet className="w-10 h-10 text-green-400" />
+                <FileSpreadsheet className="w-10 h-10 text-green-600" />
                 <div className="text-left">
-                  <p className="font-medium text-white">{file.name}</p>
-                  <p className="text-sm text-slate-400">
+                  <p className="font-medium text-gray-900">{file.name}</p>
+                  <p className="text-sm text-gray-500">
                     {(file.size / 1024).toFixed(1)} KB
                   </p>
                 </div>
@@ -916,7 +918,7 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
                       fileInputRef.current.value = '';
                     }
                   }}
-                  className="p-1 text-slate-400 hover:text-white transition-colors"
+                  className="p-1 text-gray-500 hover:text-gray-900 transition-colors"
                   aria-label="Remove file"
                   disabled={isReadOnly}
                 >
@@ -928,13 +930,13 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
             <>
               <Upload
                 className={`w-12 h-12 mx-auto mb-4 ${
-                  dragActive ? 'text-blue-400' : 'text-slate-500'
+                  dragActive ? 'text-blue-600' : 'text-gray-400'
                 }`}
               />
-              <p className="text-lg font-medium text-slate-200 mb-2">
+              <p className="text-lg font-medium text-gray-700 mb-2">
                 Drag and drop your Excel file here
               </p>
-              <p className="text-sm text-slate-300 mb-4">or click to browse</p>
+              <p className="text-sm text-gray-600 mb-4">or click to browse</p>
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
@@ -942,7 +944,7 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
               >
                 Select File
               </button>
-              <p className="text-xs text-slate-300 mt-4">
+              <p className="text-xs text-gray-600 mt-4">
                 Supported formats: .xlsx, .xls (max 10MB)
               </p>
             </>
@@ -951,7 +953,7 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
 
         {/* Error Display */}
         {error && (
-          <div className="mt-4 flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
+          <div className="mt-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <span>{error.message}</span>
           </div>
@@ -1041,8 +1043,8 @@ function StagedImportTab({ userTier }: StagedImportTabProps) {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-xl font-semibold text-white">Staged Imports</h3>
-          <p className="text-slate-400 text-sm">
+          <h3 className="text-xl font-semibold text-gray-900">Staged Imports</h3>
+          <p className="text-gray-500 text-sm">
             Upload schedules, people, and absences. Review staged changes before applying.
           </p>
         </div>
@@ -1070,16 +1072,16 @@ function StagedImportTab({ userTier }: StagedImportTabProps) {
 
       {/* History Table */}
       <div className="space-y-4">
-        <h4 className="text-lg font-medium text-white flex items-center gap-2">
-          <FileText className="w-5 h-5 text-slate-500" />
+        <h4 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+          <FileText className="w-5 h-5 text-gray-400" />
           Import History
         </h4>
 
         {batchesData?.items && batchesData.items.length === 0 && !isBatchesLoading ? (
-          <div className="flex flex-col items-center justify-center h-64 border border-dashed border-slate-700 rounded-xl bg-slate-900/50">
-            <FileText className="w-12 h-12 text-slate-600 mb-4" />
-            <h3 className="text-lg font-medium text-slate-300">No Import History</h3>
-            <p className="text-slate-300">Upload a schedule to get started</p>
+          <div className="flex flex-col items-center justify-center h-64 border border-dashed border-gray-300 rounded-xl bg-gray-50">
+            <FileText className="w-12 h-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-700">No Import History</h3>
+            <p className="text-gray-500">Upload a schedule to get started</p>
           </div>
         ) : (
           <ImportHistoryTable
@@ -1100,7 +1102,7 @@ function StagedImportTab({ userTier }: StagedImportTabProps) {
             >
               Previous
             </Button>
-            <span className="flex items-center text-sm text-slate-300">
+            <span className="flex items-center text-sm text-gray-600">
               Page {page}
             </span>
             <Button
@@ -1147,6 +1149,43 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
   const [includeQaSheet, setIncludeQaSheet] = useState(true);
   const [includeOverrides, setIncludeOverrides] = useState(true);
 
+  // Block ranges for the block quick-selector
+  const { data: blockRanges } = useBlockRanges();
+
+  const availableAYs = useMemo(() => {
+    if (!blockRanges?.length) return [];
+    return [...new Set(blockRanges.map((r) => r.academicYear))].sort();
+  }, [blockRanges]);
+
+  // Determine current AY from today's date (July 1 = new AY)
+  const defaultAY = useMemo(() => {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    return month < 7 ? now.getFullYear() - 1 : now.getFullYear();
+  }, []);
+
+  const [selectedAY, setSelectedAY] = useState(defaultAY);
+
+  const blocksForAY = useMemo(() => {
+    if (!blockRanges?.length) return [];
+    return blockRanges
+      .filter((r) => r.academicYear === selectedAY)
+      .sort((a, b) => a.blockNumber - b.blockNumber);
+  }, [blockRanges, selectedAY]);
+
+  const handleBlockQuickSelect = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (!value || !blockRanges?.length) return;
+    const [ayStr, blockStr] = value.split(':');
+    const range = blockRanges.find(
+      (r) => r.academicYear === Number(ayStr) && r.blockNumber === Number(blockStr)
+    );
+    if (range) {
+      setStartDate(range.startDate);
+      setEndDate(range.endDate);
+    }
+  }, [blockRanges]);
+
   // Build filters — schedule endpoint requires dates
   const filters: ExportFilters | undefined =
     exportType === 'schedules' ? { startDate, endDate } : undefined;
@@ -1169,72 +1208,113 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
   return (
     <div className="space-y-6">
       {/* Export Type Selection */}
-      <Card className="p-6 bg-slate-800/50 border-slate-700">
-        <h3 className="text-lg font-semibold text-white mb-4">Select Data to Export</h3>
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Data to Export</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => setExportType('schedules')}
             className={`p-4 rounded-lg border-2 transition-colors text-left ${
               exportType === 'schedules'
-                ? 'border-blue-500 bg-blue-500/10'
-                : 'border-slate-700 hover:border-slate-600'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <Calendar className={`w-6 h-6 mb-2 ${exportType === 'schedules' ? 'text-blue-400' : 'text-slate-400'}`} />
-            <p className="font-medium text-white">Schedules</p>
-            <p className="text-sm text-slate-400">Export full schedule data</p>
+            <Calendar className={`w-6 h-6 mb-2 ${exportType === 'schedules' ? 'text-blue-600' : 'text-gray-400'}`} />
+            <p className="font-medium text-gray-900">Schedules</p>
+            <p className="text-sm text-gray-500">Export full schedule data</p>
           </button>
 
           <button
             onClick={() => setExportType('people')}
             className={`p-4 rounded-lg border-2 transition-colors text-left ${
               exportType === 'people'
-                ? 'border-blue-500 bg-blue-500/10'
-                : 'border-slate-700 hover:border-slate-600'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <Users className={`w-6 h-6 mb-2 ${exportType === 'people' ? 'text-blue-400' : 'text-slate-400'}`} />
-            <p className="font-medium text-white">People</p>
-            <p className="text-sm text-slate-400">Export residents and faculty</p>
+            <Users className={`w-6 h-6 mb-2 ${exportType === 'people' ? 'text-blue-600' : 'text-gray-400'}`} />
+            <p className="font-medium text-gray-900">People</p>
+            <p className="text-sm text-gray-500">Export residents and faculty</p>
           </button>
 
           <button
             onClick={() => setExportType('assignments')}
             className={`p-4 rounded-lg border-2 transition-colors text-left ${
               exportType === 'assignments'
-                ? 'border-blue-500 bg-blue-500/10'
-                : 'border-slate-700 hover:border-slate-600'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <FileText className={`w-6 h-6 mb-2 ${exportType === 'assignments' ? 'text-blue-400' : 'text-slate-400'}`} />
-            <p className="font-medium text-white">Assignments</p>
-            <p className="text-sm text-slate-400">Export assignment records</p>
+            <FileText className={`w-6 h-6 mb-2 ${exportType === 'assignments' ? 'text-blue-600' : 'text-gray-400'}`} />
+            <p className="font-medium text-gray-900">Assignments</p>
+            <p className="text-sm text-gray-500">Export assignment records</p>
           </button>
         </div>
       </Card>
 
       {/* Date Range (schedules only) */}
       {exportType === 'schedules' && (
-        <Card className="p-6 bg-slate-800/50 border-slate-700">
-          <h3 className="text-lg font-semibold text-white mb-4">Date Range</h3>
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Date Range</h3>
+
+          {/* Block quick-selector */}
+          {blocksForAY.length > 0 && (
+            <div className="flex flex-wrap items-end gap-4 mb-4 pb-4 border-b border-gray-200">
+              <label className="flex flex-col gap-1">
+                <span className="text-sm text-gray-500">Academic Year</span>
+                <select
+                  value={selectedAY}
+                  onChange={(e) => setSelectedAY(Number(e.target.value))}
+                  className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {availableAYs.map((ay) => (
+                    <option key={ay} value={ay}>
+                      AY {ay}-{String(ay + 1).slice(2)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-sm text-gray-500">Quick Select Block</span>
+                <select
+                  onChange={handleBlockQuickSelect}
+                  defaultValue=""
+                  className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="" disabled>
+                    Select a block...
+                  </option>
+                  {blocksForAY.map((range) => (
+                    <option
+                      key={`${range.academicYear}:${range.blockNumber}`}
+                      value={`${range.academicYear}:${range.blockNumber}`}
+                    >
+                      Block {range.blockNumber} ({range.startDate} to {range.endDate})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-4">
             <label className="flex flex-col gap-1">
-              <span className="text-sm text-slate-400">Start Date</span>
+              <span className="text-sm text-gray-500">Start Date</span>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900"
               />
             </label>
             <label className="flex flex-col gap-1">
-              <span className="text-sm text-slate-400">End Date</span>
+              <span className="text-sm text-gray-500">End Date</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900"
               />
             </label>
           </div>
@@ -1243,9 +1323,9 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
 
       {/* Excel Export Options (schedules only) */}
       {exportType === 'schedules' && (
-        <Card className="p-6 bg-slate-800/50 border-slate-700">
-          <h3 className="text-lg font-semibold text-white mb-4">Excel Export Options</h3>
-          <p className="text-sm text-slate-400 mb-4">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Excel Export Options</h3>
+          <p className="text-sm text-gray-500 mb-4">
             These options apply when exporting to Excel (.xlsx) format via the server-side export.
           </p>
           <div className="space-y-3">
@@ -1254,11 +1334,11 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
                 type="checkbox"
                 checked={includeQaSheet}
                 onChange={(e) => setIncludeQaSheet(e.target.checked)}
-                className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-800"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <div>
-                <span className="text-sm font-medium text-white">Include QA Sheet</span>
-                <p className="text-xs text-slate-400">Adds a validation/QA worksheet to the exported workbook</p>
+                <span className="text-sm font-medium text-gray-900">Include QA Sheet</span>
+                <p className="text-xs text-gray-500">Adds a validation/QA worksheet to the exported workbook</p>
               </div>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
@@ -1266,11 +1346,11 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
                 type="checkbox"
                 checked={includeOverrides}
                 onChange={(e) => setIncludeOverrides(e.target.checked)}
-                className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-800"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <div>
-                <span className="text-sm font-medium text-white">Include Overrides</span>
-                <p className="text-xs text-slate-400">Include override/swap assignments in export data</p>
+                <span className="text-sm font-medium text-gray-900">Include Overrides</span>
+                <p className="text-xs text-gray-500">Include override/swap assignments in export data</p>
               </div>
             </label>
           </div>
@@ -1279,7 +1359,7 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
 
       {/* Loading / Error States */}
       {isLoading && (
-        <div className="flex items-center gap-2 text-slate-400">
+        <div className="flex items-center gap-2 text-gray-500">
           <Loader2 className="w-4 h-4 animate-spin" />
           <span>Loading export data...</span>
         </div>
@@ -1290,48 +1370,46 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
         </Alert>
       )}
 
-      {/* Server-side XLSX Export (schedules only) */}
+      {/* Primary Export Action: Server-side XLSX (schedules only) */}
       {exportType === 'schedules' && (
-        <Card className="p-6 bg-slate-800/50 border-slate-700">
-          <h3 className="text-lg font-semibold text-white mb-4">Server-side Excel Export</h3>
-          <p className="text-sm text-slate-400 mb-4">
-            Download the canonical schedule workbook generated by the server.
-            QA sheet and override options above are applied.
+        <Card className="p-6 border-2 border-blue-200 bg-blue-50/30">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Export Block Schedule</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Downloads the formatted schedule workbook with color-coded rotations, AM/PM grid, and coverage summary.
           </p>
           <a
             href={`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/export/schedule/xlsx?start_date=${startDate}&end_date=${endDate}&include_qa_sheet=${includeQaSheet}&include_overrides=${includeOverrides}`}
             download
-            className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
           >
-            <FileSpreadsheet className="w-4 h-4" />
-            Download Excel (.xlsx)
+            <Download className="w-5 h-5" />
+            Export Schedule (.xlsx)
           </a>
         </Card>
       )}
 
-      {/* Client-side Export Panel */}
-      <Card className="p-6 bg-slate-800/50 border-slate-700">
-        <h3 className="text-lg font-semibold text-white mb-4">Export Options</h3>
-        <ExportPanel
-          data={exportData}
-          columns={columns}
-          filename={`${exportType}-export`}
-          variant="panel"
-          title={`Export ${exportType.charAt(0).toUpperCase() + exportType.slice(1)}`}
-          subtitle={`Download ${exportType} data in your preferred format`}
-        />
-      </Card>
-
-      {/* Info Box */}
-      <Card className="p-4 bg-slate-800/30 border-slate-700">
-        <h4 className="font-medium text-slate-200 mb-2">About Exports</h4>
-        <ul className="text-sm text-slate-300 space-y-1">
-          <li>- Exports include all visible data based on your permissions</li>
-          <li>- Choose from CSV, Excel, JSON, or PDF formats</li>
-          <li>- Large exports may take a moment to generate</li>
-          <li>- Date formats follow ISO 8601 standard (YYYY-MM-DD)</li>
-        </ul>
-      </Card>
+      {/* Collapsible: Raw Data Export */}
+      <details className="group">
+        <summary className="flex items-center gap-2 cursor-pointer text-sm text-gray-500 hover:text-gray-700 py-2 select-none">
+          <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
+          Advanced: Raw data export (CSV, JSON, Excel)
+        </summary>
+        <div className="mt-2 space-y-4">
+          <Card className="p-6">
+            <ExportPanel
+              data={exportData}
+              columns={columns}
+              filename={`${exportType}-export`}
+              variant="panel"
+              title={`Export ${exportType.charAt(0).toUpperCase() + exportType.slice(1)}`}
+              subtitle={`Download ${exportType} data in your preferred format`}
+            />
+          </Card>
+          <p className="text-xs text-gray-400 px-1">
+            Raw data exports contain unformatted records. Use the button above for the formatted schedule workbook.
+          </p>
+        </div>
+      </details>
     </div>
   );
 }
@@ -1361,7 +1439,7 @@ export default function ImportExportHub() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen bg-gray-50">
         {/* Risk Bar - shows current permission level for this page */}
         <RiskBar
           tier={currentRiskTier}
@@ -1375,15 +1453,15 @@ export default function ImportExportHub() {
         />
 
         {/* Header */}
-        <header className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
+        <header className="border-b border-gray-200 bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 py-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl">
                 <FileSpreadsheet className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Import / Export Hub</h1>
-                <p className="text-slate-400">
+                <h1 className="text-2xl font-bold text-gray-900">Import / Export Hub</h1>
+                <p className="text-gray-600">
                   Manage schedule imports, block schedules, FMIT data, and exports
                 </p>
               </div>
@@ -1392,9 +1470,9 @@ export default function ImportExportHub() {
         </header>
 
         {/* Tab Navigation */}
-        <div className="border-b border-slate-700/50 bg-slate-900/50">
+        <div className="border-b border-gray-200 bg-white">
           <div className="max-w-7xl mx-auto px-4">
-            <nav className="flex gap-1" role="tablist" aria-label="Import/Export sections">
+            <nav className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Import/Export sections">
               {availableTabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 const tabTier = getMaxTierForTab(tab.id, userTier);
@@ -1410,8 +1488,8 @@ export default function ImportExportHub() {
                     className={`
                       flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
                       ${isActive
-                        ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-                        : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/50'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }
                     `}
                   >
@@ -1422,8 +1500,8 @@ export default function ImportExportHub() {
                       <span
                         className={`text-xs px-1.5 py-0.5 rounded ${
                           tabTier >= tab.tier
-                            ? 'bg-amber-500/20 text-amber-400'
-                            : 'bg-slate-700 text-slate-500'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-gray-100 text-gray-500'
                         }`}
                       >
                         {tabTier >= tab.tier ? 'Write' : 'View'}

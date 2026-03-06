@@ -28,7 +28,10 @@ jest.mock('@/features/import-export/utils', () => {
 const mockedDownloadFile = exportUtils.downloadFile as jest.MockedFunction<
   typeof exportUtils.downloadFile
 >;
-const mockedXLSX = XLSX as jest.Mocked<typeof XLSX>;
+const mockedAoaToSheet = XLSX.utils.aoa_to_sheet as jest.Mock;
+const mockedBookNew = XLSX.utils.book_new as jest.Mock;
+const mockedBookAppendSheet = XLSX.utils.book_append_sheet as jest.Mock;
+const mockedXlsxWrite = XLSX.write as jest.Mock;
 
 const TEST_COLUMNS: ExportColumn[] = [
   { key: 'name', header: 'Name' },
@@ -46,9 +49,9 @@ const BASE_OPTIONS: ExportOptions = {
 describe('useExport', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedXLSX.utils.aoa_to_sheet.mockReturnValue({});
-    mockedXLSX.utils.book_new.mockReturnValue({ Sheets: {}, SheetNames: [] });
-    mockedXLSX.write.mockReturnValue(new Uint8Array([0x50, 0x4b, 0x03, 0x04]).buffer);
+    mockedAoaToSheet.mockReturnValue({});
+    mockedBookNew.mockReturnValue({ Sheets: {}, SheetNames: [] });
+    mockedXlsxWrite.mockReturnValue(new Uint8Array([0x50, 0x4b, 0x03, 0x04]).buffer);
   });
 
   it('initializes with idle state', () => {
@@ -76,16 +79,16 @@ describe('useExport', () => {
       await result.current.exportData(data, BASE_OPTIONS);
     });
 
-    expect(mockedXLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([
+    expect(mockedAoaToSheet).toHaveBeenCalledWith([
       ['Name', 'Active'],
       ['Dr. Smith', 'Yes'],
     ]);
-    expect(mockedXLSX.utils.book_append_sheet).toHaveBeenCalledWith(
+    expect(mockedBookAppendSheet).toHaveBeenCalledWith(
       expect.any(Object),
       expect.any(Object),
       'Export'
     );
-    expect(mockedXLSX.write).toHaveBeenCalledWith(
+    expect(mockedXlsxWrite).toHaveBeenCalledWith(
       expect.any(Object),
       expect.objectContaining({
         bookType: 'xlsx',
@@ -116,6 +119,6 @@ describe('useExport', () => {
       });
     });
 
-    expect(mockedXLSX.utils.aoa_to_sheet).toHaveBeenCalledWith([['Dr. Adams', 'No']]);
+    expect(mockedAoaToSheet).toHaveBeenCalledWith([['Dr. Adams', 'No']]);
   });
 });

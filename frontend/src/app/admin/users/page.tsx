@@ -209,10 +209,10 @@ function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="text-center py-12 px-4 border border-dashed border-slate-700 rounded-lg">
-      <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-slate-200 mb-2">{title}</h3>
-      <p className="text-slate-300 mb-6 max-w-md mx-auto">{description}</p>
+    <div className="text-center py-12 px-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+      <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
+      <p className="text-gray-500 mb-6 max-w-md mx-auto">{description}</p>
       {action}
     </div>
   );
@@ -255,15 +255,15 @@ function ConfirmDialog({
         onClick={onCancel}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCancel(); } }}
       />
-      <div className="relative bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-        <h2 className="text-lg font-semibold text-white mb-2">{title}</h2>
-        <p className="text-slate-300 mb-6">{message}</p>
+      <div className="relative bg-white border border-gray-200 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">{title}</h2>
+        <p className="text-gray-500 mb-6">{message}</p>
         <div className="flex justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
@@ -330,13 +330,13 @@ function UserRow({
   };
 
   return (
-    <tr className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors">
+    <tr className="border-b border-gray-200 hover:bg-gray-100 transition-colors">
       <td className="px-4 py-3">
         <input
           type="checkbox"
           checked={isSelected}
           onChange={() => onSelect(user.id)}
-          className="rounded border-slate-600 bg-slate-700 text-violet-500 focus:ring-violet-500"
+          className="rounded border-gray-300 text-violet-500 focus:ring-violet-500"
         />
       </td>
       <td className="px-4 py-3">
@@ -346,10 +346,10 @@ function UserRow({
             {user.lastName[0]}
           </div>
           <div>
-            <div className="font-medium text-slate-200">
+            <div className="font-medium text-gray-700">
               {user.firstName} {user.lastName}
             </div>
-            <div className="text-sm text-slate-300">{user.email}</div>
+            <div className="text-sm text-gray-500">{user.email}</div>
           </div>
         </div>
       </td>
@@ -359,17 +359,17 @@ function UserRow({
       <td className="px-4 py-3">
         <StatusBadge status={user.status} />
       </td>
-      <td className="px-4 py-3 text-sm text-slate-300">
+      <td className="px-4 py-3 text-sm text-gray-500">
         {formatDate(user.lastLogin)}
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           {user.mfaEnabled ? (
-            <span className="text-green-400" title="MFA Enabled">
+            <span className="text-green-600" title="MFA Enabled">
               <Shield className="w-4 h-4" />
             </span>
           ) : (
-            <span className="text-slate-300" title="MFA Disabled">
+            <span className="text-gray-500" title="MFA Disabled">
               <Shield className="w-4 h-4" />
             </span>
           )}
@@ -379,9 +379,9 @@ function UserRow({
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <MoreVertical className="w-4 h-4 text-slate-300" />
+            <MoreVertical className="w-4 h-4 text-gray-500" />
           </button>
           {showMenu && (
             <>
@@ -393,7 +393,7 @@ function UserRow({
                 onClick={() => setShowMenu(false)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowMenu(false); } }}
               />
-              <div className="absolute right-0 top-full mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-20">
                 {canViewAs && (
                   <button
                     onClick={() => {
@@ -401,7 +401,7 @@ function UserRow({
                       setShowMenu(false);
                     }}
                     disabled={isViewAsLoading}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-400 hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-600 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isViewAsLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -416,7 +416,7 @@ function UserRow({
                     onEdit(user);
                     setShowMenu(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 transition-colors"
                 >
                   <Edit2 className="w-4 h-4" />
                   Edit User
@@ -427,7 +427,7 @@ function UserRow({
                       onResendInvite(user);
                       setShowMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 transition-colors"
                   >
                     <Mail className="w-4 h-4" />
                     Resend Invite
@@ -438,7 +438,7 @@ function UserRow({
                     onToggleLock(user);
                     setShowMenu(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 transition-colors"
                 >
                   {user.status === "locked" ? (
                     <>
@@ -452,13 +452,13 @@ function UserRow({
                     </>
                   )}
                 </button>
-                <hr className="border-slate-700 my-1" />
+                <hr className="border-gray-200 my-1" />
                 <button
                   onClick={() => {
                     onDelete(user);
                     setShowMenu(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-slate-700 transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete User
@@ -523,16 +523,16 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
         onClick={onClose}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose(); } }}
       />
-      <div className="relative bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-        <div className="px-6 py-4 border-b border-slate-700">
-          <h2 className="text-lg font-semibold text-white">
+      <div className="relative bg-white border border-gray-200 rounded-xl shadow-2xl w-full max-w-md mx-4">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">
             {user ? "Edit User" : "Create New User"}
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-gray-500 mb-1.5">
                 First Name
               </label>
               <input
@@ -541,12 +541,12 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, firstName: e.target.value })
                 }
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium text-gray-500 mb-1.5">
                 Last Name
               </label>
               <input
@@ -555,13 +555,13 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, lastName: e.target.value })
                 }
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-white"
                 required
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-gray-500 mb-1.5">
               Email Address
             </label>
             <input
@@ -570,12 +570,12 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-white"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-gray-500 mb-1.5">
               Role
             </label>
             <select
@@ -583,7 +583,7 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
               onChange={(e) =>
                 setFormData({ ...formData, role: e.target.value as UserRole })
               }
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-white"
             >
               {Object.entries(USER_ROLE_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -600,9 +600,9 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, sendInvite: e.target.checked })
                 }
-                className="rounded border-slate-600 bg-slate-700 text-violet-500 focus:ring-violet-500"
+                className="rounded border-gray-300 text-violet-500 focus:ring-violet-500"
               />
-              <span className="text-sm text-slate-300">
+              <span className="text-sm text-gray-500">
                 Send invitation email
               </span>
             </label>
@@ -611,7 +611,7 @@ function UserModal({ user, isOpen, onClose, onSave }: UserModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
             >
               Cancel
             </button>
@@ -639,10 +639,10 @@ function RolesPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-gray-900">
             Roles & Permissions
           </h2>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-gray-500">
             View role definitions and their permissions
           </p>
         </div>
@@ -652,7 +652,7 @@ function RolesPanel() {
         {MOCK_ROLE_PERMISSIONS.map((roleConfig) => (
           <div
             key={roleConfig.role}
-            className="bg-slate-800/50 border border-slate-700/50 rounded-lg overflow-hidden"
+            className="bg-white border border-gray-200 rounded-lg overflow-hidden"
           >
             <button
               onClick={() =>
@@ -660,30 +660,30 @@ function RolesPanel() {
                   expandedRole === roleConfig.role ? null : roleConfig.role
                 )
               }
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-700/50 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <RoleBadge role={roleConfig.role} />
-                <span className="text-sm text-slate-300">
+                <span className="text-sm text-gray-500">
                   {roleConfig.description}
                 </span>
               </div>
               {expandedRole === roleConfig.role ? (
-                <ChevronUp className="w-5 h-5 text-slate-300" />
+                <ChevronUp className="w-5 h-5 text-gray-500" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-slate-300" />
+                <ChevronDown className="w-5 h-5 text-gray-500" />
               )}
             </button>
             {expandedRole === roleConfig.role && (
-              <div className="px-4 pb-4 pt-2 border-t border-slate-700/50">
-                <h4 className="text-sm font-medium text-slate-300 mb-3">
+              <div className="px-4 pb-4 pt-2 border-t border-gray-200">
+                <h4 className="text-sm font-medium text-gray-500 mb-3">
                   Permissions
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {roleConfig.permissions.map((permission) => (
                     <span
                       key={permission}
-                      className="inline-flex items-center px-2 py-1 bg-slate-700/50 text-slate-300 text-xs rounded-md"
+                      className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-md"
                     >
                       {permission}
                     </span>
@@ -758,33 +758,33 @@ function ActivityPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
-          <p className="text-sm text-slate-300">User management activity log</p>
+          <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+          <p className="text-sm text-gray-500">User management activity log</p>
         </div>
         <button
           onClick={handleExportActivity}
           disabled={!data?.items.length}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-300 hover:text-white border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Download className="w-4 h-4" />
           Export
         </button>
       </div>
 
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-700/50">
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+            <tr className="border-b border-gray-200">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Time
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Action
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 User
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Target
               </th>
             </tr>
@@ -793,21 +793,21 @@ function ActivityPanel() {
             {data.items.map((activity) => (
               <tr
                 key={activity.id}
-                className="border-b border-slate-700/50 last:border-0 hover:bg-slate-800/20"
+                className="border-b border-gray-200 last:border-0 hover:bg-gray-50"
               >
-                <td className="px-4 py-3 text-sm text-slate-300">
+                <td className="px-4 py-3 text-sm text-gray-500">
                   {new Date(activity.timestamp).toLocaleString()}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-200">
+                <td className="px-4 py-3 text-sm text-gray-700">
                   <span className="capitalize">
                     {activity.action.replace(/_/g, " ").toLowerCase()}
                   </span>
                 </td>
                 {/* Note: In a real app, you might want to fetch user details or resolve names */}
-                <td className="px-4 py-3 text-sm text-slate-300">
+                <td className="px-4 py-3 text-sm text-gray-500">
                   {activity.userId}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-300">-</td>
+                <td className="px-4 py-3 text-sm text-gray-500">-</td>
               </tr>
             ))}
           </tbody>
@@ -816,21 +816,21 @@ function ActivityPanel() {
 
       {/* Pagination Controls */}
       {data.totalPages > 1 && (
-        <div className="flex justify-between items-center px-4 py-2 border-t border-slate-700/50">
+        <div className="flex justify-between items-center px-4 py-2 border-t border-gray-200">
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="flex items-center gap-1 text-sm text-slate-300 hover:text-white disabled:opacity-50"
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 disabled:opacity-50"
           >
             <ArrowLeft className="w-4 h-4" /> Previous
           </button>
-          <span className="text-xs text-slate-300">
+          <span className="text-xs text-gray-500">
             Page {page} of {data.totalPages}
           </span>
           <button
             disabled={page === data.totalPages}
             onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-            className="flex items-center gap-1 text-sm text-slate-300 hover:text-white disabled:opacity-50"
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 disabled:opacity-50"
           >
             Next <ArrowRight className="w-4 h-4" />
           </button>
@@ -1103,9 +1103,9 @@ export default function AdminUsersPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-40">
+      <header className="border-b border-gray-200 bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1113,10 +1113,10 @@ export default function AdminUsersPage() {
                 <Users className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">
+                <h1 className="text-xl font-bold text-gray-900">
                   User Management
                 </h1>
-                <p className="text-sm text-slate-300">
+                <p className="text-sm text-gray-500">
                   Manage users, roles, and permissions
                 </p>
               </div>
@@ -1126,7 +1126,7 @@ export default function AdminUsersPage() {
                 setEditingUser(undefined);
                 setIsModalOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-500 transition-colors"
             >
               <UserPlus className="w-5 h-5" />
               Add User
@@ -1134,7 +1134,7 @@ export default function AdminUsersPage() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex items-center gap-1 mt-6 border-b border-slate-700/50">
+          <div className="flex items-center gap-1 mt-6 border-b border-gray-200">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -1143,8 +1143,8 @@ export default function AdminUsersPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab.id
-                      ? "border-violet-500 text-violet-400"
-                      : "border-transparent text-slate-300 hover:text-slate-300 hover:border-slate-700"
+                      ? "border-violet-500 text-violet-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -1161,16 +1161,16 @@ export default function AdminUsersPage() {
         {activeTab === "users" && (
           <div className="space-y-4">
             {/* Filters & Actions */}
-            <div className="flex items-center justify-between gap-4 p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
+            <div className="flex items-center justify-between gap-4 p-4 bg-white border border-gray-200 rounded-xl">
               <div className="flex items-center gap-4 flex-1">
                 <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search users..."
-                    className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-white"
                   />
                 </div>
                 <div className="flex items-center gap-2">
@@ -1179,7 +1179,7 @@ export default function AdminUsersPage() {
                     onChange={(e) =>
                       setRoleFilter(e.target.value as UserRole | "all")
                     }
-                    className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-300 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                    className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-500 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-white"
                   >
                     <option value="all">All Roles</option>
                     {Object.entries(USER_ROLE_LABELS).map(([value, label]) => (
@@ -1193,7 +1193,7 @@ export default function AdminUsersPage() {
                     onChange={(e) =>
                       setStatusFilter(e.target.value as UserStatus | "all")
                     }
-                    className="px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-300 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                    className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-500 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-white"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
@@ -1205,7 +1205,7 @@ export default function AdminUsersPage() {
               </div>
               <button
                 onClick={() => refetch()}
-                className="p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 text-gray-500 hover:text-gray-900 hover:bg-white rounded-lg transition-colors"
                 title="Refresh List"
               >
                 <RefreshCw
@@ -1216,26 +1216,26 @@ export default function AdminUsersPage() {
 
             {/* Bulk Actions (only visible when users selected) */}
             {selectedUsers.length > 0 && (
-              <div className="flex items-center gap-2 p-2 bg-violet-500/10 border border-violet-500/20 rounded-lg animate-in fade-in slide-in-from-top-2">
-                <span className="text-sm text-violet-300 font-medium px-2">
+              <div className="flex items-center gap-2 p-2 bg-violet-50 border border-violet-200 rounded-lg animate-in fade-in slide-in-from-top-2">
+                <span className="text-sm text-violet-600 font-medium px-2">
                   {selectedUsers.length} selected
                 </span>
-                <div className="h-4 w-px bg-violet-500/20 mx-2" />
+                <div className="h-4 w-px bg-violet-100 mx-2" />
                 <button
                   onClick={() => handleBulkAction("activate")}
-                  className="px-3 py-1.5 text-xs font-medium text-violet-300 hover:bg-violet-500/20 rounded-md transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-100 rounded-md transition-colors"
                 >
                   Activate
                 </button>
                 <button
                   onClick={() => handleBulkAction("deactivate")}
-                  className="px-3 py-1.5 text-xs font-medium text-violet-300 hover:bg-violet-500/20 rounded-md transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-100 rounded-md transition-colors"
                 >
                   Deactivate
                 </button>
                 <button
                   onClick={() => handleBulkAction("delete")}
-                  className="px-3 py-1.5 text-xs font-medium text-red-300 hover:bg-red-500/20 rounded-md transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 rounded-md transition-colors"
                 >
                   Delete
                 </button>
@@ -1243,11 +1243,11 @@ export default function AdminUsersPage() {
             )}
 
             {/* Users Table */}
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden shadow-xl shadow-black/20">
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
               <div className="overflow-x-auto max-h-[calc(100vh-350px)]">
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 z-10">
-                    <tr className="bg-slate-900/50 text-slate-300 text-xs uppercase tracking-wider border-b border-slate-700/50">
+                    <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
                       <th className="px-4 py-3 w-10">
                         <input
                           type="checkbox"
@@ -1256,7 +1256,7 @@ export default function AdminUsersPage() {
                             filteredUsers.length > 0
                           }
                           onChange={handleSelectAll}
-                          className="rounded border-slate-600 bg-slate-700 text-violet-500 focus:ring-violet-500"
+                          className="rounded border-gray-300 text-violet-500 focus:ring-violet-500"
                         />
                       </th>
                       <th className="px-4 py-3 font-medium">User</th>
@@ -1272,14 +1272,14 @@ export default function AdminUsersPage() {
                       <tr>
                         <td colSpan={7}>
                           <div className="p-8 flex justify-center">
-                            <Loader2 className="animate-spin text-slate-300" />
+                            <Loader2 className="animate-spin text-gray-500" />
                           </div>
                         </td>
                       </tr>
                     ) : filteredUsers.length === 0 ? (
                       <tr>
                         <td colSpan={7}>
-                          <div className="p-8 text-center text-slate-300">
+                          <div className="p-8 text-center text-gray-500">
                             No users found
                           </div>
                         </td>
@@ -1305,7 +1305,7 @@ export default function AdminUsersPage() {
               </div>
             </div>
             {/* Pagination Summary */}
-            <div className="text-xs text-slate-300 text-right px-2">
+            <div className="text-xs text-gray-500 text-right px-2">
               Showing {filteredUsers.length} of {totalUsers} users
             </div>
           </div>

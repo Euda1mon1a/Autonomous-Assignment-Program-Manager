@@ -4,21 +4,25 @@ Provides endpoints for reading and managing half-day schedule data.
 This is the frontend-facing API for daily schedule views.
 """
 
-from datetime import date
+from datetime import date, datetime, UTC
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import delete as sa_delete
+from sqlalchemy import delete as sa_delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.logging import get_logger
 from app.core.security import get_scheduler_user
 from app.db.session import get_async_db
+from app.models.activity import Activity
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.user import User
 from app.schemas.half_day_assignment import (
     HalfDayAssignmentListResponse,
     HalfDayAssignmentRead,
+    HalfDayAssignmentUpdate,
 )
 from app.services.half_day_schedule_service import HalfDayScheduleService
 from app.utils.academic_blocks import get_block_dates
@@ -121,6 +125,93 @@ async def list_half_day_assignments(
         academic_year=academic_year,
         start_date=start_date,
         end_date=end_date,
+    )
+
+
+@router.patch("/{assignment_id}", response_model=HalfDayAssignmentRead)
+async def update_half_day_assignment(
+    assignment_id: UUID,
+    payload: HalfDayAssignmentUpdate,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_scheduler_user),
+):
+    """
+    Update a single half-day assignment (manual override).
+
+    Resolves activity_code to an activity_id server-side. Sets source to
+    'manual' and records override metadata for audit trail.
+
+    Requires scheduler role (admin or coordinator).
+    """
+    # Fetch the HDA with relationships
+    result = await db.execute(
+        select(HalfDayAssignment)
+        .options(
+            selectinload(HalfDayAssignment.person),
+            selectinload(HalfDayAssignment.activity),
+        )
+        .where(HalfDayAssignment.id == assignment_id)
+    )
+    hda = result.scalar_one_or_none()
+    if not hda:
+        raise HTTPException(status_code=404, detail="Half-day assignment not found")
+
+    # Resolve activity_code → activity_id
+    if payload.activity_code is not None:
+        activity_result = await db.execute(
+            select(Activity).where(
+                (Activity.code == payload.activity_code)
+                | (Activity.display_abbreviation == payload.activity_code)
+            )
+        )
+        activity = activity_result.scalar_one_or_none()
+        if not activity:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown activity code: {payload.activity_code}",
+            )
+        hda.activity_id = activity.id
+
+    # Mark as manual override
+    hda.source = AssignmentSource.MANUAL.value
+    hda.is_override = True
+    hda.override_reason = payload.override_reason
+    hda.overridden_by = current_user.id
+    hda.overridden_at = datetime.now(UTC)
+    hda.updated_at = datetime.now(UTC)
+
+    await db.commit()
+
+    # Refresh to load updated relationships
+    await db.refresh(hda, ["person", "activity"])
+
+    logger.info(
+        "Updated HDA %s: activity=%s, reason=%s, by user %s",
+        assignment_id,
+        payload.activity_code,
+        payload.override_reason,
+        current_user.id,
+    )
+
+    return HalfDayAssignmentRead(
+        id=hda.id,
+        person_id=hda.person_id,
+        person_name=hda.person.name if hda.person else None,
+        person_type=hda.person.type if hda.person else None,
+        pgy_level=hda.person.pgy_level if hda.person else None,
+        date=hda.date,
+        time_of_day=hda.time_of_day,
+        activity_id=hda.activity_id,
+        activity_code=hda.activity.code if hda.activity else None,
+        activity_name=hda.activity.name if hda.activity else None,
+        display_abbreviation=hda.activity.display_abbreviation
+        if hda.activity
+        else None,
+        source=hda.source,
+        is_locked=hda.is_locked,
+        is_gap=False,
+        created_at=hda.created_at,
+        updated_at=hda.updated_at,
     )
 
 

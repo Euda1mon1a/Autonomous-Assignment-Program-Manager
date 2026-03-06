@@ -5,8 +5,8 @@
  * This provides the day-specific patterns (LEC, intern continuity, etc.)
  * that are missing from block-level assignment data.
  */
-import { useQuery, UseQueryOptions } from '@tanstack/react-query'
-import { get, ApiError } from '@/lib/api'
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query'
+import { get, patch, ApiError } from '@/lib/api'
 
 // ============================================================================
 // Types
@@ -167,6 +167,47 @@ export function useHalfDayAssignmentsByBlock(
     blockNumber,
     academicYear,
     personType,
+  })
+}
+
+// ============================================================================
+// Mutation Types
+// ============================================================================
+
+export interface HalfDayAssignmentUpdateRequest {
+  activityCode: string | null
+  overrideReason?: string | null
+}
+
+// ============================================================================
+// Mutation Hooks
+// ============================================================================
+
+/**
+ * Updates a single half-day assignment (manual override).
+ *
+ * Sends PATCH to /half-day-assignments/{id} with activity_code and optional reason.
+ * The backend resolves the code to an activity_id and marks the HDA as a manual override.
+ */
+export function useUpdateHalfDayAssignment() {
+  const queryClient = useQueryClient()
+
+  return useMutation<
+    HalfDayAssignment,
+    ApiError,
+    { id: string; data: HalfDayAssignmentUpdateRequest }
+  >({
+    mutationFn: ({ id, data }) =>
+      patch<HalfDayAssignment>(`/half-day-assignments/${id}`, {
+        // URL params stay snake_case (Couatl Killer), but body goes through axios interceptor
+        activityCode: data.activityCode,
+        overrideReason: data.overrideReason,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: halfDayAssignmentQueryKeys.all,
+      })
+    },
   })
 }
 

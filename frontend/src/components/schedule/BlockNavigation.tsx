@@ -106,6 +106,53 @@ export function BlockNavigation({
     }
   }, [blockRanges, currentBlockNumber, startDate])
 
+  // Build list of available academic years and blocks for the current AY for the dropdown
+  const currentAY = useMemo(() => getAcademicYear(startDate), [startDate])
+
+  const availableAYs = useMemo(() => {
+    if (!blockRanges?.length) return []
+    const ays = [...new Set(blockRanges.map((r) => r.academicYear))].sort()
+    return ays
+  }, [blockRanges])
+
+  const blocksForCurrentAY = useMemo(() => {
+    if (!blockRanges?.length) return []
+    return blockRanges
+      .filter((r) => r.academicYear === currentAY)
+      .sort((a, b) => a.blockNumber - b.blockNumber)
+  }, [blockRanges, currentAY])
+
+  // Handle block dropdown selection
+  const handleBlockSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    if (!value || !blockRanges?.length) return
+
+    // Parse "AY:blockNumber" format
+    const [ayStr, blockStr] = value.split(':')
+    const ay = Number(ayStr)
+    const blockNum = Number(blockStr)
+
+    const range = blockRanges.find(
+      (r) => r.academicYear === ay && r.blockNumber === blockNum
+    )
+    if (range) {
+      onDateRangeChange(parseISO(range.startDate), parseISO(range.endDate))
+    }
+  }
+
+  // Handle academic year change from dropdown
+  const handleAYChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const ay = Number(e.target.value)
+    if (!blockRanges?.length) return
+    // Jump to first block of the selected AY
+    const firstBlock = blockRanges
+      .filter((r) => r.academicYear === ay)
+      .sort((a, b) => a.blockNumber - b.blockNumber)[0]
+    if (firstBlock) {
+      onDateRangeChange(parseISO(firstBlock.startDate), parseISO(firstBlock.endDate))
+    }
+  }
+
   // Navigate to previous block using actual block boundaries from API
   const handlePreviousBlock = () => {
     if (previousBlockRange) {
@@ -227,6 +274,43 @@ export function BlockNavigation({
           </button>
         )}
       </div>
+
+      {/* Block jump dropdown */}
+      {!isFallbackMode && blocksForCurrentAY.length > 0 && (
+        <div className="flex items-center gap-2">
+          {availableAYs.length > 1 && (
+            <select
+              value={currentAY}
+              onChange={handleAYChange}
+              disabled={isLoading}
+              className="px-2 py-1 text-sm border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Select academic year"
+            >
+              {availableAYs.map((ay) => (
+                <option key={ay} value={ay}>
+                  AY {ay}-{String(ay + 1).slice(2)}
+                </option>
+              ))}
+            </select>
+          )}
+          <select
+            value={currentBlockNumber !== null ? `${currentAY}:${currentBlockNumber}` : ''}
+            onChange={handleBlockSelect}
+            disabled={isLoading}
+            className="px-2 py-1 text-sm border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Jump to block"
+          >
+            <option value="" disabled>
+              Jump to block...
+            </option>
+            {blocksForCurrentAY.map((range) => (
+              <option key={`${range.academicYear}:${range.blockNumber}`} value={`${range.academicYear}:${range.blockNumber}`}>
+                Block {range.blockNumber}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Date range display (read-only - use navigation buttons to change) */}
       <div className="flex items-center gap-2 text-sm" role="status" aria-live="polite">

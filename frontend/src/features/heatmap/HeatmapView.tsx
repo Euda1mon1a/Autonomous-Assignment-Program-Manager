@@ -219,9 +219,9 @@ export function HeatmapView({
         <div className="flex flex-col items-center gap-3 p-6 text-center">
           <AlertCircle className="w-8 h-8 text-gray-400" />
           <div>
-            <p className="text-sm font-medium text-gray-900">No data available</p>
+            <p className="text-sm font-medium text-gray-900">No heatmap data for this range</p>
             <p className="text-sm text-gray-600 mt-1">
-              Adjust your filters or date range to view data
+              Try selecting a date range that has schedule assignments, or change the grouping option.
             </p>
           </div>
         </div>

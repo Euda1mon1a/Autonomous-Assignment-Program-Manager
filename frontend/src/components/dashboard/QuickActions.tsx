@@ -54,7 +54,7 @@ export function QuickActions() {
           aria-label="Generate a new schedule"
           aria-haspopup="dialog"
         >
-          <Calendar className="w-6 h-6 text-blue-600 mb-2 group-hover:scale-110 transition-transform" aria-hidden="true" />
+          <Calendar className="w-5 h-5 text-blue-600 mb-2 group-hover:scale-110 transition-transform" aria-hidden="true" />
           <span className="text-sm font-medium text-blue-800">Generate Schedule</span>
         </button>
 
@@ -66,9 +66,9 @@ export function QuickActions() {
           className="flex flex-col items-center justify-center p-4 bg-green-50 hover:bg-green-100 disabled:bg-green-50/50 rounded-lg transition-colors group"
         >
           {isExporting ? (
-            <Loader2 className="w-6 h-6 text-green-600 mb-2 animate-spin" aria-hidden="true" />
+            <Loader2 className="w-5 h-5 text-green-600 mb-2 animate-spin" aria-hidden="true" />
           ) : (
-            <FileSpreadsheet className="w-6 h-6 text-green-600 mb-2 group-hover:scale-110 transition-transform" aria-hidden="true" />
+            <FileSpreadsheet className="w-5 h-5 text-green-600 mb-2 group-hover:scale-110 transition-transform" aria-hidden="true" />
           )}
           <span className="text-sm font-medium text-green-800">
             {isExporting ? 'Exporting...' : 'Export Excel'}
@@ -80,7 +80,7 @@ export function QuickActions() {
           className="flex flex-col items-center justify-center p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors group"
           aria-label="Go to people management page"
         >
-          <UserPlus className="w-6 h-6 text-purple-600 mb-2 group-hover:scale-110 transition-transform" aria-hidden="true" />
+          <UserPlus className="w-5 h-5 text-purple-600 mb-2 group-hover:scale-110 transition-transform" aria-hidden="true" />
           <span className="text-sm font-medium text-purple-800">Add Person</span>
         </Link>
 
@@ -89,7 +89,7 @@ export function QuickActions() {
           className="flex flex-col items-center justify-center p-4 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors group"
           aria-label="Go to activities page"
         >
-          <FileText className="w-6 h-6 text-amber-600 mb-2 group-hover:scale-110 transition-transform" aria-hidden="true" />
+          <FileText className="w-5 h-5 text-amber-600 mb-2 group-hover:scale-110 transition-transform" aria-hidden="true" />
           <span className="text-sm font-medium text-amber-800">View Activities</span>
         </Link>
       </div>
