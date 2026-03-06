@@ -21,11 +21,11 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.execute(
-        "UPDATE activities SET is_protected = TRUE WHERE code IN ('hc', 'HC', 'clc', 'CLC')"
+        "UPDATE activities SET is_protected = TRUE WHERE code IN ('hc', 'HC', 'clc', 'CLC', 'hlc', 'HLC')"
     )
 
 
 def downgrade() -> None:
     op.execute(
-        "UPDATE activities SET is_protected = FALSE WHERE code IN ('hc', 'HC', 'clc', 'CLC')"
+        "UPDATE activities SET is_protected = FALSE WHERE code IN ('hc', 'HC', 'clc', 'CLC', 'hlc', 'HLC')"
     )
