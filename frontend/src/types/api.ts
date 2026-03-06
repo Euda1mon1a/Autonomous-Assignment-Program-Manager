@@ -541,11 +541,11 @@ export interface RotationTemplate {
   /** Required specialty for this rotation (if any) */
   requiresSpecialty: string | null;
   /** Whether the rotation requires procedure credentials */
-  requiresProcedureCredential: boolean;
+  requiresProcedureCredential: boolean | null;
   /** Whether faculty supervision is required */
-  supervisionRequired: boolean;
+  supervisionRequired: boolean | null;
   /** Maximum ratio of residents to supervisors (e.g., 3 means 3:1) */
-  maxSupervisionRatio: number;
+  maxSupervisionRatio: number | null;
   /** True for half-block rotations (14 days instead of 28) */
   isBlockHalfRotation?: boolean;
   /** Timestamp when the template was created */

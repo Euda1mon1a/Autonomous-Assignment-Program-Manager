@@ -174,7 +174,7 @@ export function EditAssignmentModal({
       date,
       session,
       rotationTemplateId,
-      requiresSupervision: selectedRotation?.supervisionRequired,
+      requiresSupervision: selectedRotation?.supervisionRequired ?? undefined,
       absences: personAbsences,
       existingAssignments: existingAssignments,
       ...warningContext,
