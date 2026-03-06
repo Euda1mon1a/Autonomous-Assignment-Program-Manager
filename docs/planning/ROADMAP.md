@@ -23,6 +23,7 @@
 **XLSX Export — TAMC Reference Format Match:**
 - Color, font, sizing, borders, column widths all matched to reference spreadsheet
 - Calculator formulas: Screeners, Providers Virtual, Attendings, V Clinic all implemented
+- *Note: Further deep formatting to match the exact "hand-jammed" layout is paused pending architectural consensus on native generation vs. ML transformation pipelines. See `docs/architecture/decisions/EXCEL_EXPORT_FORMATTING.md`.*
 
 **Frontend:**
 - Frontend rewiring steps 1-5 (#1259) — type safety, OpenAPI types, expand_block_assignments toggle
