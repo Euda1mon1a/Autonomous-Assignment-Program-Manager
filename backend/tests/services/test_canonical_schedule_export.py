@@ -215,8 +215,8 @@ class TestCanonicalScheduleExportService:
         with pytest.raises(ValueError, match="No academic blocks found"):
             service.export_year_xlsx(academic_year=2026)
 
-    @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
-    def test_export_year_xlsx_builds_block_map_and_metadata(self, mock_converter_class):
+    @patch("app.services.canonical_schedule_export_service.TAMCBlockExporter")
+    def test_export_year_xlsx_builds_block_map_and_metadata(self, mock_exporter_class):
         """export_year_xlsx() should build block_map and embed inline metadata."""
         mock_db = MagicMock()
         block_one = MagicMock()
@@ -238,28 +238,30 @@ class TestCanonicalScheduleExportService:
         # Mock the .query().distinct().all() calls for rotation/activity codes
         mock_db.query.return_value.distinct.return_value.all.return_value = []
 
-        mock_converter = MagicMock()
-        mock_converter.convert_from_json.return_value = self._make_template_bytes()
-        mock_converter_class.return_value = mock_converter
+        mock_exporter = MagicMock()
+        mock_exporter.export.return_value = self._make_template_bytes()
+        mock_exporter.summary_col_start = 62
+        mock_exporter_class.return_value = mock_exporter
 
         service = CanonicalScheduleExportService(mock_db)
         with (
-            patch.object(service, "_export_json_data", return_value={"faculty": []}),
+            patch.object(
+                service,
+                "_export_json_data",
+                return_value={
+                    "faculty": [],
+                    "block_start": "2026-07-01",
+                    "block_end": "2026-07-28",
+                },
+            ),
             patch.object(service, "_copy_worksheet"),
             patch.object(service, "_apply_phantom_columns"),
             patch.object(service, "_build_ytd_summary_sheet"),
-            patch.object(
-                service, "_template_path", return_value=Path("/fake/template.xlsx")
-            ),
-            patch.object(
-                service, "_structure_path", return_value=Path("/fake/structure.xml")
-            ),
         ):
             result = service.export_year_xlsx(academic_year=2026)
 
         # Result should be valid xlsx bytes (starts with PK zip header)
         assert result[:2] == b"PK"
-        assert mock_converter_class.call_args.kwargs["include_qa_sheet"] is False
 
         # Verify metadata was written inline by loading the workbook
         from openpyxl import load_workbook
@@ -761,8 +763,8 @@ class TestBuildYtdSummarySheet:
         assert "SUMIF" in str(ws.cell(row=3, column=2).value)
         wb.close()
 
-    @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
-    def test_export_year_xlsx_uses_faculty_union(self, mock_converter_class):
+    @patch("app.services.canonical_schedule_export_service.TAMCBlockExporter")
+    def test_export_year_xlsx_uses_faculty_union(self, mock_exporter_class):
         """export_year_xlsx() should pass union of all blocks' faculty to YTD_SUMMARY."""
         mock_db = MagicMock()
 
@@ -784,7 +786,7 @@ class TestBuildYtdSummarySheet:
         ]
         mock_db.query.return_value.distinct.return_value.all.return_value = []
 
-        mock_converter = MagicMock()
+        mock_exporter = MagicMock()
 
         def _make_template():
             wb = Workbook()
@@ -794,8 +796,9 @@ class TestBuildYtdSummarySheet:
             wb.save(buf)
             return buf.getvalue()
 
-        mock_converter.convert_from_json.return_value = _make_template()
-        mock_converter_class.return_value = mock_converter
+        mock_exporter.export.return_value = _make_template()
+        mock_exporter.summary_col_start = 62
+        mock_exporter_class.return_value = mock_exporter
 
         # Block 1 has Faculty A and B; Block 2 has Faculty B and C
         export_calls = [0]
@@ -813,9 +816,9 @@ class TestBuildYtdSummarySheet:
 
         original_build = service._build_ytd_summary_sheet
 
-        def capture_build(ws, blocks, faculty):
+        def capture_build(ws, blocks, faculty, block_summary_cols=None):
             captured_faculty.extend(faculty)
-            return original_build(ws, blocks, faculty)
+            return original_build(ws, blocks, faculty, block_summary_cols)
 
         with (
             patch.object(service, "_export_json_data", side_effect=mock_export_json),
@@ -823,12 +826,6 @@ class TestBuildYtdSummarySheet:
             patch.object(service, "_apply_phantom_columns"),
             patch.object(
                 service, "_build_ytd_summary_sheet", side_effect=capture_build
-            ),
-            patch.object(
-                service, "_template_path", return_value=Path("/fake/template.xlsx")
-            ),
-            patch.object(
-                service, "_structure_path", return_value=Path("/fake/structure.xml")
             ),
         ):
             service.export_year_xlsx(academic_year=2026)

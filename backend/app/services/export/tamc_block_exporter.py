@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -144,10 +144,10 @@ class TAMCBlockExporter:
     FACULTY_START = 31
     FACULTY_END = 47
 
-    # Full black separator rows
-    SEPARATOR_ROWS = {7, 8, 48, 55, 66, 69}
-    # Partial black rows (black + summary data)
-    PARTIAL_BLACK_ROWS = {29, 30}
+    # Full black separator rows (entire row is BLACK + NBSP)
+    SEPARATOR_ROWS = {7, 8, 29, 48, 55, 66, 69}
+    # Partial black rows (A:B = BLACK, rest has summary data)
+    PARTIAL_BLACK_ROWS = {30}
 
     # Extra section row ranges
     TY_FLT_START = 49
@@ -375,8 +375,11 @@ class TAMCBlockExporter:
             cell1 = ws.cell(row=1, column=am_col, value=day_names[dow])
             # Row 2: Day abbreviation
             cell2 = ws.cell(row=2, column=am_col, value=day_abbrevs[dow])
-            # Row 3: Date (day number)
-            cell3 = ws.cell(row=3, column=am_col, value=d.day)
+            # Row 3: Actual date (Excel serial date, displayed as M/D)
+            cell3 = ws.cell(
+                row=3, column=am_col, value=datetime(d.year, d.month, d.day)
+            )
+            cell3.number_format = "M/D"
 
             # Day-of-week coloring
             if dow == 3:  # Thursday
@@ -1011,12 +1014,18 @@ class TAMCBlockExporter:
     def _add_data_validation(self, ws, block_start: date, block_end: date) -> None:
         """Add dropdown validation for rotation and activity columns."""
         rot_dv = DataValidation(
-            type="list", formula1="ValidRotations", allow_blank=True
+            type="list",
+            formula1="ValidRotations",
+            allow_blank=True,
+            showErrorMessage=False,
         )
         ws.add_data_validation(rot_dv)
 
         act_dv = DataValidation(
-            type="list", formula1="ValidActivities", allow_blank=True
+            type="list",
+            formula1="ValidActivities",
+            allow_blank=True,
+            showErrorMessage=False,
         )
         ws.add_data_validation(act_dv)
 

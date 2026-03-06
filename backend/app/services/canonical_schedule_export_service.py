@@ -4,7 +4,7 @@ Exports schedules from half_day_assignments (descriptive truth) into
 Block Template2 XLSX using a fixed, formatted template.
 
 Pipeline:
-  half_day_assignments -> HalfDayJSONExporter -> JSONToXlsxConverter -> xlsx
+  half_day_assignments -> HalfDayJSONExporter -> TAMCBlockExporter -> xlsx
 """
 
 from __future__ import annotations
@@ -16,7 +16,8 @@ from pathlib import Path
 from typing import Any
 
 from openpyxl import load_workbook, Workbook
-from openpyxl.styles import PatternFill, Protection
+from openpyxl.styles import Font, PatternFill, Protection
+from openpyxl.utils import get_column_letter
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -32,7 +33,6 @@ from app.services.excel_metadata import (
 )
 from app.services.export.tamc_block_exporter import TAMCBlockExporter
 from app.services.half_day_json_exporter import HalfDayJSONExporter
-from app.services.json_to_xlsx_converter import JSONToXlsxConverter
 from app.utils.academic_blocks import get_block_dates
 
 logger = get_logger(__name__)
@@ -116,6 +116,7 @@ class CanonicalScheduleExportService:
         output_path: Path | str | None = None,
     ) -> bytes:
         """Export all 14 blocks for an academic year into a single workbook."""
+
         wb = Workbook()
         wb.remove(wb.active)  # type: ignore
 
@@ -131,20 +132,8 @@ class CanonicalScheduleExportService:
 
         block_map = {}
         all_faculty_by_name: dict[str, dict[str, Any]] = {}
-        template_path = self._template_path()
-        structure_path = self._structure_path()
-        effective_preserve = structure_path is not None and template_path is not None
-
-        converter = JSONToXlsxConverter(
-            template_path=template_path,
-            structure_xml_path=structure_path,
-            use_block_template2=True,
-            apply_colors=True,
-            strict_row_mapping=structure_path is not None,
-            include_qa_sheet=False,  # Single QA sheet for 14 blocks is messy
-            preserve_template_identity_fields=effective_preserve,
-            presentation_profile="tamc_handjam_v2",
-        )
+        # Track summary column start per block (varies by block length)
+        block_summary_cols: dict[str, int] = {}
 
         for block in blocks:
             logger.info(f"Exporting Block {block.block_number} for yearly workbook")
@@ -161,8 +150,11 @@ class CanonicalScheduleExportService:
                 if name:
                     all_faculty_by_name[name] = f
 
-            # Convert to temporary workbook to extract sheet
-            temp_bytes = converter.convert_from_json(data)
+            # Export via TAMCBlockExporter
+            exporter = TAMCBlockExporter(
+                block_config=self._load_block_config(block.block_number),
+            )
+            temp_bytes = exporter.export(data)
             temp_wb = load_workbook(io.BytesIO(temp_bytes))
             temp_ws = temp_wb["Block Template2"]
 
@@ -176,12 +168,8 @@ class CanonicalScheduleExportService:
             # Apply phantom columns for stub blocks (0 and 13)
             self._apply_phantom_columns(ws, block)
 
-            # Hide unused faculty rows for cleaner presentation
-            # Base template has 50 faculty rows starting at row 31
-            active_faculty_count = len(data.get("faculty", []))
-            last_populated_row = 30 + active_faculty_count
-            for row_idx in range(last_populated_row + 1, 81):
-                ws.row_dimensions[row_idx].hidden = True
+            # Track where summary columns landed for this block
+            block_summary_cols[sheet_title] = exporter.summary_col_start
 
             # Collect baseline cell data for hand-jam tracking
             baseline_cells = self._collect_baseline_data(ws, data)
@@ -196,7 +184,9 @@ class CanonicalScheduleExportService:
             all_faculty_by_name.values(), key=lambda f: f.get("name", "")
         )
         summary_ws = wb.create_sheet(title="YTD_SUMMARY", index=0)
-        self._build_ytd_summary_sheet(summary_ws, blocks, all_faculty)
+        self._build_ytd_summary_sheet(
+            summary_ws, blocks, all_faculty, block_summary_cols
+        )
 
         # Ensure YTD_SUMMARY is active
         wb.active = summary_ws
@@ -222,10 +212,6 @@ class CanonicalScheduleExportService:
         buffer = io.BytesIO()
         wb.save(buffer)
         xlsx_bytes = buffer.getvalue()
-
-        # Skip xlwings for year export — sheets are named "Block {n}" not
-        # "Block Template2", so the finishing pass would fail on sheet lookup.
-        # TODO: Multi-sheet xlwings support for annual workbooks.
 
         if output_path:
             Path(output_path).write_bytes(xlsx_bytes)
@@ -338,9 +324,20 @@ class CanonicalScheduleExportService:
         # No password — visual lock only (prevents accidental edits)
 
     def _build_ytd_summary_sheet(
-        self, ws, blocks: list[AcademicBlock], faculty: list[dict[str, Any]]
+        self,
+        ws,
+        blocks: list[AcademicBlock],
+        faculty: list[dict[str, Any]],
+        block_summary_cols: dict[str, int] | None = None,
     ) -> None:
-        """Build YTD_SUMMARY sheet using dynamic cross-sheet SUMIF formulas."""
+        """Build YTD_SUMMARY sheet using dynamic cross-sheet SUMIF formulas.
+
+        Args:
+            block_summary_cols: Maps sheet title -> summary column start.
+                Used to compute correct column letters per block (varies by
+                block length for Block 0/13 stub blocks).
+        """
+
         headers = [
             "Faculty Name",
             "YTD Clinic (C+SM)",
@@ -354,15 +351,36 @@ class CanonicalScheduleExportService:
             "YTD Call Nights",
         ]
 
-        # Write headers
-        from openpyxl.styles import Font
-
         bold_font = Font(bold=True)
         for col_idx, header in enumerate(headers, start=1):
             cell = ws.cell(row=1, column=col_idx, value=header)
             cell.font = bold_font
 
-        block_names = [f"'Block {b.block_number}'" for b in blocks]
+        # Faculty summary column offsets:
+        # 0=C(+SM), 1=CC, 2=CV, 3=(total), 4=AT, 5=ADM, 6=LV, 7=FMIT, 8=CALL
+        # Map YTD column -> summary offset within each block sheet
+        ytd_to_offset = {
+            2: 0,  # YTD Clinic -> C(+SM)
+            3: 1,  # YTD CC -> CC
+            4: 2,  # YTD CV -> CV
+            6: 4,  # YTD AT -> AT
+            7: 5,  # YTD Admin -> ADM
+            8: 6,  # YTD Leave -> LV
+            9: 7,  # YTD FMIT -> FMIT
+            10: 8,  # YTD Call -> CALL
+        }
+
+        # Precompute per-block column letters for each YTD metric
+        block_col_letters: dict[
+            int, dict[int, str]
+        ] = {}  # block_num -> {ytd_col -> letter}
+        for block in blocks:
+            sheet_title = f"Block {block.block_number}"
+            sc = (block_summary_cols or {}).get(sheet_title, 62)
+            letters = {}
+            for ytd_col, offset in ytd_to_offset.items():
+                letters[ytd_col] = get_column_letter(sc + offset)
+            block_col_letters[block.block_number] = letters
 
         # Write faculty rows
         for row_idx, f in enumerate(faculty, start=2):
@@ -372,33 +390,36 @@ class CanonicalScheduleExportService:
             if not name:
                 continue
 
-            # Helper to generate cross-sheet SUMIF
-            def cross_sheet_sumif(col_letter: str, current_row: int = row_idx) -> str:
-                # e.g., SUMIF('Block 0'!$E$31:$E$80, $A2, 'Block 0'!BJ$31:BJ$80) + ...
-                terms = [
-                    f"SUMIF({b}!$E$31:$E$80, $A{current_row}, {b}!{col_letter}$31:{col_letter}$80)"
-                    for b in block_names
-                ]
+            def cross_sheet_sumif(ytd_col: int, current_row: int = row_idx) -> str:
+                """Generate SUMIF formula with per-block column letters."""
+                terms = []
+                for block in blocks:
+                    b = f"'Block {block.block_number}'"
+                    col_l = block_col_letters[block.block_number][ytd_col]
+                    terms.append(
+                        f"SUMIF({b}!$E$31:$E$80, $A{current_row}, "
+                        f"{b}!{col_l}$31:{col_l}$80)"
+                    )
                 return f"=({'+'.join(terms)})"
 
-            # B: YTD Clinic (C+SM) -> BJ
-            ws.cell(row=row_idx, column=2, value=cross_sheet_sumif("BJ"))
-            # C: YTD CC -> BK
-            ws.cell(row=row_idx, column=3, value=cross_sheet_sumif("BK"))
-            # D: YTD CV -> BL
-            ws.cell(row=row_idx, column=4, value=cross_sheet_sumif("BL"))
-            # E: YTD Total Clinic -> B+C+D
+            # B: YTD Clinic (C+SM)
+            ws.cell(row=row_idx, column=2, value=cross_sheet_sumif(2))
+            # C: YTD CC
+            ws.cell(row=row_idx, column=3, value=cross_sheet_sumif(3))
+            # D: YTD CV
+            ws.cell(row=row_idx, column=4, value=cross_sheet_sumif(4))
+            # E: YTD Total Clinic = B+C+D
             ws.cell(row=row_idx, column=5, value=f"=B{row_idx}+C{row_idx}+D{row_idx}")
-            # F: YTD AT (AT+PCAT+DO) -> BN
-            ws.cell(row=row_idx, column=6, value=cross_sheet_sumif("BN"))
-            # G: YTD Admin -> BO
-            ws.cell(row=row_idx, column=7, value=cross_sheet_sumif("BO"))
-            # H: YTD Leave -> BP
-            ws.cell(row=row_idx, column=8, value=cross_sheet_sumif("BP"))
-            # I: YTD FMIT Weeks -> BQ / 14
-            ws.cell(row=row_idx, column=9, value=f"{cross_sheet_sumif('BQ')}/14")
-            # J: YTD Call Nights -> BR
-            ws.cell(row=row_idx, column=10, value=cross_sheet_sumif("BR"))
+            # F: YTD AT (AT+PCAT+DO)
+            ws.cell(row=row_idx, column=6, value=cross_sheet_sumif(6))
+            # G: YTD Admin
+            ws.cell(row=row_idx, column=7, value=cross_sheet_sumif(7))
+            # H: YTD Leave
+            ws.cell(row=row_idx, column=8, value=cross_sheet_sumif(8))
+            # I: YTD FMIT Weeks (divide by 14 half-days per FMIT week)
+            ws.cell(row=row_idx, column=9, value=f"{cross_sheet_sumif(9)}/14")
+            # J: YTD Call Nights
+            ws.cell(row=row_idx, column=10, value=cross_sheet_sumif(10))
 
     def _collect_baseline_data(self, ws, data: dict[str, Any]) -> list[dict[str, Any]]:
         """Extract cell data from a block sheet for baseline fingerprinting.
@@ -406,7 +427,6 @@ class CanonicalScheduleExportService:
         Scans the data region (rows 9-69, cols F onward) and records every
         non-empty cell with its reference, value, and source from the JSON data.
         """
-        from openpyxl.utils import get_column_letter
 
         cells: list[dict[str, Any]] = []
 
