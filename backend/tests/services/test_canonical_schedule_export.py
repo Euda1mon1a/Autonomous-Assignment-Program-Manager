@@ -834,3 +834,37 @@ class TestBuildYtdSummarySheet:
         names = [f["name"] for f in captured_faculty]
         assert len(names) == 3
         assert names == ["Alpha, Dr.", "Beta, Dr.", "Charlie, Dr."]
+
+
+class TestPhantomColumnBoundary:
+    """Verify phantom columns don't erase summary formulas in short blocks."""
+
+    def test_phantom_stops_before_summary_columns(self):
+        """For a 3-day stub block, phantom fill must not touch summary cols."""
+        from openpyxl import Workbook
+        from openpyxl.styles import PatternFill
+
+        wb = Workbook()
+        ws = wb.active
+
+        # Simulate summary formula in column 12 (where a 3-day block's
+        # summary starts: col 6 + 3*2 = 12)
+        summary_col = 12
+        ws.cell(row=9, column=summary_col, value="=SUMPRODUCT(...)")
+        ws.cell(row=30, column=summary_col, value="C")
+
+        mock_block = MagicMock()
+        mock_block.start_date = date(2026, 7, 1)
+        mock_block.end_date = date(2026, 7, 3)  # 3 days
+
+        service = CanonicalScheduleExportService(MagicMock())
+        service._apply_phantom_columns(ws, mock_block, summary_col_start=summary_col)
+
+        # Summary cells should NOT be erased
+        assert ws.cell(row=9, column=summary_col).value == "=SUMPRODUCT(...)"
+        assert ws.cell(row=30, column=summary_col).value == "C"
+
+        # Phantom cells before summary should be grayed out
+        phantom_cell = ws.cell(row=9, column=summary_col - 1)
+        assert phantom_cell.value is None
+        assert phantom_cell.fill.fgColor.rgb is not None

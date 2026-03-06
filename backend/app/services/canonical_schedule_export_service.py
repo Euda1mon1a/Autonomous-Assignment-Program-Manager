@@ -166,7 +166,7 @@ class CanonicalScheduleExportService:
             self._copy_worksheet(temp_ws, ws)
 
             # Apply phantom columns for stub blocks (0 and 13)
-            self._apply_phantom_columns(ws, block)
+            self._apply_phantom_columns(ws, block, exporter.summary_col_start)
 
             # Track where summary columns landed for this block
             block_summary_cols[sheet_title] = exporter.summary_col_start
@@ -302,8 +302,16 @@ class CanonicalScheduleExportService:
             for rule in rules:
                 target.conditional_formatting.add(rule_range, copy(rule))
 
-    def _apply_phantom_columns(self, ws, block: AcademicBlock) -> None:
-        """Gray out and lock columns for days that don't exist in stub blocks."""
+    def _apply_phantom_columns(
+        self, ws, block: AcademicBlock, summary_col_start: int = 62
+    ) -> None:
+        """Gray out and lock columns for days that don't exist in stub blocks.
+
+        Args:
+            summary_col_start: First column used for summary formulas.
+                Phantom fill stops before this column to avoid erasing
+                summary data in short blocks (e.g., Block 0/13).
+        """
         # BT2_COL_SCHEDULE_START = 6
         # COLS_PER_DAY = 2
         actual_days = (block.end_date - block.start_date).days + 1
@@ -314,6 +322,8 @@ class CanonicalScheduleExportService:
         for day_index in range(actual_days, 28):
             for slot in range(2):  # AM, PM
                 col = 6 + (day_index * 2) + slot
+                if col >= summary_col_start:
+                    break
                 for row in range(9, 70):
                     cell = ws.cell(row=row, column=col)
                     cell.fill = PHANTOM_FILL

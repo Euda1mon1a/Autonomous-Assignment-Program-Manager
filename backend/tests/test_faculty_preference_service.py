@@ -367,12 +367,15 @@ class TestUpdatePreferences:
         existing_preference: FacultyPreference,
     ):
         """Test that update modifies the updated_at timestamp."""
+        # Make timestamp deterministic without relying on wall-clock delays.
+        existing_preference.updated_at = existing_preference.updated_at - timedelta(
+            days=1
+        )
+        db.add(existing_preference)
+        db.commit()
+        db.refresh(existing_preference)
+
         original_updated_at = existing_preference.updated_at
-
-        # Wait a tiny bit to ensure timestamp difference
-        import time
-
-        time.sleep(0.01)
 
         result = faculty_preference_service.update_preferences(
             faculty_member.id,
