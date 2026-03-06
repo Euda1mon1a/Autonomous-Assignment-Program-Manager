@@ -1045,13 +1045,19 @@ class XMLToXlsxConverter:
 
         # Rotation columns: dropdown from ValidRotations named range
         rot_dv = DataValidation(
-            type="list", formula1="ValidRotations", allow_blank=True
+            type="list",
+            formula1="ValidRotations",
+            allow_blank=True,
+            showErrorMessage=False,  # Allow free-text overrides
         )
         sheet.add_data_validation(rot_dv)
 
         # Activity columns: dropdown from ValidActivities named range
         act_dv = DataValidation(
-            type="list", formula1="ValidActivities", allow_blank=True
+            type="list",
+            formula1="ValidActivities",
+            allow_blank=True,
+            showErrorMessage=False,  # Allow free-text overrides
         )
         sheet.add_data_validation(act_dv)
 
