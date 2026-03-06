@@ -484,7 +484,7 @@ function StatsOverview({ stats }: { stats: AuditStats }) {
 // Main Page Component
 // ============================================================================
 
-export default function AdminAuditPage() {
+export function AuditTab() {
   const [viewMode, setViewMode] = useState<AuditViewMode>('list');
   const [entries] = useState<AuditEntry[]>(MOCK_ENTRIES);
   const [stats] = useState<AuditStats>(MOCK_STATS);
@@ -517,54 +517,40 @@ export default function AdminAuditPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <header className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">Audit Logs</h1>
-                <p className="text-sm text-slate-300">
-                  System activity and security events
-                </p>
-              </div>
-            </div>
-
-            {/* View Toggle */}
-            <div className="flex items-center gap-2 bg-slate-800 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'list'
-                    ? 'bg-violet-600 text-white'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                <List className="w-4 h-4" />
-                List
-              </button>
-              <button
-                onClick={() => setViewMode('stats')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  viewMode === 'stats'
-                    ? 'bg-violet-600 text-white'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                <BarChart3 className="w-4 h-4" />
-                Stats
-              </button>
-            </div>
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Audit Logs</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            System activity and security events
+          </p>
         </div>
-      </header>
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+          <button
+            onClick={() => setViewMode('list')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'list'
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <List className="w-4 h-4" />
+            List
+          </button>
+          <button
+            onClick={() => setViewMode('stats')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'stats'
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            Stats
+          </button>
+        </div>
+      </div>
 
-      {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
         {viewMode === 'stats' ? (
           <StatsOverview stats={stats} />
         ) : (
@@ -754,8 +740,6 @@ export default function AdminAuditPage() {
             </div>
           </div>
         )}
-      </main>
-
       {/* Entry Detail Sidebar */}
       {selectedEntry && (
         <>
