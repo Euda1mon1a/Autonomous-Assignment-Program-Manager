@@ -22,6 +22,7 @@ import { SwapFilters } from './SwapFilters';
 import { SwapRequestCard } from './SwapRequestCard';
 import { SwapRequestForm } from './SwapRequestForm';
 import { MySwapRequests } from './MySwapRequests';
+import { Abbr } from '@/components/ui/Abbr';
 import type { MarketplaceTab, SwapFilters as Filters } from './types';
 
 // ============================================================================
@@ -185,7 +186,7 @@ export function SwapMarketplace() {
                     No Swaps Available
                   </h3>
                   <p className="text-gray-600 mb-4">
-                    There are currently no swap requests in the marketplace.
+                    No one has posted a swap request yet. Be the first — create a request to exchange one of your assigned <Abbr>FMIT</Abbr> weeks.
                   </p>
                   <button
                     onClick={() => setActiveTab('create')}
@@ -329,7 +330,7 @@ export function SwapMarketplace() {
               <h4 className="font-medium text-gray-900 text-sm sm:text-base">Create Request</h4>
             </div>
             <p className="text-xs sm:text-sm text-gray-600 ml-10">
-              Create a swap request for one of your assigned FMIT weeks. Choose to target
+              Create a swap request for one of your assigned <Abbr>FMIT</Abbr> weeks. Choose to target
               specific faculty or let the system find candidates.
             </p>
           </div>

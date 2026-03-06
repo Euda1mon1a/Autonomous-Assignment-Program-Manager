@@ -15,7 +15,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, subqueryload
 
 from app.core.logging import get_logger
 from app.models.block_assignment import BlockAssignment
@@ -85,9 +85,19 @@ class BlockAssignmentExportService:
             .options(
                 joinedload(BlockAssignment.resident),
                 joinedload(BlockAssignment.rotation_template),
+                joinedload(BlockAssignment.academic_block),
             )
             .where(BlockAssignment.academic_year == request.academic_year)
         )
+
+        # Eagerly load absences on residents when leave status is requested
+        # (leave_days hybrid property accesses resident.absences + academic_block)
+        if request.include_leave_status:
+            from app.models.person import Person
+
+            query = query.options(
+                joinedload(BlockAssignment.resident).subqueryload(Person.absences),
+            )
 
         # Apply filters
         if request.block_numbers:

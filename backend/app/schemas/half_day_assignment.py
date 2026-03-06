@@ -29,6 +29,13 @@ class HalfDayAssignmentRead(BaseModel):
     updated_at: datetime
 
 
+class HalfDayAssignmentUpdate(BaseModel):
+    """Schema for updating a half-day assignment (manual override)."""
+
+    activity_code: str | None = None
+    override_reason: str | None = None
+
+
 class HalfDayAssignmentListResponse(BaseModel):
     """Response for listing half-day assignments."""
 

@@ -223,6 +223,22 @@ export {
 } from "./useAdminDashboard";
 
 // ============================================================================
+// Half-Day Assignment Hooks
+// ============================================================================
+export {
+  halfDayAssignmentQueryKeys,
+  useHalfDayAssignments,
+  useHalfDayAssignmentsByBlock,
+  useUpdateHalfDayAssignment,
+  buildHalfDayAssignmentMap,
+  getSlotAssignment,
+  type HalfDayAssignment,
+  type HalfDayAssignmentFilters,
+  type HalfDayAssignmentListResponse,
+  type HalfDayAssignmentUpdateRequest,
+} from './useHalfDayAssignments'
+
+// ============================================================================
 // Half-Day Import Hooks
 // ============================================================================
 export {

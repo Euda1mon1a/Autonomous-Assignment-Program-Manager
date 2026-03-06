@@ -1,13 +1,18 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { format, eachDayOfInterval, isWeekend } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
 import { useAssignmentsForRange } from '@/hooks/useAssignmentsForRange'
-import { useHalfDayAssignments } from '@/hooks/useHalfDayAssignments'
+import {
+  useHalfDayAssignments,
+  buildHalfDayAssignmentMap,
+  type HalfDayAssignment,
+} from '@/hooks/useHalfDayAssignments'
+import { HalfDayEditModal } from './HalfDayEditModal'
 import { useGridKeyboardNavigation } from '@/hooks/useGridKeyboardNavigation'
 import type { Person, RotationTemplate, Block } from '@/types/api'
 import {
@@ -113,6 +118,15 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     startDate: startDateStr,
     endDate: endDateStr,
   })
+
+  // Build a lookup map for raw HDA objects (for edit modal)
+  const hdaMap = useMemo(
+    () => buildHalfDayAssignmentMap(halfDayData?.assignments ?? []),
+    [halfDayData]
+  )
+
+  // State for cell editing modal
+  const [editingHda, setEditingHda] = useState<HalfDayAssignment | null>(null)
 
   // Generate array of days in the range
   const days = useMemo(() => {
@@ -259,6 +273,14 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     return lookup
   }, [assignmentsData, blockMap, templateMap, halfDayData, personMap, days])
 
+  // Build set of person IDs that have any HDA in the date range
+  const peopleWithAssignments = useMemo(() => {
+    const ids = new Set<string>()
+    halfDayData?.assignments?.forEach((hda) => ids.add(hda.personId))
+    assignmentsData?.items?.forEach((a) => ids.add(a.personId))
+    return ids
+  }, [halfDayData, assignmentsData])
+
   // Group people by PGY level (with optional filtering)
   const personGroups = useMemo((): PersonGroup[] => {
     if (!peopleData?.items) return []
@@ -289,13 +311,18 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
       }
     })
 
-    // Sort each group by name
-    const sortByName = (a: Person, b: Person) => a.name.localeCompare(b.name)
-    pgy1.sort(sortByName)
-    pgy2.sort(sortByName)
-    pgy3.sort(sortByName)
-    pgyOther.sort(sortByName)
-    faculty.sort(sortByName)
+    // Sort: people with assignments first, then alphabetically within each group
+    const sortAssignedFirst = (a: Person, b: Person) => {
+      const aHas = peopleWithAssignments.has(a.id) ? 0 : 1
+      const bHas = peopleWithAssignments.has(b.id) ? 0 : 1
+      if (aHas !== bHas) return aHas - bHas
+      return a.name.localeCompare(b.name)
+    }
+    pgy1.sort(sortAssignedFirst)
+    pgy2.sort(sortAssignedFirst)
+    pgy3.sort(sortAssignedFirst)
+    pgyOther.sort(sortAssignedFirst)
+    faculty.sort(sortAssignedFirst)
 
     const groups: PersonGroup[] = []
     if (pgy1.length > 0) groups.push({ label: 'PGY-1', people: pgy1 })
@@ -305,7 +332,7 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     if (faculty.length > 0) groups.push({ label: 'Faculty', people: faculty })
 
     return groups
-  }, [peopleData, personFilter])
+  }, [peopleData, personFilter, peopleWithAssignments])
 
   // Get person's assignment for a specific date and time
   const getAssignment = (
@@ -334,21 +361,22 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     return order
   }, [personGroups])
 
-  // Keyboard navigation callback
+  // Keyboard navigation callback — opens edit modal for the clicked cell
   const onCellActivate = useCallback(
     (position: { row: number; col: number }) => {
       const personId = personRowOrder[position.row]
       if (!personId) return
       const dayIndex = Math.floor(position.col / 2)
-      const timeOfDay = position.col % 2 === 0 ? 'AM' : 'PM'
+      const timeOfDay: 'AM' | 'PM' = position.col % 2 === 0 ? 'AM' : 'PM'
       const day = days[dayIndex]
       if (!day) return
       const dateStr = format(day, 'yyyy-MM-dd')
-      // Cell activation is available for future features (e.g., editing assignments)
-      // For now, the hook provides focus management and ARIA attributes
-      void { personId, dateStr, timeOfDay }
+      const hda = hdaMap.get(`${personId}_${dateStr}_${timeOfDay}`)
+      if (hda) {
+        setEditingHda(hda)
+      }
     },
-    [personRowOrder, days]
+    [personRowOrder, days, hdaMap]
   )
 
   const { gridProps, getCellProps } = useGridKeyboardNavigation({
@@ -406,32 +434,43 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: FADE_IN_DURATION, ease: 'easeOut' }}
-      className={`glass-panel overflow-auto max-h-[${SCHEDULE_GRID_MAX_HEIGHT}]`}
-    >
-      <table className="min-w-full divide-y divide-gray-200/50 schedule-grid-table" {...gridProps} aria-label="Schedule grid showing assignments by person and date">
-        <ScheduleHeader days={days} />
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: FADE_IN_DURATION, ease: 'easeOut' }}
+        className={`glass-panel overflow-auto max-h-[${SCHEDULE_GRID_MAX_HEIGHT}]`}
+      >
+        <table className="min-w-full divide-y divide-gray-200/50 schedule-grid-table" {...gridProps} aria-label="Schedule grid showing assignments by person and date">
+          <ScheduleHeader days={days} />
 
-        <tbody className="bg-white/50 divide-y divide-gray-200/50">
-          {personGroups.map((group, groupIndex) => (
-            <PersonGroupRows
-              key={group.label}
-              group={group}
-              groupIndex={groupIndex}
-              days={days}
-              todayStr={todayStr}
-              getAssignment={getAssignment}
-              showSeparator={groupIndex > 0}
-              rowOffset={groupRowOffsets[groupIndex]}
-              getCellProps={getCellProps}
-            />
-          ))}
-        </tbody>
-      </table>
-    </motion.div>
+          <tbody className="bg-white/50 divide-y divide-gray-200/50">
+            {personGroups.map((group, groupIndex) => (
+              <PersonGroupRows
+                key={group.label}
+                group={group}
+                groupIndex={groupIndex}
+                days={days}
+                todayStr={todayStr}
+                getAssignment={getAssignment}
+                showSeparator={groupIndex > 0}
+                rowOffset={groupRowOffsets[groupIndex]}
+                getCellProps={getCellProps}
+                peopleWithAssignments={peopleWithAssignments}
+              />
+            ))}
+          </tbody>
+        </table>
+      </motion.div>
+
+      {editingHda && (
+        <HalfDayEditModal
+          assignment={editingHda}
+          isOpen={true}
+          onClose={() => setEditingHda(null)}
+        />
+      )}
+    </>
   )
 }
 
@@ -451,6 +490,7 @@ interface PersonGroupRowsProps {
   showSeparator: boolean
   rowOffset: number
   getCellProps: (row: number, col: number) => GridCellProps
+  peopleWithAssignments: Set<string>
 }
 
 function PersonGroupRows({
@@ -462,6 +502,7 @@ function PersonGroupRows({
   showSeparator,
   rowOffset,
   getCellProps,
+  peopleWithAssignments,
 }: PersonGroupRowsProps) {
   return (
     <>
@@ -485,6 +526,7 @@ function PersonGroupRows({
           getAssignment={getAssignment}
           rowIndex={rowOffset + personIndex}
           getCellProps={getCellProps}
+          hasAssignments={peopleWithAssignments.has(person.id)}
         />
       ))}
     </>
@@ -505,11 +547,19 @@ interface PersonRowProps {
   ) => ProcessedAssignment | undefined
   rowIndex: number
   getCellProps: (row: number, col: number) => GridCellProps
+  hasAssignments: boolean
 }
 
-function PersonRow({ person, days, todayStr, getAssignment, rowIndex, getCellProps }: PersonRowProps) {
+function PersonRow({ person, days, todayStr, getAssignment, rowIndex, getCellProps, hasAssignments }: PersonRowProps) {
   // Memoize person badge
   const personBadge = useMemo(() => {
+    if (!hasAssignments) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+          No Schedule
+        </span>
+      )
+    }
     if (person.type === 'faculty') {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
@@ -522,10 +572,10 @@ function PersonRow({ person, days, todayStr, getAssignment, rowIndex, getCellPro
         PGY-{person.pgyLevel}
       </span>
     )
-  }, [person.type, person.pgyLevel])
+  }, [person.type, person.pgyLevel, hasAssignments])
 
   return (
-    <tr className={`group hover:bg-blue-50/30 transition-colors duration-[${ROW_HOVER_TRANSITION_MS}ms]`} role="row">
+    <tr className={`group hover:bg-blue-50/30 transition-colors duration-[${ROW_HOVER_TRANSITION_MS}ms] ${!hasAssignments ? 'opacity-40' : ''}`} role="row">
       {/* Sticky person name column */}
       <th scope="row" className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/50 px-4 py-2 border-r border-gray-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors duration-150 text-left font-normal" role="rowheader">
         <div className="flex flex-col gap-1">

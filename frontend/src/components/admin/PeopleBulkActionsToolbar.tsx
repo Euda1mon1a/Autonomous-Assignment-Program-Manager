@@ -4,7 +4,6 @@
  * PeopleBulkActionsToolbar Component
  *
  * Fixed toolbar that appears when people are selected, showing bulk action options.
- * Follows the dark theme pattern from admin pages.
  */
 import { useState } from 'react';
 import {
@@ -71,7 +70,7 @@ function Dropdown({ trigger, children, isOpen, onOpenChange }: DropdownProps) {
             onClick={() => onOpenChange(false)}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenChange(false); } }}
           />
-          <div className="absolute bottom-full left-0 mb-2 z-50 bg-slate-700 border border-slate-600 rounded-lg shadow-xl py-1 min-w-[160px]">
+          <div className="absolute bottom-full left-0 mb-2 z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[160px]">
             {children}
           </div>
         </>
@@ -101,19 +100,19 @@ export function PeopleBulkActionsToolbar({
   return (
     <div className="fixed bottom-0 inset-x-0 z-40">
       <div className="max-w-7xl mx-auto px-4 pb-4">
-        <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-xl p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Selection Count */}
             <div className="flex items-center gap-4">
               <button
                 onClick={onClearSelection}
                 disabled={isPending}
-                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-colors disabled:opacity-50"
+                className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
                 title="Clear selection"
               >
                 <X className="w-5 h-5" />
               </button>
-              <span className="text-sm font-medium text-white">
+              <span className="text-sm font-medium text-gray-900">
                 {selectedCount} {selectedCount === 1 ? 'person' : 'people'} selected
               </span>
             </div>
@@ -125,7 +124,7 @@ export function PeopleBulkActionsToolbar({
                 isOpen={pgyDropdownOpen}
                 onOpenChange={setPgyDropdownOpen}
                 trigger={
-                  <span className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+                  <span className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
                     {pendingAction === 'update_pgy' ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
@@ -144,7 +143,7 @@ export function PeopleBulkActionsToolbar({
                       onBulkUpdatePGY(level);
                     }}
                     disabled={isPending}
-                    className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
                   >
                     PGY-{level}
                   </button>
@@ -156,7 +155,7 @@ export function PeopleBulkActionsToolbar({
                 isOpen={typeDropdownOpen}
                 onOpenChange={setTypeDropdownOpen}
                 trigger={
-                  <span className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+                  <span className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
                     {pendingAction === 'update_type' ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
@@ -173,7 +172,7 @@ export function PeopleBulkActionsToolbar({
                     onBulkUpdateType('resident');
                   }}
                   disabled={isPending}
-                  className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
                 >
                   Resident
                 </button>
@@ -183,7 +182,7 @@ export function PeopleBulkActionsToolbar({
                     onBulkUpdateType('faculty');
                   }}
                   disabled={isPending}
-                  className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
                 >
                   Faculty
                 </button>

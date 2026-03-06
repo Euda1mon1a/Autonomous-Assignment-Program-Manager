@@ -51,6 +51,9 @@ export function WebSocketStatus({
   connectionState,
   reconnectAttempts = 0,
 }: WebSocketStatusProps) {
+  // Hide badge when connected — "Live" is visual noise; only show problems
+  if (connectionState === 'connected') return null;
+
   const config = statusConfig[connectionState];
   const Icon = config.icon;
 

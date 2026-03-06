@@ -155,7 +155,7 @@ export default function AbsencesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Absence Management</h1>
           <p className="text-gray-600">Manage vacation, sick days, and other absences</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <ExportButton
             data={exportData}
             filename="absences"
@@ -230,7 +230,7 @@ export default function AbsencesPage() {
             <option value="conference">Conference</option>
             <option value="family_emergency">Personal / Family Emergency</option>
             <option value="deployment">Deployment</option>
-            <option value="tdy">TDY</option>
+            <option value="tdy">TDY (Temporary Duty)</option>
           </select>
         )}
 

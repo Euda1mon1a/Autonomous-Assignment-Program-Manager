@@ -300,12 +300,12 @@ export default function SettingsPage() {
                   }
                 >
                   <option value="greedy">Greedy (Fast)</option>
-                  <option value="cp_sat">CP-SAT (Optimal, OR-Tools)</option>
+                  <option value="cp_sat">CP-SAT (Constraint Solver, Optimal)</option>
                   <option value="pulp">PuLP (Linear Programming)</option>
                   <option value="hybrid">Hybrid (CP-SAT + PuLP)</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Greedy is fastest. CP-SAT guarantees ACGME compliance. Hybrid combines both.
+                  Greedy is fastest. CP-SAT (constraint solver) guarantees ACGME (accreditation) compliance. Hybrid combines both.
                 </p>
               </div>
               <div>

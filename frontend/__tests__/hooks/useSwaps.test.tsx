@@ -499,7 +499,7 @@ describe('useSwapCreate', () => {
           sourceFacultyId: 'faculty-1',
           sourceWeek: '2024-01-01',
           swapType: SwapType.ABSORB,
-          auto_match: true,
+          autoMatch: true,
         })
       })
 
@@ -735,7 +735,7 @@ describe('useAutoMatch', () => {
             constraints_met: true,
           },
         ],
-        total_candidates: 1,
+        totalCandidates: 1,
         message: 'Found 1 compatible candidate',
       }
 
@@ -749,7 +749,7 @@ describe('useAutoMatch', () => {
         result.current.mutate({
           sourceFacultyId: 'faculty-1',
           sourceWeek: '2024-01-01',
-          max_candidates: 10,
+          maxCandidates: 10,
           prefer_oneToOne: true,
         })
       })
@@ -759,14 +759,14 @@ describe('useAutoMatch', () => {
       })
 
       expect(result.current.data).toEqual(mockResponse)
-      expect(result.current.data?.total_candidates).toBe(1)
+      expect(result.current.data?.totalCandidates).toBe(1)
     })
 
     it('should handle no candidates found', async () => {
       const mockResponse = {
         success: true,
         candidates: [],
-        total_candidates: 0,
+        totalCandidates: 0,
         message: 'No compatible candidates found',
       }
 
@@ -787,7 +787,7 @@ describe('useAutoMatch', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      expect(result.current.data?.total_candidates).toBe(0)
+      expect(result.current.data?.totalCandidates).toBe(0)
     })
   })
 
@@ -826,7 +826,7 @@ describe('useAutoMatch', () => {
           compatibility_score: 0.8,
           constraints_met: true,
         })),
-        total_candidates: 50,
+        totalCandidates: 50,
         message: 'Found 50 compatible candidates',
       }
 
@@ -840,7 +840,7 @@ describe('useAutoMatch', () => {
         result.current.mutate({
           sourceFacultyId: 'faculty-1',
           sourceWeek: '2024-01-01',
-          max_candidates: 100,
+          maxCandidates: 100,
         })
       })
 

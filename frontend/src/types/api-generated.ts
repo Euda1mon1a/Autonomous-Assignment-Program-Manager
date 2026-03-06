@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-03-04T14:51:39Z
+ * Generated at: 2026-03-06T23:09:10Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -892,7 +892,7 @@ export interface paths {
         };
         /**
          * Get Pgy Levels
-         * @description Get PGY levels for dropdown.
+         * @description Get PGY levels for dropdown (1-8, supports fellowship levels).
          */
         get: operations["get_pgy_levels_api_v1_enums_pgy_levels_get"];
         put?: never;
@@ -5240,6 +5240,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/half-day-assignments/{assignment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Half Day Assignment
+         * @description Update a single half-day assignment (manual override).
+         *
+         *     Resolves activity_code to an activity_id server-side. Sets source to
+         *     'manual' and records override metadata for audit trail.
+         *
+         *     Requires scheduler role (admin or coordinator).
+         */
+        patch: operations["update_half_day_assignment_api_v1_half_day_assignments__assignment_id__patch"];
+        trace?: never;
+    };
     "/api/v1/schedule/constraints": {
         parameters: {
             query?: never;
@@ -5442,7 +5467,13 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Constraint
+         * @description Update constraint configuration (enable/disable, weight).
+         *
+         *     Persists changes to the database so they survive restarts.
+         */
+        patch: operations["update_constraint_api_v1_schedule_constraints__name__patch"];
         trace?: never;
     };
     "/api/v1/schedule/metrics/health": {
@@ -5918,179 +5949,6 @@ export interface paths {
         get: operations["get_impersonation_status_api_v1_auth_impersonation_status_get"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/oauth2/authorize": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Authorize
-         * @description OAuth2 authorization endpoint with PKCE.
-         *
-         *     Requires user to be authenticated. Creates an authorization code that
-         *     can be exchanged for an access token.
-         *
-         *     Flow:
-         *     1. User authenticates (session or login)
-         *     2. User authorizes the client application
-         *     3. Server creates authorization code with PKCE challenge
-         *     4. Client receives code and can exchange it for access token
-         *
-         *     Args:
-         *         request: Authorization request with PKCE code challenge
-         *         current_user: Authenticated user (from session/JWT)
-         *         db: Database session
-         *
-         *     Returns:
-         *         AuthorizationResponse with authorization code and state
-         *
-         *     Raises:
-         *         HTTPException: If validation fails
-         */
-        post: operations["authorize_api_v1_oauth2_authorize_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/oauth2/token": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Token
-         * @description OAuth2 token endpoint - exchange authorization code for access token.
-         *
-         *     This endpoint validates the authorization code and PKCE code verifier,
-         *     then issues an access token.
-         *
-         *     Security:
-         *     - Validates code verifier matches code challenge (PKCE)
-         *     - Single-use authorization codes (prevent replay)
-         *     - Time-limited codes (10 minutes)
-         *     - Redirect URI validation
-         *
-         *     Args:
-         *         request: Token request with authorization code and code verifier
-         *         db: Database session
-         *
-         *     Returns:
-         *         TokenResponse with access token
-         *
-         *     Raises:
-         *         HTTPException: If validation fails
-         */
-        post: operations["token_api_v1_oauth2_token_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/oauth2/introspect": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Token Introspection
-         * @description Token introspection endpoint (RFC 7662).
-         *
-         *     Allows clients to check if an access token is valid and retrieve
-         *     metadata about the token.
-         *
-         *     Args:
-         *         request: Introspection request with token
-         *         db: Database session
-         *
-         *     Returns:
-         *         TokenIntrospectionResponse with token metadata
-         */
-        post: operations["token_introspection_api_v1_oauth2_introspect_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/oauth2/revoke": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Revoke
-         * @description Token revocation endpoint.
-         *
-         *     Allows users to revoke their own access tokens by adding them
-         *     to the blacklist.
-         *
-         *     Args:
-         *         token: The access token to revoke
-         *         current_user: Authenticated user
-         *         db: Database session
-         *
-         *     Returns:
-         *         Success message
-         */
-        post: operations["revoke_api_v1_oauth2_revoke_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/oauth2/clients": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create Client
-         * @description Register a new OAuth2 public client.
-         *
-         *     Only admin users can register new clients.
-         *
-         *     Args:
-         *         request: Client registration request
-         *         current_user: Authenticated admin user
-         *         db: Database session
-         *
-         *     Returns:
-         *         OAuth2ClientResponse with client details including client_id
-         *
-         *     Raises:
-         *         HTTPException: If user is not admin
-         */
-        post: operations["create_client_api_v1_oauth2_clients_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6917,6 +6775,8 @@ export interface paths {
          *         end_date: End date of the block
          *         block_number: Block number to display in header (1-13 for academic year)
          *         federal_holidays: Ignored (legacy parameter)
+         *         include_qa_sheet: Include QA validation sheet (default True)
+         *         include_overrides: Include override assignments (default True)
          *
          *     Returns:
          *         Excel file (.xlsx) download
@@ -6946,6 +6806,7 @@ export interface paths {
          *
          *     Args:
          *         academic_year: Target academic year (e.g. 2025)
+         *         include_overrides: Include override assignments (default True)
          *
          *     Returns:
          *         Excel file (.xlsx) download
@@ -10533,7 +10394,13 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Constraint
+         * @description Update constraint configuration (enable/disable, weight).
+         *
+         *     Persists changes to the database so they survive restarts.
+         */
+        patch: operations["update_constraint_api_v1_constraints__name__patch"];
         trace?: never;
     };
     "/api/v1/credentials/expiring": {
@@ -11889,6 +11756,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pareto/optimize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run multi-objective Pareto optimization
+         * @description Run NSGA-II multi-objective optimization on schedule assignments. Requires at least 2 objectives. Returns Pareto frontier solutions.
+         */
+        post: operations["optimize_schedule_api_v1_pareto_optimize_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pareto/rank": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rank Pareto solutions by weighted objectives
+         * @description Rank a set of solutions using weighted objective values. Supports minmax, zscore, or no normalization.
+         */
+        post: operations["rank_solutions_api_v1_pareto_rank_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agent-matcher/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Match a task to the best agents
+         * @description Use semantic similarity to find the most appropriate agents for a given task description.
+         */
+        post: operations["match_task_api_v1_agent_matcher_match_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agent-matcher/explain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Explain agent matching for a task
+         * @description Get detailed explanation of why agents were matched, including similarity scores and confidence level.
+         */
+        post: operations["explain_match_api_v1_agent_matcher_explain_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agent-matcher/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List available agents
+         * @description List all loaded agent specifications with their archetypes.
+         */
+        get: operations["list_agents_api_v1_agent_matcher_agents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/db-admin/health": {
         parameters: {
             query?: never;
@@ -12109,6 +12076,29 @@ export interface paths {
          *     Only available when ENV=test or ALLOW_DEV_SEED=true.
          */
         post: operations["seed_database_api_v1_dev_seed_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dev/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cleanup Seed Data
+         * @description Remove all data created by the /dev/seed endpoint.
+         *
+         *     Deletes Dr. Faculty-X placeholders, CPT Doe-XX residents, and their HDAs.
+         *     Same env gate as /dev/seed.
+         */
+        post: operations["cleanup_seed_data_api_v1_dev_cleanup_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19981,6 +19971,165 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/learners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Learners
+         * @description List all learners (med students and rotating interns).
+         */
+        get: operations["list_learners_api_v1_learners_get"];
+        put?: never;
+        /**
+         * Create Learner
+         * @description Create a new learner (med student or rotating intern).
+         */
+        post: operations["create_learner_api_v1_learners_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learners/tracks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Tracks
+         * @description List all learner tracks.
+         */
+        get: operations["list_tracks_api_v1_learners_tracks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learners/tracks/seed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Seed Tracks
+         * @description Seed the default 7 learner tracks with staggered FMIT weeks.
+         */
+        post: operations["seed_tracks_api_v1_learners_tracks_seed_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learners/track-assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Track Assignments
+         * @description List all learner-to-track assignments.
+         */
+        get: operations["list_track_assignments_api_v1_learners_track_assignments_get"];
+        put?: never;
+        /**
+         * Create Track Assignment
+         * @description Assign a learner to a track for a date range.
+         */
+        post: operations["create_track_assignment_api_v1_learners_track_assignments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learners/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Learner Assignments
+         * @description List learner schedule assignments, optionally filtered.
+         */
+        get: operations["list_learner_assignments_api_v1_learners_assignments_get"];
+        put?: never;
+        /**
+         * Create Learner Assignment
+         * @description Create a learner schedule assignment.
+         */
+        post: operations["create_learner_assignment_api_v1_learners_assignments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learners/generate/{block_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Learner Schedule Endpoint
+         * @description Generate learner schedule for a block.
+         *
+         *     Uses the overlay model to match learners with supervisor assignments.
+         *     Set dry_run=false to persist the generated schedule.
+         */
+        post: operations["generate_learner_schedule_endpoint_api_v1_learners_generate__block_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/learners/{learner_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Learner
+         * @description Get a learner by ID.
+         */
+        get: operations["get_learner_api_v1_learners__learner_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Learner
+         * @description Remove a learner.
+         */
+        delete: operations["delete_learner_api_v1_learners__learner_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/graphql": {
         parameters: {
             query?: never;
@@ -21359,6 +21508,34 @@ export interface components {
             retryCount: number;
         };
         /**
+         * AgentInfo
+         * @description Basic agent information.
+         */
+        AgentInfo: {
+            /** Name */
+            name: string;
+            /** Archetype */
+            archetype: string;
+            /** Capabilities */
+            capabilities: string;
+        };
+        /**
+         * AgentMatchResponse
+         * @description Single agent match result.
+         */
+        AgentMatchResponse: {
+            /** Agent Name */
+            agentName: string;
+            /** Similarity Score */
+            similarityScore: number;
+            /** Archetype */
+            archetype: string;
+            /** Capabilities */
+            capabilities: string;
+            /** Recommended Model */
+            recommendedModel: string;
+        };
+        /**
          * AggregateMetrics
          * @description System-wide fairness and balance metrics.
          */
@@ -22604,46 +22781,6 @@ export interface components {
             role?: string | null;
         };
         /**
-         * AuthorizationRequest
-         * @description OAuth2 authorization request with PKCE.
-         */
-        AuthorizationRequest: {
-            /**
-             * Response Type
-             * @default code
-             * @constant
-             */
-            responseType: "code";
-            /** Client Id */
-            clientId: string;
-            /** Redirect Uri */
-            redirectUri: string;
-            /** Scope */
-            scope?: string | null;
-            /** State */
-            state?: string | null;
-            /** Nonce */
-            nonce?: string | null;
-            /** Code Challenge */
-            codeChallenge: string;
-            /**
-             * Code Challenge Method
-             * @default S256
-             * @enum {string}
-             */
-            codeChallengeMethod: "S256" | "plain";
-        };
-        /**
-         * AuthorizationResponse
-         * @description OAuth2 authorization response.
-         */
-        AuthorizationResponse: {
-            /** Code */
-            code: string;
-            /** State */
-            state?: string | null;
-        };
-        /**
          * AwayAbsenceDetail
          * @description Detail of an absence contributing to away-from-program count.
          */
@@ -23212,7 +23349,7 @@ export interface components {
         BatchPatternSlot: {
             /**
              * Day Of Week
-             * @description 0=Sunday, 6=Saturday
+             * @description PG DOW: 0=Sunday, 6=Saturday (weekly_patterns convention)
              */
             dayOfWeek: number;
             /**
@@ -23930,7 +24067,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -26429,6 +26566,17 @@ export interface components {
          * @enum {string}
          */
         CircuitBreakerState: "closed" | "open" | "half_open";
+        /** CleanupResponse */
+        CleanupResponse: {
+            /** Status */
+            status: string;
+            /** Hdas Deleted */
+            hdasDeleted: number;
+            /** Faculty Deleted */
+            facultyDeleted: number;
+            /** Residents Deleted */
+            residentsDeleted: number;
+        };
         /**
          * ClinicLimitViolationResponse
          * @description A clinic limit violation for a faculty member.
@@ -26958,29 +27106,15 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
+         * @description Response for conflict check.
          */
         ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            canAssign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
+            /** Has Conflicts */
+            hasConflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            canProceed: boolean;
         };
         /**
          * ConflictDetail
@@ -27127,93 +27261,15 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affectedPeopleCount": 8,
-         *       "autoResolvableCount": 6,
-         *       "averageImpactScore": 0.65,
-         *       "criticalCount": 3,
-         *       "highCount": 5,
-         *       "lowCount": 3,
-         *       "mediumCount": 4,
-         *       "totalConflicts": 15
-         *     }
+         * @description Summary of conflicts found.
          */
         ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
+            /** Total Conflicts */
             totalConflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            criticalCount: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            highCount: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            mediumCount: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            lowCount: number;
-            /** By Category */
-            byCategory?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            byType?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affectedPeopleCount: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affectedBlocksCount: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            autoResolvableCount: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requiresManualCount: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            averageImpactScore: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            averageUrgencyScore: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            averageComplexityScore: number;
-            /** Earliest Date */
-            earliestDate?: string | null;
-            /** Latest Date */
-            latestDate?: string | null;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
         /**
          * ConflictType
@@ -27304,6 +27360,27 @@ export interface components {
             enableCondition: string | null;
             /** Disable Reason */
             disableReason: string | null;
+        };
+        /**
+         * ConstraintUpdateRequest
+         * @description Request model for updating constraint configuration.
+         */
+        ConstraintUpdateRequest: {
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Weight */
+            weight?: number | null;
+        };
+        /**
+         * ConstraintUpdateResponse
+         * @description Response model for constraint updates.
+         */
+        ConstraintUpdateResponse: {
+            /** Success */
+            success: boolean;
+            /** Message */
+            message: string;
+            constraint: components["schemas"]["ConstraintStatusResponse"];
         };
         /**
          * ContainmentLevel
@@ -30261,7 +30338,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__certification__PersonSummary"];
             certificationType: components["schemas"]["CertificationTypeSummary"];
             /**
              * Expiration Date
@@ -30293,10 +30370,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Supported export formats.
+         * @description Export file formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "xlsx";
+        ExportFormat: "csv" | "json" | "xlsx" | "xml";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -30324,7 +30401,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__models__export_job__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -30623,7 +30700,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
+            format?: components["schemas"]["ExportFormat"] | null;
             deliveryMethod?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             emailRecipients?: string[] | null;
@@ -31327,7 +31404,7 @@ export interface components {
             effectiveDate: string;
             /**
              * Day Of Week
-             * @description 0=Sunday, 6=Saturday
+             * @description 0=Monday, 6=Sunday (Python weekday)
              */
             dayOfWeek: number;
             /**
@@ -31366,7 +31443,7 @@ export interface components {
             effectiveDate: string;
             /**
              * Day Of Week
-             * @description 0=Sunday, 6=Saturday
+             * @description 0=Monday, 6=Sunday (Python weekday)
              */
             dayOfWeek: number;
             /**
@@ -31641,7 +31718,7 @@ export interface components {
         FacultyTemplateSlotCreate: {
             /**
              * Day Of Week
-             * @description 0=Sunday, 6=Saturday
+             * @description 0=Monday, 6=Sunday (Python weekday)
              */
             dayOfWeek: number;
             /**
@@ -31685,7 +31762,7 @@ export interface components {
         FacultyTemplateSlotResponse: {
             /**
              * Day Of Week
-             * @description 0=Sunday, 6=Saturday
+             * @description 0=Monday, 6=Sunday (Python weekday)
              */
             dayOfWeek: number;
             /**
@@ -32979,6 +33056,16 @@ export interface components {
              * Format: date-time
              */
             updatedAt: string;
+        };
+        /**
+         * HalfDayAssignmentUpdate
+         * @description Schema for updating a half-day assignment (manual override).
+         */
+        HalfDayAssignmentUpdate: {
+            /** Activity Code */
+            activityCode?: string | null;
+            /** Override Reason */
+            overrideReason?: string | null;
         };
         /**
          * HalfDayDiffEntry
@@ -34333,7 +34420,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
+            summary?: components["schemas"]["ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -35335,6 +35422,176 @@ export interface components {
             yourPoints?: number | null;
             /** Snapshot Date */
             snapshotDate?: string | null;
+        };
+        /** LearnerAssignmentCreate */
+        LearnerAssignmentCreate: {
+            /**
+             * Learner Id
+             * Format: uuid
+             */
+            learnerId: string;
+            /**
+             * Block Id
+             * Format: uuid
+             */
+            blockId: string;
+            /** Parent Assignment Id */
+            parentAssignmentId?: string | null;
+            /** Activity Type */
+            activityType: string;
+            /** Day Of Week */
+            dayOfWeek: number;
+            /** Time Of Day */
+            timeOfDay: string;
+            /**
+             * Source
+             * @default manual
+             */
+            source: string;
+        };
+        /** LearnerAssignmentResponse */
+        LearnerAssignmentResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Learner Id
+             * Format: uuid
+             */
+            learnerId: string;
+            /**
+             * Block Id
+             * Format: uuid
+             */
+            blockId: string;
+            /** Parent Assignment Id */
+            parentAssignmentId: string | null;
+            /** Activity Type */
+            activityType: string;
+            /** Day Of Week */
+            dayOfWeek: number;
+            /** Time Of Day */
+            timeOfDay: string;
+            /** Source */
+            source: string;
+        };
+        /** LearnerCreate */
+        LearnerCreate: {
+            /** Name */
+            name: string;
+            /** Email */
+            email?: string | null;
+            /** Type */
+            type: string;
+            /** Learner Type */
+            learnerType: string;
+            /** Med School */
+            medSchool?: string | null;
+            /** Ms Year */
+            msYear?: number | null;
+            /**
+             * Requires Fmit
+             * @default true
+             */
+            requiresFmit: boolean;
+        };
+        /** LearnerResponse */
+        LearnerResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /** Learner Type */
+            learnerType: string | null;
+            /** Med School */
+            medSchool: string | null;
+            /** Ms Year */
+            msYear: number | null;
+            /** Requires Fmit */
+            requiresFmit: boolean | null;
+            /** Rotation Start Date */
+            rotationStartDate: string | null;
+            /** Rotation End Date */
+            rotationEndDate: string | null;
+        };
+        /** LearnerToTrackCreate */
+        LearnerToTrackCreate: {
+            /**
+             * Learner Id
+             * Format: uuid
+             */
+            learnerId: string;
+            /**
+             * Track Id
+             * Format: uuid
+             */
+            trackId: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            startDate: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            endDate: string;
+            /**
+             * Requires Fmit
+             * @default true
+             */
+            requiresFmit: boolean;
+        };
+        /** LearnerToTrackResponse */
+        LearnerToTrackResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Learner Id
+             * Format: uuid
+             */
+            learnerId: string;
+            /**
+             * Track Id
+             * Format: uuid
+             */
+            trackId: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            startDate: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            endDate: string;
+            /** Requires Fmit */
+            requiresFmit: boolean;
+        };
+        /** LearnerTrackResponse */
+        LearnerTrackResponse: {
+            /** Track Number */
+            trackNumber: number;
+            /** Default Fmit Week */
+            defaultFmitWeek: number;
+            /** Description */
+            description?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
         };
         /** LeaveApprovalRequest */
         LeaveApprovalRequest: {
@@ -36430,48 +36687,17 @@ export interface components {
             callType: string;
         };
         /**
-         * OAuth2ClientCreate
-         * @description Request to create a new OAuth2 client.
+         * ObjectiveDirection
+         * @description Direction for objective optimization.
+         * @enum {string}
          */
-        OAuth2ClientCreate: {
-            /** Client Name */
-            clientName: string;
-            /** Client Uri */
-            clientUri?: string | null;
-            /** Redirect Uris */
-            redirectUris: string[];
-            /** Scope */
-            scope?: string | null;
-        };
+        ObjectiveDirection: "minimize" | "maximize";
         /**
-         * OAuth2ClientResponse
-         * @description OAuth2 client response.
+         * ObjectiveName
+         * @description Available optimization objectives.
+         * @enum {string}
          */
-        OAuth2ClientResponse: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Client Id */
-            clientId: string;
-            /** Client Name */
-            clientName: string;
-            /** Client Uri */
-            clientUri: string | null;
-            /** Redirect Uris */
-            redirectUris: string[];
-            /** Grant Types */
-            grantTypes: string[];
-            /** Response Types */
-            responseTypes: string[];
-            /** Scope */
-            scope: string | null;
-            /** Is Public */
-            isPublic: boolean;
-            /** Is Active */
-            isActive: boolean;
-        };
+        ObjectiveName: "fairness" | "coverage" | "preference_satisfaction" | "workload_balance" | "consecutive_days" | "specialty_distribution";
         /**
          * OverallStatus
          * @description Overall system health status.
@@ -36575,6 +36801,227 @@ export interface components {
              * @description Detailed results per call assignment
              */
             results?: components["schemas"]["PCATAssignmentResult"][];
+        };
+        /**
+         * ParetoConstraint
+         * @description Schema for optimization constraints.
+         */
+        ParetoConstraint: {
+            /**
+             * Constraint Type
+             * @description Type of constraint (e.g., 'max_consecutive_days', 'min_rest_hours')
+             */
+            constraintType: string;
+            /**
+             * Parameters
+             * @description Parameters for the constraint
+             * @default {}
+             */
+            parameters: {
+                [key: string]: unknown;
+            };
+            /**
+             * Is Hard
+             * @description Whether this is a hard constraint (must be satisfied)
+             * @default true
+             */
+            isHard: boolean;
+        };
+        /**
+         * ParetoObjective
+         * @description Schema for a single optimization objective.
+         */
+        ParetoObjective: {
+            /** @description Name of the objective to optimize */
+            name: components["schemas"]["ObjectiveName"];
+            /**
+             * Weight
+             * @description Relative weight of this objective (0.0-1.0)
+             * @default 1
+             */
+            weight: number;
+            /**
+             * @description Whether to minimize or maximize this objective
+             * @default maximize
+             */
+            direction: components["schemas"]["ObjectiveDirection"];
+            /**
+             * Target Value
+             * @description Optional target value for the objective
+             */
+            targetValue?: number | null;
+        };
+        /**
+         * ParetoOptimizeRequest
+         * @description Request schema for multi-objective Pareto optimization.
+         */
+        ParetoOptimizeRequest: {
+            /**
+             * Objectives
+             * @description List of objectives to optimize (minimum 2 for multi-objective)
+             */
+            objectives: components["schemas"]["ParetoObjective"][];
+            /**
+             * Constraints
+             * @description List of constraints to satisfy
+             * @default []
+             */
+            constraints: components["schemas"]["ParetoConstraint"][];
+            /**
+             * Population Size
+             * @description Size of the population for genetic algorithm
+             * @default 100
+             */
+            populationSize: number;
+            /**
+             * N Generations
+             * @description Number of generations to evolve
+             * @default 100
+             */
+            nGenerations: number;
+            /**
+             * Timeout Seconds
+             * @description Maximum optimization time in seconds
+             * @default 300
+             */
+            timeoutSeconds: number;
+            /**
+             * Seed
+             * @description Random seed for reproducibility
+             */
+            seed?: number | null;
+            /**
+             * Person Ids
+             * @description Filter to specific persons for assignment
+             */
+            personIds?: string[] | null;
+            /**
+             * Block Ids
+             * @description Filter to specific blocks for assignment
+             */
+            blockIds?: string[] | null;
+        };
+        /**
+         * ParetoOptimizeResponse
+         * @description Response schema for Pareto optimization.
+         */
+        ParetoOptimizeResponse: {
+            /**
+             * Success
+             * @description Whether optimization completed successfully
+             */
+            success: boolean;
+            /**
+             * Message
+             * @description Human-readable message about the optimization result
+             */
+            message: string;
+            /** @description Optimization results if successful */
+            result?: components["schemas"]["ParetoResult"] | null;
+            /**
+             * Error
+             * @description Error message if optimization failed
+             */
+            error?: string | null;
+            /**
+             * Recommended Solution Id
+             * @description ID of the recommended solution based on weights
+             */
+            recommendedSolutionId?: number | null;
+        };
+        /**
+         * ParetoResult
+         * @description Schema for Pareto optimization results.
+         */
+        ParetoResult: {
+            /**
+             * Solutions
+             * @description All solutions found during optimization
+             */
+            solutions: components["schemas"]["ParetoSolution"][];
+            /**
+             * Frontier Indices
+             * @description Indices of solutions on the Pareto frontier
+             */
+            frontierIndices: number[];
+            /**
+             * Hypervolume
+             * @description Hypervolume indicator for solution quality
+             */
+            hypervolume?: number | null;
+            /**
+             * Total Solutions
+             * @description Total number of solutions evaluated
+             */
+            totalSolutions: number;
+            /**
+             * Convergence Metric
+             * @description Metric indicating algorithm convergence
+             */
+            convergenceMetric?: number | null;
+            /**
+             * Execution Time Seconds
+             * @description Time taken to complete optimization
+             */
+            executionTimeSeconds: number;
+            /**
+             * Algorithm
+             * @description Algorithm used for optimization
+             * @default NSGA-II
+             */
+            algorithm: string;
+            /**
+             * Termination Reason
+             * @description Reason why optimization terminated
+             */
+            terminationReason?: string | null;
+        };
+        /**
+         * ParetoSolution
+         * @description Schema for a single solution in the Pareto frontier.
+         */
+        ParetoSolution: {
+            /**
+             * Solution Id
+             * @description Unique identifier for this solution
+             */
+            solutionId: number;
+            /**
+             * Objective Values
+             * @description Objective values achieved by this solution
+             */
+            objectiveValues: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Decision Variables
+             * @description Assignment decisions made in this solution (person_id -> block_id mappings)
+             */
+            decisionVariables: {
+                [key: string]: unknown;
+            };
+            /**
+             * Is Feasible
+             * @description Whether this solution satisfies all constraints
+             * @default true
+             */
+            isFeasible: boolean;
+            /**
+             * Constraint Violations
+             * @description List of constraint violations if infeasible
+             * @default []
+             */
+            constraintViolations: string[];
+            /**
+             * Rank
+             * @description Pareto rank (0 = non-dominated, 1 = dominated by rank 0, etc.)
+             */
+            rank?: number | null;
+            /**
+             * Crowding Distance
+             * @description Crowding distance for diversity metric
+             */
+            crowdingDistance?: number | null;
         };
         /**
          * ParetoSolutionSchema
@@ -37142,7 +37589,7 @@ export interface components {
          * @description Certification compliance for a single person.
          */
         PersonComplianceResponse: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__certification__PersonSummary"];
             /** Total Required */
             totalRequired: number;
             /** Total Current */
@@ -37314,6 +37761,21 @@ export interface components {
             primaryDuty?: string | null;
             /** @description Faculty role type */
             facultyRole?: components["schemas"]["FacultyRoleSchema"] | null;
+            /**
+             * Min Clinic Halfdays Per Week
+             * @description Minimum clinic half-days per week
+             */
+            minClinicHalfdaysPerWeek?: number | null;
+            /**
+             * Max Clinic Halfdays Per Week
+             * @description Maximum clinic half-days per week
+             */
+            maxClinicHalfdaysPerWeek?: number | null;
+            /**
+             * Admin Type
+             * @description Admin type: GME, DFM, SM
+             */
+            adminType?: string | null;
         };
         /**
          * PersonListResponse
@@ -37389,6 +37851,21 @@ export interface components {
             /** @description Faculty role type */
             facultyRole?: components["schemas"]["FacultyRoleSchema"] | null;
             /**
+             * Min Clinic Halfdays Per Week
+             * @description Minimum clinic half-days per week
+             */
+            minClinicHalfdaysPerWeek?: number | null;
+            /**
+             * Max Clinic Halfdays Per Week
+             * @description Maximum clinic half-days per week
+             */
+            maxClinicHalfdaysPerWeek?: number | null;
+            /**
+             * Admin Type
+             * @description Admin type: GME, DFM, SM
+             */
+            adminType?: string | null;
+            /**
              * Id
              * Format: uuid
              */
@@ -37421,7 +37898,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Minimal person info for certification reports.
+         * @description Minimal person info for embedding in credential responses.
          */
         PersonSummary: {
             /**
@@ -37433,8 +37910,6 @@ export interface components {
             name: string;
             /** Type */
             type: string;
-            /** Email */
-            email?: string | null;
         };
         /**
          * PersonType
@@ -37479,6 +37954,21 @@ export interface components {
             primaryDuty?: string | null;
             /** @description Faculty role type */
             facultyRole?: components["schemas"]["FacultyRoleSchema"] | null;
+            /**
+             * Min Clinic Halfdays Per Week
+             * @description Minimum clinic half-days per week
+             */
+            minClinicHalfdaysPerWeek?: number | null;
+            /**
+             * Max Clinic Halfdays Per Week
+             * @description Maximum clinic half-days per week
+             */
+            maxClinicHalfdaysPerWeek?: number | null;
+            /**
+             * Admin Type
+             * @description Admin type: GME, DFM, SM
+             */
+            adminType?: string | null;
         };
         /**
          * PersonWorkloadResponse
@@ -38503,7 +38993,7 @@ export interface components {
             /** Procedure Name */
             procedureName: string;
             /** Qualified Faculty */
-            qualifiedFaculty: components["schemas"]["app__schemas__procedure_credential__PersonSummary"][];
+            qualifiedFaculty: components["schemas"]["PersonSummary"][];
             /** Total */
             total: number;
         };
@@ -38625,7 +39115,7 @@ export interface components {
         };
         /**
          * QueuePurgeResponse
-         * @description Response to queue purge request.
+         * @description Response after purging a queue.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -39170,6 +39660,26 @@ export interface components {
              */
             metadataFilters?: {
                 [key: string]: unknown;
+            };
+        };
+        /**
+         * RankedSolution
+         * @description Schema for a ranked solution.
+         */
+        RankedSolution: {
+            /** Solution Id */
+            solutionId: number;
+            /** Rank */
+            rank: number;
+            /** Score */
+            score: number;
+            /** Objective Values */
+            objectiveValues: {
+                [key: string]: number | undefined;
+            };
+            /** Weighted Score Breakdown */
+            weightedScoreBreakdown: {
+                [key: string]: number | undefined;
             };
         };
         /**
@@ -41792,7 +42302,7 @@ export interface components {
             /** Components */
             components: components["schemas"]["ScoreComponentResponse"][];
             /** Suggestions */
-            suggestions?: components["schemas"]["SuggestionResponse"][];
+            suggestions?: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -42827,6 +43337,50 @@ export interface components {
             reason: string;
         };
         /**
+         * SolutionRankRequest
+         * @description Request schema for ranking solutions.
+         */
+        SolutionRankRequest: {
+            /**
+             * Solutions
+             * @description Solutions to rank (from /optimize result)
+             */
+            solutions: components["schemas"]["ParetoSolution"][];
+            /**
+             * Weights
+             * @description Weights for each objective used in ranking
+             */
+            weights: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Normalization
+             * @description Normalization method (minmax, zscore, none)
+             * @default minmax
+             */
+            normalization: string;
+        };
+        /**
+         * SolutionRankResponse
+         * @description Response schema for ranked solutions.
+         */
+        SolutionRankResponse: {
+            /** Success */
+            success: boolean;
+            /**
+             * Ranked Solutions
+             * @default []
+             */
+            rankedSolutions: components["schemas"]["RankedSolution"][];
+            /** Normalization Used */
+            normalizationUsed: string;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+        };
+        /**
          * SolverAbortRequest
          * @description Request to abort a running solver job.
          */
@@ -43681,25 +44235,24 @@ export interface components {
         };
         /**
          * SuggestionResponse
-         * @description Response for improvement suggestion.
+         * @description Response schema for autocomplete suggestions.
          */
         SuggestionResponse: {
-            /** Type */
-            type: string;
             /**
-             * Priority
-             * @description high, medium, low
+             * Suggestions
+             * @description List of suggestions
              */
-            priority: string;
-            /** Description */
-            description: string;
+            suggestions: string[];
             /**
-             * Impact
-             * @description Expected improvement
+             * Query
+             * @description Original query string
              */
-            impact: number;
-            /** Affected Items */
-            affectedItems?: string[];
+            query: string;
+            /**
+             * Entity Type
+             * @description Entity type
+             */
+            entityType: string;
         };
         /**
          * SurveyFrequencyEnum
@@ -44662,6 +45215,35 @@ export interface components {
             traceback?: string | null;
         };
         /**
+         * TaskMatchRequest
+         * @description Request for matching a task to agents.
+         */
+        TaskMatchRequest: {
+            /**
+             * Task
+             * @description Task description to match
+             */
+            task: string;
+            /**
+             * Top K
+             * @description Number of matches to return
+             * @default 3
+             */
+            topK: number;
+        };
+        /**
+         * TaskMatchResponse
+         * @description Response for task matching.
+         */
+        TaskMatchResponse: {
+            /** Task */
+            task: string;
+            /** Matches */
+            matches: components["schemas"]["AgentMatchResponse"][];
+            /** Recommendation */
+            recommendation?: string | null;
+        };
+        /**
          * TaskMetrics
          * @description Task execution metrics.
          */
@@ -45240,83 +45822,6 @@ export interface components {
              * @description Timestamp when data was generated
              */
             generatedAt: string;
-        };
-        /**
-         * TokenIntrospectionRequest
-         * @description Token introspection request.
-         */
-        TokenIntrospectionRequest: {
-            /** Token */
-            token: string;
-            /** Token Type Hint */
-            tokenTypeHint?: ("access_token" | "refresh_token") | null;
-        };
-        /**
-         * TokenIntrospectionResponse
-         * @description Token introspection response (RFC 7662).
-         */
-        TokenIntrospectionResponse: {
-            /** Active */
-            active: boolean;
-            /** Scope */
-            scope?: string | null;
-            /** Client Id */
-            clientId?: string | null;
-            /** Username */
-            username?: string | null;
-            /** Token Type */
-            tokenType?: string | null;
-            /** Exp */
-            exp?: number | null;
-            /** Iat */
-            iat?: number | null;
-            /** Sub */
-            sub?: string | null;
-            /** Aud */
-            aud?: string | null;
-            /** Iss */
-            iss?: string | null;
-            /** Jti */
-            jti?: string | null;
-        };
-        /**
-         * TokenRequest
-         * @description OAuth2 token exchange request with PKCE.
-         */
-        TokenRequest: {
-            /**
-             * Grant Type
-             * @default authorization_code
-             * @constant
-             */
-            grantType: "authorization_code";
-            /** Code */
-            code: string;
-            /** Redirect Uri */
-            redirectUri: string;
-            /** Client Id */
-            clientId: string;
-            /** Code Verifier */
-            codeVerifier: string;
-        };
-        /**
-         * TokenResponse
-         * @description OAuth2 token response.
-         */
-        TokenResponse: {
-            /** Access Token */
-            accessToken: string;
-            /**
-             * Token Type
-             * @default Bearer
-             */
-            tokenType: string;
-            /** Expires In */
-            expiresIn: number;
-            /** Scope */
-            scope?: string | null;
-            /** Refresh Token */
-            refreshToken?: string | null;
         };
         /**
          * TokenWithRefresh
@@ -47297,7 +47802,7 @@ export interface components {
         WeeklyPatternCreate: {
             /**
              * Day Of Week
-             * @description 0=Sunday, 6=Saturday
+             * @description PG DOW: 0=Sunday, 6=Saturday (weekly_patterns convention)
              */
             dayOfWeek: number;
             /**
@@ -47337,7 +47842,7 @@ export interface components {
         WeeklyPatternResponse: {
             /**
              * Day Of Week
-             * @description 0=Sunday, 6=Saturday
+             * @description PG DOW: 0=Sunday, 6=Saturday (weekly_patterns convention)
              */
             dayOfWeek: number;
             /**
@@ -47801,7 +48306,7 @@ export interface components {
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancingSuggestions: components["schemas"]["SuggestionResponse"][];
+            rebalancingSuggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -48156,11 +48661,95 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * ExportFormat
-         * @description Export file formats.
-         * @enum {string}
+         * ConflictSummary
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affectedPeopleCount": 8,
+         *       "autoResolvableCount": 6,
+         *       "averageImpactScore": 0.65,
+         *       "criticalCount": 3,
+         *       "highCount": 5,
+         *       "lowCount": 3,
+         *       "mediumCount": 4,
+         *       "totalConflicts": 15
+         *     }
          */
-        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        app__scheduling__conflicts__types__ConflictSummary: {
+            /**
+             * Total Conflicts
+             * @default 0
+             */
+            totalConflicts: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            criticalCount: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            highCount: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            mediumCount: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            lowCount: number;
+            /** By Category */
+            byCategory?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            byType?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affectedPeopleCount: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affectedBlocksCount: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            autoResolvableCount: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requiresManualCount: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            averageImpactScore: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            averageUrgencyScore: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            averageComplexityScore: number;
+            /** Earliest Date */
+            earliestDate?: string | null;
+            /** Latest Date */
+            latestDate?: string | null;
+        };
         /**
          * BlockListResponse
          * @description Response for listing academic blocks.
@@ -48223,6 +48812,29 @@ export interface components {
             severity: string;
         };
         /**
+         * ExportFormat
+         * @description Supported export formats.
+         * @enum {string}
+         */
+        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
+        /**
+         * PersonSummary
+         * @description Minimal person info for certification reports.
+         */
+        app__schemas__certification__PersonSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /** Email */
+            email?: string | null;
+        };
+        /**
          * PersonSummary
          * @description Summary of person for manifest display.
          */
@@ -48241,19 +48853,64 @@ export interface components {
             pgyLevel?: number | null;
         };
         /**
-         * PersonSummary
-         * @description Minimal person info for embedding in credential responses.
+         * ConflictCheckResponse
+         * @description Response for conflict checking before assignment.
          */
-        app__schemas__procedure_credential__PersonSummary: {
+        app__schemas__fmit_assignments__ConflictCheckResponse: {
             /**
-             * Id
-             * Format: uuid
+             * Can Assign
+             * @description Whether assignment can proceed
              */
-            id: string;
-            /** Name */
-            name: string;
+            canAssign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
+        };
+        /**
+         * QueuePurgeResponse
+         * @description Response to queue purge request.
+         */
+        app__schemas__jobs__QueuePurgeResponse: {
+            /** Queuename */
+            queueName: string;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
+        };
+        /**
+         * SuggestionResponse
+         * @description Response for improvement suggestion.
+         */
+        app__schemas__ml__SuggestionResponse: {
             /** Type */
             type: string;
+            /**
+             * Priority
+             * @description high, medium, low
+             */
+            priority: string;
+            /** Description */
+            description: string;
+            /**
+             * Impact
+             * @description Expected improvement
+             */
+            impact: number;
+            /** Affected Items */
+            affectedItems?: string[];
         };
         /**
          * QueuePurgeRequest
@@ -48268,18 +48925,6 @@ export interface components {
              * @default false
              */
             confirm: boolean;
-        };
-        /**
-         * QueuePurgeResponse
-         * @description Response after purging a queue.
-         */
-        app__schemas__queue__QueuePurgeResponse: {
-            /** Queuename */
-            queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
         };
         /**
          * BatchOperationResult
@@ -48297,51 +48942,6 @@ export interface components {
             success: boolean;
             /** Error */
             error?: string | null;
-        };
-        /**
-         * ConflictCheckResponse
-         * @description Response for conflict check.
-         */
-        app__schemas__rotation_template__ConflictCheckResponse: {
-            /** Has Conflicts */
-            hasConflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            canProceed: boolean;
-        };
-        /**
-         * ConflictSummary
-         * @description Summary of conflicts found.
-         */
-        app__schemas__schedule__ConflictSummary: {
-            /** Total Conflicts */
-            totalConflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
-        };
-        /**
-         * SuggestionResponse
-         * @description Response schema for autocomplete suggestions.
-         */
-        app__schemas__search__SuggestionResponse: {
-            /**
-             * Suggestions
-             * @description List of suggestions
-             */
-            suggestions: string[];
-            /**
-             * Query
-             * @description Original query string
-             */
-            query: string;
-            /**
-             * Entity Type
-             * @description Entity type
-             */
-            entityType: string;
         };
         /**
          * CoverageGap
@@ -51274,7 +51874,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -54802,6 +55402,41 @@ export interface operations {
             };
         };
     };
+    update_half_day_assignment_api_v1_half_day_assignments__assignment_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HalfDayAssignmentUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HalfDayAssignmentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_constraints_api_v1_schedule_constraints_get: {
         parameters: {
             query?: never;
@@ -55004,6 +55639,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConstraintStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_constraint_api_v1_schedule_constraints__name__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConstraintUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConstraintUpdateResponse"];
                 };
             };
             /** @description Validation Error */
@@ -55514,169 +56184,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImpersonationStatus"];
-                };
-            };
-        };
-    };
-    authorize_api_v1_oauth2_authorize_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AuthorizationRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthorizationResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    token_api_v1_oauth2_token_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TokenRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TokenResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    token_introspection_api_v1_oauth2_introspect_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TokenIntrospectionRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TokenIntrospectionResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    revoke_api_v1_oauth2_revoke_post: {
-        parameters: {
-            query: {
-                token: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_client_api_v1_oauth2_clients_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OAuth2ClientCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OAuth2ClientResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -57118,6 +57625,10 @@ export interface operations {
                 block_number?: number | null;
                 /** @description Comma-separated federal holiday dates (YYYY-MM-DD) */
                 federal_holidays?: string | null;
+                /** @description Include QA validation sheet in export */
+                include_qa_sheet?: boolean;
+                /** @description Include override assignments in export */
+                include_overrides?: boolean;
             };
             header?: never;
             path?: never;
@@ -57150,6 +57661,8 @@ export interface operations {
             query: {
                 /** @description Target academic year (e.g. 2025) */
                 academic_year: number;
+                /** @description Include override assignments in export */
+                include_overrides?: boolean;
             };
             header?: never;
             path?: never;
@@ -61920,6 +62433,41 @@ export interface operations {
             };
         };
     };
+    update_constraint_api_v1_constraints__name__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConstraintUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConstraintUpdateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_expiring_credentials_api_v1_credentials_expiring_get: {
         parameters: {
             query?: {
@@ -62602,7 +63150,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -62635,7 +63183,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -63999,6 +64547,160 @@ export interface operations {
             };
         };
     };
+    optimize_schedule_api_v1_pareto_optimize_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ParetoOptimizeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParetoOptimizeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rank_solutions_api_v1_pareto_rank_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SolutionRankRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SolutionRankResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_task_api_v1_agent_matcher_match_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskMatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskMatchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    explain_match_api_v1_agent_matcher_explain_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskMatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_agents_api_v1_agent_matcher_agents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentInfo"][];
+                };
+            };
+        };
+    };
     get_database_health_api_v1_db_admin_health_get: {
         parameters: {
             query?: never;
@@ -64229,6 +64931,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cleanup_seed_data_api_v1_dev_cleanup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupResponse"];
                 };
             };
         };
@@ -67535,7 +68257,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -67730,7 +68452,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictSummary"];
+                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -69017,7 +69739,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -69384,7 +70106,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -73150,6 +73872,310 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_learners_api_v1_learners_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnerResponse"][];
+                };
+            };
+        };
+    };
+    create_learner_api_v1_learners_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LearnerCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnerResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_tracks_api_v1_learners_tracks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnerTrackResponse"][];
+                };
+            };
+        };
+    };
+    seed_tracks_api_v1_learners_tracks_seed_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnerTrackResponse"][];
+                };
+            };
+        };
+    };
+    list_track_assignments_api_v1_learners_track_assignments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnerToTrackResponse"][];
+                };
+            };
+        };
+    };
+    create_track_assignment_api_v1_learners_track_assignments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LearnerToTrackCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnerToTrackResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_learner_assignments_api_v1_learners_assignments_get: {
+        parameters: {
+            query?: {
+                block_id?: string | null;
+                learner_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnerAssignmentResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_learner_assignment_api_v1_learners_assignments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LearnerAssignmentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnerAssignmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_learner_schedule_endpoint_api_v1_learners_generate__block_id__post: {
+        parameters: {
+            query?: {
+                dry_run?: boolean;
+            };
+            header?: never;
+            path: {
+                block_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_learner_api_v1_learners__learner_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                learner_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearnerResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_learner_api_v1_learners__learner_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                learner_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

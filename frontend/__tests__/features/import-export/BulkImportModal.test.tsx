@@ -8,6 +8,7 @@ import { render, screen, waitFor, fireEvent } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { BulkImportModal } from '@/features/import-export/BulkImportModal';
 import * as useImportModule from '@/features/import-export/useImport';
+import type { ImportResult } from '@/features/import-export/types';
 import { importExportMockFactories } from './import-export-mocks';
 
 // Mock useImport hook
@@ -18,7 +19,7 @@ const mockedUseImport = useImportModule.useImport as jest.MockedFunction<
 >;
 
 // Capture the onComplete/onError callbacks passed to useImport
-let capturedOnComplete: (() => void) | undefined;
+let capturedOnComplete: ((result: ImportResult) => void) | undefined;
 let capturedOnError: ((error: Error) => void) | undefined;
 
 // Mock URL methods for file download
@@ -65,7 +66,7 @@ describe('BulkImportModal', () => {
     capturedOnComplete = undefined;
     capturedOnError = undefined;
 
-    mockedUseImport.mockImplementation((opts?: { dataType?: string; onComplete?: () => void; onError?: (error: Error) => void }) => {
+    mockedUseImport.mockImplementation((opts?: { dataType?: string; onComplete?: (result: ImportResult) => void; onError?: (error: Error) => void }) => {
       capturedOnComplete = opts?.onComplete;
       capturedOnError = opts?.onError;
       return getDefaultMockReturn() as any;

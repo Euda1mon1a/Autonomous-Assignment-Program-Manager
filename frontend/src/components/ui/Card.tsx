@@ -47,7 +47,7 @@ export function Card({
   const hoverStyles = hover ? 'transition-shadow hover:shadow-md' : '';
 
   return (
-    <div className={`bg-white rounded-lg ${paddingStyles[padding]} ${shadowStyles[shadow]} ${hoverStyles} ${className}`}>
+    <div className={`rounded-lg ${paddingStyles[padding]} ${shadowStyles[shadow]} ${hoverStyles} ${/(?:^|\s)bg-/.test(className) ? '' : 'bg-white'} ${className}`}>
       {children}
     </div>
   );

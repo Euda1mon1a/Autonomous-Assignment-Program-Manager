@@ -66,7 +66,7 @@ export function ScheduleSummary() {
           <EmptyState
             icon={Calendar}
             title="No schedule generated"
-            description={`${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`}
+            description={`No assignments found for ${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}. Use the scheduling lab to generate a block schedule, or import one from Excel.`}
             action={{
               label: 'Generate Schedule',
               onClick: () => setIsGenerateOpen(true),

@@ -1091,7 +1091,7 @@ describe('useLogout - Additional Scenarios', () => {
 
     // The warn only fires in development mode
     const originalNodeEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true })
 
     const { result } = renderHook(() => useLogout(), {
       wrapper: createWrapper(),
@@ -1114,7 +1114,7 @@ describe('useLogout - Additional Scenarios', () => {
     )
 
     consoleWarnSpy.mockRestore()
-    process.env.NODE_ENV = originalNodeEnv
+    Object.defineProperty(process.env, 'NODE_ENV', { value: originalNodeEnv, writable: true })
   })
 })
 

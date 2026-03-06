@@ -34,26 +34,26 @@ const mockSearchResponse: RAGRetrieveResponse = {
       chunk_id: 'chunk-1',
       category: 'acgme_rules',
       content: 'Work hour limits apply to all residents...',
-      similarity_score: 0.95, // @gorgon-ok
-      metadata: { source_file: 'acgme_rules.md', section_title: 'Work Hours' },
+      similarityScore: 0.95, // @gorgon-ok
+      metadata: { sourceFile: 'acgme_rules.md', section_title: 'Work Hours' },
     },
     {
       chunk_id: 'chunk-2',
       category: 'acgme_rules',
       content: 'Maximum 80 hours per week...',
-      similarity_score: 0.89, // @gorgon-ok
-      metadata: { source_file: 'acgme_rules.md', section_title: '80-Hour Rule' },
+      similarityScore: 0.89, // @gorgon-ok
+      metadata: { sourceFile: 'acgme_rules.md', section_title: '80-Hour Rule' },
     },
   ],
-  total_searched: 150,
+  totalSearched: 150,
   query_time_ms: 42, // @gorgon-ok
   category_filter: 'acgme_rules',
 }
 
 const mockHealthResponse: RAGHealthResponse = {
   status: 'healthy',
-  vector_store_available: true, // @gorgon-ok
-  document_count: 67, // @gorgon-ok
+  vectorStoreAvailable: true, // @gorgon-ok
+  documentCount: 67, // @gorgon-ok
   embedding_model: 'text-embedding-3-small', // @gorgon-ok
   last_updated: '2024-01-01T00:00:00Z',
 }
@@ -75,7 +75,7 @@ describe('useRAGSearch', () => {
     })
 
     act(() => {
-      result.current.mutate({ query: 'ACGME work hours', category: 'acgme_rules', top_k: 5 })
+      result.current.mutate({ query: 'ACGME work hours', category: 'acgme_rules', topK: 5 })
     })
 
     await waitFor(() => {
@@ -83,20 +83,20 @@ describe('useRAGSearch', () => {
     })
 
     expect(result.current.data?.chunks).toHaveLength(2)
-    expect(result.current.data?.chunks[0].similarity_score).toBe(0.95)
-    expect(result.current.data?.total_searched).toBe(150)
+    expect(result.current.data?.chunks[0].similarityScore).toBe(0.95)
+    expect(result.current.data?.totalSearched).toBe(150)
 
     expect(mockPost).toHaveBeenCalledWith('/rag/retrieve', {
       query: 'ACGME work hours',
       category: 'acgme_rules',
-      top_k: 5,
+      topK: 5,
     })
   })
 
   it('should handle empty search results', async () => {
     const emptyResponse: RAGRetrieveResponse = {
       chunks: [],
-      total_searched: 150,
+      totalSearched: 150,
       query_time_ms: 10, // @gorgon-ok
     }
     mockPost.mockResolvedValueOnce(emptyResponse)
@@ -200,16 +200,16 @@ describe('useRAGHealth', () => {
     })
 
     expect(result.current.data?.status).toBe('healthy')
-    expect(result.current.data?.vector_store_available).toBe(true)
-    expect(result.current.data?.document_count).toBe(67)
+    expect(result.current.data?.vectorStoreAvailable).toBe(true)
+    expect(result.current.data?.documentCount).toBe(67)
     expect(mockGet).toHaveBeenCalledWith('/rag/health')
   })
 
   it('should handle unhealthy status', async () => {
     const unhealthyResponse: RAGHealthResponse = {
       status: 'unhealthy',
-      vector_store_available: false, // @gorgon-ok
-      document_count: 0, // @gorgon-ok
+      vectorStoreAvailable: false, // @gorgon-ok
+      documentCount: 0, // @gorgon-ok
       embedding_model: 'text-embedding-3-small', // @gorgon-ok
     }
     mockGet.mockResolvedValueOnce(unhealthyResponse)
@@ -223,7 +223,7 @@ describe('useRAGHealth', () => {
     })
 
     expect(result.current.data?.status).toBe('unhealthy')
-    expect(result.current.data?.vector_store_available).toBe(false)
+    expect(result.current.data?.vectorStoreAvailable).toBe(false)
   })
 
   it('should handle health check errors', async () => {

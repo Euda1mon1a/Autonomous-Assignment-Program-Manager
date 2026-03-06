@@ -448,7 +448,7 @@ describe('useLeaveCalendar', () => {
       })
 
       expect(result.current.data?.conflictCount).toBe(1)
-      expect(result.current.data?.entries[0].has_fmit_conflict).toBe(true)
+      expect(result.current.data?.entries[0].hasFmitConflict).toBe(true)
     })
   })
 
@@ -591,7 +591,7 @@ describe('useLeaveBalance', () => {
       })
 
       expect(result.current.data).toEqual(mockBalance)
-      expect(result.current.data?.vacation_days).toBe(10)
+      expect(result.current.data?.vacationDays).toBe(10)
     })
   })
 
@@ -927,7 +927,7 @@ describe('useAbsenceApprove', () => {
 
       act(() => {
         result.current.mutate({
-          absence_id: 'absence-123',
+          absenceId: 'absence-123',
           approved: true,
           comments: 'Approved - coverage confirmed',
         })
@@ -958,7 +958,7 @@ describe('useAbsenceApprove', () => {
 
       act(() => {
         result.current.mutate({
-          absence_id: 'absence-123',
+          absenceId: 'absence-123',
           approved: false,
           comments: 'Rejected - insufficient coverage',
         })
@@ -983,7 +983,7 @@ describe('useAbsenceApprove', () => {
 
       act(() => {
         result.current.mutate({
-          absence_id: 'absence-123',
+          absenceId: 'absence-123',
           approved: true,
         })
       })
