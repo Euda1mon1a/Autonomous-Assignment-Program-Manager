@@ -393,7 +393,17 @@ class SchedulerAPIClient:
             )
             if delete_response.status_code == 200:
                 deleted = delete_response.json().get("deleted", 0)
-                logger.info(f"Cleared {deleted} existing assignments")
+                logger.info(f"Cleared {deleted} existing block assignments")
+
+            hda_delete_response = await self._request_with_retry(
+                "DELETE",
+                f"{self.config.api_prefix}/half-day-assignments",
+                headers=headers,
+                params={"start_date": start_date, "end_date": end_date},
+            )
+            if hda_delete_response.status_code == 200:
+                deleted_hda = hda_delete_response.json().get("deleted", 0)
+                logger.info(f"Cleared {deleted_hda} existing half-day assignments")
 
         # Generate new schedule
         logger.info(f"Generating schedule from {start_date} to {end_date} using {algorithm}")

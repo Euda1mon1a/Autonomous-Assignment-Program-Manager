@@ -16,21 +16,21 @@
 ### Scheduling Engine
 
 - [ ] **CP-SAT FMIT Fri/Sat call verification** — Code exists (FMIT weekend exclusions in `overnight_call.py`). Needs manual verification that Fri/Sat call appears in `call_assignments` after regeneration + PCAT/DO correctness check.
-- [ ] **MCP clear_existing doesn't clear HDAs** — `api_client.py` deletes `assignments` only; stale `half_day_assignments` cause INFEASIBLE on repeated runs. Fix MCP client to clear both tables.
-- [ ] **C30/C40 PGY booking rule** — Post-processing: auto-translate `C` → `C40` (PGY-1) / `C30` (PGY-2/3). Fix `C30` display_abbreviation (currently `None`). Add background color to TAMC color scheme.
-- [ ] **Graduated call spacing** — Replace flat `weight=50.0` in `NoConsecutiveCallConstraint` with exponential decay across 1-4 day gaps (100/50/25/0).
-- [ ] **NF continuity touchpoint (C-N)** — `C-N` code recognized in activity solver but no preloader/constraint assigns it to first Thursday PM of NF blocks.
-- [ ] **SM deterministic preload** — DECISION NEEDED: remove SM from solver entirely (Option A) vs. improve solver's SM handling (Option B). Design doc: `docs/architecture/SM_DETERMINISTIC_PRELOAD.md`.
+- [x] **MCP clear_existing doesn't clear HDAs** — `api_client.py` deletes `assignments` only; stale `half_day_assignments` cause INFEASIBLE on repeated runs. Fix MCP client to clear both tables.
+- [x] **C30/C40 PGY booking rule** — Post-processing: auto-translate `C` → `C40` (PGY-1) / `C30` (PGY-2/3). Fix `C30` display_abbreviation (currently `None`). Add background color to TAMC color scheme.
+- [x] **Graduated call spacing** — Replace flat `weight=50.0` in `NoConsecutiveCallConstraint` with exponential decay across 1-4 day gaps (100/50/25/0).
+- [x] **NF continuity touchpoint (C-N)** — `C-N` code recognized in activity solver but no preloader/constraint assigns it to first Thursday PM of NF blocks.
+- [x] **SM deterministic preload** — DECISION NEEDED: remove SM from solver entirely (Option A) vs. improve solver's SM handling (Option B). Design doc: `docs/architecture/SM_DETERMINISTIC_PRELOAD.md`.
 
 ### Infrastructure
 
-- [ ] **Alembic head sync** — Run `alembic current` + `alembic heads`, then `alembic upgrade head`. Requires running DB.
+- [x] **Alembic head sync** — Run `alembic current` + `alembic heads`, then `alembic upgrade head`. Requires running DB.
 - [ ] **5 failing tests (DEBT-025)** — Fixes landed (#1123, #1147) but not confirmed all 5 resolved. Requires backend `pytest` run against live DB.
 - [ ] **mypy errors** — 3 ratchet batches merged (#1243-#1245). Unknown current count — run `mypy` to establish baseline.
 
 ### Frontend
 
-- [ ] **Heavy route bundles (DEBT-028)** — `/absences` 345kB, `/hub/import-export` 332kB, `/admin/import` 318kB, `/admin/labs/optimization` 315kB. Add route-level code splitting via `next/dynamic`.
+- [x] **Heavy route bundles (DEBT-028)** — `/absences` 345kB, `/hub/import-export` 332kB, `/admin/import` 318kB, `/admin/labs/optimization` 315kB. Add route-level code splitting via `next/dynamic`.
 - [ ] **Playwright port conflict (DEBT-030)** — All 3 configs use port 3000. Unify with reserved port strategy.
 
 ## P2 — Medium / This Month
@@ -39,14 +39,14 @@
 
 - [ ] **ACGME call duty validation gap** — `call_assignments` excluded from 24+4/rest checks. Blocked on MEDCOM ruling.
 - [ ] **Faculty template gaps** — 4 faculty have no weekly templates; overrides are effectively empty.
-- [ ] **Final Wednesday continuity** — Faculty side done (`WednesdayPMSingleFaculty` in `temporal.py`). Resident side needed: penalize PGY-1/2 reaching final Wednesday without `C` or `C-I`.
-- [ ] **HC & CLC template immunity** — `is_protected` field exists on activities but HC not seeded as protected. Verify CLC. Solver/import must treat as locked.
+- [x] **Final Wednesday continuity** — Faculty side done (`WednesdayPMSingleFaculty` in `temporal.py`). Resident side needed: penalize PGY-1/2 reaching final Wednesday without `C` or `C-I`.
+- [x] **HC & CLC template immunity** — `is_protected` field exists on activities but HC not seeded as protected. Verify CLC. Solver/import must treat as locked.
 - [ ] **Closed-loop validation pipeline** — Automated generate → validate → diagnose → fix → regenerate loop. Not yet implemented.
 
 ### Infrastructure
 
 - [ ] **Orphan framework code (~5.8K LOC)** — Dead code confirmed: Saga (4.9K), EventBus (1.4K), gRPC (0.9K), Mesh (1.3K). None registered in `main.py`. Evaluate: integrate or remove.
-- [ ] **Budget cron wiring** — Route exists (`routes/budget.py`) but NOT registered in `__init__.py`. Celery beat function exists but not wired at startup. Code merged (PR #1177) but never activated.
+- [x] **Budget cron wiring** — Route exists (`routes/budget.py`) but NOT registered in `__init__.py`. Celery beat function exists but not wired at startup. Code merged (PR #1177) but never activated.
 - [ ] **Lock window Phase 3** — Base lock window works (services, routes, tests). Phase 3 enhancements unbuilt: resilience workflows (stage + gated publish), import lock-window flag injection.
 - [ ] **Field-level change tracking** — Activity log tracks actions but not field diffs. No `old_value/new_value` tracking.
 
@@ -54,7 +54,7 @@
 
 - [ ] **MCP placeholder tools (DEBT-009)** — 9/40 tools fully integrated. VaR, Shapley, game theory tools still return mock data.
 - [ ] **Frontend a11y gaps (DEBT-008)** — Standard components fixed (#1110, #1251). Exotic components remain (Three.js, voxel, Plotly). Low priority.
-- [ ] **Frontend hub consolidation** — 14 hubs: 1 complete (Swap), 5 partial, 8 to build. Each hub is its own PR. See `docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md`.
+- [x] **Frontend hub consolidation** — 14 hubs: 1 complete (Swap), 5 partial, 8 to build. Each hub is its own PR. See `docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md`.
 
 ## P3 — Low / Backlog
 

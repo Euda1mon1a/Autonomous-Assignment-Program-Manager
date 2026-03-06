@@ -196,6 +196,11 @@ celery_app.conf.update(
     },
 )
 
+# Wire up the budget cron tasks
+from app.tasks.budget_tasks import configure_celery_for_budget
+
+configure_celery_for_budget(celery_app)
+
 
 def get_celery_app() -> Celery:
     """Get the Celery application instance."""
