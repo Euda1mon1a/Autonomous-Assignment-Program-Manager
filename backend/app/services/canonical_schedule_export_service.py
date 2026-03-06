@@ -10,6 +10,7 @@ Pipeline:
 from __future__ import annotations
 
 import io
+import json
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
@@ -29,6 +30,7 @@ from app.services.excel_metadata import (
     write_ref_sheet,
     write_sys_meta_sheet,
 )
+from app.services.export.tamc_block_exporter import TAMCBlockExporter
 from app.services.half_day_json_exporter import HalfDayJSONExporter
 from app.services.json_to_xlsx_converter import JSONToXlsxConverter
 from app.utils.academic_blocks import get_block_dates
@@ -82,31 +84,10 @@ class CanonicalScheduleExportService:
             export_timestamp=datetime.now(UTC).isoformat(),
         )
 
-        template_path = self._template_path()
-        structure_path = self._structure_path()
-
-        # When no structure XML exists, dynamic UUID-based mappings are used
-        # and identity fields (rotations, template, role, name) must be written
-        # by the converter — can't preserve what doesn't exist in the template.
-        # Only preserve identity fields when BOTH template AND structure XML exist
-        # (i.e., using a hand-jam template with pre-filled names).
-        effective_preserve = (
-            preserve_template_identity_fields
-            and structure_path is not None
-            and template_path is not None
+        exporter = TAMCBlockExporter(
+            block_config=self._load_block_config(block_number),
         )
-
-        converter = JSONToXlsxConverter(
-            template_path=template_path,
-            structure_xml_path=structure_path,
-            use_block_template2=True,
-            apply_colors=True,
-            strict_row_mapping=structure_path is not None,
-            include_qa_sheet=include_qa_sheet,
-            preserve_template_identity_fields=effective_preserve,
-            presentation_profile=presentation_profile,
-        )
-        xlsx_bytes = converter.convert_from_json(
+        xlsx_bytes = exporter.export(
             data,
             export_metadata=meta,
             rotation_codes=rotation_codes,
@@ -574,6 +555,14 @@ class CanonicalScheduleExportService:
                 f.write(final_bytes)
 
         return final_bytes
+
+    def _load_block_config(self, block_number: int) -> dict:
+        """Load block-specific config from block_config.json."""
+        config_path = Path(__file__).parent / "export" / "block_config.json"
+        if not config_path.exists():
+            return {}
+        with open(config_path) as f:
+            return json.load(f).get("blocks", {}).get(str(block_number), {})
 
     def _data_dir(self) -> Path:
         # backend/app/services -> backend

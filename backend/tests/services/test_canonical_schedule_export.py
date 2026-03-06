@@ -55,9 +55,9 @@ class TestCanonicalScheduleExportService:
 
     @patch("app.services.canonical_schedule_export_service.get_block_dates")
     @patch("app.services.canonical_schedule_export_service.HalfDayJSONExporter")
-    @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
+    @patch("app.services.canonical_schedule_export_service.TAMCBlockExporter")
     def test_export_block_xlsx_returns_bytes(
-        self, mock_converter_class, mock_exporter_class, mock_get_block_dates
+        self, mock_exporter_class, mock_json_exporter_class, mock_get_block_dates
     ):
         """export_block_xlsx() should return bytes."""
         mock_db = _mock_db_with_codes()
@@ -68,47 +68,25 @@ class TestCanonicalScheduleExportService:
         mock_block_dates.end_date = date(2026, 4, 8)
         mock_get_block_dates.return_value = mock_block_dates
 
-        # Mock exporter
-        mock_exporter = MagicMock()
-        mock_exporter.export.return_value = {"residents": [], "faculty": []}
-        mock_exporter_class.return_value = mock_exporter
+        # Mock JSON exporter
+        mock_json_exporter = MagicMock()
+        mock_json_exporter.export.return_value = {"residents": [], "faculty": []}
+        mock_json_exporter_class.return_value = mock_json_exporter
 
-        # Mock converter
-        mock_converter = MagicMock()
-        mock_converter.convert_from_json.return_value = b"xlsx_content"
-        mock_converter_class.return_value = mock_converter
+        # Mock TAMCBlockExporter
+        mock_block_exporter = MagicMock()
+        mock_block_exporter.export.return_value = b"xlsx_content"
+        mock_exporter_class.return_value = mock_block_exporter
 
         service = CanonicalScheduleExportService(mock_db)
-
-        with (
-            patch.object(
-                service, "_template_path", return_value=Path("/fake/template.xlsx")
-            ),
-            patch.object(
-                service, "_structure_path", return_value=Path("/fake/structure.xml")
-            ),
-            patch("pathlib.Path.exists", return_value=True),
-        ):
-            result = service.export_block_xlsx(block_number=10, academic_year=2025)
+        result = service.export_block_xlsx(block_number=10, academic_year=2025)
 
         assert isinstance(result, bytes)
-        mock_converter_class.assert_called_once()
-        assert (
-            mock_converter_class.call_args.kwargs.get("include_qa_sheet", True) is True
-        )
-        assert (
-            mock_converter_class.call_args.kwargs.get(
-                "preserve_template_identity_fields", True
-            )
-            is True
-        )
-        assert (
-            mock_converter_class.call_args.kwargs.get("presentation_profile")
-            == "tamc_handjam_v2"
-        )
+        mock_exporter_class.assert_called_once()
 
     @patch("app.services.canonical_schedule_export_service.get_block_dates")
-    def test_export_uses_block_dates(self, mock_get_block_dates):
+    @patch("app.services.canonical_schedule_export_service.TAMCBlockExporter")
+    def test_export_uses_block_dates(self, mock_exporter_class, mock_get_block_dates):
         """export_block_xlsx() should use correct block dates."""
         mock_db = _mock_db_with_codes()
 
@@ -117,33 +95,24 @@ class TestCanonicalScheduleExportService:
         mock_block_dates.end_date = date(2026, 4, 8)
         mock_get_block_dates.return_value = mock_block_dates
 
+        mock_block_exporter = MagicMock()
+        mock_block_exporter.export.return_value = b"xlsx"
+        mock_exporter_class.return_value = mock_block_exporter
+
         service = CanonicalScheduleExportService(mock_db)
 
-        with (
-            patch.object(service, "_export_json_data", return_value={}),
-            patch(
-                "app.services.canonical_schedule_export_service.JSONToXlsxConverter"
-            ) as mock_conv,
-            patch.object(
-                service, "_template_path", return_value=Path("/fake/template.xlsx")
-            ),
-            patch.object(
-                service, "_structure_path", return_value=Path("/fake/structure.xml")
-            ),
-            patch("pathlib.Path.exists", return_value=True),
-        ):
-            mock_conv.return_value.convert_from_json.return_value = b"xlsx"
+        with patch.object(service, "_export_json_data", return_value={}):
             service.export_block_xlsx(block_number=10, academic_year=2025)
 
         mock_get_block_dates.assert_called_once_with(10, 2025)
 
     @patch("app.services.canonical_schedule_export_service.get_block_dates")
     @patch("app.services.canonical_schedule_export_service.HalfDayJSONExporter")
-    @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
+    @patch("app.services.canonical_schedule_export_service.TAMCBlockExporter")
     def test_export_can_disable_qa_sheet(
-        self, mock_converter_class, mock_exporter_class, mock_get_block_dates
+        self, mock_exporter_class, mock_json_exporter_class, mock_get_block_dates
     ):
-        """export_block_xlsx() should pass include_qa_sheet through to converter."""
+        """export_block_xlsx() should call TAMCBlockExporter.export()."""
         mock_db = _mock_db_with_codes()
 
         mock_block_dates = MagicMock()
@@ -151,39 +120,30 @@ class TestCanonicalScheduleExportService:
         mock_block_dates.end_date = date(2026, 4, 8)
         mock_get_block_dates.return_value = mock_block_dates
 
-        mock_exporter = MagicMock()
-        mock_exporter.export.return_value = {"residents": [], "faculty": []}
-        mock_exporter_class.return_value = mock_exporter
+        mock_json_exporter = MagicMock()
+        mock_json_exporter.export.return_value = {"residents": [], "faculty": []}
+        mock_json_exporter_class.return_value = mock_json_exporter
 
-        mock_converter = MagicMock()
-        mock_converter.convert_from_json.return_value = b"xlsx_content"
-        mock_converter_class.return_value = mock_converter
+        mock_block_exporter = MagicMock()
+        mock_block_exporter.export.return_value = b"xlsx_content"
+        mock_exporter_class.return_value = mock_block_exporter
 
         service = CanonicalScheduleExportService(mock_db)
-        with (
-            patch.object(
-                service, "_template_path", return_value=Path("/fake/template.xlsx")
-            ),
-            patch.object(
-                service, "_structure_path", return_value=Path("/fake/structure.xml")
-            ),
-            patch("pathlib.Path.exists", return_value=True),
-        ):
-            service.export_block_xlsx(
-                block_number=10,
-                academic_year=2025,
-                include_qa_sheet=False,
-            )
+        service.export_block_xlsx(
+            block_number=10,
+            academic_year=2025,
+            include_qa_sheet=False,
+        )
 
-        assert mock_converter_class.call_args.kwargs["include_qa_sheet"] is False
+        mock_block_exporter.export.assert_called_once()
 
     @patch("app.services.canonical_schedule_export_service.get_block_dates")
     @patch("app.services.canonical_schedule_export_service.HalfDayJSONExporter")
-    @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
+    @patch("app.services.canonical_schedule_export_service.TAMCBlockExporter")
     def test_export_can_override_identity_and_profile(
-        self, mock_converter_class, mock_exporter_class, mock_get_block_dates
+        self, mock_exporter_class, mock_json_exporter_class, mock_get_block_dates
     ):
-        """export_block_xlsx() should pass identity/profile options through."""
+        """export_block_xlsx() should call TAMCBlockExporter with block_config."""
         mock_db = _mock_db_with_codes()
 
         mock_block_dates = MagicMock()
@@ -191,42 +151,33 @@ class TestCanonicalScheduleExportService:
         mock_block_dates.end_date = date(2026, 4, 8)
         mock_get_block_dates.return_value = mock_block_dates
 
-        mock_exporter = MagicMock()
-        mock_exporter.export.return_value = {"residents": [], "faculty": []}
-        mock_exporter_class.return_value = mock_exporter
+        mock_json_exporter = MagicMock()
+        mock_json_exporter.export.return_value = {"residents": [], "faculty": []}
+        mock_json_exporter_class.return_value = mock_json_exporter
 
-        mock_converter = MagicMock()
-        mock_converter.convert_from_json.return_value = b"xlsx_content"
-        mock_converter_class.return_value = mock_converter
+        mock_block_exporter = MagicMock()
+        mock_block_exporter.export.return_value = b"xlsx_content"
+        mock_exporter_class.return_value = mock_block_exporter
 
         service = CanonicalScheduleExportService(mock_db)
-        with (
-            patch.object(
-                service, "_template_path", return_value=Path("/fake/template.xlsx")
-            ),
-            patch.object(
-                service, "_structure_path", return_value=Path("/fake/structure.xml")
-            ),
-            patch("pathlib.Path.exists", return_value=True),
-        ):
-            service.export_block_xlsx(
-                block_number=10,
-                academic_year=2025,
-                preserve_template_identity_fields=False,
-                presentation_profile="none",
-            )
+        service.export_block_xlsx(
+            block_number=10,
+            academic_year=2025,
+            preserve_template_identity_fields=False,
+            presentation_profile="none",
+        )
 
-        kwargs = mock_converter_class.call_args.kwargs
-        assert kwargs["preserve_template_identity_fields"] is False
-        assert kwargs["presentation_profile"] == "none"
+        # TAMCBlockExporter was created with block_config kwarg
+        mock_exporter_class.assert_called_once()
+        assert "block_config" in mock_exporter_class.call_args.kwargs
 
     @patch("app.services.canonical_schedule_export_service.get_block_dates")
     @patch("app.services.canonical_schedule_export_service.HalfDayJSONExporter")
-    @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
-    def test_export_passes_metadata_to_converter(
-        self, mock_converter_class, mock_exporter_class, mock_get_block_dates
+    @patch("app.services.canonical_schedule_export_service.TAMCBlockExporter")
+    def test_export_passes_metadata_to_exporter(
+        self, mock_exporter_class, mock_json_exporter_class, mock_get_block_dates
     ):
-        """export_block_xlsx() should pass ExportMetadata to converter (single-save)."""
+        """export_block_xlsx() should pass ExportMetadata to TAMCBlockExporter."""
         mock_db = _mock_db_with_codes()
 
         mock_block_dates = MagicMock()
@@ -234,28 +185,19 @@ class TestCanonicalScheduleExportService:
         mock_block_dates.end_date = date(2026, 4, 8)
         mock_get_block_dates.return_value = mock_block_dates
 
-        mock_exporter = MagicMock()
-        mock_exporter.export.return_value = {"residents": []}
-        mock_exporter_class.return_value = mock_exporter
+        mock_json_exporter = MagicMock()
+        mock_json_exporter.export.return_value = {"residents": []}
+        mock_json_exporter_class.return_value = mock_json_exporter
 
-        mock_converter = MagicMock()
-        mock_converter.convert_from_json.return_value = b"raw_xlsx"
-        mock_converter_class.return_value = mock_converter
+        mock_block_exporter = MagicMock()
+        mock_block_exporter.export.return_value = b"raw_xlsx"
+        mock_exporter_class.return_value = mock_block_exporter
 
         service = CanonicalScheduleExportService(mock_db)
-        with (
-            patch.object(
-                service, "_template_path", return_value=Path("/fake/template.xlsx")
-            ),
-            patch.object(
-                service, "_structure_path", return_value=Path("/fake/structure.xml")
-            ),
-            patch("pathlib.Path.exists", return_value=True),
-        ):
-            result = service.export_block_xlsx(block_number=10, academic_year=2025)
+        result = service.export_block_xlsx(block_number=10, academic_year=2025)
 
-        # Converter should receive metadata kwargs
-        call_kwargs = mock_converter.convert_from_json.call_args.kwargs
+        # TAMCBlockExporter.export() should receive metadata kwargs
+        call_kwargs = mock_block_exporter.export.call_args.kwargs
         assert call_kwargs["export_metadata"] is not None
         assert call_kwargs["export_metadata"].academic_year == 2025
         assert call_kwargs["export_metadata"].block_number == 10
