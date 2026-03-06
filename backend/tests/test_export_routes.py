@@ -680,6 +680,37 @@ class TestExportScheduleXLSXEndpoint:
         # Should handle large range (might succeed or timeout)
         assert response.status_code in [200, 400, 500, 504]
 
+    def test_export_xlsx_passes_include_flags(self, authed_client: TestClient):
+        """Test XLSX export passes include_qa_sheet/include_overrides to exporter."""
+        with (
+            patch(
+                "app.api.routes.export.get_block_number_for_date",
+                return_value=(4, 2025),
+            ),
+            patch(
+                "app.api.routes.export.CanonicalScheduleExportService.export_block_xlsx",
+                return_value=b"block_xlsx",
+            ) as mock_export,
+        ):
+            response = authed_client.get(
+                "/api/v1/export/schedule/xlsx",
+                params={
+                    "start_date": "2025-01-01",
+                    "end_date": "2025-01-28",
+                    "include_qa_sheet": "false",
+                    "include_overrides": "false",
+                },
+            )
+
+        assert response.status_code == 200
+        assert mock_export.call_args.kwargs == {
+            "block_number": 4,
+            "academic_year": 2025,
+            "include_faculty": True,
+            "include_qa_sheet": False,
+            "include_overrides": False,
+        }
+
 
 class TestExportScheduleYearXLSXEndpoint:
     """Tests for GET /api/export/schedule/year/xlsx endpoint."""
@@ -692,7 +723,7 @@ class TestExportScheduleYearXLSXEndpoint:
         ) as mock_export:
             response = authed_client.get(
                 "/api/v1/export/schedule/year/xlsx",
-                params={"academic_year": 2025},
+                params={"academic_year": 2025, "include_overrides": "false"},
             )
 
         assert response.status_code == 200
@@ -705,6 +736,7 @@ class TestExportScheduleYearXLSXEndpoint:
         assert mock_export.call_args.kwargs == {
             "academic_year": 2025,
             "include_faculty": True,
+            "include_overrides": False,
         }
 
     def test_export_year_xlsx_invalid_year(self, authed_client: TestClient):
