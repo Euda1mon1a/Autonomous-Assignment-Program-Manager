@@ -115,7 +115,7 @@ class TestBlackSeparators:
     def test_black_separator_rows(self):
         wb = _export_wb()
         ws = wb["Block Template2"]
-        separator_rows = {7, 8, 48, 55, 66, 69}
+        separator_rows = {7, 8, 29, 48, 55, 66, 69}
         for row in separator_rows:
             cell = ws.cell(row=row, column=1)
             assert cell.value == NBSP, f"Row {row} col A should have NBSP"
