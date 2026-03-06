@@ -26,7 +26,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { STRATEGY_LABELS, STATUS_COLORS } from '@/types/game-theory';
 import type { ConfigStrategy, TournamentCreate, EvolutionCreate, GameTheorySummary, Tournament, Evolution, ConfigAnalysisRequest, ConfigAnalysisResult } from '@/types/game-theory';
 
-export default function GameTheoryPage() {
+export function GameTheoryTab() {
   const [activeTab, setActiveTab] = useState<'overview' | 'strategies' | 'tournaments' | 'evolution' | 'analysis'>('overview');
   const [selectedStrategies, setSelectedStrategies] = useState<string[]>([]);
   const [_showTournamentModal, setShowTournamentModal] = useState(false);
