@@ -136,9 +136,6 @@ class TAMCBlockExporter:
     COL_SCHEDULE_START = 6
     COLS_PER_DAY = 2
 
-    # Summary columns start at BJ (column 62)
-    SUMMARY_COL_START = 62
-
     # Row bands (fixed positions matching reference)
     RESIDENT_START = 9
     RESIDENT_END = 28
@@ -173,6 +170,8 @@ class TAMCBlockExporter:
         self.color_scheme = color_scheme or get_color_scheme()
         self.block_config = block_config or {}
         self.row_mappings: dict[str, int] = {}
+        # Computed dynamically in export() — defaults to 62 (BJ) for 28-day blocks
+        self.summary_col_start: int = 62
 
     # ══════════════════════════════════════════════════════════════════════
     # Public API
@@ -191,6 +190,9 @@ class TAMCBlockExporter:
         block_end = date.fromisoformat(data["block_end"])
         num_days = (block_end - block_start).days + 1
         max_col = self.COL_SCHEDULE_START + (num_days * self.COLS_PER_DAY) - 1
+
+        # Summary columns start after the schedule grid (shifts right for >28-day blocks)
+        self.summary_col_start = max_col + 1
 
         # Phase 1: Structure
         wb = self._create_workbook()
@@ -704,38 +706,57 @@ class TAMCBlockExporter:
     # ══════════════════════════════════════════════════════════════════════
 
     def _write_resident_summaries(self, ws, block_start: date, block_end: date) -> None:
-        """Write summary headers and formulas for resident rows (BJ-BR)."""
+        """Write summary headers and formulas for resident rows."""
+        sc = (
+            self.summary_col_start
+        )  # First summary column (shifts right for >28-day blocks)
+        sched_end = get_column_letter(self._schedule_end_col(block_start, block_end))
+        start_l = get_column_letter(self.COL_SCHEDULE_START)
+
         # Row 8: Resident summary headers
         headers = ["C", "CC", "CV", "(C+CC+CV)", "NF", "CC", "PC/OFF", "LV", "FMIT"]
         for idx, header in enumerate(headers):
-            ws.cell(row=8, column=self.SUMMARY_COL_START + idx).value = header
+            ws.cell(row=8, column=sc + idx).value = header
+
+        # Column letters for the first three summary cols (used in total formula)
+        c_let = get_column_letter(sc)  # C count
+        cc_let = get_column_letter(sc + 1)  # CC count
+        cv_let = get_column_letter(sc + 2)  # CV count
 
         # Rows 9-28: Resident formulas
         for row in range(self.RESIDENT_START, self.RESIDENT_END + 1):
+            rng = f"{start_l}{row}:{sched_end}{row}"
             c_terms = '{"C","C-I","SM"}' if row == 9 else '{"C","CV","C-I","SM"}'
             ws.cell(
-                row=row, column=62
-            ).value = f"=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {c_terms}))"
-            ws.cell(row=row, column=63).value = f'=COUNTIF(F{row}:BI{row}, "CC")'
-            ws.cell(row=row, column=64).value = f'=COUNTIF(F{row}:BI{row}, "CV")'
-            ws.cell(row=row, column=65).value = f"=BJ{row}+BK{row}+BL{row}"
-            ws.cell(row=row, column=66).value = f'=COUNTIF(F{row}:BI{row}, "NF")'
-            ws.cell(row=row, column=67).value = f'=COUNTIF(F{row}:BI{row}, "CC")'
+                row=row, column=sc
+            ).value = f"=SUMPRODUCT(COUNTIF({rng}, {c_terms}))"
+            ws.cell(row=row, column=sc + 1).value = f'=COUNTIF({rng}, "CC")'
+            ws.cell(row=row, column=sc + 2).value = f'=COUNTIF({rng}, "CV")'
             ws.cell(
-                row=row, column=68
-            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"PC","OFF","W"}}))'
-            ws.cell(row=row, column=69).value = f'=COUNTIF(F{row}:BI{row}, "LV")'
-            ws.cell(row=row, column=70).value = f'=COUNTIF(F{row}:BI{row}, "FMIT")'
+                row=row, column=sc + 3
+            ).value = f"={c_let}{row}+{cc_let}{row}+{cv_let}{row}"
+            ws.cell(row=row, column=sc + 4).value = f'=COUNTIF({rng}, "NF")'
+            ws.cell(row=row, column=sc + 5).value = f'=COUNTIF({rng}, "CC")'
+            ws.cell(
+                row=row, column=sc + 6
+            ).value = f'=SUMPRODUCT(COUNTIF({rng}, {{"PC","OFF","W"}}))'
+            ws.cell(row=row, column=sc + 7).value = f'=COUNTIF({rng}, "LV")'
+            ws.cell(row=row, column=sc + 8).value = f'=COUNTIF({rng}, "FMIT")'
 
         # Row 29: Totals
-        for col in range(62, 71):
+        for offset in range(9):
+            col = sc + offset
             col_letter = get_column_letter(col)
             ws.cell(
                 row=self.ROW_RES_TOTALS, column=col
             ).value = f"=SUM({col_letter}{self.RESIDENT_START}:{col_letter}{self.RESIDENT_END})"
 
     def _write_faculty_summaries(self, ws, block_start: date, block_end: date) -> None:
-        """Write summary headers and formulas for faculty rows (BJ-BT)."""
+        """Write summary headers and formulas for faculty rows."""
+        sc = self.summary_col_start
+        sched_end = get_column_letter(self._schedule_end_col(block_start, block_end))
+        start_l = get_column_letter(self.COL_SCHEDULE_START)
+
         # Row 30: Faculty summary headers
         fac_headers = [
             "C",
@@ -749,11 +770,15 @@ class TAMCBlockExporter:
             "CALL",
         ]
         for idx, header in enumerate(fac_headers):
-            ws.cell(
-                row=self.ROW_FAC_HEADERS, column=self.SUMMARY_COL_START + idx
-            ).value = header
-        # SUN at col 72 (BT)
-        ws.cell(row=self.ROW_FAC_HEADERS, column=72).value = "SUN"
+            ws.cell(row=self.ROW_FAC_HEADERS, column=sc + idx).value = header
+        # SUN column (one past CALL)
+        sun_col = sc + len(fac_headers)
+        ws.cell(row=self.ROW_FAC_HEADERS, column=sun_col).value = "SUN"
+
+        # Column letters for first three summary cols (total formula)
+        c_let = get_column_letter(sc)
+        cc_let = get_column_letter(sc + 1)
+        cv_let = get_column_letter(sc + 2)
 
         # Compute Sunday column letters for SUN call count
         num_days = (block_end - block_start).days + 1
@@ -765,46 +790,45 @@ class TAMCBlockExporter:
                 sunday_col_letters.append(get_column_letter(am_col))
                 sunday_col_letters.append(get_column_letter(am_col + 1))
 
+        # Call row range for COUNTIF
+        call_rng = f"{start_l}4:{sched_end}4"
+
         # Rows 31-47: Faculty formulas
         for row in range(self.FACULTY_START, self.FACULTY_END + 1):
+            rng = f"{start_l}{row}:{sched_end}{row}"
             ws.cell(
-                row=row, column=62
-            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"C","SM"}}))'
-            ws.cell(row=row, column=63).value = f'=COUNTIF(F{row}:BI{row}, "CC")'
-            ws.cell(row=row, column=64).value = f'=COUNTIF(F{row}:BI{row}, "CV")'
-            ws.cell(row=row, column=65).value = f"=BJ{row}+BK{row}+BL{row}"
+                row=row, column=sc
+            ).value = f'=SUMPRODUCT(COUNTIF({rng}, {{"C","SM"}}))'
+            ws.cell(row=row, column=sc + 1).value = f'=COUNTIF({rng}, "CC")'
+            ws.cell(row=row, column=sc + 2).value = f'=COUNTIF({rng}, "CV")'
             ws.cell(
-                row=row, column=66
-            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"AT","PCAT","DO"}}))'
+                row=row, column=sc + 3
+            ).value = f"={c_let}{row}+{cc_let}{row}+{cv_let}{row}"
             ws.cell(
-                row=row, column=67
-            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"GME","DFM","DOFM"}}))'
-            ws.cell(row=row, column=68).value = f'=COUNTIF(F{row}:BI{row}, "LV")'
-            ws.cell(row=row, column=69).value = f'=COUNTIF(F{row}:BI{row}, "FMIT")'
+                row=row, column=sc + 4
+            ).value = f'=SUMPRODUCT(COUNTIF({rng}, {{"AT","PCAT","DO"}}))'
+            ws.cell(
+                row=row, column=sc + 5
+            ).value = f'=SUMPRODUCT(COUNTIF({rng}, {{"GME","DFM","DOFM"}}))'
+            ws.cell(row=row, column=sc + 6).value = f'=COUNTIF({rng}, "LV")'
+            ws.cell(row=row, column=sc + 7).value = f'=COUNTIF({rng}, "FMIT")'
 
             # CALL count: match faculty last name against call row 4
             call_name = self._call_last_name_token(
                 ws.cell(row=row, column=self.COL_NAME).value
             )
-            ws.cell(row=row, column=70).value = (
-                f'=COUNTIF(F4:BI4, "{call_name}")' if call_name else None
+            ws.cell(row=row, column=sc + 8).value = (
+                f'=COUNTIF({call_rng}, "{call_name}")' if call_name else None
             )
 
-            # SUN column (col 72)
+            # SUN column
             if call_name and sunday_col_letters:
                 sun_terms = "+".join(
                     f'COUNTIF({c}4,"{call_name}")' for c in sunday_col_letters
                 )
-                ws.cell(row=row, column=72).value = f"={sun_terms}"
+                ws.cell(row=row, column=sun_col).value = f"={sun_terms}"
             else:
-                ws.cell(row=row, column=72).value = 0
-
-        # Faculty totals row (use row after last faculty = 48, but that's a separator)
-        # Put totals at a reasonable location — matching old converter's row 81 equivalent
-        # In our layout, FACULTY_END=47 so totals could go in row 48 area.
-        # But row 48 is a separator. We embed totals within the partial black rows.
-        # For now, row 29 has res totals, row 30 has fac headers.
-        # Faculty totals: write after the faculty section (omitting separator row issues)
+                ws.cell(row=row, column=sun_col).value = 0
 
     def _write_appointments_section(
         self, ws, block_start: date, block_end: date
@@ -1068,8 +1092,8 @@ class TAMCBlockExporter:
             ws.cell(row=row, column=3, value=row_hash)
 
     def _add_leave_formula_column(self, ws, block_start: date, block_end: date) -> None:
-        """Add LV Days column at BS (col 71)."""
-        leave_col = 71
+        """Add LV Days column after the last summary column."""
+        leave_col = self.summary_col_start + 9  # After 9 resident summary cols
         ws.cell(row=8, column=leave_col, value="LV Days")
 
         start_letter = get_column_letter(self.COL_SCHEDULE_START)

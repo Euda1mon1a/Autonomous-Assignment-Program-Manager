@@ -53,12 +53,17 @@ class CanonicalScheduleExportService:
         academic_year: int,
         include_faculty: bool = True,
         include_overrides: bool = True,
-        include_qa_sheet: bool = True,
-        preserve_template_identity_fields: bool = True,
-        presentation_profile: str = "tamc_handjam_v2",
+        include_qa_sheet: bool = True,  # noqa: ARG002 — kept for API compat
+        preserve_template_identity_fields: bool = True,  # noqa: ARG002
+        presentation_profile: str = "tamc_handjam_v2",  # noqa: ARG002
         output_path: Path | str | None = None,
     ) -> bytes:
-        """Export a block schedule to XLSX using the canonical template."""
+        """Export a block schedule to XLSX using TAMCBlockExporter.
+
+        Note: ``include_qa_sheet``, ``preserve_template_identity_fields``, and
+        ``presentation_profile`` are accepted for API compatibility but have no
+        effect — TAMCBlockExporter always produces the full-fidelity template.
+        """
         block_dates = get_block_dates(block_number, academic_year)
 
         data = self._export_json_data(
