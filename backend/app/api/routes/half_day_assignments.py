@@ -157,14 +157,20 @@ async def update_half_day_assignment(
         raise HTTPException(status_code=404, detail="Half-day assignment not found")
 
     # Resolve activity_code → activity_id
+    # Try exact code first, then fall back to display_abbreviation
+    # (avoids MultipleResultsFound when code and abbreviation match different rows)
     if payload.activity_code is not None:
         activity_result = await db.execute(
-            select(Activity).where(
-                (Activity.code == payload.activity_code)
-                | (Activity.display_abbreviation == payload.activity_code)
-            )
+            select(Activity).where(Activity.code == payload.activity_code)
         )
         activity = activity_result.scalar_one_or_none()
+        if activity is None:
+            abbrev_result = await db.execute(
+                select(Activity).where(
+                    Activity.display_abbreviation == payload.activity_code
+                )
+            )
+            activity = abbrev_result.scalar_one_or_none()
         if not activity:
             raise HTTPException(
                 status_code=400,

@@ -314,9 +314,10 @@ async def generate_schedule(
             # Continue without idempotency tracking
 
     # Issue #1: Double-submit / Re-entrancy protection
-    # Auto-expire stale runs older than 2 minutes (crash recovery)
+    # Auto-expire stale runs older than the requested timeout (crash recovery)
     # Note: schedule_runs.created_at is timestamp WITHOUT time zone (naive UTC)
-    stale_cutoff = datetime.utcnow() - timedelta(minutes=2)
+    guard_seconds = max(schedule_request.timeout_seconds, 120)  # at least 2 min
+    stale_cutoff = datetime.utcnow() - timedelta(seconds=guard_seconds)
     stale_runs = (
         db.query(ScheduleRun)
         .filter(
@@ -331,7 +332,7 @@ async def generate_schedule(
     if stale_runs:
         db.commit()
 
-    # Check for genuinely in-progress generations (created within last 2 min)
+    # Check for genuinely in-progress generations (created within guard window)
     in_progress_run = (
         db.query(ScheduleRun)
         .filter(
