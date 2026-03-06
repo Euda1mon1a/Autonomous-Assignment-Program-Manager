@@ -312,8 +312,10 @@ class XlwingsBridge:
             ws.api.PageSetup.FitToPagesWide = 1
             ws.api.PageSetup.FitToPagesTall = False
 
-            # Set print area to cover the schedule grid
-            ws.api.PageSetup.PrintArea = "$A$1:$BI$45"
+            # Derive print area from actual populated range
+            last_row = ws.used_range.last_cell.row
+            last_col_letter = "BI"  # Schedule grid max (col 61)
+            ws.api.PageSetup.PrintArea = f"$A$1:${last_col_letter}${last_row}"
 
             logger.debug("Print layout applied to %s", ws.name)
         except Exception:

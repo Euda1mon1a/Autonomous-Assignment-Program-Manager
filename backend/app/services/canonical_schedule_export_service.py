@@ -237,9 +237,9 @@ class CanonicalScheduleExportService:
         wb.save(buffer)
         xlsx_bytes = buffer.getvalue()
 
-        # Optional xlwings finishing pass
-        if self._should_use_xlwings():
-            xlsx_bytes = self._apply_xlwings_finishing(xlsx_bytes)
+        # Skip xlwings for year export — sheets are named "Block {n}" not
+        # "Block Template2", so the finishing pass would fail on sheet lookup.
+        # TODO: Multi-sheet xlwings support for annual workbooks.
 
         if output_path:
             Path(output_path).write_bytes(xlsx_bytes)
