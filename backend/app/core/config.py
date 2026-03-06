@@ -253,6 +253,11 @@ class Settings(BaseSettings):
     ML_AUTO_TRAINING_ENABLED: bool = False  # Enable automatic model retraining
     ML_TRAINING_FREQUENCY_DAYS: int = 7  # Retraining frequency
 
+    # Excel Native Integration (xlwings)
+    XLWINGS_ENABLED: bool = False  # Enable xlwings finishing pass for exports
+    EXCEL_APP_PATH: str = "/Applications/Microsoft Excel.app"
+    XLWINGS_VISIBLE: bool = False  # Show Excel window during processing (debug only)
+
     # ML Scoring Weights (for ScheduleScorer)
     ML_PREFERENCE_WEIGHT: float = 0.4  # Weight for preference satisfaction
     ML_WORKLOAD_WEIGHT: float = 0.3  # Weight for workload balance

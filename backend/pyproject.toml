@@ -19,6 +19,9 @@ cli = [
     "httpx>=0.25.0",
     "pyyaml>=6.0.0",
 ]
+excel = [
+    "xlwings>=0.31.0",
+]
 
 [tool.black]
 line-length = 88
