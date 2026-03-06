@@ -54,6 +54,7 @@ Features:
 """
 
 from app.services.export.csv_exporter import CSVExporter
+from app.services.export.tamc_block_exporter import TAMCBlockExporter
 from app.services.export.export_factory import (
     ExportFactory,
     ExportFormat,
@@ -70,6 +71,7 @@ __all__ = [
     # Exporters
     "CSVExporter",
     "JSONExporter",
+    "TAMCBlockExporter",
     "XMLExporter",
     # Factory and enums
     "ExportFactory",
