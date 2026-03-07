@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { AnticipatedLeaveGenerator } from './AnticipatedLeaveGenerator';
 
 export const metadata = {
-  title: 'Annual Planning Hub | Residency Scheduler',
+  title: 'Annual Planning Hub',
   description: 'Manage the Annual Roll-Over (ARO) process for the upcoming academic year.',
 };
 

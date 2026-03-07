@@ -16,7 +16,7 @@ import { CallHubClient } from './CallHubClient';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export const metadata = {
-  title: 'Call Hub | Residency Scheduler',
+  title: 'Call Hub',
   description: 'View and manage faculty call schedules and on-call roster',
 };
 
