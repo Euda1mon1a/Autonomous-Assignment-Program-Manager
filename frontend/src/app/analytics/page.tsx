@@ -70,6 +70,14 @@ export default function AnalyticsHubPage() {
 
   const [activeTab, setActiveTab] = useState<AnalyticsTab>(initialTab);
 
+  // Sync tab state when URL search params change
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as AnalyticsTab;
+    if (tabParam && ['fairness', 'game-theory'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
   // Determine user's permission tier from role
   const userTier: RiskTier = useRiskTierFromRoles(user?.role ? [user.role] : []);
 

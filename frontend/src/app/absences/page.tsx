@@ -15,6 +15,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Calendar, User, Shield, Stethoscope } from 'lucide-react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { RiskBar, type RiskTier, useRiskTierFromRoles } from '@/components/ui/RiskBar';
@@ -57,9 +58,24 @@ const TABS: TabConfig[] = [
   },
 ];
 
+const VALID_ABSENCE_TABS: AbsencesTab[] = ['my-absences', 'directory', 'approvals'];
+
 export default function AbsencesHubPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<AbsencesTab>('directory');
+  const searchParams = useSearchParams();
+
+  const initialTabParam = searchParams.get('tab') as AbsencesTab;
+  const initialTab = VALID_ABSENCE_TABS.includes(initialTabParam) ? initialTabParam : 'directory';
+
+  const [activeTab, setActiveTab] = useState<AbsencesTab>(initialTab);
+
+  // Sync tab state when URL search params change
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as AbsencesTab;
+    if (tabParam && VALID_ABSENCE_TABS.includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const userTier: RiskTier = useRiskTierFromRoles(user?.role ? [user.role] : []);
 

@@ -19,6 +19,22 @@ const nextConfig = {
       },
     ]
   },
+  // Redirect deleted admin pages to their new hub destinations
+  async redirects() {
+    return [
+      { source: '/admin/audit', destination: '/compliance?tab=audit', permanent: true },
+      { source: '/admin/compliance', destination: '/compliance', permanent: true },
+      { source: '/admin/procedures', destination: '/procedures', permanent: true },
+      { source: '/admin/faculty-call', destination: '/call-hub', permanent: true },
+      { source: '/admin/import', destination: '/hub/import-export', permanent: true },
+      { source: '/admin/game-theory', destination: '/analytics?tab=game-theory', permanent: true },
+      { source: '/heatmap', destination: '/ops?tab=demand', permanent: true },
+      { source: '/conflicts', destination: '/ops?tab=conflicts', permanent: true },
+      { source: '/daily-manifest', destination: '/ops?tab=manifest', permanent: true },
+      { source: '/call-roster', destination: '/call-hub', permanent: true },
+      { source: '/proxy-coverage', destination: '/ops?tab=coverage', permanent: true },
+    ]
+  },
   images: {
     unoptimized: true, // No external images
   },
