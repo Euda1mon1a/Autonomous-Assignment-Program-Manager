@@ -399,24 +399,31 @@ class OvernightCallGenerationConstraint(HardConstraint):  # @archetype-ok
 
 class NoConsecutiveCallConstraint(SoftConstraint):
     """
-    Penalizes back-to-back overnight call nights for the same faculty.
+    Penalizes back-to-back and closely spaced overnight call nights for the same faculty.
 
     FMIT Fri/Sat pairs are expected and NOT penalized (they're preloaded,
-    not solver-generated). This only targets solver-generated Sun-Thu calls
-    where the same faculty is assigned consecutive nights.
+    not solver-generated). This targets solver-generated Sun-Thu calls
+    where the same faculty is assigned call within a few days.
 
-    The penalty is high (default 50.0) to strongly discourage back-to-back
-    call, but as a soft constraint it won't make the model infeasible if
-    8 faculty can't cleanly cover 5 nights/week.
+    Applies an exponential decay penalty based on distance:
+    - 1 day (consecutive): weight (default 100.0)
+    - 2 days: weight / 2
+    - 3 days: weight / 4
+    - 4 days: 0 (no penalty)
     """
 
-    def __init__(self, weight: float = 50.0) -> None:
+    def __init__(self, weight: float = 100.0) -> None:
         super().__init__(
             name="NoConsecutiveCall",
             constraint_type=ConstraintType.CALL,
             weight=weight,
             priority=ConstraintPriority.HIGH,
         )
+        self.decay_weights = {
+            1: self.weight,
+            2: self.weight / 2.0,
+            3: self.weight / 4.0,
+        }
 
     def add_to_cpsat(
         self,
@@ -460,38 +467,46 @@ class NoConsecutiveCallConstraint(SoftConstraint):
             if f_i is None:
                 continue
 
-            # Check each pair of consecutive call nights
-            for i in range(len(call_dates) - 1):
-                d1, d2 = call_dates[i], call_dates[i + 1]
-                # Only penalize truly consecutive calendar days
-                if (d2 - d1).days != 1:
-                    continue
+            # Check each pair of call nights
+            for i in range(len(call_dates)):
+                for j in range(i + 1, len(call_dates)):
+                    d1, d2 = call_dates[i], call_dates[j]
+                    gap = (d2 - d1).days
 
-                b_i1 = date_to_b_i.get(d1)
-                b_i2 = date_to_b_i.get(d2)
-                if b_i1 is None or b_i2 is None:
-                    continue
+                    if gap > 3:
+                        break  # Dates are sorted, gap will only increase
 
-                key1 = (f_i, b_i1, "overnight")
-                key2 = (f_i, b_i2, "overnight")
-                if key1 not in call_vars or key2 not in call_vars:
-                    continue
+                    # Skip preloaded Friday/Saturday sequences (if they exist in this list)
+                    if gap == 1 and d1.weekday() == 4:
+                        continue
 
-                # Create indicator: both_on = 1 iff both call vars are 1
-                both_on = model.NewBoolVar(f"consec_call_{f_i}_{d1}_{d2}")
-                model.AddBoolAnd([call_vars[key1], call_vars[key2]]).OnlyEnforceIf(
-                    both_on
-                )
-                model.AddBoolOr(
-                    [call_vars[key1].Not(), call_vars[key2].Not()]
-                ).OnlyEnforceIf(both_on.Not())
+                    b_i1 = date_to_b_i.get(d1)
+                    b_i2 = date_to_b_i.get(d2)
+                    if b_i1 is None or b_i2 is None:
+                        continue
 
-                objective_terms.append((both_on, int(self.weight)))
-                pair_count += 1
+                    key1 = (f_i, b_i1, "overnight")
+                    key2 = (f_i, b_i2, "overnight")
+                    if key1 not in call_vars or key2 not in call_vars:
+                        continue
+
+                    penalty_weight = int(self.decay_weights[gap])
+
+                    # Create indicator: both_on = 1 iff both call vars are 1
+                    both_on = model.NewBoolVar(f"consec_call_{f_i}_{d1}_{d2}")
+                    model.AddBoolAnd([call_vars[key1], call_vars[key2]]).OnlyEnforceIf(
+                        both_on
+                    )
+                    model.AddBoolOr(
+                        [call_vars[key1].Not(), call_vars[key2].Not()]
+                    ).OnlyEnforceIf(both_on.Not())
+
+                    objective_terms.append((both_on, penalty_weight))
+                    pair_count += 1
 
         variables["objective_terms"] = objective_terms
         logger.info(
-            f"Added {pair_count} consecutive-call penalty terms (weight={self.weight})"
+            f"Added {pair_count} consecutive-call exponential penalty terms (max_weight={self.weight})"
         )
 
     def add_to_pulp(
@@ -534,33 +549,41 @@ class NoConsecutiveCallConstraint(SoftConstraint):
             if f_i is None:
                 continue
 
-            for i in range(len(call_dates) - 1):
-                d1, d2 = call_dates[i], call_dates[i + 1]
-                if (d2 - d1).days != 1:
-                    continue
+            for i in range(len(call_dates)):
+                for j in range(i + 1, len(call_dates)):
+                    d1, d2 = call_dates[i], call_dates[j]
+                    gap = (d2 - d1).days
 
-                b_i1 = date_to_b_i.get(d1)
-                b_i2 = date_to_b_i.get(d2)
-                if b_i1 is None or b_i2 is None:
-                    continue
+                    if gap > 3:
+                        break
 
-                key1 = (f_i, b_i1, "overnight")
-                key2 = (f_i, b_i2, "overnight")
-                if key1 not in call_vars or key2 not in call_vars:
-                    continue
+                    if gap == 1 and d1.weekday() == 4:
+                        continue
 
-                # both = min(var1, var2) via auxiliary variable
-                both = pulp.LpVariable(f"consec_{f_i}_{d1}_{d2}", cat="Binary")
-                model += both <= call_vars[key1]
-                model += both <= call_vars[key2]
-                model += both >= call_vars[key1] + call_vars[key2] - 1
+                    b_i1 = date_to_b_i.get(d1)
+                    b_i2 = date_to_b_i.get(d2)
+                    if b_i1 is None or b_i2 is None:
+                        continue
 
-                if "objective" in variables:
-                    variables["objective"] += self.weight * both
-                pair_count += 1
+                    key1 = (f_i, b_i1, "overnight")
+                    key2 = (f_i, b_i2, "overnight")
+                    if key1 not in call_vars or key2 not in call_vars:
+                        continue
+
+                    penalty_weight = self.decay_weights[gap]
+
+                    # both = min(var1, var2) via auxiliary variable
+                    both = pulp.LpVariable(f"consec_{f_i}_{d1}_{d2}", cat="Binary")
+                    model += both <= call_vars[key1]
+                    model += both <= call_vars[key2]
+                    model += both >= call_vars[key1] + call_vars[key2] - 1
+
+                    if "objective" in variables:
+                        variables["objective"] += penalty_weight * both
+                    pair_count += 1
 
         logger.info(
-            f"Added {pair_count} consecutive-call penalty terms (weight={self.weight})"
+            f"Added {pair_count} consecutive-call exponential penalty terms (max_weight={self.weight})"
         )
 
     def validate(
@@ -581,28 +604,37 @@ class NoConsecutiveCallConstraint(SoftConstraint):
         penalty = 0.0
         for person_id, dates in calls_by_person.items():
             sorted_dates = sorted(dates)
-            for i in range(len(sorted_dates) - 1):
-                if (sorted_dates[i + 1] - sorted_dates[i]).days == 1:
+            for i in range(len(sorted_dates)):
+                for j in range(i + 1, len(sorted_dates)):
+                    gap = (sorted_dates[j] - sorted_dates[i]).days
+
+                    if gap > 3:
+                        break
+
                     # Skip FMIT Fri+Sat pairs — expected preloaded pattern
-                    if sorted_dates[i].weekday() == 4:  # Friday
+                    if gap == 1 and sorted_dates[i].weekday() == 4:  # Friday
                         continue
+
+                    penalty_weight = self.decay_weights.get(gap, 0.0)
+
                     violations.append(
                         ConstraintViolation(
                             constraint_name=self.name,
                             constraint_type=self.constraint_type,
-                            severity="MEDIUM",
+                            severity="MEDIUM" if gap == 1 else "LOW",
                             message=(
-                                f"Back-to-back call: {sorted_dates[i]} and "
-                                f"{sorted_dates[i + 1]}"
+                                f"Call spacing ({gap} days): {sorted_dates[i]} and "
+                                f"{sorted_dates[j]}"
                             ),
                             person_id=person_id,
                             details={
                                 "date1": str(sorted_dates[i]),
-                                "date2": str(sorted_dates[i + 1]),
+                                "date2": str(sorted_dates[j]),
+                                "gap_days": gap,
                             },
                         )
                     )
-                    penalty += self.weight
+                    penalty += penalty_weight
 
         return ConstraintResult(
             satisfied=True,  # Soft constraint

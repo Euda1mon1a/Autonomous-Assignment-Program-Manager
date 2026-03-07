@@ -733,6 +733,10 @@ class SchedulingEngine:
             if not create_draft:
                 self._backfill_virtual_clinic(residents)
 
+            # Step 7.7: Apply PGY-specific booking rules to remaining clinic (C) assignments
+            if not create_draft:
+                self._apply_pgy_clinic_rules(residents)
+
             # Step 8: Handle draft vs live assignment persistence
             draft_id = None
             if create_draft:
@@ -3925,6 +3929,51 @@ class SchedulingEngine:
         if modified:
             self.db.flush()
         return modified
+
+    def _apply_pgy_clinic_rules(
+        self,
+        residents: list[Person],
+    ) -> None:
+        """Convert generic clinic (C) assignments to C40 (PGY-1) or C30 (PGY-2/3)."""
+        from app.models.half_day_assignment import HalfDayAssignment
+
+        try:
+            c_activity_id = self._get_activity_id_by_code("fm_clinic")  # Generic 'C'
+            c40_activity_id = self._get_activity_id_by_code("c40")
+            c30_activity_id = self._get_activity_id_by_code("c30")
+        except Exception as e:
+            logger.warning(f"Could not load clinic codes for PGY rules: {e}")
+            return
+
+        resident_pgy = {r.id: self._get_pgy_level(r) for r in residents}
+        resident_ids = list(resident_pgy.keys())
+
+        clinic_assignments = (
+            self.db.query(HalfDayAssignment)
+            .filter(
+                HalfDayAssignment.person_id.in_(resident_ids),
+                HalfDayAssignment.activity_id == c_activity_id,
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+            )
+            .all()
+        )
+
+        updated = 0
+        for a in clinic_assignments:
+            pgy = resident_pgy.get(a.person_id)
+            if pgy == 1:
+                a.activity_id = c40_activity_id
+                updated += 1
+            elif pgy and pgy >= 2:
+                a.activity_id = c30_activity_id
+                updated += 1
+
+        if updated:
+            self.db.flush()
+            logger.info(
+                f"Applied PGY clinic booking rules to {updated} assignments (C -> C40/C30)"
+            )
 
     def _backfill_virtual_clinic(
         self,

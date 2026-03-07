@@ -2602,6 +2602,62 @@ class CPSATActivitySolver:
                 else -overage_penalty
             )
 
+        # -----------------------------------------------------------------
+        # FINAL WEDNESDAY CONTINUITY (C / C-I) FOR PGY-1/2 RESIDENTS
+        # -----------------------------------------------------------------
+        # Penalize PGY-1/2 reaching final Wednesday PM without C or C-I.
+        # This protects continuity clinic right before the end of the block.
+        final_wed_date = None
+        for d in sorted(set(s.date for s in slots)):
+            if d.weekday() == 2 and (end_date - d).days < 7:
+                final_wed_date = d
+                break
+
+        if final_wed_date:
+            c_act = self._get_activity_by_code("C")
+            ci_act = self._get_activity_by_code("C-I")
+            clinic_act_ids = [a.id for a in [c_act, ci_act] if a]
+
+            pgy12_residents = [
+                r for r in residents if getattr(r, "pgy_level", 0) in (1, 2)
+            ]
+
+            final_wed_penalties = []
+            for r in pgy12_residents:
+                # Find the PM slot on final Wednesday for this resident
+                wed_pm_key = (r.id, final_wed_date, "PM")
+
+                # Check if this slot exists in our candidate space
+                if wed_pm_key not in slots_by_person_date_time:
+                    continue
+
+                slot = slots_by_person_date_time[wed_pm_key]
+
+                # Gather variables for C or C-I in this slot
+                clinic_vars = []
+                for act_id in clinic_act_ids:
+                    var = self._variables.get((slot.id, act_id))
+                    if var is not None:
+                        clinic_vars.append(var)
+
+                if clinic_vars:
+                    has_clinic = sum(clinic_vars)
+                    penalty_var = model.NewBoolVar(f"final_wed_penalty_{r.id}")
+                    model.Add(has_clinic == 0).OnlyEnforceIf(penalty_var)
+                    model.Add(has_clinic > 0).OnlyEnforceIf(penalty_var.Not())
+                    final_wed_penalties.append(penalty_var)
+
+            if final_wed_penalties:
+                fw_penalty = sum(final_wed_penalties) * 40  # Heavy penalty
+                objective_expr = (
+                    objective_expr - fw_penalty
+                    if objective_expr is not None
+                    else -fw_penalty
+                )
+                logger.info(
+                    f"Added {len(final_wed_penalties)} final Wednesday continuity penalties"
+                )
+
         if objective_expr is not None:
             model.Maximize(objective_expr)
 
