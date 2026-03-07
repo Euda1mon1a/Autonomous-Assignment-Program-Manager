@@ -11,6 +11,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { CalendarDays, AlertTriangle, ShieldAlert, BarChart3, Activity } from 'lucide-react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { RiskBar, type RiskTier, useRiskTierFromRoles } from '@/components/ui/RiskBar';
@@ -73,9 +74,25 @@ const TABS: TabConfig[] = [
 // Component
 // ============================================================================
 
+const VALID_OPS_TABS: OpsTab[] = ['manifest', 'coverage', 'conflicts', 'demand'];
+
 export default function OpsHubPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<OpsTab>('manifest');
+  const searchParams = useSearchParams();
+
+  // Parse initial tab from query params
+  const initialTabParam = searchParams.get('tab') as OpsTab;
+  const initialTab = VALID_OPS_TABS.includes(initialTabParam) ? initialTabParam : 'manifest';
+
+  const [activeTab, setActiveTab] = useState<OpsTab>(initialTab);
+
+  // Sync tab state when URL search params change
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as OpsTab;
+    if (tabParam && VALID_OPS_TABS.includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Determine user's permission tier from role
   const userTier: RiskTier = useRiskTierFromRoles(user?.role ? [user.role] : []);

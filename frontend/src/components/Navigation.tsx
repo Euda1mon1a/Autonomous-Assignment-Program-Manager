@@ -158,8 +158,8 @@ export function Navigation() {
               </Link>
             </div>
 
-            {/* Desktop Navigation Links - hidden on mobile */}
-            <div className="hidden md:flex items-center gap-1">
+            {/* Desktop Navigation Links - hidden on mobile, scrollable when overflow */}
+            <div className="hidden md:flex items-center gap-1 overflow-x-auto scrollbar-thin max-w-[calc(100vw-24rem)]">
               {userNavItems.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;

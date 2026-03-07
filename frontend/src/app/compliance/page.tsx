@@ -81,6 +81,14 @@ export default function ComplianceHubPage() {
 
   const [activeTab, setActiveTab] = useState<ComplianceTab>(initialTab);
 
+  // Sync tab state when URL search params change (e.g., command palette deep links)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as ComplianceTab;
+    if (tabParam && ['acgme', 'away-from-program', 'audit'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
   // Determine user's permission tier from role
   const userTier: RiskTier = useRiskTierFromRoles(user?.role ? [user.role] : []);
 
