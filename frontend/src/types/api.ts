@@ -384,7 +384,7 @@ export interface Absence {
   /** Whether this absence counts toward away-from-program limit (28 days/year for residents) */
   isAwayFromProgram: boolean;
   /** Whether the absence is due to deployment orders (military) */
-  deploymentOrders: boolean;
+  deploymentOrders: boolean | null;
   /** Location of TDY (temporary duty) if applicable */
   tdyLocation: string | null;
   /** Replacement activity to be scheduled during absence */
@@ -628,9 +628,9 @@ export interface ScheduleRun {
   /** Unique identifier */
   id: UUID;
   /** Start date of the scheduling period */
-  startDate: DateString;
+  startDate: DateString | null;
   /** End date of the scheduling period */
-  endDate: DateString;
+  endDate: DateString | null;
   /** Algorithm used for schedule generation */
   algorithm: SchedulingAlgorithm;
   /** Status of the schedule generation */

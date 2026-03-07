@@ -177,6 +177,16 @@ Pre-commit hook `scripts/archetype-check.py` uses AST analysis to catch anti-pat
 
 Suppress false positives with `# @archetype-ok` comment.
 
+### Nullability Drift Detection (Phantom Null)
+
+**ARCH-007:** Manual TypeScript types in `api.ts` MUST match generated nullability from `api-generated.ts`.
+
+Pre-commit hook `scripts/nullability-drift.py` compares response-type interfaces and flags fields where the manual type strips `| null` that the API actually returns. This causes runtime `TypeError: Cannot read properties of null` crashes that TypeScript can't catch.
+
+Only checks response types (not `Create`/`Update`/`Request` schemas — those have different null semantics).
+
+Suppress false positives with `// @nullable-ok` comment.
+
 ### SQLAlchemy Boolean Negation (Beholder Bane)
 
 **Use `~column` not `not column`** for SQLAlchemy boolean filters:
