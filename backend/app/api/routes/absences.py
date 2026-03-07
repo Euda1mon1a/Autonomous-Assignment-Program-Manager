@@ -353,7 +353,7 @@ async def get_all_residents_away_status(
 async def generate_anticipated_leave(
     academic_year: int = Query(..., description="Target academic year (e.g. 2025)"),
     weeks_per_intern: int = Query(
-        4, description="Number of weeks of leave to generate per intern"
+        4, ge=1, le=11, description="Number of weeks of leave to generate per intern"
     ),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),

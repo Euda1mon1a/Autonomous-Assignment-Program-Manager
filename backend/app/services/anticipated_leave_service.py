@@ -33,10 +33,12 @@ class AnticipatedLeaveService:
         if weeks_per_intern < 1:
             raise ValueError("weeks_per_intern must be at least 1")
 
-        # Find all PGY-1s
+        # Find all PGY-1s for the current cohort.
+        # NOTE: Uses current pgy_level, not year-scoped. Once PersonAcademicYear
+        # table ships (Track A), scope by academic_year to handle past/future AYs.
         interns = (
             self.db.query(Person)
-            .filter(Person.pgy_level == 1, Person.is_active == True)
+            .filter(Person.pgy_level == 1, Person.is_active == True)  # noqa: E712
             .all()
         )
 

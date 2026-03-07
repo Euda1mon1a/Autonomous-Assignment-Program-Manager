@@ -23,7 +23,7 @@ export function AnticipatedLeaveGenerator() {
     setResult(null);
 
     try {
-      const response = await api.post('/api/v1/absences/generate-anticipated', null, {
+      const response = await api.post('/absences/generate-anticipated', null, {
         params: {
           academic_year: currentAcademicYear,
           weeks_per_intern: 4,
