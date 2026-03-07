@@ -329,8 +329,8 @@ const availableTabs = TABS.filter(t => t.requiredTier <= userTier);
 | 2 | Activities Hub | Pure dictionary definition of ACGME activities |
 | 2.5 | Absences Hub | High user value, tiered RBAC understood |
 | 3 | Ops Hub | Tactical Command Center for Day-of Chaos / Resilience shock response |
-| 4 | People Hub Enhancement | Add views to existing hub |
-| 5 | Procedures Hub | Small scope, critical for booking |
+| 4 | Procedures Hub | Standalone global dictionary for clinical capabilities |
+| 5 | People Hub Enhancement | Add Credentials Matrix mapping people to procedures |
 | 6 | Compliance Hub | Audit + compliance dashboard |
 | 7 | Analytics Hub | Fairness + game theory |
 | 8 | Import/Export Hub | Finish started work |
