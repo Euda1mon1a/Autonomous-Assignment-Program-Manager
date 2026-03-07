@@ -43,6 +43,9 @@ class LeaveStatus(str, Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
     CANCELLED = "cancelled"
+    ANTICIPATED = "anticipated"
+    CONFIRMED = "confirmed"
+    DENIED = "denied"
 
 
 class LeaveWebhookPayload(BaseModel):
