@@ -407,7 +407,7 @@ function OverviewContent({ data, columns }: OverviewContentProps) {
 // Main Page Component
 // ============================================================================
 
-export default function FairnessLabsPage() {
+export function FairnessTab() {
   const queryClient = useQueryClient();
 
   // Tab state

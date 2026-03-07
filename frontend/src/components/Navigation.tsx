@@ -25,6 +25,7 @@ import {
   FileText,
   FileUp,
   HelpCircle,
+  LineChart,
   LogIn,
   Network,
   Phone,
@@ -59,7 +60,7 @@ const navItems: NavItem[] = [
   { href: "/hub/import-export", label: "Import/Export", icon: FileUp },
   { href: "/help", label: "Help", icon: HelpCircle },
   // Core admin tools
-  { href: "/admin/game-theory", label: "Game Theory", icon: Brain, adminOnly: true },
+  { href: "/analytics", label: "Analytics", icon: LineChart },
   { href: "/admin/scheduling", label: "Lab", icon: Beaker, adminOnly: true },
   { href: "/admin/users", label: "Users", icon: Shield, adminOnly: true },
   { href: "/admin/resilience-hub", label: "Resilience", icon: Activity, adminOnly: true },
