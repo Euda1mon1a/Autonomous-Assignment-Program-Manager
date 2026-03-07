@@ -5,21 +5,27 @@ import { startOfWeek, addDays, format, startOfMonth, endOfMonth, eachDayOfInterv
 import { useQueryClient } from '@tanstack/react-query'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { BlockNavigation } from '@/components/schedule/BlockNavigation'
-import { ScheduleGrid } from '@/components/schedule/ScheduleGrid'
 import { ViewToggle, useScheduleView } from '@/components/schedule/ViewToggle'
-import { MonthView } from '@/components/schedule/MonthView'
-import { WeekView } from '@/components/schedule/WeekView'
-import { DayView } from '@/components/schedule/DayView'
-import { BlockAnnualView } from '@/components/schedule/BlockAnnualView'
-import { BlockWeekView } from '@/components/schedule/BlockWeekView'
-import { CopyGrid } from '@/components/schedule/CopyGrid'
-import { MultiSelectPersonFilter } from '@/components/schedule/MultiSelectPersonFilter'
-import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
+import dynamic from 'next/dynamic'
 import { usePeople, useRotationTemplates, useBlockRanges } from '@/lib/hooks'
 import { useAssignmentsForRange, useBlocksForRange } from '@/hooks/useAssignmentsForRange'
 import { useScheduleWebSocket } from '@/hooks/useWebSocket'
 import { WebSocketStatus } from '@/components/ui/WebSocketStatus'
 import type { Block, RotationTemplate } from '@/types/api'
+
+// Dynamically import heavy schedule views
+const ScheduleGrid = dynamic(() => import('@/components/schedule/ScheduleGrid').then(mod => mod.ScheduleGrid), { ssr: false })
+const MonthView = dynamic(() => import('@/components/schedule/MonthView').then(mod => mod.MonthView), { ssr: false })
+const WeekView = dynamic(() => import('@/components/schedule/WeekView').then(mod => mod.WeekView), { ssr: false })
+const DayView = dynamic(() => import('@/components/schedule/DayView').then(mod => mod.DayView), { ssr: false })
+const BlockAnnualView = dynamic(() => import('@/components/schedule/BlockAnnualView').then(mod => mod.BlockAnnualView), { ssr: false })
+const BlockWeekView = dynamic(() => import('@/components/schedule/BlockWeekView').then(mod => mod.BlockWeekView), { ssr: false })
+const CopyGrid = dynamic(() => import('@/components/schedule/CopyGrid').then(mod => mod.CopyGrid), { ssr: false })
+const MultiSelectPersonFilter = dynamic(() => import('@/components/schedule/MultiSelectPersonFilter').then(mod => mod.MultiSelectPersonFilter), { ssr: false })
+const ResidentAcademicYearView = dynamic(() => import('@/components/schedule/drag').then(mod => mod.ResidentAcademicYearView), { ssr: false })
+const FacultyInpatientWeeksView = dynamic(() => import('@/components/schedule/drag').then(mod => mod.FacultyInpatientWeeksView), { ssr: false })
+const BlockAssignmentImportModal = dynamic(() => import('@/components/admin/BlockAssignmentImportModal').then(mod => mod.BlockAssignmentImportModal), { ssr: false })
+const BlockAssignmentExportModal = dynamic(() => import('@/components/admin/BlockAssignmentExportModal').then(mod => mod.BlockAssignmentExportModal), { ssr: false })
 
 /**
  * Schedule Page - The core schedule viewing feature

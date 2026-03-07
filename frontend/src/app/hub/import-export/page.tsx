@@ -42,10 +42,15 @@ import { Alert } from '@/components/ui/Alert';
 import { Abbr } from '@/components/ui/Abbr';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import dynamic from 'next/dynamic';
 
 // Import hooks and components
-import { ImportHistoryTable } from '@/features/import/components/ImportHistoryTable';
-import { BulkImportModal } from '@/features/import-export/BulkImportModal';
+const ImportHistoryTable = dynamic(() => import('@/features/import/components/ImportHistoryTable').then(mod => mod.ImportHistoryTable), {
+  ssr: false
+});
+const BulkImportModal = dynamic(() => import('@/features/import-export/BulkImportModal').then(mod => mod.BulkImportModal), {
+  ssr: false
+});
 import {
   ExportPanel,
   PEOPLE_EXPORT_COLUMNS,

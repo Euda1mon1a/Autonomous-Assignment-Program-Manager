@@ -3,12 +3,19 @@
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/contexts/ToastContext";
-import { BulkImportModal } from "@/features/import-export/BulkImportModal";
+import dynamic from 'next/dynamic';
 import { useImport } from "@/features/import-export/useImport";
-import { ImportHistoryTable } from "@/features/import/components/ImportHistoryTable";
 import { useImportBatches, useRollbackBatch } from "@/hooks/useImport";
 import { FileText, Upload } from "lucide-react";
 import { useState } from "react";
+
+// Dynamically import heavy components
+const BulkImportModal = dynamic(() => import('@/features/import-export/BulkImportModal').then(mod => mod.BulkImportModal), {
+  ssr: false
+});
+const ImportHistoryTable = dynamic(() => import('@/features/import/components/ImportHistoryTable').then(mod => mod.ImportHistoryTable), {
+  ssr: false
+});
 
 export default function ImportPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
