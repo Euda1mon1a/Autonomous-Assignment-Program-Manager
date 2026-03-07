@@ -30,9 +30,13 @@ export function AnticipatedLeaveGenerator() {
         },
       });
       setResult(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err?.response?.data?.detail || 'Failed to generate anticipated leave placeholders.');
+      const errorDetail =
+        typeof err === 'object' && err !== null && 'response' in err
+          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : undefined;
+      setError(errorDetail || 'Failed to generate anticipated leave placeholders.');
     } finally {
       setIsGenerating(false);
     }

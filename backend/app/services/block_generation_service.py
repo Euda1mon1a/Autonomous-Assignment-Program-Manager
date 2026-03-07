@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class BlockGenerationService:
     """Service to manage creation of academic and daily blocks."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def ensure_academic_blocks_exist(self, academic_year: int) -> list[AcademicBlock]:
