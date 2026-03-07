@@ -122,7 +122,7 @@ async def get_feature_flag_stats(
     stats = await service.get_stats()
 
     # Get flags by environment breakdown
-    flags_by_environment = await _get_flags_by_environment(db)
+    flags_by_environment = _get_flags_by_environment(db)
 
     return FeatureFlagStatsResponse(
         total_flags=stats["total_flags"],
@@ -350,7 +350,7 @@ async def disable_feature_flag(
         )
 
 
-async def _get_flags_by_environment(db: Session) -> dict[str, Any]:
+def _get_flags_by_environment(db: Session) -> dict[str, Any]:
     """
     Get feature flags breakdown by environment.
 

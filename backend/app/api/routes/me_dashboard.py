@@ -41,7 +41,7 @@ def _get_base_url(request: Request) -> str:
     return f"{proto}://{host}/api/calendar"
 
 
-async def _get_person_for_user(db: Session, current_user: User) -> Person | None:
+def _get_person_for_user(db: Session, current_user: User) -> Person | None:
     """
     Get the Person associated with the current User.
 
@@ -91,7 +91,7 @@ async def get_my_dashboard(
         Complete dashboard response with schedule and activity data
     """
     # Get the person associated with this user
-    person = await _get_person_for_user(db, current_user)
+    person = _get_person_for_user(db, current_user)
 
     if not person:
         raise HTTPException(
