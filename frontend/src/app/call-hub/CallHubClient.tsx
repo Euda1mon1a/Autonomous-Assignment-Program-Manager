@@ -18,13 +18,13 @@ import { RiskBar, type RiskTier } from '@/components/ui/RiskBar';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { CallRosterTab } from './tabs/CallRosterTab';
-import { CallAdminTab } from './tabs/CallAdminTab';
+import { FacultyCallTab } from './tabs/FacultyCallTab';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type TabId = 'roster' | 'admin';
+type TabId = 'roster' | 'faculty-call';
 
 interface TabConfig {
   id: TabId;
@@ -47,8 +47,8 @@ const TABS: TabConfig[] = [
     minTier: 0,
   },
   {
-    id: 'admin',
-    label: 'Admin Panel',
+    id: 'faculty-call',
+    label: 'Faculty Call',
     icon: Settings,
     description: 'Manage call assignments',
     minTier: 1,
@@ -193,7 +193,7 @@ export function CallHubClient() {
                   >
                     <Icon className="w-4 h-4" aria-hidden="true" />
                     {tab.label}
-                    {tab.id === 'admin' && userTier >= 2 && (
+                    {tab.id === 'faculty-call' && userTier >= 2 && (
                       <span
                         className="ml-1 px-1.5 py-0.5 text-xs bg-red-100 text-red-700 rounded"
                         title="High impact actions available"
@@ -223,15 +223,15 @@ export function CallHubClient() {
             {activeTab === 'roster' && <CallRosterTab />}
           </div>
 
-          {/* Admin Tab */}
+          {/* Faculty Call Tab */}
           {userTier >= 1 && (
             <div
               role="tabpanel"
-              id="tabpanel-admin"
-              aria-labelledby="tab-admin"
-              hidden={activeTab !== 'admin'}
+              id="tabpanel-faculty-call"
+              aria-labelledby="tab-faculty-call"
+              hidden={activeTab !== 'faculty-call'}
             >
-              {activeTab === 'admin' && <CallAdminTab userTier={userTier} />}
+              {activeTab === 'faculty-call' && <FacultyCallTab userTier={userTier} />}
             </div>
           )}
         </main>
