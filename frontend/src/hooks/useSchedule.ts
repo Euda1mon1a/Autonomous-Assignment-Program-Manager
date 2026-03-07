@@ -45,6 +45,8 @@ export interface ScheduleGenerateRequest {
   rotationTemplateIds?: string[];
   algorithm?: "greedy" | "cp_sat" | "pulp" | "hybrid";
   timeoutSeconds?: number;
+  createDraft?: boolean;
+  expandBlockAssignments?: boolean;
 }
 
 export interface ScheduleGenerateResponse {

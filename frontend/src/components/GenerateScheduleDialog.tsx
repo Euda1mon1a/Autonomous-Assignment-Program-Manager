@@ -112,6 +112,7 @@ export function GenerateScheduleDialog({
         algorithm,
         timeoutSeconds: parseFloat(timeout),
         pgyLevels: pgyLevels,
+        createDraft: true,
       });
       setShowResults(true);
     } catch (_err) {
