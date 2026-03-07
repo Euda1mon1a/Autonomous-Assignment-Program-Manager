@@ -5,8 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import Executable
 
 from app.models.faculty_weekly_override import FacultyWeeklyOverride
 from app.models.faculty_weekly_template import FacultyWeeklyTemplate
@@ -20,7 +22,7 @@ class FacultyWeeklyTemplateCoverageService:
         self.db = db
         self._is_async = isinstance(db, AsyncSession) or hasattr(db, "_session")
 
-    async def _execute(self, stmt):
+    async def _execute(self, stmt: Executable) -> Result[Any]:
         if self._is_async:
             return await self.db.execute(stmt)
         return self.db.execute(stmt)

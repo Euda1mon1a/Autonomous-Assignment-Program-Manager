@@ -307,3 +307,124 @@ def test_clear_half_day_assignments_solver_only(client: TestClient, db, schedule
     remaining = db.query(HalfDayAssignment).all()
     assert len(remaining) == 1
     assert remaining[0].source == "template"
+
+
+# ============================================================================
+# PATCH /api/v1/half-day-assignments/{assignment_id} Tests
+# ============================================================================
+
+
+def test_update_half_day_assignment_prefers_exact_activity_code_match(
+    client: TestClient, db, scheduler_user
+):
+    """Should resolve activity by exact code before display abbreviation fallback."""
+    resident = Person(
+        id=uuid4(),
+        name="Patch Resident",
+        type="resident",
+        email="patch@hospital.org",
+        pgy_level=2,
+    )
+    original_activity = Activity(
+        id=uuid4(),
+        name="Clinic",
+        code="CLN",
+        display_abbreviation="C",
+        activity_category=ActivityCategory.CLINICAL.value,
+    )
+    exact_code_activity = Activity(
+        id=uuid4(),
+        name="Conference",
+        code="ECHO",
+        display_abbreviation="X",
+        activity_category=ActivityCategory.DIDACTIC.value,
+    )
+    abbreviation_collision_activity = Activity(
+        id=uuid4(),
+        name="Echo Backup",
+        code="ZZZ",
+        display_abbreviation="ECHO",
+        activity_category=ActivityCategory.CLINICAL.value,
+    )
+    db.add_all(
+        [
+            resident,
+            original_activity,
+            exact_code_activity,
+            abbreviation_collision_activity,
+        ]
+    )
+    db.commit()
+
+    assignment = HalfDayAssignment(
+        id=uuid4(),
+        person_id=resident.id,
+        date=date.today(),
+        time_of_day="AM",
+        activity_id=original_activity.id,
+        source="solver",
+    )
+    db.add(assignment)
+    db.commit()
+
+    response = client.patch(
+        f"/api/v1/half-day-assignments/{assignment.id}",
+        json={"activity_code": "ECHO", "override_reason": "Manual correction"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["activity_id"] == str(exact_code_activity.id)
+    assert payload["activity_code"] == "ECHO"
+    assert payload["source"] == "manual"
+    assert payload["is_locked"] is True
+
+    db.refresh(assignment)
+    assert assignment.activity_id == exact_code_activity.id
+    assert assignment.is_override is True
+    assert assignment.overridden_by == scheduler_user.id
+
+
+def test_update_half_day_assignment_unknown_activity_code_returns_400(
+    client: TestClient, db, scheduler_user
+):
+    """Should reject unknown activity code and preserve existing assignment."""
+    resident = Person(
+        id=uuid4(),
+        name="Unknown Code Resident",
+        type="resident",
+        email="unknown@hospital.org",
+        pgy_level=1,
+    )
+    activity = Activity(
+        id=uuid4(),
+        name="Ward",
+        code="WRD",
+        display_abbreviation="W",
+        activity_category=ActivityCategory.CLINICAL.value,
+    )
+    db.add_all([resident, activity])
+    db.commit()
+
+    assignment = HalfDayAssignment(
+        id=uuid4(),
+        person_id=resident.id,
+        date=date.today(),
+        time_of_day="PM",
+        activity_id=activity.id,
+        source="solver",
+    )
+    db.add(assignment)
+    db.commit()
+
+    response = client.patch(
+        f"/api/v1/half-day-assignments/{assignment.id}",
+        json={"activity_code": "NOT_REAL"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Unknown activity code: NOT_REAL"
+
+    db.refresh(assignment)
+    assert assignment.activity_id == activity.id
+    assert assignment.source == "solver"

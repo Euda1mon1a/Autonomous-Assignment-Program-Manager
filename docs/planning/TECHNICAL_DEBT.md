@@ -1,6 +1,6 @@
 # Technical Debt Tracker
 
-> **Last Updated:** 2026-03-04
+> **Last Updated:** 2026-03-07
 > **Source:** Full-Stack MVP Review (16-layer inspection) + 2026-02-08 Repo-Wide Scan + 2026-03-04 Codex GPT-5 Full-Stack Assessment
 
 This document tracks identified technical debt, prioritized by severity and impact.
@@ -327,15 +327,9 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 **Location:** `frontend/src/app/`
 **Category:** Performance
 **Found:** 2026-03-04 (Codex GPT-5 full-stack assessment)
-**Status:** Open
+**Status:** ✅ RESOLVED (2026-03-06, branch `perf/route-bundle-splitting`)
 
-Routes exceeding 300kB first-load JS:
-- `/absences`: 345 kB
-- `/hub/import-export`: 332 kB
-- `/admin/import`: 318 kB
-- `/admin/labs/optimization`: 315 kB (178 kB route-specific)
-
-Candidates for route-level code splitting and lazy-loading boundaries.
+**Resolution:** Split heavy routes via `next/dynamic` lazy loading.
 
 ---
 
@@ -343,12 +337,9 @@ Candidates for route-level code splitting and lazy-loading boundaries.
 **Location:** `.github/workflows/load-tests.yml`
 **Category:** Infrastructure
 **Found:** 2026-03-04 (Codex GPT-5 full-stack assessment)
-**Status:** Open
+**Status:** ✅ RESOLVED (2026-03-07, branch `fix/load-test-missing-scripts`)
 
-Workflow references scripts not present in repo:
-- `load-tests/scripts/compare-baselines.py`
-- `load-tests/scripts/report-generator.py`
-- `load-tests/scripts/performance-regression-detector.py`
+**Resolution:** Created all 3 missing scripts: `compare-baselines.py`, `report-generator.py`, `performance-regression-detector.py`. Added `baseline-results/.gitkeep`.
 
 ---
 
@@ -356,9 +347,9 @@ Workflow references scripts not present in repo:
 **Location:** `frontend/playwright.config.ts`, `frontend/e2e/playwright.config.ts`
 **Category:** Testing
 **Found:** 2026-03-04 (Codex GPT-5 full-stack assessment)
-**Status:** Open
+**Status:** ✅ RESOLVED (2026-03-06, branch `fix/playwright-port-conflict`)
 
-Two Playwright configs with port 3000 conflict. Responsive test run fails before executing due to webServer readiness timeout (port occupied, Next.js falls back to 3002). Need unified config with reserved fixed port strategy.
+**Resolution:** Unique ports assigned: root 3001, CI 3002, E2E 3003. Fixed hardcoded localhost:3000 in test files.
 
 ---
 
@@ -367,9 +358,9 @@ Two Playwright configs with port 3000 conflict. Responsive test run fails before
 | Category | Open | Resolved | Total |
 |----------|------|----------|-------|
 | Security | 2 | 1 | 3 |
-| Infrastructure | 1 | 1 | 2 |
+| Infrastructure | 0 | 2 | 2 |
 | Configuration | 0 | 3 | 3 |
-| Performance | 1 | 3 | 4 |
+| Performance | 0 | 4 | 4 |
 | Feature Incomplete | 1 | 2 | 3 |
 | API Quality | 0 | 1 | 1 |
 | Authentication | 0 | 1 | 1 |
@@ -378,13 +369,13 @@ Two Playwright configs with port 3000 conflict. Responsive test run fails before
 | Code Quality | 0 | 1 | 1 |
 | Data / OPSEC | 0 | 1 | 1 |
 | Frontend Quality | 0 | 1 | 1 |
-| Testing | 2 | 2 | 4 |
+| Testing | 1 | 3 | 4 |
 | Error Handling | 0 | 2 | 2 |
 | Observability | 1 | 0 | 1 |
 | Real-time Features | 0 | 1 | 1 |
-| **Total** | **9** | **21** | **30** |
+| **Total** | **6** | **24** | **30** |
 
-> 21 of 30 items resolved (70%). 9 open items: a11y gaps, MCP placeholders, telemetry, failing tests, 2 dep CVE sets, heavy bundles, broken load-test scripts, Playwright port conflict.
+> 24 of 30 items resolved (80%). 6 open items: a11y gaps, MCP placeholders, telemetry, failing tests, 2 dep CVE sets.
 
 ---
 
@@ -419,9 +410,9 @@ Two Playwright configs with port 3000 conflict. Responsive test run fails before
 | DEBT-025 | Open | - | - |
 | DEBT-026 | Open | - | Python dep CVEs |
 | DEBT-027 | Open | - | npm dep CVEs |
-| DEBT-028 | Open | - | Heavy route bundles |
-| DEBT-029 | Open | - | Load-test missing scripts |
-| DEBT-030 | Open | - | Playwright port conflict |
+| DEBT-028 | ✅ Resolved | 2026-03-06 | `perf/route-bundle-splitting` |
+| DEBT-029 | ✅ Resolved | 2026-03-07 | `fix/load-test-missing-scripts` |
+| DEBT-030 | ✅ Resolved | 2026-03-06 | `fix/playwright-port-conflict` |
 
 ---
 

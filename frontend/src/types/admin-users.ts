@@ -14,7 +14,7 @@ export type UserRole =
   | "coordinator"
   | "faculty"
   | "resident"
-  | "clinicalStaff"
+  | "clinical_staff"
   | "rn"
   | "lpn"
   | "msa";
@@ -24,7 +24,7 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
   coordinator: "Coordinator",
   faculty: "Faculty",
   resident: "Resident",
-  clinicalStaff: "Clinical Staff",
+  clinical_staff: "Clinical Staff",
   rn: "Registered Nurse",
   lpn: "Licensed Practical Nurse",
   msa: "Medical Support Assistant",
@@ -35,7 +35,7 @@ export const USER_ROLE_COLORS: Record<UserRole, string> = {
   coordinator: "bg-purple-100 text-purple-800",
   faculty: "bg-blue-100 text-blue-800",
   resident: "bg-green-100 text-green-800",
-  clinicalStaff: "bg-yellow-100 text-yellow-800",
+  clinical_staff: "bg-yellow-100 text-yellow-800",
   rn: "bg-teal-100 text-teal-800",
   lpn: "bg-cyan-100 text-cyan-800",
   msa: "bg-gray-100 text-gray-800",

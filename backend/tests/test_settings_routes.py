@@ -1,11 +1,29 @@
 """Comprehensive tests for settings API routes."""
 
+import time
 from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.settings import ApplicationSettings
+
+
+def _assert_updated_at_advanced(
+    db: Session, initial_updated_at, timeout_seconds: float = 1.0
+) -> None:
+    """Wait briefly for DB timestamp precision/commit timing and assert advancement."""
+    deadline = time.monotonic() + timeout_seconds
+    latest = None
+    while time.monotonic() < deadline:
+        db.expire_all()
+        latest = db.query(ApplicationSettings).first()
+        if latest is not None and latest.updated_at > initial_updated_at:
+            return
+        time.sleep(0.01)
+
+    assert latest is not None
+    assert latest.updated_at > initial_updated_at
 
 
 class TestGetSettingsEndpoint:
@@ -362,11 +380,6 @@ class TestUpdateSettingsEndpoint:
         initial_settings = db.query(ApplicationSettings).first()
         initial_updated_at = initial_settings.updated_at
 
-        # Wait a moment and update
-        import time
-
-        time.sleep(0.1)
-
         response = authed_client.post(
             "/api/settings",
             json={
@@ -386,8 +399,7 @@ class TestUpdateSettingsEndpoint:
         assert response.status_code == 200
 
         # Verify timestamp was updated
-        updated_settings = db.query(ApplicationSettings).first()
-        assert updated_settings.updated_at > initial_updated_at
+        _assert_updated_at_advanced(db, initial_updated_at)
 
 
 class TestPatchSettingsEndpoint:
@@ -547,11 +559,6 @@ class TestPatchSettingsEndpoint:
         initial_settings = db.query(ApplicationSettings).first()
         initial_updated_at = initial_settings.updated_at
 
-        # Wait a moment
-        import time
-
-        time.sleep(0.1)
-
         # Patch a field
         response = authed_client.patch(
             "/api/settings",
@@ -561,8 +568,7 @@ class TestPatchSettingsEndpoint:
         assert response.status_code == 200
 
         # Verify timestamp was updated
-        updated_settings = db.query(ApplicationSettings).first()
-        assert updated_settings.updated_at > initial_updated_at
+        _assert_updated_at_advanced(db, initial_updated_at)
 
 
 class TestResetSettingsEndpoint:
@@ -634,18 +640,12 @@ class TestResetSettingsEndpoint:
         initial_settings = db.query(ApplicationSettings).first()
         initial_updated_at = initial_settings.updated_at
 
-        # Wait a moment
-        import time
-
-        time.sleep(0.1)
-
         # Reset
         response = authed_client.delete("/api/settings")
         assert response.status_code == 204
 
         # Verify timestamp was updated
-        updated_settings = db.query(ApplicationSettings).first()
-        assert updated_settings.updated_at > initial_updated_at
+        _assert_updated_at_advanced(db, initial_updated_at)
 
 
 class TestSettingsValidation:

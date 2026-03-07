@@ -13,8 +13,10 @@ from typing import Any, Union
 from uuid import UUID
 
 from sqlalchemy import delete, func, or_, select
+from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.sql import Executable
 
 from app.core.exceptions import ActivityNotFoundError
 from app.models.activity import Activity, ActivityCategory
@@ -60,14 +62,14 @@ class RotationTemplateService:
             or hasattr(db, "_session")  # Test wrapper detection
         )
 
-    async def _execute(self, stmt):
+    async def _execute(self, stmt: Executable) -> Result[Any]:
         """Execute a statement, handling both sync and async sessions."""
         if self._is_async:
             return await self.db.execute(stmt)
         else:
             return self.db.execute(stmt)
 
-    async def _delete(self, obj) -> None:
+    async def _delete(self, obj: object) -> None:
         """Delete an object, handling both sync and async sessions."""
         if self._is_async:
             await self.db.delete(obj)
@@ -81,7 +83,7 @@ class RotationTemplateService:
         else:
             self.db.flush()
 
-    async def _refresh(self, obj) -> None:
+    async def _refresh(self, obj: object) -> None:
         """Refresh an object, handling both sync and async sessions."""
         if self._is_async:
             await self.db.refresh(obj)

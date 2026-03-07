@@ -27,6 +27,7 @@ const nextConfig = {
       { source: '/admin/procedures', destination: '/procedures', permanent: true },
       { source: '/admin/faculty-call', destination: '/call-hub', permanent: true },
       { source: '/admin/import', destination: '/hub/import-export', permanent: true },
+      { source: '/admin/import/:path*', destination: '/hub/import-export', permanent: true },
       { source: '/admin/game-theory', destination: '/analytics?tab=game-theory', permanent: true },
       { source: '/heatmap', destination: '/ops?tab=demand', permanent: true },
       { source: '/conflicts', destination: '/ops?tab=conflicts', permanent: true },

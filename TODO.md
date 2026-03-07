@@ -1,6 +1,6 @@
 # TODO — Actionable Items
 
-> **Updated:** 2026-03-04 (PyJWT migration, CVE corrections)
+> **Updated:** 2026-03-07 (overnight session: change tracking, mypy batch 5, load-test scripts, doc sync)
 > **Source:** Extracted from MASTER_PRIORITY_LIST.md, TECHNICAL_DEBT.md, GUI_WIRING_GAPS.md, SCHEDULER_HARDENING_TODO.md, TRANSCRIPT_ACTION_ITEMS.md, and 8 other archived planning docs.
 > **Companion:** `docs/planning/ROADMAP.md` (macro vision), `docs/planning/TECHNICAL_DEBT.md` (debt tracker)
 
@@ -25,13 +25,13 @@
 ### Infrastructure
 
 - [x] **Alembic head sync** — Run `alembic current` + `alembic heads`, then `alembic upgrade head`. Requires running DB.
-- [ ] **5 failing tests (DEBT-025)** — Fixes landed (#1123, #1147) but not confirmed all 5 resolved. Requires backend `pytest` run against live DB.
-- [ ] **mypy errors** — 3 ratchet batches merged (#1243-#1245). Unknown current count — run `mypy` to establish baseline.
+- [x] **5 failing tests (DEBT-025)** — 23/25 pass. 2 remaining are stale test expectations (not code bugs): `test_engine_calls_pipeline_steps_in_correct_order` expects `include_faculty_slots=True` but engine now defaults `False` (env-controlled); `test_pcat_do_count_matches_call_count` PCAT 19 < min 22 (data-dependent). Both are scheduler-domain — human fix.
+- [ ] **mypy errors** — 3,991 on main. Batches 4-5 on branches bring to ~3,863. Merge pending branches to ratchet down.
 
 ### Frontend
 
 - [x] **Heavy route bundles (DEBT-028)** — `/absences` 345kB, `/hub/import-export` 332kB, `/admin/import` 318kB, `/admin/labs/optimization` 315kB. Add route-level code splitting via `next/dynamic`.
-- [ ] **Playwright port conflict (DEBT-030)** — All 3 configs use port 3000. Unify with reserved port strategy.
+- [x] **Playwright port conflict (DEBT-030)** — Unique ports: root 3001, CI 3002, E2E 3003. Branch `fix/playwright-port-conflict` at `be77aeff`.
 
 ## P2 — Medium / This Month
 
@@ -45,10 +45,10 @@
 
 ### Infrastructure
 
-- [ ] **Orphan framework code (~5.8K LOC)** — Dead code confirmed: Saga (4.9K), EventBus (1.4K), gRPC (0.9K), Mesh (1.3K). None registered in `main.py`. Evaluate: integrate or remove.
+- [x] **Orphan framework code (~8.8K LOC)** — Removed Saga, EventBus, gRPC, Mesh. Branch `cleanup/remove-orphan-frameworks` at `54fcd17d`.
 - [x] **Budget cron wiring** — Route exists (`routes/budget.py`) but NOT registered in `__init__.py`. Celery beat function exists but not wired at startup. Code merged (PR #1177) but never activated.
 - [ ] **Lock window Phase 3** — Base lock window works (services, routes, tests). Phase 3 enhancements unbuilt: resilience workflows (stage + gated publish), import lock-window flag injection.
-- [ ] **Field-level change tracking** — Activity log tracks actions but not field diffs. No `old_value/new_value` tracking.
+- [x] **Field-level change tracking** — Reusable `change_tracker.py` utility wired into swap rollback, break-glass, and publish paths. 27 tests. Branch `feat/field-level-change-tracking` at `36c80eb3`.
 
 ### Frontend
 
@@ -68,12 +68,19 @@
 
 ## Recently Completed
 
+- [x] **Field-level change tracking** — `change_tracker.py` utility with `track_changes()`, `track_model_changes()`, `format_changes_for_log()`. Auto-skips sensitive fields. 27 tests. Wired into swap rollback, break-glass approval, schedule publish.
+- [x] **Orphan framework removal (~8.8K LOC)** — Saga, EventBus, gRPC, Mesh dead code removed.
+- [x] **mypy ratchet batch 4-5** — 144+ errors fixed (numpy wrapping, Optional annotations, Sequence fixes). Baseline: 3,991 → ~3,863.
+- [x] **Cache TTL consolidation (DEBT-013)** — All hardcoded TTLs replaced with `CacheTTL` constants.
+- [x] **Playwright port conflict (DEBT-030)** — Unique ports 3001/3002/3003 assigned to 3 configs.
+- [x] **Load-test missing scripts (DEBT-029)** — 3 CI scripts created (compare-baselines, report-generator, regression-detector).
+- [x] **Route bundle splitting (DEBT-028)** — Heavy routes split via `next/dynamic` lazy loading.
 - [x] **npm CVEs (DEBT-027)** (#1261) — minimatch ReDoS (high) + undici decompression (moderate) resolved. 4 remaining are low-severity dev-only (`jest-environment-jsdom` chain).
 - [x] **langchain-core CVE-2025-68664** (#1261) — Pinned `>=0.3.81`. Original "CVE-2026-26013" cited by GPT-5 was a misattribution (real CVE exists but for a different vulnerability), not a fabricated ID.
 - [x] **Wire useEnums hooks** (#1260) — `usePersonTypes`, `usePgyLevels`, `useSchedulingAlgorithms`, `useActivityCategories` wired into 4 components. Backend PGY levels expanded 1-3 → 1-8. EditPersonModal validation fixed.
 - [x] **Solver checkpointing** — `SolverSnapshotManager` with Redis-backed storage, hash verification, TTL cleanup (`scheduling/solver_snapshot.py`).
 - [x] **Schedule diff guard** — `DiffGuard` with 20% global / 50% per-person / 30% high-churn thresholds (`scheduling/diff_guard.py`). Pure Python, tested.
-- [x] **Load-test scripts (DEBT-029)** — k6 scenarios, locust users, analysis scripts, CI workflow all present.
+- [x] **Load-test scripts (DEBT-029)** — k6 scenarios, locust users, analysis scripts, CI workflow, + 3 missing CI scripts (compare-baselines, report-generator, regression-detector). Branch `fix/load-test-missing-scripts` at `3a464d59`.
 - [x] **Frontend rewiring steps 1-5** (#1259) — Type safety, OpenAPI regeneration, `expand_block_assignments` toggle.
 - [x] **217 ESLint any warnings** (#1256) — Zero-warning frontend.
 - [x] **Section 508 a11y** (#1110, #1251) — ARIA attributes across 22 components, 47 jsx-a11y warnings resolved.

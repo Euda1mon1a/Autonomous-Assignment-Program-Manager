@@ -33,7 +33,7 @@ DEFAULT_SETTINGS = {
 }
 
 
-async def get_or_create_settings(db: Session) -> ApplicationSettings:
+def get_or_create_settings(db: Session) -> ApplicationSettings:
     """Get settings from database, creating default if none exist."""
     result = db.execute(select(ApplicationSettings))
     settings = result.scalar_one_or_none()
@@ -52,7 +52,7 @@ async def get_settings(
     current_user: User = Depends(get_current_active_user),
 ) -> SettingsResponse:
     """Get current application settings."""
-    settings = await get_or_create_settings(db)
+    settings = get_or_create_settings(db)
     return SettingsResponse(**settings.to_dict())
 
 
@@ -68,7 +68,7 @@ async def update_settings(
             status_code=400,
             detail="Only CP-SAT is allowed in production settings.",
         )
-    settings = await get_or_create_settings(db)
+    settings = get_or_create_settings(db)
     previous_lock_date = settings.schedule_lock_date
 
     # Update all fields
@@ -99,7 +99,7 @@ async def patch_settings(
     current_user: User = Depends(get_admin_user),
 ) -> SettingsResponse:
     """Partially update application settings."""
-    settings = await get_or_create_settings(db)
+    settings = get_or_create_settings(db)
     previous_lock_date = settings.schedule_lock_date
 
     # Only update provided fields
@@ -139,7 +139,7 @@ async def reset_settings(
     current_user: User = Depends(get_admin_user),
 ) -> None:
     """Reset settings to defaults."""
-    settings = await get_or_create_settings(db)
+    settings = get_or_create_settings(db)
     previous_lock_date = settings.schedule_lock_date
 
     # Reset all fields to defaults

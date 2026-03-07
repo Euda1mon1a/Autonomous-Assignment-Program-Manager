@@ -20,6 +20,7 @@ import time
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
 
@@ -36,6 +37,10 @@ from app.autonomous.state import (
     StateStore,
 )
 from app.resilience.service import ResilienceConfig
+
+if TYPE_CHECKING:
+    from app.autonomous.adapter import ParameterAdapter
+    from app.autonomous.advisor import LLMAdvisor
 
 logger = logging.getLogger(__name__)
 

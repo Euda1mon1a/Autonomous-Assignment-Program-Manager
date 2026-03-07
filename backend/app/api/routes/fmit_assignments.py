@@ -59,7 +59,7 @@ BLOCKS_PER_WEEK = 14  # 7 days x 2 blocks (AM/PM)
 # =============================================================================
 
 
-async def get_fmit_template(db: Session) -> RotationTemplate | None:
+def get_fmit_template(db: Session) -> RotationTemplate | None:
     """Get the FMIT rotation template."""
     result = db.execute(
         select(RotationTemplate).where(RotationTemplate.name == FMIT_ROTATION_NAME)
@@ -73,9 +73,7 @@ def get_week_start(any_date: date) -> date:
     return friday
 
 
-async def get_or_create_blocks(
-    db: Session, start_date: date, end_date: date
-) -> list[Block]:
+def get_or_create_blocks(db: Session, start_date: date, end_date: date) -> list[Block]:
     """Get or create all blocks for a date range."""
     blocks = []
     current_date = start_date
@@ -109,7 +107,7 @@ async def get_or_create_blocks(
     return blocks
 
 
-async def check_faculty_conflicts(
+def check_faculty_conflicts(
     db: Session,
     faculty_id: UUID,
     week_start: date,
@@ -257,7 +255,7 @@ async def create_fmit_assignment(
         )
 
     # Get FMIT template
-    fmit_template = await get_fmit_template(db)
+    fmit_template = get_fmit_template(db)
     if not fmit_template:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -272,7 +270,7 @@ async def create_fmit_assignment(
     week_end = week_start + timedelta(days=6)
 
     # Check for conflicts
-    conflicts = await check_faculty_conflicts(
+    conflicts = check_faculty_conflicts(
         db, request.faculty_id, week_start, week_end, fmit_template.id
     )
 
@@ -288,7 +286,7 @@ async def create_fmit_assignment(
         )
 
     # Get or create blocks for the week
-    blocks = await get_or_create_blocks(db, week_start, week_end)
+    blocks = get_or_create_blocks(db, week_start, week_end)
 
     # Create assignments for all blocks
     assignment_ids = []
@@ -364,7 +362,7 @@ async def update_fmit_assignment(
     Primarily used to reassign a week to a different faculty member.
     """
     # Get FMIT template
-    fmit_template = await get_fmit_template(db)
+    fmit_template = get_fmit_template(db)
     if not fmit_template:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -412,7 +410,7 @@ async def update_fmit_assignment(
             )
 
         # Check conflicts for new faculty
-        conflicts = await check_faculty_conflicts(
+        conflicts = check_faculty_conflicts(
             db, request.faculty_id, week_start, week_end, fmit_template.id
         )
         critical_conflicts = [c for c in conflicts if c.severity == "critical"]
@@ -489,7 +487,7 @@ async def delete_fmit_assignment(
     """
     Delete all FMIT assignments for a faculty member in a specific week.
     """
-    fmit_template = await get_fmit_template(db)
+    fmit_template = get_fmit_template(db)
     if not fmit_template:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -565,7 +563,7 @@ async def bulk_create_fmit_assignments(
     Supports dry_run mode for validation and skip_conflicts mode
     to continue on errors.
     """
-    fmit_template = await get_fmit_template(db)
+    fmit_template = get_fmit_template(db)
     if not fmit_template:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -618,7 +616,7 @@ async def bulk_create_fmit_assignments(
                 continue
 
         # Check conflicts
-        conflicts = await check_faculty_conflicts(
+        conflicts = check_faculty_conflicts(
             db, item.faculty_id, week_start, week_end, fmit_template.id
         )
         critical_conflicts = [c for c in conflicts if c.severity == "critical"]
@@ -668,7 +666,7 @@ async def bulk_create_fmit_assignments(
             continue
 
         # Create assignments
-        blocks = await get_or_create_blocks(db, week_start, week_end)
+        blocks = get_or_create_blocks(db, week_start, week_end)
         assignment_ids = []
 
         for block in blocks:
@@ -752,7 +750,7 @@ async def get_year_grid(
     Returns all weeks in the year with assigned faculty, coverage stats,
     and fairness metrics.
     """
-    fmit_template = await get_fmit_template(db)
+    fmit_template = get_fmit_template(db)
     if not fmit_template:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -901,7 +899,7 @@ async def check_conflicts(
 
     Returns detailed conflict information and suggestions.
     """
-    fmit_template = await get_fmit_template(db)
+    fmit_template = get_fmit_template(db)
     if not fmit_template:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -924,7 +922,7 @@ async def check_conflicts(
     week_end = week_start + timedelta(days=6)
 
     # Check conflicts
-    conflicts = await check_faculty_conflicts(
+    conflicts = check_faculty_conflicts(
         db, faculty_id, week_start, week_end, fmit_template.id
     )
 
@@ -947,7 +945,7 @@ async def check_conflicts(
         other_faculty = result.scalars().all()
 
         for other in other_faculty[:3]:  # Suggest up to 3 alternatives
-            other_conflicts = await check_faculty_conflicts(
+            other_conflicts = check_faculty_conflicts(
                 db, other.id, week_start, week_end, fmit_template.id
             )
             if not [c for c in other_conflicts if c.severity == "critical"]:

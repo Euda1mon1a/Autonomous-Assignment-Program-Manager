@@ -1,6 +1,7 @@
 """Schedule generation and validation API routes."""
 
 from inspect import isawaitable
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import (
@@ -84,10 +85,12 @@ from app.services.xlsx_import import (
 )
 
 # Import observability metrics (optional - graceful degradation)
+obs_metrics: Any
 try:
-    from app.core.observability import metrics as obs_metrics
+    from app.core.observability import metrics as _obs_metrics
 except ImportError:
-    obs_metrics = None
+    _obs_metrics = cast(Any, None)
+obs_metrics = cast(Any, _obs_metrics)
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -1411,7 +1414,7 @@ async def list_schedule_runs(
         runs=[ScheduleRunRead.from_orm(r) for r in results],
         total=total,
         page=page,
-        pageSize=page_size,
+        page_size=page_size,
     )
 
 

@@ -12,6 +12,7 @@ This lets the control loop swap strategies without rewriting the orchestrator.
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -281,7 +282,7 @@ class CandidateGenerator:
 
                 # Add faculty assignments
             engine.assignments = assignments
-            engine._assign_faculty(faculty, blocks)
+            engine._assign_faculty(faculty, blocks, run_id=UUID(int=0))
             assignments = engine.assignments
 
             # Rollback any database changes (we don't want to persist yet)

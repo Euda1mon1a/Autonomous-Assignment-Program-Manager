@@ -5,6 +5,7 @@ import { act, renderHook, waitFor } from '@/test-utils';
 import { QueryClient } from '@tanstack/react-query';
 import { TestProviders } from '@/test-utils';
 import {
+  ImportStageError,
   importStagingKeys,
   useImportPreview,
   useStageImport,
@@ -62,6 +63,29 @@ describe('useStageImport', () => {
 
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: importStagingKeys.batches(),
+    });
+  });
+
+  it('throws ImportStageError with fallback message/code from API error payload', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({
+        detail: { message: 'Spreadsheet format invalid', code: 'INVALID_FORMAT' },
+      }),
+    });
+
+    const { result } = renderHook(() => useStageImport(), {
+      wrapper: createWrapper(),
+    });
+
+    await expect(
+      result.current.mutateAsync({
+        file: new File(['bad-data'], 'broken.xlsx'),
+      })
+    ).rejects.toMatchObject<Partial<ImportStageError>>({
+      name: 'ImportStageError',
+      message: 'Spreadsheet format invalid',
+      code: 'INVALID_FORMAT',
     });
   });
 });
