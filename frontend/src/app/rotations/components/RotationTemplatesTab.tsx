@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Plus, Search, ChevronDown, Pencil, X } from 'lucide-react'
+import { Abbr } from '@/components/ui/Abbr'
 import { useQuery } from '@tanstack/react-query'
 import { get } from '@/lib/api'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
@@ -10,6 +11,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { EditTemplateModal } from '@/components/EditTemplateModal'
 import { CreateTemplateModal } from '@/components/CreateTemplateModal'
 import { RotationWeeklyGrid } from '@/components/schedule/RotationWeeklyGrid'
+import { ACTIVITY_TYPE_CONFIGS } from '@/types/admin-templates'
 import type { RotationTemplate } from '@/types/api'
 
 interface RotationTemplatesTabProps {
@@ -87,14 +89,8 @@ export function RotationTemplatesTab({
     [templatesData?.items]
   )
 
-  // Get unique activity types
-  const activityTypes = useMemo(() => {
-    const types = new Set<string>()
-    templates.forEach((t) => {
-      if (t.activityType) types.add(t.activityType)
-    })
-    return Array.from(types).sort()
-  }, [templates])
+  // Activity type options from shared config
+  const activityTypes = ACTIVITY_TYPE_CONFIGS
 
   // Filter templates
   const filteredTemplates = useMemo(() => {
@@ -156,9 +152,9 @@ export function RotationTemplatesTab({
               className="appearance-none pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               <option value="">All Types</option>
-              {activityTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
+              {activityTypes.map((cfg) => (
+                <option key={cfg.type} value={cfg.type}>
+                  {cfg.label}
                 </option>
               ))}
             </select>
@@ -217,7 +213,9 @@ export function RotationTemplatesTab({
                   <div className="flex items-center gap-2">
                     {template.abbreviation && (
                       <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded">
-                        {template.abbreviation}
+                        <Abbr term={template.abbreviation.split('-')[0]}>
+                          {template.abbreviation}
+                        </Abbr>
                       </span>
                     )}
                     {canEdit && (
