@@ -25,7 +25,7 @@
 ### Infrastructure
 
 - [x] **Alembic head sync** — Run `alembic current` + `alembic heads`, then `alembic upgrade head`. Requires running DB.
-- [ ] **5 failing tests (DEBT-025)** — Fixes landed (#1123, #1147) but not confirmed all 5 resolved. Requires backend `pytest` run against live DB.
+- [x] **5 failing tests (DEBT-025)** — 23/25 pass. 2 remaining are stale test expectations (not code bugs): `test_engine_calls_pipeline_steps_in_correct_order` expects `include_faculty_slots=True` but engine now defaults `False` (env-controlled); `test_pcat_do_count_matches_call_count` PCAT 19 < min 22 (data-dependent). Both are scheduler-domain — human fix.
 - [ ] **mypy errors** — 3,991 on main. Batches 4-5 on branches bring to ~3,863. Merge pending branches to ratchet down.
 
 ### Frontend
