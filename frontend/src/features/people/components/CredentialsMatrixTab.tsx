@@ -160,7 +160,7 @@ function FacultySummaryTable({
 // Main Page Component
 // ============================================================================
 
-export default function AdminCredentialsPage() {
+export function CredentialsMatrixTab() {
   const { toast } = useToast();
 
   // State
@@ -229,70 +229,55 @@ export default function AdminCredentialsPage() {
   const expiringCredentials = expiringData?.items || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <header className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg">
-                <Award className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">
-                  Procedure Credentials
-                </h1>
-                <p className="text-sm text-slate-300">
-                  Manage faculty procedure credentialing
-                </p>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-3">
-              {/* View Toggle */}
-              <div className="flex items-center bg-slate-800/50 rounded-lg p-1 border border-slate-700">
-                <button
-                  onClick={() => setViewMode('matrix')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
-                    viewMode === 'matrix'
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Matrix View"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                  Matrix
-                </button>
-                <button
-                  onClick={() => setViewMode('summary')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
-                    viewMode === 'summary'
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Summary View"
-                >
-                  <List className="w-4 h-4" />
-                  Summary
-                </button>
-              </div>
-
-              <button
-                onClick={handleRefresh}
-                disabled={isLoading || summariesLoading}
-                className="p-2 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
-                title="Refresh"
-              >
-                <RefreshCw className={`w-5 h-5 ${isLoading || summariesLoading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* Header Controls */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Procedure Credentials</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Manage faculty procedure credentialing and supervision requirements.
+          </p>
         </div>
-      </header>
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => setViewMode('matrix')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
+                viewMode === 'matrix'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="Matrix View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Matrix
+            </button>
+            <button
+              onClick={() => setViewMode('summary')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
+                viewMode === 'summary'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="Summary View"
+            >
+              <List className="w-4 h-4" />
+              Summary
+            </button>
+          </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading || summariesLoading}
+            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 dark:hover:text-white transition-colors disabled:opacity-50"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-5 h-5 ${isLoading || summariesLoading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
         {/* Expiring Alerts Section */}
         {expiringCredentials.length > 0 && (
           <ExpiringCredentialsAlert
@@ -361,7 +346,6 @@ export default function AdminCredentialsPage() {
             isLoading={summariesLoading}
           />
         )}
-      </main>
     </div>
   );
 }
