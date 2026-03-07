@@ -368,6 +368,6 @@ async def generate_anticipated_leave(
     result = service.generate_anticipated_leave(
         academic_year=academic_year,
         weeks_per_intern=weeks_per_intern,
-        created_by_id=current_user.id,
+        created_by_id=None,  # System-generated; user.id != person.id FK
     )
     return result

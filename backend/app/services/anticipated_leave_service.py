@@ -75,11 +75,14 @@ class AnticipatedLeaveService:
 
         available_blocks = list(range(2, 13))  # Blocks 2 through 12
         num_blocks = len(available_blocks)
+        # Cap to avoid zero-spacing when weeks_per_intern > num_blocks
+        effective_weeks = min(weeks_per_intern, num_blocks)
+        block_spacing = max(num_blocks // effective_weeks, 1)
 
         for i, intern in enumerate(interns):
-            # Pick 'weeks_per_intern' distinct blocks for this intern, distributed smoothly
-            for w in range(weeks_per_intern):
-                block_idx = (i + w * (num_blocks // weeks_per_intern)) % num_blocks
+            # Pick 'effective_weeks' distinct blocks for this intern, distributed smoothly
+            for w in range(effective_weeks):
+                block_idx = (i + w * block_spacing) % num_blocks
                 block_num = available_blocks[block_idx]
 
                 # We need the start and end date of that block to put the leave in

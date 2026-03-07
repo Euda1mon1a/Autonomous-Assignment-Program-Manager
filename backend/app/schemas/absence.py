@@ -122,7 +122,7 @@ class AbsenceUpdate(BaseModel):
     start_date: date | None = Field(None, description="Absence start date")
     end_date: date | None = Field(None, description="Absence end date")
     absence_type: str | None = Field(None, description="Type of absence")
-    status: str | None = Field(None, description="Status of the absence")
+    # status intentionally excluded — use dedicated approval endpoints
     is_blocking: bool | None = Field(None, description="Whether absence is blocking")
     return_date_tentative: bool | None = Field(
         None, description="Whether return date is tentative"
