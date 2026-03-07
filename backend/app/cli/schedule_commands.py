@@ -146,17 +146,9 @@ def generate(
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
                 "algorithm": algorithm,
-                "score": result.score,
-                "violation_count": result.violation_count,
-                "assignments": [
-                    {
-                        "person_id": a.person_id,
-                        "block_id": a.block_id,
-                        "rotation_id": a.rotation_id,
-                        "date": a.block.date.isoformat() if a.block else None,
-                    }
-                    for a in result.assignments
-                ],
+                "score": result.get("score"),
+                "violation_count": result.get("violation_count"),
+                "assignments": result.get("assignments", []),
             }
 
             with open(output_path, "w") as f:
