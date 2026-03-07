@@ -384,7 +384,7 @@ export interface Absence {
   /** Whether this absence counts toward away-from-program limit (28 days/year for residents) */
   isAwayFromProgram: boolean;
   /** Whether the absence is due to deployment orders (military) */
-  deploymentOrders: boolean;
+  deploymentOrders: boolean | null;
   /** Location of TDY (temporary duty) if applicable */
   tdyLocation: string | null;
   /** Replacement activity to be scheduled during absence */
@@ -541,11 +541,11 @@ export interface RotationTemplate {
   /** Required specialty for this rotation (if any) */
   requiresSpecialty: string | null;
   /** Whether the rotation requires procedure credentials */
-  requiresProcedureCredential: boolean;
+  requiresProcedureCredential: boolean | null;
   /** Whether faculty supervision is required */
-  supervisionRequired: boolean;
+  supervisionRequired: boolean | null;
   /** Maximum ratio of residents to supervisors (e.g., 3 means 3:1) */
-  maxSupervisionRatio: number;
+  maxSupervisionRatio: number | null;
   /** True for half-block rotations (14 days instead of 28) */
   isBlockHalfRotation?: boolean;
   /** Timestamp when the template was created */
@@ -628,9 +628,9 @@ export interface ScheduleRun {
   /** Unique identifier */
   id: UUID;
   /** Start date of the scheduling period */
-  startDate: DateString;
+  startDate: DateString | null;
   /** End date of the scheduling period */
-  endDate: DateString;
+  endDate: DateString | null;
   /** Algorithm used for schedule generation */
   algorithm: SchedulingAlgorithm;
   /** Status of the schedule generation */

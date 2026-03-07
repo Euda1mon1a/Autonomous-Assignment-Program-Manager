@@ -167,8 +167,11 @@ export default function AdminSchedulingPage() {
   const triggerSync = useTriggerSync();
   const unlockAssignment = useUnlockAssignment();
 
-  const handleConfigChange = useCallback((updates: Partial<RunConfiguration>) => {
-    setConfiguration(prev => ({ ...prev, ...updates }));
+  const handleConfigChange = useCallback((updates: Partial<RunConfiguration> | ((prev: RunConfiguration) => Partial<RunConfiguration>)) => {
+    setConfiguration(prev => ({
+      ...prev,
+      ...(typeof updates === 'function' ? updates(prev) : updates),
+    }));
   }, []);
 
   const handleValidateAndRun = useCallback(async () => {
@@ -462,7 +465,7 @@ function ConfigurationPanel({
   constraints: ConstraintConfig[];
   algorithms: { value: Algorithm; label: string; description: string }[];
   isLoading: boolean;
-  onChange: (updates: Partial<RunConfiguration>) => void;
+  onChange: (updates: Partial<RunConfiguration> | ((prev: RunConfiguration) => Partial<RunConfiguration>)) => void;
   onRun: () => void;
   onValidate: () => void;
   isRunning: boolean;
@@ -539,13 +542,15 @@ function ConfigurationPanel({
                     constraint={constraint}
                     enabled={configuration.constraints.find(c => c.id === constraint.id)?.enabled ?? constraint.enabled}
                     onToggle={(enabled) => {
-                      const updated = configuration.constraints.map(c =>
-                        c.id === constraint.id ? { ...c, enabled } : c
-                      );
-                      if (!updated.find(c => c.id === constraint.id)) {
-                        updated.push({ ...constraint, enabled });
-                      }
-                      onChange({ constraints: updated });
+                      onChange((prev) => {
+                        const updated = prev.constraints.map(c =>
+                          c.id === constraint.id ? { ...c, enabled } : c
+                        );
+                        if (!updated.find(c => c.id === constraint.id)) {
+                          updated.push({ ...constraint, enabled });
+                        }
+                        return { constraints: updated };
+                      });
                     }}
                   />
                 ))}

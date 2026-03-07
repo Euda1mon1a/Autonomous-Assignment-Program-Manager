@@ -114,9 +114,9 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
       setClinicLocation(template.clinicLocation || '');
       setMaxResidents(template.maxResidents?.toString() || '');
       setRequiresSpecialty(template.requiresSpecialty || '');
-      setRequiresProcedureCredential(template.requiresProcedureCredential);
-      setSupervisionRequired(template.supervisionRequired);
-      setMaxSupervisionRatio(template.maxSupervisionRatio.toString());
+      setRequiresProcedureCredential(template.requiresProcedureCredential ?? false);
+      setSupervisionRequired(template.supervisionRequired ?? true);
+      setMaxSupervisionRatio(template.maxSupervisionRatio?.toString() ?? '4');
       setIsBlockHalfRotation(template.isBlockHalfRotation || false);
     }
   }, [template]);

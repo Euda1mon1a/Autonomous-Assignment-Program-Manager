@@ -116,7 +116,7 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
       {/* Header with statistics */}
       <div className="bg-white border-b shadow-sm">
         <div className="px-6 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4 animate-slideDown">
+          <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4 mb-4 animate-slideDown">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 Conflict Resolution
@@ -137,7 +137,7 @@ export function ConflictDashboard({ initialFilters }: ConflictDashboardProps) {
 
           {/* Statistics cards */}
           <div
-            className="grid grid-cols-1 md:grid-cols-4 gap-4"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4"
             role="region"
             aria-label="Conflict statistics summary"
             aria-live="polite"

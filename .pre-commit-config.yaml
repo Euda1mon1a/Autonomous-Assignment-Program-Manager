@@ -481,6 +481,23 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 25b: ARCH-007 Phantom Null - Nullability Drift Detection
+  # ============================================================================
+
+  # Compares manual TypeScript types (api.ts) against generated types
+  # (api-generated.ts) to catch fields where null is stripped from the
+  # manual type but the API returns null — causing runtime crashes.
+  - repo: local
+    hooks:
+      - id: phantom-null
+        name: Phantom Null (ARCH-007 Nullability Drift)
+        entry: python3 scripts/nullability-drift.py --staged
+        language: system
+        pass_filenames: false
+        files: ^frontend/src/types/api\.ts$
+        stages: [pre-commit]
+
+  # ============================================================================
   # PHASE 26: Pre-Push Safety (Githyanki Gatekeeper)
   # ============================================================================
 

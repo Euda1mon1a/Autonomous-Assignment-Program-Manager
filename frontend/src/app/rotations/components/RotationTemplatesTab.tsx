@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Plus, Search, ChevronDown, Pencil, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { get } from '@/lib/api'
@@ -40,6 +40,7 @@ export function RotationTemplatesTab({
   const [editingTemplate, setEditingTemplate] = useState<RotationTemplate | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const editorRef = useRef<HTMLDivElement>(null)
 
   // Handle template card click: expand/collapse grid
   const handleCardClick = (template: RotationTemplate) => {
@@ -49,6 +50,13 @@ export function RotationTemplatesTab({
       setExpandedTemplateId(template.id)
     }
   }
+
+  // Auto-scroll to expanded editor when it opens
+  useEffect(() => {
+    if (expandedTemplateId && editorRef.current) {
+      editorRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [expandedTemplateId])
 
   // Handle edit metadata (pencil icon)
   const handleEditMetadata = (e: React.MouseEvent, template: RotationTemplate) => {
@@ -251,7 +259,7 @@ export function RotationTemplatesTab({
 
       {/* Expanded: 4-week grid editor */}
       {expandedTemplate && (
-        <div className="bg-white rounded-lg border border-blue-200 shadow-lg p-6">
+        <div ref={editorRef} className="bg-white rounded-lg border border-blue-200 shadow-lg p-6 scroll-mt-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
