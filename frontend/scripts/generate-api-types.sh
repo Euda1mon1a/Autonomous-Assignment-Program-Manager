@@ -70,7 +70,7 @@ echo "==========================================="
 
 # Check if backend is running
 echo -n "Checking backend at $BACKEND_URL... "
-if ! curl -s "$BACKEND_URL/health" >/dev/null 2>&1; then
+if ! curl -s "$BACKEND_URL/api/v1/health/live" >/dev/null 2>&1; then
     echo -e "${RED}FAILED${NC}"
     echo ""
     echo "Backend not running. Start it with:"

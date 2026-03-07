@@ -13,6 +13,7 @@ import {
   useConstraintConfigs,
   useUpdateConstraint,
 } from '@/hooks/useAdminScheduling';
+import { useConstraintCategories } from '@/hooks/useEnums';
 import type { ConstraintConfig } from '@/types/admin-scheduling';
 
 const PRIORITY_LABELS: Record<number, string> = {
@@ -31,6 +32,7 @@ const PRIORITY_COLORS: Record<number, string> = {
 
 export default function ConstraintConfigPage() {
   const { data: constraints, isLoading, error } = useConstraintConfigs();
+  const { data: apiCategories } = useConstraintCategories();
   const updateMutation = useUpdateConstraint();
   const [filter, setFilter] = useState<string>('all');
   const [editingWeight, setEditingWeight] = useState<string | null>(null);
@@ -71,9 +73,9 @@ export default function ConstraintConfigPage() {
     );
   }
 
-  const categories = Array.from(
-    new Set((constraints ?? []).map((c) => c.category)),
-  ).sort();
+  const categories = apiCategories
+    ? apiCategories.map((c) => c.value)
+    : Array.from(new Set((constraints ?? []).map((c) => c.category))).sort();
   const filtered =
     filter === 'all'
       ? constraints ?? []

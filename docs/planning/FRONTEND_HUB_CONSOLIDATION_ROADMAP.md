@@ -100,10 +100,11 @@ The permission tier model determines what users can see and do across all hubs.
 
 | Hub | Route | Views/Tabs | Tier Access | Priority |
 |-----|-------|------------|-------------|----------|
-| **Activity Hub** | `/activities` | My Activities / Templates | 0: view all, 1: edit templates | 1 |
+| **Rotations Hub** | `/rotations` | Outpatient (Targets) / Inpatient (Grid) | 0: view, 1: edit | 1 |
+| **Activity Hub** | `/activities` | Activity Dictionary | 0: view all, 1: edit definitions | 2 |
 | **Absences Hub** | `/absences` | My Absences / Requests / Approvals | 0: view all + request, 1: approve + sick reasons | 2 |
+| **Ops Hub** | `/ops` | Manifest / Heatmap / Conflicts / Coverage | 0: view, 1: resolve conflicts | 3 |
 | **Procedures Hub** | `/procedures` | Catalog (view/edit modes) | 0: view, 1: edit | 4 |
-| **Ops Hub** | `/ops` | Manifest / Heatmap / Conflicts / Coverage | 0: view, 1: resolve conflicts | 5 |
 | **Compliance Hub** | `/compliance` | Dashboard / Audit Trail | 0: summary, 1: details + audit | 6 |
 | **Analytics Hub** | `/analytics` | Fairness / Game Theory | 0: view (transparency), 1: edit params | 7 |
 | **Config Hub** | `/config` | Rotations / Settings | 1 only (setup/config) | 9 |
@@ -324,11 +325,12 @@ const availableTabs = TABS.filter(t => t.requiredTier <= userTier);
 
 | Priority | Hub | Rationale |
 |----------|-----|-----------|
-| 1 | Activity Hub | Simplest model, clear tab structure |
-| 2 | Absences Hub | High user value, tiered RBAC understood |
-| 3 | People Hub Enhancement | Add views to existing hub |
-| 4 | Procedures Hub | Small scope, critical for booking |
-| 5 | Ops Hub | Bundle operational views |
+| 1 | Rotations Hub | Split into Inpatient (fixed grid) and Outpatient (flexible targets) |
+| 2 | Activities Hub | Pure dictionary definition of ACGME activities |
+| 2.5 | Absences Hub | High user value, tiered RBAC understood |
+| 3 | Ops Hub | Tactical Command Center for Day-of Chaos / Resilience shock response |
+| 4 | Procedures Hub | Standalone global dictionary for clinical capabilities |
+| 5 | People Hub Enhancement | Add Credentials Matrix mapping people to procedures |
 | 6 | Compliance Hub | Audit + compliance dashboard |
 | 7 | Analytics Hub | Fairness + game theory |
 | 8 | Import/Export Hub | Finish started work |
@@ -358,8 +360,9 @@ These pages stay in `/admin/` and are **NOT** hub-ified:
 
 | Current Route | Target Hub | Action |
 |---------------|------------|--------|
-| `/activities` | Activity Hub | Become default view |
-| `/admin/faculty-activities` | Activity Hub | Become Templates tab |
+| `/activities` | Activity Hub | Activity Dictionary view |
+| `/admin/faculty-activities` | People Hub | Become Faculty Workload Profiles tab |
+| `/rotations` | Rotations Hub | Split into Outpatient and Inpatient tabs |
 | `/absences` | Absences Hub | Become default view |
 | `/admin/credentials` | People Hub | Become Credentials tab |
 | `/admin/people` | People Hub | Merge with existing |

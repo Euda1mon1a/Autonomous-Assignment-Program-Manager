@@ -243,6 +243,7 @@ async def generate_schedule(
             else None
         ),
         "timeout_seconds": schedule_request.timeout_seconds,
+        "create_draft": schedule_request.create_draft,
     }
 
     # If idempotency key provided, check for existing request
@@ -375,6 +376,8 @@ async def generate_schedule(
             "expand_block_assignments": schedule_request.expand_block_assignments,
             "block_number": schedule_request.block_number,
             "academic_year": schedule_request.academic_year,
+            "create_draft": schedule_request.create_draft,
+            "created_by_id": current_user.id,
         }
 
         # Choose pipeline: LangGraph (feature-flagged) or monolithic engine

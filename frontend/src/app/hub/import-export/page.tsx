@@ -31,6 +31,7 @@ import {
   ChevronRight,
   AlertCircle,
   Users,
+  FolderDown,
 } from 'lucide-react';
 
 // Components
@@ -42,10 +43,15 @@ import { Alert } from '@/components/ui/Alert';
 import { Abbr } from '@/components/ui/Abbr';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import dynamic from 'next/dynamic';
 
 // Import hooks and components
-import { ImportHistoryTable } from '@/features/import/components/ImportHistoryTable';
-import { BulkImportModal } from '@/features/import-export/BulkImportModal';
+const ImportHistoryTable = dynamic(() => import('@/features/import/components/ImportHistoryTable').then(mod => mod.ImportHistoryTable), {
+  ssr: false
+});
+const BulkImportModal = dynamic(() => import('@/features/import-export/BulkImportModal').then(mod => mod.BulkImportModal), {
+  ssr: false
+});
 import {
   ExportPanel,
   PEOPLE_EXPORT_COLUMNS,
@@ -1146,6 +1152,7 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
     return formatLocalDate(d);
   });
   const [endDate, setEndDate] = useState(() => formatLocalDate(new Date()));
+  const [academicYear, setAcademicYear] = useState(() => new Date().getFullYear());
   const [includeQaSheet, setIncludeQaSheet] = useState(true);
   const [includeOverrides, setIncludeOverrides] = useState(true);
 
@@ -1372,20 +1379,51 @@ function ExportTab({ userTier: _userTier }: ExportTabProps) {
 
       {/* Primary Export Action: Server-side XLSX (schedules only) */}
       {exportType === 'schedules' && (
-        <Card className="p-6 border-2 border-blue-200 bg-blue-50/30">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Export Block Schedule</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Downloads the formatted schedule workbook with color-coded rotations, AM/PM grid, and coverage summary.
-          </p>
-          <a
-            href={`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/export/schedule/xlsx?start_date=${startDate}&end_date=${endDate}&include_qa_sheet=${includeQaSheet}&include_overrides=${includeOverrides}`}
-            download
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
-          >
-            <Download className="w-5 h-5" />
-            Export Schedule (.xlsx)
-          </a>
-        </Card>
+        <div className="space-y-6">
+          <Card className="p-6 border-2 border-blue-200 bg-blue-50/30">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Export Block Schedule</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Downloads the formatted schedule workbook with color-coded rotations, AM/PM grid, and coverage summary.
+            </p>
+            <a
+              href={`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/export/schedule/xlsx?start_date=${startDate}&end_date=${endDate}&include_qa_sheet=${includeQaSheet}&include_overrides=${includeOverrides}`}
+              download
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+            >
+              <Download className="w-5 h-5" />
+              Export Schedule (.xlsx)
+            </a>
+          </Card>
+
+          <Card className="p-6 border-2 border-indigo-200 bg-indigo-50/30">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <FolderDown className="w-5 h-5 text-indigo-500" />
+              Annual Workbook Export (14-Sheet)
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Download the complete master schedule workbook for an entire academic year. Includes 14 visible block sheets (Block 0 - 13), a YTD Summary, and cross-sheet validation.
+            </p>
+            <div className="flex flex-wrap items-end gap-4">
+              <label className="flex flex-col gap-1">
+                <span className="text-sm text-gray-600">Academic Year</span>
+                <input
+                  type="number"
+                  value={academicYear}
+                  onChange={(e) => setAcademicYear(parseInt(e.target.value) || new Date().getFullYear())}
+                  className="px-3 py-2 border border-gray-300 rounded-lg w-32 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </label>
+              <a
+                href={`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/export/schedule/year/xlsx?academic_year=${academicYear}&include_overrides=${includeOverrides}`}
+                download
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium h-[42px]"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                Download Annual Workbook
+              </a>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* Collapsible: Raw Data Export */}

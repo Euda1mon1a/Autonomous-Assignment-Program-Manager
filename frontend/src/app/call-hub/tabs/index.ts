@@ -7,4 +7,4 @@
  */
 
 export { CallRosterTab } from './CallRosterTab';
-export { CallAdminTab } from './CallAdminTab';
+export { FacultyCallTab } from './FacultyCallTab';

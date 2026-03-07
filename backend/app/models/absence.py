@@ -126,7 +126,7 @@ class Absence(Base):
             name="check_absence_type",
         ),
         CheckConstraint(
-            "status IN ('pending', 'approved', 'rejected', 'cancelled')",
+            "status IN ('pending', 'approved', 'rejected', 'cancelled', 'anticipated', 'confirmed', 'denied')",
             name="check_absence_status",
         ),
     )

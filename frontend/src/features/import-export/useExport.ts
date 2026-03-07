@@ -3,7 +3,6 @@
  */
 
 import { useState, useCallback } from 'react';
-import * as XLSX from 'xlsx';
 import type {
   ExportColumn,
   ExportOptions,
@@ -196,6 +195,7 @@ export function useExport(hookOptions: UseExportOptions = {}) {
         })
       );
 
+      const XLSX = await import("xlsx");
       const headerRow = options.columns.map((column) => column.header);
       const aoa = options.includeHeaders ? [headerRow, ...rows] : rows;
       const worksheet = XLSX.utils.aoa_to_sheet(aoa);

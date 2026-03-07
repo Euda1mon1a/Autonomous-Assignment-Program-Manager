@@ -240,6 +240,20 @@ class ImportStagingService:
                         meta.academic_year,
                         meta.block_number,
                     )
+
+                    if (
+                        target_block is not None
+                        and meta.block_number is not None
+                        and meta.block_number != target_block
+                    ):
+                        return StageResult(
+                            success=False,
+                            message=f"Block mismatch: file is for Block {meta.block_number}, but you selected Block {target_block}.",
+                            error_code="BLOCK_MISMATCH",
+                        )
+
+                    # Target academic year is inferred from start date or provided externally
+                    # For simplicity, if we have target_start_date, check if it matches AY somewhat or at least we can just check if AY was passed.
                 meta_wb.close()
             except Exception:
                 pass  # Legacy files may not have metadata — non-blocking

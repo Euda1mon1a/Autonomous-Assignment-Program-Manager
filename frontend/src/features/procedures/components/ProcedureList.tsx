@@ -4,8 +4,8 @@ import { Edit, Trash2 } from "lucide-react";
 
 interface ProcedureListProps {
   procedures: Procedure[];
-  onEdit: (procedure: Procedure) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (procedure: Procedure) => void;
+  onDelete?: (id: string) => void;
   isLoading?: boolean;
 }
 
@@ -107,22 +107,26 @@ export function ProcedureList({
               </td>
               <td className="px-6 py-4 text-right">
                 <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(procedure)}
-                    className="h-8 w-8 p-0 text-slate-400 hover:text-white"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(procedure.id)}
-                    className="h-8 w-8 p-0 text-slate-400 hover:text-red-400 hover:bg-red-400/10"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEdit(procedure)}
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-white"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDelete(procedure.id)}
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-400 hover:bg-red-400/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </td>
             </tr>

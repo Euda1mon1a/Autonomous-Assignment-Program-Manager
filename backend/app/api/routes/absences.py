@@ -10,6 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response
 
 from app.controllers.absence_controller import AbsenceController
+from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
@@ -24,6 +25,7 @@ from app.schemas.absence import (
     AwayFromProgramSummary,
     AwayFromProgramCheck,
     AllResidentsAwayStatus,
+    AnticipatedLeaveResponse,
 )
 from app.websocket.manager import broadcast_schedule_updated
 
@@ -340,3 +342,32 @@ async def get_all_residents_away_status(
 
     controller = AbsenceController(db)
     return controller.get_all_residents_away_status(academic_year=academic_year)
+
+
+@router.post(
+    "/generate-anticipated",
+    response_model=AnticipatedLeaveResponse,
+    summary="Generate anticipated leave for incoming interns",
+    description="Generates placeholder leave for PGY-1s before their actual requests arrive.",
+)
+async def generate_anticipated_leave(
+    academic_year: int = Query(..., description="Target academic year (e.g. 2025)"),
+    weeks_per_intern: int = Query(
+        4, ge=1, le=11, description="Number of weeks of leave to generate per intern"
+    ),
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
+):
+    """
+    Generate anticipated leave placeholders for all PGY-1s.
+    """
+    from app.services.anticipated_leave_service import AnticipatedLeaveService
+
+    service = AnticipatedLeaveService(db)
+    result = service.generate_anticipated_leave(
+        academic_year=academic_year,
+        weeks_per_intern=weeks_per_intern,
+        created_by_id=None,  # System-generated; user.id != person.id FK
+    )
+    return result

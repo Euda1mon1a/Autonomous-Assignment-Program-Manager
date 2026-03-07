@@ -99,13 +99,22 @@ export interface StageImportParams {
   sheetName?: string;
 }
 
+export class ImportStageError extends Error {
+  code?: string;
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = 'ImportStageError';
+    this.code = code;
+  }
+}
+
 /**
  * Stage an Excel file for import.
  */
 export function useStageImport() {
   const queryClient = useQueryClient();
 
-  return useMutation<{ batchId: string }, ApiError, StageImportParams>({
+  return useMutation<{ batchId: string }, Error, StageImportParams>({
     mutationFn: async (params) => {
       const formData = new FormData();
       formData.append('file', params.file);
@@ -138,7 +147,10 @@ export function useStageImport() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail?.error || 'Failed to stage import');
+        throw new ImportStageError(
+          error.detail?.error || error.detail?.message || 'Failed to stage import',
+          error.detail?.error_code || error.detail?.code
+        );
       }
 
       const data = await response.json();

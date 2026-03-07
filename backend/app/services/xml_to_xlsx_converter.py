@@ -563,7 +563,7 @@ class XMLToXlsxConverter:
     ) -> None:
         """Align summary headers/formulas/freeze panes with handjam Block 10."""
         # Keep navigation locked to schedule start while exposing summary rows.
-        sheet.freeze_panes = "F50"
+        sheet.freeze_panes = "E8"
 
         summary_headers = [
             "C",
@@ -1045,13 +1045,19 @@ class XMLToXlsxConverter:
 
         # Rotation columns: dropdown from ValidRotations named range
         rot_dv = DataValidation(
-            type="list", formula1="ValidRotations", allow_blank=True
+            type="list",
+            formula1="ValidRotations",
+            allow_blank=True,
+            showErrorMessage=False,  # Allow free-text overrides
         )
         sheet.add_data_validation(rot_dv)
 
         # Activity columns: dropdown from ValidActivities named range
         act_dv = DataValidation(
-            type="list", formula1="ValidActivities", allow_blank=True
+            type="list",
+            formula1="ValidActivities",
+            allow_blank=True,
+            showErrorMessage=False,  # Allow free-text overrides
         )
         sheet.add_data_validation(act_dv)
 

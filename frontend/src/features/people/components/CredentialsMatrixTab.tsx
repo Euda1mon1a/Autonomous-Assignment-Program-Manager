@@ -1,0 +1,351 @@
+'use client';
+
+/**
+ * Admin Credentials Page
+ *
+ * Management interface for procedure credentialing with:
+ * - Faculty × Procedure matrix view
+ * - Expiring credentials alerts
+ * - Filter by specialty/category
+ */
+import { useState, useCallback } from 'react';
+import {
+  Award,
+  RefreshCw,
+  Filter,
+  AlertTriangle,
+  LayoutGrid,
+  List,
+} from 'lucide-react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { CredentialMatrix } from '@/components/admin/CredentialMatrix';
+import { ExpiringCredentialsAlert } from '@/components/admin/ExpiringCredentialsAlert';
+import { usePeople } from '@/hooks/usePeople';
+import {
+  useProcedures,
+  useCredentials,
+  useProcedureSpecialties,
+  useExpiringCredentials,
+  useFacultyCredentialSummaries,
+  type FacultyCredentialSummary,
+} from '@/hooks/useProcedures';
+import { useToast } from '@/contexts/ToastContext';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+type ViewMode = 'matrix' | 'summary';
+
+interface CredentialFilters {
+  specialty: string;
+  category: string;
+}
+
+// ============================================================================
+// Faculty Summary Table Component
+// ============================================================================
+
+function FacultySummaryTable({
+  summaries,
+  isLoading,
+}: {
+  summaries: FacultyCredentialSummary[];
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!summaries.length) {
+    return (
+      <div className="text-center py-12 text-slate-400">
+        No faculty credential data available.
+      </div>
+    );
+  }
+
+  // Sort by expiring soon (urgent first), then by name
+  const sortedSummaries = [...summaries].sort((a, b) => {
+    if (b.expiringSoon !== a.expiringSoon) {
+      return b.expiringSoon - a.expiringSoon;
+    }
+    return a.personName.localeCompare(b.personName);
+  });
+
+  return (
+    <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
+      <table className="w-full">
+        <thead className="bg-slate-900/50">
+          <tr>
+            <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Faculty
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Total
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Active
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Expiring Soon
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Procedures
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-700/50">
+          {sortedSummaries.map((summary) => (
+            <tr
+              key={summary.personId}
+              className="hover:bg-slate-700/30 transition-colors"
+            >
+              <td className="px-4 py-3">
+                <span className="text-white font-medium">
+                  {summary.personName}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-center">
+                <span className="text-slate-300">{summary.totalCredentials}</span>
+              </td>
+              <td className="px-4 py-3 text-center">
+                <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/50 text-green-300">
+                  {summary.activeCredentials}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-center">
+                {summary.expiringSoon > 0 ? (
+                  <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-900/50 text-amber-300">
+                    <AlertTriangle className="w-3 h-3" />
+                    {summary.expiringSoon}
+                  </span>
+                ) : (
+                  <span className="text-slate-500">0</span>
+                )}
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap gap-1">
+                  {summary.procedures.slice(0, 3).map((proc) => (
+                    <span
+                      key={proc.id}
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-700/50 text-slate-300"
+                      title={proc.name}
+                    >
+                      {proc.name.length > 20
+                        ? `${proc.name.slice(0, 20)}...`
+                        : proc.name}
+                    </span>
+                  ))}
+                  {summary.procedures.length > 3 && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-600/50 text-slate-400">
+                      +{summary.procedures.length - 3} more
+                    </span>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ============================================================================
+// Main Page Component
+// ============================================================================
+
+export function CredentialsMatrixTab() {
+  const { toast } = useToast();
+
+  // State
+  const [viewMode, setViewMode] = useState<ViewMode>('matrix');
+  const [filters, setFilters] = useState<CredentialFilters>({
+    specialty: '',
+    category: '',
+  });
+  const [showExpiringOnly, setShowExpiringOnly] = useState(false);
+
+  // Queries
+  const {
+    data: facultyData,
+    isLoading: facultyLoading,
+    refetch: refetchFaculty,
+  } = usePeople({ role: 'faculty' });
+
+  const {
+    data: proceduresData,
+    isLoading: proceduresLoading,
+    refetch: refetchProcedures,
+  } = useProcedures(
+    filters.specialty ? { specialty: filters.specialty } : undefined
+  );
+
+  const {
+    data: credentialsData,
+    isLoading: credentialsLoading,
+    refetch: refetchCredentials,
+  } = useCredentials();
+
+  const { data: specialties } = useProcedureSpecialties();
+
+  const {
+    data: expiringData,
+    isLoading: expiringLoading,
+  } = useExpiringCredentials(30);
+
+  // Faculty summaries for summary view
+  const {
+    data: facultySummaries,
+    isLoading: summariesLoading,
+    refetch: refetchSummaries,
+  } = useFacultyCredentialSummaries({
+    includeEmpty: true,
+    enabled: viewMode === 'summary',
+  });
+
+  // Handlers
+  const handleRefresh = useCallback(() => {
+    if (viewMode === 'matrix') {
+      refetchFaculty();
+      refetchProcedures();
+      refetchCredentials();
+    } else {
+      refetchSummaries();
+    }
+    toast.info('Refreshing credentials...');
+  }, [viewMode, refetchFaculty, refetchProcedures, refetchCredentials, refetchSummaries, toast]);
+
+  const isLoading = facultyLoading || proceduresLoading || credentialsLoading;
+
+  const faculty = facultyData?.items || [];
+  const procedures = proceduresData?.items || [];
+  const credentials = credentialsData?.items || [];
+  const expiringCredentials = expiringData?.items || [];
+
+  return (
+    <div className="space-y-6">
+      {/* Header Controls */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Procedure Credentials</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Manage faculty procedure credentialing and supervision requirements.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => setViewMode('matrix')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
+                viewMode === 'matrix'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="Matrix View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Matrix
+            </button>
+            <button
+              onClick={() => setViewMode('summary')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
+                viewMode === 'summary'
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="Summary View"
+            >
+              <List className="w-4 h-4" />
+              Summary
+            </button>
+          </div>
+
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading || summariesLoading}
+            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-300 dark:hover:text-white transition-colors disabled:opacity-50"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-5 h-5 ${isLoading || summariesLoading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+        {/* Expiring Alerts Section */}
+        {expiringCredentials.length > 0 && (
+          <ExpiringCredentialsAlert
+            credentials={expiringCredentials}
+            isLoading={expiringLoading}
+          />
+        )}
+
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Specialty Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-slate-300" />
+            <select
+              value={filters.specialty}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, specialty: e.target.value }))
+              }
+              className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+            >
+              <option value="">All Specialties</option>
+              {specialties?.map((specialty) => (
+                <option key={specialty} value={specialty}>
+                  {specialty}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Show Expiring Toggle */}
+          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showExpiringOnly}
+              onChange={(e) => setShowExpiringOnly(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-amber-500 focus:ring-amber-500"
+            />
+            <AlertTriangle className="w-4 h-4 text-amber-400" />
+            Show expiring only
+          </label>
+
+          {/* Stats */}
+          <div className="flex-1" />
+          <div className="text-sm text-slate-300">
+            {faculty.length} faculty · {procedures.length} procedures · {credentials.length} credentials
+          </div>
+        </div>
+
+        {/* Credential View (Matrix or Summary) */}
+        {viewMode === 'matrix' ? (
+          isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <CredentialMatrix
+              faculty={faculty}
+              procedures={procedures}
+              credentials={credentials}
+              showExpiringOnly={showExpiringOnly}
+            />
+          )
+        ) : (
+          <FacultySummaryTable
+            summaries={facultySummaries ?? []}
+            isLoading={summariesLoading}
+          />
+        )}
+    </div>
+  );
+}

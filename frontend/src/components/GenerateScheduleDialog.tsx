@@ -112,6 +112,7 @@ export function GenerateScheduleDialog({
         algorithm,
         timeoutSeconds: parseFloat(timeout),
         pgyLevels: pgyLevels,
+        createDraft: true,
       });
       setShowResults(true);
     } catch (_err) {
@@ -141,7 +142,7 @@ export function GenerateScheduleDialog({
           {/* Result Status */}
           <div
             className={`p-4 rounded-lg flex items-start gap-3 ${
-              result.status === 'success'
+              result.status === 'success' || result.status === 'draft'
                 ? 'bg-green-50 border border-green-200'
                 : result.status === 'partial'
                 ? 'bg-amber-50 border border-amber-200'
@@ -150,7 +151,7 @@ export function GenerateScheduleDialog({
             role="status"
             aria-live="polite"
           >
-            {result.status === 'success' ? (
+            {result.status === 'success' || result.status === 'draft' ? (
               <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
             ) : result.status === 'partial' ? (
               <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
@@ -159,7 +160,7 @@ export function GenerateScheduleDialog({
             )}
             <div>
               <p className={`font-medium ${
-                result.status === 'success'
+                result.status === 'success' || result.status === 'draft'
                   ? 'text-green-800'
                   : result.status === 'partial'
                   ? 'text-amber-800'
@@ -167,6 +168,8 @@ export function GenerateScheduleDialog({
               }`}>
                 {result.status === 'success'
                   ? 'Schedule Generated Successfully'
+                  : result.status === 'draft'
+                  ? 'Draft Schedule Created'
                   : result.status === 'partial'
                   ? 'Partial Schedule Generated'
                   : 'Schedule Generation Failed'}

@@ -45,10 +45,12 @@ export interface ScheduleGenerateRequest {
   rotationTemplateIds?: string[];
   algorithm?: "greedy" | "cp_sat" | "pulp" | "hybrid";
   timeoutSeconds?: number;
+  createDraft?: boolean;
+  expandBlockAssignments?: boolean;
 }
 
 export interface ScheduleGenerateResponse {
-  status: "success" | "partial" | "failed";
+  status: "success" | "partial" | "failed" | "draft";
   message: string;
   totalBlocksAssigned: number;
   totalBlocks: number;

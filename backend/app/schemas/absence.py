@@ -49,6 +49,7 @@ class AbsenceBase(BaseModel):
     """Base absence schema."""
 
     person_id: UUID = Field(..., description="Person UUID")
+    status: str = Field(default="approved", description="Status of the absence")
     start_date: date = Field(..., description="Absence start date")
     end_date: date = Field(..., description="Absence end date")
     absence_type: str = Field(..., description="Type of absence")
@@ -121,6 +122,7 @@ class AbsenceUpdate(BaseModel):
     start_date: date | None = Field(None, description="Absence start date")
     end_date: date | None = Field(None, description="Absence end date")
     absence_type: str | None = Field(None, description="Type of absence")
+    # status intentionally excluded — use dedicated approval endpoints
     is_blocking: bool | None = Field(None, description="Whether absence is blocking")
     return_date_tentative: bool | None = Field(
         None, description="Whether return date is tentative"
@@ -192,6 +194,16 @@ class AbsenceListResponse(BaseModel):
 # ============================================================================
 # Bulk Import Schemas
 # ============================================================================
+
+
+class AnticipatedLeaveResponse(BaseModel):
+    interns_processed: int = Field(description="Number of interns processed")
+    absences_created: int = Field(
+        description="Number of anticipated leave placeholders created"
+    )
+    absences_deleted: int = Field(
+        description="Number of existing anticipated leave placeholders deleted"
+    )
 
 
 class AbsenceBulkCreate(BaseModel):
