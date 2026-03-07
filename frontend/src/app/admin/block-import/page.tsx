@@ -38,6 +38,7 @@ import {
   useApplyImport,
   useRollbackImport,
   useDeleteImportBatch,
+  ImportStageError,
 } from '@/hooks/useImportStaging';
 import { ConflictResolutionMode } from '@/types/import';
 import type { StagedAssignmentResponse } from '@/types/import';
@@ -177,6 +178,11 @@ export default function BlockImportPage() {
       setStep('staged');
       toast.success('File staged successfully. Review the preview below.');
     } catch (error) {
+      if (error instanceof ImportStageError && error.code === 'BLOCK_MISMATCH') {
+        toast.error(`Block mismatch detected: ${error.message}`);
+        setStep('upload'); // Stay on upload step to allow fixing
+        return;
+      }
       toast.error(`Staging failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [file, targetBlock, conflictResolution, stageImport, toast]);
