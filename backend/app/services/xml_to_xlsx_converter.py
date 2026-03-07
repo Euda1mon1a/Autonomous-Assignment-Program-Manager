@@ -563,7 +563,7 @@ class XMLToXlsxConverter:
     ) -> None:
         """Align summary headers/formulas/freeze panes with handjam Block 10."""
         # Keep navigation locked to schedule start while exposing summary rows.
-        sheet.freeze_panes = "F50"
+        sheet.freeze_panes = "E8"
 
         summary_headers = [
             "C",
