@@ -51,7 +51,7 @@ class ScheduleRequest(BaseModel):
         description="Academic year for block_assignment expansion (e.g., 2025 for AY 2025-2026)",
     )
     create_draft: bool = Field(
-        default=True,
+        default=False,
         description="If True, stage assignments in a draft instead of committing directly to live assignments.",
     )
 

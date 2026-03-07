@@ -921,7 +921,7 @@ class SyncPreloadService:
                 continue
 
             # Use rotation_codes.py NIGHT_FLOAT_ROTATIONS if imported, otherwise check abbrev
-            from app.services.preload.rotation_codes import canonical_rotation_code
+            from app.services.preload.constants import canonical_rotation_code
 
             code = canonical_rotation_code(
                 self._rotation_label(assignment.rotation_template)

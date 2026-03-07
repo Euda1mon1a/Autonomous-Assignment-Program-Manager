@@ -38,7 +38,11 @@ class AnticipatedLeaveService:
         )
 
         if not interns:
-            return {"interns_processed": 0, "absences_created": 0}
+            return {
+                "interns_processed": 0,
+                "absences_created": 0,
+                "absences_deleted": 0,
+            }
 
         # Clear existing anticipated leave for these interns in this AY
         # This allows safely re-running the generator
