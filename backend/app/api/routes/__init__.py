@@ -113,7 +113,7 @@ api_router.include_router(changelog.router, prefix="/changelog", tags=["changelo
 
 api_router.include_router(people.router, prefix="/people", tags=["people"])
 api_router.include_router(blocks.router, prefix="/blocks", tags=["blocks"])
-api_router.include_router(budget.router, prefix="/budget", tags=["budget"])
+api_router.include_router(budget.router, tags=["budget"])
 api_router.include_router(
     academic_blocks.router, prefix="/academic-blocks", tags=["academic-blocks"]
 )
