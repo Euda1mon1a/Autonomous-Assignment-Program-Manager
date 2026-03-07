@@ -14,9 +14,9 @@ export function AnticipatedLeaveGenerator() {
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
-    // In a real implementation we would prompt the user for the academic year and weeks per intern.
-    // Defaulting to 2025 and 4 weeks for the purpose of the generator.
-    const currentAcademicYear = 2025;
+    // AY starts July 1: if month >= 7, AY = this year; else AY = last year
+    const now = new Date();
+    const currentAcademicYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
 
     setIsGenerating(true);
     setError(null);

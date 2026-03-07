@@ -50,7 +50,7 @@ export interface ScheduleGenerateRequest {
 }
 
 export interface ScheduleGenerateResponse {
-  status: "success" | "partial" | "failed";
+  status: "success" | "partial" | "failed" | "draft";
   message: string;
   totalBlocksAssigned: number;
   totalBlocks: number;

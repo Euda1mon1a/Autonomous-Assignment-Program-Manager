@@ -30,6 +30,9 @@ class AnticipatedLeaveService:
         This provides a balanced structure for the solver before actual
         leave requests arrive.
         """
+        if weeks_per_intern < 1:
+            raise ValueError("weeks_per_intern must be at least 1")
+
         # Find all PGY-1s
         interns = (
             self.db.query(Person)
