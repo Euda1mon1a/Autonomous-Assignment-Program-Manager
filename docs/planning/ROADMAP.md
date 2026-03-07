@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last Updated:** 2026-03-04 (post-#1260 audit)
+> **Last Updated:** 2026-03-07 (overnight batch: change tracking, mypy 5, debt cleanup)
 > **Companion:** `TODO.md` (actionable items), `docs/planning/TECHNICAL_DEBT.md` (debt tracker)
 
 ---
@@ -33,20 +33,26 @@
 - Repo hygiene: 48→25 dirs, 55→10 planning docs (#1255-#1258)
 
 **Infrastructure:**
-- mypy ratchet batches (#1243-#1245)
-- Load-test scripts (k6, locust, CI workflow)
+- mypy ratchet batches 1-5 (#1243-#1245 + branches): 4,007 → ~3,863 errors
+- Load-test scripts (k6, locust, CI workflow) + 3 missing CI scripts added (DEBT-029)
 - DEBT-025 failing tests partially addressed (#1123, #1147)
+- Field-level change tracking utility (`change_tracker.py`) wired into ActivityLog
+- Cache TTL consolidation (DEBT-013)
+- Orphan framework removal (~8.8K LOC: Saga, EventBus, gRPC, Mesh)
+- Playwright port conflict fix (DEBT-030)
+- Route bundle splitting via `next/dynamic` (DEBT-028)
+- PyJWT migration replacing python-jose (CVE-2024-23342)
 
-### Upcoming: Last-Mile Coordinator Rules
+### Last-Mile Coordinator Rules
 
 > **Source**: `docs/archived/planning/TRANSCRIPT_ACTION_ITEMS.md`, `docs/architecture/SM_DETERMINISTIC_PRELOAD.md`
 
-- [ ] Graduated call spacing (exponential decay 1-4 day gaps)
-- [ ] C30/C40 PGY booking rule (auto-translate `C` → `C40`/`C30` by PGY level)
-- [ ] NF continuity touchpoint (`C-N` code, first Thursday PM of NF blocks)
-- [ ] Final Wednesday continuity loss protection (resident side)
-- [ ] HC & CLC template immunity (`is_protected=True`)
-- [ ] SM deterministic preload (DECISION NEEDED: Option A vs B)
+- [x] Graduated call spacing (exponential decay 1-4 day gaps)
+- [x] C30/C40 PGY booking rule (auto-translate `C` → `C40`/`C30` by PGY level)
+- [x] NF continuity touchpoint (`C-N` code, first Thursday PM of NF blocks)
+- [x] Final Wednesday continuity loss protection (resident side)
+- [x] HC & CLC template immunity (`is_protected=True`)
+- [ ] SM deterministic preload (DECISION NEEDED: Option A vs B — **Human TODO**)
 
 ### Upcoming: Frontend Rewiring (Post-Backend Sprint)
 
@@ -125,5 +131,5 @@ Detailed design documents for future features have been archived to `docs/archiv
 | `docs/planning/MCP_PRIORITY_LIST.md` | Daily P0-P4 MCP priorities |
 | `docs/planning/PERFORMANCE_TESTING.md` | Solver benchmarking infrastructure |
 | `docs/planning/STRATEGIC_DECISIONS.md` | 7 product direction decisions |
-| `docs/planning/TECHNICAL_DEBT.md` | 30 items tracked (21 resolved, 9 open) |
+| `docs/planning/TECHNICAL_DEBT.md` | 30 items tracked (23 resolved, 7 open) |
 | `docs/architecture/ANNUAL_WORKBOOK_ARCHITECTURE.md` | 14-sheet master workbook pipeline |
