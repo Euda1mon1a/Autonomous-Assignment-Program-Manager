@@ -144,10 +144,10 @@ export function ActivityFormModal({
     const formData = {
       name: name.trim(),
       code: code.trim().toLowerCase(),
-      displayAbbreviation: displayAbbreviation.trim() || undefined,
+      displayAbbreviation: displayAbbreviation.trim() || (isEditing ? null : undefined),
       activityCategory: activityCategory as ActivityCategory,
-      fontColor: fontColor || undefined,
-      backgroundColor: backgroundColor || undefined,
+      fontColor: fontColor || (isEditing ? null : undefined),
+      backgroundColor: backgroundColor || (isEditing ? null : undefined),
       requiresSupervision,
       isProtected,
       countsTowardClinicalHours,
