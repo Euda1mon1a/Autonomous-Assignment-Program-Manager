@@ -146,8 +146,8 @@ async def train_models(
             try:
                 if model_type == "preference":
                     X, y = await pipeline.extract_preference_training_data(
-                        start_date=date.today() - timedelta(days=lookback),
-                        end_date=date.today(),
+                        start_date=date.today() - timedelta(days=lookback),  # type: ignore[arg-type]
+                        end_date=date.today(),  # type: ignore[arg-type]
                     )
                     if len(X) >= min_samples:
                         predictor = PreferencePredictor()
@@ -170,11 +170,11 @@ async def train_models(
 
                 elif model_type == "conflict":
                     X, y = await pipeline.extract_conflict_training_data(
-                        start_date=date.today() - timedelta(days=lookback),
-                        end_date=date.today(),
+                        start_date=date.today() - timedelta(days=lookback),  # type: ignore[arg-type]
+                        end_date=date.today(),  # type: ignore[arg-type]
                     )
                     if len(X) >= min_samples:
-                        predictor = ConflictPredictor()
+                        predictor = ConflictPredictor()  # type: ignore[assignment]
                         metrics = predictor.train(X, y)
                         model_path = models_dir / "conflict_predictor"
                         predictor.save(model_path)
@@ -194,8 +194,8 @@ async def train_models(
 
                 elif model_type == "workload":
                     X, y = await pipeline.extract_workload_training_data(
-                        start_date=date.today() - timedelta(days=lookback),
-                        end_date=date.today(),
+                        start_date=date.today() - timedelta(days=lookback),  # type: ignore[arg-type]
+                        end_date=date.today(),  # type: ignore[arg-type]
                     )
                     if len(X) >= min_samples // 2:
                         optimizer = WorkloadOptimizer()
@@ -432,7 +432,7 @@ async def predict_conflict(
         predictor = ConflictPredictor()
         predictor.load(model_path)
 
-        prob = predictor.predict_conflict_probability(
+        prob = predictor.predict_conflict_probability(  # type: ignore[call-arg]
             person_data={"id": request.person_id},
             assignment_data={
                 "block_id": request.block_id,

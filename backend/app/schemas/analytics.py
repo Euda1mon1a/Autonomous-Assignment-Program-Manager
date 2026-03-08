@@ -290,28 +290,36 @@ class ComplianceData(BaseModel):
 class ResearchDataExport(BaseModel):
     """Anonymized data export for research and publication."""
 
-    export_id: str = Field(alias="exportId")
-    timestamp: str
-    anonymized: bool
+    export_id: str = Field(default="", alias="exportId")
+    timestamp: str = ""
+    anonymized: bool = True
 
     # Date range
-    start_date: str = Field(alias="startDate")
-    end_date: str = Field(alias="endDate")
+    start_date: str = Field(default="", alias="startDate")
+    end_date: str = Field(default="", alias="endDate")
 
     # Summary statistics
-    total_residents: int = Field(alias="totalResidents")
-    total_blocks: int = Field(alias="totalBlocks")
-    total_assignments: int = Field(alias="totalAssignments")
-    total_rotations: int = Field(alias="totalRotations")
+    total_residents: int = Field(default=0, alias="totalResidents")
+    total_blocks: int = Field(default=0, alias="totalBlocks")
+    total_assignments: int = Field(default=0, alias="totalAssignments")
+    total_rotations: int = Field(default=0, alias="totalRotations")
 
     # Detailed data
-    resident_workload: list[ResidentWorkloadData] = Field(alias="residentWorkload")
-    rotation_coverage: list[RotationCoverageData] = Field(alias="rotationCoverage")
-    compliance_data: ComplianceData = Field(alias="complianceData")
+    resident_workload: list[ResidentWorkloadData] = Field(
+        default_factory=list, alias="residentWorkload"
+    )
+    rotation_coverage: list[RotationCoverageData] = Field(
+        default_factory=list, alias="rotationCoverage"
+    )
+    compliance_data: ComplianceData | None = Field(default=None, alias="complianceData")
 
     # Aggregate metrics
-    fairness_metrics: dict[str, float] = Field(alias="fairnessMetrics")
-    coverage_metrics: dict[str, float] = Field(alias="coverageMetrics")
+    fairness_metrics: dict[str, float] = Field(
+        default_factory=dict, alias="fairnessMetrics"
+    )
+    coverage_metrics: dict[str, float] = Field(
+        default_factory=dict, alias="coverageMetrics"
+    )
 
     # Metadata
     institution_type: str | None = Field(

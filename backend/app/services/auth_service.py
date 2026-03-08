@@ -52,7 +52,7 @@ class AuthService:
 
         # Create access token with jti for blacklist support
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token, jti, expires_at = create_access_token(
+        access_token, jti, expires_at = create_access_token(  # type: ignore[misc]
             data={"sub": str(user.id), "username": user.username},
             expires_delta=access_token_expires,
             return_details=True,

@@ -95,7 +95,7 @@ class TaskScheduler:
             priority=int(priority),
         )
 
-        execution_time = eta or (datetime.now(UTC) + timedelta(seconds=countdown))
+        execution_time = eta or (datetime.now(UTC) + timedelta(seconds=countdown or 0))
         logger.info(
             f"Task {task_name} scheduled for {execution_time.isoformat()} "
             f"(ID: {result.id})"
@@ -223,7 +223,7 @@ class TaskScheduler:
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
-        result = {"tasks": {}, "total_tasks": 0}
+        result: dict[str, Any] = {"tasks": {}, "total_tasks": 0}
 
         for worker, tasks in scheduled.items():
             result["tasks"][worker] = [

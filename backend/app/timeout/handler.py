@@ -9,7 +9,7 @@ import asyncio
 import builtins
 import logging
 import time
-from contextvars import ContextVar
+from contextvars import ContextVar, Token
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +69,8 @@ class TimeoutHandler:
         )
         self.start_time: float | None = None
         self._task: asyncio.Task | None = None
-        self._token_remaining = None
-        self._token_start = None
+        self._token_remaining: Token[float | None] | None = None
+        self._token_start: Token[float | None] | None = None
 
     async def __aenter__(self):
         """Enter async context - start timeout tracking."""

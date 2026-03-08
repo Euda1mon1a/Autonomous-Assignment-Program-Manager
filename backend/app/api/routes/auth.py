@@ -100,7 +100,7 @@ async def login(
     username = payload.get("username")
 
     # Generate refresh token with user data
-    refresh_token, _, _ = create_refresh_token(
+    refresh_token, _, _ = create_refresh_token(  # type: ignore[misc]
         data={"sub": user_id, "username": username},
         return_details=True,
     )
@@ -150,7 +150,7 @@ async def login_json(
     username = payload.get("username")
 
     # Generate refresh token with user data
-    refresh_token, _, _ = create_refresh_token(
+    refresh_token, _, _ = create_refresh_token(  # type: ignore[misc]
         data={"sub": user_id, "username": username},
         return_details=True,
     )
@@ -253,7 +253,7 @@ async def refresh_token(
 
     # Create new access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    new_access_token, _, _ = create_access_token(
+    new_access_token, _, _ = create_access_token(  # type: ignore[misc]
         data={"sub": str(user.id), "username": user.username},
         expires_delta=access_token_expires,
         return_details=True,
@@ -273,7 +273,7 @@ async def refresh_token(
     # Create new refresh token if rotation is enabled
     # The old token was already blacklisted in verify_refresh_token
     if settings.REFRESH_TOKEN_ROTATE:
-        new_refresh_token, _, _ = create_refresh_token(
+        new_refresh_token, _, _ = create_refresh_token(  # type: ignore[misc]
             data={"sub": str(user.id), "username": user.username},
             return_details=True,
         )

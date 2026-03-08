@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     CACHE_SCHEDULE_TTL: int = 1800  # Schedule data cache TTL (30 minutes)
     CACHE_ROTATION_TTL: int = 86400  # Rotation template cache TTL (24 hours)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         """
@@ -98,7 +98,7 @@ class Settings(BaseSettings):
         """
         return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def redis_url_with_password(self) -> str:
         """
@@ -530,7 +530,7 @@ def get_settings() -> Settings:
     return Settings()
 
 
-def get_resilience_config() -> "ResilienceConfig":
+def get_resilience_config() -> "ResilienceConfig":  # type: ignore[name-defined]
     """Get ResilienceConfig from settings."""
     from app.resilience.defense_in_depth import DefenseLevel
     from app.resilience.service import ResilienceConfig
@@ -549,7 +549,7 @@ def get_resilience_config() -> "ResilienceConfig":
     )
 
 
-def get_shadow_config() -> "ShadowConfig":
+def get_shadow_config() -> "ShadowConfig":  # type: ignore[name-defined]
     """Get ShadowConfig from settings."""
     from app.shadow.traffic import DiffSeverity, ShadowConfig
 

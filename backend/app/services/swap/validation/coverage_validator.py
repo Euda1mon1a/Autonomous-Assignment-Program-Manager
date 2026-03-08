@@ -188,7 +188,7 @@ class CoverageValidator:
 
         metrics["rotation_counts"] = {k: len(v) for k, v in rotation_counts.items()}
 
-        metrics["total_faculty"] = len(set(a.person_id for a in assignments))
+        metrics["total_faculty"] = len(set(a.person_id for a in assignments))  # type: ignore[assignment]
 
         return {
             "gaps": gaps,

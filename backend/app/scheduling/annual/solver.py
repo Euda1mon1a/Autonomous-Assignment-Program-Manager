@@ -260,7 +260,7 @@ def solve(
     leave_detail: list[tuple[LeaveRequest, cp_model.IntVar]] = []
 
     for i, lr in enumerate(context.leave_requests):
-        r_idx = context.resident_idx.get(lr.person_id)
+        r_idx = context.resident_idx.get(lr.person_id)  # type: ignore[assignment]
         if r_idx is None:
             continue
 
@@ -483,7 +483,7 @@ def print_solution_grid(result: SolverResult, context: AnnualContext) -> str:
 
         row = f"{resident.name:>14}  "
         for block in context.block_numbers:
-            a = by_resident.get(r_idx, {}).get(block)
+            a = by_resident.get(r_idx, {}).get(block)  # type: ignore[assignment]
             if a:
                 # Abbreviate rotation names
                 abbr = a.rotation_name[:6]

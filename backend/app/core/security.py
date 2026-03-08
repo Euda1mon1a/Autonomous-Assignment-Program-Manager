@@ -23,7 +23,7 @@ settings = get_settings()
 try:
     from app.core.observability import metrics as obs_metrics
 except ImportError:
-    obs_metrics = None
+    obs_metrics = None  # type: ignore[assignment]
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

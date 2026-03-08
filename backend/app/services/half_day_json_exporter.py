@@ -30,7 +30,7 @@ logger = get_logger(__name__)
 class HalfDayJSONExporter(HalfDayXMLExporter):
     """Export schedule from half_day_assignments table to JSON dict."""
 
-    def export(
+    def export(  # type: ignore[override]
         self,
         block_start: date,
         block_end: date,
@@ -103,7 +103,7 @@ class HalfDayJSONExporter(HalfDayXMLExporter):
             data["call"] = {
                 "nights": [
                     {
-                        "date": row.get("date").isoformat()
+                        "date": row.get("date").isoformat()  # type: ignore[union-attr]
                         if isinstance(row.get("date"), date)
                         else row.get("date"),
                         "staff": row.get("staff", ""),

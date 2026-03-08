@@ -9,6 +9,7 @@ import statistics
 import uuid
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, and_
@@ -124,14 +125,14 @@ async def get_current_metrics(
 
         # Use analytics engine to get comprehensive data
         engine = AnalyticsEngine(db)
-        analysis = engine.analyze_schedule(
+        analysis = engine.analyze_schedule(  # type: ignore[attr-defined]
             start_date=latest_run.start_date, end_date=latest_run.end_date
         )
 
         # Convert to response schema
         return ScheduleVersionMetrics(
-            versionId=f"run-{latest_run.id}",
-            scheduleRunId=latest_run.id,
+            version_id=f"run-{latest_run.id}",
+            schedule_run_id=latest_run.id,
             timestamp=datetime.now(UTC).isoformat() + "Z",
             period={
                 "start_date": latest_run.start_date.isoformat(),
@@ -140,25 +141,25 @@ async def get_current_metrics(
                     (latest_run.end_date - latest_run.start_date).days + 1
                 ),
             },
-            fairnessIndex=_create_metric_value(
+            fairness_index=_create_metric_value(
                 "Fairness Index", analysis["metrics"]["fairness"]
             ),
-            coverageRate=_create_metric_value(
+            coverage_rate=_create_metric_value(
                 "Coverage Rate", analysis["metrics"]["coverage"], unit="%"
             ),
-            acgmeCompliance=_create_metric_value(
+            acgme_compliance=_create_metric_value(
                 "ACGME Compliance", analysis["metrics"]["compliance"], unit="%"
             ),
-            preferenceSatisfaction=MetricValue(
+            preference_satisfaction=MetricValue(
                 name="Preference Satisfaction",
                 value=0.0,  # Placeholder - would calculate from preferences
                 unit="%",
                 status="good",
                 description="Preference satisfaction not yet implemented",
             ),
-            totalBlocks=analysis["summary"]["total_blocks"],
-            totalAssignments=analysis["summary"]["total_assignments"],
-            uniqueResidents=analysis["summary"]["unique_people"],
+            total_blocks=analysis["summary"]["total_blocks"],
+            total_assignments=analysis["summary"]["total_assignments"],
+            unique_residents=analysis["summary"]["unique_people"],
             violations={
                 "total": analysis["violations"]["total"],
                 "overrides_acknowledged": analysis["violations"][
@@ -166,7 +167,7 @@ async def get_current_metrics(
                 ],
                 "unacknowledged": analysis["violations"]["unacknowledged"],
             },
-            workloadDistribution=analysis["workload"],
+            workload_distribution=analysis["workload"],
         )
 
     except HTTPException:
@@ -232,7 +233,7 @@ async def get_metrics_history(
 
         for run in runs:
             try:
-                analysis = engine.analyze_schedule(
+                analysis = engine.analyze_schedule(  # type: ignore[attr-defined]
                     start_date=run.start_date, end_date=run.end_date
                 )
 
@@ -301,12 +302,12 @@ async def get_metrics_history(
 
         return [
             MetricTimeSeries(
-                metricName=metric_name,
-                startDate=start_date.isoformat(),
-                endDate=end_date.isoformat(),
-                dataPoints=data_points,
+                metric_name=metric_name,
+                start_date=start_date.isoformat(),
+                end_date=end_date.isoformat(),
+                data_points=data_points,
                 statistics=stats,
-                trendDirection=trend,
+                trend_direction=trend,
             )
         ]
 
@@ -364,7 +365,7 @@ async def get_fairness_trend(
 
         for run in runs:
             try:
-                analysis = engine.analyze_schedule(
+                analysis = engine.analyze_schedule(  # type: ignore[attr-defined]
                     start_date=run.start_date, end_date=run.end_date
                 )
 
@@ -375,9 +376,9 @@ async def get_fairness_trend(
                 data_points.append(
                     FairnessTrendDataPoint(
                         date=run.start_date.isoformat(),
-                        fairnessIndex=fairness_index,
-                        giniCoefficient=round(gini, 3),
-                        residentsCount=analysis["summary"]["unique_people"],
+                        fairness_index=fairness_index,
+                        gini_coefficient=round(gini, 3),
+                        residents_count=analysis["summary"]["unique_people"],
                     )
                 )
                 fairness_values.append(fairness_index)
@@ -443,14 +444,14 @@ async def get_fairness_trend(
             )
 
         return FairnessTrendReport(
-            periodMonths=months,
-            startDate=start_date.isoformat(),
-            endDate=end_date.isoformat(),
-            dataPoints=data_points,
-            averageFairness=round(avg_fairness, 3),
+            period_months=months,
+            start_date=start_date.isoformat(),
+            end_date=end_date.isoformat(),
+            data_points=data_points,
+            average_fairness=round(avg_fairness, 3),
             trend=trend,
-            mostUnfairPeriod=most_unfair,
-            mostFairPeriod=most_fair,
+            most_unfair_period=most_unfair,
+            most_fair_period=most_fair,
             recommendations=recommendations,
         )
 
@@ -501,8 +502,8 @@ async def compare_versions(
             )
 
         # Analyze both versions
-        analysis_a = engine.analyze_schedule(run_a.start_date, run_a.end_date)
-        analysis_b = engine.analyze_schedule(run_b.start_date, run_b.end_date)
+        analysis_a = engine.analyze_schedule(run_a.start_date, run_a.end_date)  # type: ignore[attr-defined]
+        analysis_b = engine.analyze_schedule(run_b.start_date, run_b.end_date)  # type: ignore[attr-defined]
 
         # Compare metrics
         metrics_to_compare = [
@@ -526,11 +527,11 @@ async def compare_versions(
 
             metric_comparisons.append(
                 VersionMetricComparison(
-                    metricName=metric_name,
-                    versionAValue=round(val_a, 2),
-                    versionBValue=round(val_b, 2),
+                    metric_name=metric_name,
+                    version_a_value=round(val_a, 2),
+                    version_b_value=round(val_b, 2),
                     difference=round(diff, 2),
-                    percentChange=round(pct_change, 2),
+                    percent_change=round(pct_change, 2),
                     improvement=improved,
                 )
             )
@@ -542,11 +543,11 @@ async def compare_versions(
 
         metric_comparisons.append(
             VersionMetricComparison(
-                metricName="Total Violations",
-                versionAValue=float(violations_a),
-                versionBValue=float(violations_b),
+                metric_name="Total Violations",
+                version_a_value=float(violations_a),
+                version_b_value=float(violations_b),
                 difference=float(violations_diff),
-                percentChange=round(
+                percent_change=round(
                     (violations_diff / violations_a * 100) if violations_a != 0 else 0,
                     2,
                 ),
@@ -591,14 +592,14 @@ async def compare_versions(
             )
 
         return VersionComparison(
-            versionA=version_a,
-            versionB=version_b,
+            version_a=version_a,
+            version_b=version_b,
             timestamp=datetime.now(UTC).isoformat() + "Z",
             metrics=metric_comparisons,
-            overallImprovement=overall_improvement,
-            improvementScore=round(improvement_score, 2),
-            assignmentsChanged=assignments_changed,
-            residentsAffected=residents_affected,
+            overall_improvement=overall_improvement,
+            improvement_score=round(improvement_score, 2),
+            assignments_changed=assignments_changed,
+            residents_affected=residents_affected,
             summary=summary,
             recommendations=recommendations,
         )
@@ -647,7 +648,7 @@ async def what_if_analysis(
             )
 
         engine = AnalyticsEngine(db)
-        current_analysis = engine.analyze_schedule(
+        current_analysis = engine.analyze_schedule(  # type: ignore[attr-defined]
             latest_run.start_date, latest_run.end_date
         )
 
@@ -708,8 +709,8 @@ async def what_if_analysis(
                         WhatIfViolation(
                             type="WORKLOAD_EXCESS",
                             severity="warning",
-                            personId=change.person_id,
-                            personName=person.name,
+                            person_id=change.person_id,
+                            person_name=person.name,
                             message=f"Would exceed target workload by {new_assignments - target} blocks",
                         )
                     )
@@ -726,12 +727,12 @@ async def what_if_analysis(
 
         metric_impacts.append(
             WhatIfMetricImpact(
-                metricName="Fairness Index",
-                currentValue=current_analysis["metrics"]["fairness"]["value"],
-                predictedValue=current_analysis["metrics"]["fairness"]["value"]
+                metric_name="Fairness Index",
+                current_value=current_analysis["metrics"]["fairness"]["value"],
+                predicted_value=current_analysis["metrics"]["fairness"]["value"]
                 - (0.02 if fairness_impact == "negative" else 0),
                 change=-0.02 if fairness_impact == "negative" else 0,
-                impactSeverity=fairness_impact,
+                impact_severity=fairness_impact,
                 confidence=0.7,
             )
         )
@@ -752,15 +753,15 @@ async def what_if_analysis(
 
         return WhatIfResult(
             timestamp=datetime.now(UTC).isoformat() + "Z",
-            changesAnalyzed=len(proposed_changes),
-            metricImpacts=metric_impacts,
-            newViolations=new_violations,
-            resolvedViolations=[],  # Would need to check if changes fix existing violations
-            overallImpact=overall_impact,
+            changes_analyzed=len(proposed_changes),
+            metric_impacts=metric_impacts,
+            new_violations=new_violations,
+            resolved_violations=[],  # Would need to check if changes fix existing violations
+            overall_impact=overall_impact,
             recommendation=recommendation,
-            safeToApply=safe_to_apply,
-            affectedResidents=list(affected_residents),
-            workloadChanges=workload_changes,
+            safe_to_apply=safe_to_apply,
+            affected_residents=list(affected_residents),
+            workload_changes=workload_changes,
         )
 
     except HTTPException:
@@ -865,20 +866,20 @@ async def export_for_research(
 
             resident_workload.append(
                 ResidentWorkloadData(
-                    residentId=resident_id,
-                    pgyLevel=resident.pgy_level or 1,
-                    totalBlocks=len(person_assignments),
-                    targetBlocks=target,
-                    utilizationPercent=round(utilization, 2),
-                    clinicalBlocks=clinical_blocks,
-                    nonClinicalBlocks=non_clinical_blocks,
-                    maxConsecutiveDays=duty_stats["max_consecutive_days"],
-                    averageRestDays=duty_stats["average_rest_days"],
+                    resident_id=resident_id,
+                    pgy_level=resident.pgy_level or 1,
+                    total_blocks=len(person_assignments),
+                    target_blocks=target,
+                    utilization_percent=round(utilization, 2),
+                    clinical_blocks=clinical_blocks,
+                    non_clinical_blocks=non_clinical_blocks,
+                    max_consecutive_days=duty_stats["max_consecutive_days"],
+                    average_rest_days=duty_stats["average_rest_days"],
                 )
             )
 
         # Build rotation coverage data
-        rotation_counts = defaultdict(
+        rotation_counts: dict[str, dict[str, Any]] = defaultdict(
             lambda: {"assignments": 0, "residents": set(), "rotation_type": "unknown"}
         )
         for assignment in assignments:
@@ -897,11 +898,11 @@ async def export_for_research(
             )
             rotation_coverage.append(
                 RotationCoverageData(
-                    rotationId=rotation_id_display,
-                    rotationType=data["rotation_type"],
-                    totalAssignments=data["assignments"],
-                    uniqueResidents=len(data["residents"]),
-                    averageDuration=4.0,  # Placeholder
+                    rotation_id=rotation_id_display,
+                    rotation_type=data["rotation_type"],
+                    total_assignments=data["assignments"],
+                    unique_residents=len(data["residents"]),
+                    average_duration=4.0,  # Placeholder
                 )
             )
 
@@ -927,14 +928,14 @@ async def export_for_research(
         )
 
         compliance_data = ComplianceData(
-            totalChecks=total_checks,
-            totalViolations=total_violations,
-            complianceRate=round(compliance_rate, 2),
-            violationsByType={
+            total_checks=total_checks,
+            total_violations=total_violations,
+            compliance_rate=round(compliance_rate, 2),
+            violations_by_type={
                 "unspecified": total_violations
             },  # Would need more detail
-            violationsBySeverity={"high": total_violations},  # Would need more detail
-            overrideCount=total_overrides,
+            violations_by_severity={"high": total_violations},  # Would need more detail
+            override_count=total_overrides,
         )
 
         # Calculate aggregate metrics
@@ -963,22 +964,22 @@ async def export_for_research(
         }
 
         return ResearchDataExport(
-            exportId=str(uuid.uuid4()),
+            export_id=str(uuid.uuid4()),
             timestamp=datetime.now(UTC).isoformat() + "Z",
             anonymized=anonymize,
-            startDate=start_date.date().isoformat(),
-            endDate=end_date.date().isoformat(),
-            totalResidents=len(residents),
-            totalBlocks=len(blocks),
-            totalAssignments=len(assignments),
-            totalRotations=len(rotation_coverage),
-            residentWorkload=resident_workload,
-            rotationCoverage=rotation_coverage,
-            complianceData=compliance_data,
-            fairnessMetrics=fairness_metrics,
-            coverageMetrics=coverage_metrics,
-            institutionType="Military Medical Facility" if not anonymize else None,
-            programSize="medium" if len(residents) < 50 else "large",
+            start_date=start_date.date().isoformat(),
+            end_date=end_date.date().isoformat(),
+            total_residents=len(residents),
+            total_blocks=len(blocks),
+            total_assignments=len(assignments),
+            total_rotations=len(rotation_coverage),
+            resident_workload=resident_workload,
+            rotation_coverage=rotation_coverage,
+            compliance_data=compliance_data,
+            fairness_metrics=fairness_metrics,
+            coverage_metrics=coverage_metrics,
+            institution_type="Military Medical Facility" if not anonymize else None,
+            program_size="medium" if len(residents) < 50 else "large",
             speciality="Emergency Medicine" if not anonymize else None,
             notes="Exported for research analysis",
         )

@@ -165,12 +165,12 @@ class BounceHandler:
         return {
             "total_bounces": len(self._events),
             "suppressed_recipients": len(self._suppression_list),
-            "hard_bounces": self.get_bounce_count(None, BounceType.HARD),
-            "soft_bounces": self.get_bounce_count(None, BounceType.SOFT),
-            "complaints": self.get_bounce_count(None, BounceType.COMPLAINT),
+            "hard_bounces": self.get_bounce_count(None, BounceType.HARD),  # type: ignore[arg-type]
+            "soft_bounces": self.get_bounce_count(None, BounceType.SOFT),  # type: ignore[arg-type]
+            "complaints": self.get_bounce_count(None, BounceType.COMPLAINT),  # type: ignore[arg-type]
         }
 
-    def get_bounce_count(
+    def get_bounce_count(  # type: ignore[no-redef]
         self, recipient: str | None, bounce_type: BounceType | None
     ) -> int:
         """Get bounce count with optional filters."""

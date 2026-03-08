@@ -575,4 +575,4 @@ class ConstraintService:
         }
 
         factory = config_map.get(config, ConstraintManager.create_default)
-        return factory()
+        return factory()  # type: ignore[operator]

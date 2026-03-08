@@ -431,7 +431,7 @@ class TensegritySolver:
                 )
 
         # Sort by time
-        schedule.sort(key=lambda x: x["scheduled_time"])
+        schedule.sort(key=lambda x: x["scheduled_time"])  # type: ignore[arg-type,return-value]
         return schedule
 
     def visualize(self, solution: dict[str, float]) -> str:

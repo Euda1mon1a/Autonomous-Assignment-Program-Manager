@@ -855,7 +855,7 @@ def ml_score_node(state: ScheduleGraphState, config: RunnableConfig) -> dict:
         # Resolve model paths from settings or env
         models_dir = Path(
             getattr(settings, "ML_MODELS_DIR", None)
-            or os.getenv("ML_MODELS_DIR", "models")
+            or os.getenv("ML_MODELS_DIR", "models")  # type: ignore[arg-type]
         )
         pref_path = (
             getattr(settings, "ML_PREFERENCE_MODEL_PATH", None)

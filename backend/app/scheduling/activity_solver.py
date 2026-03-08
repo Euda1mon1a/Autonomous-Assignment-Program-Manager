@@ -22,6 +22,8 @@ Constraints:
     7. LEC/ADV are expected to be preloaded (locked) and are not assigned here
 """
 
+from __future__ import annotations
+
 import json
 import os
 import time
@@ -781,7 +783,7 @@ class CPSATActivitySolver:
         fallback_allowed = sorted(
             assignable_ids,
             key=lambda act_id: (
-                activity_by_id.get(act_id).code if act_id in activity_by_id else ""
+                activity_by_id[act_id].code if act_id in activity_by_id else ""
             ),
         )
 
@@ -935,7 +937,7 @@ class CPSATActivitySolver:
                     if person_type != "faculty":
                         template = templates_by_id.get(template_id)
                         pgy_level = slot_meta[s_i].get("pgy_level") or 0
-                        allow_cv = (
+                        allow_cv = bool(
                             cv_activity
                             and cv_activity.id in assignable_ids
                             and template
@@ -956,9 +958,7 @@ class CPSATActivitySolver:
 
             for act_id in allowed:
                 act_code = (
-                    activity_by_id.get(act_id).code
-                    if act_id in activity_by_id
-                    else "act"
+                    activity_by_id[act_id].code if act_id in activity_by_id else "act"
                 )
                 safe_code = act_code.replace("-", "_")
                 a[s_i, act_id] = model.NewBoolVar(f"a_{s_i}_{safe_code}")
@@ -1000,7 +1000,7 @@ class CPSATActivitySolver:
                     and slot_meta[s_i]["date"].weekday() in OIC_CLINIC_AVOID_DAYS
                 ):
                     for act_id in allowed:
-                        activity = activity_by_id.get(act_id)
+                        activity = activity_by_id.get(act_id)  # type: ignore[assignment]
                         if not activity or activity.activity_category != "clinical":
                             continue
                         if activity.provides_supervision:
@@ -1042,7 +1042,7 @@ class CPSATActivitySolver:
             capacity_ids: list[UUID] = []
             sm_ids: list[UUID] = []
             for act_id in allowed:
-                activity = activity_by_id.get(act_id)
+                activity = activity_by_id.get(act_id)  # type: ignore[assignment]
                 if not activity:
                     continue
                 if activity_counts_toward_fmc_capacity_for_template(activity, template):
@@ -1147,7 +1147,7 @@ class CPSATActivitySolver:
             day_of_week = locked.date.weekday()
             person_type = locked.person.type if locked.person else None
             slot_key = (locked.date, locked.time_of_day)
-            activity = activity_by_id.get(locked.activity_id)
+            activity = activity_by_id.get(locked.activity_id)  # type: ignore[assignment]
             is_cv = self._is_cv_activity(activity)
             is_clinic = self._is_fmc_clinic_activity(activity)
             pgy_level = (
@@ -1448,13 +1448,13 @@ class CPSATActivitySolver:
         faculty_clinic_overages: list[Any] = []
         faculty_clinic_floor_constraints = 0
         if faculty_slots and clinic_activity:
-            faculty_by_id: dict[UUID, Person] = {}
+            faculty_by_id = {}
             for s_i in faculty_slots:
                 slot_person = slots[s_i].person
                 if slot_person:
                     faculty_by_id[slot_person.id] = slot_person
 
-            faculty_week_slots: dict[tuple[UUID, int], list[int]] = defaultdict(list)
+            faculty_week_slots = defaultdict(list)
             for s_i in faculty_slots:
                 meta = slot_meta[s_i]
                 faculty_week_slots[(meta["person_id"], meta["week"])].append(s_i)
@@ -1609,13 +1609,13 @@ class CPSATActivitySolver:
         faculty_academic_equity_ranges: list[Any] = []
         faculty_supervision_equity_ranges: list[Any] = []
         if faculty_slots:
-            faculty_by_id: dict[UUID, Person] = {}
+            faculty_by_id = {}
             for s_i in faculty_slots:
                 slot_person = slots[s_i].person
                 if slot_person:
                     faculty_by_id[slot_person.id] = slot_person
 
-            faculty_week_slots: dict[tuple[UUID, int], list[int]] = defaultdict(list)
+            faculty_week_slots = defaultdict(list)
             for s_i in faculty_slots:
                 meta = slot_meta[s_i]
                 faculty_week_slots[(meta["person_id"], meta["week"])].append(s_i)
@@ -1756,12 +1756,12 @@ class CPSATActivitySolver:
                 counts = []
                 max_possible = 0
                 for resident_id in resident_by_id:
-                    slot_indices = resident_week_slots.get((resident_id, week))
-                    if not slot_indices:
+                    res_slot_indices = resident_week_slots.get((resident_id, week))
+                    if not res_slot_indices:
                         continue
                     vars_for_activity = [
                         a[s_i, act_id]
-                        for s_i in slot_indices
+                        for s_i in res_slot_indices
                         for act_id in resident_clinic_equity_ids
                         if act_id in slot_allowed[s_i]
                     ]
@@ -1770,7 +1770,7 @@ class CPSATActivitySolver:
                     )
                     if not vars_for_activity and locked_count == 0:
                         continue
-                    max_slots = len(slot_indices)
+                    max_slots = len(res_slot_indices)
                     max_possible = max(max_possible, locked_count + max_slots)
                     count_var = model.NewIntVar(
                         locked_count,
@@ -1842,8 +1842,8 @@ class CPSATActivitySolver:
                 defaultdict(lambda: {"clinic": [], "cv": []})
             )
             for s_i, meta in slot_meta.items():
-                week = meta.get("week")
-                if week is None:
+                cv_week = meta.get("week")
+                if cv_week is None:
                     continue
                 day_of_week = meta["date"].weekday()
                 person_type = meta.get("person_type")
@@ -1854,35 +1854,36 @@ class CPSATActivitySolver:
                     pgy_level = meta.get("pgy_level") or 0
                     if pgy_level != 3:
                         continue
-                    template = templates_by_id.get(meta.get("template_id"))
+                    _cv_tid = meta.get("template_id")
+                    template = (
+                        templates_by_id.get(_cv_tid) if _cv_tid is not None else None
+                    )
                     if not template or not template_is_fmc_clinic(template):
                         continue
 
-                allowed = slot_allowed.get(s_i, [])
-                if clinic_id in allowed and (s_i, clinic_id) in a:
-                    cv_terms_by_week[week]["clinic"].append(a[s_i, clinic_id])
-                    cv_terms_by_week_day[(week, day_of_week)]["clinic"].append(
+                slot_acts = slot_allowed.get(s_i, [])
+                if clinic_id in slot_acts and (s_i, clinic_id) in a:
+                    cv_terms_by_week[cv_week]["clinic"].append(a[s_i, clinic_id])
+                    cv_terms_by_week_day[(cv_week, day_of_week)]["clinic"].append(
                         a[s_i, clinic_id]
                     )
-                if cv_id in allowed and (s_i, cv_id) in a:
-                    cv_terms_by_week[week]["cv"].append(a[s_i, cv_id])
-                    cv_terms_by_week_day[(week, day_of_week)]["cv"].append(
+                if cv_id in slot_acts and (s_i, cv_id) in a:
+                    cv_terms_by_week[cv_week]["cv"].append(a[s_i, cv_id])
+                    cv_terms_by_week_day[(cv_week, day_of_week)]["cv"].append(
                         a[s_i, cv_id]
                     )
 
             for week, terms in cv_terms_by_week.items():
-                locked_counts = locked_cv_target_counts.get(
-                    week, {"clinic": 0, "cv": 0}
-                )
+                cv_locked = locked_cv_target_counts.get(week, {"clinic": 0, "cv": 0})
                 if (
                     not terms["clinic"]
                     and not terms["cv"]
-                    and not locked_counts["clinic"]
-                    and not locked_counts["cv"]
+                    and not cv_locked["clinic"]
+                    and not cv_locked["cv"]
                 ):
                     continue
-                locked_clinic = locked_counts["clinic"]
-                locked_cv = locked_counts["cv"]
+                locked_clinic = cv_locked["clinic"]
+                locked_cv = cv_locked["cv"]
                 total_clinic = (
                     sum(terms["clinic"]) + sum(terms["cv"]) + locked_clinic + locked_cv
                 )
@@ -1902,18 +1903,18 @@ class CPSATActivitySolver:
                 cv_target_shortfalls.append(shortfall)
 
             for (week, day_of_week), terms in cv_terms_by_week_day.items():
-                locked_counts = locked_cv_target_counts_by_day.get(
+                cv_day_locked = locked_cv_target_counts_by_day.get(
                     (week, day_of_week), {"clinic": 0, "cv": 0}
                 )
                 if (
                     not terms["clinic"]
                     and not terms["cv"]
-                    and not locked_counts["clinic"]
-                    and not locked_counts["cv"]
+                    and not cv_day_locked["clinic"]
+                    and not cv_day_locked["cv"]
                 ):
                     continue
-                locked_clinic = locked_counts["clinic"]
-                locked_cv = locked_counts["cv"]
+                locked_clinic = cv_day_locked["clinic"]
+                locked_cv = cv_day_locked["cv"]
                 total_clinic = (
                     sum(terms["clinic"]) + sum(terms["cv"]) + locked_clinic + locked_cv
                 )
@@ -1950,11 +1951,11 @@ class CPSATActivitySolver:
             resident_slots_by_key: dict[tuple[date, str], list[int]] = defaultdict(list)
             faculty_slots_by_key: dict[tuple[date, str], list[int]] = defaultdict(list)
             for s_i, meta in slot_meta.items():
-                key = (meta["date"], meta["time_of_day"])
+                at_key = (meta["date"], meta["time_of_day"])
                 if meta.get("person_type") == "faculty":
-                    faculty_slots_by_key[key].append(s_i)
+                    faculty_slots_by_key[at_key].append(s_i)
                 else:
-                    resident_slots_by_key[key].append(s_i)
+                    resident_slots_by_key[at_key].append(s_i)
 
             all_keys = set(resident_slots_by_key.keys()) | set(
                 baseline_resident_demand.keys()
@@ -2008,12 +2009,12 @@ class CPSATActivitySolver:
                 # Soft constraint: allow shortfall with penalty
                 max_demand = baseline_demand
                 for s_i in resident_slots_by_key.get(slot_key, []):
-                    allowed = set(slot_allowed[s_i])
-                    if not allowed.intersection(supervision_required_ids):
+                    allowed_set = set(slot_allowed[s_i])
+                    if not allowed_set.intersection(supervision_required_ids):
                         continue
                     pgy_level = slot_meta[s_i].get("pgy_level") or 2
                     max_demand += 2 if pgy_level == 1 else 1
-                    if allowed.intersection(proc_vas_activity_ids):
+                    if allowed_set.intersection(proc_vas_activity_ids):
                         max_demand += PROC_VAS_EXTRA_UNITS
                 shortfall = model.NewIntVar(
                     0,
@@ -2044,7 +2045,7 @@ class CPSATActivitySolver:
             )
 
             for s_i, meta in slot_meta.items():
-                key = (meta["date"], meta["time_of_day"])
+                sm_key = (meta["date"], meta["time_of_day"])
                 if meta.get("person_type") == "faculty":
                     slot_person = slots[s_i].person
                     if (
@@ -2052,7 +2053,7 @@ class CPSATActivitySolver:
                         and self._is_sports_medicine_faculty(slot_person)
                         and sm_clinic_activity.id in slot_allowed[s_i]
                     ):
-                        sm_faculty_vars_by_slot[key].append(
+                        sm_faculty_vars_by_slot[sm_key].append(
                             a[s_i, sm_clinic_activity.id]
                         )
                 else:
@@ -2061,7 +2062,7 @@ class CPSATActivitySolver:
                         and sm_clinic_activity.id in slot_allowed[s_i]
                     ):
                         # Only SM clinic activity counts toward SM alignment.
-                        sm_resident_vars_by_slot[key].append(
+                        sm_resident_vars_by_slot[sm_key].append(
                             a[s_i, sm_clinic_activity.id]
                         )
 
@@ -2140,15 +2141,15 @@ class CPSATActivitySolver:
             )
 
             for s_i, meta in slot_meta.items():
-                key = (meta["date"], meta["time_of_day"])
+                vas_key = (meta["date"], meta["time_of_day"])
                 if meta.get("person_type") == "faculty":
                     for act_id in slot_allowed[s_i]:
                         if act_id in vas_activity_ids:
-                            vas_faculty_vars_by_slot[key].append(a[s_i, act_id])
+                            vas_faculty_vars_by_slot[vas_key].append(a[s_i, act_id])
                 else:
                     for act_id in slot_allowed[s_i]:
                         if act_id in vas_activity_ids:
-                            vas_resident_vars_by_slot[key].append(a[s_i, act_id])
+                            vas_resident_vars_by_slot[vas_key].append(a[s_i, act_id])
 
             all_vas_keys = set(vas_resident_vars_by_slot.keys()) | set(
                 vas_faculty_vars_by_slot.keys()
@@ -2222,8 +2223,8 @@ class CPSATActivitySolver:
         # Group slots by (date, time_of_day)
         slot_groups: dict[tuple[date, str], list[int]] = defaultdict(list)
         for s_i, slot in enumerate(slots):
-            key = (slot.date, slot.time_of_day)
-            slot_groups[key].append(s_i)
+            cap_key = (slot.date, slot.time_of_day)
+            slot_groups[cap_key].append(s_i)
 
             # Baseline occupancy from locked/preloaded slots not in solver
         slot_ids = {slot.id for slot in slots}
@@ -2294,11 +2295,13 @@ class CPSATActivitySolver:
                 forced_non_sm = 0
                 forced_sm = False
                 for s_i in slot_indices:
-                    allowed = set(slot_allowed[s_i])
-                    if not allowed:
+                    allowed_set = set(slot_allowed[s_i])
+                    if not allowed_set:
                         continue
                     capacity_allowed = set(slot_capacity_ids[s_i])
-                    if not capacity_allowed or not allowed.issubset(capacity_allowed):
+                    if not capacity_allowed or not allowed_set.issubset(
+                        capacity_allowed
+                    ):
                         continue
                     sm_allowed = set(slot_sm_capacity_ids[s_i])
                     if capacity_allowed and capacity_allowed.issubset(sm_allowed):
@@ -2619,7 +2622,9 @@ class CPSATActivitySolver:
             clinic_act_ids = [a.id for a in [c_act, ci_act] if a]
 
             pgy12_residents = [
-                r for r in residents if getattr(r, "pgy_level", 0) in (1, 2)
+                r
+                for r in residents  # type: ignore[name-defined]
+                if getattr(r, "pgy_level", 0) in (1, 2)
             ]
 
             final_wed_penalties = []
@@ -2628,15 +2633,15 @@ class CPSATActivitySolver:
                 wed_pm_key = (r.id, final_wed_date, "PM")
 
                 # Check if this slot exists in our candidate space
-                if wed_pm_key not in slots_by_person_date_time:
+                if wed_pm_key not in slots_by_person_date_time:  # type: ignore[name-defined]
                     continue
 
-                slot = slots_by_person_date_time[wed_pm_key]
+                slot = slots_by_person_date_time[wed_pm_key]  # type: ignore[name-defined]
 
                 # Gather variables for C or C-I in this slot
                 clinic_vars = []
                 for act_id in clinic_act_ids:
-                    var = self._variables.get((slot.id, act_id))
+                    var = self._variables.get((slot.id, act_id))  # type: ignore[attr-defined]
                     if var is not None:
                         clinic_vars.append(var)
 
@@ -2723,7 +2728,7 @@ class CPSATActivitySolver:
             clamped_by_template.sort(key=lambda entry: entry["count"], reverse=True)
             clamped_by_activity = []
             for activity_id, data in clamped_stats["by_activity"].items():
-                activity = activity_by_id.get(activity_id)
+                activity = activity_by_id.get(activity_id)  # type: ignore[assignment]
                 clamped_by_activity.append(
                     {
                         "activity_id": str(activity_id),
@@ -2815,8 +2820,9 @@ class CPSATActivitySolver:
         for s_i, slot in enumerate(slots):
             for act_id in slot_allowed[s_i]:
                 if solver.Value(a[s_i, act_id]) == 1:
-                    activity = activity_by_id.get(act_id)
-                    template = templates_by_id.get(slot_meta[s_i].get("template_id"))
+                    activity = activity_by_id.get(act_id)  # type: ignore[assignment]
+                    _tid = slot_meta[s_i].get("template_id")
+                    template = templates_by_id.get(_tid) if _tid is not None else None
                     slot.activity_id = act_id
                     slot.counts_toward_fmc_capacity = (
                         activity_counts_toward_fmc_capacity_for_template(
@@ -3576,7 +3582,7 @@ class CPSATActivitySolver:
         self,
         start_date: date,
         end_date: date,
-        person_ids: set[UUID],
+        person_ids: set[UUID] | None,
     ) -> list[HalfDayAssignment]:
         """Load locked (preload/manual) slots for baseline counts."""
         return self._load_slots(

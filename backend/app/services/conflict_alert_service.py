@@ -64,7 +64,7 @@ class ResolutionOption:
     details: dict[str, Any]
     impact: ImpactEstimate | None = None
     status: ResolutionStatus = ResolutionStatus.PROPOSED
-    created_at: datetime = None
+    created_at: datetime | None = None
     applied_at: datetime | None = None
     applied_by_id: UUID | None = None
     error_message: str | None = None

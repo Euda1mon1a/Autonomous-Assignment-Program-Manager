@@ -495,7 +495,7 @@ class ContractVerifier:
                 headers=request.headers,
                 params=request.query,
                 json=request.body if isinstance(request.body, (dict, list)) else None,
-                data=request.body if isinstance(request.body, str) else None,
+                data=request.body if isinstance(request.body, str) else None,  # type: ignore[arg-type]
             )
 
         return {

@@ -1071,12 +1071,12 @@ class ExperimentService:
             )
         elif rule.operator == TargetingOperator.GREATER_THAN:
             try:
-                return float(attr_value) > float(rule.value)
+                return float(attr_value) > float(rule.value)  # type: ignore[arg-type]
             except (ValueError, TypeError):
                 return False
         elif rule.operator == TargetingOperator.LESS_THAN:
             try:
-                return float(attr_value) < float(rule.value)
+                return float(attr_value) < float(rule.value)  # type: ignore[arg-type]
             except (ValueError, TypeError):
                 return False
         elif rule.operator == TargetingOperator.CONTAINS:

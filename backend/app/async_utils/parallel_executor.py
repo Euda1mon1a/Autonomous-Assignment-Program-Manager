@@ -83,7 +83,7 @@ class ParallelExecutor:
         self,
         *coroutines,
         return_exceptions: bool = False,
-    ) -> tuple:
+    ) -> tuple[Any, ...]:
         """Run multiple coroutines in parallel.
 
         Args:
@@ -95,7 +95,7 @@ class ParallelExecutor:
         """
         results = await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
         logger.debug(f"Parallel execution completed: {len(coroutines)} coroutines")
-        return results
+        return tuple(results)
 
     async def run_with_timeout(
         self,
@@ -159,6 +159,7 @@ class ParallelExecutor:
                     )
                     await asyncio.sleep(delay)
 
+        assert last_exception is not None
         raise last_exception
 
 

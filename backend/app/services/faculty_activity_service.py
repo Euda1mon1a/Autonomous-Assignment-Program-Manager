@@ -432,7 +432,7 @@ class FacultyActivityService:
         self,
         person_id: UUID,
         week_start: date,
-        week_number: int = 1,
+        week_number: int | None = 1,
     ) -> list[dict[str, Any]]:
         """Get the effective schedule for a faculty member for a specific week.
 

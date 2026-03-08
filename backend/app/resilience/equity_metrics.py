@@ -15,6 +15,8 @@ Functions:
     - equity_report: Comprehensive equity analysis with recommendations
 """
 
+from __future__ import annotations
+
 import logging
 from typing import Any
 
@@ -241,7 +243,7 @@ def equity_report(
 
     # Find most overloaded and underloaded providers using the same values
     # used for delta calculations to keep recommendations consistent
-    if weights is not None:
+    if intensity_weights is not None:
         # Use intensity-adjusted hours for identification
         adjusted_hours = {
             pid: provider_hours[pid] * intensity_weights[pid] for pid in provider_ids
@@ -251,8 +253,8 @@ def equity_report(
         adjusted_hours = {pid: provider_hours[pid] for pid in provider_ids}
         std_adjusted_hours = std_hours
 
-    most_overloaded = max(adjusted_hours, key=adjusted_hours.get)
-    most_underloaded = min(adjusted_hours, key=adjusted_hours.get)
+    most_overloaded = max(adjusted_hours, key=lambda k: adjusted_hours[k])
+    most_underloaded = min(adjusted_hours, key=lambda k: adjusted_hours[k])
 
     mean_adjusted_hours = float(np.mean(list(adjusted_hours.values())))
     overload_delta = adjusted_hours[most_overloaded] - mean_adjusted_hours
@@ -315,10 +317,10 @@ def equity_report(
             )
 
     # Add intensity-specific recommendations if weights were provided
-    if weights is not None:
+    if weights is not None and intensity_weights is not None:
         avg_weight = np.mean(weights)
         max_weight = max(intensity_weights.values())
-        max_weight_provider = max(intensity_weights, key=intensity_weights.get)
+        max_weight_provider = max(intensity_weights, key=lambda k: intensity_weights[k])
 
         if max_weight > avg_weight * 1.5:
             recommendations.append(

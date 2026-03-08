@@ -23,7 +23,7 @@ class CorrelationIdFilter(logging.Filter):
     def __init__(self) -> None:
         """Initialize filter with context variable."""
         super().__init__()
-        self.correlation_id = None
+        self.correlation_id: str | None = None
 
     def filter(self, record: logging.LogRecord) -> bool:
         """
@@ -134,7 +134,7 @@ class SensitiveDataRedactor:
         Returns:
             Dictionary with sensitive data redacted
         """
-        redacted = {}
+        redacted: dict[str, Any] = {}
 
         for key, value in data.items():
             if isinstance(key, str) and any(
@@ -500,7 +500,7 @@ class AuditLogger:
             resource: Resource affected
             details: Additional details
         """
-        log_data = {
+        log_data: dict[str, Any] = {
             "action": action,
             "user_id": user_id,
             "resource": resource,
@@ -528,7 +528,7 @@ class AuditLogger:
             status: Access status (allowed/denied)
             details: Additional details
         """
-        log_data = {
+        log_data: dict[str, Any] = {
             "user_id": user_id,
             "resource": resource,
             "status": status,
@@ -704,7 +704,7 @@ class SecurityLogger:
             user_id: ID of user involved
             details: Additional details
         """
-        log_data = {
+        log_data: dict[str, Any] = {
             "activity_type": activity_type,
             "user_id": user_id,
             "timestamp": datetime.now(UTC).isoformat(),

@@ -365,8 +365,8 @@ def time_crystal_objective(
 
     if len(churn_by_person) > 0:
         churn_values = list(churn_by_person.values())
-        mean_churn = np.mean(churn_values)
-        std_churn = np.std(churn_values)
+        mean_churn = float(np.mean(churn_values))
+        std_churn = float(np.std(churn_values))
 
         # Fairness = 1 - (coefficient_of_variation)
         # CV = std / mean, measures relative variability

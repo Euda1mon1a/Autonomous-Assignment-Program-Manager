@@ -420,7 +420,7 @@ class ShapleyValueService:
                 )
 
         # Sort by magnitude of gap (most urgent first)
-        suggestions.sort(key=lambda x: x["hours"], reverse=True)
+        suggestions.sort(key=lambda x: x["hours"], reverse=True)  # type: ignore[arg-type, return-value]
 
         return suggestions
 

@@ -393,7 +393,7 @@ class ServiceProxy:
                     await asyncio.sleep(delay)
 
                     # All retries failed
-        raise last_error
+        raise last_error  # type: ignore[misc]
 
     async def _execute_request(
         self,
@@ -493,7 +493,7 @@ class ServiceProxy:
         Returns:
             dict: Statistics including circuit breaker state, cache hits, etc.
         """
-        stats = {
+        stats: dict[str, Any] = {
             "name": self.config.name,
             "target_url": self.config.target_url,
         }

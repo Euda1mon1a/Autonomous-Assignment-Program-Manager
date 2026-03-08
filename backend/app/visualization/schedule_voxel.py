@@ -526,6 +526,8 @@ class ScheduleVoxelTransformer:
         rotation_type = assignment.get("rotation_type", "unknown")
 
         # Get indices
+        if block_id is None or person_id is None:
+            return None
         x = self._block_index_map.get(block_id)
         y = self._person_index_map.get(person_id)
         z = self._rotation_index_map.get(rotation_type, 0)

@@ -15,6 +15,8 @@ References:
 - Parisi, G. (1979). Infinite number of order parameters for spin-glasses.
 """
 
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -179,7 +181,7 @@ class SpinGlassScheduler:
         self.rng = np.random.default_rng(random_seed)
 
         # Cache constraint interaction matrix for efficiency
-        self._interaction_matrix: dict[tuple[str, str], float] | None = None
+        self._interaction_matrix: dict[tuple[int, int], float] | None = None
 
     def compute_frustration_index(
         self, constraints: list[Constraint] | None = None
@@ -215,6 +217,8 @@ class SpinGlassScheduler:
         # Build interaction matrix if not cached
         if self._interaction_matrix is None:
             self._build_interaction_matrix(constraints)
+
+        assert self._interaction_matrix is not None
 
         # Compute frustration as fraction of negative (conflicting) interactions
         total_pairs = 0
@@ -395,17 +399,19 @@ class SpinGlassScheduler:
 
             # Compute mean overlap between replica pairs
             if len(replicas) >= 2:
-                mean_overlap = np.mean(
-                    [
-                        self.compute_parisi_overlap(replicas[i], replicas[j])
-                        for i in range(len(replicas))
-                        for j in range(i + 1, len(replicas))
-                    ]
+                mean_overlap: float = float(
+                    np.mean(
+                        [
+                            self.compute_parisi_overlap(replicas[i], replicas[j])
+                            for i in range(len(replicas))
+                            for j in range(i + 1, len(replicas))
+                        ]
+                    )
                 )
             else:
                 mean_overlap = 1.0
 
-            overlaps.append(mean_overlap)
+            overlaps.append(float(mean_overlap))
 
             logger.debug(
                 f"Density={density:.2f}, T={temp:.3f}, overlap={mean_overlap:.3f}"
@@ -548,10 +554,10 @@ class SpinGlassScheduler:
         overlap_variance = np.var(off_diagonal)
 
         # RSB order parameter: higher variance = more symmetry breaking
-        rsb_parameter = min(1.0, overlap_variance * 4.0)  # Normalize to [0, 1]
+        rsb_parameter = min(1.0, float(overlap_variance) * 4.0)  # Normalize to [0, 1]
 
         # Diversity score: inverse of mean overlap
-        diversity_score = 1.0 - mean_overlap
+        diversity_score = float(1.0 - mean_overlap)
 
         # Compute overlap distribution histogram
         overlap_hist, bin_edges = np.histogram(
@@ -569,10 +575,10 @@ class SpinGlassScheduler:
 
         analysis = ReplicaSymmetryAnalysis(
             parisi_overlap_matrix=overlap_matrix,
-            rsb_order_parameter=rsb_parameter,
-            diversity_score=diversity_score,
+            rsb_order_parameter=float(rsb_parameter),
+            diversity_score=float(diversity_score),
             ultrametric_distance=ultrametric,
-            mean_overlap=mean_overlap,
+            mean_overlap=float(mean_overlap),
             overlap_distribution=overlap_distribution,
         )
 
@@ -932,7 +938,7 @@ class SpinGlassScheduler:
         # Tg ~ width of energy distribution
         glass_temp = energy_std / 2.0
 
-        return glass_temp
+        return float(glass_temp)
 
     def _compute_ultrametric_distances(
         self,

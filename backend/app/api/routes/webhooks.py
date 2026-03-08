@@ -366,7 +366,7 @@ async def retry_delivery(
 
         # Return updated delivery status
     delivery = await service.get_delivery_status(db, retry_data.delivery_id)
-    return delivery
+    return delivery  # type: ignore[return-value]
 
     # ============================================================================
     # Dead Letter Queue Endpoints
@@ -432,7 +432,7 @@ async def resolve_dead_letter(
     success = await service.resolve_dead_letter(
         db=db,
         dead_letter_id=dead_letter_id,
-        resolved_by=user_id,
+        resolved_by=user_id,  # type: ignore[arg-type]
         notes=resolve_data.notes,
         retry=resolve_data.retry,
     )

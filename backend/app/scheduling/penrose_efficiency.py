@@ -647,7 +647,7 @@ class PenroseEfficiencyExtractor:
             return 0.5  # Default neutral flexibility
 
         # Count potential swap candidates
-        swap_candidates = 0
+        swap_candidates: float = 0
         total_other_assignments = 0
 
         for other in all_assignments:
@@ -1244,7 +1244,7 @@ class PenroseEfficiencyExtractor:
             # Longer periods may have multiple conflicts
             return int(duration_hours / 12)
 
-    def _calculate_flexibility_score(
+    def _calculate_flexibility_score(  # type: ignore[no-redef]
         self, assignment: Assignment, phase_type: str
     ) -> float:
         """

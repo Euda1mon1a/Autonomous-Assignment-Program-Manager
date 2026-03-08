@@ -529,7 +529,7 @@ async def apply_batch(
     result = await service.apply_batch(
         batch_id=batch_id,
         applied_by_id=current_user.id,
-        conflict_resolution=conflict_resolution,
+        conflict_resolution=conflict_resolution,  # type: ignore[arg-type]
         dry_run=request.dry_run,
         validate_acgme=request.validate_acgme,
     )

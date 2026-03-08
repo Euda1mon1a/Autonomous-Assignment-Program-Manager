@@ -92,6 +92,8 @@ class ProtectedSlotConstraint(HardConstraint):
         # Check day of week
         block_dow = block.date.weekday()  # Python: 0=Monday, 6=Sunday
         pattern_dow = pattern.get("day_of_week")
+        if pattern_dow is None:
+            return False
 
         # weekly_patterns use PG EXTRACT(DOW) convention: 0=Sunday, 6=Saturday
         # (WARNING: faculty_weekly_templates use Python weekday: 0=Monday, 6=Sunday)

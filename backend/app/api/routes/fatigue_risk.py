@@ -498,7 +498,7 @@ async def export_temporal_constraints() -> TemporalConstraintsExport:
     - Scheduling constraints (hard and soft)
     """
     service = FRMSService()
-    return service.export_temporal_constraints()
+    return service.export_temporal_constraints()  # type: ignore[return-value]
 
 
 # =============================================================================

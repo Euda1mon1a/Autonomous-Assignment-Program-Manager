@@ -24,10 +24,13 @@ Environment Variables:
     LOG_FILE: Path to log file (optional, logs to stderr by default)
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import sys
 from contextvars import ContextVar
+from types import FrameType
 from typing import Any
 
 from loguru import logger
@@ -63,12 +66,13 @@ class InterceptHandler(logging.Handler):
         """Emit a log record by forwarding to loguru."""
         # Get corresponding loguru level
         try:
-            level = logger.level(record.levelname).name
+            level: str | int = logger.level(record.levelname).name
         except ValueError:
             level = record.levelno
 
         # Find caller from where originated the logging call
-        frame, depth = sys._getframe(6), 6
+        frame: FrameType | None = sys._getframe(6)
+        depth = 6
         while frame and frame.f_code.co_filename == logging.__file__:
             frame = frame.f_back
             depth += 1
@@ -201,7 +205,7 @@ def setup_logging(
         logger.add(
             sys.stderr,
             level=level,
-            format=_text_format,
+            format=_text_format,  # type: ignore[arg-type]
             colorize=True,
             backtrace=True,
             diagnose=True,
@@ -212,7 +216,7 @@ def setup_logging(
         logger.add(
             log_file,
             level=level,
-            format=_text_format if format_type == "text" else "{message}",
+            format=_text_format if format_type == "text" else "{message}",  # type: ignore[arg-type]
             rotation="100 MB",
             retention="7 days",
             compression="gz",
@@ -242,7 +246,7 @@ def setup_logging(
     )
 
 
-def get_logger(name: str = __name__) -> "logger":
+def get_logger(name: str = __name__) -> Any:
     """
     Get a logger instance bound with the module name.
 

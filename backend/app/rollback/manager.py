@@ -516,7 +516,7 @@ class RollbackManager:
             raise NotFoundError(f"Rollback point {rollback_point_id} not found")
 
         verified_at = datetime.now(UTC)
-        mismatches = []
+        mismatches: list[dict[str, Any]] = []
         entities_verified = 0
         entities_failed = 0
 

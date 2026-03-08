@@ -12,6 +12,8 @@ This engine integrates work hour, supervision, call, leave, and
 rotation validators into a unified compliance system.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -272,10 +274,10 @@ class ACGMEComplianceEngine:
         call_dates = [c.get("date") for c in call_assignments if c.get("date")]
         call_violations, call_warnings = self.call_validator.validate_call_frequency(
             person_id=person_id,
-            call_dates=call_dates,
+            call_dates=call_dates,  # type: ignore[arg-type]
         )
-        violations_by_domain["call"] = call_violations
-        warnings_by_domain["call"] = call_warnings
+        violations_by_domain["call"] = call_violations  # type: ignore[assignment]
+        warnings_by_domain["call"] = call_warnings  # type: ignore[assignment]
 
         if call_violations:
             remediation.append(
@@ -287,17 +289,17 @@ class ACGMEComplianceEngine:
         for leave in leave_records:
             violation = self.leave_validator.validate_no_assignment_during_block(
                 person_id=person_id,
-                absence_id=leave.get("id"),
-                absence_type=leave.get("type"),
-                start_date=leave.get("start_date"),
-                end_date=leave.get("end_date"),
+                absence_id=leave.get("id"),  # type: ignore[arg-type]
+                absence_type=leave.get("type"),  # type: ignore[arg-type]
+                start_date=leave.get("start_date"),  # type: ignore[arg-type]
+                end_date=leave.get("end_date"),  # type: ignore[arg-type]
                 assigned_dates=list(hours_by_date.keys()),
                 is_blocking=leave.get("is_blocking"),
             )
             if violation:
                 leave_violations.append(violation)
 
-        violations_by_domain["leave"] = leave_violations
+        violations_by_domain["leave"] = leave_violations  # type: ignore[assignment]
         if leave_violations:
             remediation.append("Remove assignments that conflict with approved leaves")
 
@@ -317,7 +319,7 @@ class ACGMEComplianceEngine:
                 )
             )
 
-        violations_by_domain["rotation"] = [v for v in rotation_violations if v]
+        violations_by_domain["rotation"] = [v for v in rotation_violations if v]  # type: ignore[assignment, misc]
         if violations_by_domain["rotation"]:
             remediation.append(
                 "Schedule additional clinic rotations to meet PGY-level requirements"
@@ -329,7 +331,7 @@ class ACGMEComplianceEngine:
             for vlist in violations_by_domain.values()
         )
         critical_count = sum(
-            1
+            1  # type: ignore[arg-type, misc]
             for domain_violations in violations_by_domain.values()
             for v in (
                 domain_violations
@@ -339,7 +341,7 @@ class ACGMEComplianceEngine:
             if v and hasattr(v, "severity") and v.severity == "CRITICAL"
         )
         high_count = sum(
-            1
+            1  # type: ignore[arg-type, misc]
             for domain_violations in violations_by_domain.values()
             for v in (
                 domain_violations
@@ -399,12 +401,19 @@ class ACGMEComplianceEngine:
         # Check leave conflicts
         for leave in leave_records:
             if self.leave_validator.should_block_assignment(
-                leave.get("type"),
-                leave.get("start_date"),
-                leave.get("end_date"),
+                leave.get("type"),  # type: ignore[arg-type]
+                leave.get("start_date"),  # type: ignore[arg-type]
+                leave.get("end_date"),  # type: ignore[arg-type]
                 leave.get("is_blocking"),
             ):
-                if leave.get("start_date") <= block_date <= leave.get("end_date"):
+                leave_start = leave.get("start_date")
+                leave_end = leave.get("end_date")
+                if (
+                    leave_start is not None
+                    and leave_end is not None
+                    and block_date is not None
+                    and leave_start <= block_date <= leave_end
+                ):
                     reasons.append(
                         f"Assignment conflicts with {leave.get('type')} leave "
                         f"({leave.get('start_date')} to {leave.get('end_date')})"

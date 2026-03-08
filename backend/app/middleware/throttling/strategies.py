@@ -321,8 +321,13 @@ class AdaptiveThrottleStrategy(ThrottleStrategy):
                     wait_time=wait_time,
                     retry_after=int(wait_time) + 1,
                 )
+            return ThrottleDecision(
+                action=ThrottleAction.REJECT,
+                reason="System at capacity during normal operation",
+                retry_after=5,
+            )
 
-                # Warning level (70-80% utilization)
+            # Warning level (70-80% utilization)
         elif utilization < DEGRADATION_THRESHOLDS["throttle"]:
             # Allow critical and high
             if priority in [ThrottlePriority.CRITICAL, ThrottlePriority.HIGH]:

@@ -735,7 +735,7 @@ class CatastropheDetector:
 
             # Predict failure
         will_fail = False
-        time_to_failure = None
+        time_to_failure: float | None = None
         failure_mode = "stable"
         confidence = 0.0
 
@@ -747,7 +747,7 @@ class CatastropheDetector:
             # Estimate time to failure
             velocity_magnitude = np.linalg.norm(velocity_vector)
             if velocity_magnitude > 0.001:
-                time_to_failure = distance / velocity_magnitude
+                time_to_failure = float(distance / velocity_magnitude)
                 confidence = min(0.95, 0.5 + (1 - distance))
             else:
                 time_to_failure = float("inf")
@@ -848,7 +848,7 @@ class CatastropheDetector:
                 feas = surface.feasibility_grid[i, j]
                 if 0.3 < feas < 0.7:  # On boundary
                     if feas < min_feasibility:
-                        min_feasibility = feas
+                        min_feasibility = float(feas)
                         cusp_demand = demand
                         cusp_strictness = strictness
 

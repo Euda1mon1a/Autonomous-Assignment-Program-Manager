@@ -360,6 +360,7 @@ def example_task_status_tracking() -> None:
 
     # Check status
     status = scheduler.get_task_status(execution_id)
+    assert status is not None
 
     print(f"Task Status for {execution_id}:")
     print(f"  Task Name: {status['task_name']}")

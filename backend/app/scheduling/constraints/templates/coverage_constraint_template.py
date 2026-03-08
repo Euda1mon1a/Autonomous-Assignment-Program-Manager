@@ -23,7 +23,7 @@ class CoverageConstraintTemplate(SoftConstraint):
     def __init__(self, weight: float = 1.5) -> None:
         super().__init__(
             name="CoverageConstraint",
-            constraint_type=ConstraintType.COVERAGE,
+            constraint_type=ConstraintType.COVERAGE,  # type: ignore[attr-defined]
             weight=weight,
             priority=ConstraintPriority.HIGH,
         )
@@ -60,7 +60,7 @@ class CoverageConstraintTemplate(SoftConstraint):
         penalty = self.get_penalty(uncovered_count)
         return ConstraintResult(
             satisfied=(uncovered_count == 0),
-            violations=violations,
+            violations=violations,  # type: ignore[arg-type]
             penalty=penalty,
         )
 

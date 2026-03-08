@@ -4,6 +4,8 @@ Provides valid options for configuration fields so the frontend
 can populate dropdowns without hardcoding values.
 """
 
+from enum import Enum
+
 from fastapi import APIRouter
 
 from app.core.config import get_settings
@@ -14,7 +16,7 @@ from app.scheduling.constraints.config import ConstraintCategory
 router = APIRouter(prefix="/enums", tags=["enums"])
 
 
-def _enum_to_options(enum_class: type) -> list[dict[str, str]]:
+def _enum_to_options(enum_class: type[Enum]) -> list[dict[str, str]]:
     """Convert an enum to a list of {value, label} options."""
     return [
         {"value": member.value, "label": member.name.replace("_", " ").title()}

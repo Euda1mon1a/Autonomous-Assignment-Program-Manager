@@ -94,7 +94,7 @@ class OptimizedConnectionPool:
             pool_timeout=self.pool_timeout,
             pool_recycle=self.pool_recycle,
             pool_pre_ping=self.pool_pre_ping,
-            echo=settings.DB_ECHO,
+            echo=settings.DB_ECHO,  # type: ignore[attr-defined]
             # Additional performance optimizations
             execution_options={
                 "isolation_level": "READ COMMITTED",
@@ -233,7 +233,7 @@ def get_connection_pool() -> OptimizedConnectionPool:
     if _pool_instance is None:
         _pool_instance = OptimizedConnectionPool(
             pool_size=settings.DB_POOL_SIZE,
-            max_overflow=settings.DB_MAX_OVERFLOW,
+            max_overflow=settings.DB_MAX_OVERFLOW,  # type: ignore[attr-defined]
         )
     return _pool_instance
 
@@ -245,5 +245,8 @@ async def get_optimized_session() -> AsyncSession:
         Async database session from optimized pool
     """
     pool = get_connection_pool()
-    async with pool.get_session() as session:
+    session = await pool.get_session()
+    try:
         yield session
+    finally:
+        await session.close()

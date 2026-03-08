@@ -291,9 +291,9 @@ def get_redis_client() -> redis.Redis:
         Redis client instance
     """
     return redis.Redis(
-        host=settings.REDIS_HOST,
-        port=settings.REDIS_PORT,
-        db=settings.REDIS_DB,
+        host=settings.REDIS_HOST,  # type: ignore[attr-defined]
+        port=settings.REDIS_PORT,  # type: ignore[attr-defined]
+        db=settings.REDIS_DB,  # type: ignore[attr-defined]
         password=settings.REDIS_PASSWORD
         if hasattr(settings, "REDIS_PASSWORD")
         else None,

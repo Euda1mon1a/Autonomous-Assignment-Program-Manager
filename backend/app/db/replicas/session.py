@@ -60,13 +60,13 @@ class ReplicaAwareSessionFactory:
                     enable_health_checks=enable_health_checks,
                 )
             else:
-                self.balancer = LoadBalancer(
+                self.balancer = LoadBalancer(  # type: ignore[assignment]
                     self.replica_engines,
                     health_checker=self.health_checker,
                     enable_health_checks=enable_health_checks,
                 )
         else:
-            self.balancer = None
+            self.balancer = None  # type: ignore[assignment]
 
             # Initialize router
         self.router = QueryRouter(

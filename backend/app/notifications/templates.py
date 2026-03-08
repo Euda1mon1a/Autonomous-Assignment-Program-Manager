@@ -15,6 +15,7 @@ Note:
 from dataclasses import dataclass
 from enum import Enum
 from string import Template
+from typing import Any
 
 
 class NotificationType(str, Enum):
@@ -214,7 +215,7 @@ def get_template(notification_type: NotificationType) -> NotificationTemplate | 
 
 def render_notification(
     notification_type: NotificationType, data: dict
-) -> dict[str, str] | None:
+) -> dict[str, Any] | None:
     """
     Render a notification with provided data.
 

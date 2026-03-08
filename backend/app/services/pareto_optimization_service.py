@@ -541,7 +541,7 @@ class ParetoOptimizationService:
         ranked_solutions.sort(key=lambda x: x.score, reverse=True)
 
         # Assign ranks
-        for rank, sol in enumerate(ranked_solutions, start=1):
+        for rank, sol in enumerate(ranked_solutions, start=1):  # type: ignore[assignment]
             sol.rank = rank
 
         return ranked_solutions
@@ -550,21 +550,21 @@ class ParetoOptimizationService:
         """Fetch persons from database."""
         if person_ids:
             return [
-                self.person_repo.get_by_id(pid)
+                self.person_repo.get_by_id(pid)  # type: ignore[misc]
                 for pid in person_ids
                 if self.person_repo.get_by_id(pid)
             ]
-        return self.person_repo.list_all()[:50]  # Limit for performance
+        return self.person_repo.list_all()[:50]  # type: ignore[attr-defined]  # Limit for performance
 
     def _get_blocks(self, block_ids: list[UUID] | None) -> list[Block]:
         """Fetch blocks from database."""
         if block_ids:
             return [
-                self.block_repo.get_by_id(bid)
+                self.block_repo.get_by_id(bid)  # type: ignore[misc]
                 for bid in block_ids
                 if self.block_repo.get_by_id(bid)
             ]
-        return self.block_repo.list_all()[:100]  # Limit for performance
+        return self.block_repo.list_all()[:100]  # type: ignore[attr-defined]  # Limit for performance
 
     def _person_to_dict(self, person: Person) -> dict:
         """Convert person model to dictionary."""

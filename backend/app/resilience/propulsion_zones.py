@@ -44,7 +44,7 @@ from datetime import date
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from app.scheduling.constraint_validator import ConstraintAlignmentMatrix
+    from app.scheduling.constraint_validator import ConstraintAlignmentMatrix  # type: ignore[attr-defined]
 
 logger = logging.getLogger(__name__)
 

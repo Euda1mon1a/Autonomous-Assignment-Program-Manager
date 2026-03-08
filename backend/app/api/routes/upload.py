@@ -64,7 +64,7 @@ def get_upload_service() -> UploadService:
         # Local storage (default)
         default_upload_dir = Path(tempfile.gettempdir()) / "uploads"
         upload_dir = Path(getattr(settings, "UPLOAD_LOCAL_DIR", default_upload_dir))
-        storage = LocalStorageBackend(base_path=upload_dir)
+        storage = LocalStorageBackend(base_path=upload_dir)  # type: ignore[assignment]
 
     # Configure validator
     max_size_mb = getattr(settings, "UPLOAD_MAX_SIZE_MB", 50)
@@ -307,4 +307,4 @@ async def check_file_exists(
     Requires authentication.
     """
     exists = upload_service.storage_backend.exists(file_id)
-    return {"exists": exists, "file_id": file_id}
+    return {"exists": exists, "file_id": file_id}  # type: ignore[dict-item]

@@ -8,6 +8,7 @@ performance statistics.
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, UTC
+from typing import Any
 from threading import Lock
 
 from sqlalchemy.pool import Pool
@@ -246,7 +247,7 @@ class PoolMonitor:
                 checkout_durations=self._stats.checkout_durations.copy(),
             )
 
-    def get_metrics_summary(self) -> dict[str, any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """Get summary of pool metrics for reporting.
 
         Returns:
@@ -285,7 +286,7 @@ class PoolMonitor:
             self._snapshots.clear()
             self._checkout_times.clear()
 
-    def get_health_metrics(self) -> dict[str, any]:
+    def get_health_metrics(self) -> dict[str, Any]:
         """Get health-related metrics for monitoring.
 
         Returns:

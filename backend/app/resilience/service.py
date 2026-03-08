@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Resilience Service - Orchestrates all resilience components.
 
@@ -331,7 +333,7 @@ class ResilienceService:
             self.tf_scheduler = TranscriptionFactorScheduler()
             self._last_tf_decay: datetime | None = None
         else:
-            self.tf_scheduler = None
+            self.tf_scheduler = None  # type: ignore[assignment]
             self._last_tf_decay = None
 
             # State tracking
@@ -1070,8 +1072,8 @@ class ResilienceService:
         incident_type: str,
         description: str,
         severity: str,
-        faculty_affected: list[UUID] = None,
-        services_affected: list[str] = None,
+        faculty_affected: list[UUID] | None = None,
+        services_affected: list[str] | None = None,
     ) -> ZoneIncident | None:
         """Record an incident affecting a zone."""
         incident = self.blast_radius.record_incident(
@@ -1303,7 +1305,7 @@ class ResilienceService:
         # Tier 2: Combined Status
         # =========================================================================
 
-    def get_tier2_status(self, current_metrics: dict[str, float] = None) -> dict:
+    def get_tier2_status(self, current_metrics: dict[str, float] | None = None) -> dict:
         """
         Get combined status of all Tier 2 resilience components.
 
@@ -1430,10 +1432,10 @@ class ResilienceService:
         complexity: DecisionComplexity,
         description: str,
         options: list[str],
-        recommended_option: str = None,
-        safe_default: str = None,
-        context: dict = None,
-        deadline: datetime = None,
+        recommended_option: str | None = None,
+        safe_default: str | None = None,
+        context: dict | None = None,
+        deadline: datetime | None = None,
         is_urgent: bool = False,
     ) -> Decision:
         """
@@ -1477,7 +1479,7 @@ class ResilienceService:
         decision_id: UUID,
         chosen_option: str,
         decided_by: str,
-        actual_time_seconds: float = None,
+        actual_time_seconds: float | None = None,
     ) -> None:
         """Record a decision that was made."""
         self.cognitive_load.record_decision(
@@ -1547,11 +1549,11 @@ class ResilienceService:
         self,
         faculty_id: UUID,
         trail_type: TrailType,
-        slot_id: UUID = None,
-        slot_type: str = None,
-        block_type: str = None,
-        service_type: str = None,
-        target_faculty_id: UUID = None,
+        slot_id: UUID | None = None,
+        slot_type: str | None = None,
+        block_type: str | None = None,
+        service_type: str | None = None,
+        target_faculty_id: UUID | None = None,
         strength: float = 0.5,
     ) -> PreferenceTrail:
         """
@@ -1600,10 +1602,10 @@ class ResilienceService:
         self,
         faculty_id: UUID,
         signal_type: SignalType,
-        slot_id: UUID = None,
-        slot_type: str = None,
-        target_faculty_id: UUID = None,
-        strength_change: float = None,
+        slot_id: UUID | None = None,
+        slot_type: str | None = None,
+        target_faculty_id: UUID | None = None,
+        strength_change: float | None = None,
     ) -> None:
         """
         Record a behavioral signal that updates preference trails.
@@ -1651,8 +1653,8 @@ class ResilienceService:
 
     def get_collective_preference(
         self,
-        slot_type: str = None,
-        slot_id: UUID = None,
+        slot_type: str | None = None,
+        slot_id: UUID | None = None,
     ) -> CollectivePreference | None:
         """
         Get aggregated preference for a slot or slot type.
@@ -1669,7 +1671,7 @@ class ResilienceService:
     def get_faculty_preferences(
         self,
         faculty_id: UUID,
-        trail_type: TrailType = None,
+        trail_type: TrailType = None,  # type: ignore[assignment]
         min_strength: float = 0.1,
     ) -> list[PreferenceTrail]:
         """Get all preference trails for a faculty member."""
@@ -1761,7 +1763,7 @@ class ResilienceService:
         self,
         faculty_id: UUID,
         services: dict[UUID, list[UUID]],
-        service_names: dict[UUID, str] = None,
+        service_names: dict[UUID, str] | None = None,
     ) -> HubProfile | None:
         """
         Create detailed profile for a hub faculty member.
@@ -1779,8 +1781,8 @@ class ResilienceService:
     def generate_cross_training_recommendations(
         self,
         services: dict[UUID, list[UUID]],
-        service_names: dict[UUID, str] = None,
-        all_faculty: list[UUID] = None,
+        service_names: dict[UUID, str] | None = None,
+        all_faculty: list[UUID] | None = None,
     ) -> list[CrossTrainingRecommendation]:
         """
         Generate cross-training recommendations to reduce hub concentration.
@@ -1812,7 +1814,7 @@ class ResilienceService:
         reason: str,
         workload_reduction: float = 0.3,
         assign_backup: bool = True,
-        created_by: str = None,
+        created_by: str | None = None,
     ) -> HubProtectionPlan | None:
         """
         Create a protection plan for a hub during a high-risk period.
@@ -1858,7 +1860,7 @@ class ResilienceService:
     def get_hub_distribution_report(
         self,
         services: dict[UUID, list[UUID]],
-        service_names: dict[UUID, str] = None,
+        service_names: dict[UUID, str] | None = None,
     ) -> HubDistributionReport:
         """
         Generate report on hub distribution across the system.
@@ -1955,7 +1957,7 @@ class ResilienceService:
         activation_strength: float = 1.0,
         repression_strength: float = 0.5,
         half_life_hours: float = 24.0,
-        activation_conditions: dict = None,
+        activation_conditions: dict | None = None,
     ) -> TranscriptionFactor | None:
         """
         Create a new transcription factor for constraint regulation.
@@ -2113,7 +2115,7 @@ class ResilienceService:
 
     def get_regulated_constraint_weights(
         self,
-        constraint_ids: list[UUID] = None,
+        constraint_ids: list[UUID] | None = None,
     ) -> dict[UUID, tuple[float, str]]:
         """
         Get current constraint weights after TF regulation.

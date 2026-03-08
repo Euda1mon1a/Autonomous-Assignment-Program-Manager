@@ -11,6 +11,8 @@ This validator ensures residents work within regulatory limits while
 tracking workload distribution and violation severity.
 """
 
+from __future__ import annotations
+
 import functools
 import logging
 from dataclasses import dataclass
@@ -42,7 +44,7 @@ class WorkHourViolation:
     violation_type: str  # "80_hour", "24_plus_4", "rest_period", "moonlighting"
     severity: str  # "CRITICAL", "HIGH", "MEDIUM", "LOW"
     message: str
-    date_range: tuple[date, date]
+    date_range: tuple[date | None, date | None]
     hours: float
     limit: float
     violation_percentage: float = 0.0  # (hours - limit) / limit * 100
@@ -370,7 +372,11 @@ class WorkHourValidator:
                 return max(0, days_diff * 24 - 12)
             return 0.0
 
-            # Parse end_time to datetime
+        # At this point, all four values are non-None (guaranteed by the guard above)
+        assert current_date is not None
+        assert next_date is not None
+
+        # Parse end_time to datetime
         current_end_dt = self._parse_time_to_datetime(current_date, current_end)
         next_start_dt = self._parse_time_to_datetime(next_date, next_start)
 
@@ -495,7 +501,7 @@ class WorkHourValidator:
             # Calculate week starting Monday
             week_start = work_date - timedelta(days=work_date.weekday())
             if week_start not in weeks_data:
-                weeks_data[week_start] = 0
+                weeks_data[week_start] = 0.0
             weeks_data[week_start] += hours
 
             # Check weekly moonlighting
@@ -517,7 +523,6 @@ class WorkHourValidator:
 
         return violations, warnings
 
-    @functools.lru_cache(maxsize=128)
     def calculate_violation_severity_level(self, violation_percentage: float) -> str:
         """
         Calculate severity level based on violation magnitude.
@@ -535,7 +540,6 @@ class WorkHourValidator:
         else:
             return "MEDIUM"
 
-    @functools.lru_cache(maxsize=256)
     def create_violation_notification_level(self, hours: float) -> str | None:
         """
         Determine notification threshold for approaching limit.
@@ -595,7 +599,7 @@ class BlockBasedWorkHourCalculator:
     def calculate_hours_from_assignments(
         self,
         assignments: list[dict],
-        rotation_intensity_map: dict[str, str] = None,
+        rotation_intensity_map: dict[str, str] | None = None,
     ) -> dict[date, float]:
         """
         Calculate work hours from block assignments.
@@ -613,13 +617,17 @@ class BlockBasedWorkHourCalculator:
 
         for assignment in assignments:
             block_date = assignment.get("block_date")
-            rotation_id = assignment.get("rotation_id")
+            rotation_id: str | None = assignment.get("rotation_id")
 
             if not block_date:
                 continue
 
                 # Determine hours based on rotation intensity
-            intensity = rotation_intensity_map.get(rotation_id, "standard")
+            intensity = (
+                rotation_intensity_map.get(rotation_id, "standard")
+                if rotation_id
+                else "standard"
+            )
             hours = (
                 self.intensive_hours
                 if intensity == "intensive"

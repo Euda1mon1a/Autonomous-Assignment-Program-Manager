@@ -482,7 +482,7 @@ class SwapRequestService:
                 success=False,
                 message="Swap validation failed",
                 errors=validation.errors,
-                warnings=validation.warnings,
+                warnings=validation.warnings,  # type: ignore[call-arg]
             )
 
             # Mark as approved

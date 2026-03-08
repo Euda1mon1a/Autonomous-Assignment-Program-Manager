@@ -1,6 +1,7 @@
 """Calendar export schemas."""
 
 from datetime import date, datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -16,7 +17,7 @@ class CalendarExportRequest(BaseModel):
 
     @field_validator("end_date")
     @classmethod
-    def validate_date_range(cls, v: date, info: dict) -> date:
+    def validate_date_range(cls, v: date, info: Any) -> date:
         """Validate end_date is after start_date."""
         if "start_date" in info.data and v < info.data["start_date"]:
             raise ValueError("end_date must be after start_date")

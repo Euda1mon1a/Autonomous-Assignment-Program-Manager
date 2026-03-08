@@ -16,7 +16,7 @@ class OpenAPIEnhancer:
     def __init__(self) -> None:
         """Initialize the OpenAPI enhancer."""
         self.custom_examples: dict[str, dict[str, Any]] = {}
-        self.error_codes: dict[str, dict[str, str]] = {}
+        self.error_codes: dict[str, dict[str, str | dict[str, Any]]] = {}
         self.security_schemes: dict[str, dict[str, Any]] = {}
 
     def add_example(

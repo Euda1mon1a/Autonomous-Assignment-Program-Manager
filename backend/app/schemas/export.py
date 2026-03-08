@@ -271,12 +271,12 @@ class ExportJobRunResponse(BaseModel):
 class ExportJobStatsResponse(BaseModel):
     """Statistics for export jobs."""
 
-    total_jobs: int = Field(alias="totalJobs")
-    active_jobs: int = Field(alias="activeJobs")
-    scheduled_jobs: int = Field(alias="scheduledJobs")
-    total_executions: int = Field(alias="totalExecutions")
-    successful_executions: int = Field(alias="successfulExecutions")
-    failed_executions: int = Field(alias="failedExecutions")
+    total_jobs: int = Field(default=0, alias="totalJobs")
+    active_jobs: int = Field(default=0, alias="activeJobs")
+    scheduled_jobs: int = Field(default=0, alias="scheduledJobs")
+    total_executions: int = Field(default=0, alias="totalExecutions")
+    successful_executions: int = Field(default=0, alias="successfulExecutions")
+    failed_executions: int = Field(default=0, alias="failedExecutions")
     average_runtime_seconds: float | None = Field(None, alias="averageRuntimeSeconds")
     total_rows_exported: int | None = Field(None, alias="totalRowsExported")
     total_bytes_exported: int | None = Field(None, alias="totalBytesExported")

@@ -84,13 +84,13 @@ class APIVersion(str, Enum):
         """String representation."""
         return self.value
 
-    def __lt__(self, other: "APIVersion") -> bool:
+    def __lt__(self, other: "APIVersion") -> bool:  # type: ignore[override]
         """Compare versions for sorting."""
         if not isinstance(other, APIVersion):
             return NotImplemented
         return self.numeric < other.numeric
 
-    def __le__(self, other: "APIVersion") -> bool:
+    def __le__(self, other: "APIVersion") -> bool:  # type: ignore[override]
         """Compare versions for sorting."""
         if not isinstance(other, APIVersion):
             return NotImplemented

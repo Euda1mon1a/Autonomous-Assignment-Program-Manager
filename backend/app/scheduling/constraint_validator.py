@@ -599,7 +599,7 @@ class ConstraintPerformanceProfiler:
 
             # High priority constraints are checked more frequently
             priority_factor = {
-                ConstraintPriority.MANDATORY: 1.5,
+                ConstraintPriority.CRITICAL: 1.5,
                 ConstraintPriority.HIGH: 1.2,
                 ConstraintPriority.MEDIUM: 1.0,
                 ConstraintPriority.LOW: 0.8,
@@ -626,7 +626,7 @@ class ConstraintPerformanceProfiler:
         }
 
         # Sort by complexity for reporting
-        constraint_complexities.sort(key=lambda x: x["complexity"], reverse=True)
+        constraint_complexities.sort(key=lambda x: x["complexity"], reverse=True)  # type: ignore[arg-type, return-value]
         report.summary["top_complexity_constraints"] = constraint_complexities[:5]
 
         # Warnings based on estimated solver time

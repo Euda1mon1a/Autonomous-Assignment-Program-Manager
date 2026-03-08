@@ -7,10 +7,11 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models.absence import Absence, AbsenceType
+from app.models.absence import Absence
+from app.schemas.absence import AbsenceType
 from app.models.person import Person
 from app.models.settings import ApplicationSettings
-from app.utils.academic_blocks import get_academic_block_dates
+from app.utils.academic_blocks import get_all_block_dates as get_academic_block_dates
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +109,7 @@ class AnticipatedLeaveService:
                     # Fallback to rough calculation if Block records aren't generated yet
                     from app.utils.academic_blocks import get_block_dates
 
-                    start, _ = get_block_dates(block_num, academic_year)
+                    start, _ = get_block_dates(block_num, academic_year)  # type: ignore[misc]
                     end = start + timedelta(days=6)
 
                 absence = Absence(

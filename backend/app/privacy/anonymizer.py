@@ -295,7 +295,7 @@ class DataAnonymizer:
                         "L-diversity requires sensitive_attributes to be specified"
                     )
 
-                strategy = LDiversityStrategy(l=config.l_value)
+                strategy = LDiversityStrategy(l=config.l_value)  # type: ignore[assignment]
                 anonymized_data = strategy.apply(
                     records,
                     quasi_identifiers=config.quasi_identifiers or [],

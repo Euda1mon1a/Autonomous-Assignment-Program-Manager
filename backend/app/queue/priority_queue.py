@@ -267,7 +267,7 @@ class PriorityQueueManager:
         self,
         enable_deduplication: bool = True,
         enable_fair_scheduling: bool = True,
-        fair_scheduling_policy: FairSchedulingPolicy = FairSchedulingPolicy.WEIGHTED,
+        fair_scheduling_policy: FairSchedulingPolicy = FairSchedulingPolicy.WEIGHTED,  # type: ignore[assignment]
         default_timeout: int = 600,
         dead_letter_retention_hours: int = 168,  # 7 days
     ) -> None:
@@ -460,7 +460,7 @@ class PriorityQueueManager:
             job_id=job_id,
             task_name=task_name,
             priority=priority,
-            state=JobState.SCHEDULED if (countdown or eta) else JobState.PENDING,
+            state=JobState.SCHEDULED if (countdown or eta) else JobState.PENDING,  # type: ignore[arg-type]
             created_at=datetime.now(UTC),
             scheduled_at=eta
             or (
@@ -555,7 +555,7 @@ class PriorityQueueManager:
         if result.state in celery_state_map:
             new_state = celery_state_map[result.state]
             if metadata.state != new_state:
-                metadata.state = new_state
+                metadata.state = new_state  # type: ignore[assignment]
 
                 if new_state == JobState.RUNNING and not metadata.started_at:
                     metadata.started_at = datetime.now(UTC)
@@ -639,7 +639,7 @@ class PriorityQueueManager:
         self.app.control.revoke(job_id, terminate=terminate, signal="SIGTERM")
 
         # Update metadata
-        metadata.state = JobState.CANCELLED
+        metadata.state = JobState.CANCELLED  # type: ignore[assignment]
         metadata.completed_at = datetime.now(UTC)
         if reason:
             metadata.metadata["cancellation_reason"] = reason
@@ -752,7 +752,7 @@ class PriorityQueueManager:
         self._dead_letter_queue[job_id] = record
 
         # Update metadata
-        metadata.state = JobState.DEAD_LETTER
+        metadata.state = JobState.DEAD_LETTER  # type: ignore[assignment]
         metadata.completed_at = datetime.now(UTC)
 
         # Clean up deduplication index
@@ -968,7 +968,7 @@ class PriorityQueueManager:
 
             # Remove from metadata
         for job_id in jobs_to_purge:
-            metadata = self._job_metadata.pop(job_id, None)
+            metadata = self._job_metadata.pop(job_id, None)  # type: ignore[arg-type]
             if metadata and self.enable_deduplication and metadata.dedup_key:
                 self._dedup_index.pop(metadata.dedup_key, None)
 
@@ -1007,7 +1007,7 @@ class PriorityQueueManager:
 
                     # Remove old jobs
         for job_id in jobs_to_remove:
-            metadata = self._job_metadata.pop(job_id, None)
+            metadata = self._job_metadata.pop(job_id, None)  # type: ignore[arg-type]
             if metadata and self.enable_deduplication and metadata.dedup_key:
                 self._dedup_index.pop(metadata.dedup_key, None)
 

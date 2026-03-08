@@ -48,7 +48,7 @@ def example_basic_rigidity_check() -> float:
 
     # Create snapshots
     current = ScheduleSnapshot.from_assignments(current_assignments)
-    proposed = ScheduleSnapshot.from_tuples(proposed_tuples)
+    proposed = ScheduleSnapshot.from_tuples(proposed_tuples)  # type: ignore[arg-type]
 
     # Check rigidity
     rigidity = calculate_schedule_rigidity(proposed, current)

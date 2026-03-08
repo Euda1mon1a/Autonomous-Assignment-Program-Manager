@@ -1215,7 +1215,7 @@ class BlockAssignmentExpansionService:
         Checks week-specific pattern first, then falls back to all-weeks pattern.
         """
         # First try week-specific pattern
-        key = (day_of_week, time_of_day, week_number)
+        key: tuple[int, str, int | None] = (day_of_week, time_of_day, week_number)
         if key in patterns:
             return patterns[key]
 

@@ -149,6 +149,8 @@ Customize weights for your use case:
     score = fitness.weighted_sum(weights)
 """
 
+from __future__ import annotations
+
 import logging
 import math
 import random
@@ -237,7 +239,7 @@ class FitnessVector:
         )
 
     @classmethod
-    def from_array(cls, arr: np.ndarray) -> "FitnessVector":
+    def from_array(cls, arr: np.ndarray) -> FitnessVector:
         """Create FitnessVector from numpy array."""
         return cls(
             coverage=float(arr[0]),
@@ -248,7 +250,7 @@ class FitnessVector:
             continuity=float(arr[5]),
         )
 
-    def dominates(self, other: "FitnessVector") -> bool:
+    def dominates(self, other: FitnessVector) -> bool:
         """
         Check if this solution Pareto-dominates another.
 
@@ -262,7 +264,7 @@ class FitnessVector:
         at_least_as_good = np.all(self_arr >= other_arr)
         strictly_better = np.any(self_arr > other_arr)
 
-        return at_least_as_good and strictly_better
+        return bool(at_least_as_good and strictly_better)
 
     def weighted_sum(self, weights: dict[str, float] | None = None) -> float:
         """
@@ -333,7 +335,7 @@ class Chromosome:
         n_templates: int,
         density: float = 0.6,
         seed: int | None = None,
-    ) -> "Chromosome":
+    ) -> Chromosome:
         """
         Create a random chromosome with specified assignment density.
 
@@ -359,11 +361,11 @@ class Chromosome:
         return cls(genes=genes)
 
     @classmethod
-    def create_empty(cls, n_residents: int, n_blocks: int) -> "Chromosome":
+    def create_empty(cls, n_residents: int, n_blocks: int) -> Chromosome:
         """Create an empty chromosome with no assignments."""
         return cls(genes=np.zeros((n_residents, n_blocks), dtype=np.int32))
 
-    def copy(self) -> "Chromosome":
+    def copy(self) -> Chromosome:
         """Create a deep copy of this chromosome."""
         return Chromosome(genes=self.genes.copy())
 
@@ -438,7 +440,7 @@ class Chromosome:
         cls,
         assignments: list[tuple[UUID, UUID, UUID | None]],
         context: SchedulingContext,
-    ) -> "Chromosome":
+    ) -> Chromosome:
         """
         Create chromosome from assignment list.
 
@@ -462,11 +464,11 @@ class Chromosome:
 
         return cls(genes=genes)
 
-    def hamming_distance(self, other: "Chromosome") -> int:
+    def hamming_distance(self, other: Chromosome) -> int:
         """Compute Hamming distance (number of differing positions)."""
         return int(np.sum(self.genes != other.genes))
 
-    def similarity(self, other: "Chromosome") -> float:
+    def similarity(self, other: Chromosome) -> float:
         """Compute similarity (1 - normalized Hamming distance)."""
         total = self.genes.size
         if total == 0:
@@ -494,13 +496,13 @@ class Individual:
     parent_ids: list[int] = field(default_factory=list)
     id: int = 0
 
-    def __lt__(self, other: "Individual") -> bool:
+    def __lt__(self, other: Individual) -> bool:
         """Compare for sorting: lower rank better, higher crowding better."""
         if self.rank != other.rank:
             return self.rank < other.rank
         return self.crowding_distance > other.crowding_distance
 
-    def copy(self) -> "Individual":
+    def copy(self) -> Individual:
         """Create a deep copy."""
         return Individual(
             chromosome=self.chromosome.copy(),
@@ -634,7 +636,7 @@ class BioInspiredSolver(BaseSolver, ABC):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """
         Solve using bio-inspired optimization.
@@ -690,9 +692,10 @@ class BioInspiredSolver(BaseSolver, ABC):
             # Convert to assignments
         assignments = best.chromosome.to_assignment_list(context)
 
+        best_score = best.fitness.weighted_sum() if best.fitness else 0.0
         logger.info(
             f"{self.__class__.__name__}: Found {len(assignments)} assignments "
-            f"(fitness={best.fitness.weighted_sum():.4f}) in {runtime:.2f}s"
+            f"(fitness={best_score:.4f}) in {runtime:.2f}s"
         )
 
         return SolverResult(
@@ -746,8 +749,8 @@ class BioInspiredSolver(BaseSolver, ABC):
             [chromosome.count_resident_assignments(r) for r in range(n_residents)]
         )
         if len(resident_counts) > 1 and np.mean(resident_counts) > 0:
-            cv = np.std(resident_counts) / np.mean(
-                resident_counts
+            cv = float(np.std(resident_counts)) / float(
+                np.mean(resident_counts)
             )  # Coefficient of variation
             fairness = 1.0 / (1.0 + cv)  # Higher = more fair
         else:
@@ -923,8 +926,8 @@ class BioInspiredSolver(BaseSolver, ABC):
 
         best_fitness = max(fitness_values)
         worst_fitness = min(fitness_values)
-        mean_fitness = np.mean(fitness_values)
-        std_fitness = np.std(fitness_values)
+        mean_fitness = float(np.mean(fitness_values))
+        std_fitness = float(np.std(fitness_values))
 
         # Diversity: average pairwise similarity
         if len(population) > 1:
@@ -934,12 +937,14 @@ class BioInspiredSolver(BaseSolver, ABC):
             for i, ind1 in enumerate(sample):
                 for ind2 in sample[i + 1 :]:
                     similarities.append(ind1.chromosome.similarity(ind2.chromosome))
-            diversity = 1.0 - np.mean(similarities) if similarities else 0.0
+            diversity = 1.0 - float(np.mean(similarities)) if similarities else 0.0
         else:
             diversity = 0.0
 
             # Selection pressure
-        selection_pressure = best_fitness / mean_fitness if mean_fitness > 0 else 1.0
+        selection_pressure = (
+            float(best_fitness / mean_fitness) if mean_fitness > 0 else 1.0
+        )
 
         # Best objectives
         best_coverage = max(
@@ -1010,11 +1015,11 @@ class BioInspiredSolver(BaseSolver, ABC):
         sorted_points = sorted(points, key=lambda p: p[0], reverse=True)
 
         hypervolume = 0.0
-        prev_y = ref_point[1]
+        prev_y: float = float(ref_point[1])
 
         for x, y in sorted_points:
             if y > prev_y:
-                hypervolume += (x - ref_point[0]) * (y - prev_y)
+                hypervolume += (x - float(ref_point[0])) * (y - prev_y)
                 prev_y = y
 
         return hypervolume

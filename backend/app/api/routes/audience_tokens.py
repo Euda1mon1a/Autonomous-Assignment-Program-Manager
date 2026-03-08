@@ -276,7 +276,7 @@ async def request_audience_token(
             f"ttl={request.ttl_seconds}s"
         )
 
-        return token_response
+        return token_response  # type: ignore[return-value]
 
     except ValueError as e:
         # Invalid audience or TTL

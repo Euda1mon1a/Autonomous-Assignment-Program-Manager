@@ -128,10 +128,10 @@ def scheduled_job(
 
             # Add scheduling metadata
 
-        wrapper._scheduled_job = True
-        wrapper._job_name = name or func.__name__
-        wrapper._job_description = description or func.__doc__
-        wrapper._max_instances = max_instances
+        wrapper._scheduled_job = True  # type: ignore[attr-defined]
+        wrapper._job_name = name or func.__name__  # type: ignore[attr-defined]
+        wrapper._job_description = description or func.__doc__  # type: ignore[attr-defined]
+        wrapper._max_instances = max_instances  # type: ignore[attr-defined]
 
         return wrapper
 

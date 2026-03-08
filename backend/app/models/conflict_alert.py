@@ -119,7 +119,7 @@ class ConflictAlert(Base):
         self.acknowledged_at = datetime.now(UTC)
         self.acknowledged_by_id = user_id
 
-    def resolve(self, user_id: PGUUID, notes: str = None) -> None:
+    def resolve(self, user_id: PGUUID, notes: str | None = None) -> None:
         """Mark alert as resolved."""
         self.status = ConflictAlertStatus.RESOLVED
         self.resolved_at = datetime.now(UTC)

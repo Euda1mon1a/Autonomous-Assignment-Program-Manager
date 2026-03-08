@@ -22,6 +22,7 @@ Configuration via environment variables:
 """
 
 import os
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -40,7 +41,7 @@ class CertificationScheduler:
     """Background scheduler for certification management tasks."""
 
     def __init__(self) -> None:
-        self.scheduler = None
+        self.scheduler: Any = None
         self.enabled = os.getenv("CERT_CHECK_ENABLED", "true").lower() == "true"
         self.check_hour = int(os.getenv("CERT_CHECK_HOUR", "6"))
         self.admin_email = os.getenv("CERT_ADMIN_EMAIL")

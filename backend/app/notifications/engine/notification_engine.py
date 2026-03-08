@@ -135,7 +135,9 @@ class NotificationEngine:
             # Step 4: Determine priority
         final_priority = priority or rendered.get("priority", "normal")
         priority_score = self.priority_handler.calculate_priority_score(
-            notification_type, final_priority, data
+            notification_type,
+            final_priority,
+            data,  # type: ignore[arg-type]
         )
 
         # Step 5: Determine target channels
@@ -278,7 +280,7 @@ class NotificationEngine:
                     )
                 ]
             else:
-                results[str(recipient_id)] = result
+                results[str(recipient_id)] = result  # type: ignore[assignment]
 
         return results
 

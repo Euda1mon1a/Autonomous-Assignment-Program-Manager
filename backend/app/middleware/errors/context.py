@@ -107,7 +107,7 @@ class ErrorContext:
         Returns:
             Dict with exception information
         """
-        info = {
+        info: dict[str, Any] = {
             "type": type(self.exc).__name__,
             "module": type(self.exc).__module__,
             "message": str(self.exc),

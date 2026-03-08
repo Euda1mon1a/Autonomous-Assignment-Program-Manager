@@ -230,7 +230,7 @@ def example_baggage_propagation() -> None:
         set_baggage("tenant.id", tenant_id)
 
         # Call other services - baggage is automatically propagated
-        await call_external_service()
+        await call_external_service()  # type: ignore[name-defined]
 
     async def downstream_handler() -> None:
         # Retrieve baggage from upstream service

@@ -36,7 +36,7 @@ class SwapNotification:
     body: str
     swap_id: UUID | None = None
     week: date | None = None
-    created_at: datetime = None
+    created_at: datetime | None = None
 
     def __post_init__(self) -> None:
         if self.created_at is None:

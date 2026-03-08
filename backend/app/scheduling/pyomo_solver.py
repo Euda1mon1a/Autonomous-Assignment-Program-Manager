@@ -9,9 +9,12 @@ Provides a solver implementation using Pyomo that captures rich optimization dat
 This solver enables "why" explanations for scheduling decisions.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from dataclasses import dataclass, field
+from typing import Any
 
 from app.models.assignment import Assignment
 from app.scheduling.constraints import ConstraintManager, SchedulingContext
@@ -139,7 +142,7 @@ class PyomoSolver(BaseSolver):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """
         Solve scheduling problem using Pyomo.
@@ -440,6 +443,7 @@ class PyomoSolver(BaseSolver):
                         f"Could not extract dual for template_capacity[{b},{t}]: {e}"
                     )
 
+        assert self._solution_data is not None
         self._solution_data.constraint_insights = insights
         self._solution_data.binding_constraints = binding
 
@@ -462,7 +466,11 @@ class PyomoSolver(BaseSolver):
         if not self._solution_data:
             return {"error": "No solution data available. Run solve() first."}
 
-        report = {
+        bottlenecks: list[dict[str, Any]] = []
+        recommendations: list[str] = []
+        headroom: list[dict[str, Any]] = []
+
+        report: dict[str, Any] = {
             "summary": {
                 "objective_value": self._solution_data.objective_value,
                 "is_optimal": self._solution_data.is_optimal,
@@ -471,14 +479,14 @@ class PyomoSolver(BaseSolver):
                     self._solution_data.binding_constraints
                 ),
             },
-            "bottlenecks": [],
-            "recommendations": [],
-            "headroom": [],
+            "bottlenecks": bottlenecks,
+            "recommendations": recommendations,
+            "headroom": headroom,
         }
 
         for insight in self._solution_data.constraint_insights:
             if insight.is_binding:
-                report["bottlenecks"].append(
+                bottlenecks.append(
                     {
                         "constraint": insight.name,
                         "dual_value": insight.dual_value,
@@ -488,15 +496,15 @@ class PyomoSolver(BaseSolver):
 
                 # Generate recommendation
                 if "capacity" in insight.name.lower():
-                    report["recommendations"].append(
+                    recommendations.append(
                         f"Consider increasing capacity for the resource in {insight.name}"
                     )
                 elif "one_rotation" in insight.name.lower():
-                    report["recommendations"].append(
+                    recommendations.append(
                         "Resident is fully utilized - consider distributing load"
                     )
             else:
-                report["headroom"].append(
+                headroom.append(
                     {
                         "constraint": insight.name,
                         "slack": insight.slack,

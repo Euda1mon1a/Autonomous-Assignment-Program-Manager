@@ -181,13 +181,13 @@ async def persist_health_check(
 def persist_event(
     db: Session,
     event_type: str,
-    severity: str = None,
-    reason: str = None,
-    triggered_by: str = None,
-    previous_state: dict = None,
-    new_state: dict = None,
-    metadata: dict = None,
-    health_check_id: UUID = None,
+    severity: str | None = None,
+    reason: str | None = None,
+    triggered_by: str | None = None,
+    previous_state: dict | None = None,
+    new_state: dict | None = None,
+    metadata: dict | None = None,
+    health_check_id: UUID | None = None,
 ):
     """Persist resilience event to database."""
     event = ResilienceEvent(
@@ -442,7 +442,7 @@ async def list_fallbacks(
 
     for scenario in FallbackScenario:
         # Get info from service
-        fallback_schedule = service.fallback.get_fallback(scenario.value)
+        fallback_schedule = service.fallback.get_fallback(scenario.value)  # type: ignore[attr-defined]
         is_active = fallback_schedule is not None and fallback_schedule.is_active
 
         if is_active:
@@ -581,7 +581,7 @@ async def deactivate_fallback(
     }
 
     service_scenario = scenario_map.get(request.scenario)
-    service.fallback.deactivate_fallback(service_scenario)
+    service.fallback.deactivate_fallback(service_scenario)  # type: ignore[arg-type]
 
     # Update activation record
     activation = (
@@ -1490,7 +1490,7 @@ async def create_zone(
     name: str,
     zone_type: str,
     description: str = "",
-    services: list[str] = None,
+    services: list[str] | None = None,
     minimum_coverage: int = 1,
     optimal_coverage: int = 2,
     priority: int = 5,
@@ -1570,8 +1570,8 @@ async def record_zone_incident(
     incident_type: str,
     description: str,
     severity: str,
-    faculty_affected: list[UUID] = None,
-    services_affected: list[str] = None,
+    faculty_affected: list[UUID] | None = None,
+    services_affected: list[str] | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -2410,7 +2410,7 @@ async def get_faculty_preferences(
     parsed_type = type_map.get(trail_type) if trail_type else None
 
     service = get_resilience_service(db)
-    trails = service.get_faculty_preferences(faculty_id, parsed_type, min_strength)
+    trails = service.get_faculty_preferences(faculty_id, parsed_type, min_strength)  # type: ignore[arg-type]
 
     return {
         "faculty_id": str(faculty_id),

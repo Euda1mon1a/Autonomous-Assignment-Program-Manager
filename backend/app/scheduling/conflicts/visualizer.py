@@ -263,7 +263,7 @@ class ConflictVisualizer:
         ]
 
         # Sort by date
-        heatmap_data.sort(key=lambda x: x["date"])
+        heatmap_data.sort(key=lambda x: x["date"])  # type: ignore[arg-type,return-value]
 
         return {
             "data": heatmap_data,
@@ -471,6 +471,6 @@ class ConflictVisualizer:
             )
 
         # Sort by conflict count (descending)
-        impact_data.sort(key=lambda x: x["conflict_count"], reverse=True)
+        impact_data.sort(key=lambda x: x["conflict_count"], reverse=True)  # type: ignore[arg-type,return-value]
 
         return impact_data

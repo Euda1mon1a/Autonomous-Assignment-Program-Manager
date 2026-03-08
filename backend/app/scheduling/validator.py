@@ -8,10 +8,13 @@ Validates schedules against ACGME requirements:
 - Supervision ratios
 """
 
+from __future__ import annotations
+
 from collections import defaultdict
 import math
 import re
 from datetime import date, timedelta
+from typing import Any
 
 from sqlalchemy.orm import Session, selectinload
 
@@ -391,7 +394,7 @@ class ACGMEValidator:
             .all()
         )
 
-        by_slot: dict[tuple[date, str], dict[str, int | list]] = defaultdict(
+        by_slot: dict[tuple[date, str], dict[str, Any]] = defaultdict(
             lambda: {
                 "resident_ids": [],
                 "faculty_ids": [],

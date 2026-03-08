@@ -72,7 +72,7 @@ class Detector:
             True if vector is within detection radius (anomaly detected)
         """
         distance = np.linalg.norm(feature_vector - self.center)
-        return distance < self.radius
+        return bool(distance < self.radius)
 
     def get_distance(self, feature_vector: np.ndarray) -> float:
         """
@@ -123,7 +123,7 @@ class Antibody:
         # Normalize by radius: distance 0 = affinity 1.0, distance >= radius = affinity 0
         if distance >= self.affinity_radius:
             return 0.0
-        return 1.0 - (distance / self.affinity_radius)
+        return float(1.0 - (distance / self.affinity_radius))
 
     @property
     def success_rate(self) -> float:
@@ -718,7 +718,7 @@ class ScheduleImmuneSystem:
                     {"detector_id": str(d.id), "matches": d.matches_count}
                     for d in self.detectors
                 ],
-                key=lambda x: x["matches"],
+                key=lambda x: x["matches"],  # type: ignore[arg-type,return-value]
                 reverse=True,
             )[:5],
             "antibody_performance": {

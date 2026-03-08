@@ -20,6 +20,8 @@ This module implements:
 6. Single-point-of-failure detection
 """
 
+from __future__ import annotations
+
 import logging
 import statistics
 from dataclasses import dataclass
@@ -100,7 +102,7 @@ class FacultyCentrality:
     # Replacement difficulty (0.0 easy - 1.0 impossible)
     replacement_difficulty: float = 0.0
 
-    def calculate_composite(self, weights: dict = None) -> float:
+    def calculate_composite(self, weights: dict | None = None) -> float:
         """Calculate weighted composite centrality score."""
         weights = weights or {
             "degree": 0.2,
@@ -468,7 +470,7 @@ class HubAnalyzer:
 
     def identify_hubs(
         self,
-        centrality_scores: list[FacultyCentrality] = None,
+        centrality_scores: list[FacultyCentrality] | None = None,
     ) -> list[FacultyCentrality]:
         """
         Identify hub faculty members from centrality scores.
@@ -486,7 +488,7 @@ class HubAnalyzer:
         self,
         faculty_id: UUID,
         services: dict[UUID, list[UUID]],
-        service_names: dict[UUID, str] = None,
+        service_names: dict[UUID, str] | None = None,
     ) -> HubProfile | None:
         """
         Create detailed profile for a hub faculty member.
@@ -574,8 +576,8 @@ class HubAnalyzer:
     def generate_cross_training_recommendations(
         self,
         services: dict[UUID, list[UUID]],
-        service_names: dict[UUID, str] = None,
-        all_faculty: list[UUID] = None,
+        service_names: dict[UUID, str] | None = None,
+        all_faculty: list[UUID] | None = None,
     ) -> list[CrossTrainingRecommendation]:
         """
         Generate recommendations for cross-training to reduce hub concentration.
@@ -716,7 +718,7 @@ class HubAnalyzer:
     def get_distribution_report(
         self,
         services: dict[UUID, list[UUID]],
-        service_names: dict[UUID, str] = None,
+        service_names: dict[UUID, str] | None = None,
     ) -> HubDistributionReport:
         """
         Generate report on hub distribution across the system.

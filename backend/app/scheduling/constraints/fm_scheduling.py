@@ -136,8 +136,8 @@ class WednesdayPMLecConstraint(HardConstraint):
                     violations.append(
                         ConstraintViolation(
                             constraint_name=self.name,
+                            constraint_type=ConstraintType.ROTATION,
                             message=f"Wednesday PM should be LEC-PM, got {abbrev}",
-                            entity_id=str(getattr(a, "id", "unknown")),
                             severity="error",
                         )
                     )
@@ -220,8 +220,8 @@ class InternContinuityConstraint(HardConstraint):
                     violations.append(
                         ConstraintViolation(
                             constraint_name=self.name,
+                            constraint_type=ConstraintType.ROTATION,
                             message=f"PGY-1 Wed AM should be continuity, got {abbrev}",
-                            entity_id=str(getattr(a, "id", "unknown")),
                             severity="error",
                         )
                     )
@@ -318,8 +318,8 @@ class NightFloatSlotConstraint(HardConstraint):
                 violations.append(
                     ConstraintViolation(
                         constraint_name=self.name,
+                        constraint_type=ConstraintType.ROTATION,
                         message=f"{nf_rotation} AM should be {expected_am}, got {actual_abbrev}",
-                        entity_id=str(getattr(a, "id", "unknown")),
                         severity="error",
                     )
                 )

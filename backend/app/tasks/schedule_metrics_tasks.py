@@ -78,7 +78,7 @@ def compute_schedule_metrics(
         from app.analytics.stability_metrics import compute_stability_metrics
 
         engine = AnalyticsEngine(db)
-        schedule_analysis = engine.analyze_schedule(start, end)
+        schedule_analysis = engine.analyze_schedule(start, end)  # type: ignore[attr-defined]
 
         # Compute stability metrics
         stability = compute_stability_metrics(db, start, end)
@@ -163,11 +163,11 @@ def compute_version_diff(
             }
 
         # Use existing comparison method
-        comparison = engine.compare_schedules(run_id_1, run_id_2)
+        comparison = engine.compare_schedules(run_id_1, run_id_2)  # type: ignore[attr-defined]
 
         # Compute metrics for each run to get fairness/coverage changes
-        analysis1 = engine.analyze_schedule(run1.start_date, run1.end_date)
-        analysis2 = engine.analyze_schedule(run2.start_date, run2.end_date)
+        analysis1 = engine.analyze_schedule(run1.start_date, run1.end_date)  # type: ignore[attr-defined]
+        analysis2 = engine.analyze_schedule(run2.start_date, run2.end_date)  # type: ignore[attr-defined]
 
         # Calculate metric deltas
         fairness_change = (
@@ -257,7 +257,7 @@ def snapshot_metrics(
 
         # Compute current metrics
         engine = AnalyticsEngine(db)
-        schedule_analysis = engine.analyze_schedule(start_date, end_date)
+        schedule_analysis = engine.analyze_schedule(start_date, end_date)  # type: ignore[attr-defined]
         stability = compute_stability_metrics(db, start_date, end_date)
 
         # Create snapshot record (stored as JSON in existing tables)
@@ -426,7 +426,7 @@ def generate_fairness_trend_report(
             week_end = min(current_date + timedelta(days=7), end_date)
 
             try:
-                analysis = engine.analyze_schedule(current_date, week_end)
+                analysis = engine.analyze_schedule(current_date, week_end)  # type: ignore[attr-defined]
                 fairness = analysis["metrics"]["fairness"]
 
                 weekly_metrics.append(

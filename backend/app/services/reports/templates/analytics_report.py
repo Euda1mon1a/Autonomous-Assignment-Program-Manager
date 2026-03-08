@@ -148,7 +148,7 @@ class AnalyticsReportTemplate:
         for assignment in assignments:
             if assignment.person:
                 person_id = str(assignment.person.id)
-                workload[person_id]["assignments"] += 1
+                workload[person_id]["assignments"] += 1  # type: ignore[operator]
                 workload[person_id]["name"] = assignment.person.name
                 workload[person_id]["type"] = assignment.person.type
 

@@ -471,7 +471,7 @@ class CallAssignmentService:
         """
         if replace_existing and assignments:
             # Find date range from assignments
-            dates = [a.date for a in assignments]
+            dates = [a.date for a in assignments]  # type: ignore[attr-defined]
             min_date = min(dates)
             max_date = max(dates)
             await self.clear_call_assignments_in_range(
@@ -661,7 +661,7 @@ class CallAssignmentService:
             )
 
         # Sort by total calls descending
-        distribution.sort(key=lambda x: x["total_calls"], reverse=True)
+        distribution.sort(key=lambda x: x["total_calls"], reverse=True)  # type: ignore[arg-type,return-value]
 
         return CallEquityReport(
             start_date=start_date,
@@ -1132,7 +1132,7 @@ class CallAssignmentService:
                     + projected_weekday.get(pid, 0),
                 }
             )
-        projected_distribution.sort(key=lambda x: x["total_calls"], reverse=True)
+        projected_distribution.sort(key=lambda x: x["total_calls"], reverse=True)  # type: ignore[arg-type,return-value]
 
         projected_equity = CallEquityReport(
             start_date=start_date,

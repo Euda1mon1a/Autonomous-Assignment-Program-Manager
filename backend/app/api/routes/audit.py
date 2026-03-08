@@ -649,7 +649,7 @@ async def export_audit_logs(
     # Try to get real audit data
     entries = []
     try:
-        entries, _ = audit_service.get_audit_logs(
+        entries, _ = audit_service.get_audit_logs(  # type: ignore[assignment]
             db=db,
             page=1,
             page_size=10000,  # Export all matching entries
@@ -674,7 +674,7 @@ async def export_audit_logs(
     # Fall back to mock data if needed
     if not entries:
         logger.info("Using mock audit data for export")
-        entries, _ = _generate_mock_audit_entries(
+        entries, _ = _generate_mock_audit_entries(  # type: ignore[assignment]
             page=1,
             page_size=10000,
             start_date=start_date,

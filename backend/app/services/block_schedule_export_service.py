@@ -580,7 +580,7 @@ async def export_block_schedule(
         xlsx bytes
     """
     service = BlockScheduleExportService(session, template_path)
-    return await service.export_block(block_number, academic_year, output_path)
+    return await service.export_block(block_number, academic_year, output_path)  # type: ignore[return-value]
 
 
 async def export_block_schedule_with_xml(
@@ -606,11 +606,12 @@ async def export_block_schedule_with_xml(
         Tuple of (xlsx bytes, xml string)
     """
     service = BlockScheduleExportService(session, template_path)
-    xlsx_bytes, xml_string = await service.export_block(
+    result = await service.export_block(
         block_number, academic_year, xlsx_path, return_xml=True
     )
+    xlsx_bytes, xml_string = result  # type: ignore[misc]
 
     if xml_path:
-        Path(xml_path).write_text(xml_string)
+        Path(xml_path).write_text(str(xml_string))
 
-    return xlsx_bytes, xml_string
+    return bytes(xlsx_bytes), str(xml_string)

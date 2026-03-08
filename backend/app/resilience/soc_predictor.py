@@ -192,15 +192,21 @@ class SOCAvalanchePredictor:
         # Count triggered signals
         signals_triggered = sum(
             [
-                relaxation_increasing
-                and relaxation_time
-                and relaxation_time > self.relaxation_threshold,
-                variance_increasing
-                and variance_slope
-                and variance_slope > self.variance_slope_threshold,
-                ac1_increasing
-                and ac1_current
-                and ac1_current > self.autocorrelation_threshold,
+                bool(
+                    relaxation_increasing
+                    and relaxation_time
+                    and relaxation_time > self.relaxation_threshold
+                ),
+                bool(
+                    variance_increasing
+                    and variance_slope
+                    and variance_slope > self.variance_slope_threshold
+                ),
+                bool(
+                    ac1_increasing
+                    and ac1_current
+                    and ac1_current > self.autocorrelation_threshold
+                ),
             ]
         )
 
@@ -417,7 +423,7 @@ class SOCAvalanchePredictor:
 
             is_increasing = current_ac1 > baseline_ac1 * 1.1  # 10% increase
 
-            return current_ac1, baseline_ac1, is_increasing
+            return float(current_ac1), float(baseline_ac1), bool(is_increasing)
 
         except Exception as e:
             logger.warning(f"Autocorrelation calculation failed: {e}")

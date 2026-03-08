@@ -35,6 +35,8 @@ export interface PeopleTableProps {
   onSortChange: (field: SortField) => void;
   /** Whether table is in loading state */
   isLoading?: boolean;
+  /** Callback when a row is clicked (opens edit, etc.) */
+  onRowClick?: (person: Person) => void;
 }
 
 // ============================================================================
@@ -144,6 +146,7 @@ export function PeopleTable({
   onSelectionChange,
   sort,
   onSortChange,
+  onRowClick,
 }: PeopleTableProps) {
   // Selection handlers
   const isAllSelected = people.length > 0 && selectedIds.length === people.length;
@@ -237,7 +240,7 @@ export function PeopleTable({
                     transition-colors cursor-pointer
                     ${isSelected ? 'bg-cyan-500/10' : 'hover:bg-slate-700/30'}
                   `}
-                  onClick={() => handleSelectRow(person.id)}
+                  onClick={() => onRowClick?.(person)}
                 >
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <RowCheckbox

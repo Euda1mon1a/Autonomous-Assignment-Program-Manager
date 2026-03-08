@@ -86,6 +86,8 @@ class RotationTemplateInfo(BaseModel):
     name: str
     rotation_type: str
     leave_eligible: bool
+    display_abbreviation: str | None = None
+    abbreviation: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

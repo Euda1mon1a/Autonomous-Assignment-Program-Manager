@@ -256,7 +256,7 @@ class YAMLParser(Parser):
             ParsingError: If YAML is invalid
             RuntimeError: If YAML is not available
         """
-        if not self.available:
+        if not self.available or self._yaml is None:
             raise RuntimeError("YAML parsing not available")
 
         try:

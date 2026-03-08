@@ -5,6 +5,8 @@ Extends FastAPI's APIRouter with version-awareness, allowing endpoints
 to be defined for specific API versions with automatic deprecation handling.
 """
 
+from __future__ import annotations
+
 import logging
 from collections.abc import Awaitable, Callable
 from typing import Any, ParamSpec, TypeVar
@@ -267,17 +269,19 @@ def version_route(
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         # Store version metadata on function
-        func.__api_versions__ = versions
-        func.__min_version__ = min(versions)
-        func.__max_version__ = max(versions)
+        min_ver = min(versions)
+        max_ver = max(versions)
+        func.__api_versions__ = versions  # type: ignore[attr-defined]
+        func.__min_version__ = min_ver  # type: ignore[attr-defined]
+        func.__max_version__ = max_ver  # type: ignore[attr-defined]
 
         # If router provided, add route automatically
         if router:
             router.add_api_route(
                 path=f"/{func.__name__}",
                 endpoint=func,
-                min_version=func.__min_version__,
-                max_version=func.__max_version__,
+                min_version=min_ver,
+                max_version=max_ver,
             )
 
         return func

@@ -123,7 +123,7 @@ class RateLimitBypassDetector:
                 self.redis.ping()
             except (redis.ConnectionError, redis.TimeoutError) as e:
                 logger.error(f"Failed to connect to Redis for bypass detection: {e}")
-                self.redis = None
+                self.redis = None  # type: ignore[assignment]
         else:
             self.redis = redis_client
 
@@ -749,7 +749,7 @@ class RateLimitBypassDetector:
                     "endpoint": detection.endpoint,
                     "timestamp": detection.timestamp.isoformat(),
                 }
-                self.redis.hmset(key, detection_data)
+                self.redis.hmset(key, detection_data)  # type: ignore[arg-type]
                 self.redis.expire(key, 86400)  # Keep for 24 hours
         except Exception as e:
             logger.error(f"Failed to store detection in Redis: {e}")

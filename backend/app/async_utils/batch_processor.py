@@ -92,7 +92,7 @@ class BatchProcessor:
                     global_idx = batch_idx * self.batch_size + item_idx
 
                     try:
-                        result = await processor(item)
+                        result = await processor(item)  # type: ignore[misc]
                         batch_results.append(result)
                         processed += 1
 
@@ -122,7 +122,7 @@ class BatchProcessor:
                 if self.stop_on_error:
                     break
             else:
-                batch_results, batch_errors = output
+                batch_results, batch_errors = output  # type: ignore[misc]
                 results.extend(batch_results)
                 errors.extend(batch_errors)
 
@@ -168,13 +168,13 @@ class BatchProcessor:
 
             for attempt in range(max_retries + 1):
                 try:
-                    return await processor(item)
+                    return await processor(item)  # type: ignore[misc]
                 except Exception as e:
                     last_error = e
                     if attempt < max_retries:
                         await asyncio.sleep(retry_delay * (2**attempt))
 
-            raise last_error
+            raise last_error  # type: ignore[misc]
 
         return await self.process(items, processor_with_retry)
 

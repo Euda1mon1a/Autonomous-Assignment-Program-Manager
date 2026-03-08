@@ -14,10 +14,10 @@ import logging
 from datetime import date
 
 from app.autonomous.advisor import LLMAdvisor, MockLLMAdvisor
-from app.autonomous.evaluator import (
+from app.autonomous.evaluator import (  # type: ignore[attr-defined]
     EvaluationResult,
     ScoreComponent,
-    Violation,
+    Violation,  # type: ignore[attr-defined]
     ViolationSeverity,
 )
 from app.autonomous.state import GeneratorParams, IterationRecord, RunState
@@ -43,7 +43,7 @@ async def example_with_real_llm() -> None:
     )
 
     # Create mock run state
-    state = RunState(
+    state = RunState(  # type: ignore[call-arg]
         run_id="example-001",
         scenario="baseline",
         start_date=date(2025, 1, 1),
@@ -61,7 +61,7 @@ async def example_with_real_llm() -> None:
     )
 
     # Create mock evaluation with some violations
-    evaluation = EvaluationResult(
+    evaluation = EvaluationResult(  # type: ignore[call-arg]
         score=0.65,
         valid=False,
         critical_violations=2,
@@ -105,7 +105,7 @@ async def example_with_real_llm() -> None:
 
     # Create some iteration history
     history = [
-        IterationRecord(
+        IterationRecord(  # type: ignore[call-arg]
             iteration=i,
             params=GeneratorParams(algorithm="greedy"),
             score=0.5 + (i * 0.02),
@@ -167,7 +167,7 @@ def example_with_mock_advisor() -> None:
     advisor = MockLLMAdvisor()
 
     # Create state with critical violations
-    state = RunState(
+    state = RunState(  # type: ignore[call-arg]
         run_id="mock-001",
         scenario="baseline",
         start_date=date(2025, 1, 1),
@@ -180,7 +180,7 @@ def example_with_mock_advisor() -> None:
         current_params=GeneratorParams(algorithm="greedy"),
     )
 
-    evaluation = EvaluationResult(
+    evaluation = EvaluationResult(  # type: ignore[call-arg]
         score=0.45,
         valid=False,
         critical_violations=3,

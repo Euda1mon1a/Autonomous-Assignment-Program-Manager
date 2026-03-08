@@ -168,7 +168,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             # Check rate limiting
             should_report = self.rate_limiter.should_report(fingerprint)
 
-            if should_report:
+            if should_report and self.reporter is not None:
                 # Report to all configured reporters
                 await self.reporter.report(
                     exc=exc,

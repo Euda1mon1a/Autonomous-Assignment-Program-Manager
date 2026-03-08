@@ -300,7 +300,7 @@ class SpinGlassModel:
         Returns:
             Best configuration found
         """
-        best_config = None
+        best_config: SpinConfiguration | None = None
         best_energy = float("inf")
 
         for _ in range(num_attempts):
@@ -310,6 +310,7 @@ class SpinGlassModel:
                 best_energy = config.energy
                 best_config = config
 
+        assert best_config is not None, "num_attempts must be > 0"
         return best_config
 
     def assess_landscape_ruggedness(
@@ -334,7 +335,7 @@ class SpinGlassModel:
             energy = self.calculate_energy(spins)
             energies.append(energy)
 
-        energies = np.array(energies)
+        energies = np.array(energies)  # type: ignore[assignment]
 
         # Metrics
         energy_range = float(np.max(energies) - np.min(energies))

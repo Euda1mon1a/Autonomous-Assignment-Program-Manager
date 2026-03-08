@@ -503,8 +503,8 @@ If you have questions, please contact the scheduling coordinator.
 
         # Notify affected persons
         for person_id in affected_persons:
-            email = self._get_person_email(person_id)
-            if email:
+            email_addr = self._get_person_email(person_id)
+            if email_addr:
                 subject = f"Schedule Conflict: {conflict_type}"
                 body_html = f"""
                 <html>
@@ -520,7 +520,7 @@ If you have questions, please contact the scheduling coordinator.
                 </body>
                 </html>
                 """
-                if self.email_service.send_email(email, subject, body_html):
+                if self.email_service.send_email(email_addr, subject, body_html):
                     success = True
 
         return success

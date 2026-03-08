@@ -1280,14 +1280,15 @@ class DisasterRecoveryService:
         """
         self._last_health_check = datetime.now(UTC)
 
-        health = {
+        issues: list[str] = []
+        health: dict[str, Any] = {
             "timestamp": self._last_health_check.isoformat(),
             "overall_status": self._current_status.value,
             "rpo_compliance": {},
             "rto_achievability": {},
             "failover_ready": False,
             "sync_status": {},
-            "issues": [],
+            "issues": issues,
         }
 
         try:

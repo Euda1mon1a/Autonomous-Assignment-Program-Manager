@@ -667,7 +667,7 @@ class RestoreService:
 
     def _prepare_model_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """Prepare data dictionary for model creation."""
-        prepared = {}
+        prepared: dict[str, Any] = {}
         for key, value in data.items():
             if value is None:
                 prepared[key] = None

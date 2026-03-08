@@ -985,7 +985,7 @@ class SchemaRegistry:
             )
 
     async def notify_schema_change(
-        self, schema_name: str, change_type: str, details: dict = None
+        self, schema_name: str, change_type: str, details: dict | None = None
     ) -> None:
         """
         Notify about schema changes via notification service.

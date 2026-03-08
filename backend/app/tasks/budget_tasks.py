@@ -10,9 +10,12 @@ Configuration:
     monthly rollup on the 1st at 1 AM.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from celery import shared_task
 
@@ -371,7 +374,7 @@ def cleanup_old_usage_logs(self, retention_days: int = 90) -> dict:
 
 
 # Beat schedule for budget tasks
-BUDGET_BEAT_SCHEDULE = {
+BUDGET_BEAT_SCHEDULE: dict[str, dict[str, Any]] = {
     # Budget status check every hour
     "budget-status-check": {
         "task": "app.tasks.budget_tasks.check_budget_status",
@@ -463,9 +466,9 @@ def configure_celery_for_budget(celery_app_instance) -> None:
     from celery.schedules import crontab
 
     # Convert schedule dicts to crontab objects for beat schedule
-    schedule = {}
+    schedule: dict[str, Any] = {}
     for name, config in BUDGET_BEAT_SCHEDULE.items():
-        entry = dict(config)
+        entry: dict[str, Any] = dict(config)
         sched = entry.get("schedule")
         if isinstance(sched, dict) and sched.get("__type__") == "crontab":
             sched_copy = {k: v for k, v in sched.items() if k != "__type__"}

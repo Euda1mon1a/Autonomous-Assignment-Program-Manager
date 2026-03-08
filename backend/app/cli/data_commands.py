@@ -359,7 +359,7 @@ def seed(
         click.echo(f"Seeding database with test data (type: {type})")
 
         if type in ["all", "blocks"]:
-            from app.models.block import Session
+            from app.models.block import Session  # type: ignore[attr-defined]
 
             click.echo(f"\nGenerating blocks for academic year {year}-{year + 1}...")
 

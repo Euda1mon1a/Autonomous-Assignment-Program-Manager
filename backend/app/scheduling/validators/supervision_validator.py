@@ -178,7 +178,7 @@ class SupervisionValidator:
         for block_data in period_blocks:
             violation = self.validate_block_supervision(
                 block_id=block_data.get("block_id"),
-                block_date=block_data.get("block_date"),
+                block_date=block_data.get("block_date"),  # type: ignore[arg-type]
                 pgy1_residents=block_data.get("pgy1_residents", []),
                 other_residents=block_data.get("other_residents", []),
                 faculty_assigned=block_data.get("faculty_assigned", []),

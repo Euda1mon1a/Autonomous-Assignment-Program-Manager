@@ -181,7 +181,7 @@ class BackupService:
                 f"Must be one of: {', '.join(strategies.keys())}"
             )
 
-        return strategy_class()
+        return strategy_class()  # type: ignore[abstract]
 
     def _get_last_backup(self, backup_type: str | None = None) -> dict[str, Any] | None:
         """

@@ -447,7 +447,7 @@ class QueueManager:
         scheduled = inspect.scheduled()
         reserved = inspect.reserved()
 
-        stats = {
+        stats: dict[str, Any] = {
             "timestamp": datetime.now(UTC).isoformat(),
             "queues": {},
         }

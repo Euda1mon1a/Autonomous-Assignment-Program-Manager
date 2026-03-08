@@ -70,7 +70,7 @@ export function Tooltip({
   const child = React.Children.only(children) as React.ReactElement;
 
   return (
-    <div
+    <span
       className={`relative inline-block ${className}`}
       onMouseEnter={showTooltip}
       onMouseLeave={hideTooltip}
@@ -82,17 +82,17 @@ export function Tooltip({
       })}
 
       {isVisible && (
-        <div
+        <span
           id={tooltipId}
           role="tooltip"
           className={`absolute z-50 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap ${positionStyles[position]}`}
         >
           {content}
-          <div
+          <span
             className={`absolute w-0 h-0 border-4 ${arrowStyles[position]}`}
           />
-        </div>
+        </span>
       )}
-    </div>
+    </span>
   );
 }

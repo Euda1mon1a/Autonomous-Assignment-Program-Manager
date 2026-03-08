@@ -156,7 +156,7 @@ class CPUProfiler:
         if stats is None:
             return "No profiling data available"
         stats.sort_stats(sort_by)
-        stats.stream = stream
+        stats.stream = stream  # type: ignore[attr-defined]
         stats.print_stats()
         return stream.getvalue()
 

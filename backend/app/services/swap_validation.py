@@ -88,6 +88,9 @@ class SwapValidationService:
         if errors:
             return SwapValidationResult(valid=False, errors=errors, warnings=warnings)
 
+        assert source_faculty is not None
+        assert target_faculty is not None
+
         # Check back-to-back conflicts
         target_weeks = self._get_faculty_fmit_weeks(target_faculty_id)
         if self._creates_back_to_back(target_weeks, source_week):

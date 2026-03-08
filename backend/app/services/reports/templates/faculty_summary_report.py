@@ -83,7 +83,9 @@ class FacultySummaryReportTemplate:
             # Generate report for each faculty member
         for faculty_id in faculty_ids:
             faculty_data = self._get_faculty_data(
-                faculty_id, request.start_date, request.end_date
+                faculty_id,
+                request.start_date,
+                request.end_date,  # type: ignore[arg-type]
             )
 
             if not faculty_data:
@@ -117,7 +119,7 @@ class FacultySummaryReportTemplate:
                 elements.append(PageBreak())
 
                 # Generate PDF
-        return self.generator.build(
+        return self.generator.build(  # type: ignore[attr-defined]
             elements=elements,
             include_toc=request.include_toc,
             include_logo=request.include_logo,

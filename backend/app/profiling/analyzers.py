@@ -299,7 +299,10 @@ class BottleneckDetector:
         ]
 
         if slow_queries:
-            avg_duration = statistics.mean([q.duration_ms for q in slow_queries])
+            durations = [
+                q.duration_ms for q in slow_queries if q.duration_ms is not None
+            ]
+            avg_duration = statistics.mean(durations)
             bottlenecks.append(
                 Bottleneck(
                     bottleneck_type="sql",
@@ -309,7 +312,7 @@ class BottleneckDetector:
                     metrics={
                         "count": len(slow_queries),
                         "avg_duration_ms": avg_duration,
-                        "max_duration_ms": max(q.duration_ms for q in slow_queries),
+                        "max_duration_ms": max(durations),
                     },
                     recommendations=[
                         "Add database indexes for frequently queried columns",
@@ -398,7 +401,10 @@ class BottleneckDetector:
         ]
 
         if slow_requests:
-            avg_duration = statistics.mean([r.duration_ms for r in slow_requests])
+            durations = [
+                r.duration_ms for r in slow_requests if r.duration_ms is not None
+            ]
+            avg_duration = statistics.mean(durations)
             bottlenecks.append(
                 Bottleneck(
                     bottleneck_type="request",
@@ -408,7 +414,7 @@ class BottleneckDetector:
                     metrics={
                         "count": len(slow_requests),
                         "avg_duration_ms": avg_duration,
-                        "max_duration_ms": max(r.duration_ms for r in slow_requests),
+                        "max_duration_ms": max(durations),
                     },
                     recommendations=[
                         "Implement caching for frequently accessed data",
@@ -566,7 +572,7 @@ class QueryAnalyzer:
             )
 
             # Sort by total duration
-        pattern_stats.sort(key=lambda x: x["total_duration_ms"], reverse=True)
+        pattern_stats.sort(key=lambda x: x["total_duration_ms"], reverse=True)  # type: ignore[arg-type,return-value]
 
         return {
             "total_queries": len(queries),

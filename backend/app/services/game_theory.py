@@ -324,9 +324,9 @@ class GameTheoryService:
                 .first()
             )
             if not existing:
-                strategy = self.create_strategy(  # type: ignore[arg-type]
-                    **config,
-                    created_by="system",  # type: ignore[arg-type]
+                strategy = self.create_strategy(
+                    **config,  # type: ignore[arg-type]
+                    created_by="system",
                 )
                 created.append(strategy)
 

@@ -68,7 +68,7 @@ class FacultyPreferenceCache:
             self._available = True
         except (redis.ConnectionError, redis.TimeoutError) as e:
             logger.warning(f"Redis unavailable for faculty preference cache: {e}")
-            self._redis = None
+            self._redis = None  # type: ignore[assignment]
             self._available = False
 
             # Local LRU cache fallback when Redis is unavailable

@@ -201,6 +201,8 @@ Statistics Computed
 - Average improvement per generation
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from dataclasses import dataclass
@@ -316,14 +318,14 @@ class ParetoExporter:
 
             # Add objectives
             if ind.fitness:
-                solution["objectives"] = {
+                solution["objectives"] = {  # type: ignore[assignment]
                     obj: getattr(ind.fitness, obj, 0) for obj in objectives
                 }
                 solution["weighted_sum"] = ind.fitness.weighted_sum()
 
                 # Optionally include chromosome
             if include_chromosomes:
-                solution["chromosome"] = {
+                solution["chromosome"] = {  # type: ignore[assignment]
                     "shape": list(ind.chromosome.genes.shape),
                     "n_assignments": ind.chromosome.count_assignments(),
                     "genes_hash": hash(ind.chromosome.genes.tobytes()),
@@ -332,7 +334,7 @@ class ParetoExporter:
             solutions.append(solution)
 
             # Sort by first objective for easier visualization
-        solutions.sort(key=lambda s: s.get("objectives", {}).get(objectives[0], 0))
+        solutions.sort(key=lambda s: s.get("objectives", {}).get(objectives[0], 0))  # type: ignore[union-attr, call-overload]
 
         # Compute front statistics
         stats = self._compute_pareto_stats(pareto_front, objectives)
@@ -355,7 +357,7 @@ class ParetoExporter:
         if not pareto_front:
             return {}
 
-        stats = {
+        stats: dict[str, Any] = {
             "objective_ranges": {},
             "ideal_point": {},
             "nadir_point": {},
@@ -503,7 +505,7 @@ class EvolutionExporter:
                     {
                         "generation": len(pareto_history) - 1,
                         "is_final": True,
-                        "solutions": [
+                        "solutions": [  # type: ignore[dict-item]
                             {
                                 "id": ind.id,
                                 "fitness": ind.fitness.to_dict() if ind.fitness else {},
@@ -540,8 +542,12 @@ class EvolutionExporter:
 
         # Compute improvement rate
         if len(best_fitness_series) >= 2:
-            early_avg = np.mean(best_fitness_series[: len(best_fitness_series) // 4])
-            late_avg = np.mean(best_fitness_series[-len(best_fitness_series) // 4 :])
+            early_avg = float(
+                np.mean(best_fitness_series[: len(best_fitness_series) // 4])
+            )
+            late_avg = float(
+                np.mean(best_fitness_series[-len(best_fitness_series) // 4 :])
+            )
             improvement_rate = (late_avg - early_avg) / max(early_avg, 0.001)
         else:
             improvement_rate = 0.0

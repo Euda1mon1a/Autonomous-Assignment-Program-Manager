@@ -191,11 +191,13 @@ async def deep_health() -> dict[str, Any]:
     Performs direct checks for database and Redis connectivity, and includes
     backend version metadata loaded from pyproject.toml.
     """
-    database_result, redis_result = await asyncio.gather(
+    results = await asyncio.gather(
         health_aggregator.check_service("database"),
         health_aggregator.check_service("redis"),
         return_exceptions=True,
     )
+    database_result: Any = results[0]
+    redis_result: Any = results[1]
 
     database_connected, database_payload = _normalize_connectivity_result(
         database_result

@@ -257,7 +257,7 @@ class MetastabilitySolverWrapper:
                 # In practice: perturb solution and restart
 
                 # Create enriched result
-        enriched_result = EnrichedSolverResult(
+        enriched_result = EnrichedSolverResult(  # type: ignore[call-arg]
             success=result.success,
             assignments=result.assignments,
             status=result.status,

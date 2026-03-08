@@ -27,7 +27,7 @@ Medical Residency Application:
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any, Optional, cast
 from uuid import UUID
 
 # Use try/except to handle both package and standalone imports
@@ -42,10 +42,10 @@ except ImportError:
     # Standalone import (for testing)
     import circadian_model
 
-    CircadianImpact = circadian_model.CircadianImpact
-    CircadianQualityLevel = circadian_model.CircadianQualityLevel
-    CircadianScheduleAnalyzer = circadian_model.CircadianScheduleAnalyzer
-    CircadianShiftType = circadian_model.CircadianShiftType
+    CircadianImpact = circadian_model.CircadianImpact  # type: ignore[misc]
+    CircadianQualityLevel = circadian_model.CircadianQualityLevel  # type: ignore[misc]
+    CircadianScheduleAnalyzer = circadian_model.CircadianScheduleAnalyzer  # type: ignore[misc]
+    CircadianShiftType = circadian_model.CircadianShiftType  # type: ignore[misc]
 
 logger = logging.getLogger(__name__)
 
@@ -254,7 +254,7 @@ class CircadianScheduleOptimizer:
             >>> report = optimizer.pre_solver_analysis(residents, history)
             >>> # Use report to set solver constraints
         """
-        analysis = {
+        analysis: dict[str, Any] = {
             "analyzed_at": datetime.now().isoformat(),
             "total_residents": len(residents),
             "residents_at_risk": [],
@@ -391,10 +391,10 @@ class CircadianScheduleOptimizer:
             )
 
             # Sort by quality (descending)
-        scored_shifts.sort(key=lambda x: x["quality_score"], reverse=True)
+        scored_shifts.sort(key=lambda x: cast(float, x["quality_score"]), reverse=True)
 
         # Return ranked shifts
-        ranked_shifts = [item["shift"] for item in scored_shifts]
+        ranked_shifts: list[dict] = [item["shift"] for item in scored_shifts]  # type: ignore[misc]
 
         logger.debug(
             f"Ranked {len(ranked_shifts)} shifts by circadian quality for {resident_id}"

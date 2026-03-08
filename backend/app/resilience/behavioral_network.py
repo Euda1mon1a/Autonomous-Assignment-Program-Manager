@@ -473,7 +473,8 @@ class BehavioralNetworkAnalyzer:
         target_node = self.nodes[target_id]
 
         # Ensure edge exists
-        edge_key = tuple(sorted([source_id, target_id]))
+        sorted_ids = sorted([source_id, target_id])
+        edge_key: tuple[UUID, UUID] = (sorted_ids[0], sorted_ids[1])
         if edge_key not in self.edges:
             self.edges[edge_key] = SwapEdge(
                 source_id=edge_key[0],
@@ -949,7 +950,7 @@ class ShadowOrgChartService:
             equity_analysis = self.analyzer.analyze_burden_equity(burden_profiles)
 
             # Compile report
-        report = {
+        report: dict[str, Any] = {
             "generated_at": datetime.now().isoformat(),
             "period": {
                 "start": period_start.isoformat(),

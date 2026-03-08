@@ -122,7 +122,7 @@ class WorkerManager:
         reserved = self.inspect.reserved()
         scheduled = self.inspect.scheduled()
 
-        result = {
+        result: dict[str, Any] = {
             "timestamp": datetime.now(UTC).isoformat(),
             "workers": {},
         }

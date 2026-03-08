@@ -529,7 +529,7 @@ class PreSolverValidator:
 
         total_possible = len(context.residents) * len(workday_blocks)
         stats["availability_rate"] = (
-            total_availability / total_possible if total_possible > 0 else 0
+            total_availability / total_possible if total_possible > 0 else 0  # type: ignore[assignment]
         )
 
         return stats

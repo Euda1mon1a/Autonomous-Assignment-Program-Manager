@@ -47,7 +47,7 @@ def get_or_create_settings(db: Session) -> ApplicationSettings:
 
 
 @router.get("", response_model=SettingsResponse)
-async def get_settings(
+async def get_settings_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> SettingsResponse:

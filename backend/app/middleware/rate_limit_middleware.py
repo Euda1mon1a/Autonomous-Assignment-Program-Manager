@@ -64,6 +64,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             redis_client: Optional Redis client (creates new if not provided)
         """
         super().__init__(app)
+        self.redis: redis.Redis | None  # type declaration for both branches
 
         if redis_client is None:
             try:

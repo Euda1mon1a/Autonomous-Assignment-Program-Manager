@@ -15,7 +15,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.logging.context import set_user_id, set_session_id, set_custom_field
-from app.core.security import decode_access_token
+from app.core.security import decode_access_token  # type: ignore[attr-defined]
 from loguru import logger
 
 

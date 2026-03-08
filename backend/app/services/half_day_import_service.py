@@ -165,6 +165,7 @@ class HalfDayImportService:
         self._load_person_map()
 
         for slot in parsed_slots:
+            person_id: UUID | None
             if slot.person_id:
                 person_id = slot.person_id
             else:
@@ -290,6 +291,7 @@ class HalfDayImportService:
         for slot in parsed_slots:
             slot_warnings: list[str] = []
             slot_errors: list[str] = []
+            person_id: UUID | None  # type: ignore[no-redef]
             if slot.person_id:
                 person_id = slot.person_id
             else:

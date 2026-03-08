@@ -357,7 +357,7 @@ async def export_heatmap(
             )
         elif request.heatmap_type == "coverage":
             params = request.request_params
-            heatmap_response = service.generate_coverage_heatmap(
+            heatmap_response = service.generate_coverage_heatmap(  # type: ignore[assignment]
                 db=db,
                 start_date=date.fromisoformat(params["start_date"]),
                 end_date=date.fromisoformat(params["end_date"]),

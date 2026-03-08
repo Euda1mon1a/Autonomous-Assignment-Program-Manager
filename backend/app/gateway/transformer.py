@@ -77,7 +77,7 @@ class TransformationContext:
 
     request: Request | None = None
     response: Response | None = None
-    metadata: dict[str, Any] = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.metadata is None:
@@ -336,7 +336,7 @@ class BodyTransformer(Transformer):
 
         if isinstance(node, ast.Dict):
             return {
-                self._eval_ast_node(k, context): self._eval_ast_node(v, context)
+                self._eval_ast_node(k, context): self._eval_ast_node(v, context)  # type: ignore[arg-type]
                 for k, v in zip(node.keys, node.values)
             }
 
@@ -423,7 +423,7 @@ class BodyTransformer(Transformer):
             step = self._eval_ast_node(node.step, context) if node.step else None
             return slice(lower, upper, step)
         if isinstance(node, ast.Index):  # pragma: no cover - py<3.9 compatibility
-            return self._eval_ast_node(node.value, context)
+            return self._eval_ast_node(node.value, context)  # type: ignore[attr-defined]
         return self._eval_ast_node(node, context)
 
 

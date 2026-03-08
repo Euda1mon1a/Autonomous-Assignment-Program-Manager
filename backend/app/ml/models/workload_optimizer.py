@@ -475,7 +475,7 @@ class WorkloadOptimizer:
         if not workloads:
             return {"gini_coefficient": 0.0, "std_deviation": 0.0, "mean_workload": 0.0}
 
-        workloads = np.array(workloads)
+        workloads = np.array(workloads)  # type: ignore[assignment]
 
         # Gini coefficient (measure of inequality)
         sorted_workloads = np.sort(workloads)

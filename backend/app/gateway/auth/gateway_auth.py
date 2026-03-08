@@ -547,7 +547,7 @@ class IPFilterManager:
         # Check blacklist first (takes precedence)
         is_blacklisted, blacklist_entry = await self.is_ip_blacklisted(ip_address)
         if is_blacklisted:
-            return False, f"IP blacklisted: {blacklist_entry.reason}"
+            return False, f"IP blacklisted: {blacklist_entry.reason}"  # type: ignore[union-attr]
 
             # Check allowed IPs list (for API key restrictions)
         if allowed_ips:
@@ -772,7 +772,8 @@ class GatewayAuthenticator:
         if is_blacklisted:
             logger.warning(f"Blocked blacklisted IP: {client_ip}")
             return GatewayAuthValidationResponse(
-                is_valid=False, error_message=f"Access denied: {blacklist_entry.reason}"
+                is_valid=False,
+                error_message=f"Access denied: {blacklist_entry.reason}",  # type: ignore[union-attr]
             )
 
             # Try API key authentication

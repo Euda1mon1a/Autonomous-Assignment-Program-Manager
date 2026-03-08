@@ -28,6 +28,9 @@ Example:
     ...     .build()
 """
 
+from __future__ import annotations
+
+import builtins
 import copy
 import json
 import logging
@@ -68,20 +71,20 @@ class ConstraintBuilder:
     def __init__(self) -> None:
         """Initialize builder."""
         self._is_hard = True
-        self._name = None
-        self._constraint_type = None
+        self._name: str | None = None
+        self._constraint_type: ConstraintType | None = None
         self._priority = ConstraintPriority.MEDIUM
         self._weight = 1.0
         self._enabled = True
         self._parameters = {}
-        self._parent_class = None
+        self._parent_class: builtins.type | None = None
 
-    def hard(self) -> "ConstraintBuilder":
+    def hard(self) -> ConstraintBuilder:
         """Set as hard constraint."""
         self._is_hard = True
         return self
 
-    def soft(self, weight: float = 1.0) -> "ConstraintBuilder":
+    def soft(self, weight: float = 1.0) -> ConstraintBuilder:
         """
         Set as soft constraint with weight.
 
@@ -95,7 +98,7 @@ class ConstraintBuilder:
         self._weight = weight
         return self
 
-    def name(self, name: str) -> "ConstraintBuilder":
+    def name(self, name: str) -> ConstraintBuilder:
         """
         Set constraint name.
 
@@ -108,7 +111,7 @@ class ConstraintBuilder:
         self._name = name
         return self
 
-    def type(self, constraint_type: ConstraintType) -> "ConstraintBuilder":
+    def type(self, constraint_type: ConstraintType) -> ConstraintBuilder:
         """
         Set constraint type.
 
@@ -121,7 +124,7 @@ class ConstraintBuilder:
         self._constraint_type = constraint_type
         return self
 
-    def priority(self, priority: ConstraintPriority) -> "ConstraintBuilder":
+    def priority(self, priority: ConstraintPriority) -> ConstraintBuilder:
         """
         Set constraint priority.
 
@@ -134,7 +137,7 @@ class ConstraintBuilder:
         self._priority = priority
         return self
 
-    def weight(self, weight: float) -> "ConstraintBuilder":
+    def weight(self, weight: float) -> ConstraintBuilder:
         """
         Set soft constraint weight.
 
@@ -147,7 +150,7 @@ class ConstraintBuilder:
         self._weight = weight
         return self
 
-    def enabled(self, enabled: bool = True) -> "ConstraintBuilder":
+    def enabled(self, enabled: bool = True) -> ConstraintBuilder:
         """
         Set constraint enabled state.
 
@@ -160,7 +163,7 @@ class ConstraintBuilder:
         self._enabled = enabled
         return self
 
-    def with_parameter(self, name: str, value: Any) -> "ConstraintBuilder":
+    def with_parameter(self, name: str, value: Any) -> ConstraintBuilder:
         """
         Add parameter to constraint.
 
@@ -180,7 +183,7 @@ class ConstraintBuilder:
         self._parameters[name] = value
         return self
 
-    def with_parameters(self, params: dict) -> "ConstraintBuilder":
+    def with_parameters(self, params: dict) -> ConstraintBuilder:
         """
         Add multiple parameters to constraint.
 
@@ -193,7 +196,7 @@ class ConstraintBuilder:
         self._parameters.update(params)
         return self
 
-    def parent_class(self, parent_class: type) -> "ConstraintBuilder":
+    def parent_class(self, parent_class: builtins.type) -> ConstraintBuilder:
         """
         Set parent constraint class.
 
@@ -230,14 +233,14 @@ class ConstraintBuilder:
 
         # Create constraint instance
         if self._is_hard:
-            constraint = HardConstraint(
+            constraint = HardConstraint(  # type: ignore[abstract]
                 name=self._name,
                 constraint_type=self._constraint_type,
                 priority=self._priority,
                 enabled=self._enabled,
             )
         else:
-            constraint = SoftConstraint(
+            constraint = SoftConstraint(  # type: ignore[abstract, assignment]
                 name=self._name,
                 constraint_type=self._constraint_type,
                 weight=self._weight,
@@ -252,7 +255,7 @@ class ConstraintBuilder:
         logger.debug(f"Built constraint: {self._name}")
         return constraint
 
-    def reset(self) -> "ConstraintBuilder":
+    def reset(self) -> ConstraintBuilder:
         """
         Reset builder to initial state.
 
@@ -277,7 +280,7 @@ class ConstraintBuilder:
         self._parent_class = None
         return self
 
-    def clone(self) -> "ConstraintBuilder":
+    def clone(self) -> ConstraintBuilder:
         """
         Create a deep copy of builder configuration.
 
@@ -326,10 +329,10 @@ class CompositeConstraintBuilder:
             name: Name of composite constraint group
         """
         self.name = name
-        self.constraints = []
-        self.enabled = True
+        self.constraints: list[Constraint] = []
+        self._enabled = True
 
-    def add_constraint(self, constraint: Constraint) -> "CompositeConstraintBuilder":
+    def add_constraint(self, constraint: Constraint) -> CompositeConstraintBuilder:
         """
         Add constraint to composite.
 
@@ -345,7 +348,7 @@ class CompositeConstraintBuilder:
     def add_constraints(
         self,
         constraints: list[Constraint],
-    ) -> "CompositeConstraintBuilder":
+    ) -> CompositeConstraintBuilder:
         """
         Add multiple constraints to composite.
 
@@ -358,7 +361,7 @@ class CompositeConstraintBuilder:
         self.constraints.extend(constraints)
         return self
 
-    def enabled(self, enabled: bool = True) -> "CompositeConstraintBuilder":
+    def enabled(self, enabled: bool = True) -> CompositeConstraintBuilder:
         """
         Set composite enabled state.
 
@@ -368,7 +371,7 @@ class CompositeConstraintBuilder:
         Returns:
             Self for chaining
         """
-        self.enabled = enabled
+        self._enabled = enabled
         return self
 
     def build(self) -> dict:
@@ -381,7 +384,7 @@ class CompositeConstraintBuilder:
         return {
             "name": self.name,
             "type": "composite",
-            "enabled": self.enabled,
+            "enabled": self._enabled,
             "constraints": self.constraints,
             "count": len(self.constraints),
         }
@@ -485,7 +488,7 @@ class ConstraintSerializer:
         }
 
         if isinstance(constraint, SoftConstraint):
-            data["weight"] = constraint.weight
+            data["weight"] = constraint.weight  # type: ignore[assignment]
 
         # Serialize parameters
         parameters = {}
@@ -507,7 +510,7 @@ class ConstraintSerializer:
                         pass
 
         if parameters:
-            data["parameters"] = parameters
+            data["parameters"] = parameters  # type: ignore[assignment]
 
         return data
 
@@ -557,7 +560,7 @@ class ConstraintSerializer:
             else:
                 builder.hard()
 
-            builder.name(data.get("name"))
+            builder.name(data.get("name", ""))
 
             # Reconstruct constraint type
             constraint_type_str = data.get("constraint_type")
@@ -624,7 +627,7 @@ def build_hard_constraint(
         .name(name)
         .type(constraint_type)
         .priority(priority)
-        .build()
+        .build()  # type: ignore[return-value]
     )
 
 
@@ -652,5 +655,5 @@ def build_soft_constraint(
         .name(name)
         .type(constraint_type)
         .priority(priority)
-        .build()
+        .build()  # type: ignore[return-value]
     )

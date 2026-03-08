@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 try:
     from app.core.observability import metrics as obs_metrics
 except ImportError:
-    obs_metrics = None
+    obs_metrics = None  # type: ignore[assignment]
 
 # JWT algorithm (consistent with main auth)
 ALGORITHM = "HS256"

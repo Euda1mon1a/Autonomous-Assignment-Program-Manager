@@ -518,4 +518,4 @@ class ContentNegotiationStats:
 
     def reset(self) -> None:
         """Reset all statistics."""
-        self.__init__()
+        self.__init__()  # type: ignore[misc]

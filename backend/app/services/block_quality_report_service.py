@@ -672,8 +672,8 @@ class BlockQualityReportService:
         # and supervision ratios (per slot). Use statistics to derive proper total_checks.
         acgme_result = ACGMEValidator(self.db).validate_all(start_date, end_date)
         stats = acgme_result.statistics
-        residents_checked = stats.get("residents_scheduled", 0)
-        blocks_checked = stats.get("total_blocks", 0)
+        residents_checked = stats.get("residents_scheduled", 0)  # type: ignore[union-attr]
+        blocks_checked = stats.get("total_blocks", 0)  # type: ignore[union-attr]
         # Each resident: 2 checks (80-hour, 1-in-7). Each block: 1 supervision check.
         # Ensure total_checks >= violations + 1 to avoid negative compliance rates.
         computed_checks = residents_checked * 2 + blocks_checked

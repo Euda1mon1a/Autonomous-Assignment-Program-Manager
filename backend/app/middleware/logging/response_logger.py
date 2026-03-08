@@ -334,7 +334,7 @@ class ResponseMetrics:
 
     def reset(self) -> None:
         """Reset all metrics."""
-        self.__init__()
+        self.__init__()  # type: ignore[misc]
 
         # Global metrics instance
 

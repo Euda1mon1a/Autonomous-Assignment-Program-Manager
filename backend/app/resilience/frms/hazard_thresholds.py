@@ -423,7 +423,7 @@ class HazardThresholdEngine:
         hazards = []
         for data in residents:
             hazard = self.evaluate_hazard(
-                resident_id=data.get("resident_id"),
+                resident_id=data.get("resident_id"),  # type: ignore[arg-type]
                 alertness=data.get("alertness"),
                 sleep_debt=data.get("sleep_debt"),
                 hours_awake=data.get("hours_awake"),

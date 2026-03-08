@@ -11,6 +11,8 @@ This module provides:
 - Multi-consumer stream support
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -424,7 +426,7 @@ class DataStream(Generic[T]):
                 if asyncio.iscoroutinefunction(transform_func):
                     transformed_data = await transform_func(transformed_data)
                 else:
-                    transformed_data = transform_func(transformed_data)
+                    transformed_data = transform_func(transformed_data)  # type: ignore[assignment]
                 self.metrics.messages_transformed += 1
             except Exception as e:
                 logger.error(
@@ -523,10 +525,10 @@ class DataStream(Generic[T]):
         """Send periodic heartbeat messages to all consumers."""
         while not self._closed:
             try:
-                await asyncio.sleep(self.heartbeat_interval)
+                await asyncio.sleep(self.heartbeat_interval)  # type: ignore[arg-type]  # guarded by __init__ check
                 if not self._closed:
                     await self.publish(
-                        data={"timestamp": time.time()},
+                        data={"timestamp": time.time()},  # type: ignore[arg-type]  # heartbeat dict is always valid
                         event_type=StreamEventType.HEARTBEAT,
                     )
             except asyncio.CancelledError:
@@ -748,7 +750,7 @@ class WebSocketStreamWrapper:
                     if isinstance(event.data, BaseModel):
                         data = event.data.model_dump()
                     else:
-                        data = event.data
+                        data = event.data  # type: ignore[assignment]
 
                     await self.websocket.send_json(
                         {

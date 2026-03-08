@@ -43,6 +43,7 @@ class ConstraintType(Enum):
     DUTY_HOURS = "duty_hours"
     CONSECUTIVE_DAYS = "consecutive_days"
     SUPERVISION = "supervision"
+    COVERAGE = "coverage"
     CAPACITY = "capacity"
     ROTATION = "rotation"
     PREFERENCE = "preference"
@@ -76,6 +77,7 @@ class ConstraintViolation:
     message: str
     person_id: UUID | None = None
     block_id: UUID | None = None
+    entity_id: UUID | None = None
     details: dict = field(default_factory=dict)
 
 
@@ -86,6 +88,7 @@ class ConstraintResult:
     satisfied: bool
     violations: list[ConstraintViolation] = field(default_factory=list)
     penalty: float = 0.0  # For soft constraints
+    details: dict = field(default_factory=dict)
 
 
 class Constraint(ABC):
@@ -245,6 +248,9 @@ class SchedulingContext:
     # Preference trails from stigmergy: {faculty_id: {slot_type: strength}}
     # Used to weight assignments based on learned preferences
     preference_trails: dict[UUID, dict[str, float]] = field(default_factory=dict)
+
+    # Alias for preference_trails (used by quantum template selector)
+    preferences: dict = field(default_factory=dict)
 
     # Zone assignments: {faculty_id: zone_id}
     # For blast radius isolation - faculty should primarily work in their zone

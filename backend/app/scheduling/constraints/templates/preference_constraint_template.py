@@ -56,7 +56,7 @@ class PreferenceConstraintTemplate(SoftConstraint):
         penalty = self.get_penalty(violation_count * self.penalty_for_violation)
         return ConstraintResult(
             satisfied=(violation_count == 0),
-            violations=violations,
+            violations=violations,  # type: ignore[arg-type]
             penalty=penalty,
         )
 

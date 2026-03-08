@@ -281,12 +281,12 @@ class N2ContingencyScenario:
                 faculty_pair = all_pairs[iteration]
             else:
                 # Shouldn't happen, but handle gracefully
-                faculty_pair = tuple(
+                faculty_pair = tuple(  # type: ignore[assignment]
                     self._rng.sample(range(self.config.faculty_count), 2)
                 )
         else:
             # Random sampling
-            faculty_pair = tuple(
+            faculty_pair = tuple(  # type: ignore[assignment]
                 sorted(self._rng.sample(range(self.config.faculty_count), 2))
             )
 

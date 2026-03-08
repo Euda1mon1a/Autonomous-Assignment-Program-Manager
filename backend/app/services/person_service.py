@@ -1,6 +1,7 @@
 """Person service for business logic."""
 
 import logging
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
@@ -204,7 +205,7 @@ class PersonService:
                 "error": "PGY level required for residents",
             }
 
-        person_data = {
+        person_data: dict[str, Any] = {
             "name": name,
             "type": type,
         }
@@ -538,7 +539,7 @@ class PersonService:
             person_id = update_item.get("person_id")
             update_data = update_item.get("updates", {})
 
-            person = self.person_repo.get_by_id(person_id)
+            person = self.person_repo.get_by_id(person_id)  # type: ignore[arg-type]
             if not person:
                 results.append(
                     {

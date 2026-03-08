@@ -278,4 +278,4 @@ def create_logging_config(
     # Apply overrides
     config_dict.update(overrides)
 
-    return RequestLoggingConfig(**config_dict)
+    return RequestLoggingConfig(**config_dict)  # type: ignore[arg-type]

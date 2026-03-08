@@ -130,9 +130,9 @@ class HealthAggregator:
             db_task = asyncio.create_task(self.database_check.check())
             redis_task = asyncio.create_task(self.redis_check.check())
 
-            db_result, redis_result = await asyncio.gather(
-                db_task, redis_task, return_exceptions=True
-            )
+            results = await asyncio.gather(db_task, redis_task, return_exceptions=True)
+            db_result: Any = results[0]
+            redis_result: Any = results[1]
 
             # Determine overall readiness
             db_healthy = not isinstance(db_result, Exception) and db_result.get(
@@ -202,7 +202,7 @@ class HealthAggregator:
                     error=str(result),
                 )
             else:
-                service_results[service_name] = result
+                service_results[service_name] = result  # type: ignore[assignment]
 
                 # Determine overall status
         overall_status = self._aggregate_status(service_results)
