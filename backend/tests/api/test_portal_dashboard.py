@@ -1,7 +1,7 @@
 """Tests for portal dashboard API."""
 
-from datetime import date, datetime, timedelta
-from uuid import uuid4
+from datetime import date, datetime, timedelta, timezone, UTC
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -25,7 +25,7 @@ from app.models.user import User
 
 
 async def get_faculty_week_counts(
-    db: Session, faculty_id: str, academic_year_start: date
+    db: Session, faculty_id: UUID, academic_year_start: date
 ) -> dict:
     """
     Calculate week counts for faculty member.
@@ -88,7 +88,7 @@ async def get_faculty_week_counts(
 
 
 async def get_upcoming_weeks(
-    db: Session, faculty_id: str, limit: int = 4
+    db: Session, faculty_id: UUID, limit: int = 4
 ) -> list[dict]:
     """
     Get upcoming FMIT weeks for faculty member.
@@ -149,7 +149,9 @@ async def get_upcoming_weeks(
     return upcoming
 
 
-async def get_recent_alerts(db: Session, faculty_id: str, days: int = 30) -> list[dict]:
+async def get_recent_alerts(
+    db: Session, faculty_id: UUID, days: int = 30
+) -> list[dict]:
     """
     Get recent conflict alerts for faculty member.
 
@@ -161,7 +163,7 @@ async def get_recent_alerts(db: Session, faculty_id: str, days: int = 30) -> lis
     Returns:
         list: List of recent alert info dicts
     """
-    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    cutoff_date = datetime.now(UTC) - timedelta(days=days)
 
     alerts = (
         db.query(ConflictAlert)
@@ -186,7 +188,7 @@ async def get_recent_alerts(db: Session, faculty_id: str, days: int = 30) -> lis
     ]
 
 
-async def get_pending_swaps(db: Session, faculty_id: str) -> list[dict]:
+async def get_pending_swaps(db: Session, faculty_id: UUID) -> list[dict]:
     """
     Get pending swap requests requiring response.
 
@@ -280,7 +282,7 @@ class TestDashboardQueries:
 
         result = await get_faculty_week_counts(
             db=db,
-            faculty_id=str(sample_faculty.id),
+            faculty_id=sample_faculty.id,
             academic_year_start=date(2025, 7, 1),
         )
 
@@ -291,7 +293,7 @@ class TestDashboardQueries:
     @pytest.mark.asyncio
     async def test_get_upcoming_weeks_empty(self, db, sample_faculty):
         """Test upcoming weeks with no data."""
-        result = await get_upcoming_weeks(db=db, faculty_id=str(sample_faculty.id))
+        result = await get_upcoming_weeks(db=db, faculty_id=sample_faculty.id)
 
         assert result == []
 
@@ -332,9 +334,7 @@ class TestDashboardQueries:
             db.add(assignment)
         db.commit()
 
-        result = await get_upcoming_weeks(
-            db=db, faculty_id=str(sample_faculty.id), limit=4
-        )
+        result = await get_upcoming_weeks(db=db, faculty_id=sample_faculty.id, limit=4)
 
         assert len(result) > 0
         assert "week_start" in result[0]
@@ -344,7 +344,7 @@ class TestDashboardQueries:
     @pytest.mark.asyncio
     async def test_get_recent_alerts_empty(self, db, sample_faculty):
         """Test recent alerts query with no alerts."""
-        result = await get_recent_alerts(db=db, faculty_id=str(sample_faculty.id))
+        result = await get_recent_alerts(db=db, faculty_id=sample_faculty.id)
 
         assert isinstance(result, list)
         assert len(result) == 0
@@ -361,14 +361,12 @@ class TestDashboardQueries:
                 fmit_week=date.today() + timedelta(days=7 * i),
                 description=f"Test conflict {i}",
                 status=ConflictAlertStatus.NEW,
-                created_at=datetime.utcnow() - timedelta(days=i),
+                created_at=datetime.now(UTC) - timedelta(days=i),
             )
             db.add(alert)
         db.commit()
 
-        result = await get_recent_alerts(
-            db=db, faculty_id=str(sample_faculty.id), days=30
-        )
+        result = await get_recent_alerts(db=db, faculty_id=sample_faculty.id, days=30)
 
         assert isinstance(result, list)
         assert len(result) == 3
@@ -379,7 +377,7 @@ class TestDashboardQueries:
     @pytest.mark.asyncio
     async def test_get_pending_swaps_empty(self, db, sample_faculty):
         """Test pending swaps query with no swaps."""
-        result = await get_pending_swaps(db=db, faculty_id=str(sample_faculty.id))
+        result = await get_pending_swaps(db=db, faculty_id=sample_faculty.id)
 
         assert isinstance(result, list)
         assert len(result) == 0
@@ -399,13 +397,13 @@ class TestDashboardQueries:
                 target_week=None,
                 swap_type=SwapType.ABSORB,
                 status=SwapStatus.PENDING,
-                requested_at=datetime.utcnow() - timedelta(hours=i),
+                requested_at=datetime.now(UTC) - timedelta(hours=i),
                 reason=f"Need coverage {i}",
             )
             db.add(swap)
         db.commit()
 
-        result = await get_pending_swaps(db=db, faculty_id=str(sample_faculty.id))
+        result = await get_pending_swaps(db=db, faculty_id=sample_faculty.id)
 
         assert isinstance(result, list)
         assert len(result) == 2
@@ -590,7 +588,7 @@ class TestDashboardIntegration:
             fmit_week=start_date,
             description="Test conflict",
             status=ConflictAlertStatus.NEW,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         db.add(alert)
         db.commit()

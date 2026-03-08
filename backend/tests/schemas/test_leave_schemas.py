@@ -53,7 +53,7 @@ class TestLeaveStatus:
         assert LeaveStatus.CANCELLED.value == "cancelled"
 
     def test_count(self):
-        assert len(LeaveStatus) == 4
+        assert len(LeaveStatus) == 7
 
 
 class TestLeaveWebhookPayload:

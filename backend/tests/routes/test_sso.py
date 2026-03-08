@@ -361,7 +361,7 @@ class TestSSORoutes:
     # ========================================================================
 
     @patch("app.api.routes.sso.sso_config")
-    def test_get_or_create_user_existing(
+    async def test_get_or_create_user_existing(
         self,
         mock_config: MagicMock,
         db_session: MagicMock,
@@ -371,9 +371,9 @@ class TestSSORoutes:
 
         mock_user = MagicMock()
         mock_user.email = "existing@example.com"
-        db_session.query.return_value.filter.return_value.first.return_value = mock_user
+        db_session.execute.return_value.scalar_one_or_none.return_value = mock_user
 
-        result = get_or_create_user(
+        result = await get_or_create_user(
             db_session,
             {"email": "existing@example.com", "username": "existing"},
             "saml",
@@ -381,7 +381,7 @@ class TestSSORoutes:
         assert result == mock_user
 
     @patch("app.api.routes.sso.sso_config")
-    def test_get_or_create_user_missing_email(
+    async def test_get_or_create_user_missing_email(
         self,
         mock_config: MagicMock,
         db_session: MagicMock,
@@ -392,7 +392,7 @@ class TestSSORoutes:
         from app.api.routes.sso import get_or_create_user
 
         with pytest.raises(HTTPException) as exc_info:
-            get_or_create_user(
+            await get_or_create_user(
                 db_session,
                 {"username": "nomail"},
                 "saml",
@@ -401,7 +401,7 @@ class TestSSORoutes:
         assert "Email is required" in str(exc_info.value.detail)
 
     @patch("app.api.routes.sso.sso_config")
-    def test_get_or_create_user_auto_provision_disabled(
+    async def test_get_or_create_user_auto_provision_disabled(
         self,
         mock_config: MagicMock,
         db_session: MagicMock,
@@ -412,10 +412,10 @@ class TestSSORoutes:
         from app.api.routes.sso import get_or_create_user
 
         mock_config.auto_provision_users = False
-        db_session.query.return_value.filter.return_value.first.return_value = None
+        db_session.execute.return_value.scalar_one_or_none.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
-            get_or_create_user(
+            await get_or_create_user(
                 db_session,
                 {"email": "new@example.com"},
                 "oauth2",
