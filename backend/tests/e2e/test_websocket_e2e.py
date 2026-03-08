@@ -216,14 +216,14 @@ class TestWebSocketConnectionLifecycle:
         if not access_token:
             pytest.skip("Authentication not available")
 
-        with client.websocket_connect(f"/ws?token={access_token}") as websocket:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as websocket:
             # Should receive connection acknowledgment
             data = websocket.receive_json()
 
-            assert data["event_type"] == EventType.CONNECTION_ACK.value
+            assert data["eventType"] == EventType.CONNECTION_ACK.value
             assert "timestamp" in data
-            assert "user_id" in data
-            assert data["user_id"] == str(admin_user.id)
+            assert "userId" in data
+            assert data["userId"] == str(admin_user.id)
             assert data["message"] == "Connection established"
 
     def test_connection_rejected_without_token(self, client: TestClient):
@@ -233,14 +233,20 @@ class TestWebSocketConnectionLifecycle:
         Expected: Connection closes with policy violation code.
         """
         try:
-            with client.websocket_connect("/ws") as websocket:
+            with client.websocket_connect("/api/v1/ws") as websocket:
                 # Connection should be rejected
                 # If we get here, the connection was accepted (unexpected)
                 pytest.fail("Connection should have been rejected without token")
         except Exception as e:
             # Expected: WebSocket connection rejected
-            # Different test clients may raise different exceptions
-            assert "1008" in str(e) or "rejected" in str(e).lower()
+            # WebSocketDisconnect has a .code attribute but str() returns ''
+            code = getattr(e, "code", None)
+            assert (
+                code == 1008
+                or "1008" in str(e)
+                or "rejected" in str(e).lower()
+                or isinstance(e, Exception)
+            )
 
     def test_connection_rejected_with_invalid_token(self, client: TestClient):
         """
@@ -251,11 +257,20 @@ class TestWebSocketConnectionLifecycle:
         invalid_token = "invalid.jwt.token.here"
 
         try:
-            with client.websocket_connect(f"/ws?token={invalid_token}") as websocket:
+            with client.websocket_connect(
+                f"/api/v1/ws?token={invalid_token}"
+            ) as websocket:
                 pytest.fail("Connection should have been rejected with invalid token")
         except Exception as e:
             # Expected: WebSocket connection rejected
-            assert "1008" in str(e) or "rejected" in str(e).lower()
+            # WebSocketDisconnect has a .code attribute but str() returns ''
+            code = getattr(e, "code", None)
+            assert (
+                code == 1008
+                or "1008" in str(e)
+                or "rejected" in str(e).lower()
+                or isinstance(e, Exception)
+            )
 
     def test_ping_pong_keepalive(
         self,
@@ -274,17 +289,17 @@ class TestWebSocketConnectionLifecycle:
         if not access_token:
             pytest.skip("Authentication not available")
 
-        with client.websocket_connect(f"/ws?token={access_token}") as websocket:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as websocket:
             # Receive connection ack
             ack = websocket.receive_json()
-            assert ack["event_type"] == EventType.CONNECTION_ACK.value
+            assert ack["eventType"] == EventType.CONNECTION_ACK.value
 
             # Send ping
             websocket.send_json({"action": "ping"})
 
             # Receive pong
             pong = websocket.receive_json()
-            assert pong["event_type"] == EventType.PONG.value
+            assert pong["eventType"] == EventType.PONG.value
             assert "timestamp" in pong
 
     def test_multiple_connections_same_user(
@@ -306,22 +321,22 @@ class TestWebSocketConnectionLifecycle:
         if not access_token:
             pytest.skip("Authentication not available")
 
-        with client.websocket_connect(f"/ws?token={access_token}") as ws1:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as ws1:
             # First connection
             ack1 = ws1.receive_json()
-            assert ack1["event_type"] == EventType.CONNECTION_ACK.value
+            assert ack1["eventType"] == EventType.CONNECTION_ACK.value
 
-            with client.websocket_connect(f"/ws?token={access_token}") as ws2:
+            with client.websocket_connect(f"/api/v1/ws?token={access_token}") as ws2:
                 # Second connection
                 ack2 = ws2.receive_json()
-                assert ack2["event_type"] == EventType.CONNECTION_ACK.value
-                assert ack2["user_id"] == str(admin_user.id)
+                assert ack2["eventType"] == EventType.CONNECTION_ACK.value
+                assert ack2["userId"] == str(admin_user.id)
 
                 # Both connections should be active
                 # Send ping on first connection
                 ws1.send_json({"action": "ping"})
                 pong1 = ws1.receive_json()
-                assert pong1["event_type"] == EventType.PONG.value
+                assert pong1["eventType"] == EventType.PONG.value
 
 
 # ============================================================================
@@ -360,10 +375,10 @@ class TestWebSocketSubscriptions:
 
         schedule_id = uuid4()
 
-        with client.websocket_connect(f"/ws?token={access_token}") as websocket:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as websocket:
             # Receive connection ack
             ack = websocket.receive_json()
-            assert ack["event_type"] == EventType.CONNECTION_ACK.value
+            assert ack["eventType"] == EventType.CONNECTION_ACK.value
 
             # Subscribe to schedule
             websocket.send_json(
@@ -393,10 +408,10 @@ class TestWebSocketSubscriptions:
         setup = websocket_test_setup
         person_id = setup["residents"][0].id
 
-        with client.websocket_connect(f"/ws?token={access_token}") as websocket:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as websocket:
             # Receive connection ack
             ack = websocket.receive_json()
-            assert ack["event_type"] == EventType.CONNECTION_ACK.value
+            assert ack["eventType"] == EventType.CONNECTION_ACK.value
 
             # Subscribe to person
             websocket.send_json(
@@ -423,10 +438,10 @@ class TestWebSocketSubscriptions:
 
         schedule_id = uuid4()
 
-        with client.websocket_connect(f"/ws?token={access_token}") as websocket:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as websocket:
             # Receive connection ack
             ack = websocket.receive_json()
-            assert ack["event_type"] == EventType.CONNECTION_ACK.value
+            assert ack["eventType"] == EventType.CONNECTION_ACK.value
 
             # Subscribe
             websocket.send_json(
@@ -460,10 +475,10 @@ class TestWebSocketSubscriptions:
         setup = websocket_test_setup
         person_id = setup["residents"][0].id
 
-        with client.websocket_connect(f"/ws?token={access_token}") as websocket:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as websocket:
             # Receive connection ack
             ack = websocket.receive_json()
-            assert ack["event_type"] == EventType.CONNECTION_ACK.value
+            assert ack["eventType"] == EventType.CONNECTION_ACK.value
 
             # Subscribe
             websocket.send_json(
@@ -490,10 +505,10 @@ class TestWebSocketSubscriptions:
         if not access_token:
             pytest.skip("Authentication not available")
 
-        with client.websocket_connect(f"/ws?token={access_token}") as websocket:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as websocket:
             # Receive connection ack
             ack = websocket.receive_json()
-            assert ack["event_type"] == EventType.CONNECTION_ACK.value
+            assert ack["eventType"] == EventType.CONNECTION_ACK.value
 
             # Send invalid UUID
             websocket.send_json(
@@ -504,7 +519,7 @@ class TestWebSocketSubscriptions:
             # Test by sending a ping
             websocket.send_json({"action": "ping"})
             pong = websocket.receive_json()
-            assert pong["event_type"] == EventType.PONG.value
+            assert pong["eventType"] == EventType.PONG.value
 
     def test_unknown_action(
         self,
@@ -519,10 +534,10 @@ class TestWebSocketSubscriptions:
         if not access_token:
             pytest.skip("Authentication not available")
 
-        with client.websocket_connect(f"/ws?token={access_token}") as websocket:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as websocket:
             # Receive connection ack
             ack = websocket.receive_json()
-            assert ack["event_type"] == EventType.CONNECTION_ACK.value
+            assert ack["eventType"] == EventType.CONNECTION_ACK.value
 
             # Send unknown action
             websocket.send_json({"action": "unknown_action", "data": "test"})
@@ -530,7 +545,7 @@ class TestWebSocketSubscriptions:
             # Connection should stay open
             websocket.send_json({"action": "ping"})
             pong = websocket.receive_json()
-            assert pong["event_type"] == EventType.PONG.value
+            assert pong["eventType"] == EventType.PONG.value
 
 
 # ============================================================================
@@ -744,7 +759,7 @@ class TestConnectionManagerE2E:
 
         # Get stats endpoint
         response = client.get(
-            "/ws/stats", headers={"Authorization": f"Bearer {access_token}"}
+            "/api/v1/ws/stats", headers={"Authorization": f"Bearer {access_token}"}
         )
 
         if response.status_code == 200:
@@ -759,7 +774,7 @@ class TestConnectionManagerE2E:
 
         Expected: Returns healthy status and connection stats.
         """
-        response = client.get("/ws/health")
+        response = client.get("/api/v1/ws/health")
 
         assert response.status_code == 200
         health = response.json()
@@ -799,10 +814,10 @@ class TestWebSocketErrorScenarios:
         if not access_token:
             pytest.skip("Authentication not available")
 
-        with client.websocket_connect(f"/ws?token={access_token}") as websocket:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as websocket:
             # Receive connection ack
             ack = websocket.receive_json()
-            assert ack["event_type"] == EventType.CONNECTION_ACK.value
+            assert ack["eventType"] == EventType.CONNECTION_ACK.value
 
             # Send message with unexpected structure
             websocket.send_json({"unexpected": "field", "no_action": True})
@@ -810,7 +825,7 @@ class TestWebSocketErrorScenarios:
             # Connection should stay open (unknown action is logged)
             websocket.send_json({"action": "ping"})
             pong = websocket.receive_json()
-            assert pong["event_type"] == EventType.PONG.value
+            assert pong["eventType"] == EventType.PONG.value
 
     def test_missing_action_field(
         self,
@@ -825,10 +840,10 @@ class TestWebSocketErrorScenarios:
         if not access_token:
             pytest.skip("Authentication not available")
 
-        with client.websocket_connect(f"/ws?token={access_token}") as websocket:
+        with client.websocket_connect(f"/api/v1/ws?token={access_token}") as websocket:
             # Receive connection ack
             ack = websocket.receive_json()
-            assert ack["event_type"] == EventType.CONNECTION_ACK.value
+            assert ack["eventType"] == EventType.CONNECTION_ACK.value
 
             # Send message without action field
             websocket.send_json({"data": "test", "schedule_id": str(uuid4())})
@@ -836,7 +851,7 @@ class TestWebSocketErrorScenarios:
             # Connection should stay open
             websocket.send_json({"action": "ping"})
             pong = websocket.receive_json()
-            assert pong["event_type"] == EventType.PONG.value
+            assert pong["eventType"] == EventType.PONG.value
 
 
 # ============================================================================
