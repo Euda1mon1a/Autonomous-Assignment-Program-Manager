@@ -29,11 +29,13 @@ class MockTemplate:
         self,
         id=None,
         name="Test Rotation",
+        rotation_type="inpatient",
         max_residents=None,
         requires_procedure_credential=False,
     ):
         self.id = id or uuid4()
         self.name = name
+        self.rotation_type = rotation_type
         self.max_residents = max_residents
         self.requires_procedure_credential = requires_procedure_credential
 
@@ -47,7 +49,7 @@ def test_cpsat_call_extraction_includes_weekend_block() -> None:
 
     resident = MockPerson(name="Resident", person_type="resident", pgy_level=1)
     faculty = MockPerson(name="Faculty", person_type="faculty", pgy_level=None)
-    template = MockTemplate(name="Clinic")
+    template = MockTemplate(name="Inpatient", rotation_type="inpatient")
 
     context = SchedulingContext(
         residents=[resident],

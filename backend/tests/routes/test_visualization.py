@@ -91,13 +91,19 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test successful heatmap generation."""
-        mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2, 3], [4, 5, 6]],
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
             x_labels=["2025-01-01", "2025-01-02", "2025-01-03"],
             y_labels=["Person 1", "Person 2"],
-            title="Schedule Heatmap",
+            z_values=[[1, 2, 3], [4, 5, 6]],
             color_scale="RdYlGn",
+            annotations=None,
+        )
+        mock_service = MagicMock()
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Schedule Heatmap",
             metadata={"total_assignments": 100},
         )
         mock_service_class.return_value = mock_service
@@ -110,8 +116,7 @@ class TestVisualizationRoutes:
 
         data = response.json()
         assert "data" in data
-        assert "x_labels" in data
-        assert "y_labels" in data
+        assert "title" in data
 
     @patch("app.api.routes.visualization.CachedHeatmapService")
     def test_heatmap_with_filters(
@@ -121,14 +126,22 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test heatmap with person and rotation filters."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
         person_id = uuid4()
         rotation_id = uuid4()
-        mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]],
+        heatmap_data = HeatmapData(
             x_labels=["2025-01-01"],
             y_labels=["Person"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
+        mock_service = MagicMock()
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
             title="Filtered",
+            metadata=None,
         )
         mock_service_class.return_value = mock_service
 
@@ -177,15 +190,22 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test unified heatmap with time range specification."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["Person"],
+            z_values=[[1, 2, 3]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
         mock_service.calculate_date_range.return_value = (
             date(2025, 1, 1),
             date(2025, 1, 31),
         )
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2, 3]],
-            x_labels=["2025-01-01"],
-            y_labels=["Person"],
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
             title="Monthly Heatmap",
             metadata=None,
         )
@@ -236,9 +256,20 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test heatmap PNG image export."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["P1"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], title="Test Heatmap"
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Test Heatmap",
+            metadata=None,
         )
         mock_service.export_heatmap_image.return_value = b"\x89PNG fake image data"
         mock_service_class.return_value = mock_service
@@ -258,9 +289,20 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test heatmap PDF image export."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["P1"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], title="Test Heatmap"
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Test Heatmap",
+            metadata=None,
         )
         mock_service.export_heatmap_image.return_value = b"%PDF-1.4 fake pdf"
         mock_service_class.return_value = mock_service
@@ -280,9 +322,20 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test heatmap SVG image export."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["P1"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], title="Test Heatmap"
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Test Heatmap",
+            metadata=None,
         )
         mock_service.export_heatmap_image.return_value = b"<svg>fake svg</svg>"
         mock_service_class.return_value = mock_service
@@ -315,9 +368,20 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test heatmap image handles export errors."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["P1"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], title="Test"
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Test",
+            metadata=None,
         )
         mock_service.export_heatmap_image.side_effect = Exception("Export failed")
         mock_service_class.return_value = mock_service
@@ -340,14 +404,21 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test successful coverage heatmap generation."""
-        mock_service = MagicMock()
-        mock_service.generate_coverage_heatmap.return_value = MagicMock(
-            data=[[3, 2, 4]],
+        from app.schemas.visualization import CoverageHeatmapResponse, HeatmapData
+
+        heatmap_data = HeatmapData(
             x_labels=["2025-01-01", "2025-01-02", "2025-01-03"],
             y_labels=["Cardiology", "Pulmonology"],
+            z_values=[[3, 2, 4]],
+            color_scale="RdYlGn",
+            annotations=None,
+        )
+        mock_service = MagicMock()
+        mock_service.generate_coverage_heatmap.return_value = CoverageHeatmapResponse(
+            data=heatmap_data,
+            coverage_percentage=95.0,
+            gaps=[],
             title="Coverage Heatmap",
-            gaps=[{"date": "2025-01-02", "rotation": "Pulmonology", "count": 1}],
-            summary={"total_gaps": 1, "coverage_rate": 0.95},
         )
         mock_service_class.return_value = mock_service
 
@@ -381,13 +452,21 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test successful workload heatmap generation."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
         person_id = uuid4()
-        mock_service = MagicMock()
-        mock_service.generate_person_workload_heatmap.return_value = MagicMock(
-            data=[[8, 10, 6]],
+        heatmap_data = HeatmapData(
             x_labels=["2025-01-01", "2025-01-02", "2025-01-03"],
             y_labels=["Dr. Smith"],
+            z_values=[[8, 10, 6]],
+            color_scale="Viridis",
+            annotations=None,
+        )
+        mock_service = MagicMock()
+        mock_service.generate_person_workload_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
             title="Workload Heatmap",
+            metadata=None,
         )
         mock_service_class.return_value = mock_service
 
@@ -405,14 +484,22 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test workload heatmap for multiple persons."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
         person_id1 = uuid4()
         person_id2 = uuid4()
-        mock_service = MagicMock()
-        mock_service.generate_person_workload_heatmap.return_value = MagicMock(
-            data=[[8, 10], [6, 9]],
+        heatmap_data = HeatmapData(
             x_labels=["2025-01-01", "2025-01-02"],
             y_labels=["Dr. Smith", "Dr. Jones"],
+            z_values=[[8, 10], [6, 9]],
+            color_scale="Viridis",
+            annotations=None,
+        )
+        mock_service = MagicMock()
+        mock_service.generate_person_workload_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
             title="Workload Heatmap",
+            metadata=None,
         )
         mock_service_class.return_value = mock_service
 
@@ -448,9 +535,20 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test exporting unified heatmap."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["P1"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], title="Unified Heatmap"
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Unified Heatmap",
+            metadata=None,
         )
         mock_service.export_heatmap_image.return_value = b"\x89PNG image data"
         mock_service_class.return_value = mock_service

@@ -185,8 +185,7 @@ class TestInAppChannel:
 
         assert result.success is False
         assert result.channel == "in_app"
-        assert "Failed to store notification" in result.message
-        assert "Database error" in result.message
+        assert result.message == "Operation failed"
 
 
 class TestEmailChannel:

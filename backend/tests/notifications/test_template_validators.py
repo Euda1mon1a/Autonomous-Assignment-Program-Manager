@@ -218,7 +218,7 @@ class TestTemplateValidator:
     def test_extract_variables_with_filters(self):
         """Test extracting variables when filters are used."""
         validator = TemplateValidator()
-        template = "{{ name|upper }} - {{ count|pluralize('item', 'items') }}"
+        template = "{{ name|upper }} - {{ count|default(0) }}"
 
         variables = validator.extract_variables(template)
 

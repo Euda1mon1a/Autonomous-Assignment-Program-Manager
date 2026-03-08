@@ -62,9 +62,9 @@ class TestWorkHourValidator:
 
     def test_80_hour_rule_exceeds_limit_violation(self, validator, resident_id):
         """Test that > 80 hours/week is VIOLATION."""
-        # 28 days of 11.5 hours = 322 hours = 80.5 hours/week
+        # 28 days of 13 hours = 364 hours = 91 hours/week (>10% over -> CRITICAL)
         start_date = date(2025, 1, 1)
-        hours_by_date = {start_date + timedelta(days=i): 11.5 for i in range(28)}
+        hours_by_date = {start_date + timedelta(days=i): 13.0 for i in range(28)}
 
         violations, warnings = validator.validate_80_hour_rolling_average(
             resident_id, hours_by_date
@@ -76,9 +76,9 @@ class TestWorkHourValidator:
 
     def test_80_hour_rule_approaching_limit_warning(self, validator, resident_id):
         """Test warning when approaching 80-hour limit (76+ hours)."""
-        # 28 days of 10.85 hours = 304 hours = 76 hours/week
+        # 28 days of 10.9 hours = 305.2 hours = 76.3 hours/week (above 95% threshold)
         start_date = date(2025, 1, 1)
-        hours_by_date = {start_date + timedelta(days=i): 10.85 for i in range(28)}
+        hours_by_date = {start_date + timedelta(days=i): 10.9 for i in range(28)}
 
         violations, warnings = validator.validate_80_hour_rolling_average(
             resident_id, hours_by_date

@@ -337,18 +337,14 @@ class TestWorkloadValidate:
         assert result.satisfied is True
         assert result.penalty == 0.0
 
-    def test_validate_with_eligible_faculty_raises_type_error(self):
-        """Bug: ConstraintResult doesn't accept 'details' kwarg.
-
-        validate() passes details= to ConstraintResult on line 521, but
-        ConstraintResult.__init__ doesn't support that parameter. This
-        causes TypeError whenever eligible_ids is non-empty.
-        """
+    def test_validate_with_eligible_faculty_returns_result(self):
+        """validate() returns ConstraintResult with details when eligible faculty exist."""
         c = IntegratedWorkloadConstraint()
         fac = _person(name="Dr. A", faculty_role="core")
         ctx = _context(faculty=[fac])
-        with pytest.raises(TypeError, match="details"):
-            c.validate([], ctx)
+        result = c.validate([], ctx)
+        assert result.satisfied is True
+        assert isinstance(result.details, dict)
 
 
 # ==================== calculate_workload_report Tests ====================
@@ -357,23 +353,22 @@ class TestWorkloadValidate:
 class TestCalculateWorkloadReport:
     """Test convenience function.
 
-    Note: calculate_workload_report calls validate which hits the
-    ConstraintResult 'details' bug when eligible faculty exist.
+    calculate_workload_report calls validate and returns result.details.
     """
 
-    def test_no_faculty_raises_attribute_error(self):
-        """Bug: calculate_workload_report accesses result.details which
-        doesn't exist on ConstraintResult, even on the no-faculty path."""
+    def test_no_faculty_returns_empty_report(self):
+        """No eligible faculty -> empty report dict."""
         ctx = _context()
-        with pytest.raises(AttributeError, match="details"):
-            calculate_workload_report([], ctx)
+        report = calculate_workload_report([], ctx)
+        assert isinstance(report, dict)
 
-    def test_with_eligible_faculty_raises_type_error(self):
-        """Bug propagates from validate."""
+    def test_with_eligible_faculty_returns_report(self):
+        """With eligible faculty -> report with workloads."""
         fac = _person(name="Dr. A", faculty_role="core")
         ctx = _context(faculty=[fac])
-        with pytest.raises(TypeError, match="details"):
-            calculate_workload_report([], ctx)
+        report = calculate_workload_report([], ctx)
+        assert isinstance(report, dict)
+        assert "workloads" in report
 
 
 # ==================== add_to_cpsat Solver Variable Tests ====================

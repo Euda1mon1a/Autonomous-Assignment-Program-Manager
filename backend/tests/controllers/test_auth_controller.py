@@ -11,6 +11,11 @@ from app.models.user import User
 from app.core.security import get_password_hash
 
 
+def _clear_lockout(controller, username):
+    """Clear lockout state for a username before a test."""
+    controller.lockout.clear_lockout(username)
+
+
 class TestAuthController:
     """Test suite for AuthController."""
 
@@ -33,6 +38,7 @@ class TestAuthController:
         db.commit()
 
         controller = AuthController(db)
+        _clear_lockout(controller, "testuser")
         result = controller.login("testuser", "TestPassword123!")
 
         assert result is not None
@@ -40,8 +46,9 @@ class TestAuthController:
         assert result.token_type == "bearer"
 
     def test_login_invalid_username(self, db):
-        """Test login with non-existent username raises 401."""
+        """Test login with non-existent username raises 401 or 429."""
         controller = AuthController(db)
+        _clear_lockout(controller, "nonexistent")
 
         with pytest.raises(HTTPException) as exc_info:
             controller.login("nonexistent", "password123")
@@ -63,6 +70,7 @@ class TestAuthController:
         db.commit()
 
         controller = AuthController(db)
+        _clear_lockout(controller, "testuser")
 
         with pytest.raises(HTTPException) as exc_info:
             controller.login("testuser", "WrongPassword123!")
@@ -84,6 +92,7 @@ class TestAuthController:
         db.commit()
 
         controller = AuthController(db)
+        _clear_lockout(controller, "inactiveuser")
 
         with pytest.raises(HTTPException) as exc_info:
             controller.login("inactiveuser", "TestPassword123!")
@@ -105,6 +114,7 @@ class TestAuthController:
         db.commit()
 
         controller = AuthController(db)
+        _clear_lockout(controller, "lockouttest")
 
         # Attempt multiple failed logins
         for _ in range(5):
@@ -134,8 +144,7 @@ class TestAuthController:
             role="resident",
         )
 
-        # Registration without current_user for initial admin setup
-        # or with admin user for subsequent registrations
+        # is_admin is a read-only property on User; set role="admin" instead
         admin_user = User(
             id=uuid4(),
             username="admin",
@@ -143,7 +152,6 @@ class TestAuthController:
             hashed_password=get_password_hash("AdminPass123!"),
             role="admin",
             is_active=True,
-            is_admin=True,
         )
         db.add(admin_user)
         db.commit()
@@ -169,7 +177,7 @@ class TestAuthController:
         db.add(existing_user)
         db.commit()
 
-        # Create admin for registration
+        # Create admin for registration (is_admin is a property, not settable)
         admin_user = User(
             id=uuid4(),
             username="admin",
@@ -177,7 +185,6 @@ class TestAuthController:
             hashed_password=get_password_hash("AdminPass123!"),
             role="admin",
             is_active=True,
-            is_admin=True,
         )
         db.add(admin_user)
         db.commit()
@@ -210,7 +217,7 @@ class TestAuthController:
         db.add(existing_user)
         db.commit()
 
-        # Create admin for registration
+        # Create admin for registration (is_admin is a property, not settable)
         admin_user = User(
             id=uuid4(),
             username="admin",
@@ -218,7 +225,6 @@ class TestAuthController:
             hashed_password=get_password_hash("AdminPass123!"),
             role="admin",
             is_active=True,
-            is_admin=True,
         )
         db.add(admin_user)
         db.commit()
@@ -239,7 +245,7 @@ class TestAuthController:
 
     def test_register_user_unauthorized(self, db):
         """Test registration without admin privileges fails."""
-        # Create non-admin user
+        # Create non-admin user (is_admin is a property derived from role)
         regular_user = User(
             id=uuid4(),
             username="regular",
@@ -247,7 +253,6 @@ class TestAuthController:
             hashed_password=get_password_hash("Password123!"),
             role="resident",
             is_active=True,
-            is_admin=False,
         )
         db.add(regular_user)
         db.commit()
@@ -306,7 +311,7 @@ class TestAuthController:
         """Test complete registration and login workflow."""
         controller = AuthController(db)
 
-        # Create admin for registration
+        # Create admin for registration (is_admin is a property, not settable)
         admin_user = User(
             id=uuid4(),
             username="admin",
@@ -314,7 +319,6 @@ class TestAuthController:
             hashed_password=get_password_hash("AdminPass123!"),
             role="admin",
             is_active=True,
-            is_admin=True,
         )
         db.add(admin_user)
         db.commit()
@@ -328,6 +332,9 @@ class TestAuthController:
         )
         registered = controller.register_user(user_data, current_user=admin_user)
         assert registered.username == "testuser"
+
+        # Clear any lockout state before login
+        _clear_lockout(controller, "testuser")
 
         # Login with newly registered user
         token = controller.login("testuser", "TestPassword123!")
@@ -348,6 +355,7 @@ class TestAuthController:
         db.commit()
 
         controller = AuthController(db)
+        _clear_lockout(controller, "lockoutclear")
 
         # Make some failed attempts (not enough to lock out)
         for _ in range(2):

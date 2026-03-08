@@ -244,14 +244,15 @@ class TestProcedureController:
 
         controller = ProcedureController(db)
 
+        # min_pgy_level validator enforces range 1-3
         update_data = ProcedureUpdate(
             description="Updated description",
-            min_pgy_level=4,
+            min_pgy_level=3,
         )
         result = controller.update_procedure(procedure.id, update_data)
 
         assert result.description == "Updated description"
-        assert result.min_pgy_level == 4
+        assert result.min_pgy_level == 3
 
     def test_update_procedure_change_complexity(self, db, setup_data):
         """Test changing procedure complexity level."""

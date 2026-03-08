@@ -20,7 +20,7 @@ from app.services.role_filter_service import (
     UserRole,
 )
 
-router = APIRouter(prefix="/api/example", tags=["Role Filter Examples"])
+router = APIRouter(tags=["Role Filter Examples"])
 
 
 @router.get("/permissions")

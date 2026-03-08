@@ -176,7 +176,11 @@ class TestBlockController:
         assert len(result.items) == 14
 
     def test_generate_blocks_custom_block_number(self, db):
-        """Test generating blocks with custom base block number."""
+        """Test generating blocks uses automatic block number calculation.
+
+        Note: base_block_number is deprecated and ignored. Block numbers
+        are calculated automatically using Thursday-Wednesday alignment.
+        """
         controller = BlockController(db)
 
         start = date(2025, 8, 1)
@@ -189,8 +193,11 @@ class TestBlockController:
         )
 
         assert result.total == 2
-        # All generated blocks should have block_number 5
-        assert all(item.block_number == 5 for item in result.items)
+        # Block numbers are auto-calculated, not the passed base_block_number
+        # All blocks for the same day should have the same calculated block_number
+        assert all(
+            item.block_number == result.items[0].block_number for item in result.items
+        )
 
     def test_generate_blocks_identifies_weekends(self, db):
         """Test that generated blocks correctly identify weekends."""

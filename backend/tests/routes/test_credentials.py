@@ -73,6 +73,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test listing expiring credentials with default 30 days."""
         mock_controller = MagicMock()
@@ -90,7 +91,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get("/api/v1/credentials/expiring")
+        response = client.get("/api/v1/credentials/expiring", headers=auth_headers)
         assert response.status_code == 200
 
         mock_controller.list_expiring_credentials.assert_called_once_with(days=30)
@@ -100,6 +101,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test listing expiring credentials with custom days parameter."""
         mock_controller = MagicMock()
@@ -109,7 +111,9 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get("/api/v1/credentials/expiring?days=60")
+        response = client.get(
+            "/api/v1/credentials/expiring?days=60", headers=auth_headers
+        )
         assert response.status_code == 200
 
         mock_controller.list_expiring_credentials.assert_called_once_with(days=60)
@@ -123,6 +127,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test listing credentials for a specific person."""
         person_id = uuid4()
@@ -141,7 +146,9 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/v1/credentials/by-person/{person_id}")
+        response = client.get(
+            f"/api/v1/credentials/by-person/{person_id}", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -152,6 +159,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test listing credentials with status filter and include_expired."""
         person_id = uuid4()
@@ -163,7 +171,8 @@ class TestCredentialRoutes:
         mock_controller_class.return_value = mock_controller
 
         response = client.get(
-            f"/api/v1/credentials/by-person/{person_id}?status=active&include_expired=true"
+            f"/api/v1/credentials/by-person/{person_id}?status=active&include_expired=true",
+            headers=auth_headers,
         )
         assert response.status_code == 200
 
@@ -182,6 +191,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test listing credentials for a specific procedure."""
         procedure_id = uuid4()
@@ -200,7 +210,9 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/v1/credentials/by-procedure/{procedure_id}")
+        response = client.get(
+            f"/api/v1/credentials/by-procedure/{procedure_id}", headers=auth_headers
+        )
         assert response.status_code == 200
 
     # ========================================================================
@@ -212,6 +224,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting qualified faculty for a procedure."""
         procedure_id = uuid4()
@@ -227,7 +240,10 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/v1/credentials/qualified-faculty/{procedure_id}")
+        response = client.get(
+            f"/api/v1/credentials/qualified-faculty/{procedure_id}",
+            headers=auth_headers,
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -239,6 +255,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting qualified faculty when none exist."""
         procedure_id = uuid4()
@@ -251,7 +268,10 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/v1/credentials/qualified-faculty/{procedure_id}")
+        response = client.get(
+            f"/api/v1/credentials/qualified-faculty/{procedure_id}",
+            headers=auth_headers,
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -266,6 +286,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test checking qualification when faculty is qualified."""
         person_id = uuid4()
@@ -280,7 +301,10 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/v1/credentials/check/{person_id}/{procedure_id}")
+        response = client.get(
+            f"/api/v1/credentials/check/{person_id}/{procedure_id}",
+            headers=auth_headers,
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -291,6 +315,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test checking qualification when faculty is not qualified."""
         person_id = uuid4()
@@ -304,7 +329,10 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/v1/credentials/check/{person_id}/{procedure_id}")
+        response = client.get(
+            f"/api/v1/credentials/check/{person_id}/{procedure_id}",
+            headers=auth_headers,
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -319,6 +347,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting faculty credential summary."""
         person_id = uuid4()
@@ -338,7 +367,9 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/v1/credentials/summary/{person_id}")
+        response = client.get(
+            f"/api/v1/credentials/summary/{person_id}", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -354,6 +385,7 @@ class TestCredentialRoutes:
         self,
         mock_controller_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting a credential by ID."""
         credential_id = uuid4()
@@ -368,7 +400,9 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/v1/credentials/{credential_id}")
+        response = client.get(
+            f"/api/v1/credentials/{credential_id}", headers=auth_headers
+        )
         assert response.status_code == 200
 
     # ========================================================================

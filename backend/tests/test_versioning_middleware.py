@@ -261,7 +261,7 @@ class TestVersionedAPIRouter:
 
         # Create versioned routers
         v1_router = VersionedAPIRouter(
-            prefix="/api/v1/v1",
+            prefix="/api/v1",
             min_version=APIVersion.V1,
             max_version=APIVersion.V1,
         )

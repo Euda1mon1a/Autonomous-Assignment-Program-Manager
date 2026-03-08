@@ -49,7 +49,8 @@ def client_with_mock_quota(db, mock_redis_client, mock_quota_manager):
     with TestClient(app) as test_client:
         yield test_client
 
-    app.dependency_overrides.clear()
+    app.dependency_overrides.pop(get_redis_client, None)
+    app.dependency_overrides.pop(get_quota_manager, None)
 
 
 class TestQuotaRoutes:
@@ -521,4 +522,4 @@ class TestQuotaRoutes:
             assert response.status_code == 503
             assert "unavailable" in response.json()["detail"].lower()
 
-        app.dependency_overrides.clear()
+        app.dependency_overrides.pop(get_redis_client, None)

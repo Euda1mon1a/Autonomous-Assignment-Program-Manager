@@ -78,6 +78,7 @@ from app.api.routes import (
     reports,
     resident_weekly_requirements,
     resilience,
+    role_filter_example,
     role_views,
     rotation_templates,
     schedule,
@@ -270,6 +271,9 @@ api_router.include_router(
     conflict_resolution.router, prefix="/conflicts", tags=["conflict-resolution"]
 )
 
+api_router.include_router(
+    role_filter_example.router, prefix="/example", tags=["role-filter-examples"]
+)
 api_router.include_router(role_views.router, prefix="/views", tags=["role-views"])
 api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])

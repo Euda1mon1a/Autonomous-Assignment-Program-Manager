@@ -100,7 +100,7 @@ class TestChangelogRoutes:
         client: TestClient,
     ):
         """Test save version handles errors."""
-        mock_generator.save_current_version.side_effect = Exception("Storage error")
+        mock_generator.save_current_version.side_effect = ValueError("Storage error")
 
         response = client.post(
             "/api/v1/changelog/versions",

@@ -131,7 +131,7 @@ class TestReportRoutes:
     ):
         """Test schedule report handles generation errors."""
         mock_template = MagicMock()
-        mock_template.generate.side_effect = Exception("PDF generation failed")
+        mock_template.generate.side_effect = ValueError("PDF generation failed")
         mock_template_class.return_value = mock_template
 
         response = client.post(
@@ -205,7 +205,7 @@ class TestReportRoutes:
     ):
         """Test compliance report handles generation errors."""
         mock_template = MagicMock()
-        mock_template.generate.side_effect = Exception("Data fetch failed")
+        mock_template.generate.side_effect = ValueError("Data fetch failed")
         mock_template_class.return_value = mock_template
 
         response = client.post(
@@ -281,7 +281,7 @@ class TestReportRoutes:
     ):
         """Test analytics report handles generation errors."""
         mock_template = MagicMock()
-        mock_template.generate.side_effect = Exception("Chart generation failed")
+        mock_template.generate.side_effect = ValueError("Chart generation failed")
         mock_template_class.return_value = mock_template
 
         response = client.post(
@@ -355,7 +355,7 @@ class TestReportRoutes:
     ):
         """Test faculty summary report handles generation errors."""
         mock_template = MagicMock()
-        mock_template.generate.side_effect = Exception("Faculty data not found")
+        mock_template.generate.side_effect = ValueError("Faculty data not found")
         mock_template_class.return_value = mock_template
 
         response = client.post(

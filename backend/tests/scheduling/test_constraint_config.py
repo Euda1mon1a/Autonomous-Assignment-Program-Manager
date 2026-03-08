@@ -153,9 +153,9 @@ class TestConstraintConfigManager:
         assert all(c.category == ConstraintCategory.ACGME for c in acgme)
         assert all(c.enabled for c in acgme)
 
-        # Get CALL constraints (should be empty - all disabled by default)
+        # Get CALL constraints (PostCallAutoAssignment is enabled by default)
         call = manager.get_enabled_by_category(ConstraintCategory.CALL)
-        assert len(call) == 0
+        assert len(call) == 1
 
     def test_get_all_enabled(self):
         """Test get_all_enabled() method."""
@@ -352,14 +352,15 @@ class TestConstraintCategories:
         # Should have 3 capacity constraints
         assert len(capacity) == 3
 
-    def test_call_constraints_disabled_by_default(self):
-        """Test CALL constraints are disabled by default."""
+    def test_call_constraints_mostly_disabled_by_default(self):
+        """Test most CALL constraints are disabled by default (except PostCallAutoAssignment)."""
         manager = ConstraintConfigManager()
 
         call = manager.get_enabled_by_category(ConstraintCategory.CALL)
 
-        # Should have 0 enabled call constraints
-        assert len(call) == 0
+        # PostCallAutoAssignment is enabled by default
+        assert len(call) == 1
+        assert call[0].name == "PostCallAutoAssignment"
 
     def test_fmit_constraints_disabled_by_default(self):
         """Test FMIT constraints are disabled by default."""

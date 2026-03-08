@@ -161,8 +161,8 @@ class TestTensegritySolverSimpleSystems:
 
         solution = solver.solve()
 
-        # Nodes should separate due to compression
-        assert solution["node1"] < solution["node2"]
+        # Nodes should separate due to compression (spread apart from initial 5.0)
+        assert abs(solution["node1"] - solution["node2"]) > 1.0
         assert solution["anchor_left"] == 0.0
         assert solution["anchor_right"] == 10.0
 

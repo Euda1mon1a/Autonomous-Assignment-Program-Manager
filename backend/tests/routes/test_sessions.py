@@ -39,7 +39,7 @@ def client_with_mock_manager(db, mock_session_manager):
     with TestClient(app) as test_client:
         yield test_client
 
-    app.dependency_overrides.clear()
+    app.dependency_overrides.pop(get_session_manager, None)
 
 
 class TestSessionRoutes:

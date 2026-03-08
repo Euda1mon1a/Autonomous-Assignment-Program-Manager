@@ -67,7 +67,8 @@ class TestBatchRoutes:
 
     def test_batch_delete_requires_auth(self, client: TestClient):
         """Test that batch delete requires authentication."""
-        response = client.delete(
+        response = client.request(
+            "DELETE",
             "/api/v1/batch/delete",
             json={"assignments": [{"assignment_id": str(uuid4())}]},
         )
@@ -557,7 +558,8 @@ class TestBatchRoutes:
         )
         mock_service_class.return_value = mock_service
 
-        response = client.delete(
+        response = client.request(
+            "DELETE",
             "/api/v1/batch/delete",
             headers=auth_headers,
             json={
@@ -604,7 +606,8 @@ class TestBatchRoutes:
         )
         mock_service_class.return_value = mock_service
 
-        response = client.delete(
+        response = client.request(
+            "DELETE",
             "/api/v1/batch/delete",
             headers=auth_headers,
             json={
@@ -645,7 +648,8 @@ class TestBatchRoutes:
         )
         mock_service_class.return_value = mock_service
 
-        response = client.delete(
+        response = client.request(
+            "DELETE",
             "/api/v1/batch/delete",
             headers=auth_headers,
             json={"assignments": [{"assignment_id": str(uuid4())}]},
@@ -687,7 +691,8 @@ class TestBatchRoutes:
         )
         mock_service_class.return_value = mock_service
 
-        response = client.delete(
+        response = client.request(
+            "DELETE",
             "/api/v1/batch/delete",
             headers=auth_headers,
             json={
