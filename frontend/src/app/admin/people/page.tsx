@@ -22,6 +22,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { PeopleTable } from '@/components/admin/PeopleTable';
 import { PeopleBulkActionsToolbar } from '@/components/admin/PeopleBulkActionsToolbar';
 import { AddPersonModal } from '@/components/AddPersonModal';
+import { EditPersonModal } from '@/components/EditPersonModal';
 import {
   usePeople,
   useBulkDeletePeople,
@@ -31,7 +32,7 @@ import {
 import { useDebounce } from '@/hooks/useDebounce';
 import { useKeyboardShortcuts, getShortcutDisplay } from '@/hooks/useKeyboardShortcuts';
 import { useToast } from '@/contexts/ToastContext';
-import type { PersonUpdate } from '@/types/api';
+import type { Person, PersonUpdate } from '@/types/api';
 import { SectionErrorBoundary } from '@/components/SectionErrorBoundary';
 
 // ============================================================================
@@ -79,6 +80,7 @@ export default function AdminPeoplePage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingAction, setPendingAction] = useState<BulkActionType | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
 
   // Debounce search input for better performance
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -420,6 +422,7 @@ export default function AdminPeoplePage() {
               onSelectionChange={setSelectedIds}
               sort={sort}
               onSortChange={handleSortChange}
+              onRowClick={(person) => setEditingPerson(person)}
             />
           )}
         </SectionErrorBoundary>
@@ -440,6 +443,13 @@ export default function AdminPeoplePage() {
       <AddPersonModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
+      />
+
+      {/* Edit Person Modal */}
+      <EditPersonModal
+        isOpen={editingPerson !== null}
+        onClose={() => setEditingPerson(null)}
+        person={editingPerson}
       />
     </div>
   );

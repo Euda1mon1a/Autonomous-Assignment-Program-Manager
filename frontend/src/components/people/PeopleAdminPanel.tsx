@@ -476,6 +476,7 @@ export function PeopleAdminPanel({
             onSelectionChange={setSelectedIds}
             sort={sort}
             onSortChange={handleSortChange}
+            onRowClick={(person) => setEditingPerson(person)}
           />
         </div>
       )}

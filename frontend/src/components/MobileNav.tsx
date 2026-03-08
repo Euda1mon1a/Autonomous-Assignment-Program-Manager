@@ -45,6 +45,7 @@ const navItems: NavItem[] = [
   { href: '/ops', label: 'Ops Hub', icon: Activity },
   { href: '/compliance', label: 'Compliance', icon: CheckCircle },
   { href: '/activities', label: 'Activities', icon: FileText },
+  { href: '/rotations', label: 'Rotations', icon: FileText },
   { href: '/procedures', label: 'Procedures', icon: ClipboardList },
   { href: '/absences', label: 'Absences', icon: CalendarOff },
   { href: '/analytics', label: 'Analytics', icon: LineChart },

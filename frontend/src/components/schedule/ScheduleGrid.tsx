@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { format, eachDayOfInterval, isWeekend } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -579,9 +580,9 @@ function PersonRow({ person, days, todayStr, getAssignment, rowIndex, getCellPro
       {/* Sticky person name column */}
       <th scope="row" className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/50 px-4 py-2 border-r border-gray-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] transition-colors duration-150 text-left font-normal" role="rowheader">
         <div className="flex flex-col gap-1">
-          <span className="font-medium text-gray-900 text-sm whitespace-nowrap">
+          <Link href={`/my-schedule?person=${person.id}`} className="font-medium text-gray-900 text-sm whitespace-nowrap hover:text-blue-600 hover:underline transition-colors">
             {person.name}
-          </span>
+          </Link>
           {personBadge}
         </div>
       </th>

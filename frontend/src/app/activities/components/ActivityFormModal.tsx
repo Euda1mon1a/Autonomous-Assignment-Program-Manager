@@ -156,8 +156,11 @@ export function ActivityFormModal({
 
     try {
       await onSave(formData);
-    } catch (_err) {
-      setErrors({ general: `Failed to ${isEditing ? 'update' : 'create'} activity. It may already exist with that name or code.` });
+    } catch (err: any) {
+      const message = err?.response?.data?.detail
+        || err?.message
+        || `Failed to ${isEditing ? 'update' : 'create'} activity.`;
+      setErrors({ general: message });
     }
   };
 

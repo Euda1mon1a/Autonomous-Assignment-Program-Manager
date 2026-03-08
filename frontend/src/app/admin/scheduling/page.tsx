@@ -781,7 +781,7 @@ function ConfigurationPanel({
             <div className="flex justify-between">
               <dt className="text-slate-300">Constraints</dt>
               <dd className="text-white font-medium">
-                {configuration.constraints.filter(c => c.enabled).length} active
+                {(constraints ?? []).filter((c: { enabled: boolean }) => c.enabled).length} active
               </dd>
             </div>
             <div className="flex justify-between">
