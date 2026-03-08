@@ -183,7 +183,7 @@ export function ScheduleCell({
         className={`
           inline-block px-1.5 py-0.5 rounded text-xs font-medium border
           ${colorClass}
-          cursor-default transition-all hover:scale-105 hover:shadow-sm
+          cursor-pointer transition-all hover:scale-105 hover:shadow-sm
         `}
         style={customStyle}
         title={tooltipContent}
