@@ -199,9 +199,8 @@ class TestConstraintInteractions:
         conference_block = Block(
             id=uuid4(),
             date=conference_date,
-            session=Session.AM,
+            time_of_day="AM",
             block_number=15,
-            academic_year=2025,
         )
         db.add(conference_block)
 
@@ -285,9 +284,8 @@ class TestConstraintInteractions:
         afternoon_block = Block(
             id=uuid4(),
             date=afternoon_date,
-            session=Session.PM,  # Resident prefers AM
+            time_of_day="PM",  # Resident prefers AM
             block_number=15,
-            academic_year=2025,
         )
         db.add(afternoon_block)
 
@@ -314,11 +312,11 @@ class TestConstraintInteractions:
 
         # Create soft constraint with weight=0
         preference_zero = PreferenceConstraint(weight=0.0)
-        preference_zero.add_preference(resident.id, Session.AM)  # Prefers mornings
+        preference_zero.add_preference(resident.id, "AM")  # Prefers mornings
 
         # Create soft constraint with non-zero weight for comparison
         preference_normal = PreferenceConstraint(weight=5.0)
-        preference_normal.add_preference(resident.id, Session.AM)
+        preference_normal.add_preference(resident.id, "AM")
 
         # Build context
         context = SchedulingContext(
@@ -377,15 +375,14 @@ class TestConstraintInteractions:
         blocks = []
         for week in range(4):
             for day in range(7):
-                for session in [Session.AM, Session.PM]:
+                for session in ["AM", "PM"]:
                     block_date = block_start + timedelta(days=week * 7 + day)
                     block = Block(
                         id=uuid4(),
                         date=block_date,
                         session=session,
                         block_number=(week * 7 + day) * 2
-                        + (0 if session == Session.AM else 1),
-                        academic_year=2025,
+                        + (0 if session == "AM" else 1),
                     )
                     blocks.append(block)
                     db.add(block)
@@ -567,14 +564,12 @@ class TestConstraintInteractions:
 
         call_blocks = []
         for day_offset in range(2):  # 15th and 16th
-            for session in [Session.AM, Session.PM]:
+            for session in ["AM", "PM"]:
                 block = Block(
                     id=uuid4(),
                     date=call_start_date + timedelta(days=day_offset),
                     session=session,
-                    block_number=(14 + day_offset) * 2
-                    + (0 if session == Session.AM else 1),
-                    academic_year=2025,
+                    block_number=(14 + day_offset) * 2 + (0 if session == "AM" else 1),
                 )
                 call_blocks.append(block)
                 db.add(block)
@@ -750,16 +745,14 @@ class TestConstraintInteractions:
         am_block = Block(
             id=uuid4(),
             date=test_date,
-            session=Session.AM,
+            time_of_day="AM",
             block_number=29,
-            academic_year=2025,
         )
         pm_block = Block(
             id=uuid4(),
             date=test_date,
-            session=Session.PM,
+            time_of_day="PM",
             block_number=30,
-            academic_year=2025,
         )
         db.add_all([am_block, pm_block])
 
@@ -793,7 +786,7 @@ class TestConstraintInteractions:
 
         # Create multiple constraints
         preference = PreferenceConstraint(weight=5.0)
-        preference.add_preference(resident.id, Session.AM)  # Prefers AM
+        preference.add_preference(resident.id, "AM")  # Prefers AM
 
         # Build context
         context = SchedulingContext(

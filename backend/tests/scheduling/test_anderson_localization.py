@@ -51,8 +51,9 @@ def test_blocks(db: Session, test_date_range):
         am_block = Block(
             id=uuid4(),
             date=current_date,
-            session="AM",
-            day_of_week=current_date.strftime("%A"),
+            time_of_day="AM",
+            block_number=1,
+            is_weekend=(current_date.weekday() >= 5),
         )
         db.add(am_block)
         blocks.append(am_block)
@@ -61,8 +62,9 @@ def test_blocks(db: Session, test_date_range):
         pm_block = Block(
             id=uuid4(),
             date=current_date,
-            session="PM",
-            day_of_week=current_date.strftime("%A"),
+            time_of_day="PM",
+            block_number=1,
+            is_weekend=(current_date.weekday() >= 5),
         )
         db.add(pm_block)
         blocks.append(pm_block)

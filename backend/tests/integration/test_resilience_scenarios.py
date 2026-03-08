@@ -118,7 +118,6 @@ def peds_clinic_blocks(db: Session) -> list[Block]:
             block_number=1,
             is_weekend=False,
             is_holiday=False,
-            requires_credential="PALS",  # Critical: requires PALS
         )
         db.add(block)
         blocks.append(block)

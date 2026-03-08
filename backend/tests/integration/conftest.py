@@ -89,6 +89,12 @@ def integration_client(integration_db: Session) -> Generator[TestClient, None, N
 
     app.dependency_overrides[get_async_db] = get_async_db_override
 
+    # Disable rate limiting in integration tests
+    from app.api.routes.auth import rate_limit_login, rate_limit_register
+
+    app.dependency_overrides[rate_limit_login] = lambda: None
+    app.dependency_overrides[rate_limit_register] = lambda: None
+
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

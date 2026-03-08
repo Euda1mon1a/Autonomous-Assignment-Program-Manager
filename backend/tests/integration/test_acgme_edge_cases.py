@@ -58,7 +58,6 @@ def test_faculty(db: Session) -> Person:
         type="faculty",
         email="test.faculty@hospital.org",
         performs_procedures=True,
-        fte=1.0,
     )
     db.add(faculty)
     db.commit()
@@ -369,7 +368,6 @@ def test_supervision_ratio_fractional_fte(db: Session, acgme_validator: ACGMEVal
         name="Dr. Full-Time Faculty",
         type="faculty",
         email="faculty.full@hospital.org",
-        fte=1.0,
         performs_procedures=True,
     )
     faculty_half = Person(
@@ -377,7 +375,6 @@ def test_supervision_ratio_fractional_fte(db: Session, acgme_validator: ACGMEVal
         name="Dr. Part-Time Faculty",
         type="faculty",
         email="faculty.half@hospital.org",
-        fte=0.5,
         performs_procedures=True,
     )
     db.add(faculty_full)
@@ -453,7 +450,6 @@ def test_supervision_ratio_violation(db: Session, acgme_validator: ACGMEValidato
             name=f"Dr. Faculty {i + 1}",
             type="faculty",
             email=f"faculty.{i + 1}@hospital.org",
-            fte=1.0,
             performs_procedures=True,
         )
         db.add(fac)
@@ -689,7 +685,6 @@ def test_supervision_ratio_mixed_pgy_levels(
             name=f"Dr. Faculty {i + 1}",
             type="faculty",
             email=f"faculty.{i + 1}@hospital.org",
-            fte=1.0,
             performs_procedures=True,
         )
         db.add(fac)
