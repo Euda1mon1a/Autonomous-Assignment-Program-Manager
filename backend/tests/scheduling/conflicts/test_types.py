@@ -1,6 +1,6 @@
 """Tests for conflict type definitions (enums and Pydantic models)."""
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone, UTC
 from uuid import UUID, uuid4
 
 import pytest
@@ -138,10 +138,14 @@ class TestConflict:
         assert c.resolution_difficulty == "medium"
 
     def test_detected_at_auto_set(self):
-        before = datetime.utcnow()
+        before = datetime.now(UTC)
         c = Conflict(**_make_conflict())
-        after = datetime.utcnow()
-        assert before <= c.detected_at <= after
+        after = datetime.now(UTC)
+        # detected_at may be naive or aware; normalize for comparison
+        detected = c.detected_at
+        if detected.tzinfo is None:
+            detected = detected.replace(tzinfo=UTC)
+        assert before <= detected <= after
 
     def test_impact_score_boundary_zero(self):
         c = Conflict(**_make_conflict(impact_score=0.0))

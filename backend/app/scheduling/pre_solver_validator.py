@@ -142,8 +142,8 @@ class PreSolverValidator:
         self._estimate_complexity(context, result)
         self._check_existing_assignment_conflicts(context, result)
 
-        # Add statistics
-        result.statistics = self._gather_statistics(context)
+        # Add statistics (merge with existing — _estimate_complexity already wrote to it)
+        result.statistics.update(self._gather_statistics(context))
 
         # If any issues found, mark as infeasible
         if result.issues:
