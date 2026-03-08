@@ -128,6 +128,7 @@ class TestBlockController:
         block_data = BlockCreate(
             date=date.today() + timedelta(days=45),
             time_of_day="AM",
+            block_number=1,
         )
 
         block = controller.create_block(block_data)

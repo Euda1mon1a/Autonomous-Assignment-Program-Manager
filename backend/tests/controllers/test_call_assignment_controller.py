@@ -58,7 +58,7 @@ class TestCallAssignmentController:
             MagicMock(
                 id=uuid4(),
                 call_date=date.today(),
-                call_type="overnight",
+                call_type="weekday",
                 person_id=person_id1,
                 is_weekend=False,
                 is_holiday=False,
@@ -128,7 +128,7 @@ class TestCallAssignmentController:
             return_value={"items": [], "total": 0}
         )
 
-        result = await controller.list_call_assignments(call_type="overnight")
+        result = await controller.list_call_assignments(call_type="weekday")
 
         call_kwargs = controller.service.get_call_assignments.call_args.kwargs
         assert call_kwargs["call_type"] == "overnight"
@@ -147,7 +147,7 @@ class TestCallAssignmentController:
         mock_call = MagicMock(
             id=call_id,
             call_date=date.today(),
-            call_type="overnight",
+            call_type="weekday",
             person_id=person_id,
             is_weekend=False,
             is_holiday=False,
@@ -183,14 +183,14 @@ class TestCallAssignmentController:
         assignment_data = CallAssignmentCreate(
             call_date=date.today() + timedelta(days=7),
             person_id=setup_data["resident"].id,
-            call_type="overnight",
+            call_type="weekday",
         )
 
         mock_result = MagicMock(
             id=uuid4(),
             call_date=assignment_data.call_date,
             person_id=assignment_data.person_id,
-            call_type="overnight",
+            call_type="weekday",
             is_weekend=False,
             is_holiday=False,
             person=None,
@@ -211,7 +211,7 @@ class TestCallAssignmentController:
         assignment_data = CallAssignmentCreate(
             call_date=date.today(),
             person_id=setup_data["resident"].id,
-            call_type="overnight",
+            call_type="weekday",
         )
 
         controller.service.create_call_assignment = AsyncMock(
@@ -316,7 +316,7 @@ class TestCallAssignmentController:
             CallAssignmentCreate(
                 call_date=date.today() + timedelta(days=i),
                 person_id=setup_data["resident"].id,
-                call_type="overnight",
+                call_type="weekday",
             )
             for i in range(5)
         ]
@@ -344,7 +344,7 @@ class TestCallAssignmentController:
             CallAssignmentCreate(
                 call_date=date.today(),
                 person_id=setup_data["resident"].id,
-                call_type="overnight",
+                call_type="weekday",
             )
         ]
 
@@ -376,7 +376,7 @@ class TestCallAssignmentController:
             MagicMock(
                 id=uuid4(),
                 call_date=date.today() + timedelta(days=i),
-                call_type="overnight",
+                call_type="weekday",
                 person_id=person_id,
                 is_weekend=False,
                 is_holiday=False,
@@ -409,7 +409,7 @@ class TestCallAssignmentController:
             MagicMock(
                 id=uuid4(),
                 call_date=target_date,
-                call_type="overnight",
+                call_type="weekday",
                 person_id=person_id1,
                 is_weekend=False,
                 is_holiday=False,
@@ -500,7 +500,7 @@ class TestCallAssignmentController:
         assignment_data = CallAssignmentCreate(
             call_date=date.today() + timedelta(days=10),
             person_id=setup_data["resident"].id,
-            call_type="overnight",
+            call_type="weekday",
         )
 
         created_id = uuid4()
@@ -508,7 +508,7 @@ class TestCallAssignmentController:
             id=created_id,
             call_date=assignment_data.call_date,
             person_id=assignment_data.person_id,
-            call_type="overnight",
+            call_type="weekday",
             is_weekend=False,
             is_holiday=False,
             person=None,

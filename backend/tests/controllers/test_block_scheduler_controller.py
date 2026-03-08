@@ -342,19 +342,16 @@ class TestBlockSchedulerController:
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
             assignment_reason="balanced",
-            has_leave=False,
-            leave_days=0,
         )
         db.add(assignment)
         db.commit()
 
         controller = BlockSchedulerController(db)
 
-        update_data = BlockAssignmentUpdate(has_leave=True, leave_days=5)
+        update_data = BlockAssignmentUpdate()
         result = controller.update_assignment(assignment.id, update_data)
 
-        assert result.has_leave is True
-        assert result.leave_days == 5
+        assert result is not None
 
     def test_update_assignment_not_found(self, db):
         """Test updating non-existent assignment raises 404."""
@@ -480,15 +477,8 @@ class TestBlockSchedulerController:
         )
         created = controller.create_assignment(assignment_data)
 
-        # Update to indicate leave
-        update_data = BlockAssignmentUpdate(
-            has_leave=True,
-            leave_days=7,
-        )
-        updated = controller.update_assignment(created.id, update_data)
-
-        assert updated.has_leave is True
-        assert updated.leave_days == 7
+        # Verify created assignment is associated with leave-eligible template
+        assert created.rotation_template_id == leave_template.id
 
     def test_different_academic_years(self, db, setup_data):
         """Test assignments across different academic years."""

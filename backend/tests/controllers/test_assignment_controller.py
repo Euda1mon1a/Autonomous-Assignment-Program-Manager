@@ -112,8 +112,8 @@ class TestAssignmentController:
         controller = AssignmentController(db)
         result = controller.list_assignments()
 
-        assert result["total"] >= 3
-        assert len(result["items"]) >= 3
+        assert result.total >= 3
+        assert len(result.items) >= 3
 
     def test_list_assignments_with_date_filter(self, db, setup_data):
         """Test listing assignments with date range filter."""
@@ -146,7 +146,7 @@ class TestAssignmentController:
             end_date=start_date + timedelta(days=2),
         )
 
-        assert result["total"] >= 3
+        assert result.total >= 3
 
     def test_list_assignments_with_person_filter(self, db, setup_data):
         """Test listing assignments for specific person."""
@@ -200,7 +200,7 @@ class TestAssignmentController:
         # Should include the original resident's assignments
         assert all(
             item.person_id == setup_data["resident"].id
-            for item in result["items"]
+            for item in result.items
             if hasattr(item, "person_id")
         )
 
@@ -457,7 +457,7 @@ class TestAssignmentController:
             end_date=start + timedelta(days=2),
         )
 
-        assert result["deleted_count"] >= 3
+        assert result.deleted_count >= 3
 
     # ========================================================================
     # Integration Tests
