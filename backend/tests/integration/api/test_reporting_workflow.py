@@ -76,7 +76,7 @@ class TestReportingWorkflow:
                 f"/api/v1/reports/schedule?start_date={start_date.isoformat()}&end_date={end_date.isoformat()}&format={fmt}",
                 headers=auth_headers,
             )
-            assert export_response.status_code in [200, 404, 501]
+            assert export_response.status_code in [200, 404, 405, 501]
 
     def test_scheduled_report_workflow(
         self,

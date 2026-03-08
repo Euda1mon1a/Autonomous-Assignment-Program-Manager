@@ -250,7 +250,8 @@ class TestPutRotationPreferences:
         assert response.status_code == 400
         error = response.json()
         assert "detail" in error
-        assert "duplicate" in error["detail"].lower()
+        # Route catches ValueError and returns generic "Invalid request"
+        assert error["detail"] == "Invalid request"
 
     def test_replace_preferences_invalid_type_fails(
         self,
@@ -326,7 +327,8 @@ class TestPutRotationPreferences:
         assert response.status_code == 400  # Service raises ValueError -> 400
         error = response.json()
         assert "detail" in error
-        assert "not found" in error["detail"].lower()
+        # Route catches ValueError and returns generic "Invalid request"
+        assert error["detail"] == "Invalid request"
 
     def test_replace_preferences_unauthorized(
         self, client: TestClient, sample_template: RotationTemplate

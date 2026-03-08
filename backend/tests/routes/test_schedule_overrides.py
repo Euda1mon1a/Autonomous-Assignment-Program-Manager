@@ -251,7 +251,7 @@ class TestScheduleOverrides:
             id=uuid4(),
             date=call_date,
             person_id=faculty_a.id,
-            call_type="weekday",
+            call_type="overnight",
             is_weekend=False,
             is_holiday=False,
         )

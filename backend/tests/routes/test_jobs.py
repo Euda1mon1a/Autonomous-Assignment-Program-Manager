@@ -384,8 +384,14 @@ class TestJobsRoutes:
             "totalTasks": 96,
             "successfulTasks": 95,
             "failedTasks": 1,
+            "pendingTasks": 0,
+            "retriedTasks": 2,
             "successRate": 98.96,
+            "failureRate": 1.04,
             "averageRuntimeSeconds": 5.2,
+            "minRuntimeSeconds": 0.5,
+            "maxRuntimeSeconds": 30.0,
+            "timestamp": datetime.utcnow().isoformat(),
         }
         mock_stats_service.return_value = mock_stats
 
@@ -411,6 +417,8 @@ class TestJobsRoutes:
             "maxRetriesUsed": 3,
             "averageRetriesPerTask": 1.88,
             "retrySuccessRate": 87.5,
+            "commonRetryReasons": ["ConnectionError", "Timeout"],
+            "timestamp": datetime.utcnow().isoformat(),
         }
         mock_stats_service.return_value = mock_stats
 
@@ -430,9 +438,17 @@ class TestJobsRoutes:
             "taskName": "all",
             "timeRangeHours": 24,
             "totalExecutions": 24,
+            "averageRuntimeSeconds": 4.5,
+            "medianRuntimeSeconds": 3.2,
             "p50RuntimeSeconds": 3.2,
+            "p75RuntimeSeconds": 4.8,
+            "p90RuntimeSeconds": 5.5,
             "p95RuntimeSeconds": 5.8,
             "p99RuntimeSeconds": 7.1,
+            "minRuntimeSeconds": 0.3,
+            "maxRuntimeSeconds": 12.0,
+            "stdDevRuntimeSeconds": 2.1,
+            "timestamp": datetime.utcnow().isoformat(),
         }
         mock_stats_service.return_value = mock_stats
 
@@ -454,9 +470,12 @@ class TestJobsRoutes:
             "queueName": "all",
             "timeRangeHours": 24,
             "totalTasksProcessed": 96,
-            "tasksPerHour": 4.0,
             "tasksPerMinute": 0.067,
+            "tasksPerHour": 4.0,
+            "peakThroughputPerHour": 8.0,
             "averageQueueTimeSeconds": 2.5,
+            "averageProcessingTimeSeconds": 5.2,
+            "timestamp": datetime.utcnow().isoformat(),
         }
         mock_stats_service.return_value = mock_stats
 
@@ -530,6 +549,8 @@ class TestJobsRoutes:
                 "taskName": "app.tasks.heavy_process",
                 "runtimeSeconds": 125.5,
                 "startedAt": datetime.utcnow().isoformat(),
+                "completedAt": datetime.utcnow().isoformat(),
+                "status": "SUCCESS",
             }
         ]
         mock_history_service.return_value = mock_history

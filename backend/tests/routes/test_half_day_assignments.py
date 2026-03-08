@@ -337,7 +337,7 @@ def test_update_half_day_assignment_prefers_exact_activity_code_match(
         name="Conference",
         code="ECHO",
         display_abbreviation="X",
-        activity_category=ActivityCategory.DIDACTIC.value,
+        activity_category=ActivityCategory.EDUCATIONAL.value,
     )
     abbreviation_collision_activity = Activity(
         id=uuid4(),

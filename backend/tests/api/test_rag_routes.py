@@ -241,7 +241,8 @@ class TestRAGRetrieve:
             )
 
         assert response.status_code == 400
-        assert "empty" in response.json()["detail"].lower()
+        # Route catches ValueError and returns generic "Invalid request"
+        assert "invalid" in response.json()["detail"].lower()
 
     def test_rag_retrieve_with_similarity_threshold(
         self, client: TestClient, auth_headers: dict, admin_user: User

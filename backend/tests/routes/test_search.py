@@ -97,9 +97,9 @@ class TestSearchRoutes:
                 "items": [
                     {
                         "id": str(uuid4()),
-                        "entity_type": "person",
+                        "type": "person",
                         "title": "Dr. Smith",
-                        "description": "Faculty - Cardiology",
+                        "subtitle": "Faculty - Cardiology",
                         "score": 0.95,
                     }
                 ],
@@ -200,7 +200,7 @@ class TestSearchRoutes:
             return_value=[
                 {
                     "id": str(uuid4()),
-                    "entity_type": "person",
+                    "type": "person",
                     "title": "Dr. Johnson",
                     "score": 0.9,
                 }
@@ -265,9 +265,9 @@ class TestSearchRoutes:
                 "items": [
                     {
                         "id": str(uuid4()),
-                        "entity_type": "person",
+                        "type": "person",
                         "title": "Dr. Smith",
-                        "description": "PGY-2 Resident",
+                        "subtitle": "PGY-2 Resident",
                     }
                 ],
                 "total": 1,
@@ -341,9 +341,9 @@ class TestSearchRoutes:
                 "items": [
                     {
                         "id": str(uuid4()),
-                        "entity_type": "rotation",
+                        "type": "rotation",
                         "title": "Cardiology Clinic",
-                        "description": "Outpatient cardiology rotation",
+                        "subtitle": "Outpatient cardiology rotation",
                     }
                 ],
                 "total": 1,
@@ -415,9 +415,9 @@ class TestSearchRoutes:
                 "items": [
                     {
                         "id": str(uuid4()),
-                        "entity_type": "procedure",
+                        "type": "procedure",
                         "title": "Colonoscopy",
-                        "description": "CPT: 45378",
+                        "subtitle": "CPT: 45378",
                     }
                 ],
                 "total": 1,
@@ -459,12 +459,12 @@ class TestSearchRoutes:
                 "items": [
                     {
                         "id": str(uuid4()),
-                        "entity_type": "person",
+                        "type": "person",
                         "title": "Dr. Test",
                     },
                     {
                         "id": str(uuid4()),
-                        "entity_type": "rotation",
+                        "type": "rotation",
                         "title": "Test Rotation",
                     },
                 ],

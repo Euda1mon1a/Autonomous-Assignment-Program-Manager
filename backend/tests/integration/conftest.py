@@ -101,33 +101,48 @@ def integration_client(integration_db: Session) -> Generator[TestClient, None, N
 
 
 @pytest.fixture
-def admin_user(integration_db: Session) -> User:
-    """Create an admin user for authenticated tests."""
+def admin_user(db: Session) -> User:
+    """Create an admin user for authenticated tests.
+
+    Uses ``db`` (not ``integration_db``) so the user lives in the same
+    database session as the ``client`` fixture from the root conftest.
+    """
     user = User(
         id=uuid4(),
-        username="admin",
-        email="admin@test.org",
-        hashed_password=get_password_hash("admin123"),
+        username="testadmin",
+        email="testadmin@test.org",
+        hashed_password=get_password_hash("testpass123"),
         role="admin",
         is_active=True,
     )
-    integration_db.add(user)
-    integration_db.commit()
-    integration_db.refresh(user)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     return user
 
 
 @pytest.fixture
-def auth_headers(integration_client: TestClient, admin_user: User) -> dict:
-    """Get authentication headers for API requests."""
-    response = integration_client.post(
+def auth_headers(client: TestClient, admin_user: User) -> dict:
+    """Get authentication headers for API requests.
+
+    Uses ``client`` (not ``integration_client``) to match the fixture
+    used by the API integration tests.
+    """
+    response = client.post(
         "/api/v1/auth/login/json",
-        json={"username": "admin", "password": "admin123"},
+        json={"username": "testadmin", "password": "testpass123"},
     )
     if response.status_code == 200:
         token = response.json()["access_token"]
         return {"Authorization": f"Bearer {token}"}
     return {}
+
+
+@pytest.fixture
+def authed_client(client: TestClient, auth_headers: dict) -> TestClient:
+    """Return a client with admin auth headers attached."""
+    client.headers.update(auth_headers)
+    return client
 
 
 @pytest.fixture

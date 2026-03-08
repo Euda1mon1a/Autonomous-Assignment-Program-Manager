@@ -7,6 +7,7 @@ Tests the feature flag functionality including:
 - Enable/disable toggles
 """
 
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -14,6 +15,31 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.models.user import User
+from app.schemas.feature_flag import FeatureFlagResponse
+
+
+def _flag_response(**overrides) -> FeatureFlagResponse:
+    """Helper to create a valid FeatureFlagResponse with all required fields."""
+    defaults = {
+        "id": uuid4(),
+        "key": "test-flag",
+        "name": "Test Flag",
+        "description": None,
+        "flag_type": "boolean",
+        "enabled": False,
+        "rollout_percentage": None,
+        "environments": None,
+        "target_user_ids": None,
+        "target_roles": None,
+        "variants": None,
+        "dependencies": None,
+        "custom_attributes": None,
+        "created_by": None,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+    }
+    defaults.update(overrides)
+    return FeatureFlagResponse(**defaults)
 
 
 class TestFeatureRoutes:
@@ -86,22 +112,12 @@ class TestFeatureRoutes:
         """Test successful feature flag creation."""
         mock_service = MagicMock()
         mock_service.create_flag = AsyncMock(
-            return_value=MagicMock(
-                id=uuid4(),
+            return_value=_flag_response(
                 key="new-feature",
                 name="New Feature",
                 description="A new feature",
-                flag_type="boolean",
                 enabled=True,
-                rollout_percentage=None,
                 environments=["production"],
-                target_user_ids=None,
-                target_roles=None,
-                variants=None,
-                dependencies=None,
-                custom_attributes=None,
-                created_at="2025-01-15T10:00:00",
-                updated_at="2025-01-15T10:00:00",
             )
         )
         mock_service_class.return_value = mock_service
@@ -134,21 +150,12 @@ class TestFeatureRoutes:
         """Test creating flag with percentage rollout."""
         mock_service = MagicMock()
         mock_service.create_flag = AsyncMock(
-            return_value=MagicMock(
-                id=uuid4(),
+            return_value=_flag_response(
                 key="rollout-flag",
                 name="Rollout Flag",
                 flag_type="percentage",
                 enabled=True,
                 rollout_percentage=0.5,
-                environments=None,
-                target_user_ids=None,
-                target_roles=None,
-                variants=None,
-                dependencies=None,
-                custom_attributes=None,
-                created_at="2025-01-15T10:00:00",
-                updated_at="2025-01-15T10:00:00",
             )
         )
         mock_service_class.return_value = mock_service
@@ -174,27 +181,15 @@ class TestFeatureRoutes:
         auth_headers: dict,
     ):
         """Test creating flag with variant options."""
-        variants = [
-            {"key": "control", "weight": 50},
-            {"key": "treatment", "weight": 50},
-        ]
+        variants = {"control": 0.5, "treatment": 0.5}
         mock_service = MagicMock()
         mock_service.create_flag = AsyncMock(
-            return_value=MagicMock(
-                id=uuid4(),
+            return_value=_flag_response(
                 key="ab-test-flag",
                 name="A/B Test Flag",
                 flag_type="variant",
                 enabled=True,
-                rollout_percentage=None,
-                environments=None,
-                target_user_ids=None,
-                target_roles=None,
                 variants=variants,
-                dependencies=None,
-                custom_attributes=None,
-                created_at="2025-01-15T10:00:00",
-                updated_at="2025-01-15T10:00:00",
             )
         )
         mock_service_class.return_value = mock_service
@@ -250,8 +245,8 @@ class TestFeatureRoutes:
     ):
         """Test listing feature flags."""
         mock_flags = [
-            MagicMock(key="flag-1", name="Flag 1", enabled=True),
-            MagicMock(key="flag-2", name="Flag 2", enabled=False),
+            _flag_response(key="flag-1", name="Flag 1", enabled=True),
+            _flag_response(key="flag-2", name="Flag 2", enabled=False),
         ]
         mock_service = MagicMock()
         mock_service.list_flags = AsyncMock(return_value=mock_flags)
@@ -273,7 +268,7 @@ class TestFeatureRoutes:
         auth_headers: dict,
     ):
         """Test listing only enabled flags."""
-        mock_flags = [MagicMock(key="flag-1", name="Flag 1", enabled=True)]
+        mock_flags = [_flag_response(key="flag-1", name="Flag 1", enabled=True)]
         mock_service = MagicMock()
         mock_service.list_flags = AsyncMock(return_value=mock_flags)
         mock_service_class.return_value = mock_service
@@ -318,7 +313,9 @@ class TestFeatureRoutes:
         auth_headers: dict,
     ):
         """Test listing flags with pagination."""
-        mock_flags = [MagicMock(key=f"flag-{i}") for i in range(100)]
+        mock_flags = [
+            _flag_response(key=f"flag-{i}", name=f"Flag {i}") for i in range(100)
+        ]
         mock_service = MagicMock()
         mock_service.list_flags = AsyncMock(return_value=mock_flags)
         mock_service_class.return_value = mock_service
@@ -349,22 +346,12 @@ class TestFeatureRoutes:
         """Test getting a specific feature flag."""
         mock_service = MagicMock()
         mock_service.get_flag = AsyncMock(
-            return_value=MagicMock(
-                id=uuid4(),
+            return_value=_flag_response(
                 key="test-flag",
                 name="Test Flag",
                 description="A test flag",
-                flag_type="boolean",
                 enabled=True,
-                rollout_percentage=None,
                 environments=["development", "staging"],
-                target_user_ids=None,
-                target_roles=None,
-                variants=None,
-                dependencies=None,
-                custom_attributes=None,
-                created_at="2025-01-15T10:00:00",
-                updated_at="2025-01-15T10:00:00",
             )
         )
         mock_service_class.return_value = mock_service
@@ -404,14 +391,11 @@ class TestFeatureRoutes:
         """Test updating a feature flag."""
         mock_service = MagicMock()
         mock_service.update_flag = AsyncMock(
-            return_value=MagicMock(
-                id=uuid4(),
+            return_value=_flag_response(
                 key="test-flag",
                 name="Updated Flag Name",
                 enabled=False,
                 rollout_percentage=0.25,
-                created_at="2025-01-15T10:00:00",
-                updated_at="2025-01-15T11:00:00",
             )
         )
         mock_service_class.return_value = mock_service
@@ -684,11 +668,10 @@ class TestFeatureRoutes:
         """Test enabling a feature flag."""
         mock_service = MagicMock()
         mock_service.update_flag = AsyncMock(
-            return_value=MagicMock(
+            return_value=_flag_response(
                 key="test-flag",
+                name="Test Flag",
                 enabled=True,
-                created_at="2025-01-15T10:00:00",
-                updated_at="2025-01-15T11:00:00",
             )
         )
         mock_service_class.return_value = mock_service
@@ -730,11 +713,10 @@ class TestFeatureRoutes:
         """Test disabling a feature flag."""
         mock_service = MagicMock()
         mock_service.update_flag = AsyncMock(
-            return_value=MagicMock(
+            return_value=_flag_response(
                 key="test-flag",
+                name="Test Flag",
                 enabled=False,
-                created_at="2025-01-15T10:00:00",
-                updated_at="2025-01-15T11:00:00",
             )
         )
         mock_service_class.return_value = mock_service
@@ -795,9 +777,9 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         mock_get_flags_by_env.return_value = {
-            "development": {"total": 10, "enabled": [], "disabled": []},
-            "staging": {"total": 8, "enabled": [], "disabled": []},
-            "production": {"total": 5, "enabled": [], "disabled": []},
+            "development": 10,
+            "staging": 8,
+            "production": 5,
         }
 
         response = client.get("/api/v1/features/stats", headers=auth_headers)

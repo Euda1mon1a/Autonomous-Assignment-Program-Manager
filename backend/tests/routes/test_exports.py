@@ -15,8 +15,43 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.models.export_job import ExportJobStatus
+from app.models.export_job import ExportFormat, ExportJobStatus, ExportTemplate
 from app.models.user import User
+
+
+def _export_job_mock(**overrides):
+    """Helper to create a mock with all ExportJobResponse required attributes."""
+    defaults = {
+        "id": str(uuid4()),
+        "name": "Test Export",
+        "description": None,
+        "template": ExportTemplate.FULL_SCHEDULE,
+        "format": ExportFormat.CSV,
+        "delivery_method": "email",
+        "email_recipients": None,
+        "email_subject_template": None,
+        "email_body_template": None,
+        "s3_bucket": None,
+        "s3_key_prefix": None,
+        "s3_region": None,
+        "schedule_cron": None,
+        "schedule_enabled": False,
+        "filters": None,
+        "columns": None,
+        "include_headers": True,
+        "last_run_at": None,
+        "next_run_at": None,
+        "run_count": 0,
+        "enabled": True,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "created_by": None,
+    }
+    defaults.update(overrides)
+    mock = MagicMock()
+    for key, value in defaults.items():
+        setattr(mock, key, value)
+    return mock
 
 
 class TestExportRoutes:
@@ -102,15 +137,11 @@ class TestExportRoutes:
         job_id = str(uuid4())
         mock_service = MagicMock()
         mock_service.create_job = AsyncMock(
-            return_value=MagicMock(
+            return_value=_export_job_mock(
                 id=job_id,
                 name="Daily Schedule Export",
-                template="full_schedule",
-                format="csv",
-                enabled=True,
                 schedule_enabled=True,
-                cron_expression="0 6 * * *",
-                created_at=datetime.utcnow(),
+                schedule_cron="0 6 * * *",
             )
         )
         mock_service_class.return_value = mock_service
@@ -122,7 +153,7 @@ class TestExportRoutes:
                 "name": "Daily Schedule Export",
                 "template": "full_schedule",
                 "format": "csv",
-                "cron_expression": "0 6 * * *",
+                "schedule_cron": "0 6 * * *",
             },
         )
         assert response.status_code == 201
@@ -139,7 +170,7 @@ class TestExportRoutes:
     ):
         """Test export job creation handles errors."""
         mock_service = MagicMock()
-        mock_service.create_job = AsyncMock(side_effect=Exception("DB error"))
+        mock_service.create_job = AsyncMock(side_effect=ValueError("DB error"))
         mock_service_class.return_value = mock_service
 
         response = client.post(
@@ -169,8 +200,8 @@ class TestExportRoutes:
         mock_service.list_jobs = AsyncMock(
             return_value=(
                 [
-                    MagicMock(id=str(uuid4()), name="Job 1", enabled=True),
-                    MagicMock(id=str(uuid4()), name="Job 2", enabled=False),
+                    _export_job_mock(name="Job 1", enabled=True),
+                    _export_job_mock(name="Job 2", enabled=False),
                 ],
                 2,
             )
@@ -221,12 +252,7 @@ class TestExportRoutes:
         job_id = str(uuid4())
         mock_service = MagicMock()
         mock_service.get_job = AsyncMock(
-            return_value=MagicMock(
-                id=job_id,
-                name="Test Export",
-                template="full_schedule",
-                format="csv",
-            )
+            return_value=_export_job_mock(id=job_id, name="Test Export")
         )
         mock_service_class.return_value = mock_service
 
@@ -263,10 +289,8 @@ class TestExportRoutes:
         job_id = str(uuid4())
         mock_service = MagicMock()
         mock_service.update_job = AsyncMock(
-            return_value=MagicMock(
-                id=job_id,
-                name="Updated Export",
-                enabled=False,
+            return_value=_export_job_mock(
+                id=job_id, name="Updated Export", enabled=False
             )
         )
         mock_service_class.return_value = mock_service
@@ -349,7 +373,7 @@ class TestExportRoutes:
         job_id = str(uuid4())
         mock_service = MagicMock()
         mock_service.get_job = AsyncMock(
-            return_value=MagicMock(id=job_id, name="Test Export")
+            return_value=_export_job_mock(id=job_id, name="Test Export")
         )
         mock_service_class.return_value = mock_service
 
@@ -395,7 +419,7 @@ class TestExportRoutes:
         job_id = str(uuid4())
         mock_service = MagicMock()
         mock_service.get_job = AsyncMock(
-            return_value=MagicMock(id=job_id, name="Test Export")
+            return_value=_export_job_mock(id=job_id, name="Test Export")
         )
         mock_service_class.return_value = mock_service
 

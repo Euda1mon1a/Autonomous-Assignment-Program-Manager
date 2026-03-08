@@ -9,7 +9,7 @@ Tests the async task queue system including:
 - Scheduled and periodic tasks
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
@@ -90,7 +90,7 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["task_id"] == task_id
+        assert data["taskId"] == task_id
         assert data["status"] == "submitted"
 
     @patch("app.api.routes.queue.QueueManager")
@@ -135,8 +135,8 @@ class TestQueueRoutes:
             headers=auth_headers,
             json={
                 "tasks": [
-                    {"taskName": "task1", "args": [1], "kwargs": {}},
-                    {"taskName": "task2", "args": [], "kwargs": {}},
+                    {"taskName": "app.tasks.step1", "args": [1], "kwargs": {}},
+                    {"taskName": "app.tasks.step2", "args": [], "kwargs": {}},
                 ],
                 "priority": 5,
             },
@@ -144,7 +144,7 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["task_name"] == "chain"
+        assert data["taskName"] == "chain"
         assert "2 tasks" in data["message"]
 
     @patch("app.api.routes.queue.QueueManager")
@@ -165,8 +165,8 @@ class TestQueueRoutes:
             headers=auth_headers,
             json={
                 "tasks": [
-                    {"taskName": "parallel1", "args": [1]},
-                    {"taskName": "parallel2", "args": [2]},
+                    {"taskName": "app.tasks.parallel1", "args": [1]},
+                    {"taskName": "app.tasks.parallel2", "args": [2]},
                 ],
                 "priority": 5,
             },
@@ -174,7 +174,7 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["task_name"] == "group"
+        assert data["taskName"] == "group"
 
     @patch("app.api.routes.queue.QueueManager")
     def test_submit_task_with_dependencies(
@@ -193,7 +193,7 @@ class TestQueueRoutes:
             "/api/v1/queue/tasks/submit-with-dependencies",
             headers=auth_headers,
             json={
-                "task_name": "aggregate_results",
+                "task_name": "app.tasks.aggregate_results",
                 "dependencies": ["task-id-1", "task-id-2"],
                 "priority": 7,
             },
@@ -218,7 +218,9 @@ class TestQueueRoutes:
         task_id = str(uuid4())
         mock_get_status.return_value = {
             "task_id": task_id,
-            "status": "SUCCESS",
+            "state": "SUCCESS",
+            "ready": True,
+            "successful": True,
             "result": {"data": "processed"},
         }
 
@@ -229,7 +231,7 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["task_id"] == task_id
+        assert data["taskId"] == task_id
 
     @patch("app.api.routes.queue.QueueManager")
     def test_get_task_progress_success(
@@ -244,7 +246,7 @@ class TestQueueRoutes:
         mock_manager.get_task_progress.return_value = {
             "current": 50,
             "total": 100,
-            "percent": 50.0,
+            "percentage": 50,
         }
         mock_queue_manager.return_value = mock_manager
 
@@ -281,7 +283,7 @@ class TestQueueRoutes:
         data = response.json()
         assert data["success"] is True
 
-    @patch("app.api.routes.queue.retry_task")
+    @patch("app.queue.tasks.retry_task")
     def test_retry_task_success(
         self,
         mock_retry: MagicMock,
@@ -301,8 +303,8 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["original_task_id"] == original_id
-        assert data["new_task_id"] == new_id
+        assert data["originalTaskId"] == original_id
+        assert data["newTaskId"] == new_id
 
     # ========================================================================
     # Queue Statistics Tests
@@ -318,9 +320,10 @@ class TestQueueRoutes:
         """Test getting queue statistics."""
         mock_manager = MagicMock()
         mock_manager.get_queue_stats.return_value = {
-            "queue_length": 25,
-            "active_tasks": 5,
-            "reserved_tasks": 10,
+            "queues": {
+                "default": {"active": 5, "reserved": 10, "pending": 25},
+            },
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         mock_queue_manager.return_value = mock_manager
 
@@ -366,7 +369,7 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["tasks_purged"] == 15
+        assert data["tasksPurged"] == 15
 
     # ========================================================================
     # Worker Management Tests
@@ -383,8 +386,10 @@ class TestQueueRoutes:
         mock_manager = MagicMock()
         mock_manager.get_worker_health.return_value = {
             "healthy": True,
+            "workers": {"celery@worker1": {"status": "online"}},
             "total_workers": 4,
             "online_workers": 4,
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         mock_worker_manager.return_value = mock_manager
 
@@ -404,8 +409,9 @@ class TestQueueRoutes:
         """Test getting worker statistics."""
         mock_manager = MagicMock()
         mock_manager.get_worker_stats.return_value = {
+            "workers": {"celery@worker1": {"active": 3}},
             "total_workers": 4,
-            "active_workers": 3,
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         mock_worker_manager.return_value = mock_manager
 
@@ -482,7 +488,7 @@ class TestQueueRoutes:
             "/api/v1/queue/schedule/task",
             headers=auth_headers,
             json={
-                "task_name": "send_reminder",
+                "task_name": "app.tasks.send_reminder",
                 "countdown": 3600,
                 "priority": 7,
             },
@@ -490,7 +496,7 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["task_id"] == task_id
+        assert data["taskId"] == task_id
 
     @patch("app.api.routes.queue.TaskScheduler")
     def test_add_periodic_task_success(
@@ -527,10 +533,11 @@ class TestQueueRoutes:
         """Test getting periodic tasks."""
         mock_sched = MagicMock()
         mock_sched.get_periodic_tasks.return_value = {
-            "tasks": [
-                {"name": "daily-cleanup", "task": "app.tasks.cleanup"},
-            ],
-            "count": 1,
+            "tasks": {
+                "daily-cleanup": {"task": "app.tasks.cleanup", "schedule": "0 2 * * *"},
+            },
+            "total_tasks": 1,
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         mock_scheduler.return_value = mock_sched
 

@@ -17,6 +17,7 @@ Tests cover:
   - Partial updates (exclude_unset behavior)
 """
 
+import os
 from datetime import datetime
 from uuid import uuid4
 
@@ -25,6 +26,18 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.rotation_template import RotationTemplate
+
+# rotation_activity_requirements table uses JSONB columns and is not created
+# in SQLite test DB. Batch delete cascades to that table and fails.
+# Use `or` (not getenv defaults) to match conftest.py logic: empty string is falsy.
+_TEST_DB_URL = (
+    os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite:///:memory:"
+)
+_USE_SQLITE = _TEST_DB_URL.startswith("sqlite")
+_SKIP_SQLITE_CASCADE = pytest.mark.skipif(
+    _USE_SQLITE,
+    reason="Batch delete cascades to rotation_activity_requirements (JSONB, not in SQLite)",
+)
 
 
 class TestBatchDeleteRotationTemplates:
@@ -38,7 +51,7 @@ class TestBatchDeleteRotationTemplates:
             template = RotationTemplate(
                 id=uuid4(),
                 name=f"Test Template {i}",
-                rotation_type="clinic",
+                rotation_type="outpatient",
                 abbreviation=f"T{i}",
                 created_at=datetime.utcnow(),
             )
@@ -47,6 +60,7 @@ class TestBatchDeleteRotationTemplates:
         db.commit()
         return templates
 
+    @_SKIP_SQLITE_CASCADE
     def test_batch_delete_success(
         self,
         client: TestClient,
@@ -150,6 +164,7 @@ class TestBatchDeleteRotationTemplates:
             )
             assert get_response.status_code == 200
 
+    @_SKIP_SQLITE_CASCADE
     def test_batch_delete_single_template(
         self,
         client: TestClient,
@@ -211,7 +226,7 @@ class TestBatchUpdateRotationTemplates:
             template = RotationTemplate(
                 id=uuid4(),
                 name=f"Test Template {i}",
-                rotation_type="clinic",
+                rotation_type="outpatient",  # Use canonical form (Pydantic normalizes "clinic" -> "outpatient")
                 abbreviation=f"T{i}",
                 max_residents=i + 1,
                 supervision_required=True,

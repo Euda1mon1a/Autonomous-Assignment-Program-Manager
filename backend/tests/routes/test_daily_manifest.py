@@ -134,7 +134,7 @@ class TestDailyManifest:
             block_id=block.id,
             person_id=sample_resident.id,
             role="primary",
-            activity_name="Morning Clinic",
+            activity_override="Morning Clinic",
         )
         db.add(assignment)
         db.commit()
@@ -264,14 +264,14 @@ class TestDailyManifest:
             block_id=block_am.id,
             person_id=sample_residents[0].id,
             role="primary",
-            activity_name="AM Activity",
+            activity_override="AM Activity",
         )
         assignment_pm = Assignment(
             id=uuid4(),
             block_id=block_pm.id,
             person_id=sample_residents[1].id,
             role="primary",
-            activity_name="PM Activity",
+            activity_override="PM Activity",
         )
         db.add(assignment_am)
         db.add(assignment_pm)

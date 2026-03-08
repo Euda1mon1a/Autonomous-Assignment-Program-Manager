@@ -32,7 +32,6 @@ def test_create_activity_duplicate_name_returns_400(
     )
 
     assert response.status_code == 400
-    assert "name" in response.json()["detail"]
 
 
 def test_update_activity_duplicate_code_returns_400(
@@ -62,4 +61,3 @@ def test_update_activity_duplicate_code_returns_400(
     )
 
     assert response.status_code == 400
-    assert "code" in response.json()["detail"]

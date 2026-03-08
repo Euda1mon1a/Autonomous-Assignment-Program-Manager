@@ -36,6 +36,7 @@ class TestProfilingRoutes:
         mock_memory: MagicMock,
         mock_cpu: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting profiling status."""
         mock_cpu.enabled = True
@@ -49,7 +50,7 @@ class TestProfilingRoutes:
         mock_trace.enabled = True
         mock_trace.get_count.return_value = 20
 
-        response = client.get("/api/v1/profiling/status")
+        response = client.get("/api/v1/profiling/status", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -75,10 +76,12 @@ class TestProfilingRoutes:
         mock_memory: MagicMock,
         mock_cpu: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test starting profiling session."""
         response = client.post(
             "/api/v1/profiling/start",
+            headers=auth_headers,
             json={
                 "cpu": True,
                 "memory": True,
@@ -107,10 +110,12 @@ class TestProfilingRoutes:
         mock_memory: MagicMock,
         mock_cpu: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test starting profiling with selective features."""
         response = client.post(
             "/api/v1/profiling/start",
+            headers=auth_headers,
             json={
                 "cpu": True,
                 "memory": False,
@@ -138,6 +143,7 @@ class TestProfilingRoutes:
         mock_memory: MagicMock,
         mock_cpu: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test stopping profiling session."""
         mock_cpu.results = [MagicMock()]
@@ -146,7 +152,7 @@ class TestProfilingRoutes:
         mock_request.get_count.return_value = 25
         mock_trace.get_count.return_value = 10
 
-        response = client.post("/api/v1/profiling/stop")
+        response = client.post("/api/v1/profiling/stop", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -176,6 +182,7 @@ class TestProfilingRoutes:
         mock_detector: MagicMock,
         mock_reporter: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting profiling report in JSON format."""
         mock_cpu.results = []
@@ -193,7 +200,9 @@ class TestProfilingRoutes:
         mock_report.to_dict.return_value = {"report_id": "abc123", "summary": {}}
         mock_reporter.generate_report.return_value = mock_report
 
-        response = client.get("/api/v1/profiling/report?format=json")
+        response = client.get(
+            "/api/v1/profiling/report?format=json", headers=auth_headers
+        )
         assert response.status_code == 200
 
     # ========================================================================
@@ -205,6 +214,7 @@ class TestProfilingRoutes:
         self,
         mock_sql: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting SQL query metrics."""
         mock_query = MagicMock()
@@ -218,7 +228,9 @@ class TestProfilingRoutes:
         mock_sql.get_failed_queries.return_value = []
         mock_sql.get_query_stats.return_value = {"avg_duration_ms": 50}
 
-        response = client.get("/api/v1/profiling/queries?limit=100")
+        response = client.get(
+            "/api/v1/profiling/queries?limit=100", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -230,6 +242,7 @@ class TestProfilingRoutes:
         self,
         mock_sql: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting only slow SQL queries."""
         mock_slow_query = MagicMock()
@@ -244,7 +257,8 @@ class TestProfilingRoutes:
         mock_sql.get_query_stats.return_value = {}
 
         response = client.get(
-            "/api/v1/profiling/queries?slow_only=true&threshold_ms=100"
+            "/api/v1/profiling/queries?slow_only=true&threshold_ms=100",
+            headers=auth_headers,
         )
         assert response.status_code == 200
 
@@ -257,6 +271,7 @@ class TestProfilingRoutes:
         self,
         mock_request: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting HTTP request metrics."""
         mock_req = MagicMock()
@@ -271,7 +286,9 @@ class TestProfilingRoutes:
         mock_request.get_failed_requests.return_value = []
         mock_request.get_request_stats.return_value = {}
 
-        response = client.get("/api/v1/profiling/requests?limit=100")
+        response = client.get(
+            "/api/v1/profiling/requests?limit=100", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -286,6 +303,7 @@ class TestProfilingRoutes:
         self,
         mock_trace: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting distributed traces."""
         mock_t = MagicMock()
@@ -297,7 +315,9 @@ class TestProfilingRoutes:
         mock_trace.get_count.return_value = 1
         mock_trace.get_slow_traces.return_value = []
 
-        response = client.get("/api/v1/profiling/traces?limit=100")
+        response = client.get(
+            "/api/v1/profiling/traces?limit=100", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -308,6 +328,7 @@ class TestProfilingRoutes:
         self,
         mock_trace: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test getting traces filtered by trace ID."""
         mock_t = MagicMock()
@@ -316,7 +337,9 @@ class TestProfilingRoutes:
         mock_trace.get_count.return_value = 1
         mock_trace.get_slow_traces.return_value = []
 
-        response = client.get("/api/v1/profiling/traces?trace_id=specific-123")
+        response = client.get(
+            "/api/v1/profiling/traces?trace_id=specific-123", headers=auth_headers
+        )
         assert response.status_code == 200
 
     # ========================================================================
@@ -334,6 +357,7 @@ class TestProfilingRoutes:
         mock_sql: MagicMock,
         mock_detector_class: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test detecting performance bottlenecks."""
         mock_sql.items = []
@@ -353,7 +377,9 @@ class TestProfilingRoutes:
         mock_detector.detect_trace_bottlenecks.return_value = []
         mock_detector_class.return_value = mock_detector
 
-        response = client.get("/api/v1/profiling/bottlenecks?sql_threshold_ms=100")
+        response = client.get(
+            "/api/v1/profiling/bottlenecks?sql_threshold_ms=100", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -371,6 +397,7 @@ class TestProfilingRoutes:
         mock_cpu: MagicMock,
         mock_fg: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test generating CPU flame graph."""
         mock_profile = MagicMock()
@@ -381,7 +408,9 @@ class TestProfilingRoutes:
             "children": [],
         }
 
-        response = client.get("/api/v1/profiling/flamegraph?type=cpu")
+        response = client.get(
+            "/api/v1/profiling/flamegraph?type=cpu", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -392,20 +421,26 @@ class TestProfilingRoutes:
         self,
         mock_cpu: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test flame graph when no data available."""
         mock_cpu.results = []
 
-        response = client.get("/api/v1/profiling/flamegraph?type=cpu")
+        response = client.get(
+            "/api/v1/profiling/flamegraph?type=cpu", headers=auth_headers
+        )
         assert response.status_code == 404
         assert "No CPU profiling data" in response.json()["detail"]
 
     def test_generate_flamegraph_invalid_type(
         self,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test flame graph with invalid type."""
-        response = client.get("/api/v1/profiling/flamegraph?type=invalid")
+        response = client.get(
+            "/api/v1/profiling/flamegraph?type=invalid", headers=auth_headers
+        )
         assert response.status_code == 400
         assert "Invalid flame graph type" in response.json()["detail"]
 
@@ -432,6 +467,7 @@ class TestProfilingRoutes:
         mock_detector_class: MagicMock,
         mock_query_analyzer: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test analyzing profiling data."""
         mock_cpu.results = []
@@ -465,6 +501,7 @@ class TestProfilingRoutes:
 
         response = client.post(
             "/api/v1/profiling/analyze",
+            headers=auth_headers,
             json={
                 "cpu_threshold_percent": 80.0,
                 "memory_threshold_mb": 1000.0,
@@ -495,9 +532,10 @@ class TestProfilingRoutes:
         mock_cpu: MagicMock,
         mock_context: MagicMock,
         client: TestClient,
+        auth_headers: dict,
     ):
         """Test clearing all profiling data."""
-        response = client.delete("/api/v1/profiling/clear")
+        response = client.delete("/api/v1/profiling/clear", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()

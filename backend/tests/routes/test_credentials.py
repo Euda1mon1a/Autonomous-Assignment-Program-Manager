@@ -7,14 +7,37 @@ Tests the faculty procedure credentials functionality including:
 - Credential status management (suspend, activate, verify)
 """
 
-from datetime import date, timedelta
-from unittest.mock import MagicMock, patch
+from datetime import date, datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.models.user import User
+
+
+def _credential_dict(**overrides):
+    """Helper to create a valid CredentialResponse dict with all required fields."""
+    defaults = {
+        "id": str(uuid4()),
+        "person_id": str(uuid4()),
+        "procedure_id": str(uuid4()),
+        "status": "active",
+        "competency_level": "qualified",
+        "issued_date": None,
+        "expiration_date": None,
+        "last_verified_date": None,
+        "max_concurrent_residents": None,
+        "max_per_week": None,
+        "max_per_academic_year": None,
+        "notes": None,
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat(),
+        "is_valid": True,
+    }
+    defaults.update(overrides)
+    return defaults
 
 
 class TestCredentialRoutes:
@@ -78,14 +101,10 @@ class TestCredentialRoutes:
         """Test listing expiring credentials with default 30 days."""
         mock_controller = MagicMock()
         mock_controller.list_expiring_credentials.return_value = {
-            "credentials": [
-                {
-                    "id": str(uuid4()),
-                    "person_id": str(uuid4()),
-                    "procedure_id": str(uuid4()),
-                    "expires_at": (date.today() + timedelta(days=15)).isoformat(),
-                    "status": "active",
-                }
+            "items": [
+                _credential_dict(
+                    expiration_date=(date.today() + timedelta(days=15)).isoformat(),
+                ),
             ],
             "total": 1,
         }
@@ -106,7 +125,7 @@ class TestCredentialRoutes:
         """Test listing expiring credentials with custom days parameter."""
         mock_controller = MagicMock()
         mock_controller.list_expiring_credentials.return_value = {
-            "credentials": [],
+            "items": [],
             "total": 0,
         }
         mock_controller_class.return_value = mock_controller
@@ -133,14 +152,8 @@ class TestCredentialRoutes:
         person_id = uuid4()
         mock_controller = MagicMock()
         mock_controller.list_credentials_for_person.return_value = {
-            "credentials": [
-                {
-                    "id": str(uuid4()),
-                    "person_id": str(person_id),
-                    "procedure_id": str(uuid4()),
-                    "procedure_name": "Colonoscopy",
-                    "status": "active",
-                }
+            "items": [
+                _credential_dict(person_id=str(person_id)),
             ],
             "total": 1,
         }
@@ -152,7 +165,7 @@ class TestCredentialRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert "credentials" in data
+        assert "items" in data
 
     @patch("app.api.routes.credentials.CredentialController")
     def test_list_credentials_for_person_with_filters(
@@ -165,7 +178,7 @@ class TestCredentialRoutes:
         person_id = uuid4()
         mock_controller = MagicMock()
         mock_controller.list_credentials_for_person.return_value = {
-            "credentials": [],
+            "items": [],
             "total": 0,
         }
         mock_controller_class.return_value = mock_controller
@@ -197,14 +210,8 @@ class TestCredentialRoutes:
         procedure_id = uuid4()
         mock_controller = MagicMock()
         mock_controller.list_credentials_for_procedure.return_value = {
-            "credentials": [
-                {
-                    "id": str(uuid4()),
-                    "person_id": str(uuid4()),
-                    "procedure_id": str(procedure_id),
-                    "person_name": "Dr. Smith",
-                    "status": "active",
-                }
+            "items": [
+                _credential_dict(procedure_id=str(procedure_id)),
             ],
             "total": 1,
         }
@@ -233,10 +240,10 @@ class TestCredentialRoutes:
             "procedure_id": str(procedure_id),
             "procedure_name": "EGD",
             "qualified_faculty": [
-                {"person_id": str(uuid4()), "name": "Dr. Smith"},
-                {"person_id": str(uuid4()), "name": "Dr. Jones"},
+                {"id": str(uuid4()), "name": "Dr. Smith", "type": "faculty"},
+                {"id": str(uuid4()), "name": "Dr. Jones", "type": "faculty"},
             ],
-            "count": 2,
+            "total": 2,
         }
         mock_controller_class.return_value = mock_controller
 
@@ -247,7 +254,7 @@ class TestCredentialRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["count"] == 2
+        assert data["total"] == 2
         assert len(data["qualified_faculty"]) == 2
 
     @patch("app.api.routes.credentials.CredentialController")
@@ -264,7 +271,7 @@ class TestCredentialRoutes:
             "procedure_id": str(procedure_id),
             "procedure_name": "Rare Procedure",
             "qualified_faculty": [],
-            "count": 0,
+            "total": 0,
         }
         mock_controller_class.return_value = mock_controller
 
@@ -275,7 +282,7 @@ class TestCredentialRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["count"] == 0
+        assert data["total"] == 0
 
     # ========================================================================
     # Check Qualification Tests
@@ -357,12 +364,10 @@ class TestCredentialRoutes:
             "person_name": "Dr. Smith",
             "total_credentials": 5,
             "active_credentials": 4,
-            "suspended_credentials": 0,
-            "expired_credentials": 1,
             "expiring_soon": 2,
             "procedures": [
-                {"name": "Colonoscopy", "status": "active"},
-                {"name": "EGD", "status": "active"},
+                {"id": str(uuid4()), "name": "Colonoscopy"},
+                {"id": str(uuid4()), "name": "EGD"},
             ],
         }
         mock_controller_class.return_value = mock_controller
@@ -390,14 +395,11 @@ class TestCredentialRoutes:
         """Test getting a credential by ID."""
         credential_id = uuid4()
         mock_controller = MagicMock()
-        mock_controller.get_credential.return_value = {
-            "id": str(credential_id),
-            "person_id": str(uuid4()),
-            "procedure_id": str(uuid4()),
-            "status": "active",
-            "issued_at": date.today().isoformat(),
-            "expires_at": (date.today() + timedelta(days=365)).isoformat(),
-        }
+        mock_controller.get_credential.return_value = _credential_dict(
+            id=str(credential_id),
+            issued_date=date.today().isoformat(),
+            expiration_date=(date.today() + timedelta(days=365)).isoformat(),
+        )
         mock_controller_class.return_value = mock_controller
 
         response = client.get(
@@ -421,14 +423,13 @@ class TestCredentialRoutes:
         procedure_id = uuid4()
         credential_id = uuid4()
         mock_controller = MagicMock()
-        mock_controller.create_credential.return_value = {
-            "id": str(credential_id),
-            "person_id": str(person_id),
-            "procedure_id": str(procedure_id),
-            "status": "active",
-            "issued_at": date.today().isoformat(),
-            "expires_at": (date.today() + timedelta(days=365)).isoformat(),
-        }
+        mock_controller.create_credential.return_value = _credential_dict(
+            id=str(credential_id),
+            person_id=str(person_id),
+            procedure_id=str(procedure_id),
+            issued_date=date.today().isoformat(),
+            expiration_date=(date.today() + timedelta(days=365)).isoformat(),
+        )
         mock_controller_class.return_value = mock_controller
 
         response = client.post(
@@ -460,13 +461,11 @@ class TestCredentialRoutes:
         """Test successful credential update."""
         credential_id = uuid4()
         mock_controller = MagicMock()
-        mock_controller.update_credential.return_value = {
-            "id": str(credential_id),
-            "person_id": str(uuid4()),
-            "procedure_id": str(uuid4()),
-            "status": "suspended",
-            "notes": "Under review",
-        }
+        mock_controller.update_credential.return_value = _credential_dict(
+            id=str(credential_id),
+            status="suspended",
+            notes="Under review",
+        )
         mock_controller_class.return_value = mock_controller
 
         response = client.put(
@@ -496,7 +495,7 @@ class TestCredentialRoutes:
         """Test successful credential deletion."""
         credential_id = uuid4()
         mock_controller = MagicMock()
-        mock_controller.delete_credential.return_value = None
+        mock_controller.delete_credential = AsyncMock(return_value=None)
         mock_controller_class.return_value = mock_controller
 
         response = client.delete(
@@ -519,11 +518,11 @@ class TestCredentialRoutes:
         """Test suspending a credential."""
         credential_id = uuid4()
         mock_controller = MagicMock()
-        mock_controller.suspend_credential.return_value = {
-            "id": str(credential_id),
-            "status": "suspended",
-            "notes": "Administrative suspension",
-        }
+        mock_controller.suspend_credential.return_value = _credential_dict(
+            id=str(credential_id),
+            status="suspended",
+            notes="Administrative suspension",
+        )
         mock_controller_class.return_value = mock_controller
 
         response = client.post(
@@ -545,10 +544,10 @@ class TestCredentialRoutes:
         """Test activating a credential."""
         credential_id = uuid4()
         mock_controller = MagicMock()
-        mock_controller.activate_credential.return_value = {
-            "id": str(credential_id),
-            "status": "active",
-        }
+        mock_controller.activate_credential.return_value = _credential_dict(
+            id=str(credential_id),
+            status="active",
+        )
         mock_controller_class.return_value = mock_controller
 
         response = client.post(
@@ -570,11 +569,11 @@ class TestCredentialRoutes:
         """Test verifying a credential."""
         credential_id = uuid4()
         mock_controller = MagicMock()
-        mock_controller.verify_credential.return_value = {
-            "id": str(credential_id),
-            "status": "active",
-            "last_verified_at": date.today().isoformat(),
-        }
+        mock_controller.verify_credential.return_value = _credential_dict(
+            id=str(credential_id),
+            status="active",
+            last_verified_date=date.today().isoformat(),
+        )
         mock_controller_class.return_value = mock_controller
 
         response = client.post(
@@ -584,4 +583,4 @@ class TestCredentialRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert "last_verified_at" in data
+        assert "last_verified_date" in data
