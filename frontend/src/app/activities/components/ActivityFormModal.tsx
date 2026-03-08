@@ -157,7 +157,8 @@ export function ActivityFormModal({
     try {
       await onSave(formData);
     } catch (err: any) {
-      const message = err?.response?.data?.detail
+      const detail = err?.response?.data?.detail;
+      const message = (typeof detail === 'string' ? detail : null)
         || err?.message
         || `Failed to ${isEditing ? 'update' : 'create'} activity.`;
       setErrors({ general: message });
