@@ -479,7 +479,7 @@ class TestSwapFinderAPI:
         }
 
         response = client.post(
-            "/api/schedule/swaps/find",
+            "/api/v1/schedule/swaps/find",
             files={"fmit_file": ("schedule.xlsx", mock_fmit_excel_bytes)},
             data={"request_json": json.dumps(request_data)},
             headers=auth_headers,
@@ -518,7 +518,7 @@ class TestSwapFinderAPI:
         }
 
         response = client.post(
-            "/api/schedule/swaps/find",
+            "/api/v1/schedule/swaps/find",
             files={"fmit_file": ("schedule.xlsx", mock_fmit_excel_bytes)},
             data={"request_json": json.dumps(request_data)},
             headers=auth_headers,
@@ -550,7 +550,7 @@ class TestSwapFinderAPI:
         }
 
         response = client.post(
-            "/api/schedule/swaps/find",
+            "/api/v1/schedule/swaps/find",
             files={"fmit_file": ("schedule.xlsx", mock_fmit_excel_bytes)},
             data={"request_json": json.dumps(request_data)},
             headers=auth_headers,
@@ -567,7 +567,7 @@ class TestSwapFinderAPI:
     ):
         """Should return 400 for invalid request JSON."""
         response = client.post(
-            "/api/schedule/swaps/find",
+            "/api/v1/schedule/swaps/find",
             files={"fmit_file": ("schedule.xlsx", mock_fmit_excel_bytes)},
             data={"request_json": "not valid json"},
             headers=auth_headers,
@@ -592,7 +592,7 @@ class TestSwapFinderAPI:
         }
 
         response = client.post(
-            "/api/schedule/swaps/find",
+            "/api/v1/schedule/swaps/find",
             files={"fmit_file": ("schedule.xlsx", mock_fmit_excel_bytes)},
             data={"request_json": json.dumps(request_data)},
             headers=auth_headers,

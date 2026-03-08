@@ -49,7 +49,7 @@ class TestProfilingRoutes:
         mock_trace.enabled = True
         mock_trace.get_count.return_value = 20
 
-        response = client.get("/api/profiling/status")
+        response = client.get("/api/v1/profiling/status")
         assert response.status_code == 200
 
         data = response.json()
@@ -78,7 +78,7 @@ class TestProfilingRoutes:
     ):
         """Test starting profiling session."""
         response = client.post(
-            "/api/profiling/start",
+            "/api/v1/profiling/start",
             json={
                 "cpu": True,
                 "memory": True,
@@ -110,7 +110,7 @@ class TestProfilingRoutes:
     ):
         """Test starting profiling with selective features."""
         response = client.post(
-            "/api/profiling/start",
+            "/api/v1/profiling/start",
             json={
                 "cpu": True,
                 "memory": False,
@@ -146,7 +146,7 @@ class TestProfilingRoutes:
         mock_request.get_count.return_value = 25
         mock_trace.get_count.return_value = 10
 
-        response = client.post("/api/profiling/stop")
+        response = client.post("/api/v1/profiling/stop")
         assert response.status_code == 200
 
         data = response.json()
@@ -193,7 +193,7 @@ class TestProfilingRoutes:
         mock_report.to_dict.return_value = {"report_id": "abc123", "summary": {}}
         mock_reporter.generate_report.return_value = mock_report
 
-        response = client.get("/api/profiling/report?format=json")
+        response = client.get("/api/v1/profiling/report?format=json")
         assert response.status_code == 200
 
     # ========================================================================
@@ -218,7 +218,7 @@ class TestProfilingRoutes:
         mock_sql.get_failed_queries.return_value = []
         mock_sql.get_query_stats.return_value = {"avg_duration_ms": 50}
 
-        response = client.get("/api/profiling/queries?limit=100")
+        response = client.get("/api/v1/profiling/queries?limit=100")
         assert response.status_code == 200
 
         data = response.json()
@@ -243,7 +243,9 @@ class TestProfilingRoutes:
         mock_sql.get_failed_queries.return_value = []
         mock_sql.get_query_stats.return_value = {}
 
-        response = client.get("/api/profiling/queries?slow_only=true&threshold_ms=100")
+        response = client.get(
+            "/api/v1/profiling/queries?slow_only=true&threshold_ms=100"
+        )
         assert response.status_code == 200
 
     # ========================================================================
@@ -259,7 +261,7 @@ class TestProfilingRoutes:
         """Test getting HTTP request metrics."""
         mock_req = MagicMock()
         mock_req.to_dict.return_value = {
-            "path": "/api/users",
+            "path": "/api/v1/users",
             "method": "GET",
             "duration_ms": 150,
         }
@@ -269,7 +271,7 @@ class TestProfilingRoutes:
         mock_request.get_failed_requests.return_value = []
         mock_request.get_request_stats.return_value = {}
 
-        response = client.get("/api/profiling/requests?limit=100")
+        response = client.get("/api/v1/profiling/requests?limit=100")
         assert response.status_code == 200
 
         data = response.json()
@@ -295,7 +297,7 @@ class TestProfilingRoutes:
         mock_trace.get_count.return_value = 1
         mock_trace.get_slow_traces.return_value = []
 
-        response = client.get("/api/profiling/traces?limit=100")
+        response = client.get("/api/v1/profiling/traces?limit=100")
         assert response.status_code == 200
 
         data = response.json()
@@ -314,7 +316,7 @@ class TestProfilingRoutes:
         mock_trace.get_count.return_value = 1
         mock_trace.get_slow_traces.return_value = []
 
-        response = client.get("/api/profiling/traces?trace_id=specific-123")
+        response = client.get("/api/v1/profiling/traces?trace_id=specific-123")
         assert response.status_code == 200
 
     # ========================================================================
@@ -351,7 +353,7 @@ class TestProfilingRoutes:
         mock_detector.detect_trace_bottlenecks.return_value = []
         mock_detector_class.return_value = mock_detector
 
-        response = client.get("/api/profiling/bottlenecks?sql_threshold_ms=100")
+        response = client.get("/api/v1/profiling/bottlenecks?sql_threshold_ms=100")
         assert response.status_code == 200
 
         data = response.json()
@@ -379,7 +381,7 @@ class TestProfilingRoutes:
             "children": [],
         }
 
-        response = client.get("/api/profiling/flamegraph?type=cpu")
+        response = client.get("/api/v1/profiling/flamegraph?type=cpu")
         assert response.status_code == 200
 
         data = response.json()
@@ -394,7 +396,7 @@ class TestProfilingRoutes:
         """Test flame graph when no data available."""
         mock_cpu.results = []
 
-        response = client.get("/api/profiling/flamegraph?type=cpu")
+        response = client.get("/api/v1/profiling/flamegraph?type=cpu")
         assert response.status_code == 404
         assert "No CPU profiling data" in response.json()["detail"]
 
@@ -403,7 +405,7 @@ class TestProfilingRoutes:
         client: TestClient,
     ):
         """Test flame graph with invalid type."""
-        response = client.get("/api/profiling/flamegraph?type=invalid")
+        response = client.get("/api/v1/profiling/flamegraph?type=invalid")
         assert response.status_code == 400
         assert "Invalid flame graph type" in response.json()["detail"]
 
@@ -462,7 +464,7 @@ class TestProfilingRoutes:
         mock_query_analyzer.analyze_query_patterns.return_value = {}
 
         response = client.post(
-            "/api/profiling/analyze",
+            "/api/v1/profiling/analyze",
             json={
                 "cpu_threshold_percent": 80.0,
                 "memory_threshold_mb": 1000.0,
@@ -495,7 +497,7 @@ class TestProfilingRoutes:
         client: TestClient,
     ):
         """Test clearing all profiling data."""
-        response = client.delete("/api/profiling/clear")
+        response = client.delete("/api/v1/profiling/clear")
         assert response.status_code == 200
 
         data = response.json()

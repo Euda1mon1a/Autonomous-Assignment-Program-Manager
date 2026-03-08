@@ -115,7 +115,7 @@ def admin_user(integration_db: Session) -> User:
 def auth_headers(integration_client: TestClient, admin_user: User) -> dict:
     """Get authentication headers for API requests."""
     response = integration_client.post(
-        "/api/auth/login/json",
+        "/api/v1/auth/login/json",
         json={"username": "admin", "password": "admin123"},
     )
     if response.status_code == 200:

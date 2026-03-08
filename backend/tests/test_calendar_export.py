@@ -67,7 +67,7 @@ class TestCalendarExportICSEndpoint:
 
         # Make API request
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -162,7 +162,7 @@ class TestCalendarExportICSEndpoint:
 
         # Export calendar
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": start_date.isoformat(),
@@ -220,7 +220,7 @@ class TestCalendarExportICSEndpoint:
 
         # Export only first 7 days
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": base_date.isoformat(),
@@ -280,7 +280,7 @@ class TestCalendarExportICSEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -316,7 +316,7 @@ class TestRFC5545Compliance:
         test_date = date(2024, 1, 1)
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -343,7 +343,7 @@ class TestRFC5545Compliance:
         test_date = date.today()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -394,7 +394,7 @@ class TestRFC5545Compliance:
         db.commit()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -449,7 +449,7 @@ class TestRFC5545Compliance:
         db.commit()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -502,7 +502,7 @@ class TestRFC5545Compliance:
         db.commit()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -530,7 +530,7 @@ class TestTimezoneHandling:
         test_date = date(2024, 1, 15)
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -553,7 +553,7 @@ class TestTimezoneHandling:
         test_date = date(2024, 2, 1)
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -578,7 +578,7 @@ class TestTimezoneHandling:
         test_date = date(2024, 3, 1)
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -603,7 +603,7 @@ class TestTimezoneHandling:
         test_date = date(2024, 4, 1)
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -649,7 +649,7 @@ class TestTimezoneHandling:
         db.commit()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -695,7 +695,7 @@ class TestTimezoneHandling:
         db.commit()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -718,7 +718,7 @@ class TestFilterParameters:
         test_date = date.today()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "start_date": test_date.isoformat(),
                 "end_date": test_date.isoformat(),
@@ -734,7 +734,7 @@ class TestFilterParameters:
         test_date = date.today()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person_id),
                 "end_date": test_date.isoformat(),
@@ -749,7 +749,7 @@ class TestFilterParameters:
         test_date = date.today()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person_id),
                 "start_date": test_date.isoformat(),
@@ -763,7 +763,7 @@ class TestFilterParameters:
         test_date = date.today()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": "not-a-valid-uuid",
                 "start_date": test_date.isoformat(),
@@ -778,7 +778,7 @@ class TestFilterParameters:
         person_id = uuid.uuid4()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person_id),
                 "start_date": "2024-13-45",  # Invalid date
@@ -839,7 +839,7 @@ class TestFilterParameters:
 
         # Export for person1 only
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person1.id),
                 "start_date": test_date.isoformat(),
@@ -865,7 +865,7 @@ class TestErrorHandling:
         test_date = date.today()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(non_existent_id),
                 "start_date": test_date.isoformat(),
@@ -889,7 +889,7 @@ class TestErrorHandling:
         test_date = date.today()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -919,7 +919,7 @@ class TestErrorHandling:
 
         # Normal request should work
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -933,7 +933,7 @@ class TestErrorHandling:
     def test_malformed_query_parameters(self, client: TestClient) -> None:
         """Test handling of malformed query parameters."""
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": "12345",  # Not a valid UUID
                 "start_date": "not-a-date",
@@ -960,7 +960,7 @@ class TestICSFileContent:
         test_date = date.today()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -1006,7 +1006,7 @@ class TestICSFileContent:
         db.commit()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -1052,7 +1052,7 @@ class TestICSFileContent:
         db.commit()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -1095,7 +1095,7 @@ class TestICSFileContent:
         db.commit()
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": test_date.isoformat(),
@@ -1116,7 +1116,7 @@ class TestICSFileContent:
         end_date = date(2024, 11, 30)
 
         response = client.get(
-            "/api/calendar/export.ics",
+            "/api/v1/calendar/export.ics",
             params={
                 "person_id": str(person.id),
                 "start_date": start_date.isoformat(),

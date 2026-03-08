@@ -28,7 +28,7 @@ class TestScheduleReportEndpoint:
     def test_schedule_report_requires_auth(self, client: TestClient):
         """Test that schedule report requires authentication."""
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -49,7 +49,7 @@ class TestScheduleReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/schedule",
+                "/api/v1/reports/schedule",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -69,7 +69,7 @@ class TestScheduleReportEndpoint:
     ):
         """Test schedule report requires date parameters."""
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             json={},
             headers=auth_headers,
         )
@@ -89,7 +89,7 @@ class TestScheduleReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/schedule",
+                "/api/v1/reports/schedule",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -111,7 +111,7 @@ class TestScheduleReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/schedule",
+                "/api/v1/reports/schedule",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -128,7 +128,7 @@ class TestComplianceReportEndpoint:
     def test_compliance_report_requires_auth(self, client: TestClient):
         """Test that compliance report requires authentication."""
         response = client.post(
-            "/api/reports/compliance",
+            "/api/v1/reports/compliance",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -149,7 +149,7 @@ class TestComplianceReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/compliance",
+                "/api/v1/reports/compliance",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -176,7 +176,7 @@ class TestComplianceReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/compliance",
+                "/api/v1/reports/compliance",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -199,7 +199,7 @@ class TestComplianceReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/compliance",
+                "/api/v1/reports/compliance",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -222,7 +222,7 @@ class TestComplianceReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/compliance",
+                "/api/v1/reports/compliance",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -239,7 +239,7 @@ class TestAnalyticsReportEndpoint:
     def test_analytics_report_requires_auth(self, client: TestClient):
         """Test that analytics report requires authentication."""
         response = client.post(
-            "/api/reports/analytics",
+            "/api/v1/reports/analytics",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -260,7 +260,7 @@ class TestAnalyticsReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/analytics",
+                "/api/v1/reports/analytics",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -288,7 +288,7 @@ class TestAnalyticsReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/analytics",
+                "/api/v1/reports/analytics",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -311,7 +311,7 @@ class TestAnalyticsReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/analytics",
+                "/api/v1/reports/analytics",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -328,7 +328,7 @@ class TestFacultySummaryReportEndpoint:
     def test_faculty_summary_requires_auth(self, client: TestClient):
         """Test that faculty summary report requires authentication."""
         response = client.post(
-            "/api/reports/faculty-summary",
+            "/api/v1/reports/faculty-summary",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -349,7 +349,7 @@ class TestFacultySummaryReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/faculty-summary",
+                "/api/v1/reports/faculty-summary",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -377,7 +377,7 @@ class TestFacultySummaryReportEndpoint:
 
             faculty_id = str(uuid4())
             response = client.post(
-                "/api/reports/faculty-summary",
+                "/api/v1/reports/faculty-summary",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -400,7 +400,7 @@ class TestFacultySummaryReportEndpoint:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/faculty-summary",
+                "/api/v1/reports/faculty-summary",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -431,7 +431,7 @@ class TestReportsEdgeCases:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/schedule",
+                "/api/v1/reports/schedule",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=365)).isoformat(),
@@ -454,7 +454,7 @@ class TestReportsEdgeCases:
 
             today = date.today()
             response = client.post(
-                "/api/reports/schedule",
+                "/api/v1/reports/schedule",
                 json={
                     "start_date": today.isoformat(),
                     "end_date": today.isoformat(),
@@ -478,7 +478,7 @@ class TestReportsEdgeCases:
             past_end = date.today() - timedelta(days=1)
             past_start = past_end - timedelta(days=30)
             response = client.post(
-                "/api/reports/schedule",
+                "/api/v1/reports/schedule",
                 json={
                     "start_date": past_start.isoformat(),
                     "end_date": past_end.isoformat(),
@@ -502,7 +502,7 @@ class TestReportsEdgeCases:
             future_start = date.today() + timedelta(days=30)
             future_end = future_start + timedelta(days=30)
             response = client.post(
-                "/api/reports/schedule",
+                "/api/v1/reports/schedule",
                 json={
                     "start_date": future_start.isoformat(),
                     "end_date": future_end.isoformat(),
@@ -545,10 +545,10 @@ class TestReportsIntegration:
                 mock_class.return_value = mock_instance
 
             endpoints = [
-                "/api/reports/schedule",
-                "/api/reports/compliance",
-                "/api/reports/analytics",
-                "/api/reports/faculty-summary",
+                "/api/v1/reports/schedule",
+                "/api/v1/reports/compliance",
+                "/api/v1/reports/analytics",
+                "/api/v1/reports/faculty-summary",
             ]
 
             for endpoint in endpoints:
@@ -581,7 +581,7 @@ class TestReportsIntegration:
             mock_template_class.return_value = mock_template
 
             response = client.post(
-                "/api/reports/schedule",
+                "/api/v1/reports/schedule",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=30)).isoformat(),
@@ -598,10 +598,10 @@ class TestReportsIntegration:
     def test_reports_http_methods(self, client: TestClient, auth_headers: dict):
         """Test reports only accept POST requests."""
         endpoints = [
-            "/api/reports/schedule",
-            "/api/reports/compliance",
-            "/api/reports/analytics",
-            "/api/reports/faculty-summary",
+            "/api/v1/reports/schedule",
+            "/api/v1/reports/compliance",
+            "/api/v1/reports/analytics",
+            "/api/v1/reports/faculty-summary",
         ]
 
         for endpoint in endpoints:

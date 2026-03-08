@@ -30,7 +30,7 @@ class TestUploadFileEndpoint:
     def test_upload_requires_auth(self, client: TestClient):
         """Test that upload requires authentication."""
         files = {"file": ("test.txt", b"test content", "text/plain")}
-        response = client.post("/api/upload", files=files)
+        response = client.post("/api/v1/upload", files=files)
 
         assert response.status_code in [401, 403]
 
@@ -49,7 +49,7 @@ class TestUploadFileEndpoint:
 
             files = {"file": ("test.txt", b"test content", "text/plain")}
             response = client.post(
-                "/api/upload",
+                "/api/v1/upload",
                 files=files,
                 headers=auth_headers,
             )
@@ -80,7 +80,7 @@ class TestUploadFileEndpoint:
                 "thumbnail_sizes": "thumbnail,medium",
             }
             response = client.post(
-                "/api/upload",
+                "/api/v1/upload",
                 files=files,
                 data=data,
                 headers=auth_headers,
@@ -110,7 +110,7 @@ class TestUploadFileEndpoint:
                 "category": "reports",
             }
             response = client.post(
-                "/api/upload",
+                "/api/v1/upload",
                 files=files,
                 data=data,
                 headers=auth_headers,
@@ -138,7 +138,7 @@ class TestUploadFileEndpoint:
                 "related_entity_type": "person",
             }
             response = client.post(
-                "/api/upload",
+                "/api/v1/upload",
                 files=files,
                 data=data,
                 headers=auth_headers,
@@ -149,7 +149,7 @@ class TestUploadFileEndpoint:
     def test_upload_missing_file(self, client: TestClient, auth_headers: dict):
         """Test upload without file."""
         response = client.post(
-            "/api/upload",
+            "/api/v1/upload",
             headers=auth_headers,
         )
 
@@ -163,7 +163,7 @@ class TestUploadProgressEndpoint:
     def test_progress_requires_auth(self, client: TestClient):
         """Test that progress check requires authentication."""
         upload_id = str(uuid4())
-        response = client.get(f"/api/upload/progress/{upload_id}")
+        response = client.get(f"/api/v1/upload/progress/{upload_id}")
 
         assert response.status_code in [401, 403]
 
@@ -182,7 +182,7 @@ class TestUploadProgressEndpoint:
 
             upload_id = str(uuid4())
             response = client.get(
-                f"/api/upload/progress/{upload_id}",
+                f"/api/v1/upload/progress/{upload_id}",
                 headers=auth_headers,
             )
 
@@ -197,7 +197,7 @@ class TestUploadProgressEndpoint:
 
             upload_id = str(uuid4())
             response = client.get(
-                f"/api/upload/progress/{upload_id}",
+                f"/api/v1/upload/progress/{upload_id}",
                 headers=auth_headers,
             )
 
@@ -210,7 +210,7 @@ class TestFileUrlEndpoint:
     def test_url_requires_auth(self, client: TestClient):
         """Test that URL retrieval requires authentication."""
         file_id = str(uuid4())
-        response = client.get(f"/api/upload/{file_id}/url")
+        response = client.get(f"/api/v1/upload/{file_id}/url")
 
         assert response.status_code in [401, 403]
 
@@ -226,7 +226,7 @@ class TestFileUrlEndpoint:
 
             file_id = str(uuid4())
             response = client.get(
-                f"/api/upload/{file_id}/url",
+                f"/api/v1/upload/{file_id}/url",
                 headers=auth_headers,
             )
 
@@ -244,7 +244,7 @@ class TestFileUrlEndpoint:
 
             file_id = str(uuid4())
             response = client.get(
-                f"/api/upload/{file_id}/url?expires_in=7200",
+                f"/api/v1/upload/{file_id}/url?expires_in=7200",
                 headers=auth_headers,
             )
 
@@ -259,7 +259,7 @@ class TestFileUrlEndpoint:
 
             file_id = str(uuid4())
             response = client.get(
-                f"/api/upload/{file_id}/url",
+                f"/api/v1/upload/{file_id}/url",
                 headers=auth_headers,
             )
 
@@ -272,7 +272,7 @@ class TestDownloadFileEndpoint:
     def test_download_requires_auth(self, client: TestClient):
         """Test that download requires authentication."""
         file_id = str(uuid4())
-        response = client.get(f"/api/upload/{file_id}/download")
+        response = client.get(f"/api/v1/upload/{file_id}/download")
 
         assert response.status_code in [401, 403]
 
@@ -285,7 +285,7 @@ class TestDownloadFileEndpoint:
 
             file_id = str(uuid4())
             response = client.get(
-                f"/api/upload/{file_id}/download",
+                f"/api/v1/upload/{file_id}/download",
                 headers=auth_headers,
             )
 
@@ -302,7 +302,7 @@ class TestDownloadFileEndpoint:
 
             file_id = str(uuid4())
             response = client.get(
-                f"/api/upload/{file_id}/download",
+                f"/api/v1/upload/{file_id}/download",
                 headers=auth_headers,
             )
 
@@ -315,7 +315,7 @@ class TestDeleteFileEndpoint:
     def test_delete_requires_auth(self, client: TestClient):
         """Test that delete requires authentication."""
         file_id = str(uuid4())
-        response = client.delete(f"/api/upload/{file_id}")
+        response = client.delete(f"/api/v1/upload/{file_id}")
 
         assert response.status_code in [401, 403]
 
@@ -328,7 +328,7 @@ class TestDeleteFileEndpoint:
 
             file_id = str(uuid4())
             response = client.delete(
-                f"/api/upload/{file_id}",
+                f"/api/v1/upload/{file_id}",
                 headers=auth_headers,
             )
 
@@ -343,7 +343,7 @@ class TestDeleteFileEndpoint:
 
             file_id = str(uuid4())
             response = client.delete(
-                f"/api/upload/{file_id}",
+                f"/api/v1/upload/{file_id}",
                 headers=auth_headers,
             )
 
@@ -356,7 +356,7 @@ class TestFileExistsEndpoint:
     def test_exists_requires_auth(self, client: TestClient):
         """Test that exists check requires authentication."""
         file_id = str(uuid4())
-        response = client.get(f"/api/upload/{file_id}/exists")
+        response = client.get(f"/api/v1/upload/{file_id}/exists")
 
         assert response.status_code in [401, 403]
 
@@ -371,7 +371,7 @@ class TestFileExistsEndpoint:
 
             file_id = str(uuid4())
             response = client.get(
-                f"/api/upload/{file_id}/exists",
+                f"/api/v1/upload/{file_id}/exists",
                 headers=auth_headers,
             )
 
@@ -390,7 +390,7 @@ class TestFileExistsEndpoint:
 
             file_id = str(uuid4())
             response = client.get(
-                f"/api/upload/{file_id}/exists",
+                f"/api/v1/upload/{file_id}/exists",
                 headers=auth_headers,
             )
 
@@ -420,7 +420,7 @@ class TestUploadValidation:
 
             files = {"file": ("large.bin", b"\x00" * 100, "application/octet-stream")}
             response = client.post(
-                "/api/upload",
+                "/api/v1/upload",
                 files=files,
                 headers=auth_headers,
             )
@@ -436,7 +436,7 @@ class TestUploadValidation:
 
             files = {"file": ("test.txt", b"content", "text/plain")}
             response = client.post(
-                "/api/upload",
+                "/api/v1/upload",
                 files=files,
                 headers=auth_headers,
             )
@@ -469,11 +469,11 @@ class TestUploadIntegration:
             mock_get_service.return_value = mock_service
 
             endpoints = [
-                (f"/api/upload/progress/{upload_id}", "GET"),
-                (f"/api/upload/{file_id}/url", "GET"),
-                (f"/api/upload/{file_id}/download", "GET"),
-                (f"/api/upload/{file_id}/exists", "GET"),
-                (f"/api/upload/{file_id}", "DELETE"),
+                (f"/api/v1/upload/progress/{upload_id}", "GET"),
+                (f"/api/v1/upload/{file_id}/url", "GET"),
+                (f"/api/v1/upload/{file_id}/download", "GET"),
+                (f"/api/v1/upload/{file_id}/exists", "GET"),
+                (f"/api/v1/upload/{file_id}", "DELETE"),
             ]
 
             for url, method in endpoints:
@@ -500,7 +500,7 @@ class TestUploadIntegration:
 
             files = {"file": ("test.txt", b"test content", "text/plain")}
             response = client.post(
-                "/api/upload",
+                "/api/v1/upload",
                 files=files,
                 headers=auth_headers,
             )

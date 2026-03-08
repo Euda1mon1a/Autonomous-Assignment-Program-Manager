@@ -28,7 +28,7 @@ class TestGetScheduleEndpoint:
         start = date.today().isoformat()
         end = (date.today() + timedelta(days=7)).isoformat()
 
-        response = client.get(f"/api/schedule/{start}/{end}")
+        response = client.get(f"/api/v1/schedule/{start}/{end}")
 
         # May succeed or need auth depending on configuration
         assert response.status_code in [200, 401, 422, 500]
@@ -39,25 +39,25 @@ class TestGetScheduleEndpoint:
         start = (date.today() + timedelta(days=365)).isoformat()
         end = (date.today() + timedelta(days=372)).isoformat()
 
-        response = client.get(f"/api/schedule/{start}/{end}")
+        response = client.get(f"/api/v1/schedule/{start}/{end}")
 
         assert response.status_code in [200, 401, 422, 500]
 
     def test_get_schedule_invalid_start_date(self, client: TestClient):
         """Test schedule retrieval with invalid start date format."""
-        response = client.get("/api/schedule/invalid-date/2025-01-31")
+        response = client.get("/api/v1/schedule/invalid-date/2025-01-31")
 
         assert response.status_code in [400, 422]
 
     def test_get_schedule_invalid_end_date(self, client: TestClient):
         """Test schedule retrieval with invalid end date format."""
-        response = client.get("/api/schedule/2025-01-01/invalid-date")
+        response = client.get("/api/v1/schedule/2025-01-01/invalid-date")
 
         assert response.status_code in [400, 422]
 
     def test_get_schedule_both_dates_invalid(self, client: TestClient):
         """Test schedule retrieval with both dates invalid."""
-        response = client.get("/api/schedule/bad/dates")
+        response = client.get("/api/v1/schedule/bad/dates")
 
         assert response.status_code in [400, 422]
 
@@ -65,7 +65,7 @@ class TestGetScheduleEndpoint:
         """Test schedule retrieval for a single day."""
         single_date = date.today().isoformat()
 
-        response = client.get(f"/api/schedule/{single_date}/{single_date}")
+        response = client.get(f"/api/v1/schedule/{single_date}/{single_date}")
 
         assert response.status_code in [200, 401, 422, 500]
 
@@ -79,7 +79,7 @@ class TestGetScheduleEndpoint:
 
         for start, end in ranges:
             response = client.get(
-                f"/api/schedule/{start.isoformat()}/{end.isoformat()}"
+                f"/api/v1/schedule/{start.isoformat()}/{end.isoformat()}"
             )
             assert response.status_code in [200, 401, 422, 500]
 
@@ -88,7 +88,7 @@ class TestGetScheduleEndpoint:
         start = (date.today() + timedelta(days=7)).isoformat()
         end = date.today().isoformat()
 
-        response = client.get(f"/api/schedule/{start}/{end}")
+        response = client.get(f"/api/v1/schedule/{start}/{end}")
 
         # Should still work but return empty or handle gracefully
         assert response.status_code in [200, 400, 401, 422, 500]
@@ -98,7 +98,7 @@ class TestGetScheduleEndpoint:
         start = date.today().isoformat()
         end = (date.today() + timedelta(days=7)).isoformat()
 
-        response = client.get(f"/api/schedule/{start}/{end}")
+        response = client.get(f"/api/v1/schedule/{start}/{end}")
 
         if response.status_code == 200:
             data = response.json()
@@ -112,7 +112,7 @@ class TestGetScheduleEndpoint:
         start = date.today().isoformat()
         end = (date.today() + timedelta(days=7)).isoformat()
 
-        response = client.get(f"/api/schedule/{start}/{end}")
+        response = client.get(f"/api/v1/schedule/{start}/{end}")
 
         if response.status_code == 200:
             data = response.json()
@@ -135,7 +135,7 @@ class TestFacultyOutpatientGenerateEndpoint:
     def test_generate_requires_auth(self, client: TestClient):
         """Test that faculty outpatient generation requires authentication."""
         response = client.post(
-            "/api/schedule/faculty-outpatient/generate",
+            "/api/v1/schedule/faculty-outpatient/generate",
             params={"block_number": 1},
         )
 
@@ -166,7 +166,7 @@ class TestFacultyOutpatientGenerateEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/faculty-outpatient/generate",
+                "/api/v1/schedule/faculty-outpatient/generate",
                 params={"block_number": 1},
                 headers=auth_headers,
             )
@@ -198,7 +198,7 @@ class TestFacultyOutpatientGenerateEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/faculty-outpatient/generate",
+                "/api/v1/schedule/faculty-outpatient/generate",
                 params={"block_number": 1, "regenerate": True},
                 headers=auth_headers,
             )
@@ -230,7 +230,7 @@ class TestFacultyOutpatientGenerateEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/faculty-outpatient/generate",
+                "/api/v1/schedule/faculty-outpatient/generate",
                 params={
                     "block_number": 1,
                     "include_clinic": True,
@@ -266,7 +266,7 @@ class TestFacultyOutpatientGenerateEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/faculty-outpatient/generate",
+                "/api/v1/schedule/faculty-outpatient/generate",
                 params={
                     "block_number": 1,
                     "include_clinic": False,
@@ -282,7 +282,7 @@ class TestFacultyOutpatientGenerateEndpoint:
     ):
         """Test generation with invalid block number (0)."""
         response = client.post(
-            "/api/schedule/faculty-outpatient/generate",
+            "/api/v1/schedule/faculty-outpatient/generate",
             params={"block_number": 0},
             headers=auth_headers,
         )
@@ -295,7 +295,7 @@ class TestFacultyOutpatientGenerateEndpoint:
     ):
         """Test generation with invalid block number (14)."""
         response = client.post(
-            "/api/schedule/faculty-outpatient/generate",
+            "/api/v1/schedule/faculty-outpatient/generate",
             params={"block_number": 14},
             headers=auth_headers,
         )
@@ -308,7 +308,7 @@ class TestFacultyOutpatientGenerateEndpoint:
     ):
         """Test generation with negative block number."""
         response = client.post(
-            "/api/schedule/faculty-outpatient/generate",
+            "/api/v1/schedule/faculty-outpatient/generate",
             params={"block_number": -1},
             headers=auth_headers,
         )
@@ -331,7 +331,7 @@ class TestFacultyOutpatientGenerateEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/faculty-outpatient/generate",
+                "/api/v1/schedule/faculty-outpatient/generate",
                 params={"block_number": 1},
                 headers=auth_headers,
             )
@@ -350,7 +350,7 @@ class TestFacultyOutpatientGenerateEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/faculty-outpatient/generate",
+                "/api/v1/schedule/faculty-outpatient/generate",
                 params={"block_number": 1},
                 headers=auth_headers,
             )
@@ -390,7 +390,7 @@ class TestFacultyOutpatientGenerateEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/faculty-outpatient/generate",
+                "/api/v1/schedule/faculty-outpatient/generate",
                 params={"block_number": 1},
                 headers=auth_headers,
             )
@@ -425,7 +425,7 @@ class TestFacultyOutpatientGenerateEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/faculty-outpatient/generate",
+                "/api/v1/schedule/faculty-outpatient/generate",
                 params={"block_number": 1},
                 headers=auth_headers,
             )
@@ -459,7 +459,7 @@ class TestFacultyOutpatientGenerateEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/faculty-outpatient/generate",
+                "/api/v1/schedule/faculty-outpatient/generate",
                 params={"block_number": 1},
                 headers=auth_headers,
             )
@@ -480,7 +480,7 @@ class TestScheduleMiscIntegration:
         start = date.today().isoformat()
         end = (date.today() + timedelta(days=7)).isoformat()
 
-        response = client.get(f"/api/schedule/{start}/{end}")
+        response = client.get(f"/api/v1/schedule/{start}/{end}")
 
         assert response.status_code != 404
 
@@ -489,7 +489,7 @@ class TestScheduleMiscIntegration:
     ):
         """Test that faculty outpatient endpoint exists."""
         response = client.post(
-            "/api/schedule/faculty-outpatient/generate",
+            "/api/v1/schedule/faculty-outpatient/generate",
             params={"block_number": 1},
             headers=auth_headers,
         )
@@ -522,7 +522,7 @@ class TestScheduleMiscIntegration:
                 mock_service_class.return_value = mock_service
 
                 response = client.post(
-                    "/api/schedule/faculty-outpatient/generate",
+                    "/api/v1/schedule/faculty-outpatient/generate",
                     params={"block_number": block},
                     headers=auth_headers,
                 )
@@ -547,7 +547,7 @@ class TestScheduleMiscIntegration:
 
         for date_str in valid_dates:
             end_date = (date.fromisoformat(date_str) + timedelta(days=7)).isoformat()
-            response = client.get(f"/api/schedule/{date_str}/{end_date}")
+            response = client.get(f"/api/v1/schedule/{date_str}/{end_date}")
             assert response.status_code in [
                 200,
                 401,
@@ -564,7 +564,7 @@ class TestScheduleMiscIntegration:
         ]
 
         for date_str in invalid_dates:
-            response = client.get(f"/api/schedule/{date_str}/2025-01-31")
+            response = client.get(f"/api/v1/schedule/{date_str}/2025-01-31")
             assert response.status_code in [
                 400,
                 422,

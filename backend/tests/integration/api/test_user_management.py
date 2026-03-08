@@ -26,7 +26,7 @@ class TestUserManagementWorkflow:
         """Test creating a new user."""
         # Step 1: Create user
         create_response = client.post(
-            "/api/people/",
+            "/api/v1/people/",
             json={
                 "name": "Dr. New User",
                 "type": "resident",
@@ -41,7 +41,7 @@ class TestUserManagementWorkflow:
 
         # Step 2: Verify user was created
         get_response = client.get(
-            f"/api/people/{user_id}",
+            f"/api/v1/people/{user_id}",
             headers=auth_headers,
         )
         assert get_response.status_code == 200
@@ -56,7 +56,7 @@ class TestUserManagementWorkflow:
         """Test updating user information."""
         # Step 1: Update user details
         update_response = client.put(
-            f"/api/people/{sample_resident.id}",
+            f"/api/v1/people/{sample_resident.id}",
             json={
                 "name": "Dr. Updated Name",
                 "email": "updated.email@hospital.org",
@@ -67,7 +67,7 @@ class TestUserManagementWorkflow:
 
         # Step 2: Verify changes
         get_response = client.get(
-            f"/api/people/{sample_resident.id}",
+            f"/api/v1/people/{sample_resident.id}",
             headers=auth_headers,
         )
         assert get_response.status_code == 200
@@ -96,14 +96,14 @@ class TestUserManagementWorkflow:
 
         # Step 2: Delete user
         delete_response = client.delete(
-            f"/api/people/{person_id}",
+            f"/api/v1/people/{person_id}",
             headers=auth_headers,
         )
         assert delete_response.status_code in [200, 204]
 
         # Step 3: Verify user is deleted or deactivated
         get_response = client.get(
-            f"/api/people/{person_id}",
+            f"/api/v1/people/{person_id}",
             headers=auth_headers,
         )
         # Should be 404 or show as inactive
@@ -120,7 +120,7 @@ class TestUserManagementWorkflow:
         """Test listing users with pagination."""
         # Step 1: Get all users
         list_response = client.get(
-            "/api/people/",
+            "/api/v1/people/",
             headers=auth_headers,
         )
         assert list_response.status_code == 200
@@ -129,7 +129,7 @@ class TestUserManagementWorkflow:
 
         # Step 2: Test pagination
         page1_response = client.get(
-            "/api/people/?limit=2&offset=0",
+            "/api/v1/people/?limit=2&offset=0",
             headers=auth_headers,
         )
         assert page1_response.status_code == 200
@@ -138,7 +138,7 @@ class TestUserManagementWorkflow:
 
         # Step 3: Test filtering
         filter_response = client.get(
-            "/api/people/?type=resident",
+            "/api/v1/people/?type=resident",
             headers=auth_headers,
         )
         assert filter_response.status_code == 200
@@ -155,7 +155,7 @@ class TestUserManagementWorkflow:
         """Test user search functionality."""
         # Search by name
         search_response = client.get(
-            f"/api/people/search?q={sample_resident.name}",
+            f"/api/v1/people/search?q={sample_resident.name}",
             headers=auth_headers,
         )
         assert search_response.status_code in [200, 404]
@@ -173,7 +173,7 @@ class TestUserManagementWorkflow:
         """Test user profile retrieval and update."""
         # Step 1: Get own profile
         profile_response = client.get(
-            "/api/me/profile",
+            "/api/v1/me/profile",
             headers=auth_headers,
         )
         assert profile_response.status_code in [200, 404]
@@ -183,7 +183,7 @@ class TestUserManagementWorkflow:
 
             # Step 2: Update profile
             update_response = client.put(
-                "/api/me/profile",
+                "/api/v1/me/profile",
                 json={
                     "email": "updated@test.org",
                     "phone": "555-1234",
@@ -212,7 +212,7 @@ class TestUserManagementWorkflow:
 
         # Step 2: Assign role
         role_response = client.post(
-            f"/api/people/{person.id}/roles",
+            f"/api/v1/people/{person.id}/roles",
             json={"role": "faculty"},
             headers=auth_headers,
         )
@@ -221,7 +221,7 @@ class TestUserManagementWorkflow:
         # Step 3: Verify role change
         if role_response.status_code == 200:
             get_response = client.get(
-                f"/api/people/{person.id}",
+                f"/api/v1/people/{person.id}",
                 headers=auth_headers,
             )
             assert get_response.status_code == 200
@@ -235,7 +235,7 @@ class TestUserManagementWorkflow:
         """Test user permissions management."""
         # Get user permissions
         perms_response = client.get(
-            f"/api/people/{sample_resident.id}/permissions",
+            f"/api/v1/people/{sample_resident.id}/permissions",
             headers=auth_headers,
         )
         assert perms_response.status_code in [200, 404, 501]
@@ -263,7 +263,7 @@ class TestUserManagementWorkflow:
 
         # Step 2: Import users
         import_response = client.post(
-            "/api/people/bulk-import",
+            "/api/v1/people/bulk-import",
             json={"users": users_data},
             headers=auth_headers,
         )
@@ -296,14 +296,14 @@ class TestUserManagementWorkflow:
 
         # Step 2: Deactivate user
         deactivate_response = client.post(
-            f"/api/people/{person_id}/deactivate",
+            f"/api/v1/people/{person_id}/deactivate",
             headers=auth_headers,
         )
         assert deactivate_response.status_code in [200, 404, 501]
 
         # Step 3: Verify user is inactive
         get_response = client.get(
-            f"/api/people/{person_id}",
+            f"/api/v1/people/{person_id}",
             headers=auth_headers,
         )
         if get_response.status_code == 200:
@@ -314,7 +314,7 @@ class TestUserManagementWorkflow:
 
         # Step 4: Reactivate user
         reactivate_response = client.post(
-            f"/api/people/{person_id}/activate",
+            f"/api/v1/people/{person_id}/activate",
             headers=auth_headers,
         )
         assert reactivate_response.status_code in [200, 404, 501]

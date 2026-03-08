@@ -37,7 +37,11 @@ class TestPHICompliance:
         middleware = PHIMiddleware(app)
 
         # Mock scope for a sensitive endpoint
-        scope: Scope = {"type": "http", "path": "/api/residents/123", "method": "GET"}
+        scope: Scope = {
+            "type": "http",
+            "path": "/api/v1/residents/123",
+            "method": "GET",
+        }
 
         async def mock_receive():
             return {"type": "http.request"}
@@ -58,7 +62,7 @@ class TestPHICompliance:
 
         scope: Scope = {
             "type": "http",
-            "path": "/api/residents/123",
+            "path": "/api/v1/residents/123",
             "method": "GET",
             "client": ("127.0.0.1", 8000),
             "user": "test_user",  # Mocking user if middleware extracted it

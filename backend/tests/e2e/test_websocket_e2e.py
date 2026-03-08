@@ -173,7 +173,7 @@ def websocket_test_setup(db: Session) -> dict:
 def access_token(client: TestClient, admin_user: User) -> str:
     """Get a valid JWT access token for WebSocket authentication."""
     response = client.post(
-        "/api/auth/login/json",
+        "/api/v1/auth/login/json",
         json={"username": "testadmin", "password": "testpass123"},
     )
     if response.status_code == 200:

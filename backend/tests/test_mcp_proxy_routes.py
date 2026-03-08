@@ -24,7 +24,7 @@ class TestCalculateEquityMetricsEndpoint:
     def test_calculate_equity_metrics_requires_auth(self, client: TestClient):
         """Test that calculate equity metrics requires authentication."""
         response = client.post(
-            "/api/mcp/calculate-equity-metrics",
+            "/api/v1/mcp/calculate-equity-metrics",
             json={
                 "provider_hours": {"provider-1": 40.0, "provider-2": 45.0},
             },
@@ -37,7 +37,7 @@ class TestCalculateEquityMetricsEndpoint:
     ):
         """Test successful equity metrics calculation."""
         response = client.post(
-            "/api/mcp/calculate-equity-metrics",
+            "/api/v1/mcp/calculate-equity-metrics",
             json={
                 "provider_hours": {
                     "provider-1": 40.0,
@@ -68,7 +68,7 @@ class TestCalculateEquityMetricsEndpoint:
     ):
         """Test equity metrics with perfect equality (all same hours)."""
         response = client.post(
-            "/api/mcp/calculate-equity-metrics",
+            "/api/v1/mcp/calculate-equity-metrics",
             json={
                 "provider_hours": {
                     "provider-1": 40.0,
@@ -89,7 +89,7 @@ class TestCalculateEquityMetricsEndpoint:
     ):
         """Test equity metrics with intensity weights."""
         response = client.post(
-            "/api/mcp/calculate-equity-metrics",
+            "/api/v1/mcp/calculate-equity-metrics",
             json={
                 "provider_hours": {
                     "provider-1": 40.0,
@@ -115,7 +115,7 @@ class TestCalculateEquityMetricsEndpoint:
     ):
         """Test error when intensity weights are incomplete."""
         response = client.post(
-            "/api/mcp/calculate-equity-metrics",
+            "/api/v1/mcp/calculate-equity-metrics",
             json={
                 "provider_hours": {
                     "provider-1": 40.0,
@@ -138,7 +138,7 @@ class TestCalculateEquityMetricsEndpoint:
     ):
         """Test error with empty provider hours."""
         response = client.post(
-            "/api/mcp/calculate-equity-metrics",
+            "/api/v1/mcp/calculate-equity-metrics",
             json={
                 "provider_hours": {},
             },
@@ -153,7 +153,7 @@ class TestCalculateEquityMetricsEndpoint:
     ):
         """Test that response has all expected fields."""
         response = client.post(
-            "/api/mcp/calculate-equity-metrics",
+            "/api/v1/mcp/calculate-equity-metrics",
             json={
                 "provider_hours": {
                     "provider-1": 60.0,
@@ -196,7 +196,7 @@ class TestGenerateLorenzCurveEndpoint:
     def test_generate_lorenz_curve_requires_auth(self, client: TestClient):
         """Test that generate Lorenz curve requires authentication."""
         response = client.post(
-            "/api/mcp/generate-lorenz-curve",
+            "/api/v1/mcp/generate-lorenz-curve",
             json={
                 "values": [10.0, 20.0, 30.0, 40.0],
             },
@@ -209,7 +209,7 @@ class TestGenerateLorenzCurveEndpoint:
     ):
         """Test successful Lorenz curve generation."""
         response = client.post(
-            "/api/mcp/generate-lorenz-curve",
+            "/api/v1/mcp/generate-lorenz-curve",
             json={
                 "values": [10.0, 20.0, 30.0, 40.0],
             },
@@ -232,7 +232,7 @@ class TestGenerateLorenzCurveEndpoint:
     ):
         """Test error with empty values list."""
         response = client.post(
-            "/api/mcp/generate-lorenz-curve",
+            "/api/v1/mcp/generate-lorenz-curve",
             json={
                 "values": [],
             },
@@ -249,7 +249,7 @@ class TestMCPProxyRoleRestrictions:
     def test_equity_metrics_admin_access(self, client: TestClient, auth_headers: dict):
         """Test that admin users can access equity metrics."""
         response = client.post(
-            "/api/mcp/calculate-equity-metrics",
+            "/api/v1/mcp/calculate-equity-metrics",
             json={
                 "provider_hours": {"p1": 40.0, "p2": 45.0},
             },

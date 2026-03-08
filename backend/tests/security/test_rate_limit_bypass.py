@@ -64,7 +64,7 @@ def mock_request():
         "Accept-Encoding": "gzip, deflate, br",
     }
     request.url = Mock()
-    request.url.path = "/api/test"
+    request.url.path = "/api/v1/test"
     return request
 
 
@@ -200,7 +200,7 @@ class TestRateLimitBypassDetector:
 
     def test_distributed_attack_detection(self, detector):
         """Test distributed attack pattern detection."""
-        endpoint = "/api/login"
+        endpoint = "/api/v1/login"
 
         # Add requests from multiple IPs
         for i in range(1, detector.DISTRIBUTED_ATTACK_THRESHOLD):
@@ -219,8 +219,8 @@ class TestRateLimitBypassDetector:
 
     def test_distributed_attack_endpoint_specific(self, detector):
         """Test distributed attack detection is endpoint-specific."""
-        endpoint1 = "/api/login"
-        endpoint2 = "/api/register"
+        endpoint1 = "/api/v1/login"
+        endpoint2 = "/api/v1/register"
 
         # Add requests to different endpoints
         for i in range(1, 6):
@@ -392,7 +392,7 @@ class TestRateLimitBypassDetector:
             ip_address="192.168.1.100",
             user_id=str(uuid4()),
             user_agent="Test UA",
-            endpoint="/api/test",
+            endpoint="/api/v1/test",
             fingerprint="test_fp",
             evidence={"test": "data"},
             timestamp=datetime.utcnow(),
@@ -531,7 +531,7 @@ class TestBypassDetectionEdgeCases:
         request.client.host = "192.168.1.1"
         request.headers = {}  # No headers
         request.url = Mock()
-        request.url.path = "/api/test"
+        request.url.path = "/api/v1/test"
 
         # Should not crash
         fingerprint = detector._generate_fingerprint(request)
@@ -543,7 +543,7 @@ class TestBypassDetectionEdgeCases:
         request.client = None  # No client
         request.headers = {}
         request.url = Mock()
-        request.url.path = "/api/test"
+        request.url.path = "/api/v1/test"
 
         ip = detector._get_client_ip(request)
         assert ip == "unknown"

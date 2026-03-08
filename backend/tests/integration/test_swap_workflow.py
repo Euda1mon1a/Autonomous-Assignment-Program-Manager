@@ -77,7 +77,7 @@ class TestSwapWorkflow:
 
         # Step 1: Validate the swap before requesting
         response = integration_client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1_start.isoformat(),
@@ -96,7 +96,7 @@ class TestSwapWorkflow:
 
         # Step 2: Execute the swap (which includes validation)
         response = integration_client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1_start.isoformat(),
@@ -227,7 +227,7 @@ class TestSwapWorkflow:
 
         # Attempt rollback
         response = integration_client.post(
-            f"/api/swaps/{swap_record.id}/rollback",
+            f"/api/v1/swaps/{swap_record.id}/rollback",
             json={
                 "reason": "Discovered scheduling conflict, need to reverse",
             },
@@ -292,7 +292,7 @@ class TestSwapWorkflow:
 
         # Attempt rollback (should fail)
         response = integration_client.post(
-            f"/api/swaps/{swap_record.id}/rollback",
+            f"/api/v1/swaps/{swap_record.id}/rollback",
             json={
                 "reason": "Attempting to rollback expired swap",
             },
@@ -422,7 +422,7 @@ class TestSwapWorkflow:
         # Attempt to validate swap where faculty1 would take week2
         # (but faculty2 is on leave, so they can't take week1)
         response = integration_client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1.isoformat(),
@@ -540,7 +540,7 @@ class TestSwapWorkflow:
 
         # Validate absorb swap (no target_week needed)
         response = integration_client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1.isoformat(),
@@ -560,7 +560,7 @@ class TestSwapWorkflow:
 
         # Execute absorb swap
         response = integration_client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1.isoformat(),
@@ -644,7 +644,7 @@ class TestSwapWorkflow:
 
         # Query swap history
         response = integration_client.get(
-            "/api/swaps/history",
+            "/api/v1/swaps/history",
             params={
                 "page": 1,
                 "page_size": 10,
@@ -664,7 +664,7 @@ class TestSwapWorkflow:
 
         # Query with faculty filter
         response = integration_client.get(
-            "/api/swaps/history",
+            "/api/v1/swaps/history",
             params={
                 "faculty_id": str(faculty1.id),
                 "page": 1,
@@ -677,7 +677,7 @@ class TestSwapWorkflow:
 
         # Query with status filter
         response = integration_client.get(
-            "/api/swaps/history",
+            "/api/v1/swaps/history",
             params={
                 "status": "pending",
                 "page": 1,
@@ -729,7 +729,7 @@ class TestSwapWorkflow:
 
         # Retrieve by ID
         response = integration_client.get(
-            f"/api/swaps/{swap_record.id}",
+            f"/api/v1/swaps/{swap_record.id}",
             headers=auth_headers,
         )
 
@@ -784,7 +784,7 @@ class TestSwapValidation:
 
         # Try to swap week2 (would give faculty1 weeks 2 and 3 back-to-back)
         response = integration_client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty2.id),
                 "source_week": week2.isoformat(),
@@ -818,7 +818,7 @@ class TestSwapValidation:
         week2 = setup["start_date"] + timedelta(days=7)
 
         response = integration_client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1.isoformat(),
@@ -857,7 +857,7 @@ class TestSwapValidation:
         # In a real scenario, we'd create call assignments or procedures
         # For now, just test the validation endpoint
         response = integration_client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1.isoformat(),

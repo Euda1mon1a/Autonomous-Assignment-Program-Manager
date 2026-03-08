@@ -424,7 +424,7 @@ class TestDashboardEndpoint:
 
     def test_get_dashboard_requires_auth(self, client: TestClient):
         """Test dashboard endpoint requires authentication."""
-        response = client.get("/api/portal/my/dashboard")
+        response = client.get("/api/v1/portal/my/dashboard")
 
         assert response.status_code == 401
 
@@ -432,7 +432,7 @@ class TestDashboardEndpoint:
         self, client: TestClient, admin_user: User, auth_headers: dict
     ):
         """Test dashboard requires linked faculty profile."""
-        response = client.get("/api/portal/my/dashboard", headers=auth_headers)
+        response = client.get("/api/v1/portal/my/dashboard", headers=auth_headers)
 
         # Should return 403 if no faculty profile linked
         assert response.status_code == 403
@@ -453,7 +453,7 @@ class TestDashboardEndpoint:
         db.add(faculty)
         db.commit()
 
-        response = client.get("/api/portal/my/dashboard", headers=auth_headers)
+        response = client.get("/api/v1/portal/my/dashboard", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -520,7 +520,7 @@ class TestDashboardEndpoint:
                 db.add(assignment)
         db.commit()
 
-        response = client.get("/api/portal/my/dashboard", headers=auth_headers)
+        response = client.get("/api/v1/portal/my/dashboard", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -596,7 +596,7 @@ class TestDashboardIntegration:
         db.commit()
 
         # Get dashboard
-        response = client.get("/api/portal/my/dashboard", headers=auth_headers)
+        response = client.get("/api/v1/portal/my/dashboard", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()

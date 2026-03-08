@@ -51,22 +51,22 @@ class TestSessionRoutes:
 
     def test_get_my_sessions_requires_auth(self, client: TestClient):
         """Test that get my sessions requires authentication."""
-        response = client.get("/api/sessions/me")
+        response = client.get("/api/v1/sessions/me")
         assert response.status_code == 401
 
     def test_get_current_session_requires_auth(self, client: TestClient):
         """Test that get current session requires authentication."""
-        response = client.get("/api/sessions/me/current")
+        response = client.get("/api/v1/sessions/me/current")
         assert response.status_code == 401
 
     def test_refresh_session_requires_auth(self, client: TestClient):
         """Test that refresh session requires authentication."""
-        response = client.post("/api/sessions/me/refresh")
+        response = client.post("/api/v1/sessions/me/refresh")
         assert response.status_code == 401
 
     def test_logout_session_requires_auth(self, client: TestClient):
         """Test that logout session requires authentication."""
-        response = client.delete(f"/api/sessions/me/{uuid4()}")
+        response = client.delete(f"/api/v1/sessions/me/{uuid4()}")
         assert response.status_code == 401
 
     # ========================================================================
@@ -83,12 +83,12 @@ class TestSessionRoutes:
 
     def test_force_logout_requires_admin(self, client: TestClient):
         """Test that force logout requires admin authentication."""
-        response = client.delete(f"/api/sessions/user/{uuid4()}/force-logout")
+        response = client.delete(f"/api/v1/sessions/user/{uuid4()}/force-logout")
         assert response.status_code == 401
 
     def test_revoke_session_requires_admin(self, client: TestClient):
         """Test that revoke session requires admin authentication."""
-        response = client.delete(f"/api/sessions/session/{uuid4()}")
+        response = client.delete(f"/api/v1/sessions/session/{uuid4()}")
         assert response.status_code == 401
 
     # ========================================================================
@@ -122,7 +122,7 @@ class TestSessionRoutes:
         }
 
         response = client_with_mock_manager.get(
-            "/api/sessions/me", headers=auth_headers
+            "/api/v1/sessions/me", headers=auth_headers
         )
         assert response.status_code == 200
 
@@ -140,7 +140,7 @@ class TestSessionRoutes:
         }
 
         response = client_with_mock_manager.get(
-            "/api/sessions/me", headers=auth_headers
+            "/api/v1/sessions/me", headers=auth_headers
         )
         assert response.status_code == 200
 
@@ -169,7 +169,7 @@ class TestSessionRoutes:
 
         mock_session_state.get_session.return_value = mock_session
 
-        response = client.get("/api/sessions/me/current", headers=auth_headers)
+        response = client.get("/api/v1/sessions/me/current", headers=auth_headers)
         assert response.status_code == 200
 
     @patch("app.api.routes.sessions.SessionState")
@@ -182,7 +182,7 @@ class TestSessionRoutes:
         """Test getting current session when none exists."""
         mock_session_state.get_session.return_value = None
 
-        response = client.get("/api/sessions/me/current", headers=auth_headers)
+        response = client.get("/api/v1/sessions/me/current", headers=auth_headers)
         assert response.status_code == 200
         # Returns null when no session
 
@@ -210,7 +210,7 @@ class TestSessionRoutes:
         mock_session_manager.refresh_session.return_value = refreshed_session
 
         response = client_with_mock_manager.post(
-            "/api/sessions/me/refresh", headers=auth_headers
+            "/api/v1/sessions/me/refresh", headers=auth_headers
         )
         assert response.status_code == 200
         assert "message" in response.json()
@@ -225,7 +225,7 @@ class TestSessionRoutes:
         """Test refresh when no active session."""
         mock_session_state.get_session.return_value = None
 
-        response = client.post("/api/sessions/me/refresh", headers=auth_headers)
+        response = client.post("/api/v1/sessions/me/refresh", headers=auth_headers)
         assert response.status_code == 404
         assert "no active session" in response.json()["detail"].lower()
 
@@ -250,7 +250,7 @@ class TestSessionRoutes:
         mock_session_manager.logout_session.return_value = True
 
         response = client_with_mock_manager.delete(
-            f"/api/sessions/me/{session_id}",
+            f"/api/v1/sessions/me/{session_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -265,7 +265,7 @@ class TestSessionRoutes:
         mock_session_manager.get_session.return_value = None
 
         response = client_with_mock_manager.delete(
-            f"/api/sessions/me/{uuid4()}",
+            f"/api/v1/sessions/me/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -283,7 +283,7 @@ class TestSessionRoutes:
         mock_session_manager.get_session.return_value = mock_session
 
         response = client_with_mock_manager.delete(
-            f"/api/sessions/me/{uuid4()}",
+            f"/api/v1/sessions/me/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 403
@@ -308,7 +308,7 @@ class TestSessionRoutes:
         mock_session_manager.logout_user_sessions.return_value = 3
 
         response = client_with_mock_manager.delete(
-            "/api/sessions/me/other", headers=auth_headers
+            "/api/v1/sessions/me/other", headers=auth_headers
         )
         assert response.status_code == 200
 
@@ -330,7 +330,7 @@ class TestSessionRoutes:
         mock_session_manager.logout_user_sessions.return_value = 5
 
         response = client_with_mock_manager.delete(
-            "/api/sessions/me/all", headers=auth_headers
+            "/api/v1/sessions/me/all", headers=auth_headers
         )
         assert response.status_code == 200
 
@@ -356,7 +356,7 @@ class TestSessionRoutes:
         }
 
         response = client_with_mock_manager.get(
-            "/api/sessions/stats", headers=auth_headers
+            "/api/v1/sessions/stats", headers=auth_headers
         )
         assert response.status_code == 200
 
@@ -376,7 +376,7 @@ class TestSessionRoutes:
         mock_session_manager.force_logout_user.return_value = 3
 
         response = client_with_mock_manager.delete(
-            f"/api/sessions/user/{user_id}/force-logout",
+            f"/api/v1/sessions/user/{user_id}/force-logout",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -400,7 +400,7 @@ class TestSessionRoutes:
         mock_session_manager.revoke_session.return_value = True
 
         response = client_with_mock_manager.delete(
-            f"/api/sessions/session/{session_id}",
+            f"/api/v1/sessions/session/{session_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -415,7 +415,7 @@ class TestSessionRoutes:
         mock_session_manager.revoke_session.return_value = False
 
         response = client_with_mock_manager.delete(
-            f"/api/sessions/session/{uuid4()}",
+            f"/api/v1/sessions/session/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -434,7 +434,7 @@ class TestSessionRoutes:
         mock_session_manager.cleanup_expired_sessions.return_value = 10
 
         response = client_with_mock_manager.post(
-            "/api/sessions/cleanup", headers=auth_headers
+            "/api/v1/sessions/cleanup", headers=auth_headers
         )
         assert response.status_code == 200
 

@@ -28,14 +28,14 @@ class TestVisualizationRoutes:
     def test_heatmap_requires_auth(self, client: TestClient):
         """Test that heatmap requires authentication."""
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31"
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31"
         )
         assert response.status_code == 401
 
     def test_unified_heatmap_requires_auth(self, client: TestClient):
         """Test that unified heatmap POST requires authentication."""
         response = client.post(
-            "/api/visualization/heatmap/unified",
+            "/api/v1/visualization/heatmap/unified",
             json={
                 "time_range": {"range_type": "month", "value": "2025-01"},
                 "group_by": "person",
@@ -46,28 +46,28 @@ class TestVisualizationRoutes:
     def test_heatmap_image_requires_auth(self, client: TestClient):
         """Test that heatmap image requires authentication."""
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31"
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31"
         )
         assert response.status_code == 401
 
     def test_coverage_requires_auth(self, client: TestClient):
         """Test that coverage heatmap requires authentication."""
         response = client.get(
-            "/api/visualization/coverage?start_date=2025-01-01&end_date=2025-01-31"
+            "/api/v1/visualization/coverage?start_date=2025-01-01&end_date=2025-01-31"
         )
         assert response.status_code == 401
 
     def test_workload_requires_auth(self, client: TestClient):
         """Test that workload heatmap requires authentication."""
         response = client.get(
-            f"/api/visualization/workload?person_ids={uuid4()}&start_date=2025-01-01&end_date=2025-01-31"
+            f"/api/v1/visualization/workload?person_ids={uuid4()}&start_date=2025-01-01&end_date=2025-01-31"
         )
         assert response.status_code == 401
 
     def test_export_requires_auth(self, client: TestClient):
         """Test that export requires authentication."""
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             json={
                 "heatmap_type": "unified",
                 "format": "png",
@@ -103,7 +103,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -133,7 +133,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31"
+            f"/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31"
             f"&person_ids={person_id}&rotation_ids={rotation_id}&include_fmit=false&group_by=rotation",
             headers=auth_headers,
         )
@@ -146,7 +146,7 @@ class TestVisualizationRoutes:
     ):
         """Test heatmap with invalid group_by parameter."""
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31&group_by=invalid",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31&group_by=invalid",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -159,7 +159,7 @@ class TestVisualizationRoutes:
     ):
         """Test heatmap with start_date after end_date."""
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-31&end_date=2025-01-01",
+            "/api/v1/visualization/heatmap?start_date=2025-01-31&end_date=2025-01-01",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -192,7 +192,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/heatmap/unified",
+            "/api/v1/visualization/heatmap/unified",
             headers=auth_headers,
             json={
                 "time_range": {"range_type": "month", "value": "2025-01"},
@@ -215,7 +215,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/heatmap/unified",
+            "/api/v1/visualization/heatmap/unified",
             headers=auth_headers,
             json={
                 "time_range": {"range_type": "invalid", "value": "bad"},
@@ -244,7 +244,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=png",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=png",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -266,7 +266,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=pdf",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=pdf",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -288,7 +288,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=svg",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=svg",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -301,7 +301,7 @@ class TestVisualizationRoutes:
     ):
         """Test heatmap image with invalid format."""
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=gif",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=gif",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -323,7 +323,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31",
             headers=auth_headers,
         )
         assert response.status_code == 500
@@ -352,7 +352,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/coverage?start_date=2025-01-01&end_date=2025-01-31",
+            "/api/v1/visualization/coverage?start_date=2025-01-01&end_date=2025-01-31",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -364,7 +364,7 @@ class TestVisualizationRoutes:
     ):
         """Test coverage heatmap with invalid date range."""
         response = client.get(
-            "/api/visualization/coverage?start_date=2025-01-31&end_date=2025-01-01",
+            "/api/v1/visualization/coverage?start_date=2025-01-31&end_date=2025-01-01",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -392,7 +392,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/visualization/workload?person_ids={person_id}&start_date=2025-01-01&end_date=2025-01-31",
+            f"/api/v1/visualization/workload?person_ids={person_id}&start_date=2025-01-01&end_date=2025-01-31",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -417,7 +417,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/visualization/workload?person_ids={person_id1}&person_ids={person_id2}"
+            f"/api/v1/visualization/workload?person_ids={person_id1}&person_ids={person_id2}"
             f"&start_date=2025-01-01&end_date=2025-01-31&include_weekends=true",
             headers=auth_headers,
         )
@@ -431,7 +431,7 @@ class TestVisualizationRoutes:
         """Test workload heatmap with invalid date range."""
         person_id = uuid4()
         response = client.get(
-            f"/api/visualization/workload?person_ids={person_id}&start_date=2025-01-31&end_date=2025-01-01",
+            f"/api/v1/visualization/workload?person_ids={person_id}&start_date=2025-01-31&end_date=2025-01-01",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -456,7 +456,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             headers=auth_headers,
             json={
                 "heatmap_type": "unified",
@@ -489,7 +489,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             headers=auth_headers,
             json={
                 "heatmap_type": "coverage",
@@ -519,7 +519,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             headers=auth_headers,
             json={
                 "heatmap_type": "workload",
@@ -541,7 +541,7 @@ class TestVisualizationRoutes:
     ):
         """Test export with invalid format."""
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             headers=auth_headers,
             json={
                 "heatmap_type": "unified",
@@ -562,7 +562,7 @@ class TestVisualizationRoutes:
     ):
         """Test export with invalid heatmap type."""
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             headers=auth_headers,
             json={
                 "heatmap_type": "custom",

@@ -40,7 +40,7 @@ class TestHeatmapGroupBy:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-02&group_by=person",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-02&group_by=person",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -70,7 +70,7 @@ class TestHeatmapGroupBy:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-02&group_by=rotation",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-02&group_by=rotation",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -100,7 +100,7 @@ class TestHeatmapGroupBy:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-03&group_by=daily",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-03&group_by=daily",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -130,7 +130,7 @@ class TestHeatmapGroupBy:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-14&group_by=weekly",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-14&group_by=weekly",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -164,7 +164,7 @@ class TestHeatmapGroupBy:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-01&group_by=Daily",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-01&group_by=Daily",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -194,7 +194,7 @@ class TestHeatmapGroupBy:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-07&group_by=Weekly",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-07&group_by=Weekly",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -213,7 +213,7 @@ class TestHeatmapGroupBy:
     ):
         """Test heatmap with invalid group_by parameter."""
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31&group_by=invalid",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31&group_by=invalid",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -231,7 +231,7 @@ class TestHeatmapGroupBy:
     ):
         """Test heatmap with empty group_by parameter."""
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31&group_by=",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31&group_by=",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -266,7 +266,7 @@ class TestHeatmapGroupBy:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/heatmap/unified",
+            "/api/v1/visualization/heatmap/unified",
             headers=auth_headers,
             json={
                 "time_range": {"range_type": "week", "reference_date": "2025-01-01"},
@@ -303,7 +303,7 @@ class TestHeatmapGroupBy:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/heatmap/unified",
+            "/api/v1/visualization/heatmap/unified",
             headers=auth_headers,
             json={
                 "time_range": {"range_type": "quarter", "reference_date": "2025-01-15"},
@@ -323,7 +323,7 @@ class TestHeatmapGroupBy:
     ):
         """Test POST unified heatmap with invalid group_by."""
         response = client.post(
-            "/api/visualization/heatmap/unified",
+            "/api/v1/visualization/heatmap/unified",
             headers=auth_headers,
             json={
                 "time_range": {"range_type": "month", "reference_date": "2025-01-01"},
@@ -360,7 +360,7 @@ class TestHeatmapGroupBy:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-01&group_by=daily",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-01&group_by=daily",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -389,7 +389,7 @@ class TestHeatmapGroupBy:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-07&group_by=weekly&format=png",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-07&group_by=weekly&format=png",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -405,7 +405,7 @@ class TestHeatmapGroupBy:
     ):
         """Test heatmap image with invalid group_by."""
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-07&group_by=bad_value",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-07&group_by=bad_value",
             headers=auth_headers,
         )
         assert response.status_code == 400

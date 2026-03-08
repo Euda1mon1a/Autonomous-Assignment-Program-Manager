@@ -29,7 +29,7 @@ class TestSchedulingFlow:
 
         # Generate schedule
         response = integration_client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "start_date": setup["start_date"].isoformat(),
                 "end_date": setup["end_date"].isoformat(),
@@ -53,7 +53,7 @@ class TestSchedulingFlow:
         setup = full_program_setup
 
         response = integration_client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "start_date": setup["start_date"].isoformat(),
                 "end_date": setup["end_date"].isoformat(),
@@ -75,7 +75,7 @@ class TestPeopleManagement:
     def test_create_resident(self, integration_client, auth_headers):
         """Test creating a new resident."""
         response = integration_client.post(
-            "/api/people",
+            "/api/v1/people",
             json={
                 "name": "Dr. New Resident",
                 "type": "resident",
@@ -91,7 +91,7 @@ class TestPeopleManagement:
     def test_create_faculty(self, integration_client, auth_headers):
         """Test creating a new faculty member."""
         response = integration_client.post(
-            "/api/people",
+            "/api/v1/people",
             json={
                 "name": "Dr. New Faculty",
                 "type": "faculty",
@@ -106,7 +106,7 @@ class TestPeopleManagement:
 
     def test_list_people(self, integration_client, auth_headers, full_program_setup):
         """Test listing all people."""
-        response = integration_client.get("/api/people", headers=auth_headers)
+        response = integration_client.get("/api/v1/people", headers=auth_headers)
 
         if response.status_code == 200:
             data = response.json()
@@ -128,7 +128,7 @@ class TestAssignmentOperations:
         setup = full_program_setup
 
         response = integration_client.post(
-            "/api/assignments",
+            "/api/v1/assignments",
             json={
                 "block_id": str(setup["blocks"][0].id),
                 "person_id": str(setup["residents"][0].id),
@@ -142,7 +142,7 @@ class TestAssignmentOperations:
 
     def test_list_assignments(self, integration_client, auth_headers):
         """Test listing assignments."""
-        response = integration_client.get("/api/assignments", headers=auth_headers)
+        response = integration_client.get("/api/v1/assignments", headers=auth_headers)
 
         assert response.status_code in [200, 401, 403]
 
@@ -163,7 +163,7 @@ class TestAbsenceManagement:
         end = (date.today() + timedelta(days=37)).isoformat()
 
         response = integration_client.post(
-            "/api/absences",
+            "/api/v1/absences",
             json={
                 "person_id": str(setup["residents"][0].id),
                 "start_date": start,
@@ -191,7 +191,7 @@ class TestAbsenceManagement:
         end = (setup["start_date"] + timedelta(days=6)).isoformat()
 
         response = integration_client.post(
-            "/api/absences",
+            "/api/v1/absences",
             json={
                 "person_id": str(resident.id),
                 "start_date": start,

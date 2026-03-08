@@ -92,7 +92,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=new_patterns,
         )
@@ -118,7 +118,7 @@ class TestPutWeeklyPatterns:
     ):
         """Test that empty patterns list clears all existing patterns."""
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json={"patterns": []},
         )
@@ -129,7 +129,7 @@ class TestPutWeeklyPatterns:
 
         # Verify patterns are actually deleted
         get_response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
         assert get_response.status_code == 200
@@ -156,7 +156,7 @@ class TestPutWeeklyPatterns:
                 )
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json={"patterns": patterns},
         )
@@ -184,7 +184,7 @@ class TestPutWeeklyPatterns:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json={"patterns": patterns},
         )
@@ -217,7 +217,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -246,7 +246,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -272,7 +272,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -296,7 +296,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{fake_id}/patterns",
+            f"/api/v1/rotation-templates/{fake_id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -311,7 +311,7 @@ class TestPutWeeklyPatterns:
     ):
         """Test 401 for unauthenticated request."""
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             json={"patterns": []},
         )
 
@@ -348,7 +348,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -378,7 +378,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -417,7 +417,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -426,7 +426,7 @@ class TestPutWeeklyPatterns:
 
         # Verify existing patterns still exist
         get_response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
         assert get_response.status_code == 200

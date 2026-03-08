@@ -20,7 +20,7 @@ from app.services.schedule_draft_service import PublishResult
 
 def _login(client: TestClient, username: str, password: str) -> dict:
     response = client.post(
-        "/api/auth/login/json",
+        "/api/v1/auth/login/json",
         json={"username": username, "password": password},
     )
     if response.status_code != 200:

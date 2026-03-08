@@ -60,7 +60,7 @@ class TestACGMEEnforcementScenarios:
         db.commit()
 
         response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(violation_block.id),
                 "person_id": str(sample_resident.id),
@@ -117,7 +117,7 @@ class TestACGMEEnforcementScenarios:
         db.commit()
 
         response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(eighth_day_block.id),
                 "person_id": str(sample_resident.id),
@@ -162,7 +162,7 @@ class TestACGMEEnforcementScenarios:
         # Try to assign 3 residents without faculty
         for i in range(3):
             response = client.post(
-                "/api/assignments/",
+                "/api/v1/assignments/",
                 json={
                     "block_id": str(block.id),
                     "person_id": str(sample_residents[i].id),
@@ -174,7 +174,7 @@ class TestACGMEEnforcementScenarios:
 
         # Should detect violation
         compliance_response = client.get(
-            f"/api/analytics/supervision?block_id={block.id}",
+            f"/api/v1/analytics/supervision?block_id={block.id}",
             headers=auth_headers,
         )
         assert compliance_response.status_code in [200, 404]

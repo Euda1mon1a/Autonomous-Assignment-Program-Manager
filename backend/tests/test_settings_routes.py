@@ -36,7 +36,7 @@ class TestGetSettingsEndpoint:
         # Verify no settings exist
         assert db.query(ApplicationSettings).first() is None
 
-        response = authed_client.get("/api/settings")
+        response = authed_client.get("/api/v1/settings")
 
         assert response.status_code == 200
         data = response.json()
@@ -72,7 +72,7 @@ class TestGetSettingsEndpoint:
         db.add(settings)
         db.commit()
 
-        response = authed_client.get("/api/settings")
+        response = authed_client.get("/api/v1/settings")
 
         assert response.status_code == 200
         data = response.json()
@@ -87,7 +87,7 @@ class TestGetSettingsEndpoint:
         self, authed_client: TestClient, db: Session
     ):
         """Test that response contains all required fields."""
-        response = authed_client.get("/api/settings")
+        response = authed_client.get("/api/v1/settings")
 
         assert response.status_code == 200
         data = response.json()
@@ -128,7 +128,7 @@ class TestUpdateSettingsEndpoint:
             "default_block_duration_hours": 6,
         }
 
-        response = authed_client.post("/api/settings", json=update_data)
+        response = authed_client.post("/api/v1/settings", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -147,7 +147,7 @@ class TestUpdateSettingsEndpoint:
     ):
         """Test validation for invalid scheduling algorithm."""
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "invalid_algorithm",
                 "work_hours_per_week": 80,
@@ -170,7 +170,7 @@ class TestUpdateSettingsEndpoint:
     ):
         """Test validation for work_hours_per_week below minimum (40)."""
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 30,  # Below minimum
@@ -192,7 +192,7 @@ class TestUpdateSettingsEndpoint:
     ):
         """Test validation for work_hours_per_week above maximum (100)."""
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 120,  # Above maximum
@@ -215,7 +215,7 @@ class TestUpdateSettingsEndpoint:
         """Test work_hours_per_week at boundary values (40 and 100)."""
         # Test minimum boundary (40)
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 40,
@@ -234,7 +234,7 @@ class TestUpdateSettingsEndpoint:
 
         # Test maximum boundary (100)
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 100,
@@ -257,7 +257,7 @@ class TestUpdateSettingsEndpoint:
         """Test validation for max_consecutive_days outside valid range (1-7)."""
         # Test below minimum
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 80,
@@ -275,7 +275,7 @@ class TestUpdateSettingsEndpoint:
 
         # Test above maximum
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 80,
@@ -297,7 +297,7 @@ class TestUpdateSettingsEndpoint:
         """Test validation for min_days_off_per_week outside valid range (1-3)."""
         # Test below minimum
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 80,
@@ -315,7 +315,7 @@ class TestUpdateSettingsEndpoint:
 
         # Test above maximum
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 80,
@@ -337,7 +337,7 @@ class TestUpdateSettingsEndpoint:
         """Test validation for default_block_duration_hours outside valid range (1-12)."""
         # Test below minimum
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 80,
@@ -355,7 +355,7 @@ class TestUpdateSettingsEndpoint:
 
         # Test above maximum
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 80,
@@ -376,12 +376,12 @@ class TestUpdateSettingsEndpoint:
     ):
         """Test that updated_at timestamp is updated on settings change."""
         # Create initial settings
-        authed_client.get("/api/settings")
+        authed_client.get("/api/v1/settings")
         initial_settings = db.query(ApplicationSettings).first()
         initial_updated_at = initial_settings.updated_at
 
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "cp_sat",
                 "work_hours_per_week": 75,
@@ -408,10 +408,10 @@ class TestPatchSettingsEndpoint:
     def test_patch_single_field(self, authed_client: TestClient, db: Session):
         """Test patching a single field."""
         # Create initial settings
-        authed_client.get("/api/settings")
+        authed_client.get("/api/v1/settings")
 
         response = authed_client.patch(
-            "/api/settings",
+            "/api/v1/settings",
             json={"scheduling_algorithm": "cp_sat"},
         )
 
@@ -426,10 +426,10 @@ class TestPatchSettingsEndpoint:
     def test_patch_multiple_fields(self, authed_client: TestClient, db: Session):
         """Test patching multiple fields at once."""
         # Create initial settings
-        authed_client.get("/api/settings")
+        authed_client.get("/api/v1/settings")
 
         response = authed_client.patch(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "work_hours_per_week": 70,
                 "max_consecutive_days": 5,
@@ -452,11 +452,11 @@ class TestPatchSettingsEndpoint:
     ):
         """Test that patching with empty data returns settings unchanged."""
         # Create initial settings
-        response = authed_client.get("/api/settings")
+        response = authed_client.get("/api/v1/settings")
         initial_data = response.json()
 
         # Patch with empty object
-        response = authed_client.patch("/api/settings", json={})
+        response = authed_client.patch("/api/v1/settings", json={})
 
         assert response.status_code == 200
         data = response.json()
@@ -467,10 +467,10 @@ class TestPatchSettingsEndpoint:
     def test_patch_boolean_fields(self, authed_client: TestClient, db: Session):
         """Test patching boolean fields."""
         # Create initial settings
-        authed_client.get("/api/settings")
+        authed_client.get("/api/v1/settings")
 
         response = authed_client.patch(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "enable_weekend_scheduling": False,
                 "enable_holiday_scheduling": True,
@@ -486,7 +486,7 @@ class TestPatchSettingsEndpoint:
     def test_patch_supervision_ratios(self, authed_client: TestClient, db: Session):
         """Test patching supervision ratio fields."""
         response = authed_client.patch(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "pgy1_supervision_ratio": "1:1",
                 "pgy2_supervision_ratio": "1:3",
@@ -504,7 +504,7 @@ class TestPatchSettingsEndpoint:
     def test_patch_with_invalid_value(self, authed_client: TestClient, db: Session):
         """Test that patching with invalid value fails validation."""
         response = authed_client.patch(
-            "/api/settings",
+            "/api/v1/settings",
             json={"work_hours_per_week": 150},  # Above maximum
         )
 
@@ -514,7 +514,7 @@ class TestPatchSettingsEndpoint:
         """Test that patching preserves all non-specified fields."""
         # Create settings with specific values
         authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "min_conflicts",
                 "work_hours_per_week": 85,
@@ -531,7 +531,7 @@ class TestPatchSettingsEndpoint:
 
         # Patch only one field
         response = authed_client.patch(
-            "/api/settings",
+            "/api/v1/settings",
             json={"work_hours_per_week": 75},
         )
 
@@ -555,13 +555,13 @@ class TestPatchSettingsEndpoint:
     def test_patch_updates_timestamp(self, authed_client: TestClient, db: Session):
         """Test that patching updates the updated_at timestamp."""
         # Create initial settings
-        authed_client.get("/api/settings")
+        authed_client.get("/api/v1/settings")
         initial_settings = db.query(ApplicationSettings).first()
         initial_updated_at = initial_settings.updated_at
 
         # Patch a field
         response = authed_client.patch(
-            "/api/settings",
+            "/api/v1/settings",
             json={"work_hours_per_week": 75},
         )
 
@@ -578,7 +578,7 @@ class TestResetSettingsEndpoint:
         """Test resetting settings to default values."""
         # Create custom settings
         authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "cp_sat",
                 "work_hours_per_week": 70,
@@ -594,12 +594,12 @@ class TestResetSettingsEndpoint:
         )
 
         # Reset to defaults
-        response = authed_client.delete("/api/settings")
+        response = authed_client.delete("/api/v1/settings")
 
         assert response.status_code == 204
 
         # Verify settings were reset
-        response = authed_client.get("/api/settings")
+        response = authed_client.get("/api/v1/settings")
         data = response.json()
 
         assert data["scheduling_algorithm"] == "cp_sat"
@@ -618,14 +618,14 @@ class TestResetSettingsEndpoint:
     ):
         """Test that reset updates the existing record rather than deleting it."""
         # Create settings
-        authed_client.get("/api/settings")
+        authed_client.get("/api/v1/settings")
 
         # Get the settings ID
         settings_before = db.query(ApplicationSettings).first()
         settings_id = settings_before.id
 
         # Reset
-        response = authed_client.delete("/api/settings")
+        response = authed_client.delete("/api/v1/settings")
         assert response.status_code == 204
 
         # Verify the same record still exists
@@ -636,12 +636,12 @@ class TestResetSettingsEndpoint:
     def test_reset_updates_timestamp(self, authed_client: TestClient, db: Session):
         """Test that reset updates the updated_at timestamp."""
         # Create settings
-        authed_client.get("/api/settings")
+        authed_client.get("/api/v1/settings")
         initial_settings = db.query(ApplicationSettings).first()
         initial_updated_at = initial_settings.updated_at
 
         # Reset
-        response = authed_client.delete("/api/settings")
+        response = authed_client.delete("/api/v1/settings")
         assert response.status_code == 204
 
         # Verify timestamp was updated
@@ -659,7 +659,7 @@ class TestSettingsValidation:
 
         for algorithm in valid_algorithms:
             response = authed_client.patch(
-                "/api/settings",
+                "/api/v1/settings",
                 json={"scheduling_algorithm": algorithm},
             )
 
@@ -677,7 +677,7 @@ class TestSettingsValidation:
         )
 
         response = authed_client.patch(
-            "/api/settings",
+            "/api/v1/settings",
             json={"scheduling_algorithm": "greedy"},
         )
 
@@ -688,7 +688,7 @@ class TestSettingsValidation:
         """Test all boundary values for integer constraints."""
         # Test minimum boundary values
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 40,  # Minimum
@@ -712,7 +712,7 @@ class TestSettingsValidation:
 
         # Test maximum boundary values
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 100,  # Maximum
@@ -739,7 +739,7 @@ class TestSettingsValidation:
     ):
         """Test that POST with missing required field fails."""
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "greedy",
                 "work_hours_per_week": 80,
@@ -754,7 +754,7 @@ class TestSettingsValidation:
     ):
         """Test that extra fields in request are ignored."""
         response = authed_client.patch(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "work_hours_per_week": 75,
                 "extra_field": "should be ignored",
@@ -775,14 +775,14 @@ class TestSettingsIntegration:
     def test_full_settings_lifecycle(self, authed_client: TestClient, db: Session):
         """Test complete settings lifecycle: create, update, patch, reset."""
         # 1. Get initial defaults (creates settings)
-        response = authed_client.get("/api/settings")
+        response = authed_client.get("/api/v1/settings")
         assert response.status_code == 200
         initial_data = response.json()
         assert initial_data["scheduling_algorithm"] == "cp_sat"
 
         # 2. Full update
         response = authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "cp_sat",
                 "work_hours_per_week": 75,
@@ -801,7 +801,7 @@ class TestSettingsIntegration:
 
         # 3. Partial update
         response = authed_client.patch(
-            "/api/settings",
+            "/api/v1/settings",
             json={"work_hours_per_week": 80},
         )
         assert response.status_code == 200
@@ -810,11 +810,11 @@ class TestSettingsIntegration:
         assert data["scheduling_algorithm"] == "cp_sat"  # Unchanged
 
         # 4. Reset to defaults
-        response = authed_client.delete("/api/settings")
+        response = authed_client.delete("/api/v1/settings")
         assert response.status_code == 204
 
         # 5. Verify reset worked
-        response = authed_client.get("/api/settings")
+        response = authed_client.get("/api/v1/settings")
         assert response.status_code == 200
         reset_data = response.json()
         assert reset_data["scheduling_algorithm"] == "cp_sat"
@@ -823,39 +823,39 @@ class TestSettingsIntegration:
     def test_multiple_updates_same_field(self, authed_client: TestClient, db: Session):
         """Test updating the same field multiple times."""
         # Initial value
-        authed_client.get("/api/settings")
+        authed_client.get("/api/v1/settings")
 
         # Update 1
         response = authed_client.patch(
-            "/api/settings", json={"work_hours_per_week": 70}
+            "/api/v1/settings", json={"work_hours_per_week": 70}
         )
         assert response.status_code == 200
         assert response.json()["work_hours_per_week"] == 70
 
         # Update 2
         response = authed_client.patch(
-            "/api/settings", json={"work_hours_per_week": 85}
+            "/api/v1/settings", json={"work_hours_per_week": 85}
         )
         assert response.status_code == 200
         assert response.json()["work_hours_per_week"] == 85
 
         # Update 3
         response = authed_client.patch(
-            "/api/settings", json={"work_hours_per_week": 60}
+            "/api/v1/settings", json={"work_hours_per_week": 60}
         )
         assert response.status_code == 200
         assert response.json()["work_hours_per_week"] == 60
 
         # Verify final value persists
-        response = authed_client.get("/api/settings")
+        response = authed_client.get("/api/v1/settings")
         assert response.json()["work_hours_per_week"] == 60
 
     def test_settings_singleton_behavior(self, authed_client: TestClient, db: Session):
         """Test that only one settings record exists in database."""
         # Create settings multiple times
-        authed_client.get("/api/settings")
+        authed_client.get("/api/v1/settings")
         authed_client.post(
-            "/api/settings",
+            "/api/v1/settings",
             json={
                 "scheduling_algorithm": "cp_sat",
                 "work_hours_per_week": 75,
@@ -869,7 +869,7 @@ class TestSettingsIntegration:
                 "default_block_duration_hours": 4,
             },
         )
-        authed_client.patch("/api/settings", json={"work_hours_per_week": 80})
+        authed_client.patch("/api/v1/settings", json={"work_hours_per_week": 80})
 
         # Verify only one record exists
         settings_count = db.query(ApplicationSettings).count()

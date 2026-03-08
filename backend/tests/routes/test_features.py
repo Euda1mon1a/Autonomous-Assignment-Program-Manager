@@ -26,7 +26,7 @@ class TestFeatureRoutes:
     def test_create_flag_requires_auth(self, client: TestClient):
         """Test that creating flag requires authentication."""
         response = client.post(
-            "/api/features/",
+            "/api/v1/features/",
             json={
                 "key": "test-flag",
                 "name": "Test Flag",
@@ -37,38 +37,38 @@ class TestFeatureRoutes:
 
     def test_list_flags_requires_auth(self, client: TestClient):
         """Test that listing flags requires authentication."""
-        response = client.get("/api/features/")
+        response = client.get("/api/v1/features/")
         assert response.status_code == 401
 
     def test_get_flag_requires_auth(self, client: TestClient):
         """Test that getting flag requires authentication."""
-        response = client.get("/api/features/test-flag")
+        response = client.get("/api/v1/features/test-flag")
         assert response.status_code == 401
 
     def test_update_flag_requires_auth(self, client: TestClient):
         """Test that updating flag requires authentication."""
         response = client.put(
-            "/api/features/test-flag",
+            "/api/v1/features/test-flag",
             json={"enabled": True},
         )
         assert response.status_code == 401
 
     def test_delete_flag_requires_auth(self, client: TestClient):
         """Test that deleting flag requires authentication."""
-        response = client.delete("/api/features/test-flag")
+        response = client.delete("/api/v1/features/test-flag")
         assert response.status_code == 401
 
     def test_evaluate_flag_requires_auth(self, client: TestClient):
         """Test that evaluating flag requires authentication."""
         response = client.post(
-            "/api/features/evaluate",
+            "/api/v1/features/evaluate",
             json={"flag_key": "test-flag"},
         )
         assert response.status_code == 401
 
     def test_stats_requires_auth(self, client: TestClient):
         """Test that getting stats requires authentication."""
-        response = client.get("/api/features/stats")
+        response = client.get("/api/v1/features/stats")
         assert response.status_code == 401
 
     # ========================================================================
@@ -107,7 +107,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/",
+            "/api/v1/features/",
             headers=auth_headers,
             json={
                 "key": "new-feature",
@@ -154,7 +154,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/",
+            "/api/v1/features/",
             headers=auth_headers,
             json={
                 "key": "rollout-flag",
@@ -200,7 +200,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/",
+            "/api/v1/features/",
             headers=auth_headers,
             json={
                 "key": "ab-test-flag",
@@ -227,7 +227,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/",
+            "/api/v1/features/",
             headers=auth_headers,
             json={
                 "key": "existing-flag",
@@ -257,7 +257,7 @@ class TestFeatureRoutes:
         mock_service.list_flags = AsyncMock(return_value=mock_flags)
         mock_service_class.return_value = mock_service
 
-        response = client.get("/api/features/", headers=auth_headers)
+        response = client.get("/api/v1/features/", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -279,7 +279,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/features/?enabled_only=true",
+            "/api/v1/features/?enabled_only=true",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -301,7 +301,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/features/?environment=production",
+            "/api/v1/features/?environment=production",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -324,7 +324,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/features/?page=2&page_size=25",
+            "/api/v1/features/?page=2&page_size=25",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -369,7 +369,7 @@ class TestFeatureRoutes:
         )
         mock_service_class.return_value = mock_service
 
-        response = client.get("/api/features/test-flag", headers=auth_headers)
+        response = client.get("/api/v1/features/test-flag", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -387,7 +387,7 @@ class TestFeatureRoutes:
         mock_service.get_flag = AsyncMock(return_value=None)
         mock_service_class.return_value = mock_service
 
-        response = client.get("/api/features/nonexistent", headers=auth_headers)
+        response = client.get("/api/v1/features/nonexistent", headers=auth_headers)
         assert response.status_code == 404
 
     # ========================================================================
@@ -417,7 +417,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.put(
-            "/api/features/test-flag?reason=testing",
+            "/api/v1/features/test-flag?reason=testing",
             headers=auth_headers,
             json={
                 "name": "Updated Flag Name",
@@ -440,7 +440,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.put(
-            "/api/features/nonexistent",
+            "/api/v1/features/nonexistent",
             headers=auth_headers,
             json={"enabled": True},
         )
@@ -455,7 +455,7 @@ class TestFeatureRoutes:
     ):
         """Test updating flag with empty update body."""
         response = client.put(
-            "/api/features/test-flag",
+            "/api/v1/features/test-flag",
             headers=auth_headers,
             json={},
         )
@@ -478,7 +478,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.delete(
-            "/api/features/test-flag?reason=cleanup",
+            "/api/v1/features/test-flag?reason=cleanup",
             headers=auth_headers,
         )
         assert response.status_code == 204
@@ -495,7 +495,7 @@ class TestFeatureRoutes:
         mock_service.delete_flag = AsyncMock(return_value=False)
         mock_service_class.return_value = mock_service
 
-        response = client.delete("/api/features/nonexistent", headers=auth_headers)
+        response = client.delete("/api/v1/features/nonexistent", headers=auth_headers)
         assert response.status_code == 404
 
     # ========================================================================
@@ -518,7 +518,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/evaluate",
+            "/api/v1/features/evaluate",
             headers=auth_headers,
             json={"flag_key": "test-flag"},
         )
@@ -544,7 +544,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/evaluate",
+            "/api/v1/features/evaluate",
             headers=auth_headers,
             json={"flag_key": "disabled-flag"},
         )
@@ -569,7 +569,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/evaluate",
+            "/api/v1/features/evaluate",
             headers=auth_headers,
             json={"flag_key": "ab-test-flag"},
         )
@@ -596,7 +596,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/evaluate",
+            "/api/v1/features/evaluate",
             headers=auth_headers,
             json={
                 "flag_key": "context-flag",
@@ -635,7 +635,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/evaluate/bulk",
+            "/api/v1/features/evaluate/bulk",
             headers=auth_headers,
             json={"flag_keys": ["flag-1", "flag-2", "flag-3"]},
         )
@@ -661,7 +661,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/evaluate/bulk",
+            "/api/v1/features/evaluate/bulk",
             headers=auth_headers,
             json={"flag_keys": []},
         )
@@ -694,7 +694,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/test-flag/enable",
+            "/api/v1/features/test-flag/enable",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -715,7 +715,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/nonexistent/enable",
+            "/api/v1/features/nonexistent/enable",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -740,7 +740,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/test-flag/disable?reason=maintenance",
+            "/api/v1/features/test-flag/disable?reason=maintenance",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -761,7 +761,7 @@ class TestFeatureRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/features/nonexistent/disable",
+            "/api/v1/features/nonexistent/disable",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -800,7 +800,7 @@ class TestFeatureRoutes:
             "production": {"total": 5, "enabled": [], "disabled": []},
         }
 
-        response = client.get("/api/features/stats", headers=auth_headers)
+        response = client.get("/api/v1/features/stats", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()

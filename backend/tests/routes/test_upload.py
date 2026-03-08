@@ -52,34 +52,34 @@ class TestUploadRoutes:
     def test_upload_requires_auth(self, client: TestClient):
         """Test that upload endpoint requires authentication."""
         response = client.post(
-            "/api/upload",
+            "/api/v1/upload",
             files={"file": ("test.txt", b"test content", "text/plain")},
         )
         assert response.status_code == 401
 
     def test_get_progress_requires_auth(self, client: TestClient):
         """Test that progress endpoint requires authentication."""
-        response = client.get(f"/api/upload/progress/{uuid4()}")
+        response = client.get(f"/api/v1/upload/progress/{uuid4()}")
         assert response.status_code == 401
 
     def test_get_file_url_requires_auth(self, client: TestClient):
         """Test that file URL endpoint requires authentication."""
-        response = client.get(f"/api/upload/{uuid4()}/url")
+        response = client.get(f"/api/v1/upload/{uuid4()}/url")
         assert response.status_code == 401
 
     def test_download_requires_auth(self, client: TestClient):
         """Test that download endpoint requires authentication."""
-        response = client.get(f"/api/upload/{uuid4()}/download")
+        response = client.get(f"/api/v1/upload/{uuid4()}/download")
         assert response.status_code == 401
 
     def test_delete_requires_auth(self, client: TestClient):
         """Test that delete endpoint requires authentication."""
-        response = client.delete(f"/api/upload/{uuid4()}")
+        response = client.delete(f"/api/v1/upload/{uuid4()}")
         assert response.status_code == 401
 
     def test_check_exists_requires_auth(self, client: TestClient):
         """Test that exists check requires authentication."""
-        response = client.get(f"/api/upload/{uuid4()}/exists")
+        response = client.get(f"/api/v1/upload/{uuid4()}/exists")
         assert response.status_code == 401
 
     # ========================================================================
@@ -104,7 +104,7 @@ class TestUploadRoutes:
         }
 
         response = client_with_mock_upload.post(
-            "/api/upload",
+            "/api/v1/upload",
             headers=auth_headers,
             files={"file": ("test.txt", b"test content", "text/plain")},
             data={
@@ -137,7 +137,7 @@ class TestUploadRoutes:
         }
 
         response = client_with_mock_upload.post(
-            "/api/upload",
+            "/api/v1/upload",
             headers=auth_headers,
             files={"file": ("document.pdf", b"pdf content", "application/pdf")},
             data={
@@ -164,7 +164,7 @@ class TestUploadRoutes:
         )
 
         response = client_with_mock_upload.post(
-            "/api/upload",
+            "/api/v1/upload",
             headers=auth_headers,
             files={"file": ("large.bin", b"x" * 1000, "application/octet-stream")},
         )
@@ -193,7 +193,7 @@ class TestUploadRoutes:
         }
 
         response = client_with_mock_upload.get(
-            f"/api/upload/progress/{upload_id}",
+            f"/api/v1/upload/progress/{upload_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -211,7 +211,7 @@ class TestUploadRoutes:
         mock_upload_service.get_upload_progress.return_value = None
 
         response = client_with_mock_upload.get(
-            f"/api/upload/progress/{uuid4()}",
+            f"/api/v1/upload/progress/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -234,7 +234,7 @@ class TestUploadRoutes:
         )
 
         response = client_with_mock_upload.get(
-            f"/api/upload/{file_id}/url",
+            f"/api/v1/upload/{file_id}/url",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -253,7 +253,7 @@ class TestUploadRoutes:
         mock_upload_service.get_file_url.side_effect = Exception("File not found")
 
         response = client_with_mock_upload.get(
-            f"/api/upload/{uuid4()}/url",
+            f"/api/v1/upload/{uuid4()}/url",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -275,7 +275,7 @@ class TestUploadRoutes:
         mock_upload_service.get_file.return_value = file_content
 
         response = client_with_mock_upload.get(
-            f"/api/upload/{file_id}/download",
+            f"/api/v1/upload/{file_id}/download",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -291,7 +291,7 @@ class TestUploadRoutes:
         mock_upload_service.get_file.side_effect = Exception("File not found")
 
         response = client_with_mock_upload.get(
-            f"/api/upload/{uuid4()}/download",
+            f"/api/v1/upload/{uuid4()}/download",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -312,7 +312,7 @@ class TestUploadRoutes:
         mock_upload_service.delete_file.return_value = True
 
         response = client_with_mock_upload.delete(
-            f"/api/upload/{file_id}",
+            f"/api/v1/upload/{file_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -331,7 +331,7 @@ class TestUploadRoutes:
         mock_upload_service.delete_file.return_value = False
 
         response = client_with_mock_upload.delete(
-            f"/api/upload/{uuid4()}",
+            f"/api/v1/upload/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -352,7 +352,7 @@ class TestUploadRoutes:
         mock_upload_service.storage_backend.exists.return_value = True
 
         response = client_with_mock_upload.get(
-            f"/api/upload/{file_id}/exists",
+            f"/api/v1/upload/{file_id}/exists",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -373,7 +373,7 @@ class TestUploadRoutes:
         mock_upload_service.storage_backend.exists.return_value = False
 
         response = client_with_mock_upload.get(
-            f"/api/upload/{file_id}/exists",
+            f"/api/v1/upload/{file_id}/exists",
             headers=auth_headers,
         )
         assert response.status_code == 200

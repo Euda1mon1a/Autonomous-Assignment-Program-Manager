@@ -49,7 +49,7 @@ class TestWebhookRoutes:
     def test_create_webhook_requires_auth(self, client: TestClient):
         """Test that webhook creation requires authentication."""
         response = client.post(
-            "/api/webhooks",
+            "/api/v1/webhooks",
             json={
                 "url": "https://example.com/webhook",
                 "name": "Test Webhook",
@@ -60,17 +60,17 @@ class TestWebhookRoutes:
 
     def test_list_webhooks_requires_auth(self, client: TestClient):
         """Test that listing webhooks requires authentication."""
-        response = client.get("/api/webhooks")
+        response = client.get("/api/v1/webhooks")
         assert response.status_code == 401
 
     def test_get_webhook_requires_auth(self, client: TestClient):
         """Test that getting webhook requires authentication."""
-        response = client.get(f"/api/webhooks/{uuid4()}")
+        response = client.get(f"/api/v1/webhooks/{uuid4()}")
         assert response.status_code == 401
 
     def test_delete_webhook_requires_auth(self, client: TestClient):
         """Test that deleting webhook requires authentication."""
-        response = client.delete(f"/api/webhooks/{uuid4()}")
+        response = client.delete(f"/api/v1/webhooks/{uuid4()}")
         assert response.status_code == 401
 
     # ========================================================================
@@ -94,7 +94,7 @@ class TestWebhookRoutes:
         }
 
         response = client_with_mock_service.post(
-            "/api/webhooks",
+            "/api/v1/webhooks",
             headers=auth_headers,
             json={
                 "url": "https://example.com/webhook",
@@ -127,7 +127,7 @@ class TestWebhookRoutes:
         }
 
         response = client_with_mock_service.post(
-            "/api/webhooks",
+            "/api/v1/webhooks",
             headers=auth_headers,
             json={
                 "url": "https://example.com/webhook",
@@ -164,7 +164,9 @@ class TestWebhookRoutes:
             },
         ]
 
-        response = client_with_mock_service.get("/api/webhooks", headers=auth_headers)
+        response = client_with_mock_service.get(
+            "/api/v1/webhooks", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -181,7 +183,7 @@ class TestWebhookRoutes:
         mock_webhook_service.list_webhooks.return_value = []
 
         response = client_with_mock_service.get(
-            "/api/webhooks?status=active&skip=0&limit=50",
+            "/api/v1/webhooks?status=active&skip=0&limit=50",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -202,7 +204,7 @@ class TestWebhookRoutes:
         }
 
         response = client_with_mock_service.get(
-            f"/api/webhooks/{webhook_id}",
+            f"/api/v1/webhooks/{webhook_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -217,7 +219,7 @@ class TestWebhookRoutes:
         mock_webhook_service.get_webhook.return_value = None
 
         response = client_with_mock_service.get(
-            f"/api/webhooks/{uuid4()}",
+            f"/api/v1/webhooks/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -238,7 +240,7 @@ class TestWebhookRoutes:
         }
 
         response = client_with_mock_service.put(
-            f"/api/webhooks/{webhook_id}",
+            f"/api/v1/webhooks/{webhook_id}",
             headers=auth_headers,
             json={
                 "name": "Updated Webhook",
@@ -258,7 +260,7 @@ class TestWebhookRoutes:
         mock_webhook_service.delete_webhook.return_value = True
 
         response = client_with_mock_service.delete(
-            f"/api/webhooks/{webhook_id}",
+            f"/api/v1/webhooks/{webhook_id}",
             headers=auth_headers,
         )
         assert response.status_code == 204
@@ -273,7 +275,7 @@ class TestWebhookRoutes:
         mock_webhook_service.delete_webhook.return_value = False
 
         response = client_with_mock_service.delete(
-            f"/api/webhooks/{uuid4()}",
+            f"/api/v1/webhooks/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -296,7 +298,7 @@ class TestWebhookRoutes:
         }
 
         response = client_with_mock_service.post(
-            f"/api/webhooks/{webhook_id}/pause",
+            f"/api/v1/webhooks/{webhook_id}/pause",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -315,7 +317,7 @@ class TestWebhookRoutes:
         }
 
         response = client_with_mock_service.post(
-            f"/api/webhooks/{webhook_id}/resume",
+            f"/api/v1/webhooks/{webhook_id}/resume",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -334,7 +336,7 @@ class TestWebhookRoutes:
         mock_webhook_service.trigger_event.return_value = 3  # 3 webhooks triggered
 
         response = client_with_mock_service.post(
-            "/api/webhooks/events/trigger",
+            "/api/v1/webhooks/events/trigger",
             headers=auth_headers,
             json={
                 "event_type": "schedule.updated",
@@ -367,7 +369,7 @@ class TestWebhookRoutes:
         ]
 
         response = client_with_mock_service.get(
-            "/api/webhooks/deliveries", headers=auth_headers
+            "/api/v1/webhooks/deliveries", headers=auth_headers
         )
         assert response.status_code == 200
 
@@ -388,7 +390,7 @@ class TestWebhookRoutes:
         }
 
         response = client_with_mock_service.get(
-            f"/api/webhooks/deliveries/{delivery_id}",
+            f"/api/v1/webhooks/deliveries/{delivery_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -408,7 +410,7 @@ class TestWebhookRoutes:
         }
 
         response = client_with_mock_service.post(
-            "/api/webhooks/deliveries/retry",
+            "/api/v1/webhooks/deliveries/retry",
             headers=auth_headers,
             json={"delivery_id": str(delivery_id)},
         )
@@ -434,7 +436,7 @@ class TestWebhookRoutes:
         ]
 
         response = client_with_mock_service.get(
-            "/api/webhooks/dead-letters", headers=auth_headers
+            "/api/v1/webhooks/dead-letters", headers=auth_headers
         )
         assert response.status_code == 200
 
@@ -458,7 +460,7 @@ class TestWebhookRoutes:
         ]
 
         response = client_with_mock_service.post(
-            f"/api/webhooks/dead-letters/{dead_letter_id}/resolve",
+            f"/api/v1/webhooks/dead-letters/{dead_letter_id}/resolve",
             headers=auth_headers,
             json={"notes": "Resolved manually", "retry": False},
         )

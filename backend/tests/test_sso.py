@@ -394,7 +394,7 @@ class TestSSORoutes:
             mock_config.oauth2.enabled = False
             mock_config.allow_local_fallback = True
 
-            response = client.get("/api/sso/providers")
+            response = client.get("/api/v1/sso/providers")
 
             assert response.status_code == 200
             data = response.json()
@@ -411,7 +411,7 @@ class TestSSORoutes:
             mock_config.oauth2.provider_name = "Google"
             mock_config.allow_local_fallback = True
 
-            response = client.get("/api/sso/providers")
+            response = client.get("/api/v1/sso/providers")
 
             assert response.status_code == 200
             data = response.json()
@@ -429,7 +429,7 @@ class TestSSORoutes:
             mock_config.oauth2.enabled = False
             mock_config.get_active_providers.return_value = ["saml"]
 
-            response = client.get("/api/sso/status")
+            response = client.get("/api/v1/sso/status")
 
             assert response.status_code == 200
             data = response.json()
@@ -442,7 +442,7 @@ class TestSSORoutes:
         with patch("app.api.routes.sso.sso_config") as mock_config:
             mock_config.saml.enabled = False
 
-            response = client.get("/api/sso/saml/metadata")
+            response = client.get("/api/v1/sso/saml/metadata")
 
             assert response.status_code == 404
 
@@ -451,7 +451,7 @@ class TestSSORoutes:
         with patch("app.api.routes.sso.sso_config") as mock_config:
             mock_config.oauth2.enabled = False
 
-            response = client.get("/api/sso/oauth2/login")
+            response = client.get("/api/v1/sso/oauth2/login")
 
             assert response.status_code == 404
 

@@ -31,7 +31,7 @@ class TestSearchEndpoint:
     def test_search_requires_auth(self, client: TestClient):
         """Test that search requires authentication."""
         response = client.post(
-            "/api/search",
+            "/api/v1/search",
             json={"query": "test", "entity_types": ["person"]},
         )
 
@@ -53,7 +53,7 @@ class TestSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search",
+                "/api/v1/search",
                 json={"query": "test", "entity_types": ["person"]},
                 headers=auth_headers,
             )
@@ -77,7 +77,7 @@ class TestSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search",
+                "/api/v1/search",
                 json={
                     "query": "resident",
                     "entity_types": ["person"],
@@ -106,7 +106,7 @@ class TestSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search",
+                "/api/v1/search",
                 json={
                     "query": "test",
                     "entity_types": ["person"],
@@ -141,7 +141,7 @@ class TestSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search",
+                "/api/v1/search",
                 json={"query": "john", "entity_types": ["person"]},
                 headers=auth_headers,
             )
@@ -158,7 +158,7 @@ class TestQuickSearchEndpoint:
 
     def test_quick_search_requires_auth(self, client: TestClient):
         """Test that quick search requires authentication."""
-        response = client.get("/api/search/quick?query=test")
+        response = client.get("/api/v1/search/quick?query=test")
 
         assert response.status_code in [401, 403]
 
@@ -172,7 +172,7 @@ class TestQuickSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.get(
-                "/api/search/quick?query=test",
+                "/api/v1/search/quick?query=test",
                 headers=auth_headers,
             )
 
@@ -190,7 +190,7 @@ class TestQuickSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.get(
-                "/api/search/quick?query=test&entity_type=rotation",
+                "/api/v1/search/quick?query=test&entity_type=rotation",
                 headers=auth_headers,
             )
 
@@ -206,7 +206,7 @@ class TestQuickSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.get(
-                "/api/search/quick?query=test&limit=5",
+                "/api/v1/search/quick?query=test&limit=5",
                 headers=auth_headers,
             )
 
@@ -215,7 +215,7 @@ class TestQuickSearchEndpoint:
     def test_quick_search_requires_query(self, client: TestClient, auth_headers: dict):
         """Test quick search requires query parameter."""
         response = client.get(
-            "/api/search/quick",
+            "/api/v1/search/quick",
             headers=auth_headers,
         )
 
@@ -229,7 +229,7 @@ class TestPeopleSearchEndpoint:
     def test_people_search_requires_auth(self, client: TestClient):
         """Test that people search requires authentication."""
         response = client.post(
-            "/api/search/people",
+            "/api/v1/search/people",
             json={"query": "john"},
         )
 
@@ -251,7 +251,7 @@ class TestPeopleSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search/people",
+                "/api/v1/search/people",
                 json={"query": "john"},
                 headers=auth_headers,
             )
@@ -274,7 +274,7 @@ class TestPeopleSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search/people",
+                "/api/v1/search/people",
                 json={"query": "smith", "type": "resident"},
                 headers=auth_headers,
             )
@@ -297,7 +297,7 @@ class TestPeopleSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search/people",
+                "/api/v1/search/people",
                 json={"query": "", "pgy_level": 2},
                 headers=auth_headers,
             )
@@ -311,7 +311,7 @@ class TestRotationsSearchEndpoint:
     def test_rotations_search_requires_auth(self, client: TestClient):
         """Test that rotations search requires authentication."""
         response = client.post(
-            "/api/search/rotations",
+            "/api/v1/search/rotations",
             json={"query": "clinic"},
         )
 
@@ -335,7 +335,7 @@ class TestRotationsSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search/rotations",
+                "/api/v1/search/rotations",
                 json={"query": "clinic"},
                 headers=auth_headers,
             )
@@ -360,7 +360,7 @@ class TestRotationsSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search/rotations",
+                "/api/v1/search/rotations",
                 json={"query": "", "category": "outpatient"},
                 headers=auth_headers,
             )
@@ -374,7 +374,7 @@ class TestProceduresSearchEndpoint:
     def test_procedures_search_requires_auth(self, client: TestClient):
         """Test that procedures search requires authentication."""
         response = client.post(
-            "/api/search/procedures",
+            "/api/v1/search/procedures",
             json={"query": "injection"},
         )
 
@@ -398,7 +398,7 @@ class TestProceduresSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search/procedures",
+                "/api/v1/search/procedures",
                 json={"query": "injection"},
                 headers=auth_headers,
             )
@@ -411,7 +411,7 @@ class TestGlobalSearchEndpoint:
 
     def test_global_search_requires_auth(self, client: TestClient):
         """Test that global search requires authentication."""
-        response = client.post("/api/search/global?query=test")
+        response = client.post("/api/v1/search/global?query=test")
 
         assert response.status_code in [401, 403]
 
@@ -433,7 +433,7 @@ class TestGlobalSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search/global?query=test",
+                "/api/v1/search/global?query=test",
                 headers=auth_headers,
             )
 
@@ -459,7 +459,7 @@ class TestGlobalSearchEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search/global?query=test&page=2&page_size=10",
+                "/api/v1/search/global?query=test&page=2&page_size=10",
                 headers=auth_headers,
             )
 
@@ -472,7 +472,7 @@ class TestSuggestEndpoint:
     def test_suggest_post_requires_auth(self, client: TestClient):
         """Test that POST suggest requires authentication."""
         response = client.post(
-            "/api/search/suggest",
+            "/api/v1/search/suggest",
             json={"query": "jo"},
         )
 
@@ -486,7 +486,7 @@ class TestSuggestEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search/suggest",
+                "/api/v1/search/suggest",
                 json={"query": "jo", "entity_type": "person"},
                 headers=auth_headers,
             )
@@ -495,7 +495,7 @@ class TestSuggestEndpoint:
 
     def test_suggest_get_requires_auth(self, client: TestClient):
         """Test that GET suggest requires authentication."""
-        response = client.get("/api/search/suggest?query=jo")
+        response = client.get("/api/v1/search/suggest?query=jo")
 
         assert response.status_code in [401, 403]
 
@@ -507,7 +507,7 @@ class TestSuggestEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.get(
-                "/api/search/suggest?query=jo",
+                "/api/v1/search/suggest?query=jo",
                 headers=auth_headers,
             )
 
@@ -521,7 +521,7 @@ class TestSuggestEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.get(
-                "/api/search/suggest?query=jo&limit=1",
+                "/api/v1/search/suggest?query=jo&limit=1",
                 headers=auth_headers,
             )
 
@@ -530,7 +530,7 @@ class TestSuggestEndpoint:
     def test_suggest_requires_query(self, client: TestClient, auth_headers: dict):
         """Test suggest requires query parameter."""
         response = client.get(
-            "/api/search/suggest",
+            "/api/v1/search/suggest",
             headers=auth_headers,
         )
 
@@ -562,7 +562,7 @@ class TestSearchEdgeCases:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search",
+                "/api/v1/search",
                 json={"query": "", "entity_types": ["person"]},
                 headers=auth_headers,
             )
@@ -586,7 +586,7 @@ class TestSearchEdgeCases:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search",
+                "/api/v1/search",
                 json={"query": "test@#$%", "entity_types": ["person"]},
                 headers=auth_headers,
             )
@@ -598,7 +598,7 @@ class TestSearchEdgeCases:
         long_query = "a" * 1000
 
         response = client.post(
-            "/api/search",
+            "/api/v1/search",
             json={"query": long_query, "entity_types": ["person"]},
             headers=auth_headers,
         )
@@ -611,7 +611,7 @@ class TestSearchEdgeCases:
     ):
         """Test quick search validates limit parameter."""
         response = client.get(
-            "/api/search/quick?query=test&limit=100",
+            "/api/v1/search/quick?query=test&limit=100",
             headers=auth_headers,
         )
 
@@ -655,13 +655,17 @@ class TestSearchIntegration:
             mock_service.return_value = mock_instance
 
             endpoints = [
-                ("/api/search", "POST", {"query": "test", "entity_types": ["person"]}),
-                ("/api/search/quick?query=test", "GET", None),
-                ("/api/search/people", "POST", {"query": "test"}),
-                ("/api/search/rotations", "POST", {"query": "test"}),
-                ("/api/search/procedures", "POST", {"query": "test"}),
-                ("/api/search/global?query=test", "POST", None),
-                ("/api/search/suggest?query=test", "GET", None),
+                (
+                    "/api/v1/search",
+                    "POST",
+                    {"query": "test", "entity_types": ["person"]},
+                ),
+                ("/api/v1/search/quick?query=test", "GET", None),
+                ("/api/v1/search/people", "POST", {"query": "test"}),
+                ("/api/v1/search/rotations", "POST", {"query": "test"}),
+                ("/api/v1/search/procedures", "POST", {"query": "test"}),
+                ("/api/v1/search/global?query=test", "POST", None),
+                ("/api/v1/search/suggest?query=test", "GET", None),
             ]
 
             for url, method, data in endpoints:
@@ -696,7 +700,7 @@ class TestSearchIntegration:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/search",
+                "/api/v1/search",
                 json={"query": "test", "entity_types": ["person"]},
                 headers=auth_headers,
             )

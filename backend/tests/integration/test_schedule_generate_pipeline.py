@@ -139,7 +139,7 @@ class TestScheduleGeneratePipeline:
         }
 
         response = integration_client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             headers=auth_headers,
         )
@@ -183,7 +183,7 @@ class TestScheduleGeneratePipeline:
         }
 
         response = integration_client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             headers=auth_headers,
         )
@@ -217,7 +217,7 @@ class TestScheduleGeneratePipeline:
         }
 
         response = integration_client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             headers=auth_headers,
         )
@@ -271,7 +271,7 @@ class TestScheduleGeneratePipeline:
         }
 
         response = integration_client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             headers=auth_headers,
         )
@@ -303,7 +303,7 @@ class TestScheduleGeneratePipeline:
         }
 
         response = integration_client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             headers=auth_headers,
         )
@@ -330,7 +330,7 @@ class TestScheduleGeneratePipeline:
         }
 
         response = integration_client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             # No auth_headers
         )
@@ -350,7 +350,7 @@ class TestScheduleGeneratePipeline:
         }
 
         response = integration_client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             headers=auth_headers,
         )
@@ -381,7 +381,7 @@ class TestScheduleGeneratePipeline:
         }
 
         response = integration_client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             headers=auth_headers,
         )

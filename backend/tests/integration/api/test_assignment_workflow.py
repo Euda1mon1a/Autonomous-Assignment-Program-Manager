@@ -31,7 +31,7 @@ class TestAssignmentWorkflow:
         """Test creating a new assignment."""
         # Create assignment
         create_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(sample_block.id),
                 "person_id": str(sample_resident.id),
@@ -45,7 +45,7 @@ class TestAssignmentWorkflow:
 
         # Verify assignment
         get_response = client.get(
-            f"/api/assignments/{assignment_id}",
+            f"/api/v1/assignments/{assignment_id}",
             headers=auth_headers,
         )
         assert get_response.status_code == 200
@@ -61,7 +61,7 @@ class TestAssignmentWorkflow:
         # Update assignment
         new_resident = sample_residents[0]
         update_response = client.put(
-            f"/api/assignments/{sample_assignment.id}",
+            f"/api/v1/assignments/{sample_assignment.id}",
             json={"person_id": str(new_resident.id)},
             headers=auth_headers,
         )
@@ -69,7 +69,7 @@ class TestAssignmentWorkflow:
 
         # Verify update
         get_response = client.get(
-            f"/api/assignments/{sample_assignment.id}",
+            f"/api/v1/assignments/{sample_assignment.id}",
             headers=auth_headers,
         )
         assert get_response.status_code == 200
@@ -111,7 +111,7 @@ class TestAssignmentWorkflow:
         ]
 
         bulk_response = client.post(
-            "/api/assignments/bulk",
+            "/api/v1/assignments/bulk",
             json={"assignments": bulk_data},
             headers=auth_headers,
         )
@@ -128,7 +128,7 @@ class TestAssignmentWorkflow:
         """Test detection of conflicting assignments."""
         # Create first assignment
         first_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(sample_blocks[0].id),
                 "person_id": str(sample_resident.id),
@@ -141,7 +141,7 @@ class TestAssignmentWorkflow:
 
         # Try to create conflicting assignment
         conflict_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(sample_blocks[0].id),
                 "person_id": str(sample_resident.id),
@@ -155,7 +155,7 @@ class TestAssignmentWorkflow:
         if conflict_response.status_code in [200, 201]:
             # Check conflict endpoint
             conflicts = client.get(
-                f"/api/conflicts/?person_id={sample_resident.id}",
+                f"/api/v1/conflicts/?person_id={sample_resident.id}",
                 headers=auth_headers,
             )
             assert conflicts.status_code in [200, 404]
@@ -185,7 +185,7 @@ class TestAssignmentWorkflow:
             db.commit()
 
             client.post(
-                "/api/assignments/",
+                "/api/v1/assignments/",
                 json={
                     "block_id": str(block.id),
                     "person_id": str(sample_resident.id),
@@ -197,7 +197,7 @@ class TestAssignmentWorkflow:
 
         # Query by date range
         range_response = client.get(
-            f"/api/assignments/?start_date={start_date.isoformat()}&end_date={(start_date + timedelta(days=6)).isoformat()}",
+            f"/api/v1/assignments/?start_date={start_date.isoformat()}&end_date={(start_date + timedelta(days=6)).isoformat()}",
             headers=auth_headers,
         )
         assert range_response.status_code == 200
@@ -213,7 +213,7 @@ class TestAssignmentWorkflow:
     ):
         """Test retrieving all assignments for a person."""
         person_assignments = client.get(
-            f"/api/assignments/?person_id={sample_resident.id}",
+            f"/api/v1/assignments/?person_id={sample_resident.id}",
             headers=auth_headers,
         )
         assert person_assignments.status_code == 200
@@ -231,7 +231,7 @@ class TestAssignmentWorkflow:
         """Test assignment validation before creation."""
         # Validate assignment
         validate_response = client.post(
-            "/api/assignments/validate",
+            "/api/v1/assignments/validate",
             json={
                 "block_id": str(sample_block.id),
                 "person_id": str(sample_resident.id),
@@ -251,7 +251,7 @@ class TestAssignmentWorkflow:
         """Test retrieving assignment change history."""
         # Get assignment history
         history_response = client.get(
-            f"/api/assignments/{sample_assignment.id}/history",
+            f"/api/v1/assignments/{sample_assignment.id}/history",
             headers=auth_headers,
         )
         assert history_response.status_code in [200, 404, 501]
@@ -265,14 +265,14 @@ class TestAssignmentWorkflow:
         """Test deleting assignments."""
         # Delete assignment
         delete_response = client.delete(
-            f"/api/assignments/{sample_assignment.id}",
+            f"/api/v1/assignments/{sample_assignment.id}",
             headers=auth_headers,
         )
         assert delete_response.status_code in [200, 204]
 
         # Verify deletion
         get_response = client.get(
-            f"/api/assignments/{sample_assignment.id}",
+            f"/api/v1/assignments/{sample_assignment.id}",
             headers=auth_headers,
         )
         assert get_response.status_code == 404
@@ -303,7 +303,7 @@ class TestAssignmentWorkflow:
 
         # Bulk delete
         bulk_delete_response = client.post(
-            "/api/assignments/bulk-delete",
+            "/api/v1/assignments/bulk-delete",
             json={"assignment_ids": assignment_ids},
             headers=auth_headers,
         )

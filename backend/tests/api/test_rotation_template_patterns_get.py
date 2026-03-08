@@ -88,7 +88,7 @@ class TestGetWeeklyPatterns:
     ):
         """Test successful retrieval of weekly patterns."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
 
@@ -118,7 +118,7 @@ class TestGetWeeklyPatterns:
     ):
         """Test patterns are returned ordered by day_of_week and time_of_day."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
 
@@ -142,7 +142,7 @@ class TestGetWeeklyPatterns:
     ):
         """Test returns empty list for template with no patterns."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
 
@@ -156,7 +156,7 @@ class TestGetWeeklyPatterns:
         """Test 404 for non-existent template."""
         fake_id = uuid4()
         response = client.get(
-            f"/api/rotation-templates/{fake_id}/patterns",
+            f"/api/v1/rotation-templates/{fake_id}/patterns",
             headers=auth_headers,
         )
 
@@ -169,14 +169,16 @@ class TestGetWeeklyPatterns:
         self, client: TestClient, sample_template: RotationTemplate
     ):
         """Test 401 for unauthenticated request."""
-        response = client.get(f"/api/rotation-templates/{sample_template.id}/patterns")
+        response = client.get(
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns"
+        )
 
         assert response.status_code == 401
 
     def test_get_patterns_invalid_uuid(self, client: TestClient, auth_headers: dict):
         """Test 422 for invalid UUID format."""
         response = client.get(
-            "/api/rotation-templates/not-a-uuid/patterns",
+            "/api/v1/rotation-templates/not-a-uuid/patterns",
             headers=auth_headers,
         )
 
@@ -192,7 +194,7 @@ class TestGetWeeklyPatterns:
     ):
         """Test patterns include is_protected flag correctly."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
 
@@ -239,7 +241,7 @@ class TestGetWeeklyPatterns:
         db.commit()
 
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
 

@@ -20,7 +20,7 @@ class TestSchedulingCatalystRoutes:
         }
 
         response = client.post(
-            "/api/scheduling-catalyst/barriers/detect",
+            "/api/v1/scheduling-catalyst/barriers/detect",
             json=request_data,
             headers=auth_headers,
         )
@@ -43,7 +43,7 @@ class TestSchedulingCatalystRoutes:
         }
 
         response = client.post(
-            "/api/scheduling-catalyst/pathways/optimize",
+            "/api/v1/scheduling-catalyst/pathways/optimize",
             json=request_data,
             headers=auth_headers,
         )
@@ -64,7 +64,7 @@ class TestSchedulingCatalystRoutes:
         }
 
         response = client.post(
-            "/api/scheduling-catalyst/swaps/analyze",
+            "/api/v1/scheduling-catalyst/swaps/analyze",
             json=request_data,
             headers=auth_headers,
         )
@@ -79,7 +79,7 @@ class TestSchedulingCatalystRoutes:
     def test_get_catalyst_capacity(self, client: TestClient, auth_headers: dict):
         """Test catalyst capacity endpoint."""
         response = client.get(
-            "/api/scheduling-catalyst/capacity",
+            "/api/v1/scheduling-catalyst/capacity",
             headers=auth_headers,
         )
 
@@ -105,7 +105,7 @@ class TestSchedulingCatalystRoutes:
         }
 
         response = client.post(
-            "/api/scheduling-catalyst/batch/optimize",
+            "/api/v1/scheduling-catalyst/batch/optimize",
             json=request_data,
             headers=auth_headers,
         )
@@ -118,7 +118,7 @@ class TestSchedulingCatalystRoutes:
 
     def test_unauthorized_access(self, client: TestClient):
         """Test that unauthenticated requests are rejected."""
-        response = client.get("/api/scheduling-catalyst/capacity")
+        response = client.get("/api/v1/scheduling-catalyst/capacity")
 
         assert response.status_code == 401
 

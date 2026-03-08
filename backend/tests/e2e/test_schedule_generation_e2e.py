@@ -176,7 +176,7 @@ class TestScheduleGenerationWorkflow:
 
         # Step 1: Generate schedule using greedy algorithm
         generate_response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "start_date": setup["start_date"].isoformat(),
                 "end_date": setup["end_date"].isoformat(),
@@ -221,7 +221,7 @@ class TestScheduleGenerationWorkflow:
 
             # Step 4: Export to CSV
             csv_response = client.get(
-                "/api/export/assignments",
+                "/api/v1/export/assignments",
                 params={
                     "format": "csv",
                     "start_date": setup["start_date"].isoformat(),
@@ -234,7 +234,7 @@ class TestScheduleGenerationWorkflow:
 
             # Step 5: Export to JSON
             json_response = client.get(
-                "/api/export/assignments",
+                "/api/v1/export/assignments",
                 params={
                     "format": "json",
                     "start_date": setup["start_date"].isoformat(),
@@ -406,7 +406,7 @@ class TestScheduleGenerationWorkflow:
 
         # Export to CSV
         csv_response = client.get(
-            "/api/export/assignments",
+            "/api/v1/export/assignments",
             params={
                 "format": "csv",
                 "start_date": setup["start_date"].isoformat(),
@@ -417,7 +417,7 @@ class TestScheduleGenerationWorkflow:
 
         # Export to JSON
         json_response = client.get(
-            "/api/export/assignments",
+            "/api/v1/export/assignments",
             params={
                 "format": "json",
                 "start_date": setup["start_date"].isoformat(),
@@ -515,7 +515,7 @@ class TestScheduleGenerationWorkflow:
         """
         # Test 1: Invalid date range
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "start_date": "2025-12-31",
                 "end_date": "2025-01-01",  # End before start
@@ -527,7 +527,7 @@ class TestScheduleGenerationWorkflow:
 
         # Test 2: Invalid algorithm
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -540,7 +540,7 @@ class TestScheduleGenerationWorkflow:
 
         # Test 3: Missing required fields
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "algorithm": "greedy",
                 # Missing start_date and end_date

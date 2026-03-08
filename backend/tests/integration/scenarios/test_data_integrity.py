@@ -26,7 +26,7 @@ class TestDataIntegrityScenarios:
         """Test referential integrity is maintained."""
         # Try to delete person with assignments
         response = client.delete(
-            f"/api/people/{sample_assignment.person_id}",
+            f"/api/v1/people/{sample_assignment.person_id}",
             headers=auth_headers,
         )
 
@@ -49,7 +49,7 @@ class TestDataIntegrityScenarios:
         """Test unique constraints are enforced."""
         # Create person
         response1 = client.post(
-            "/api/people/",
+            "/api/v1/people/",
             json={
                 "name": "Dr. Unique",
                 "type": "resident",
@@ -62,7 +62,7 @@ class TestDataIntegrityScenarios:
 
         # Try to create duplicate email
         response2 = client.post(
-            "/api/people/",
+            "/api/v1/people/",
             json={
                 "name": "Dr. Duplicate",
                 "type": "resident",
@@ -116,7 +116,7 @@ class TestDataIntegrityScenarios:
 
         # Delete block
         response = client.delete(
-            f"/api/blocks/{block.id}",
+            f"/api/v1/blocks/{block.id}",
             headers=auth_headers,
         )
 
@@ -136,7 +136,7 @@ class TestDataIntegrityScenarios:
         """Test audit trail is maintained."""
         # Update assignment
         response = client.put(
-            f"/api/assignments/{sample_assignment.id}",
+            f"/api/v1/assignments/{sample_assignment.id}",
             json={"role": "backup"},
             headers=auth_headers,
         )
@@ -144,7 +144,7 @@ class TestDataIntegrityScenarios:
 
         # Check audit log
         audit_response = client.get(
-            f"/api/audit/?entity_id={sample_assignment.id}",
+            f"/api/v1/audit/?entity_id={sample_assignment.id}",
             headers=auth_headers,
         )
         assert audit_response.status_code in [200, 404]

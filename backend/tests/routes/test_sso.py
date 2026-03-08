@@ -39,7 +39,7 @@ class TestSSORoutes:
         </EntityDescriptor>"""
         mock_saml_provider.return_value = mock_provider
 
-        response = client.get("/api/sso/saml/metadata")
+        response = client.get("/api/v1/sso/saml/metadata")
         assert response.status_code == 200
         assert "xml" in response.headers.get("content-type", "")
 
@@ -52,7 +52,7 @@ class TestSSORoutes:
         """Test SAML metadata when SAML disabled."""
         mock_config.saml.enabled = False
 
-        response = client.get("/api/sso/saml/metadata")
+        response = client.get("/api/v1/sso/saml/metadata")
         assert response.status_code == 404
         assert "not enabled" in response.json()["detail"]
 
@@ -75,7 +75,7 @@ class TestSSORoutes:
         mock_saml_provider.return_value = mock_provider
 
         response = client.get(
-            "/api/sso/saml/login",
+            "/api/v1/sso/saml/login",
             follow_redirects=False,
         )
         assert response.status_code == 307  # Redirect
@@ -89,7 +89,7 @@ class TestSSORoutes:
         """Test SAML login when disabled."""
         mock_config.saml.enabled = False
 
-        response = client.get("/api/sso/saml/login")
+        response = client.get("/api/v1/sso/saml/login")
         assert response.status_code == 404
 
     @patch("app.api.routes.sso.sso_config")
@@ -102,7 +102,7 @@ class TestSSORoutes:
         mock_config.saml.enabled = False
 
         response = client.post(
-            "/api/sso/saml/acs",
+            "/api/v1/sso/saml/acs",
             data={"SAMLResponse": "base64encoded"},
         )
         assert response.status_code == 404
@@ -116,7 +116,7 @@ class TestSSORoutes:
         """Test SAML ACS without SAMLResponse."""
         mock_config.saml.enabled = True
 
-        response = client.post("/api/sso/saml/acs", data={})
+        response = client.post("/api/v1/sso/saml/acs", data={})
         assert response.status_code == 400
         assert "Missing SAMLResponse" in response.json()["detail"]
 
@@ -129,7 +129,7 @@ class TestSSORoutes:
         """Test SAML logout when disabled."""
         mock_config.saml.enabled = False
 
-        response = client.get("/api/sso/saml/logout?name_id=user@example.com")
+        response = client.get("/api/v1/sso/saml/logout?name_id=user@example.com")
         assert response.status_code == 404
 
     @patch("app.api.routes.sso.sso_config")
@@ -151,7 +151,7 @@ class TestSSORoutes:
         mock_saml_provider.return_value = mock_provider
 
         response = client.get(
-            "/api/sso/saml/logout?name_id=user@example.com",
+            "/api/v1/sso/saml/logout?name_id=user@example.com",
             follow_redirects=False,
         )
         assert response.status_code == 307
@@ -180,7 +180,7 @@ class TestSSORoutes:
         mock_oauth_provider.return_value = mock_provider
 
         response = client.get(
-            "/api/sso/oauth2/login",
+            "/api/v1/sso/oauth2/login",
             follow_redirects=False,
         )
         assert response.status_code == 307
@@ -194,7 +194,7 @@ class TestSSORoutes:
         """Test OAuth2 login when disabled."""
         mock_config.oauth2.enabled = False
 
-        response = client.get("/api/sso/oauth2/login")
+        response = client.get("/api/v1/sso/oauth2/login")
         assert response.status_code == 404
 
     @patch("app.api.routes.sso.sso_config")
@@ -206,7 +206,7 @@ class TestSSORoutes:
         """Test OAuth2 callback when disabled."""
         mock_config.oauth2.enabled = False
 
-        response = client.get("/api/sso/oauth2/callback?code=abc&state=xyz")
+        response = client.get("/api/v1/sso/oauth2/callback?code=abc&state=xyz")
         assert response.status_code == 404
 
     @patch("app.api.routes.sso._sso_sessions", {})
@@ -219,7 +219,7 @@ class TestSSORoutes:
         """Test OAuth2 callback with invalid state."""
         mock_config.oauth2.enabled = True
 
-        response = client.get("/api/sso/oauth2/callback?code=abc&state=invalid")
+        response = client.get("/api/v1/sso/oauth2/callback?code=abc&state=invalid")
         assert response.status_code == 400
         assert "Invalid state" in response.json()["detail"]
 
@@ -240,7 +240,7 @@ class TestSSORoutes:
         mock_config.enabled = True
         mock_config.allow_local_fallback = True
 
-        response = client.get("/api/sso/providers")
+        response = client.get("/api/v1/sso/providers")
         assert response.status_code == 200
 
         data = response.json()
@@ -260,7 +260,7 @@ class TestSSORoutes:
         mock_config.enabled = True
         mock_config.allow_local_fallback = True
 
-        response = client.get("/api/sso/providers")
+        response = client.get("/api/v1/sso/providers")
         assert response.status_code == 200
 
         data = response.json()
@@ -280,7 +280,7 @@ class TestSSORoutes:
         mock_config.enabled = True
         mock_config.allow_local_fallback = True
 
-        response = client.get("/api/sso/providers")
+        response = client.get("/api/v1/sso/providers")
         assert response.status_code == 200
 
         data = response.json()
@@ -299,7 +299,7 @@ class TestSSORoutes:
         mock_config.enabled = False
         mock_config.allow_local_fallback = True
 
-        response = client.get("/api/sso/providers")
+        response = client.get("/api/v1/sso/providers")
         assert response.status_code == 200
 
         data = response.json()
@@ -325,7 +325,7 @@ class TestSSORoutes:
         mock_config.saml.enabled = True
         mock_config.oauth2.enabled = True
 
-        response = client.get("/api/sso/status")
+        response = client.get("/api/v1/sso/status")
         assert response.status_code == 200
 
         data = response.json()
@@ -350,7 +350,7 @@ class TestSSORoutes:
         mock_config.saml.enabled = False
         mock_config.oauth2.enabled = False
 
-        response = client.get("/api/sso/status")
+        response = client.get("/api/v1/sso/status")
         assert response.status_code == 200
 
         data = response.json()

@@ -284,7 +284,7 @@ class TestListResidentWeeklyRequirements:
 
     def test_list_requirements_empty(self, client: TestClient, db: Session):
         """Test listing requirements when database is empty."""
-        response = client.get("/api/resident-weekly-requirements")
+        response = client.get("/api/v1/resident-weekly-requirements")
 
         assert response.status_code == 200
         data = response.json()
@@ -296,7 +296,7 @@ class TestListResidentWeeklyRequirements:
         self, client: TestClient, sample_weekly_requirement: ResidentWeeklyRequirement
     ):
         """Test listing requirements with data."""
-        response = client.get("/api/resident-weekly-requirements")
+        response = client.get("/api/v1/resident-weekly-requirements")
 
         assert response.status_code == 200
         data = response.json()
@@ -327,7 +327,7 @@ class TestListResidentWeeklyRequirements:
         db.commit()
 
         response = client.get(
-            "/api/resident-weekly-requirements?rotation_type=outpatient"
+            "/api/v1/resident-weekly-requirements?rotation_type=outpatient"
         )
 
         assert response.status_code == 200
@@ -343,7 +343,7 @@ class TestCreateResidentWeeklyRequirement:
     ):
         """Test creating a new requirement."""
         response = client.post(
-            "/api/resident-weekly-requirements",
+            "/api/v1/resident-weekly-requirements",
             json={
                 "rotation_template_id": str(outpatient_template.id),
                 "fm_clinic_min_per_week": 2,
@@ -360,7 +360,7 @@ class TestCreateResidentWeeklyRequirement:
     def test_create_requirement_template_not_found(self, client: TestClient):
         """Test creating requirement with non-existent template."""
         response = client.post(
-            "/api/resident-weekly-requirements",
+            "/api/v1/resident-weekly-requirements",
             json={
                 "rotation_template_id": str(uuid4()),
                 "fm_clinic_min_per_week": 2,
@@ -377,7 +377,7 @@ class TestCreateResidentWeeklyRequirement:
     ):
         """Test creating duplicate requirement for same template."""
         response = client.post(
-            "/api/resident-weekly-requirements",
+            "/api/v1/resident-weekly-requirements",
             json={
                 "rotation_template_id": str(outpatient_template.id),
                 "fm_clinic_min_per_week": 3,
@@ -399,7 +399,7 @@ class TestGetRequirementByTemplate:
     ):
         """Test getting requirement by template ID."""
         response = client.get(
-            f"/api/resident-weekly-requirements/by-template/{outpatient_template.id}"
+            f"/api/v1/resident-weekly-requirements/by-template/{outpatient_template.id}"
         )
 
         assert response.status_code == 200
@@ -410,7 +410,7 @@ class TestGetRequirementByTemplate:
     def test_get_requirement_template_not_found(self, client: TestClient):
         """Test getting requirement for non-existent template."""
         response = client.get(
-            f"/api/resident-weekly-requirements/by-template/{uuid4()}"
+            f"/api/v1/resident-weekly-requirements/by-template/{uuid4()}"
         )
 
         assert response.status_code == 404
@@ -420,7 +420,7 @@ class TestGetRequirementByTemplate:
     ):
         """Test getting requirement when none configured."""
         response = client.get(
-            f"/api/resident-weekly-requirements/by-template/{outpatient_template.id}"
+            f"/api/v1/resident-weekly-requirements/by-template/{outpatient_template.id}"
         )
 
         assert response.status_code == 404
@@ -435,7 +435,7 @@ class TestUpsertRequirementByTemplate:
     ):
         """Test creating requirement via upsert endpoint."""
         response = client.put(
-            f"/api/resident-weekly-requirements/by-template/{outpatient_template.id}",
+            f"/api/v1/resident-weekly-requirements/by-template/{outpatient_template.id}",
             json={"fm_clinic_min_per_week": 3},
         )
 
@@ -452,7 +452,7 @@ class TestUpsertRequirementByTemplate:
     ):
         """Test updating existing requirement via upsert."""
         response = client.put(
-            f"/api/resident-weekly-requirements/by-template/{outpatient_template.id}",
+            f"/api/v1/resident-weekly-requirements/by-template/{outpatient_template.id}",
             json={"fm_clinic_min_per_week": 4},
         )
 
@@ -472,14 +472,14 @@ class TestDeleteRequirementByTemplate:
     ):
         """Test deleting requirement by template."""
         response = client.delete(
-            f"/api/resident-weekly-requirements/by-template/{outpatient_template.id}"
+            f"/api/v1/resident-weekly-requirements/by-template/{outpatient_template.id}"
         )
 
         assert response.status_code == 204
 
         # Verify deleted
         response = client.get(
-            f"/api/resident-weekly-requirements/by-template/{outpatient_template.id}"
+            f"/api/v1/resident-weekly-requirements/by-template/{outpatient_template.id}"
         )
         assert response.status_code == 404
 
@@ -492,7 +492,7 @@ class TestBulkOutpatientDefaults:
     ):
         """Test applying ACGME-compliant defaults to outpatient templates."""
         response = client.post(
-            "/api/resident-weekly-requirements/bulk/outpatient-defaults"
+            "/api/v1/resident-weekly-requirements/bulk/outpatient-defaults"
         )
 
         assert response.status_code == 200
@@ -505,7 +505,7 @@ class TestBulkOutpatientDefaults:
     ):
         """Test dry run doesn't create requirements."""
         response = client.post(
-            "/api/resident-weekly-requirements/bulk/outpatient-defaults?dry_run=true"
+            "/api/v1/resident-weekly-requirements/bulk/outpatient-defaults?dry_run=true"
         )
 
         assert response.status_code == 200
@@ -515,7 +515,7 @@ class TestBulkOutpatientDefaults:
 
         # Verify not actually created
         response = client.get(
-            f"/api/resident-weekly-requirements/by-template/{outpatient_template.id}"
+            f"/api/v1/resident-weekly-requirements/by-template/{outpatient_template.id}"
         )
         assert response.status_code == 404
 

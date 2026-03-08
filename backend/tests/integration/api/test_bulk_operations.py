@@ -40,7 +40,7 @@ class TestBulkOperationsWorkflow:
                 )
 
         bulk_response = client.post(
-            "/api/blocks/bulk",
+            "/api/v1/blocks/bulk",
             json={"blocks": blocks_data},
             headers=auth_headers,
         )
@@ -81,7 +81,7 @@ class TestBulkOperationsWorkflow:
         ]
 
         bulk_response = client.post(
-            "/api/assignments/bulk",
+            "/api/v1/assignments/bulk",
             json={"assignments": assignments_data},
             headers=auth_headers,
         )
@@ -104,7 +104,7 @@ class TestBulkOperationsWorkflow:
         ]
 
         bulk_update_response = client.put(
-            "/api/blocks/bulk",
+            "/api/v1/blocks/bulk",
             json={"updates": update_data},
             headers=auth_headers,
         )
@@ -132,7 +132,7 @@ class TestBulkOperationsWorkflow:
 
         # Bulk delete
         delete_response = client.post(
-            "/api/blocks/bulk-delete",
+            "/api/v1/blocks/bulk-delete",
             json={"block_ids": block_ids},
             headers=auth_headers,
         )
@@ -146,7 +146,7 @@ class TestBulkOperationsWorkflow:
         """Test bulk import from CSV/Excel."""
         # Simulate CSV upload
         import_response = client.post(
-            "/api/imports/schedule",
+            "/api/v1/imports/schedule",
             files={
                 "file": (
                     "schedule.csv",
@@ -168,7 +168,7 @@ class TestBulkOperationsWorkflow:
         end_date = start_date + timedelta(days=30)
 
         export_response = client.get(
-            f"/api/exports/schedule/csv?start_date={start_date.isoformat()}&end_date={end_date.isoformat()}",
+            f"/api/v1/exports/schedule/csv?start_date={start_date.isoformat()}&end_date={end_date.isoformat()}",
             headers=auth_headers,
         )
         assert export_response.status_code in [200, 404]
@@ -193,7 +193,7 @@ class TestBulkOperationsWorkflow:
         ]
 
         validate_response = client.post(
-            "/api/assignments/bulk-validate",
+            "/api/v1/assignments/bulk-validate",
             json={"assignments": assignments_data},
             headers=auth_headers,
         )

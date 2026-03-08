@@ -143,7 +143,7 @@ class TestGetHeatmapData:
         end_date = date.today() + timedelta(days=6)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -169,7 +169,7 @@ class TestGetHeatmapData:
         end_date = date.today() + timedelta(days=1)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -188,7 +188,7 @@ class TestGetHeatmapData:
         end_date = date.today()
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -212,7 +212,7 @@ class TestGetHeatmapData:
         end_date = date.today() + timedelta(days=1)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -239,7 +239,7 @@ class TestGetHeatmapData:
         end_date = date.today() + timedelta(days=3)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -266,7 +266,7 @@ class TestGetHeatmapData:
         end_date = date.today() + timedelta(days=3)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -291,7 +291,7 @@ class TestGetHeatmapData:
         target_date = date.today()
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             params={
                 "start_date": target_date.isoformat(),
                 "end_date": target_date.isoformat(),
@@ -321,7 +321,7 @@ class TestGetHeatmapData:
         end_date = date.today() + timedelta(days=1)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -352,7 +352,7 @@ class TestPostHeatmapData:
         end_date = date.today() + timedelta(days=6)
 
         response = client.post(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             json={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -374,7 +374,7 @@ class TestPostHeatmapData:
         end_date = date.today() + timedelta(days=1)
 
         response = client.post(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             json={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -395,7 +395,7 @@ class TestPostHeatmapData:
         end_date = date.today()
 
         response = client.post(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             json={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -436,7 +436,7 @@ class TestGetHeatmapRender:
         end_date = date.today() + timedelta(days=6)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/render",
+            "/api/v1/unified-heatmap/heatmap/render",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -456,7 +456,7 @@ class TestGetHeatmapRender:
         end_date = date.today() + timedelta(days=1)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/render",
+            "/api/v1/unified-heatmap/heatmap/render",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -475,7 +475,7 @@ class TestGetHeatmapRender:
         end_date = date.today()
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/render",
+            "/api/v1/unified-heatmap/heatmap/render",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -505,7 +505,7 @@ class TestGetHeatmapRender:
         end_date = date.today() + timedelta(days=1)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/render",
+            "/api/v1/unified-heatmap/heatmap/render",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -541,7 +541,7 @@ class TestPostHeatmapRender:
         end_date = date.today() + timedelta(days=6)
 
         response = client.post(
-            "/api/unified-heatmap/heatmap/render",
+            "/api/v1/unified-heatmap/heatmap/render",
             json={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -558,7 +558,7 @@ class TestPostHeatmapRender:
     def test_post_render_heatmap_requires_auth(self, client: TestClient):
         """Test that POST render requires authentication."""
         response = client.post(
-            "/api/unified-heatmap/heatmap/render",
+            "/api/v1/unified-heatmap/heatmap/render",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=1)).isoformat(),
@@ -594,7 +594,7 @@ class TestGetHeatmapExport:
         end_date = date.today() + timedelta(days=6)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -627,7 +627,7 @@ class TestGetHeatmapExport:
         end_date = date.today() + timedelta(days=6)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -658,7 +658,7 @@ class TestGetHeatmapExport:
         end_date = date.today() + timedelta(days=6)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -674,7 +674,7 @@ class TestGetHeatmapExport:
     def test_export_heatmap_requires_auth(self, client: TestClient):
         """Test that export requires authentication."""
         response = client.get(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=1)).isoformat(),
@@ -694,7 +694,7 @@ class TestGetHeatmapExport:
         end_date = date.today()
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -722,7 +722,7 @@ class TestGetHeatmapExport:
         mock_export.side_effect = ValueError("Invalid format")
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=1)).isoformat(),
@@ -747,7 +747,7 @@ class TestGetHeatmapExport:
         mock_export.side_effect = Exception("Export failed")
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=1)).isoformat(),
@@ -772,7 +772,7 @@ class TestGetHeatmapExport:
         mock_export.return_value = b"custom_size_image"
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=1)).isoformat(),
@@ -812,7 +812,7 @@ class TestPostHeatmapExport:
         mock_export.return_value = b"fake_png_data"
 
         response = client.post(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=6)).isoformat(),
@@ -831,7 +831,7 @@ class TestPostHeatmapExport:
     def test_post_export_heatmap_requires_auth(self, client: TestClient):
         """Test that POST export requires authentication."""
         response = client.post(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=1)).isoformat(),
@@ -852,7 +852,7 @@ class TestPostHeatmapExport:
     ):
         """Test POST export with invalid format."""
         response = client.post(
-            "/api/unified-heatmap/heatmap/export",
+            "/api/v1/unified-heatmap/heatmap/export",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=1)).isoformat(),
@@ -899,7 +899,7 @@ class TestGetPersonCoverageData:
         end_date = date.today() + timedelta(days=6)
 
         response = client.get(
-            "/api/unified-heatmap/person-coverage/data",
+            "/api/v1/unified-heatmap/person-coverage/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -917,7 +917,7 @@ class TestGetPersonCoverageData:
     def test_get_person_coverage_requires_auth(self, client: TestClient):
         """Test that person coverage requires authentication."""
         response = client.get(
-            "/api/unified-heatmap/person-coverage/data",
+            "/api/v1/unified-heatmap/person-coverage/data",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=1)).isoformat(),
@@ -936,7 +936,7 @@ class TestGetPersonCoverageData:
         end_date = date.today()
 
         response = client.get(
-            "/api/unified-heatmap/person-coverage/data",
+            "/api/v1/unified-heatmap/person-coverage/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -969,7 +969,7 @@ class TestGetPersonCoverageData:
         }
 
         response = client.get(
-            "/api/unified-heatmap/person-coverage/data",
+            "/api/v1/unified-heatmap/person-coverage/data",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": date.today().isoformat(),
@@ -996,7 +996,7 @@ class TestGetPersonCoverageData:
         mock_generate.side_effect = Exception("Coverage calculation failed")
 
         response = client.get(
-            "/api/unified-heatmap/person-coverage/data",
+            "/api/v1/unified-heatmap/person-coverage/data",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=1)).isoformat(),
@@ -1036,7 +1036,7 @@ class TestPostPersonCoverageData:
         }
 
         response = client.post(
-            "/api/unified-heatmap/person-coverage/data",
+            "/api/v1/unified-heatmap/person-coverage/data",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=6)).isoformat(),
@@ -1054,7 +1054,7 @@ class TestPostPersonCoverageData:
     def test_post_person_coverage_requires_auth(self, client: TestClient):
         """Test that POST person coverage requires authentication."""
         response = client.post(
-            "/api/unified-heatmap/person-coverage/data",
+            "/api/v1/unified-heatmap/person-coverage/data",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=1)).isoformat(),
@@ -1075,7 +1075,7 @@ class TestPostPersonCoverageData:
         end_date = date.today()
 
         response = client.post(
-            "/api/unified-heatmap/person-coverage/data",
+            "/api/v1/unified-heatmap/person-coverage/data",
             json={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -1122,7 +1122,7 @@ class TestGetWeeklyFMITData:
         end_date = date.today() + timedelta(days=14)
 
         response = client.get(
-            "/api/unified-heatmap/weekly-fmit/data",
+            "/api/v1/unified-heatmap/weekly-fmit/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -1140,7 +1140,7 @@ class TestGetWeeklyFMITData:
     def test_get_weekly_fmit_requires_auth(self, client: TestClient):
         """Test that weekly FMIT requires authentication."""
         response = client.get(
-            "/api/unified-heatmap/weekly-fmit/data",
+            "/api/v1/unified-heatmap/weekly-fmit/data",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=14)).isoformat(),
@@ -1159,7 +1159,7 @@ class TestGetWeeklyFMITData:
         end_date = date.today()
 
         response = client.get(
-            "/api/unified-heatmap/weekly-fmit/data",
+            "/api/v1/unified-heatmap/weekly-fmit/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -1186,7 +1186,7 @@ class TestGetWeeklyFMITData:
         mock_generate.side_effect = Exception("FMIT calculation failed")
 
         response = client.get(
-            "/api/unified-heatmap/weekly-fmit/data",
+            "/api/v1/unified-heatmap/weekly-fmit/data",
             params={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=14)).isoformat(),
@@ -1225,7 +1225,7 @@ class TestPostWeeklyFMITData:
         }
 
         response = client.post(
-            "/api/unified-heatmap/weekly-fmit/data",
+            "/api/v1/unified-heatmap/weekly-fmit/data",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=21)).isoformat(),
@@ -1241,7 +1241,7 @@ class TestPostWeeklyFMITData:
     def test_post_weekly_fmit_requires_auth(self, client: TestClient):
         """Test that POST weekly FMIT requires authentication."""
         response = client.post(
-            "/api/unified-heatmap/weekly-fmit/data",
+            "/api/v1/unified-heatmap/weekly-fmit/data",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=14)).isoformat(),
@@ -1260,7 +1260,7 @@ class TestPostWeeklyFMITData:
         end_date = date.today()
 
         response = client.post(
-            "/api/unified-heatmap/weekly-fmit/data",
+            "/api/v1/unified-heatmap/weekly-fmit/data",
             json={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -1295,7 +1295,7 @@ class TestHeatmapIntegration:
 
         # 1. Get heatmap data
         response = client.get(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -1319,7 +1319,7 @@ class TestHeatmapIntegration:
         end_date = date.today() + timedelta(days=1007)
 
         response = client.get(
-            "/api/unified-heatmap/heatmap/data",
+            "/api/v1/unified-heatmap/heatmap/data",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),

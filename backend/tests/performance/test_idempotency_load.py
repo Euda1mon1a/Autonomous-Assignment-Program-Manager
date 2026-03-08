@@ -68,7 +68,7 @@ class TestScheduleGenerationIdempotencyLoad:
         # Send 100 concurrent identical requests
         def make_request():
             return client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 json=schedule_data,
                 headers={"Idempotency-Key": idempotency_key},
             )
@@ -151,7 +151,7 @@ class TestScheduleGenerationIdempotencyLoad:
 
         # Initial request
         r1 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=schedule_data,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -161,7 +161,7 @@ class TestScheduleGenerationIdempotencyLoad:
         # Immediate retries (same connection)
         for _ in range(4):
             r = client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 json=schedule_data,
                 headers={"Idempotency-Key": idempotency_key},
             )
@@ -175,7 +175,7 @@ class TestScheduleGenerationIdempotencyLoad:
 
         def retry_request():
             return client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 json=schedule_data,
                 headers={"Idempotency-Key": idempotency_key},
             )
@@ -232,7 +232,7 @@ class TestScheduleGenerationIdempotencyLoad:
         responses = []
         for key in idempotency_keys:
             r = client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 json=schedule_data,
                 headers={"Idempotency-Key": key},
             )
@@ -280,7 +280,7 @@ class TestScheduleGenerationIdempotencyLoad:
         }
 
         r1 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=first_request,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -294,7 +294,7 @@ class TestScheduleGenerationIdempotencyLoad:
         }
 
         r2 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=second_request,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -343,7 +343,7 @@ class TestIdempotencyExpiry:
 
         # Create first schedule
         r1 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=schedule_data,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -374,7 +374,7 @@ class TestIdempotencyExpiry:
         }
 
         r2 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=schedule_data_2,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -578,7 +578,7 @@ class TestIdempotencyHeaderPropagation:
 
         # First request (original)
         r1 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=schedule_data,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -592,7 +592,7 @@ class TestIdempotencyHeaderPropagation:
 
         # Second request (replayed)
         r2 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=schedule_data,
             headers={"Idempotency-Key": idempotency_key},
         )

@@ -15,7 +15,7 @@ class TestMyScheduleEndpoint:
     ):
         """Test getting current user's schedule."""
         response = client.get(
-            "/api/portal/my/schedule",
+            "/api/v1/portal/my/schedule",
             headers=faculty_auth_headers,
         )
 
@@ -31,7 +31,7 @@ class TestMyScheduleEndpoint:
     ):
         """Test schedule when user has no faculty profile."""
         response = client.get(
-            "/api/portal/my/schedule",
+            "/api/v1/portal/my/schedule",
             headers=auth_headers,
         )
 
@@ -43,7 +43,7 @@ class TestMyScheduleEndpoint:
         # Should return 401, but current implementation has a bug where
         # it allows None user and then raises AttributeError
         with pytest.raises(AttributeError):
-            response = client.get("/api/portal/my/schedule")
+            response = client.get("/api/v1/portal/my/schedule")
 
     def test_get_my_schedule_with_conflicts(
         self,
@@ -55,7 +55,7 @@ class TestMyScheduleEndpoint:
     ):
         """Test schedule shows conflict information from conflict_alerts table."""
         response = client.get(
-            "/api/portal/my/schedule",
+            "/api/v1/portal/my/schedule",
             headers=faculty_auth_headers,
         )
 
@@ -76,7 +76,7 @@ class TestMySwapsEndpoint:
     def test_get_my_swaps(self, client: TestClient, faculty_auth_headers: dict):
         """Test getting user's swap requests."""
         response = client.get(
-            "/api/portal/my/swaps",
+            "/api/v1/portal/my/swaps",
             headers=faculty_auth_headers,
         )
 
@@ -89,7 +89,7 @@ class TestMySwapsEndpoint:
     def test_create_swap_request(self, client: TestClient, faculty_auth_headers: dict):
         """Test creating a new swap request."""
         response = client.post(
-            "/api/portal/my/swaps",
+            "/api/v1/portal/my/swaps",
             json={
                 "week_to_offload": (date.today() + timedelta(days=30)).isoformat(),
                 "reason": "Family commitment",
@@ -108,7 +108,7 @@ class TestMySwapsEndpoint:
     ):
         """Test creating swap request with specific target."""
         response = client.post(
-            "/api/portal/my/swaps",
+            "/api/v1/portal/my/swaps",
             json={
                 "week_to_offload": (date.today() + timedelta(days=30)).isoformat(),
                 "preferred_target_faculty_id": str(sample_faculty.id),
@@ -128,7 +128,7 @@ class TestMySwapsEndpoint:
     ):
         """Test that creating swap request with auto_find_candidates sends notifications."""
         response = client.post(
-            "/api/portal/my/swaps",
+            "/api/v1/portal/my/swaps",
             json={
                 "week_to_offload": (date.today() + timedelta(days=30)).isoformat(),
                 "reason": "Need to attend conference",
@@ -152,7 +152,7 @@ class TestSwapRespondEndpoint:
     ):
         """Test responding to non-existent swap."""
         response = client.post(
-            f"/api/portal/my/swaps/{uuid4()}/respond",
+            f"/api/v1/portal/my/swaps/{uuid4()}/respond",
             json={"accept": True},
             headers=faculty_auth_headers,
         )
@@ -165,7 +165,7 @@ class TestSwapRespondEndpoint:
     ):
         """Test responding with counter offer."""
         response = client.post(
-            f"/api/portal/my/swaps/{uuid4()}/respond",
+            f"/api/v1/portal/my/swaps/{uuid4()}/respond",
             json={
                 "accept": False,
                 "counter_offer_week": (date.today() + timedelta(days=45)).isoformat(),
@@ -183,7 +183,7 @@ class TestMyPreferencesEndpoint:
     def test_get_preferences(self, client: TestClient, faculty_auth_headers: dict):
         """Test getting user preferences."""
         response = client.get(
-            "/api/portal/my/preferences",
+            "/api/v1/portal/my/preferences",
             headers=faculty_auth_headers,
         )
 
@@ -197,7 +197,7 @@ class TestMyPreferencesEndpoint:
     def test_update_preferences(self, client: TestClient, faculty_auth_headers: dict):
         """Test updating user preferences."""
         response = client.put(
-            "/api/portal/my/preferences",
+            "/api/v1/portal/my/preferences",
             json={
                 "max_weeks_per_month": 1,
                 "notify_swap_requests": False,
@@ -216,7 +216,7 @@ class TestMyPreferencesEndpoint:
     ):
         """Test partial preference update."""
         response = client.put(
-            "/api/portal/my/preferences",
+            "/api/v1/portal/my/preferences",
             json={"notes": "Prefer mornings"},
             headers=faculty_auth_headers,
         )
@@ -230,7 +230,7 @@ class TestMyDashboardEndpoint:
     def test_get_dashboard(self, client: TestClient, faculty_auth_headers: dict):
         """Test getting dashboard view."""
         response = client.get(
-            "/api/portal/my/dashboard",
+            "/api/v1/portal/my/dashboard",
             headers=faculty_auth_headers,
         )
 
@@ -245,7 +245,7 @@ class TestMyDashboardEndpoint:
     def test_dashboard_stats(self, client: TestClient, faculty_auth_headers: dict):
         """Test dashboard statistics structure."""
         response = client.get(
-            "/api/portal/my/dashboard",
+            "/api/v1/portal/my/dashboard",
             headers=faculty_auth_headers,
         )
 
@@ -262,7 +262,7 @@ class TestMarketplaceEndpoint:
     def test_get_marketplace(self, client: TestClient, faculty_auth_headers: dict):
         """Test getting swap marketplace."""
         response = client.get(
-            "/api/portal/marketplace",
+            "/api/v1/portal/marketplace",
             headers=faculty_auth_headers,
         )
 
@@ -277,7 +277,7 @@ class TestMarketplaceEndpoint:
         # Should return 401, but current implementation has a bug where
         # it allows None user and then raises AttributeError
         with pytest.raises(AttributeError):
-            response = client.get("/api/portal/marketplace")
+            response = client.get("/api/v1/portal/marketplace")
 
 
 # Fixtures for faculty authentication
@@ -311,7 +311,7 @@ def faculty_user(db, sample_faculty):
 def faculty_auth_headers(client: TestClient, faculty_user) -> dict:
     """Get auth headers for faculty user."""
     response = client.post(
-        "/api/auth/login/json",
+        "/api/v1/auth/login/json",
         json={"username": faculty_user.username, "password": "testpass123"},
     )
     if response.status_code == 200:

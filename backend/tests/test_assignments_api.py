@@ -158,7 +158,7 @@ class TestAssignmentAuthenticationEnforcement:
 
     def test_list_assignments_requires_auth(self, client):
         """Test that listing assignments requires authentication."""
-        response = client.get("/api/assignments")
+        response = client.get("/api/v1/assignments")
         assert response.status_code == 401
         assert "Not authenticated" in response.json()["detail"]
 
@@ -182,13 +182,13 @@ class TestAssignmentAuthenticationEnforcement:
         db.refresh(assignment)
 
         # Try to get without auth
-        response = client.get(f"/api/assignments/{assignment.id}")
+        response = client.get(f"/api/v1/assignments/{assignment.id}")
         assert response.status_code == 401
 
     def test_create_assignment_requires_auth(self, client, sample_data):
         """Test that creating an assignment requires authentication."""
         response = client.post(
-            "/api/assignments",
+            "/api/v1/assignments",
             json={
                 "block_id": str(sample_data["blocks"][0].id),
                 "person_id": str(sample_data["resident"].id),
@@ -218,7 +218,7 @@ class TestAssignmentAuthenticationEnforcement:
 
         # Try to update without auth
         response = client.put(
-            f"/api/assignments/{assignment.id}",
+            f"/api/v1/assignments/{assignment.id}",
             json={
                 "role": "backup",
                 "updated_at": assignment.updated_at.isoformat(),
@@ -242,7 +242,7 @@ class TestAssignmentAuthenticationEnforcement:
         db.commit()
 
         # Try to delete without auth
-        response = client.delete(f"/api/assignments/{assignment.id}")
+        response = client.delete(f"/api/v1/assignments/{assignment.id}")
         assert response.status_code == 401
 
 
@@ -252,7 +252,7 @@ class TestAssignmentRoleBasedAccessControl:
     def test_faculty_cannot_create_assignment(self, client, sample_data, faculty_token):
         """Test that faculty users cannot create assignments."""
         response = client.post(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {faculty_token}"},
             json={
                 "block_id": str(sample_data["blocks"][0].id),
@@ -269,7 +269,7 @@ class TestAssignmentRoleBasedAccessControl:
     ):
         """Test that coordinator users can create assignments."""
         response = client.post(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {coordinator_token}"},
             json={
                 "block_id": str(sample_data["blocks"][0].id),
@@ -287,7 +287,7 @@ class TestAssignmentRoleBasedAccessControl:
     def test_admin_can_create_assignment(self, client, sample_data, admin_token):
         """Test that admin users can create assignments."""
         response = client.post(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             json={
                 "block_id": str(sample_data["blocks"][0].id),
@@ -304,7 +304,7 @@ class TestAssignmentRoleBasedAccessControl:
         """Test that faculty users can list assignments (read-only access)."""
         # Create an assignment first
         client.post(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             json={
                 "block_id": str(sample_data["blocks"][0].id),
@@ -316,7 +316,7 @@ class TestAssignmentRoleBasedAccessControl:
 
         # Faculty can list
         response = client.get(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {faculty_token}"},
         )
         assert response.status_code == 200
@@ -338,7 +338,7 @@ class TestACGMEValidationAtWriteTime:
         # Assign resident to many blocks (both AM and PM each day)
         for i, block in enumerate(blocks):
             response = client.post(
-                "/api/assignments",
+                "/api/v1/assignments",
                 headers={"Authorization": f"Bearer {admin_token}"},
                 json={
                     "block_id": str(block.id),
@@ -370,7 +370,7 @@ class TestACGMEValidationAtWriteTime:
         # Create many assignments
         for block in blocks[:-1]:
             client.post(
-                "/api/assignments",
+                "/api/v1/assignments",
                 headers={"Authorization": f"Bearer {admin_token}"},
                 json={
                     "block_id": str(block.id),
@@ -382,7 +382,7 @@ class TestACGMEValidationAtWriteTime:
 
         # Last one with override
         response = client.post(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             json={
                 "block_id": str(blocks[-1].id),
@@ -401,7 +401,7 @@ class TestACGMEValidationAtWriteTime:
             # Check that it was saved to notes
             assignment_id = data["id"]
             response = client.get(
-                f"/api/assignments/{assignment_id}",
+                f"/api/v1/assignments/{assignment_id}",
                 headers={"Authorization": f"Bearer {admin_token}"},
             )
             assert response.status_code == 200
@@ -413,7 +413,7 @@ class TestACGMEValidationAtWriteTime:
         """Test that updating assignments validates ACGME compliance."""
         # Create an assignment
         response = client.post(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             json={
                 "block_id": str(sample_data["blocks"][0].id),
@@ -429,7 +429,7 @@ class TestACGMEValidationAtWriteTime:
 
         # Update it
         response = client.put(
-            f"/api/assignments/{assignment_id}",
+            f"/api/v1/assignments/{assignment_id}",
             headers={"Authorization": f"Bearer {admin_token}"},
             json={
                 "role": "backup",
@@ -449,7 +449,7 @@ class TestOptimisticLocking:
         """Test that updating with a stale timestamp fails."""
         # Create an assignment
         response = client.post(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             json={
                 "block_id": str(sample_data["blocks"][0].id),
@@ -465,7 +465,7 @@ class TestOptimisticLocking:
 
         # Update it once
         response = client.put(
-            f"/api/assignments/{assignment_id}",
+            f"/api/v1/assignments/{assignment_id}",
             headers={"Authorization": f"Bearer {admin_token}"},
             json={
                 "role": "backup",
@@ -476,7 +476,7 @@ class TestOptimisticLocking:
 
         # Try to update with stale timestamp
         response = client.put(
-            f"/api/assignments/{assignment_id}",
+            f"/api/v1/assignments/{assignment_id}",
             headers={"Authorization": f"Bearer {admin_token}"},
             json={
                 "role": "supervising",
@@ -533,7 +533,7 @@ class TestAssignmentFiltering:
 
         for block, template in zip(blocks, templates):
             client.post(
-                "/api/assignments",
+                "/api/v1/assignments",
                 headers={"Authorization": f"Bearer {admin_token}"},
                 json={
                     "block_id": str(block.id),
@@ -545,7 +545,7 @@ class TestAssignmentFiltering:
 
         # Test filtering by on_call
         response = client.get(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             params={"rotation_type": "on_call"},
         )
@@ -557,7 +557,7 @@ class TestAssignmentFiltering:
 
         # Test filtering by clinic
         response = client.get(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             params={"rotation_type": "clinic"},
         )
@@ -569,7 +569,7 @@ class TestAssignmentFiltering:
 
         # Test filtering by inpatient
         response = client.get(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             params={"rotation_type": "inpatient"},
         )
@@ -581,7 +581,7 @@ class TestAssignmentFiltering:
 
         # Test with no filter - should return all assignments
         response = client.get(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert response.status_code == 200
@@ -611,7 +611,7 @@ class TestAssignmentFiltering:
 
         for block in blocks:
             client.post(
-                "/api/assignments",
+                "/api/v1/assignments",
                 headers={"Authorization": f"Bearer {admin_token}"},
                 json={
                     "block_id": str(block.id),
@@ -626,7 +626,7 @@ class TestAssignmentFiltering:
         end_date = (today + timedelta(days=2)).isoformat()
 
         response = client.get(
-            "/api/assignments",
+            "/api/v1/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             params={
                 "rotation_type": "on_call",

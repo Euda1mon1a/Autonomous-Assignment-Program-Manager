@@ -42,7 +42,7 @@ class TestChangelogRoutes:
             },
         ]
 
-        response = client.get("/api/changelog/versions")
+        response = client.get("/api/v1/changelog/versions")
         assert response.status_code == 200
 
         data = response.json()
@@ -59,7 +59,7 @@ class TestChangelogRoutes:
         """Test listing versions when none exist."""
         mock_generator.list_versions.return_value = []
 
-        response = client.get("/api/changelog/versions")
+        response = client.get("/api/v1/changelog/versions")
         assert response.status_code == 200
 
         data = response.json()
@@ -76,7 +76,7 @@ class TestChangelogRoutes:
         mock_generator.save_current_version.return_value = "1.2.0"
 
         response = client.post(
-            "/api/changelog/versions",
+            "/api/v1/changelog/versions",
             json={
                 "version": "1.2.0",
                 "schema": {
@@ -103,7 +103,7 @@ class TestChangelogRoutes:
         mock_generator.save_current_version.side_effect = Exception("Storage error")
 
         response = client.post(
-            "/api/changelog/versions",
+            "/api/v1/changelog/versions",
             json={
                 "schema": {"openapi": "3.0.0", "paths": {}},
             },
@@ -119,7 +119,7 @@ class TestChangelogRoutes:
         """Test deleting a version snapshot."""
         mock_generator.version_history.delete_version.return_value = True
 
-        response = client.delete("/api/changelog/versions/1.0.0")
+        response = client.delete("/api/v1/changelog/versions/1.0.0")
         assert response.status_code == 200
 
         data = response.json()
@@ -134,7 +134,7 @@ class TestChangelogRoutes:
         """Test deleting non-existent version."""
         mock_generator.version_history.delete_version.return_value = False
 
-        response = client.delete("/api/changelog/versions/9.9.9")
+        response = client.delete("/api/v1/changelog/versions/9.9.9")
         assert response.status_code == 404
 
     # ========================================================================
@@ -153,7 +153,7 @@ class TestChangelogRoutes:
         )
 
         response = client.post(
-            "/api/changelog/generate",
+            "/api/v1/changelog/generate",
             json={
                 "old_version": "1.0.0",
                 "new_version": "1.1.0",
@@ -176,7 +176,7 @@ class TestChangelogRoutes:
     ):
         """Test generating changelog with invalid format."""
         response = client.post(
-            "/api/changelog/generate",
+            "/api/v1/changelog/generate",
             json={
                 "old_version": "1.0.0",
                 "new_version": "1.1.0",
@@ -196,7 +196,7 @@ class TestChangelogRoutes:
         mock_generator.generate_from_versions.return_value = None
 
         response = client.post(
-            "/api/changelog/generate",
+            "/api/v1/changelog/generate",
             json={
                 "old_version": "1.0.0",
                 "new_version": "2.0.0",
@@ -215,7 +215,7 @@ class TestChangelogRoutes:
         mock_generator.generate_changelog.return_value = "# Changelog"
 
         response = client.post(
-            "/api/changelog/generate/schemas",
+            "/api/v1/changelog/generate/schemas",
             json={
                 "old_schema": {
                     "openapi": "3.0.0",
@@ -264,7 +264,7 @@ class TestChangelogRoutes:
         mock_generator.get_diff.return_value = mock_diff
 
         response = client.post(
-            "/api/changelog/diff",
+            "/api/v1/changelog/diff",
             json={
                 "old_version": "1.0.0",
                 "new_version": "1.1.0",
@@ -286,7 +286,7 @@ class TestChangelogRoutes:
         mock_generator.version_history.load_version.return_value = None
 
         response = client.post(
-            "/api/changelog/diff",
+            "/api/v1/changelog/diff",
             json={
                 "old_version": "0.0.1",
                 "new_version": "1.0.0",
@@ -319,7 +319,7 @@ class TestChangelogRoutes:
         mock_generator.get_diff.return_value = mock_diff
 
         response = client.post(
-            "/api/changelog/migration-guide",
+            "/api/v1/changelog/migration-guide",
             json={
                 "old_version": "1.0.0",
                 "new_version": "2.0.0",
@@ -359,7 +359,7 @@ class TestChangelogRoutes:
         mock_generator.get_diff.return_value = mock_diff
 
         response = client.post(
-            "/api/changelog/suggest-version",
+            "/api/v1/changelog/suggest-version",
             json={
                 "old_version": "1.0.0",
                 "new_version": "current",
@@ -380,7 +380,7 @@ class TestChangelogRoutes:
         client: TestClient,
     ):
         """Test getting current OpenAPI schema."""
-        response = client.get("/api/changelog/current")
+        response = client.get("/api/v1/changelog/current")
         assert response.status_code == 200
 
         data = response.json()

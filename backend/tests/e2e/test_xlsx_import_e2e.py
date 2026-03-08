@@ -235,7 +235,7 @@ class TestXLSXImportWorkflowE2E:
 
         # Step 2: Upload and analyze via API
         response = client.post(
-            "/api/schedule/import/analyze-file",
+            "/api/v1/schedule/import/analyze-file",
             files={
                 "file": (
                     "clinic_schedule.xlsx",
@@ -383,7 +383,7 @@ class TestXLSXImportWorkflowE2E:
         invalid_bytes = create_invalid_xlsx()
 
         response = client.post(
-            "/api/schedule/import/analyze-file",
+            "/api/v1/schedule/import/analyze-file",
             files={
                 "file": (
                     "corrupt.xlsx",
@@ -751,7 +751,7 @@ class TestXLSXImportEdgeCases:
         Expected: Should return 422 validation error.
         """
         response = client.post(
-            "/api/schedule/import/analyze-file",
+            "/api/v1/schedule/import/analyze-file",
             data={"file_type": "clinic"},
             headers=auth_headers,
         )

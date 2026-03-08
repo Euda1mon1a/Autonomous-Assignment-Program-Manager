@@ -92,7 +92,7 @@ def faculty_user(db: Session, sample_faculty: Person) -> User:
 def resident_auth_headers(client: TestClient, resident_user: User) -> dict:
     """Get auth headers for resident user."""
     response = client.post(
-        "/api/auth/login/json",
+        "/api/v1/auth/login/json",
         json={"username": resident_user.username, "password": "testpass123"},
     )
     if response.status_code == 200:
@@ -105,7 +105,7 @@ def resident_auth_headers(client: TestClient, resident_user: User) -> dict:
 def faculty_auth_headers(client: TestClient, faculty_user: User) -> dict:
     """Get auth headers for faculty user."""
     response = client.post(
-        "/api/auth/login/json",
+        "/api/v1/auth/login/json",
         json={"username": faculty_user.username, "password": "testpass123"},
     )
     if response.status_code == 200:
@@ -163,7 +163,7 @@ class TestMarketplaceViewAccess:
     ):
         """Test that faculty users can access the swap marketplace."""
         response = client.get(
-            "/api/portal/marketplace",
+            "/api/v1/portal/marketplace",
             headers=faculty_auth_headers,
         )
         # Should be 200 (success) or 403 for no faculty profile, not for role restriction
@@ -177,7 +177,7 @@ class TestMarketplaceViewAccess:
     ):
         """Test that residents cannot access marketplace by default (no flag)."""
         response = client.get(
-            "/api/portal/marketplace",
+            "/api/v1/portal/marketplace",
             headers=resident_auth_headers,
         )
         assert response.status_code == 403
@@ -191,7 +191,7 @@ class TestMarketplaceViewAccess:
     ):
         """Test that residents cannot access marketplace when flag excludes them."""
         response = client.get(
-            "/api/portal/marketplace",
+            "/api/v1/portal/marketplace",
             headers=resident_auth_headers,
         )
         assert response.status_code == 403
@@ -205,7 +205,7 @@ class TestMarketplaceViewAccess:
     ):
         """Test that residents can access marketplace when flag includes them."""
         response = client.get(
-            "/api/portal/marketplace",
+            "/api/v1/portal/marketplace",
             headers=resident_auth_headers,
         )
         # Should be 200 (success) or 403 for no faculty profile, not for role restriction
@@ -228,7 +228,7 @@ class TestMarketplacePostAccess:
     ):
         """Test that residents cannot post swaps to the marketplace."""
         response = client.post(
-            "/api/portal/my/swaps",
+            "/api/v1/portal/my/swaps",
             json={
                 "week_to_offload": (date.today() + timedelta(days=30)).isoformat(),
                 "reason": "Testing marketplace access",
@@ -248,7 +248,7 @@ class TestMarketplacePostAccess:
     ):
         """Test that residents can still request direct swaps with specific faculty."""
         response = client.post(
-            "/api/portal/my/swaps",
+            "/api/v1/portal/my/swaps",
             json={
                 "week_to_offload": (date.today() + timedelta(days=30)).isoformat(),
                 "preferred_target_faculty_id": str(sample_faculty.id),
@@ -266,7 +266,7 @@ class TestMarketplacePostAccess:
     ):
         """Test that faculty users can post to the marketplace."""
         response = client.post(
-            "/api/portal/my/swaps",
+            "/api/v1/portal/my/swaps",
             json={
                 "week_to_offload": (date.today() + timedelta(days=30)).isoformat(),
                 "reason": "Faculty marketplace test",
@@ -286,7 +286,7 @@ class TestMarketplacePostAccess:
     ):
         """Test that residents can post to marketplace when flag includes them."""
         response = client.post(
-            "/api/portal/my/swaps",
+            "/api/v1/portal/my/swaps",
             json={
                 "week_to_offload": (date.today() + timedelta(days=30)).isoformat(),
                 "reason": "Testing with flag enabled",
@@ -343,14 +343,14 @@ class TestFeatureFlagEdgeCases:
 
         # Login
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "disabled_test", "password": "testpass123"},
         )
         token = response.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
         # Try to access marketplace
-        response = client.get("/api/portal/marketplace", headers=headers)
+        response = client.get("/api/v1/portal/marketplace", headers=headers)
         assert response.status_code == 403
         assert "marketplace access" in response.json()["detail"].lower()
 
@@ -372,7 +372,7 @@ class TestFeatureFlagEdgeCases:
 
         # Admin should still be blocked by role targeting
         # (This verifies the feature flag logic is working correctly)
-        response = client.get("/api/portal/marketplace", headers=auth_headers)
+        response = client.get("/api/v1/portal/marketplace", headers=auth_headers)
         # Admin should get 403 because they're not in target_roles
         # Unless they have a faculty profile, then they'd get a different error
         assert response.status_code in [200, 403]
@@ -404,7 +404,7 @@ def admin_user(db: Session) -> User:
 def auth_headers(client: TestClient, admin_user: User) -> dict:
     """Get authentication headers for API requests."""
     response = client.post(
-        "/api/auth/login/json",
+        "/api/v1/auth/login/json",
         json={"username": "testadmin_marketplace", "password": "testpass123"},
     )
     if response.status_code == 200:

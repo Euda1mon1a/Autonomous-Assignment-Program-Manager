@@ -59,7 +59,7 @@ def admin_user_token(db):
     return token
 
 
-API_PREFIX = "/api/v1"
+API_PREFIX = "/api/v1/v1"
 
 
 class TestProfilingEndpointSecurity:

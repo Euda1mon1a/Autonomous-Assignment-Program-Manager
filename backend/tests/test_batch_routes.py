@@ -27,7 +27,7 @@ class TestBatchCreateEndpoint:
     def test_batch_create_requires_auth(self, client: TestClient):
         """Test that batch create requires authentication."""
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             json={
                 "assignments": [],
                 "dry_run": False,
@@ -54,7 +54,7 @@ class TestBatchCreateEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/batch/create",
+                "/api/v1/batch/create",
                 json={
                     "assignments": [],
                     "dry_run": False,
@@ -90,7 +90,7 @@ class TestBatchCreateEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/batch/create",
+                "/api/v1/batch/create",
                 json={
                     "assignments": [
                         {
@@ -131,7 +131,7 @@ class TestBatchCreateEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/batch/create",
+                "/api/v1/batch/create",
                 json={
                     "assignments": [
                         {
@@ -166,7 +166,7 @@ class TestBatchCreateEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/batch/create",
+                "/api/v1/batch/create",
                 json={
                     "assignments": [
                         {
@@ -191,7 +191,7 @@ class TestBatchUpdateEndpoint:
     def test_batch_update_requires_auth(self, client: TestClient):
         """Test that batch update requires authentication."""
         response = client.put(
-            "/api/batch/update",
+            "/api/v1/batch/update",
             json={
                 "assignments": [],
                 "dry_run": False,
@@ -217,7 +217,7 @@ class TestBatchUpdateEndpoint:
 
             assignment_id = str(uuid4())
             response = client.put(
-                "/api/batch/update",
+                "/api/v1/batch/update",
                 json={
                     "assignments": [
                         {
@@ -250,7 +250,7 @@ class TestBatchUpdateEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.put(
-                "/api/batch/update",
+                "/api/v1/batch/update",
                 json={
                     "assignments": [
                         {
@@ -272,7 +272,7 @@ class TestBatchDeleteEndpoint:
     def test_batch_delete_requires_auth(self, client: TestClient):
         """Test that batch delete requires authentication."""
         response = client.delete(
-            "/api/batch/delete",
+            "/api/v1/batch/delete",
             json={
                 "assignments": [],
                 "dry_run": False,
@@ -300,7 +300,7 @@ class TestBatchDeleteEndpoint:
             # Use request method for DELETE with body
             response = client.request(
                 "DELETE",
-                "/api/batch/delete",
+                "/api/v1/batch/delete",
                 json={
                     "assignments": [
                         {
@@ -333,7 +333,7 @@ class TestBatchDeleteEndpoint:
 
             response = client.request(
                 "DELETE",
-                "/api/batch/delete",
+                "/api/v1/batch/delete",
                 json={
                     "assignments": [
                         {
@@ -355,7 +355,7 @@ class TestBatchStatusEndpoint:
     def test_batch_status_requires_auth(self, client: TestClient):
         """Test that batch status requires authentication."""
         operation_id = str(uuid4())
-        response = client.get(f"/api/batch/status/{operation_id}")
+        response = client.get(f"/api/v1/batch/status/{operation_id}")
 
         assert response.status_code in [401, 403]
 
@@ -376,7 +376,7 @@ class TestBatchStatusEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.get(
-                f"/api/batch/status/{operation_id}",
+                f"/api/v1/batch/status/{operation_id}",
                 headers=auth_headers,
             )
 
@@ -399,7 +399,7 @@ class TestBatchStatusEndpoint:
             mock_service.return_value = mock_instance
 
             response = client.get(
-                f"/api/batch/status/{operation_id}",
+                f"/api/v1/batch/status/{operation_id}",
                 headers=auth_headers,
             )
 
@@ -414,7 +414,7 @@ class TestBatchStatusEndpoint:
 
             operation_id = str(uuid4())
             response = client.get(
-                f"/api/batch/status/{operation_id}",
+                f"/api/v1/batch/status/{operation_id}",
                 headers=auth_headers,
             )
 
@@ -443,7 +443,7 @@ class TestBatchValidation:
         ]
 
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             json={
                 "assignments": assignments,
                 "dry_run": False,
@@ -472,7 +472,7 @@ class TestBatchValidation:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/batch/create",
+                "/api/v1/batch/create",
                 json={
                     "assignments": [],
                     "dry_run": False,
@@ -518,7 +518,7 @@ class TestBatchIntegration:
 
             # Test create
             response = client.post(
-                "/api/batch/create",
+                "/api/v1/batch/create",
                 json={"assignments": [], "dry_run": False},
                 headers=auth_headers,
             )
@@ -526,7 +526,7 @@ class TestBatchIntegration:
 
             # Test update
             response = client.put(
-                "/api/batch/update",
+                "/api/v1/batch/update",
                 json={"assignments": [], "dry_run": False},
                 headers=auth_headers,
             )
@@ -534,7 +534,7 @@ class TestBatchIntegration:
 
             # Test status
             response = client.get(
-                f"/api/batch/status/{operation_id}",
+                f"/api/v1/batch/status/{operation_id}",
                 headers=auth_headers,
             )
             assert response.status_code not in [405]
@@ -562,7 +562,7 @@ class TestBatchIntegration:
             mock_service.return_value = mock_instance
 
             response = client.post(
-                "/api/batch/create",
+                "/api/v1/batch/create",
                 json={
                     "assignments": [
                         {

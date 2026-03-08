@@ -29,7 +29,7 @@ class TestQueueRoutes:
     def test_submit_task_requires_auth(self, client: TestClient):
         """Test that task submission requires authentication."""
         response = client.post(
-            "/api/queue/tasks/submit",
+            "/api/v1/queue/tasks/submit",
             json={
                 "task_name": "app.tasks.process",
                 "args": [1, 2],
@@ -39,25 +39,25 @@ class TestQueueRoutes:
 
     def test_get_task_status_requires_auth(self, client: TestClient):
         """Test that task status requires authentication."""
-        response = client.get(f"/api/queue/tasks/{uuid4()}/status")
+        response = client.get(f"/api/v1/queue/tasks/{uuid4()}/status")
         assert response.status_code == 401
 
     def test_cancel_task_requires_auth(self, client: TestClient):
         """Test that task cancellation requires authentication."""
         response = client.post(
-            "/api/queue/tasks/cancel",
+            "/api/v1/queue/tasks/cancel",
             json={"task_id": str(uuid4())},
         )
         assert response.status_code == 401
 
     def test_queue_stats_requires_auth(self, client: TestClient):
         """Test that queue stats requires authentication."""
-        response = client.get("/api/queue/queues/stats")
+        response = client.get("/api/v1/queue/queues/stats")
         assert response.status_code == 401
 
     def test_worker_health_requires_auth(self, client: TestClient):
         """Test that worker health requires authentication."""
-        response = client.get("/api/queue/workers/health")
+        response = client.get("/api/v1/queue/workers/health")
         assert response.status_code == 401
 
     # ========================================================================
@@ -78,7 +78,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/submit",
+            "/api/v1/queue/tasks/submit",
             headers=auth_headers,
             json={
                 "task_name": "app.tasks.process_data",
@@ -107,7 +107,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/submit",
+            "/api/v1/queue/tasks/submit",
             headers=auth_headers,
             json={
                 "task_name": "app.tasks.delayed_task",
@@ -131,7 +131,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/submit-chain",
+            "/api/v1/queue/tasks/submit-chain",
             headers=auth_headers,
             json={
                 "tasks": [
@@ -161,7 +161,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/submit-group",
+            "/api/v1/queue/tasks/submit-group",
             headers=auth_headers,
             json={
                 "tasks": [
@@ -190,7 +190,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/submit-with-dependencies",
+            "/api/v1/queue/tasks/submit-with-dependencies",
             headers=auth_headers,
             json={
                 "task_name": "aggregate_results",
@@ -223,7 +223,7 @@ class TestQueueRoutes:
         }
 
         response = client.get(
-            f"/api/queue/tasks/{task_id}/status",
+            f"/api/v1/queue/tasks/{task_id}/status",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -249,7 +249,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.get(
-            f"/api/queue/tasks/{task_id}/progress",
+            f"/api/v1/queue/tasks/{task_id}/progress",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -272,7 +272,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/cancel",
+            "/api/v1/queue/tasks/cancel",
             headers=auth_headers,
             json={"task_id": task_id, "terminate": False},
         )
@@ -294,7 +294,7 @@ class TestQueueRoutes:
         mock_retry.return_value = new_id
 
         response = client.post(
-            "/api/queue/tasks/retry",
+            "/api/v1/queue/tasks/retry",
             headers=auth_headers,
             json={"task_id": original_id, "countdown": 60},
         )
@@ -325,7 +325,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.get(
-            "/api/queue/queues/stats",
+            "/api/v1/queue/queues/stats",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -339,7 +339,7 @@ class TestQueueRoutes:
     ):
         """Test queue purge requires confirmation."""
         response = client.post(
-            "/api/queue/queues/purge",
+            "/api/v1/queue/queues/purge",
             headers=auth_headers,
             json={"queue_name": "test_queue", "confirm": False},
         )
@@ -359,7 +359,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/queues/purge",
+            "/api/v1/queue/queues/purge",
             headers=auth_headers,
             json={"queue_name": "test_queue", "confirm": True},
         )
@@ -389,7 +389,7 @@ class TestQueueRoutes:
         mock_worker_manager.return_value = mock_manager
 
         response = client.get(
-            "/api/queue/workers/health",
+            "/api/v1/queue/workers/health",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -410,7 +410,7 @@ class TestQueueRoutes:
         mock_worker_manager.return_value = mock_manager
 
         response = client.get(
-            "/api/queue/workers/stats",
+            "/api/v1/queue/workers/stats",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -428,7 +428,7 @@ class TestQueueRoutes:
         mock_worker_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/workers/control",
+            "/api/v1/queue/workers/control",
             headers=auth_headers,
             json={
                 "worker_name": "celery@worker1",
@@ -451,7 +451,7 @@ class TestQueueRoutes:
     ):
         """Test worker control with invalid action."""
         response = client.post(
-            "/api/queue/workers/control",
+            "/api/v1/queue/workers/control",
             headers=auth_headers,
             json={
                 "worker_name": "celery@worker1",
@@ -479,7 +479,7 @@ class TestQueueRoutes:
         mock_scheduler.return_value = mock_sched
 
         response = client.post(
-            "/api/queue/schedule/task",
+            "/api/v1/queue/schedule/task",
             headers=auth_headers,
             json={
                 "task_name": "send_reminder",
@@ -504,7 +504,7 @@ class TestQueueRoutes:
         mock_scheduler.return_value = mock_sched
 
         response = client.post(
-            "/api/queue/schedule/periodic",
+            "/api/v1/queue/schedule/periodic",
             headers=auth_headers,
             json={
                 "name": "daily-cleanup",
@@ -535,7 +535,7 @@ class TestQueueRoutes:
         mock_scheduler.return_value = mock_sched
 
         response = client.get(
-            "/api/queue/schedule/periodic",
+            "/api/v1/queue/schedule/periodic",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -553,7 +553,7 @@ class TestQueueRoutes:
         mock_scheduler.return_value = mock_sched
 
         response = client.post(
-            "/api/queue/schedule/periodic/control",
+            "/api/v1/queue/schedule/periodic/control",
             headers=auth_headers,
             json={"name": "daily-cleanup", "action": "disable"},
         )

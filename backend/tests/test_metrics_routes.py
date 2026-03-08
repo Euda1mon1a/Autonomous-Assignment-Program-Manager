@@ -32,7 +32,7 @@ class TestMetricsHealthEndpoint:
             mock_metrics._enabled = True
             mock_get_metrics.return_value = mock_metrics
 
-            response = client.get("/api/metrics/health")
+            response = client.get("/api/v1/metrics/health")
 
             assert response.status_code == 200
             data = response.json()
@@ -46,7 +46,7 @@ class TestMetricsHealthEndpoint:
             mock_metrics._enabled = False
             mock_get_metrics.return_value = mock_metrics
 
-            response = client.get("/api/metrics/health")
+            response = client.get("/api/v1/metrics/health")
 
             assert response.status_code == 200
             data = response.json()
@@ -60,7 +60,7 @@ class TestMetricsHealthEndpoint:
             mock_metrics._enabled = True
             mock_get_metrics.return_value = mock_metrics
 
-            response = client.get("/api/metrics/health")
+            response = client.get("/api/v1/metrics/health")
 
             if response.status_code == 200:
                 data = response.json()
@@ -76,7 +76,7 @@ class TestMetricsInfoEndpoint:
 
     def test_info_success(self, client: TestClient):
         """Test successful metrics info retrieval."""
-        response = client.get("/api/metrics/info")
+        response = client.get("/api/v1/metrics/info")
 
         assert response.status_code == 200
         data = response.json()
@@ -86,7 +86,7 @@ class TestMetricsInfoEndpoint:
 
     def test_info_has_all_categories(self, client: TestClient):
         """Test metrics info includes all expected categories."""
-        response = client.get("/api/metrics/info")
+        response = client.get("/api/v1/metrics/info")
 
         if response.status_code == 200:
             data = response.json()
@@ -105,7 +105,7 @@ class TestMetricsInfoEndpoint:
 
     def test_info_metric_documentation(self, client: TestClient):
         """Test that metric documentation is complete."""
-        response = client.get("/api/metrics/info")
+        response = client.get("/api/v1/metrics/info")
 
         if response.status_code == 200:
             data = response.json()
@@ -128,7 +128,7 @@ class TestMetricsExportEndpoint:
                 b"# HELP test_metric Test\n# TYPE test_metric counter\ntest_metric 1\n"
             )
 
-            response = client.get("/api/metrics/export")
+            response = client.get("/api/v1/metrics/export")
 
             assert response.status_code == 200
             assert "text/plain" in response.headers["content-type"]
@@ -144,7 +144,7 @@ class TestMetricsExportEndpoint:
                 pass
 
             # The endpoint may catch ImportError
-            response = client.get("/api/metrics/export")
+            response = client.get("/api/v1/metrics/export")
 
             # Should return 503 or 500 if prometheus not available
             assert response.status_code in [200, 500, 503]
@@ -160,7 +160,7 @@ class TestMetricsSummaryEndpoint:
             mock_metrics._enabled = True
             mock_get_metrics.return_value = mock_metrics
 
-            response = client.get("/api/metrics/summary")
+            response = client.get("/api/v1/metrics/summary")
 
             assert response.status_code == 200
             data = response.json()
@@ -174,7 +174,7 @@ class TestMetricsSummaryEndpoint:
             mock_metrics._enabled = False
             mock_get_metrics.return_value = mock_metrics
 
-            response = client.get("/api/metrics/summary")
+            response = client.get("/api/v1/metrics/summary")
 
             assert response.status_code == 200
             data = response.json()
@@ -187,7 +187,7 @@ class TestMetricsSummaryEndpoint:
             mock_metrics._enabled = True
             mock_get_metrics.return_value = mock_metrics
 
-            response = client.get("/api/metrics/summary")
+            response = client.get("/api/v1/metrics/summary")
 
             if response.status_code == 200:
                 data = response.json()
@@ -208,7 +208,7 @@ class TestMetricsResetEndpoint:
             settings.DEBUG = False
             mock_settings.return_value = settings
 
-            response = client.post("/api/metrics/reset")
+            response = client.post("/api/v1/metrics/reset")
 
             assert response.status_code == 403
 
@@ -219,7 +219,7 @@ class TestMetricsResetEndpoint:
             settings.DEBUG = True
             mock_settings.return_value = settings
 
-            response = client.post("/api/metrics/reset")
+            response = client.post("/api/v1/metrics/reset")
 
             assert response.status_code == 200
             data = response.json()
@@ -243,9 +243,9 @@ class TestMetricsIntegration:
             mock_get_metrics.return_value = mock_metrics
 
             endpoints = [
-                "/api/metrics/health",
-                "/api/metrics/info",
-                "/api/metrics/summary",
+                "/api/v1/metrics/health",
+                "/api/v1/metrics/info",
+                "/api/v1/metrics/summary",
             ]
 
             for url in endpoints:
@@ -260,9 +260,9 @@ class TestMetricsIntegration:
             mock_get_metrics.return_value = mock_metrics
 
             endpoints = [
-                "/api/metrics/health",
-                "/api/metrics/info",
-                "/api/metrics/summary",
+                "/api/v1/metrics/health",
+                "/api/v1/metrics/info",
+                "/api/v1/metrics/summary",
             ]
 
             for url in endpoints:
@@ -280,15 +280,15 @@ class TestMetricsIntegration:
             mock_get_metrics.return_value = mock_metrics
 
             # Check health
-            health_response = client.get("/api/metrics/health")
+            health_response = client.get("/api/v1/metrics/health")
             assert health_response.status_code == 200
 
             # Get info
-            info_response = client.get("/api/metrics/info")
+            info_response = client.get("/api/v1/metrics/info")
             assert info_response.status_code == 200
 
             # Get summary
-            summary_response = client.get("/api/metrics/summary")
+            summary_response = client.get("/api/v1/metrics/summary")
             assert summary_response.status_code == 200
 
 
@@ -302,7 +302,7 @@ class TestMetricsEdgeCases:
             mock_metrics._enabled = True
             mock_get_metrics.return_value = mock_metrics
 
-            response = client.get("/api/metrics/health")
+            response = client.get("/api/v1/metrics/health")
 
             assert response.status_code == 200
 
@@ -311,7 +311,7 @@ class TestMetricsEdgeCases:
         # Call multiple times to ensure consistency
         responses = []
         for _ in range(3):
-            response = client.get("/api/metrics/info")
+            response = client.get("/api/v1/metrics/info")
             if response.status_code == 200:
                 responses.append(response.json())
 

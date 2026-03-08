@@ -331,7 +331,7 @@ class TestIdempotencyEndpoint:
             "algorithm": "greedy",
         }
 
-        response = client.post("/api/schedule/generate", json=payload)
+        response = client.post("/api/v1/schedule/generate", json=payload)
         assert response.status_code in [200, 207]
 
         # No idempotency header in response
@@ -358,7 +358,7 @@ class TestIdempotencyEndpoint:
         idempotency_key = f"test-{uuid4()}"
 
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -395,7 +395,7 @@ class TestIdempotencyEndpoint:
 
         # First request
         response1 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -404,7 +404,7 @@ class TestIdempotencyEndpoint:
 
         # Second request with same key and body
         response2 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -436,7 +436,7 @@ class TestIdempotencyEndpoint:
             "algorithm": "greedy",
         }
         response1 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload1,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -451,7 +451,7 @@ class TestIdempotencyEndpoint:
             "algorithm": "greedy",
         }
         response2 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json=payload2,
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -491,7 +491,7 @@ class TestRowLevelLocking:
             "algorithm": "greedy",
         }
 
-        response1 = client.post("/api/schedule/generate", json=payload)
+        response1 = client.post("/api/v1/schedule/generate", json=payload)
         assert response1.status_code in [200, 207]
 
         # Count assignments
@@ -506,7 +506,7 @@ class TestRowLevelLocking:
         )
 
         # Second generation (should delete old and create new)
-        response2 = client.post("/api/schedule/generate", json=payload)
+        response2 = client.post("/api/v1/schedule/generate", json=payload)
         assert response2.status_code in [200, 207]
 
         # Should still have similar count (old deleted, new created)
@@ -560,7 +560,7 @@ class TestRowLevelLocking:
             "algorithm": "greedy",
         }
 
-        response = client.post("/api/schedule/generate", json=payload)
+        response = client.post("/api/v1/schedule/generate", json=payload)
 
         # Should be rejected
         assert response.status_code == 409
@@ -587,7 +587,7 @@ class TestOptimisticLocking:
         }
 
         response = client.put(
-            f"/api/assignments/{sample_assignment.id}",
+            f"/api/v1/assignments/{sample_assignment.id}",
             json=update_payload,
             headers=auth_headers,
         )
@@ -612,7 +612,7 @@ class TestOptimisticLocking:
         }
 
         response = client.put(
-            f"/api/assignments/{sample_assignment.id}",
+            f"/api/v1/assignments/{sample_assignment.id}",
             json=update_payload,
             headers=auth_headers,
         )

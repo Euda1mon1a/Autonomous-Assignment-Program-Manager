@@ -36,7 +36,7 @@ class TestGenerateSchedule:
             "algorithm": "greedy",
         }
 
-        response = client.post("/api/schedule/generate", json=payload)
+        response = client.post("/api/v1/schedule/generate", json=payload)
         # Issue #5: Now returns 200 for success, 207 for partial, 422 for failure
         assert response.status_code in [200, 207]
 
@@ -67,7 +67,7 @@ class TestGenerateSchedule:
             "algorithm": "greedy",
         }
 
-        response = client.post("/api/schedule/generate", json=payload)
+        response = client.post("/api/v1/schedule/generate", json=payload)
         # Issue #5: Now returns 200 for success, 207 for partial, 422 for failure
         assert response.status_code in [200, 207]
 
@@ -88,7 +88,7 @@ class TestGenerateSchedule:
             "end_date": end_date.isoformat(),
         }
 
-        response = client.post("/api/schedule/generate", json=payload)
+        response = client.post("/api/v1/schedule/generate", json=payload)
         # Issue #5: Failed generation now returns 422 Unprocessable Entity
         assert response.status_code == 422
 
@@ -103,7 +103,7 @@ class TestGenerateSchedule:
             "end_date": "2024-01-01",  # End before start
         }
 
-        response = client.post("/api/schedule/generate", json=payload)
+        response = client.post("/api/v1/schedule/generate", json=payload)
         # Should either return error or empty result
         assert response.status_code in [200, 400, 422]
 
@@ -145,7 +145,7 @@ class TestGenerateSchedule:
         }
 
         # Issue #1: Should reject with 409 Conflict when generation in progress
-        response = client.post("/api/schedule/generate", json=payload)
+        response = client.post("/api/v1/schedule/generate", json=payload)
         assert response.status_code == 409
         assert "in progress" in response.json()["detail"].lower()
 
@@ -159,7 +159,7 @@ class TestValidateSchedule:
         end_date = (date.today() + timedelta(days=6)).isoformat()
 
         response = client.get(
-            f"/api/schedule/validate?start_date={start_date}&end_date={end_date}"
+            f"/api/v1/schedule/validate?start_date={start_date}&end_date={end_date}"
         )
         assert response.status_code == 200
 
@@ -178,7 +178,7 @@ class TestValidateSchedule:
         end_date = (date.today() + timedelta(days=6)).isoformat()
 
         response = client.get(
-            f"/api/schedule/validate?start_date={start_date}&end_date={end_date}"
+            f"/api/v1/schedule/validate?start_date={start_date}&end_date={end_date}"
         )
         assert response.status_code == 200
 
@@ -190,7 +190,7 @@ class TestValidateSchedule:
     def test_validate_schedule_invalid_date_format(self, client: TestClient):
         """Should return 400 for invalid date format."""
         response = client.get(
-            "/api/schedule/validate?start_date=invalid&end_date=2024-01-07"
+            "/api/v1/schedule/validate?start_date=invalid&end_date=2024-01-07"
         )
         assert response.status_code == 400
         assert "date" in response.json()["detail"].lower()
@@ -222,7 +222,7 @@ class TestValidateSchedule:
         end_date = (date.today() + timedelta(days=6)).isoformat()
 
         response = client.get(
-            f"/api/schedule/validate?start_date={start_date}&end_date={end_date}"
+            f"/api/v1/schedule/validate?start_date={start_date}&end_date={end_date}"
         )
         assert response.status_code == 200
 
@@ -239,7 +239,7 @@ class TestGetSchedule:
         start_date = date.today().isoformat()
         end_date = (date.today() + timedelta(days=6)).isoformat()
 
-        response = client.get(f"/api/schedule/{start_date}/{end_date}")
+        response = client.get(f"/api/v1/schedule/{start_date}/{end_date}")
         assert response.status_code == 200
 
         data = response.json()
@@ -256,7 +256,7 @@ class TestGetSchedule:
         start_date = sample_block.date.isoformat()
         end_date = (sample_block.date + timedelta(days=1)).isoformat()
 
-        response = client.get(f"/api/schedule/{start_date}/{end_date}")
+        response = client.get(f"/api/v1/schedule/{start_date}/{end_date}")
         assert response.status_code == 200
 
         data = response.json()
@@ -270,7 +270,7 @@ class TestGetSchedule:
 
     def test_get_schedule_invalid_date_format(self, client: TestClient):
         """Should return 400 for invalid date format."""
-        response = client.get("/api/schedule/not-a-date/2024-01-07")
+        response = client.get("/api/v1/schedule/not-a-date/2024-01-07")
         assert response.status_code == 400
 
     def test_get_schedule_grouped_by_date(
@@ -297,7 +297,7 @@ class TestGetSchedule:
         start_date = date.today().isoformat()
         end_date = (date.today() + timedelta(days=6)).isoformat()
 
-        response = client.get(f"/api/schedule/{start_date}/{end_date}")
+        response = client.get(f"/api/v1/schedule/{start_date}/{end_date}")
         assert response.status_code == 200
 
         data = response.json()
@@ -327,7 +327,7 @@ class TestEmergencyCoverage:
             "is_deployment": False,
         }
 
-        response = client.post("/api/schedule/emergency-coverage", json=payload)
+        response = client.post("/api/v1/schedule/emergency-coverage", json=payload)
         assert response.status_code == 200
 
         data = response.json()
@@ -352,7 +352,7 @@ class TestEmergencyCoverage:
             "is_deployment": True,
         }
 
-        response = client.post("/api/schedule/emergency-coverage", json=payload)
+        response = client.post("/api/v1/schedule/emergency-coverage", json=payload)
         assert response.status_code == 200
 
         data = response.json()
@@ -368,6 +368,6 @@ class TestEmergencyCoverage:
             "reason": "Test",
         }
 
-        response = client.post("/api/schedule/emergency-coverage", json=payload)
+        response = client.post("/api/v1/schedule/emergency-coverage", json=payload)
         # Should either return 404 or handle gracefully
         assert response.status_code in [200, 404]

@@ -26,7 +26,7 @@ class TestAuthenticationRequired:
 
     def test_unauthenticated_request_returns_401(self, client: TestClient):
         """Requests without token return 401 Unauthorized."""
-        response = client.get("/api/schedules")
+        response = client.get("/api/v1/schedules")
         # May return 401 or 404 depending on endpoint configuration
         assert response.status_code in [
             status.HTTP_401_UNAUTHORIZED,
@@ -36,7 +36,7 @@ class TestAuthenticationRequired:
     def test_invalid_token_returns_401(self, client: TestClient):
         """Requests with invalid token return 401."""
         headers = {"Authorization": "Bearer invalid_token_here"}
-        response = client.get("/api/health", headers=headers)
+        response = client.get("/api/v1/health", headers=headers)
         # Health endpoint may be public, test a protected one
         # This test validates token verification works
 
@@ -72,8 +72,8 @@ class TestAdminAccess:
 
         # Test various endpoints that should be accessible
         endpoints = [
-            "/api/health",
-            "/api/users",  # Admin only endpoint
+            "/api/v1/health",
+            "/api/v1/users",  # Admin only endpoint
         ]
 
         for endpoint in endpoints:
@@ -110,7 +110,7 @@ class TestCoordinatorAccess:
     ):
         """Coordinator can access schedule management endpoints."""
         headers = {"Authorization": f"Bearer {coordinator_token}"}
-        response = client.get("/api/health", headers=headers)
+        response = client.get("/api/v1/health", headers=headers)
         # Should be able to access (may return 404 if endpoint doesn't exist)
         assert response.status_code != status.HTTP_403_FORBIDDEN
 
@@ -122,8 +122,8 @@ class TestCoordinatorAccess:
 
         # These endpoints should be admin-only
         admin_endpoints = [
-            "/api/users",  # User management
-            "/api/admin/settings",  # System settings
+            "/api/v1/users",  # User management
+            "/api/v1/admin/settings",  # System settings
         ]
 
         for endpoint in admin_endpoints:
@@ -163,7 +163,7 @@ class TestFacultyAccess:
     def test_faculty_can_read_schedules(self, client: TestClient, faculty_token: str):
         """Faculty can read schedules."""
         headers = {"Authorization": f"Bearer {faculty_token}"}
-        response = client.get("/api/health", headers=headers)
+        response = client.get("/api/v1/health", headers=headers)
         assert response.status_code != status.HTTP_403_FORBIDDEN
 
     def test_faculty_cannot_create_schedules(
@@ -173,7 +173,7 @@ class TestFacultyAccess:
         headers = {"Authorization": f"Bearer {faculty_token}"}
         # Attempt to create a schedule
         response = client.post(
-            "/api/schedules",
+            "/api/v1/schedules",
             headers=headers,
             json={"name": "Test Schedule", "start_date": "2024-01-01"},
         )
@@ -190,7 +190,7 @@ class TestFacultyAccess:
     ):
         """Faculty cannot delete assignments."""
         headers = {"Authorization": f"Bearer {faculty_token}"}
-        response = client.delete(f"/api/assignments/{uuid4()}", headers=headers)
+        response = client.delete(f"/api/v1/assignments/{uuid4()}", headers=headers)
         # Should be forbidden or not found
         assert response.status_code in [
             status.HTTP_403_FORBIDDEN,
@@ -226,7 +226,7 @@ class TestResidentAccess:
     ):
         """Resident can read their own schedule."""
         headers = {"Authorization": f"Bearer {resident_token}"}
-        response = client.get("/api/health", headers=headers)
+        response = client.get("/api/v1/health", headers=headers)
         assert response.status_code != status.HTTP_403_FORBIDDEN
 
     def test_resident_cannot_modify_schedules(
@@ -237,7 +237,7 @@ class TestResidentAccess:
 
         # Try to create schedule
         response = client.post(
-            "/api/schedules",
+            "/api/v1/schedules",
             headers=headers,
             json={"name": "Test", "start_date": "2024-01-01"},
         )
@@ -253,7 +253,7 @@ class TestResidentAccess:
         """Resident cannot approve leave requests."""
         headers = {"Authorization": f"Bearer {resident_token}"}
         response = client.post(
-            f"/api/leave/{uuid4()}/approve",
+            f"/api/v1/leave/{uuid4()}/approve",
             headers=headers,
         )
         # Should be forbidden or not found
@@ -291,7 +291,7 @@ class TestClinicalStaffAccess:
     ):
         """Clinical staff can read schedules."""
         headers = {"Authorization": f"Bearer {clinical_staff_token}"}
-        response = client.get("/api/health", headers=headers)
+        response = client.get("/api/v1/health", headers=headers)
         assert response.status_code != status.HTTP_403_FORBIDDEN
 
     def test_clinical_staff_cannot_modify_schedules(
@@ -300,7 +300,7 @@ class TestClinicalStaffAccess:
         """Clinical staff cannot modify schedules."""
         headers = {"Authorization": f"Bearer {clinical_staff_token}"}
         response = client.post(
-            "/api/schedules",
+            "/api/v1/schedules",
             headers=headers,
             json={"name": "Test", "start_date": "2024-01-01"},
         )
@@ -339,7 +339,7 @@ class TestInactiveUserAccess:
     ):
         """Inactive users are denied access even with valid token."""
         headers = {"Authorization": f"Bearer {inactive_user_token}"}
-        response = client.get("/api/health", headers=headers)
+        response = client.get("/api/v1/health", headers=headers)
         # Should be unauthorized (user is inactive)
         # May return 401 or 403 depending on implementation
         # The key is that it shouldn't succeed
@@ -431,14 +431,14 @@ class TestTokenValidation:
         )
 
         headers = {"Authorization": f"Bearer {token}"}
-        response = client.get("/api/health", headers=headers)
+        response = client.get("/api/v1/health", headers=headers)
         # Expired token should be rejected (401 or public endpoint succeeds)
         # Health endpoint may be public so this test is informational
 
     def test_malformed_token_rejected(self, client: TestClient):
         """Malformed tokens are rejected."""
         headers = {"Authorization": "Bearer not.a.valid.jwt.token.at.all"}
-        response = client.get("/api/health", headers=headers)
+        response = client.get("/api/v1/health", headers=headers)
         # Should reject malformed token (or health is public)
 
 
@@ -466,7 +466,7 @@ class TestPermissionEscalation:
 
         # Try to update own user role to admin
         response = client.patch(
-            f"/api/users/{user.id}",
+            f"/api/v1/users/{user.id}",
             headers=headers,
             json={"role": "admin"},
         )
@@ -500,7 +500,7 @@ class TestPermissionEscalation:
 
         # Try to create an admin user
         response = client.post(
-            "/api/users",
+            "/api/v1/users",
             headers=headers,
             json={
                 "username": "new_admin",
@@ -535,7 +535,7 @@ class TestSessionSecurity:
 
         # Login
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "logout_test", "password": "testpass123"},
         )
 
@@ -546,7 +546,7 @@ class TestSessionSecurity:
         headers = {"Authorization": f"Bearer {token}"}
 
         # Logout
-        logout_response = client.post("/api/auth/logout", headers=headers)
+        logout_response = client.post("/api/v1/auth/logout", headers=headers)
 
         if logout_response.status_code == 404:
             pytest.skip("Logout endpoint not available")

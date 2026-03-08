@@ -71,7 +71,7 @@ def regular_user(db: Session) -> User:
 def regular_user_headers(client: TestClient, regular_user: User) -> dict:
     """Get authentication headers for regular user."""
     response = client.post(
-        "/api/auth/login/json",
+        "/api/v1/auth/login/json",
         json={"username": "regularuser", "password": "testpass123"},
     )
     if response.status_code == 200:
@@ -108,7 +108,7 @@ class TestLoginEndpoint:
     def test_login_success(self, client: TestClient, admin_user: User):
         """Test successful login with valid credentials."""
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             data={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -122,7 +122,7 @@ class TestLoginEndpoint:
     def test_login_wrong_password(self, client: TestClient, admin_user: User):
         """Test login fails with incorrect password."""
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             data={"username": "testadmin", "password": "wrongpassword"},
         )
 
@@ -133,7 +133,7 @@ class TestLoginEndpoint:
     def test_login_nonexistent_user(self, client: TestClient):
         """Test login fails with non-existent username."""
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             data={"username": "nonexistent", "password": "testpass123"},
         )
 
@@ -143,7 +143,7 @@ class TestLoginEndpoint:
     def test_login_inactive_user(self, client: TestClient, inactive_user: User):
         """Test login fails for inactive user."""
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             data={"username": "inactive_user", "password": "testpass123"},
         )
 
@@ -152,7 +152,7 @@ class TestLoginEndpoint:
     def test_login_missing_username(self, client: TestClient):
         """Test login fails when username is missing."""
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             data={"password": "testpass123"},
         )
 
@@ -161,7 +161,7 @@ class TestLoginEndpoint:
     def test_login_missing_password(self, client: TestClient):
         """Test login fails when password is missing."""
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             data={"username": "testadmin"},
         )
 
@@ -170,7 +170,7 @@ class TestLoginEndpoint:
     def test_login_empty_credentials(self, client: TestClient):
         """Test login fails with empty credentials."""
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             data={"username": "", "password": ""},
         )
 
@@ -185,7 +185,7 @@ class TestLoginEndpoint:
 
         # Perform login
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             data={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -202,7 +202,7 @@ class TestLoginEndpoint:
     def test_login_token_is_valid_jwt(self, client: TestClient, admin_user: User):
         """Test that returned token is a valid JWT."""
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             data={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -235,7 +235,7 @@ class TestLoginJsonEndpoint:
     def test_login_json_success(self, client: TestClient, admin_user: User):
         """Test successful login with JSON credentials."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -247,7 +247,7 @@ class TestLoginJsonEndpoint:
     def test_login_json_wrong_password(self, client: TestClient, admin_user: User):
         """Test JSON login fails with incorrect password."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "wrongpassword"},
         )
 
@@ -258,7 +258,7 @@ class TestLoginJsonEndpoint:
     ):
         """Test that username is case-sensitive."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "TestAdmin", "password": "testpass123"},
         )
 
@@ -268,7 +268,7 @@ class TestLoginJsonEndpoint:
     def test_login_json_with_extra_fields(self, client: TestClient, admin_user: User):
         """Test login with extra fields in JSON body."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={
                 "username": "testadmin",
                 "password": "testpass123",
@@ -282,7 +282,7 @@ class TestLoginJsonEndpoint:
     def test_login_json_invalid_json(self, client: TestClient):
         """Test login fails with invalid JSON."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             data="invalid json",
             headers={"Content-Type": "application/json"},
         )
@@ -292,7 +292,7 @@ class TestLoginJsonEndpoint:
     def test_login_json_missing_fields(self, client: TestClient):
         """Test login fails when required fields are missing."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin"},
         )
 
@@ -309,7 +309,7 @@ class TestLogoutEndpoint:
 
     def test_logout_success(self, client: TestClient, auth_headers: dict, db: Session):
         """Test successful logout blacklists the token."""
-        response = client.post("/api/auth/logout", headers=auth_headers)
+        response = client.post("/api/v1/auth/logout", headers=auth_headers)
 
         assert response.status_code == 200
         assert response.json()["message"] == "Successfully logged out"
@@ -326,14 +326,14 @@ class TestLogoutEndpoint:
 
     def test_logout_requires_authentication(self, client: TestClient):
         """Test logout requires valid authentication."""
-        response = client.post("/api/auth/logout")
+        response = client.post("/api/v1/auth/logout")
 
         assert response.status_code == 401
 
     def test_logout_with_invalid_token(self, client: TestClient):
         """Test logout with invalid token."""
         response = client.post(
-            "/api/auth/logout", headers={"Authorization": "Bearer invalid_token"}
+            "/api/v1/auth/logout", headers={"Authorization": "Bearer invalid_token"}
         )
 
         assert response.status_code == 401
@@ -343,17 +343,17 @@ class TestLogoutEndpoint:
     ):
         """Test that token cannot be used after logout."""
         # First, logout
-        response = client.post("/api/auth/logout", headers=auth_headers)
+        response = client.post("/api/v1/auth/logout", headers=auth_headers)
         assert response.status_code == 200
 
         # Try to use the same token
-        response = client.get("/api/auth/me", headers=auth_headers)
+        response = client.get("/api/v1/auth/me", headers=auth_headers)
         assert response.status_code == 401
 
     def test_logout_without_bearer_prefix(self, client: TestClient):
         """Test logout fails without Bearer prefix in Authorization header."""
         response = client.post(
-            "/api/auth/logout", headers={"Authorization": "some_token"}
+            "/api/v1/auth/logout", headers={"Authorization": "some_token"}
         )
 
         assert response.status_code == 401
@@ -369,7 +369,7 @@ class TestLogoutEndpoint:
         )
 
         response = client.post(
-            "/api/auth/logout", headers={"Authorization": f"Bearer {token}"}
+            "/api/v1/auth/logout", headers={"Authorization": f"Bearer {token}"}
         )
 
         # Should fail because user is inactive
@@ -388,7 +388,7 @@ class TestGetCurrentUserEndpoint:
         self, client: TestClient, auth_headers: dict, admin_user: User
     ):
         """Test getting current user information."""
-        response = client.get("/api/auth/me", headers=auth_headers)
+        response = client.get("/api/v1/auth/me", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -403,14 +403,14 @@ class TestGetCurrentUserEndpoint:
 
     def test_get_me_requires_authentication(self, client: TestClient):
         """Test /me endpoint requires authentication."""
-        response = client.get("/api/auth/me")
+        response = client.get("/api/v1/auth/me")
 
         assert response.status_code == 401
 
     def test_get_me_with_invalid_token(self, client: TestClient):
         """Test /me with invalid token."""
         response = client.get(
-            "/api/auth/me", headers={"Authorization": "Bearer invalid_token"}
+            "/api/v1/auth/me", headers={"Authorization": "Bearer invalid_token"}
         )
 
         assert response.status_code == 401
@@ -427,7 +427,7 @@ class TestGetCurrentUserEndpoint:
         )
 
         response = client.get(
-            "/api/auth/me", headers={"Authorization": f"Bearer {expired_token}"}
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {expired_token}"}
         )
 
         assert response.status_code == 401
@@ -437,10 +437,10 @@ class TestGetCurrentUserEndpoint:
     ):
         """Test /me with blacklisted token."""
         # First logout to blacklist the token
-        client.post("/api/auth/logout", headers=auth_headers)
+        client.post("/api/v1/auth/logout", headers=auth_headers)
 
         # Try to use the blacklisted token
-        response = client.get("/api/auth/me", headers=auth_headers)
+        response = client.get("/api/v1/auth/me", headers=auth_headers)
 
         assert response.status_code == 401
 
@@ -450,14 +450,14 @@ class TestGetCurrentUserEndpoint:
         """Test /me returns correct info for different user roles."""
         # Login as faculty user
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "facultyuser", "password": "testpass123"},
         )
         token = response.json()["access_token"]
 
         # Get user info
         response = client.get(
-            "/api/auth/me", headers={"Authorization": f"Bearer {token}"}
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
         )
 
         assert response.status_code == 200
@@ -481,7 +481,7 @@ class TestRegisterUserEndpoint:
         db.commit()
 
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "firstuser",
                 "email": "first@test.org",
@@ -501,7 +501,7 @@ class TestRegisterUserEndpoint:
     ):
         """Test that subsequent users require admin authentication."""
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "newuser",
                 "email": "newuser@test.org",
@@ -521,7 +521,7 @@ class TestRegisterUserEndpoint:
     ):
         """Test registration without auth fails when users exist."""
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "newuser",
                 "email": "newuser@test.org",
@@ -538,7 +538,7 @@ class TestRegisterUserEndpoint:
     ):
         """Test that non-admin users cannot create new users."""
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "anotheruser",
                 "email": "another@test.org",
@@ -555,7 +555,7 @@ class TestRegisterUserEndpoint:
     ):
         """Test registration fails with duplicate username."""
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "testadmin",  # Already exists
                 "email": "different@test.org",
@@ -573,7 +573,7 @@ class TestRegisterUserEndpoint:
     ):
         """Test registration fails with duplicate email."""
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "differentuser",
                 "email": "testadmin@test.org",  # Already exists
@@ -589,7 +589,7 @@ class TestRegisterUserEndpoint:
     def test_register_invalid_email(self, client: TestClient, auth_headers: dict):
         """Test registration fails with invalid email format."""
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "newuser",
                 "email": "invalid-email",
@@ -604,7 +604,7 @@ class TestRegisterUserEndpoint:
     def test_register_invalid_role(self, client: TestClient, auth_headers: dict):
         """Test registration with invalid role."""
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "newuser",
                 "email": "newuser@test.org",
@@ -622,7 +622,7 @@ class TestRegisterUserEndpoint:
     ):
         """Test registration fails when required fields are missing."""
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "newuser",
                 # Missing email and password
@@ -640,7 +640,7 @@ class TestRegisterUserEndpoint:
 
         for i, role in enumerate(roles):
             response = client.post(
-                "/api/auth/register",
+                "/api/v1/auth/register",
                 json={
                     "username": f"user_{role}_{i}",
                     "email": f"{role}{i}@test.org",
@@ -660,7 +660,7 @@ class TestRegisterUserEndpoint:
         plain_password = "mysecretpassword"
 
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "hasheduser",
                 "email": "hashed@test.org",
@@ -691,7 +691,7 @@ class TestListUsersEndpoint:
         self, client: TestClient, auth_headers: dict, admin_user: User
     ):
         """Test listing all users as admin."""
-        response = client.get("/api/auth/users", headers=auth_headers)
+        response = client.get("/api/v1/auth/users", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -703,7 +703,7 @@ class TestListUsersEndpoint:
 
     def test_list_users_requires_authentication(self, client: TestClient):
         """Test listing users requires authentication."""
-        response = client.get("/api/auth/users")
+        response = client.get("/api/v1/auth/users")
 
         assert response.status_code == 401
 
@@ -711,7 +711,7 @@ class TestListUsersEndpoint:
         self, client: TestClient, regular_user_headers: dict, admin_user: User
     ):
         """Test listing users requires admin role."""
-        response = client.get("/api/auth/users", headers=regular_user_headers)
+        response = client.get("/api/v1/auth/users", headers=regular_user_headers)
 
         assert response.status_code == 403
         assert "admin" in response.json()["detail"].lower()
@@ -720,7 +720,7 @@ class TestListUsersEndpoint:
         self, client: TestClient, auth_headers: dict, admin_user: User
     ):
         """Test that user list response has correct structure."""
-        response = client.get("/api/auth/users", headers=auth_headers)
+        response = client.get("/api/v1/auth/users", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -752,7 +752,7 @@ class TestListUsersEndpoint:
             db.add(user)
         db.commit()
 
-        response = client.get("/api/auth/users", headers=auth_headers)
+        response = client.get("/api/v1/auth/users", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -773,7 +773,7 @@ class TestTokenSecurity:
     def test_token_contains_jti(self, client: TestClient, admin_user: User):
         """Test that tokens contain a unique JTI."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -788,11 +788,11 @@ class TestTokenSecurity:
         """Test that each login generates a unique JTI."""
         # Login twice
         response1 = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
         response2 = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -808,7 +808,7 @@ class TestTokenSecurity:
     def test_token_has_expiration(self, client: TestClient, admin_user: User):
         """Test that tokens have an expiration time."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -826,7 +826,7 @@ class TestTokenSecurity:
     def test_tampered_token_rejected(self, client: TestClient, admin_user: User):
         """Test that tampered tokens are rejected."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -836,7 +836,7 @@ class TestTokenSecurity:
         tampered_token = token[:-5] + "XXXXX"
 
         response = client.get(
-            "/api/auth/me", headers={"Authorization": f"Bearer {tampered_token}"}
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {tampered_token}"}
         )
 
         assert response.status_code == 401
@@ -857,7 +857,7 @@ class TestTokenSecurity:
         )
 
         response = client.get(
-            "/api/auth/me", headers={"Authorization": f"Bearer {fake_token}"}
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {fake_token}"}
         )
 
         assert response.status_code == 401
@@ -881,7 +881,7 @@ class TestTokenSecurity:
         """
         # Login to get a refresh token
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
         assert login_response.status_code == 200
@@ -899,7 +899,7 @@ class TestTokenSecurity:
         # Try to use refresh token to access a protected endpoint
         # This MUST fail - refresh tokens should only work at /refresh
         response = client.get(
-            "/api/auth/me", headers={"Authorization": f"Bearer {refresh_token}"}
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {refresh_token}"}
         )
 
         # Must be rejected - refresh tokens cannot substitute for access tokens
@@ -921,7 +921,7 @@ class TestTokenSecurity:
 
         # Try to use refresh token via cookie
         client.cookies.set("access_token", f"Bearer {refresh_token}")
-        response = client.get("/api/auth/me")
+        response = client.get("/api/v1/auth/me")
 
         # Must be rejected
         assert response.status_code == 401
@@ -954,7 +954,7 @@ class TestAuthEdgeCases:
 
         # Login should work
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "specialuser", "password": special_password},
         )
 
@@ -975,7 +975,7 @@ class TestAuthEdgeCases:
 
         # Login should work
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "user_中文_🚀", "password": "testpass"},
         )
 
@@ -988,7 +988,7 @@ class TestAuthEdgeCases:
         long_username = "a" * 150  # Longer than 100 char limit
 
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": long_username,
                 "email": "longuser@test.org",
@@ -1007,7 +1007,7 @@ class TestAuthEdgeCases:
         """Test that concurrent registrations with same username are handled."""
         # First registration
         response1 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "concurrent",
                 "email": "concurrent1@test.org",
@@ -1019,7 +1019,7 @@ class TestAuthEdgeCases:
 
         # Second registration with same username
         response2 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "concurrent",
                 "email": "concurrent2@test.org",
@@ -1037,11 +1037,11 @@ class TestAuthEdgeCases:
     def test_logout_multiple_times(self, client: TestClient, auth_headers: dict):
         """Test logging out multiple times with same token."""
         # First logout
-        response1 = client.post("/api/auth/logout", headers=auth_headers)
+        response1 = client.post("/api/v1/auth/logout", headers=auth_headers)
         assert response1.status_code == 200
 
         # Second logout with same token should fail
-        response2 = client.post("/api/auth/logout", headers=auth_headers)
+        response2 = client.post("/api/v1/auth/logout", headers=auth_headers)
         assert response2.status_code == 401
 
     def test_get_me_with_deleted_user_token(
@@ -1050,7 +1050,7 @@ class TestAuthEdgeCases:
         """Test using token after user is deleted."""
         # Login to get token
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "regularuser", "password": "testpass123"},
         )
         token = response.json()["access_token"]
@@ -1061,21 +1061,21 @@ class TestAuthEdgeCases:
         db.commit()
 
         # Try to use token
-        response = client.get("/api/auth/me", headers=headers)
+        response = client.get("/api/v1/auth/me", headers=headers)
 
         # Should fail because user no longer exists
         assert response.status_code == 401
 
     def test_empty_authorization_header(self, client: TestClient):
         """Test request with empty Authorization header."""
-        response = client.get("/api/auth/me", headers={"Authorization": ""})
+        response = client.get("/api/v1/auth/me", headers={"Authorization": ""})
 
         assert response.status_code == 401
 
     def test_malformed_authorization_header(self, client: TestClient):
         """Test request with malformed Authorization header."""
         response = client.get(
-            "/api/auth/me", headers={"Authorization": "NotBearer token123"}
+            "/api/v1/auth/me", headers={"Authorization": "NotBearer token123"}
         )
 
         assert response.status_code == 401
@@ -1098,7 +1098,7 @@ class TestRefreshTokenEndpoint:
         """Test that refresh endpoint returns new access and refresh tokens."""
         # Login to get initial tokens
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -1110,7 +1110,7 @@ class TestRefreshTokenEndpoint:
 
         # Use refresh token
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": original_refresh_token},
         )
 
@@ -1124,7 +1124,7 @@ class TestRefreshTokenEndpoint:
     def test_refresh_with_invalid_token(self, client: TestClient):
         """Test that refresh fails with invalid token."""
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": "invalid_token"},
         )
 
@@ -1141,7 +1141,7 @@ class TestRefreshTokenEndpoint:
         )
 
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": expired_token},
         )
 
@@ -1158,7 +1158,7 @@ class TestRefreshTokenEndpoint:
         )
 
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": access_token},
         )
 
@@ -1176,7 +1176,7 @@ class TestRefreshTokenEndpoint:
         """
         # Login to get initial refresh token
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -1190,7 +1190,7 @@ class TestRefreshTokenEndpoint:
 
         # Use refresh token (this should blacklist the original)
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": original_refresh_token},
         )
         assert response.status_code == 200
@@ -1212,21 +1212,21 @@ class TestRefreshTokenEndpoint:
         """
         # Login to get initial refresh token
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
         original_refresh_token = response.json()["refresh_token"]
 
         # First use of refresh token - should succeed
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": original_refresh_token},
         )
         assert response.status_code == 200
 
         # Second use of same refresh token - should fail (token was blacklisted)
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": original_refresh_token},
         )
         assert response.status_code == 401
@@ -1238,14 +1238,14 @@ class TestRefreshTokenEndpoint:
         """Test that the new refresh token works after rotation."""
         # Login to get initial refresh token
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
         original_refresh_token = response.json()["refresh_token"]
 
         # First rotation
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": original_refresh_token},
         )
         assert response.status_code == 200
@@ -1256,7 +1256,7 @@ class TestRefreshTokenEndpoint:
 
         # New token should work for another refresh
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": new_refresh_token},
         )
         assert response.status_code == 200
@@ -1272,7 +1272,7 @@ class TestRefreshTokenEndpoint:
         )
 
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": refresh_token},
         )
 
@@ -1296,7 +1296,7 @@ class TestRefreshTokenEndpoint:
 
         # Try to use refresh token
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": refresh_token},
         )
 
@@ -1307,7 +1307,7 @@ class TestRefreshTokenEndpoint:
         """Test that refresh tokens have type='refresh' in payload."""
         # Login to get refresh token
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
         refresh_token = response.json()["refresh_token"]
@@ -1323,14 +1323,14 @@ class TestRefreshTokenEndpoint:
         """Test that refresh endpoint sets httpOnly cookie with new access token."""
         # Login to get refresh token
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
         refresh_token = response.json()["refresh_token"]
 
         # Refresh
         response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": refresh_token},
         )
 
@@ -1342,7 +1342,7 @@ class TestRefreshTokenEndpoint:
         """Test that login endpoints return refresh tokens."""
         # Form login
         response = client.post(
-            "/api/auth/login",
+            "/api/v1/auth/login",
             data={"username": "testadmin", "password": "testpass123"},
         )
         assert response.status_code == 200
@@ -1350,7 +1350,7 @@ class TestRefreshTokenEndpoint:
 
         # JSON login
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
         assert response.status_code == 200
@@ -1360,11 +1360,11 @@ class TestRefreshTokenEndpoint:
         """Test that each refresh token has a unique JTI."""
         # Login twice
         response1 = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
         response2 = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
 
@@ -1388,7 +1388,7 @@ class TestRefreshTokenEndpoint:
         """
         # Login to get initial token
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
         current_token = response.json()["refresh_token"]
@@ -1397,7 +1397,7 @@ class TestRefreshTokenEndpoint:
         # Perform multiple refreshes in sequence
         for i in range(3):
             response = client.post(
-                "/api/auth/refresh",
+                "/api/v1/auth/refresh",
                 json={"refresh_token": current_token},
             )
             assert response.status_code == 200

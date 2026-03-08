@@ -29,14 +29,14 @@ class TestDatabaseHealthEndpoint:
 
     def test_health_requires_auth(self, client: TestClient):
         """Test that database health requires authentication."""
-        response = client.get("/api/db-admin/health")
+        response = client.get("/api/v1/db-admin/health")
 
         assert response.status_code in [401, 403]
 
     def test_health_requires_admin(self, client: TestClient, auth_headers: dict):
         """Test that database health requires admin role."""
         response = client.get(
-            "/api/db-admin/health",
+            "/api/v1/db-admin/health",
             headers=auth_headers,
         )
 
@@ -46,7 +46,7 @@ class TestDatabaseHealthEndpoint:
     def test_health_response_structure(self, client: TestClient, auth_headers: dict):
         """Test database health response has correct structure."""
         response = client.get(
-            "/api/db-admin/health",
+            "/api/v1/db-admin/health",
             headers=auth_headers,
         )
 
@@ -66,7 +66,7 @@ class TestIndexRecommendationsEndpoint:
 
     def test_recommendations_requires_auth(self, client: TestClient):
         """Test that index recommendations requires authentication."""
-        response = client.get("/api/db-admin/indexes/recommendations")
+        response = client.get("/api/v1/db-admin/indexes/recommendations")
 
         assert response.status_code in [401, 403]
 
@@ -80,7 +80,7 @@ class TestIndexRecommendationsEndpoint:
             mock_advisor_class.return_value = mock_advisor
 
             response = client.get(
-                "/api/db-admin/indexes/recommendations",
+                "/api/v1/db-admin/indexes/recommendations",
                 headers=auth_headers,
             )
 
@@ -96,7 +96,7 @@ class TestIndexRecommendationsEndpoint:
             mock_advisor_class.return_value = mock_advisor
 
             response = client.get(
-                "/api/db-admin/indexes/recommendations?min_table_size_mb=5.0",
+                "/api/v1/db-admin/indexes/recommendations?min_table_size_mb=5.0",
                 headers=auth_headers,
             )
 
@@ -108,7 +108,7 @@ class TestUnusedIndexesEndpoint:
 
     def test_unused_requires_auth(self, client: TestClient):
         """Test that unused indexes requires authentication."""
-        response = client.get("/api/db-admin/indexes/unused")
+        response = client.get("/api/v1/db-admin/indexes/unused")
 
         assert response.status_code in [401, 403]
 
@@ -120,7 +120,7 @@ class TestUnusedIndexesEndpoint:
             mock_advisor_class.return_value = mock_advisor
 
             response = client.get(
-                "/api/db-admin/indexes/unused",
+                "/api/v1/db-admin/indexes/unused",
                 headers=auth_headers,
             )
 
@@ -134,7 +134,7 @@ class TestUnusedIndexesEndpoint:
             mock_advisor_class.return_value = mock_advisor
 
             response = client.get(
-                "/api/db-admin/indexes/unused?min_age_days=14&min_size_mb=20.0",
+                "/api/v1/db-admin/indexes/unused?min_age_days=14&min_size_mb=20.0",
                 headers=auth_headers,
             )
 
@@ -146,7 +146,7 @@ class TestIndexUsageStatsEndpoint:
 
     def test_usage_requires_auth(self, client: TestClient):
         """Test that index usage stats requires authentication."""
-        response = client.get("/api/db-admin/indexes/usage")
+        response = client.get("/api/v1/db-admin/indexes/usage")
 
         assert response.status_code in [401, 403]
 
@@ -158,7 +158,7 @@ class TestIndexUsageStatsEndpoint:
             mock_advisor_class.return_value = mock_advisor
 
             response = client.get(
-                "/api/db-admin/indexes/usage",
+                "/api/v1/db-admin/indexes/usage",
                 headers=auth_headers,
             )
 
@@ -170,7 +170,7 @@ class TestTableStatisticsEndpoint:
 
     def test_table_stats_requires_auth(self, client: TestClient):
         """Test that table statistics requires authentication."""
-        response = client.get("/api/db-admin/tables/persons/stats")
+        response = client.get("/api/v1/db-admin/tables/persons/stats")
 
         assert response.status_code in [401, 403]
 
@@ -202,7 +202,7 @@ class TestTableStatisticsEndpoint:
             mock_advisor_class.return_value = mock_advisor
 
             response = client.get(
-                "/api/db-admin/tables/persons/stats",
+                "/api/v1/db-admin/tables/persons/stats",
                 headers=auth_headers,
             )
 
@@ -216,7 +216,7 @@ class TestTableStatisticsEndpoint:
             mock_advisor_class.return_value = mock_advisor
 
             response = client.get(
-                "/api/db-admin/tables/nonexistent_table/stats",
+                "/api/v1/db-admin/tables/nonexistent_table/stats",
                 headers=auth_headers,
             )
 
@@ -228,14 +228,14 @@ class TestQueryStatisticsEndpoint:
 
     def test_query_stats_requires_auth(self, client: TestClient):
         """Test that query statistics requires authentication."""
-        response = client.get("/api/db-admin/queries/stats?request_id=test-123")
+        response = client.get("/api/v1/db-admin/queries/stats?request_id=test-123")
 
         assert response.status_code in [401, 403]
 
     def test_query_stats_requires_admin(self, client: TestClient, auth_headers: dict):
         """Test that query statistics requires admin role."""
         response = client.get(
-            "/api/db-admin/queries/stats?request_id=test-123",
+            "/api/v1/db-admin/queries/stats?request_id=test-123",
             headers=auth_headers,
         )
 
@@ -246,7 +246,7 @@ class TestQueryStatisticsEndpoint:
     ):
         """Test that query statistics requires request_id parameter."""
         response = client.get(
-            "/api/db-admin/queries/stats",
+            "/api/v1/db-admin/queries/stats",
             headers=auth_headers,
         )
 
@@ -259,14 +259,14 @@ class TestVacuumTableEndpoint:
 
     def test_vacuum_requires_auth(self, client: TestClient):
         """Test that VACUUM requires authentication."""
-        response = client.post("/api/db-admin/vacuum/persons")
+        response = client.post("/api/v1/db-admin/vacuum/persons")
 
         assert response.status_code in [401, 403]
 
     def test_vacuum_requires_admin(self, client: TestClient, auth_headers: dict):
         """Test that VACUUM requires admin role."""
         response = client.post(
-            "/api/db-admin/vacuum/persons",
+            "/api/v1/db-admin/vacuum/persons",
             headers=auth_headers,
         )
 
@@ -276,7 +276,7 @@ class TestVacuumTableEndpoint:
     def test_vacuum_with_analyze(self, client: TestClient, auth_headers: dict):
         """Test VACUUM with ANALYZE option."""
         response = client.post(
-            "/api/db-admin/vacuum/persons?analyze=true",
+            "/api/v1/db-admin/vacuum/persons?analyze=true",
             headers=auth_headers,
         )
 
@@ -285,7 +285,7 @@ class TestVacuumTableEndpoint:
     def test_vacuum_invalid_table_name(self, client: TestClient, auth_headers: dict):
         """Test VACUUM with invalid table name (SQL injection prevention)."""
         response = client.post(
-            "/api/db-admin/vacuum/users; DROP TABLE users;",
+            "/api/v1/db-admin/vacuum/users; DROP TABLE users;",
             headers=auth_headers,
         )
 
@@ -306,10 +306,10 @@ class TestDbAdminIntegration:
     ):
         """Test that all db-admin endpoints require admin role."""
         endpoints = [
-            "/api/db-admin/health",
-            "/api/db-admin/indexes/recommendations",
-            "/api/db-admin/indexes/unused",
-            "/api/db-admin/indexes/usage",
+            "/api/v1/db-admin/health",
+            "/api/v1/db-admin/indexes/recommendations",
+            "/api/v1/db-admin/indexes/unused",
+            "/api/v1/db-admin/indexes/usage",
         ]
 
         for url in endpoints:
@@ -325,10 +325,10 @@ class TestDbAdminIntegration:
     def test_db_admin_without_auth(self, client: TestClient):
         """Test that db-admin endpoints reject unauthenticated requests."""
         endpoints = [
-            "/api/db-admin/health",
-            "/api/db-admin/indexes/recommendations",
-            "/api/db-admin/indexes/unused",
-            "/api/db-admin/indexes/usage",
+            "/api/v1/db-admin/health",
+            "/api/v1/db-admin/indexes/recommendations",
+            "/api/v1/db-admin/indexes/unused",
+            "/api/v1/db-admin/indexes/usage",
         ]
 
         for url in endpoints:
@@ -344,7 +344,7 @@ class TestDbAdminEdgeCases:
     ):
         """Test recommendations with negative min table size."""
         response = client.get(
-            "/api/db-admin/indexes/recommendations?min_table_size_mb=-1.0",
+            "/api/v1/db-admin/indexes/recommendations?min_table_size_mb=-1.0",
             headers=auth_headers,
         )
 
@@ -356,7 +356,7 @@ class TestDbAdminEdgeCases:
     ):
         """Test unused indexes with invalid min age."""
         response = client.get(
-            "/api/db-admin/indexes/unused?min_age_days=0",
+            "/api/v1/db-admin/indexes/unused?min_age_days=0",
             headers=auth_headers,
         )
 
@@ -367,7 +367,7 @@ class TestDbAdminEdgeCases:
         """Test table statistics with empty table name."""
         # Empty path segment would result in different route
         response = client.get(
-            "/api/db-admin/tables//stats",
+            "/api/v1/db-admin/tables//stats",
             headers=auth_headers,
         )
 

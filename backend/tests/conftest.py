@@ -213,6 +213,12 @@ def client(db: Session) -> Generator[TestClient, None, None]:
 
     app.dependency_overrides[get_async_db] = get_async_db_override
 
+    # Disable rate limiting in tests
+    from app.api.routes.auth import rate_limit_login, rate_limit_register
+
+    app.dependency_overrides[rate_limit_login] = lambda: None
+    app.dependency_overrides[rate_limit_register] = lambda: None
+
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
@@ -239,7 +245,7 @@ def admin_user(db: Session) -> User:
 def auth_headers(client: TestClient, admin_user: User) -> dict:
     """Get authentication headers for API requests."""
     response = client.post(
-        "/api/auth/login/json",
+        "/api/v1/auth/login/json",
         json={"username": "testadmin", "password": "testpass123"},
     )
     if response.status_code == 200:
@@ -336,16 +342,11 @@ def sample_faculty_members(db: Session) -> list[Person]:
 
 @pytest.fixture
 def sample_rotation_template(db: Session) -> RotationTemplate:
-    """Create a sample rotation template.
-
-    Note: Uses activity_type="outpatient" because the scheduling engine
-    defaults to filtering for outpatient templates. Using "clinic" would
-    cause the template to be filtered out, resulting in no assignments.
-    """
+    """Create a sample rotation template."""
     template = RotationTemplate(
         id=uuid4(),
         name="Sports Medicine Clinic",
-        activity_type="outpatient",  # Must match engine's default filter
+        rotation_type="outpatient",
         abbreviation="SM",
         clinic_location="Building A",
         max_residents=4,

@@ -215,7 +215,7 @@ class TestSwapWorkflowE2E:
 
         # Step 1: Validate the swap
         validate_response = client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1_start.isoformat(),
@@ -238,7 +238,7 @@ class TestSwapWorkflowE2E:
 
         # Step 2: Execute the swap
         execute_response = client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1_start.isoformat(),
@@ -290,7 +290,7 @@ class TestSwapWorkflowE2E:
 
             # Step 4: Get swap details
             get_response = client.get(
-                f"/api/swaps/{swap_id}",
+                f"/api/v1/swaps/{swap_id}",
                 headers=auth_headers,
             )
 
@@ -301,7 +301,7 @@ class TestSwapWorkflowE2E:
 
             # Step 5: Rollback the swap
             rollback_response = client.post(
-                f"/api/swaps/{swap_id}/rollback",
+                f"/api/v1/swaps/{swap_id}/rollback",
                 json={
                     "reason": "Testing rollback functionality",
                 },
@@ -344,7 +344,7 @@ class TestSwapWorkflowE2E:
 
             # Step 7: Check swap history
             history_response = client.get(
-                "/api/swaps/history",
+                "/api/v1/swaps/history",
                 params={"faculty_id": str(faculty1.id)},
                 headers=auth_headers,
             )
@@ -377,7 +377,7 @@ class TestSwapWorkflowE2E:
 
         # Execute absorb swap (no target_week)
         execute_response = client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1_start.isoformat(),
@@ -439,7 +439,7 @@ class TestSwapWorkflowE2E:
         # Test 1: Back-to-back conflict
         # Faculty2 already has week 2, trying to take week 1 would create back-to-back
         validate_response = client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1_start.isoformat(),
@@ -475,7 +475,7 @@ class TestSwapWorkflowE2E:
 
         # Try to swap week 3 to faculty1 (who has absence)
         conflict_response = client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty3.id),
                 "source_week": week3_start.isoformat(),
@@ -496,7 +496,7 @@ class TestSwapWorkflowE2E:
         past_date = date.today() - timedelta(days=30)
 
         past_response = client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": past_date.isoformat(),
@@ -561,7 +561,7 @@ class TestSwapWorkflowE2E:
 
         # Test 1: Filter by faculty
         faculty_response = client.get(
-            "/api/swaps/history",
+            "/api/v1/swaps/history",
             params={"faculty_id": str(faculty1.id)},
             headers=auth_headers,
         )
@@ -577,7 +577,7 @@ class TestSwapWorkflowE2E:
 
         # Test 2: Filter by status
         status_response = client.get(
-            "/api/swaps/history",
+            "/api/v1/swaps/history",
             params={"status": "executed"},
             headers=auth_headers,
         )
@@ -591,7 +591,7 @@ class TestSwapWorkflowE2E:
 
         # Test 3: Filter by date range
         date_response = client.get(
-            "/api/swaps/history",
+            "/api/v1/swaps/history",
             params={
                 "start_date": week1_start.isoformat(),
                 "end_date": (week1_start + timedelta(days=14)).isoformat(),
@@ -606,7 +606,7 @@ class TestSwapWorkflowE2E:
 
         # Test 4: Pagination
         page_response = client.get(
-            "/api/swaps/history",
+            "/api/v1/swaps/history",
             params={"page": 1, "page_size": 2},
             headers=auth_headers,
         )
@@ -659,7 +659,7 @@ class TestSwapWorkflowE2E:
 
         # Try to rollback (should fail)
         rollback_response = client.post(
-            f"/api/swaps/{old_swap.id}/rollback",
+            f"/api/v1/swaps/{old_swap.id}/rollback",
             json={
                 "reason": "Trying to rollback old swap",
             },
@@ -915,7 +915,7 @@ class TestSwapWorkflowEdgeCases:
 
         # Both faculty2 and faculty3 try to swap for week 1
         response1 = client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1_start.isoformat(),
@@ -949,7 +949,7 @@ class TestSwapWorkflowEdgeCases:
 
         # Try to swap with self
         response = client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": week1_start.isoformat(),
@@ -984,7 +984,7 @@ class TestSwapWorkflowEdgeCases:
         week2_start = setup["start_date"] + timedelta(days=7)
 
         response = client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(faculty1.id),
                 "source_week": future_week.isoformat(),

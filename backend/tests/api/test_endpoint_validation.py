@@ -42,7 +42,7 @@ class TestRequestValidation:
     ):
         """Test that invalid JSON returns 422 Unprocessable Entity."""
         response = client.post(
-            "/api/people",
+            "/api/v1/people",
             headers={**auth_headers, "Content-Type": "application/json"},
             data="invalid json{",  # Malformed JSON
         )
@@ -54,7 +54,7 @@ class TestRequestValidation:
     ):
         """Test that missing required field returns 422."""
         response = client.post(
-            "/api/people",
+            "/api/v1/people",
             headers=auth_headers,
             json={
                 # Missing required 'name' field
@@ -72,7 +72,7 @@ class TestRequestValidation:
     ):
         """Test that invalid field type returns 422."""
         response = client.post(
-            "/api/people",
+            "/api/v1/people",
             headers=auth_headers,
             json={
                 "name": "Dr. Test",
@@ -91,7 +91,7 @@ class TestRequestValidation:
     ):
         """Test that invalid email format is rejected."""
         response = client.post(
-            "/api/people",
+            "/api/v1/people",
             headers=auth_headers,
             json={
                 "name": "Dr. Test",
@@ -108,7 +108,7 @@ class TestRequestValidation:
     ):
         """Test query parameter type validation."""
         response = client.get(
-            "/api/assignments?page_size=not_a_number",  # Invalid page_size type
+            "/api/v1/assignments?page_size=not_a_number",  # Invalid page_size type
             headers=auth_headers,
         )
 
@@ -119,7 +119,7 @@ class TestRequestValidation:
     ):
         """Test UUID path parameter validation."""
         response = client.get(
-            "/api/people/invalid-uuid",  # Not a valid UUID
+            "/api/v1/people/invalid-uuid",  # Not a valid UUID
             headers=auth_headers,
         )
 
@@ -130,7 +130,7 @@ class TestRequestValidation:
     ):
         """Test date parameter format validation."""
         response = client.get(
-            "/api/blocks?start_date=not-a-date",  # Invalid date format
+            "/api/v1/blocks?start_date=not-a-date",  # Invalid date format
             headers=auth_headers,
         )
 
@@ -150,7 +150,7 @@ class TestResponseValidation:
     ):
         """Test successful resource creation returns 201 Created."""
         response = client.post(
-            "/api/people",
+            "/api/v1/people",
             headers=auth_headers,
             json={
                 "name": "Dr. New Person",
@@ -180,7 +180,7 @@ class TestResponseValidation:
         db.commit()
 
         response = client.put(
-            f"/api/people/{person.id}",
+            f"/api/v1/people/{person.id}",
             headers=auth_headers,
             json={
                 "name": "Dr. Updated",
@@ -207,7 +207,7 @@ class TestResponseValidation:
         db.commit()
 
         response = client.delete(
-            f"/api/people/{person.id}",
+            f"/api/v1/people/{person.id}",
             headers=auth_headers,
         )
 
@@ -217,7 +217,7 @@ class TestResponseValidation:
         """Test resource not found returns 404."""
         fake_id = uuid4()
         response = client.get(
-            f"/api/people/{fake_id}",
+            f"/api/v1/people/{fake_id}",
             headers=auth_headers,
         )
 
@@ -229,7 +229,7 @@ class TestResponseValidation:
     def test_list_endpoint_returns_array(self, client: TestClient, auth_headers: dict):
         """Test list endpoint returns array in response."""
         response = client.get(
-            "/api/people",
+            "/api/v1/people",
             headers=auth_headers,
         )
 
@@ -253,7 +253,7 @@ class TestErrorHandling:
     ):
         """Test error responses include 'detail' field."""
         response = client.get(
-            f"/api/people/{uuid4()}",  # Non-existent resource
+            f"/api/v1/people/{uuid4()}",  # Non-existent resource
             headers=auth_headers,
         )
 
@@ -266,7 +266,7 @@ class TestErrorHandling:
     ):
         """Test validation errors specify which fields failed."""
         response = client.post(
-            "/api/people",
+            "/api/v1/people",
             headers=auth_headers,
             json={
                 "type": "resident",
@@ -303,7 +303,7 @@ class TestErrorHandling:
 
         # Try to create another with same email
         response = client.post(
-            "/api/people",
+            "/api/v1/people",
             headers=auth_headers,
             json={
                 "name": "Dr. Second",
@@ -327,7 +327,7 @@ class TestHTTPHeaders:
     def test_content_type_json_required(self, client: TestClient, auth_headers: dict):
         """Test endpoints require application/json content type."""
         response = client.post(
-            "/api/people",
+            "/api/v1/people",
             headers={**auth_headers, "Content-Type": "text/plain"},
             data="name=Test",
         )
@@ -340,7 +340,7 @@ class TestHTTPHeaders:
     ):
         """Test response content type is application/json."""
         response = client.get(
-            "/api/people",
+            "/api/v1/people",
             headers=auth_headers,
         )
 
@@ -357,7 +357,7 @@ class TestHTTPHeaders:
     def test_rate_limit_headers_present(self, client: TestClient, auth_headers: dict):
         """Test rate limit headers are included."""
         response = client.get(
-            "/api/people",
+            "/api/v1/people",
             headers=auth_headers,
         )
 
@@ -413,7 +413,7 @@ class TestPagination:
         db.commit()
 
         response = client.get(
-            "/api/assignments?page_size=5&page=1",
+            "/api/v1/assignments?page_size=5&page=1",
             headers=auth_headers,
         )
 
@@ -462,12 +462,12 @@ class TestPagination:
 
         # Get first page
         response1 = client.get(
-            "/api/assignments?page_size=5&page=1",
+            "/api/v1/assignments?page_size=5&page=1",
             headers=auth_headers,
         )
         # Get second page
         response2 = client.get(
-            "/api/assignments?page_size=5&page=2",
+            "/api/v1/assignments?page_size=5&page=2",
             headers=auth_headers,
         )
 
@@ -516,7 +516,7 @@ class TestFilteringAndSorting:
         db.commit()
 
         response = client.get(
-            "/api/people?type=resident",
+            "/api/v1/people?type=resident",
             headers=auth_headers,
         )
 
@@ -543,7 +543,7 @@ class TestFilteringAndSorting:
         db.commit()
 
         response = client.get(
-            "/api/people?sort=name",
+            "/api/v1/people?sort=name",
             headers=auth_headers,
         )
 
@@ -579,7 +579,7 @@ class TestFilteringAndSorting:
         end = today + timedelta(days=5)
 
         response = client.get(
-            f"/api/blocks?start_date={start}&end_date={end}",
+            f"/api/v1/blocks?start_date={start}&end_date={end}",
             headers=auth_headers,
         )
 

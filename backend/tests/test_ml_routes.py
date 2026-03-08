@@ -9,7 +9,7 @@ class TestMLRoutes:
     def test_get_model_health(self, client: TestClient, auth_headers: dict):
         """Test checking ML model health."""
         response = client.get(
-            "/api/ml/health",
+            "/api/v1/ml/health",
             headers=auth_headers,
         )
 
@@ -31,7 +31,7 @@ class TestMLRoutes:
         }
 
         response = client.post(
-            "/api/ml/score",
+            "/api/v1/ml/score",
             json=request_data,
             headers=auth_headers,
         )
@@ -52,7 +52,7 @@ class TestMLRoutes:
         }
 
         response = client.post(
-            "/api/ml/predict/conflict",
+            "/api/v1/ml/predict/conflict",
             json=request_data,
             headers=auth_headers,
         )
@@ -74,7 +74,7 @@ class TestMLRoutes:
         }
 
         response = client.post(
-            "/api/ml/predict/preference",
+            "/api/v1/ml/predict/preference",
             json=request_data,
             headers=auth_headers,
         )
@@ -91,7 +91,7 @@ class TestMLRoutes:
         }
 
         response = client.post(
-            "/api/ml/analyze/workload",
+            "/api/v1/ml/analyze/workload",
             json=request_data,
             headers=auth_headers,
         )
@@ -109,7 +109,7 @@ class TestMLRoutes:
         }
 
         response = client.post(
-            "/api/ml/train",
+            "/api/v1/ml/train",
             json=request_data,
             headers=auth_headers,
         )
@@ -125,7 +125,7 @@ class TestMLRoutes:
         }
 
         response = client.post(
-            "/api/ml/train/async",
+            "/api/v1/ml/train/async",
             json=request_data,
             headers=auth_headers,
         )
@@ -138,7 +138,7 @@ class TestMLRoutes:
 
     def test_unauthorized_access(self, client: TestClient):
         """Test that unauthenticated requests are rejected."""
-        response = client.get("/api/ml/health")
+        response = client.get("/api/v1/ml/health")
 
         assert response.status_code == 401
 

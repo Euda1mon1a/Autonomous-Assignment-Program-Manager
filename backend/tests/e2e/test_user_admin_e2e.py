@@ -126,7 +126,7 @@ class TestUserAdministrationE2E:
         """
         # Step 1: Admin creates a new coordinator user
         create_response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "newcoordinator",
                 "email": "newcoord@test.org",
@@ -148,7 +148,7 @@ class TestUserAdministrationE2E:
 
         # Step 2: New user logs in
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "newcoordinator", "password": "secure_password_123"},
         )
 
@@ -162,7 +162,7 @@ class TestUserAdministrationE2E:
         user_headers = {"Authorization": f"Bearer {user_token}"}
 
         # Step 3: Verify user can access their own info
-        me_response = client.get("/api/auth/me", headers=user_headers)
+        me_response = client.get("/api/v1/auth/me", headers=user_headers)
 
         assert me_response.status_code == 200
         me_data = me_response.json()
@@ -170,14 +170,14 @@ class TestUserAdministrationE2E:
         assert me_data["role"] == "coordinator"
 
         # Step 4: Verify user cannot access admin-only endpoints
-        list_users_response = client.get("/api/auth/users", headers=user_headers)
+        list_users_response = client.get("/api/v1/auth/users", headers=user_headers)
 
         assert list_users_response.status_code == 403
         assert "admin" in list_users_response.json()["detail"].lower()
 
         # Verify user cannot create other users
         create_another_response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "another_user",
                 "email": "another@test.org",
@@ -190,13 +190,13 @@ class TestUserAdministrationE2E:
         assert create_another_response.status_code == 403
 
         # Step 5: User logs out
-        logout_response = client.post("/api/auth/logout", headers=user_headers)
+        logout_response = client.post("/api/v1/auth/logout", headers=user_headers)
 
         assert logout_response.status_code == 200
         assert logout_response.json()["message"] == "Successfully logged out"
 
         # Step 6: Verify token is invalidated after logout
-        me_after_logout_response = client.get("/api/auth/me", headers=user_headers)
+        me_after_logout_response = client.get("/api/v1/auth/me", headers=user_headers)
 
         assert me_after_logout_response.status_code == 401
 
@@ -226,7 +226,7 @@ class TestUserAdministrationE2E:
         created_users = []
         for username, email, role in roles_to_create:
             response = client.post(
-                "/api/auth/register",
+                "/api/v1/auth/register",
                 json={
                     "username": username,
                     "email": email,
@@ -243,7 +243,7 @@ class TestUserAdministrationE2E:
             created_users.append(user_data)
 
         # Step 2: Admin lists all users
-        list_response = client.get("/api/auth/users", headers=auth_headers)
+        list_response = client.get("/api/v1/auth/users", headers=auth_headers)
 
         assert list_response.status_code == 200
         all_users = list_response.json()
@@ -284,11 +284,11 @@ class TestUserAdministrationE2E:
         setup = user_admin_setup
 
         # Step 1: Admin can access all endpoints
-        admin_list_response = client.get("/api/auth/users", headers=auth_headers)
+        admin_list_response = client.get("/api/v1/auth/users", headers=auth_headers)
         assert admin_list_response.status_code == 200
 
         admin_create_response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "test_user",
                 "email": "test@test.org",
@@ -307,7 +307,7 @@ class TestUserAdministrationE2E:
             password = setup["credentials"][username]["password"]
 
             login_response = client.post(
-                "/api/auth/login/json",
+                "/api/v1/auth/login/json",
                 json={"username": username, "password": password},
             )
             assert login_response.status_code == 200
@@ -316,11 +316,11 @@ class TestUserAdministrationE2E:
             user_headers = {"Authorization": f"Bearer {user_token}"}
 
             # Try to access admin endpoints
-            list_response = client.get("/api/auth/users", headers=user_headers)
+            list_response = client.get("/api/v1/auth/users", headers=user_headers)
             assert list_response.status_code == 403
 
             create_response = client.post(
-                "/api/auth/register",
+                "/api/v1/auth/register",
                 json={
                     "username": f"new_{role}_created",
                     "email": f"new_{role}@test.org",
@@ -332,7 +332,7 @@ class TestUserAdministrationE2E:
             assert create_response.status_code == 403
 
             # Step 5: All users can access their own information
-            me_response = client.get("/api/auth/me", headers=user_headers)
+            me_response = client.get("/api/v1/auth/me", headers=user_headers)
             assert me_response.status_code == 200
             me_data = me_response.json()
             assert me_data["username"] == username
@@ -356,7 +356,7 @@ class TestUserAdministrationE2E:
         """
         # Create a test user
         create_response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "token_test_user",
                 "email": "tokentest@test.org",
@@ -370,7 +370,7 @@ class TestUserAdministrationE2E:
 
         # Step 1: User receives valid JWT on login
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "token_test_user", "password": "password123"},
         )
         assert login_response.status_code == 200
@@ -388,7 +388,7 @@ class TestUserAdministrationE2E:
 
         # Step 3: Token can be used to access protected endpoints
         user_headers = {"Authorization": f"Bearer {token}"}
-        me_response = client.get("/api/auth/me", headers=user_headers)
+        me_response = client.get("/api/v1/auth/me", headers=user_headers)
         assert me_response.status_code == 200
         assert me_response.json()["username"] == "token_test_user"
 
@@ -401,12 +401,12 @@ class TestUserAdministrationE2E:
             return_details=True,
         )
         expired_headers = {"Authorization": f"Bearer {expired_token}"}
-        expired_response = client.get("/api/auth/me", headers=expired_headers)
+        expired_response = client.get("/api/v1/auth/me", headers=expired_headers)
         assert expired_response.status_code == 401
 
         # Step 5: Invalid tokens are rejected
         invalid_headers = {"Authorization": "Bearer invalid_token_string"}
-        invalid_response = client.get("/api/auth/me", headers=invalid_headers)
+        invalid_response = client.get("/api/v1/auth/me", headers=invalid_headers)
         assert invalid_response.status_code == 401
 
     def test_first_user_becomes_admin(
@@ -429,7 +429,7 @@ class TestUserAdministrationE2E:
 
         # Step 2: Register first user
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "firstuser",
                 "email": "first@test.org",
@@ -448,7 +448,7 @@ class TestUserAdministrationE2E:
         # Step 4: Verify admin can perform admin operations
         # Login as first user
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "firstuser", "password": "password123"},
         )
         assert login_response.status_code == 200
@@ -457,7 +457,7 @@ class TestUserAdministrationE2E:
 
         # Create another user (admin operation)
         create_response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "seconduser",
                 "email": "second@test.org",
@@ -470,7 +470,7 @@ class TestUserAdministrationE2E:
         assert create_response.json()["role"] == "coordinator"  # Not auto-promoted
 
         # List users (admin operation)
-        list_response = client.get("/api/auth/users", headers=admin_headers)
+        list_response = client.get("/api/v1/auth/users", headers=admin_headers)
         assert list_response.status_code == 200
         users = list_response.json()
         assert len(users) == 2
@@ -506,7 +506,7 @@ class TestUserAdministrationEdgeCases:
         """
         # Step 1: Create first user
         response1 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "duplicate_test",
                 "email": "user1@test.org",
@@ -519,7 +519,7 @@ class TestUserAdministrationEdgeCases:
 
         # Step 2: Try to create duplicate
         response2 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "duplicate_test",  # Same username
                 "email": "user2@test.org",  # Different email
@@ -549,7 +549,7 @@ class TestUserAdministrationEdgeCases:
         """
         # Step 1: Create first user
         response1 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "user1",
                 "email": "duplicate@test.org",
@@ -562,7 +562,7 @@ class TestUserAdministrationEdgeCases:
 
         # Step 2: Try to create duplicate email
         response2 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "user2",  # Different username
                 "email": "duplicate@test.org",  # Same email
@@ -591,7 +591,7 @@ class TestUserAdministrationEdgeCases:
         """
         # Test 1: Non-existent role
         response1 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "invalid_role_user",
                 "email": "invalid@test.org",
@@ -604,7 +604,7 @@ class TestUserAdministrationEdgeCases:
 
         # Test 2: Empty role (should use default or fail)
         response2 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "empty_role_user",
                 "email": "empty@test.org",
@@ -631,7 +631,7 @@ class TestUserAdministrationEdgeCases:
         """
         # Test 1: Very short password
         response1 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "short_pw_user",
                 "email": "shortpw@test.org",
@@ -645,7 +645,7 @@ class TestUserAdministrationEdgeCases:
 
         # Test 2: Empty password
         response2 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "empty_pw_user",
                 "email": "emptypw@test.org",
@@ -658,7 +658,7 @@ class TestUserAdministrationEdgeCases:
 
         # Test 3: Password is hashed
         response3 = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "hashed_pw_user",
                 "email": "hashed@test.org",
@@ -692,7 +692,7 @@ class TestUserAdministrationEdgeCases:
         """
         # Step 1: Create active user
         create_response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "inactive_test",
                 "email": "inactive@test.org",
@@ -705,7 +705,7 @@ class TestUserAdministrationEdgeCases:
 
         # Step 2: User logs in successfully
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "inactive_test", "password": "password123"},
         )
         assert login_response.status_code == 200
@@ -718,14 +718,14 @@ class TestUserAdministrationEdgeCases:
 
         # Step 4: Verify user cannot log in
         login_response2 = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "inactive_test", "password": "password123"},
         )
         assert login_response2.status_code == 401
 
         # Step 5: Verify existing token is invalidated
         me_response = client.get(
-            "/api/auth/me", headers={"Authorization": f"Bearer {token}"}
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}
         )
         assert me_response.status_code == 401
 
@@ -750,10 +750,10 @@ class TestUserAdministrationEdgeCases:
         }
 
         response1 = client.post(
-            "/api/auth/register", json=user_data, headers=auth_headers
+            "/api/v1/auth/register", json=user_data, headers=auth_headers
         )
         response2 = client.post(
-            "/api/auth/register", json=user_data, headers=auth_headers
+            "/api/v1/auth/register", json=user_data, headers=auth_headers
         )
 
         # One should succeed, one should fail
@@ -778,7 +778,7 @@ class TestUserAdministrationEdgeCases:
         # Create multiple users
         for i in range(5):
             client.post(
-                "/api/auth/register",
+                "/api/v1/auth/register",
                 json={
                     "username": f"list_user_{chr(97 + i)}",  # a, b, c, d, e
                     "email": f"list{i}@test.org",
@@ -789,7 +789,7 @@ class TestUserAdministrationEdgeCases:
             )
 
         # Get user list
-        response = client.get("/api/auth/users", headers=auth_headers)
+        response = client.get("/api/v1/auth/users", headers=auth_headers)
         assert response.status_code == 200
         users = response.json()
 
@@ -828,7 +828,7 @@ class TestUserAdministrationEdgeCases:
         """
         # Step 1: Create user and log in
         client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "refresh_test",
                 "email": "refresh@test.org",
@@ -839,7 +839,7 @@ class TestUserAdministrationEdgeCases:
         )
 
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "refresh_test", "password": "password123"},
         )
         assert login_response.status_code == 200
@@ -849,7 +849,7 @@ class TestUserAdministrationEdgeCases:
 
         # Step 2: Use refresh token
         refresh_response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": refresh_token},
         )
         assert refresh_response.status_code == 200
@@ -858,14 +858,14 @@ class TestUserAdministrationEdgeCases:
 
         # Step 3: Verify new access token works
         me_response = client.get(
-            "/api/auth/me", headers={"Authorization": f"Bearer {new_access_token}"}
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {new_access_token}"}
         )
         assert me_response.status_code == 200
         assert me_response.json()["username"] == "refresh_test"
 
         # Step 4: Verify old refresh token is invalidated
         refresh_again_response = client.post(
-            "/api/auth/refresh",
+            "/api/v1/auth/refresh",
             json={"refresh_token": refresh_token},
         )
         assert refresh_again_response.status_code == 401

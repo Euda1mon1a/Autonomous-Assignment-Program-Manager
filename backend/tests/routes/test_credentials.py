@@ -27,7 +27,7 @@ class TestCredentialRoutes:
     def test_create_credential_requires_auth(self, client: TestClient):
         """Test that creating credential requires authentication."""
         response = client.post(
-            "/api/credentials",
+            "/api/v1/credentials",
             json={
                 "person_id": str(uuid4()),
                 "procedure_id": str(uuid4()),
@@ -39,29 +39,29 @@ class TestCredentialRoutes:
     def test_update_credential_requires_auth(self, client: TestClient):
         """Test that updating credential requires authentication."""
         response = client.put(
-            f"/api/credentials/{uuid4()}",
+            f"/api/v1/credentials/{uuid4()}",
             json={"status": "suspended"},
         )
         assert response.status_code == 401
 
     def test_delete_credential_requires_auth(self, client: TestClient):
         """Test that deleting credential requires authentication."""
-        response = client.delete(f"/api/credentials/{uuid4()}")
+        response = client.delete(f"/api/v1/credentials/{uuid4()}")
         assert response.status_code == 401
 
     def test_suspend_credential_requires_auth(self, client: TestClient):
         """Test that suspending credential requires authentication."""
-        response = client.post(f"/api/credentials/{uuid4()}/suspend")
+        response = client.post(f"/api/v1/credentials/{uuid4()}/suspend")
         assert response.status_code == 401
 
     def test_activate_credential_requires_auth(self, client: TestClient):
         """Test that activating credential requires authentication."""
-        response = client.post(f"/api/credentials/{uuid4()}/activate")
+        response = client.post(f"/api/v1/credentials/{uuid4()}/activate")
         assert response.status_code == 401
 
     def test_verify_credential_requires_auth(self, client: TestClient):
         """Test that verifying credential requires authentication."""
-        response = client.post(f"/api/credentials/{uuid4()}/verify")
+        response = client.post(f"/api/v1/credentials/{uuid4()}/verify")
         assert response.status_code == 401
 
     # ========================================================================
@@ -90,7 +90,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get("/api/credentials/expiring")
+        response = client.get("/api/v1/credentials/expiring")
         assert response.status_code == 200
 
         mock_controller.list_expiring_credentials.assert_called_once_with(days=30)
@@ -109,7 +109,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get("/api/credentials/expiring?days=60")
+        response = client.get("/api/v1/credentials/expiring?days=60")
         assert response.status_code == 200
 
         mock_controller.list_expiring_credentials.assert_called_once_with(days=60)
@@ -141,7 +141,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/credentials/by-person/{person_id}")
+        response = client.get(f"/api/v1/credentials/by-person/{person_id}")
         assert response.status_code == 200
 
         data = response.json()
@@ -163,7 +163,7 @@ class TestCredentialRoutes:
         mock_controller_class.return_value = mock_controller
 
         response = client.get(
-            f"/api/credentials/by-person/{person_id}?status=active&include_expired=true"
+            f"/api/v1/credentials/by-person/{person_id}?status=active&include_expired=true"
         )
         assert response.status_code == 200
 
@@ -200,7 +200,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/credentials/by-procedure/{procedure_id}")
+        response = client.get(f"/api/v1/credentials/by-procedure/{procedure_id}")
         assert response.status_code == 200
 
     # ========================================================================
@@ -227,7 +227,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/credentials/qualified-faculty/{procedure_id}")
+        response = client.get(f"/api/v1/credentials/qualified-faculty/{procedure_id}")
         assert response.status_code == 200
 
         data = response.json()
@@ -251,7 +251,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/credentials/qualified-faculty/{procedure_id}")
+        response = client.get(f"/api/v1/credentials/qualified-faculty/{procedure_id}")
         assert response.status_code == 200
 
         data = response.json()
@@ -280,7 +280,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/credentials/check/{person_id}/{procedure_id}")
+        response = client.get(f"/api/v1/credentials/check/{person_id}/{procedure_id}")
         assert response.status_code == 200
 
         data = response.json()
@@ -304,7 +304,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/credentials/check/{person_id}/{procedure_id}")
+        response = client.get(f"/api/v1/credentials/check/{person_id}/{procedure_id}")
         assert response.status_code == 200
 
         data = response.json()
@@ -338,7 +338,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/credentials/summary/{person_id}")
+        response = client.get(f"/api/v1/credentials/summary/{person_id}")
         assert response.status_code == 200
 
         data = response.json()
@@ -368,7 +368,7 @@ class TestCredentialRoutes:
         }
         mock_controller_class.return_value = mock_controller
 
-        response = client.get(f"/api/credentials/{credential_id}")
+        response = client.get(f"/api/v1/credentials/{credential_id}")
         assert response.status_code == 200
 
     # ========================================================================
@@ -398,7 +398,7 @@ class TestCredentialRoutes:
         mock_controller_class.return_value = mock_controller
 
         response = client.post(
-            "/api/credentials",
+            "/api/v1/credentials",
             headers=auth_headers,
             json={
                 "person_id": str(person_id),
@@ -436,7 +436,7 @@ class TestCredentialRoutes:
         mock_controller_class.return_value = mock_controller
 
         response = client.put(
-            f"/api/credentials/{credential_id}",
+            f"/api/v1/credentials/{credential_id}",
             headers=auth_headers,
             json={
                 "status": "suspended",
@@ -466,7 +466,7 @@ class TestCredentialRoutes:
         mock_controller_class.return_value = mock_controller
 
         response = client.delete(
-            f"/api/credentials/{credential_id}",
+            f"/api/v1/credentials/{credential_id}",
             headers=auth_headers,
         )
         assert response.status_code == 204
@@ -493,7 +493,7 @@ class TestCredentialRoutes:
         mock_controller_class.return_value = mock_controller
 
         response = client.post(
-            f"/api/credentials/{credential_id}/suspend?notes=Administrative%20suspension",
+            f"/api/v1/credentials/{credential_id}/suspend?notes=Administrative%20suspension",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -518,7 +518,7 @@ class TestCredentialRoutes:
         mock_controller_class.return_value = mock_controller
 
         response = client.post(
-            f"/api/credentials/{credential_id}/activate",
+            f"/api/v1/credentials/{credential_id}/activate",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -544,7 +544,7 @@ class TestCredentialRoutes:
         mock_controller_class.return_value = mock_controller
 
         response = client.post(
-            f"/api/credentials/{credential_id}/verify",
+            f"/api/v1/credentials/{credential_id}/verify",
             headers=auth_headers,
         )
         assert response.status_code == 200

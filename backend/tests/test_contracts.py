@@ -46,30 +46,30 @@ class TestContractRequest:
         """Test creating a valid contract request."""
         request = ContractRequest(
             method="GET",
-            path="/api/persons/{person_id}",
+            path="/api/v1/persons/{person_id}",
             headers={"Accept": "application/json"},
             query={"include": "assignments"},
         )
 
         assert request.method == "GET"
-        assert request.path == "/api/persons/{person_id}"
+        assert request.path == "/api/v1/persons/{person_id}"
         assert request.headers == {"Accept": "application/json"}
         assert request.query == {"include": "assignments"}
 
     def test_method_case_normalization(self):
         """Test that HTTP method is normalized to uppercase."""
-        request = ContractRequest(method="get", path="/api/test")
+        request = ContractRequest(method="get", path="/api/v1/test")
         assert request.method == "GET"
 
     def test_invalid_method(self):
         """Test that invalid HTTP methods are rejected."""
         with pytest.raises(ValueError, match="Invalid HTTP method"):
-            ContractRequest(method="INVALID", path="/api/test")
+            ContractRequest(method="INVALID", path="/api/v1/test")
 
     def test_post_request_with_body(self):
         """Test POST request with JSON body."""
         body = {"name": "John Doe", "email": "john@example.com"}
-        request = ContractRequest(method="POST", path="/api/persons", body=body)
+        request = ContractRequest(method="POST", path="/api/v1/persons", body=body)
 
         assert request.method == "POST"
         assert request.body == body
@@ -110,7 +110,7 @@ class TestContractInteraction:
 
     def test_create_interaction(self):
         """Test creating a contract interaction."""
-        request = ContractRequest(method="GET", path="/api/persons/123")
+        request = ContractRequest(method="GET", path="/api/v1/persons/123")
         response = ContractResponse(status=200, body={"id": "123", "name": "John"})
 
         interaction = ContractInteraction(
@@ -124,7 +124,7 @@ class TestContractInteraction:
 
     def test_interaction_with_provider_state(self):
         """Test interaction with provider state."""
-        request = ContractRequest(method="GET", path="/api/persons/123")
+        request = ContractRequest(method="GET", path="/api/v1/persons/123")
         response = ContractResponse(status=200, body={"id": "123"})
 
         interaction = ContractInteraction(
@@ -174,7 +174,7 @@ class TestContract:
         """Test adding interactions to contract."""
         contract = Contract(consumer="app1", provider="app2", version="1.0.0")
 
-        request = ContractRequest(method="GET", path="/api/test")
+        request = ContractRequest(method="GET", path="/api/v1/test")
         response = ContractResponse(status=200, body={})
         interaction = ContractInteraction(
             description="Test", request=request, response=response
@@ -188,7 +188,7 @@ class TestContract:
     def test_contract_hash(self):
         """Test contract hash generation."""
         contract1 = Contract(consumer="app1", provider="app2", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/test")
+        request = ContractRequest(method="GET", path="/api/v1/test")
         response = ContractResponse(status=200, body={"key": "value"})
         interaction = ContractInteraction(
             description="Test", request=request, response=response
@@ -203,7 +203,7 @@ class TestContract:
 
         # Different contract should have different hash
         contract3 = Contract(consumer="app1", provider="app2", version="1.0.0")
-        different_request = ContractRequest(method="POST", path="/api/test")
+        different_request = ContractRequest(method="POST", path="/api/v1/test")
         different_interaction = ContractInteraction(
             description="Test", request=different_request, response=response
         )
@@ -214,7 +214,7 @@ class TestContract:
     def test_to_pact_format(self):
         """Test conversion to Pact format."""
         contract = Contract(consumer="app1", provider="app2", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/test")
+        request = ContractRequest(method="GET", path="/api/v1/test")
         response = ContractResponse(status=200, body={"result": "success"})
         interaction = ContractInteraction(
             description="Test interaction",
@@ -253,7 +253,7 @@ class TestContractTester:
         """Test adding interaction to contract."""
         tester = ContractTester(consumer="app1", provider="api", version="1.0.0")
 
-        request = ContractRequest(method="GET", path="/api/persons/123")
+        request = ContractRequest(method="GET", path="/api/v1/persons/123")
         response = ContractResponse(status=200, body={"id": "123", "name": "John Doe"})
 
         tester.add_interaction(
@@ -271,7 +271,7 @@ class TestContractTester:
         """Test saving contract to file and loading it back."""
         tester = ContractTester(consumer="app1", provider="api", version="1.0.0")
 
-        request = ContractRequest(method="GET", path="/api/test")
+        request = ContractRequest(method="GET", path="/api/v1/test")
         response = ContractResponse(status=200, body={"result": "success"})
 
         tester.add_interaction(
@@ -322,13 +322,13 @@ class TestContractVerifier:
         # Create a simple FastAPI app
         app = FastAPI()
 
-        @app.get("/api/test")
+        @app.get("/api/v1/test")
         def test_endpoint():
             return {"result": "success"}
 
         # Create contract
         contract = Contract(consumer="test-app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/test")
+        request = ContractRequest(method="GET", path="/api/v1/test")
         response = ContractResponse(status=200, body={"result": "success"})
         interaction = ContractInteraction(
             description="Test endpoint", request=request, response=response
@@ -349,12 +349,12 @@ class TestContractVerifier:
         """Test verifying contract with path parameters."""
         app = FastAPI()
 
-        @app.get("/api/persons/{person_id}")
+        @app.get("/api/v1/persons/{person_id}")
         def get_person(person_id: str):
             return {"id": person_id, "name": "John Doe", "email": "john@example.com"}
 
         contract = Contract(consumer="frontend", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/persons/123")
+        request = ContractRequest(method="GET", path="/api/v1/persons/123")
         response = ContractResponse(
             status=200,
             body={"id": "123", "name": "John Doe", "email": "john@example.com"},
@@ -375,12 +375,12 @@ class TestContractVerifier:
         """Test verification fails when status codes don't match."""
         app = FastAPI()
 
-        @app.get("/api/test")
+        @app.get("/api/v1/test")
         def test_endpoint():
             return {"result": "success"}  # Returns 200
 
         contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/test")
+        request = ContractRequest(method="GET", path="/api/v1/test")
         response = ContractResponse(
             status=201,
             body={"result": "success"},  # Expects 201
@@ -407,7 +407,7 @@ class TestContractVerifier:
         app = FastAPI()
         state_executed = {"value": False}
 
-        @app.get("/api/persons/{person_id}")
+        @app.get("/api/v1/persons/{person_id}")
         def get_person(person_id: str):
             return {"id": person_id, "name": "John Doe"}
 
@@ -415,7 +415,7 @@ class TestContractVerifier:
             state_executed["value"] = True
 
         contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/persons/123")
+        request = ContractRequest(method="GET", path="/api/v1/persons/123")
         response = ContractResponse(status=200, body={"id": "123", "name": "John Doe"})
         interaction = ContractInteraction(
             description="Get person",
@@ -437,7 +437,7 @@ class TestContractVerifier:
     async def test_verify_contract_no_app_or_url(self):
         """Test verification fails when no app or URL provided."""
         contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/test")
+        request = ContractRequest(method="GET", path="/api/v1/test")
         response = ContractResponse(status=200, body={})
         interaction = ContractInteraction(
             description="Test", request=request, response=response
@@ -474,7 +474,7 @@ class TestContractPublisher:
         publisher = ContractPublisher(broker_url="http://pact-broker")
 
         contract = Contract(consumer="app1", provider="app2", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/test")
+        request = ContractRequest(method="GET", path="/api/v1/test")
         response = ContractResponse(status=200, body={})
         interaction = ContractInteraction(
             description="Test", request=request, response=response
@@ -523,7 +523,7 @@ class TestContractPublisher:
             "interactions": [
                 {
                     "description": "Test interaction",
-                    "request": {"method": "GET", "path": "/api/test"},
+                    "request": {"method": "GET", "path": "/api/v1/test"},
                     "response": {"status": 200, "body": {"result": "success"}},
                 }
             ],
@@ -578,7 +578,7 @@ class TestContractCompatibilityChecker:
     def test_compatible_contracts(self):
         """Test that identical contracts are compatible."""
         old_contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/test")
+        request = ContractRequest(method="GET", path="/api/v1/test")
         response = ContractResponse(status=200, body={"result": "success"})
         interaction = ContractInteraction(
             description="Test", request=request, response=response
@@ -599,7 +599,7 @@ class TestContractCompatibilityChecker:
     def test_removed_endpoint_breaking_change(self):
         """Test that removing an endpoint is a breaking change."""
         old_contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/test")
+        request = ContractRequest(method="GET", path="/api/v1/test")
         response = ContractResponse(status=200, body={})
         interaction = ContractInteraction(
             description="Test", request=request, response=response
@@ -621,7 +621,7 @@ class TestContractCompatibilityChecker:
     def test_changed_status_code_breaking_change(self):
         """Test that changing status code is a breaking change."""
         old_contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="POST", path="/api/create")
+        request = ContractRequest(method="POST", path="/api/v1/create")
         old_response = ContractResponse(status=200, body={"id": "123"})
         old_interaction = ContractInteraction(
             description="Create", request=request, response=old_response
@@ -647,7 +647,7 @@ class TestContractCompatibilityChecker:
     def test_removed_field_breaking_change(self):
         """Test that removing a response field is a breaking change."""
         old_contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/person")
+        request = ContractRequest(method="GET", path="/api/v1/person")
         old_response = ContractResponse(
             status=200, body={"id": "123", "name": "John", "email": "john@example.com"}
         )
@@ -680,7 +680,7 @@ class TestContractCompatibilityChecker:
     def test_changed_field_type_breaking_change(self):
         """Test that changing field type is a breaking change."""
         old_contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/stats")
+        request = ContractRequest(method="GET", path="/api/v1/stats")
         old_response = ContractResponse(status=200, body={"count": 42})  # int
         old_interaction = ContractInteraction(
             description="Get stats", request=request, response=old_response
@@ -708,7 +708,7 @@ class TestContractCompatibilityChecker:
     def test_added_field_not_breaking(self):
         """Test that adding a new field is not a breaking change."""
         old_contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/person")
+        request = ContractRequest(method="GET", path="/api/v1/person")
         old_response = ContractResponse(status=200, body={"id": "123", "name": "John"})
         old_interaction = ContractInteraction(
             description="Get person", request=request, response=old_response
@@ -741,7 +741,7 @@ class TestContractCompatibilityChecker:
     def test_nested_object_field_removal(self):
         """Test detecting removed field in nested object."""
         old_contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/user")
+        request = ContractRequest(method="GET", path="/api/v1/user")
         old_response = ContractResponse(
             status=200,
             body={
@@ -793,7 +793,7 @@ class TestContractIntegration:
         # Add interaction: Get person
         request = ContractRequest(
             method="GET",
-            path="/api/persons/123",
+            path="/api/v1/persons/123",
             headers={"Accept": "application/json"},
         )
         response = ContractResponse(
@@ -813,7 +813,7 @@ class TestContractIntegration:
         # Provider side: Create API
         app = FastAPI()
 
-        @app.get("/api/persons/{person_id}")
+        @app.get("/api/v1/persons/{person_id}")
         def get_person(person_id: str):
             return {"id": person_id, "name": "John Doe", "type": "faculty"}
 
@@ -830,7 +830,7 @@ class TestContractIntegration:
         """Test evolving contract versions and checking compatibility."""
         # Version 1.0.0
         v1_contract = Contract(consumer="app", provider="api", version="1.0.0")
-        request = ContractRequest(method="GET", path="/api/data")
+        request = ContractRequest(method="GET", path="/api/v1/data")
         response_v1 = ContractResponse(status=200, body={"id": "123", "value": "test"})
         interaction_v1 = ContractInteraction(
             description="Get data", request=request, response=response_v1

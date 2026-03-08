@@ -235,7 +235,7 @@ class TestAbsenceConflictWorkflowE2E:
         }
 
         create_response = client.post(
-            "/api/absences",
+            "/api/v1/absences",
             json=absence_data,
             headers=auth_headers,
         )

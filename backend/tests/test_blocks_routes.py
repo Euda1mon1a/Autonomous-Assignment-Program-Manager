@@ -19,7 +19,7 @@ class TestListBlocksEndpoint:
 
     def test_list_blocks_empty(self, client: TestClient, db: Session):
         """Test listing blocks when none exist."""
-        response = client.get("/api/blocks")
+        response = client.get("/api/v1/blocks")
 
         assert response.status_code == 200
         data = response.json()
@@ -31,7 +31,7 @@ class TestListBlocksEndpoint:
 
     def test_list_blocks_with_data(self, client: TestClient, sample_blocks):
         """Test listing blocks with existing data."""
-        response = client.get("/api/blocks")
+        response = client.get("/api/v1/blocks")
 
         assert response.status_code == 200
         data = response.json()
@@ -50,7 +50,7 @@ class TestListBlocksEndpoint:
     def test_list_blocks_filter_by_start_date(self, client: TestClient, sample_blocks):
         """Test filtering blocks by start_date."""
         filter_date = (date.today() + timedelta(days=3)).isoformat()
-        response = client.get("/api/blocks", params={"start_date": filter_date})
+        response = client.get("/api/v1/blocks", params={"start_date": filter_date})
 
         assert response.status_code == 200
         data = response.json()
@@ -63,7 +63,7 @@ class TestListBlocksEndpoint:
     def test_list_blocks_filter_by_end_date(self, client: TestClient, sample_blocks):
         """Test filtering blocks by end_date."""
         filter_date = (date.today() + timedelta(days=3)).isoformat()
-        response = client.get("/api/blocks", params={"end_date": filter_date})
+        response = client.get("/api/v1/blocks", params={"end_date": filter_date})
 
         assert response.status_code == 200
         data = response.json()
@@ -95,7 +95,8 @@ class TestListBlocksEndpoint:
         filter_end = (start + timedelta(days=9)).isoformat()
 
         response = client.get(
-            "/api/blocks", params={"start_date": filter_start, "end_date": filter_end}
+            "/api/v1/blocks",
+            params={"start_date": filter_start, "end_date": filter_end},
         )
 
         assert response.status_code == 200
@@ -130,7 +131,7 @@ class TestListBlocksEndpoint:
                 db.add(block)
         db.commit()
 
-        response = client.get("/api/blocks", params={"block_number": 2})
+        response = client.get("/api/v1/blocks", params={"block_number": 2})
 
         assert response.status_code == 200
         data = response.json()
@@ -161,7 +162,7 @@ class TestListBlocksEndpoint:
         filter_end = (start + timedelta(days=6)).isoformat()
 
         response = client.get(
-            "/api/blocks",
+            "/api/v1/blocks",
             params={
                 "start_date": filter_start,
                 "end_date": filter_end,
@@ -189,7 +190,8 @@ class TestListBlocksEndpoint:
         future_end = (date.today() + timedelta(days=400)).isoformat()
 
         response = client.get(
-            "/api/blocks", params={"start_date": future_start, "end_date": future_end}
+            "/api/v1/blocks",
+            params={"start_date": future_start, "end_date": future_end},
         )
 
         assert response.status_code == 200
@@ -203,7 +205,7 @@ class TestGetBlockEndpoint:
 
     def test_get_block_success(self, client: TestClient, sample_block: Block):
         """Test getting an existing block by ID."""
-        response = client.get(f"/api/blocks/{sample_block.id}")
+        response = client.get(f"/api/v1/blocks/{sample_block.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -217,14 +219,14 @@ class TestGetBlockEndpoint:
     def test_get_block_not_found(self, client: TestClient):
         """Test getting a non-existent block."""
         fake_id = uuid4()
-        response = client.get(f"/api/blocks/{fake_id}")
+        response = client.get(f"/api/v1/blocks/{fake_id}")
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
     def test_get_block_invalid_uuid(self, client: TestClient):
         """Test getting block with invalid UUID format."""
-        response = client.get("/api/blocks/not-a-valid-uuid")
+        response = client.get("/api/v1/blocks/not-a-valid-uuid")
 
         assert response.status_code == 422  # Validation error
 
@@ -243,7 +245,7 @@ class TestGetBlockEndpoint:
         db.commit()
         db.refresh(holiday_block)
 
-        response = client.get(f"/api/blocks/{holiday_block.id}")
+        response = client.get(f"/api/v1/blocks/{holiday_block.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -264,7 +266,7 @@ class TestCreateBlockEndpoint:
             "is_holiday": False,
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -283,7 +285,7 @@ class TestCreateBlockEndpoint:
             "is_holiday": False,
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -307,7 +309,7 @@ class TestCreateBlockEndpoint:
             "is_holiday": False,
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -324,7 +326,7 @@ class TestCreateBlockEndpoint:
             "holiday_name": "Independence Day",
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -341,7 +343,7 @@ class TestCreateBlockEndpoint:
             "is_holiday": False,
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         assert response.status_code == 422  # Validation error
         error_detail = str(response.json()["detail"])
@@ -358,7 +360,7 @@ class TestCreateBlockEndpoint:
             # Missing time_of_day and block_number
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -387,7 +389,7 @@ class TestCreateBlockEndpoint:
             "is_holiday": False,
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         # Should fail with 400 or 422 depending on validation
         assert response.status_code in [400, 422]
@@ -402,7 +404,7 @@ class TestCreateBlockEndpoint:
             "is_holiday": False,
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -416,7 +418,7 @@ class TestCreateBlockEndpoint:
             "is_holiday": False,
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         # Depending on validation, might succeed or fail
         # If it succeeds, verify the block_number is stored
@@ -433,7 +435,7 @@ class TestGenerateBlocksEndpoint:
         test_date = date.today() + timedelta(days=60)
 
         response = client.post(
-            "/api/blocks/generate",
+            "/api/v1/blocks/generate",
             params={
                 "start_date": test_date.isoformat(),
                 "end_date": test_date.isoformat(),
@@ -457,7 +459,7 @@ class TestGenerateBlocksEndpoint:
         end = start + timedelta(days=6)
 
         response = client.post(
-            "/api/blocks/generate",
+            "/api/v1/blocks/generate",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -474,7 +476,7 @@ class TestGenerateBlocksEndpoint:
         test_date = date.today() + timedelta(days=80)
 
         response = client.post(
-            "/api/blocks/generate",
+            "/api/v1/blocks/generate",
             params={
                 "start_date": test_date.isoformat(),
                 "end_date": test_date.isoformat(),
@@ -495,7 +497,7 @@ class TestGenerateBlocksEndpoint:
         end = start + timedelta(days=29)  # 30 days
 
         response = client.post(
-            "/api/blocks/generate",
+            "/api/v1/blocks/generate",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -513,7 +515,7 @@ class TestGenerateBlocksEndpoint:
         end = start - timedelta(days=5)  # Invalid: end before start
 
         response = client.post(
-            "/api/blocks/generate",
+            "/api/v1/blocks/generate",
             params={
                 "start_date": start.isoformat(),
                 "end_date": end.isoformat(),
@@ -528,7 +530,7 @@ class TestGenerateBlocksEndpoint:
 
     def test_generate_blocks_missing_dates(self, client: TestClient):
         """Test generate blocks with missing required parameters."""
-        response = client.post("/api/blocks/generate")
+        response = client.post("/api/v1/blocks/generate")
 
         assert response.status_code == 422  # Validation error
 
@@ -537,7 +539,7 @@ class TestGenerateBlocksEndpoint:
         test_date = date.today() + timedelta(days=120)
 
         response = client.post(
-            "/api/blocks/generate",
+            "/api/v1/blocks/generate",
             params={
                 "start_date": test_date.isoformat(),
                 "end_date": test_date.isoformat(),
@@ -572,25 +574,25 @@ class TestDeleteBlockEndpoint:
         db.commit()
         block_id = block.id
 
-        response = client.delete(f"/api/blocks/{block_id}")
+        response = client.delete(f"/api/v1/blocks/{block_id}")
 
         assert response.status_code == 204
         assert response.content == b""
 
         # Verify block is deleted
-        verify_response = client.get(f"/api/blocks/{block_id}")
+        verify_response = client.get(f"/api/v1/blocks/{block_id}")
         assert verify_response.status_code == 404
 
     def test_delete_block_not_found(self, client: TestClient):
         """Test deleting a non-existent block."""
         fake_id = uuid4()
-        response = client.delete(f"/api/blocks/{fake_id}")
+        response = client.delete(f"/api/v1/blocks/{fake_id}")
 
         assert response.status_code == 404
 
     def test_delete_block_invalid_uuid(self, client: TestClient):
         """Test deleting block with invalid UUID format."""
-        response = client.delete("/api/blocks/invalid-uuid-format")
+        response = client.delete("/api/v1/blocks/invalid-uuid-format")
 
         assert response.status_code == 422  # Validation error
 
@@ -610,11 +612,11 @@ class TestDeleteBlockEndpoint:
         block_id = block.id
 
         # First delete
-        response1 = client.delete(f"/api/blocks/{block_id}")
+        response1 = client.delete(f"/api/v1/blocks/{block_id}")
         assert response1.status_code == 204
 
         # Second delete should fail
-        response2 = client.delete(f"/api/blocks/{block_id}")
+        response2 = client.delete(f"/api/v1/blocks/{block_id}")
         assert response2.status_code == 404
 
 
@@ -625,7 +627,7 @@ class TestBlockStructureAndValidation:
         self, client: TestClient, sample_block: Block
     ):
         """Test that block response includes all expected fields."""
-        response = client.get(f"/api/blocks/{sample_block.id}")
+        response = client.get(f"/api/v1/blocks/{sample_block.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -647,7 +649,7 @@ class TestBlockStructureAndValidation:
 
     def test_block_date_format(self, client: TestClient, sample_blocks):
         """Test that block dates are in ISO format."""
-        response = client.get("/api/blocks")
+        response = client.get("/api/v1/blocks")
 
         assert response.status_code == 200
         data = response.json()
@@ -663,7 +665,7 @@ class TestBlockStructureAndValidation:
 
     def test_block_time_of_day_values(self, client: TestClient, sample_blocks):
         """Test that time_of_day only contains valid values."""
-        response = client.get("/api/blocks")
+        response = client.get("/api/v1/blocks")
 
         assert response.status_code == 200
         data = response.json()
@@ -674,7 +676,7 @@ class TestBlockStructureAndValidation:
 
     def test_block_boolean_fields(self, client: TestClient, sample_blocks):
         """Test that boolean fields are actual booleans."""
-        response = client.get("/api/blocks")
+        response = client.get("/api/v1/blocks")
 
         assert response.status_code == 200
         data = response.json()
@@ -686,7 +688,7 @@ class TestBlockStructureAndValidation:
 
     def test_block_number_is_integer(self, client: TestClient, sample_blocks):
         """Test that block_number is an integer."""
-        response = client.get("/api/blocks")
+        response = client.get("/api/v1/blocks")
 
         assert response.status_code == 200
         data = response.json()
@@ -711,7 +713,7 @@ class TestBlockEdgeCases:
             "is_holiday": False,
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         # Should succeed
         assert response.status_code == 201
@@ -728,7 +730,7 @@ class TestBlockEdgeCases:
             "is_holiday": False,
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         # Should succeed (past dates might be needed for historical data)
         assert response.status_code in [201, 400]
@@ -738,7 +740,7 @@ class TestBlockEdgeCases:
         test_date = date.today() + timedelta(days=200)
 
         response = client.post(
-            "/api/blocks/generate",
+            "/api/v1/blocks/generate",
             params={
                 "start_date": test_date.isoformat(),
                 "end_date": test_date.isoformat(),
@@ -767,7 +769,7 @@ class TestBlockEdgeCases:
 
         # Query with exact start date
         response = client.get(
-            "/api/blocks", params={"start_date": base_date.isoformat()}
+            "/api/v1/blocks", params={"start_date": base_date.isoformat()}
         )
 
         assert response.status_code == 200
@@ -784,7 +786,7 @@ class TestBlockEdgeCases:
             "is_holiday": False,
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         # Should succeed or handle gracefully
         assert response.status_code in [201, 400, 422]
@@ -803,7 +805,7 @@ class TestBlockEdgeCases:
             "holiday_name": "Not Actually a Holiday",
         }
 
-        response = client.post("/api/blocks", json=block_data)
+        response = client.post("/api/v1/blocks", json=block_data)
 
         # Should succeed - validation may or may not enforce consistency
         assert response.status_code in [201, 400, 422]

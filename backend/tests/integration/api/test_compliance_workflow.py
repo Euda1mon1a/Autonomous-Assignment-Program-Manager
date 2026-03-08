@@ -38,7 +38,7 @@ class TestComplianceWorkflow:
             current_date = start_date + timedelta(days=i)
             for tod in ["AM", "PM"]:
                 response = client.post(
-                    "/api/blocks/",
+                    "/api/v1/blocks/",
                     json={
                         "date": current_date.isoformat(),
                         "time_of_day": tod,
@@ -52,7 +52,7 @@ class TestComplianceWorkflow:
         # Step 2: Assign resident to all blocks (should violate 80-hour rule)
         for block in blocks:
             client.post(
-                "/api/assignments/",
+                "/api/v1/assignments/",
                 json={
                     "block_id": block["id"],
                     "person_id": str(sample_resident.id),
@@ -64,7 +64,7 @@ class TestComplianceWorkflow:
 
         # Step 3: Check compliance
         compliance_response = client.get(
-            f"/api/analytics/acgme/compliance?person_id={sample_resident.id}&start_date={start_date.isoformat()}",
+            f"/api/v1/analytics/acgme/compliance?person_id={sample_resident.id}&start_date={start_date.isoformat()}",
             headers=auth_headers,
         )
 
@@ -92,7 +92,7 @@ class TestComplianceWorkflow:
             current_date = start_date + timedelta(days=i)
             for tod in ["AM", "PM"]:
                 response = client.post(
-                    "/api/blocks/",
+                    "/api/v1/blocks/",
                     json={
                         "date": current_date.isoformat(),
                         "time_of_day": tod,
@@ -103,7 +103,7 @@ class TestComplianceWorkflow:
 
         # Step 2: Get created blocks
         blocks_response = client.get(
-            f"/api/blocks/?start_date={start_date.isoformat()}&end_date={(start_date + timedelta(days=13)).isoformat()}",
+            f"/api/v1/blocks/?start_date={start_date.isoformat()}&end_date={(start_date + timedelta(days=13)).isoformat()}",
             headers=auth_headers,
         )
 
@@ -113,7 +113,7 @@ class TestComplianceWorkflow:
             # Step 3: Assign to all blocks (violates 1-in-7 rule)
             for block in blocks:
                 client.post(
-                    "/api/assignments/",
+                    "/api/v1/assignments/",
                     json={
                         "block_id": block["id"],
                         "person_id": str(sample_resident.id),
@@ -125,7 +125,7 @@ class TestComplianceWorkflow:
 
             # Step 4: Validate compliance
             validation_response = client.post(
-                "/api/schedule/validate",
+                "/api/v1/schedule/validate",
                 json={
                     "person_id": str(sample_resident.id),
                     "start_date": start_date.isoformat(),
@@ -148,7 +148,7 @@ class TestComplianceWorkflow:
         # Step 1: Create a block
         start_date = date.today()
         block_response = client.post(
-            "/api/blocks/",
+            "/api/v1/blocks/",
             json={
                 "date": start_date.isoformat(),
                 "time_of_day": "AM",
@@ -161,7 +161,7 @@ class TestComplianceWorkflow:
 
         # Step 2: Create template requiring supervision
         template_response = client.post(
-            "/api/rotation-templates/",
+            "/api/v1/rotation-templates/",
             json={
                 "name": "Supervised Clinic",
                 "rotation_type": "outpatient",
@@ -178,7 +178,7 @@ class TestComplianceWorkflow:
         # Step 3: Assign residents without faculty (should fail supervision check)
         for resident in sample_residents[:3]:  # 3 residents
             client.post(
-                "/api/assignments/",
+                "/api/v1/assignments/",
                 json={
                     "block_id": block_id,
                     "person_id": str(resident.id),
@@ -190,7 +190,7 @@ class TestComplianceWorkflow:
 
         # Step 4: Check supervision compliance
         supervision_response = client.get(
-            f"/api/analytics/supervision?block_id={block_id}",
+            f"/api/v1/analytics/supervision?block_id={block_id}",
             headers=auth_headers,
         )
         assert supervision_response.status_code in [200, 404]
@@ -198,7 +198,7 @@ class TestComplianceWorkflow:
         # Step 5: Add faculty to meet ratio
         if len(sample_faculty_members) > 0:
             faculty_assignment = client.post(
-                "/api/assignments/",
+                "/api/v1/assignments/",
                 json={
                     "block_id": block_id,
                     "person_id": str(sample_faculty_members[0].id),
@@ -210,7 +210,7 @@ class TestComplianceWorkflow:
 
             # Step 6: Re-check compliance
             recheck_response = client.get(
-                f"/api/analytics/supervision?block_id={block_id}",
+                f"/api/v1/analytics/supervision?block_id={block_id}",
                 headers=auth_headers,
             )
             assert recheck_response.status_code in [200, 404]
@@ -233,7 +233,7 @@ class TestComplianceWorkflow:
             block_number, _ = get_block_number_for_date(current_date)
             for tod in ["AM", "PM"]:
                 client.post(
-                    "/api/blocks/",
+                    "/api/v1/blocks/",
                     json={
                         "date": current_date.isoformat(),
                         "time_of_day": tod,
@@ -244,7 +244,7 @@ class TestComplianceWorkflow:
 
         # Step 2: Get blocks
         blocks_response = client.get(
-            f"/api/blocks/?start_date={start_date.isoformat()}&end_date={(start_date + timedelta(days=27)).isoformat()}",
+            f"/api/v1/blocks/?start_date={start_date.isoformat()}&end_date={(start_date + timedelta(days=27)).isoformat()}",
             headers=auth_headers,
         )
 
@@ -256,7 +256,7 @@ class TestComplianceWorkflow:
                 # Vary assignment to create realistic schedule
                 if i % 3 != 0:  # Work 2 out of 3 blocks
                     client.post(
-                        "/api/assignments/",
+                        "/api/v1/assignments/",
                         json={
                             "block_id": block["id"],
                             "person_id": str(sample_resident.id),
@@ -268,7 +268,7 @@ class TestComplianceWorkflow:
 
             # Step 4: Check rolling average
             analytics_response = client.get(
-                f"/api/analytics/work-hours?person_id={sample_resident.id}&start_date={start_date.isoformat()}&window=4",
+                f"/api/v1/analytics/work-hours?person_id={sample_resident.id}&start_date={start_date.isoformat()}&window=4",
                 headers=auth_headers,
             )
             assert analytics_response.status_code in [200, 404]
@@ -283,7 +283,7 @@ class TestComplianceWorkflow:
         """Test compliance dashboard retrieval."""
         # Step 1: Get overall compliance dashboard
         dashboard_response = client.get(
-            "/api/analytics/compliance/dashboard",
+            "/api/v1/analytics/compliance/dashboard",
             headers=auth_headers,
         )
         assert dashboard_response.status_code in [200, 404]
@@ -296,7 +296,7 @@ class TestComplianceWorkflow:
         # Step 2: Get per-resident compliance
         for resident in sample_residents:
             resident_compliance = client.get(
-                f"/api/analytics/compliance/resident/{resident.id}",
+                f"/api/v1/analytics/compliance/resident/{resident.id}",
                 headers=auth_headers,
             )
             assert resident_compliance.status_code in [200, 404]
@@ -318,7 +318,7 @@ class TestComplianceWorkflow:
             current_date = start_date + timedelta(days=i)
             for tod in ["AM", "PM"]:
                 block_response = client.post(
-                    "/api/blocks/",
+                    "/api/v1/blocks/",
                     json={
                         "date": current_date.isoformat(),
                         "time_of_day": tod,
@@ -329,7 +329,7 @@ class TestComplianceWorkflow:
 
                 if block_response.status_code in [200, 201]:
                     client.post(
-                        "/api/assignments/",
+                        "/api/v1/assignments/",
                         json={
                             "block_id": block_response.json()["id"],
                             "person_id": str(sample_resident.id),
@@ -341,7 +341,7 @@ class TestComplianceWorkflow:
 
         # Step 2: Trigger compliance check
         check_response = client.post(
-            "/api/analytics/compliance/check",
+            "/api/v1/analytics/compliance/check",
             json={
                 "person_id": str(sample_resident.id),
                 "start_date": start_date.isoformat(),
@@ -353,7 +353,7 @@ class TestComplianceWorkflow:
 
         # Step 3: Check for alerts
         alerts_response = client.get(
-            "/api/alerts/",
+            "/api/v1/alerts/",
             headers=auth_headers,
         )
         assert alerts_response.status_code in [200, 404]
@@ -369,7 +369,7 @@ class TestComplianceWorkflow:
 
         # Request compliance report
         report_response = client.post(
-            "/api/reports/compliance",
+            "/api/v1/reports/compliance",
             json={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -399,7 +399,7 @@ class TestComplianceWorkflow:
         # Step 1: Create some baseline assignments
         for block in sample_blocks[:5]:
             client.post(
-                "/api/assignments/",
+                "/api/v1/assignments/",
                 json={
                     "block_id": str(block.id),
                     "person_id": str(sample_resident.id),
@@ -412,7 +412,7 @@ class TestComplianceWorkflow:
         # Step 2: Check if new assignment would violate compliance
         if len(sample_blocks) > 5:
             precheck_response = client.post(
-                "/api/assignments/validate",
+                "/api/v1/assignments/validate",
                 json={
                     "block_id": str(sample_blocks[5].id),
                     "person_id": str(sample_resident.id),

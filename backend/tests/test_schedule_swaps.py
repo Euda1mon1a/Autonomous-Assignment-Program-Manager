@@ -34,7 +34,7 @@ class TestSwapsFindEndpoint:
         }
 
         response = client.post(
-            "/api/schedule/swaps/find",
+            "/api/v1/schedule/swaps/find",
             files={
                 "fmit_file": (
                     "fmit.xlsx",
@@ -85,7 +85,7 @@ class TestSwapsFindEndpoint:
             mock_finder_class.from_fmit_file.return_value = mock_finder
 
             response = client.post(
-                "/api/schedule/swaps/find",
+                "/api/v1/schedule/swaps/find",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -122,7 +122,7 @@ class TestSwapsFindEndpoint:
             mock_finder_class.from_fmit_file.return_value = mock_finder
 
             response = client.post(
-                "/api/schedule/swaps/find",
+                "/api/v1/schedule/swaps/find",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -139,7 +139,7 @@ class TestSwapsFindEndpoint:
     def test_find_invalid_json(self, client: TestClient, auth_headers: dict):
         """Test swap search with invalid JSON request."""
         response = client.post(
-            "/api/schedule/swaps/find",
+            "/api/v1/schedule/swaps/find",
             files={
                 "fmit_file": (
                     "fmit.xlsx",
@@ -174,7 +174,7 @@ class TestSwapsFindEndpoint:
             mock_finder_class.from_fmit_file.return_value = mock_finder
 
             response = client.post(
-                "/api/schedule/swaps/find",
+                "/api/v1/schedule/swaps/find",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -227,7 +227,7 @@ class TestSwapsFindEndpoint:
             mock_finder_class.from_fmit_file.return_value = mock_finder
 
             response = client.post(
-                "/api/schedule/swaps/find",
+                "/api/v1/schedule/swaps/find",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -275,7 +275,7 @@ class TestSwapsFindEndpoint:
             mock_finder_class.from_fmit_file.return_value = mock_finder
 
             response = client.post(
-                "/api/schedule/swaps/find",
+                "/api/v1/schedule/swaps/find",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -304,7 +304,7 @@ class TestSwapsFindEndpoint:
             mock_validate.side_effect = FileValidationError("Invalid file")
 
             response = client.post(
-                "/api/schedule/swaps/find",
+                "/api/v1/schedule/swaps/find",
                 files={
                     "fmit_file": (
                         "bad.xlsx",
@@ -347,7 +347,7 @@ class TestSwapsFindEndpoint:
             mock_finder_class.from_fmit_file.return_value = mock_finder
 
             response = client.post(
-                "/api/schedule/swaps/find",
+                "/api/v1/schedule/swaps/find",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -373,7 +373,7 @@ class TestSwapsCandidatesEndpoint:
     def test_candidates_requires_auth(self, client: TestClient):
         """Test that swap candidates requires authentication."""
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": str(uuid4()),
             },
@@ -395,7 +395,7 @@ class TestSwapsCandidatesEndpoint:
             mock_person.type = "faculty"
 
             response = client.post(
-                "/api/schedule/swaps/candidates",
+                "/api/v1/schedule/swaps/candidates",
                 json={
                     "person_id": person_id,
                     "max_candidates": 10,
@@ -409,7 +409,7 @@ class TestSwapsCandidatesEndpoint:
     def test_candidates_invalid_person_id(self, client: TestClient, auth_headers: dict):
         """Test swap candidates with invalid person ID format."""
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": "not-a-uuid",
             },
@@ -421,7 +421,7 @@ class TestSwapsCandidatesEndpoint:
     def test_candidates_person_not_found(self, client: TestClient, auth_headers: dict):
         """Test swap candidates when person not found."""
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": str(uuid4()),  # Non-existent person
             },
@@ -435,7 +435,7 @@ class TestSwapsCandidatesEndpoint:
     ):
         """Test swap candidates for specific assignment."""
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": str(uuid4()),
                 "assignment_id": str(uuid4()),
@@ -448,7 +448,7 @@ class TestSwapsCandidatesEndpoint:
     def test_candidates_with_block_id(self, client: TestClient, auth_headers: dict):
         """Test swap candidates for specific block."""
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": str(uuid4()),
                 "block_id": str(uuid4()),
@@ -463,7 +463,7 @@ class TestSwapsCandidatesEndpoint:
     ):
         """Test swap candidates with invalid assignment ID."""
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": str(uuid4()),
                 "assignment_id": "invalid-uuid",
@@ -476,7 +476,7 @@ class TestSwapsCandidatesEndpoint:
     def test_candidates_invalid_block_id(self, client: TestClient, auth_headers: dict):
         """Test swap candidates with invalid block ID."""
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": str(uuid4()),
                 "block_id": "invalid-uuid",
@@ -489,7 +489,7 @@ class TestSwapsCandidatesEndpoint:
     def test_candidates_max_candidates(self, client: TestClient, auth_headers: dict):
         """Test swap candidates respects max_candidates limit."""
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": str(uuid4()),
                 "max_candidates": 5,
@@ -505,7 +505,7 @@ class TestSwapsCandidatesEndpoint:
         """Test swap candidates when person has no future assignments."""
         # This tests the empty candidate case
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": str(uuid4()),
             },
@@ -521,7 +521,7 @@ class TestSwapsCandidatesEndpoint:
         """Test swap candidate scoring handles edge cases."""
         # Test with all parameters to exercise scoring logic
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": str(uuid4()),
                 "assignment_id": str(uuid4()),
@@ -536,7 +536,7 @@ class TestSwapsCandidatesEndpoint:
     def test_candidates_ranking(self, client: TestClient, auth_headers: dict):
         """Test swap candidates are properly ranked by score."""
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={
                 "person_id": str(uuid4()),
                 "max_candidates": 50,
@@ -559,8 +559,8 @@ class TestScheduleSwapsIntegration:
     def test_endpoints_accessible(self, client: TestClient, auth_headers: dict):
         """Test that all swap endpoints respond appropriately."""
         endpoints = [
-            "/api/schedule/swaps/find",
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/find",
+            "/api/v1/schedule/swaps/candidates",
         ]
 
         for url in endpoints:
@@ -573,7 +573,7 @@ class TestScheduleSwapsIntegration:
     ):
         """Test that find and candidates endpoints have consistent behavior."""
         # Both should require authentication
-        for url in ["/api/schedule/swaps/find", "/api/schedule/swaps/candidates"]:
+        for url in ["/api/v1/schedule/swaps/find", "/api/v1/schedule/swaps/candidates"]:
             response = client.post(url, json={})
             assert response.status_code in [401, 403, 422], f"{url} should require auth"
 
@@ -583,7 +583,7 @@ class TestScheduleSwapsIntegration:
         """Test that swap endpoints gracefully handle malformed input."""
         # Test /swaps/find with missing file
         response = client.post(
-            "/api/schedule/swaps/find",
+            "/api/v1/schedule/swaps/find",
             data={"request_json": "{}"},
             headers=auth_headers,
         )
@@ -591,7 +591,7 @@ class TestScheduleSwapsIntegration:
 
         # Test /swaps/candidates with empty JSON
         response = client.post(
-            "/api/schedule/swaps/candidates",
+            "/api/v1/schedule/swaps/candidates",
             json={},
             headers=auth_headers,
         )

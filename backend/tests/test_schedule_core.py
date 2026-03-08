@@ -27,7 +27,7 @@ class TestGenerateScheduleEndpoint:
     def test_generate_requires_auth(self, client: TestClient):
         """Test that schedule generation requires authentication."""
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -58,7 +58,7 @@ class TestGenerateScheduleEndpoint:
             mock_engine_class.return_value = mock_engine
 
             response = client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -89,7 +89,7 @@ class TestGenerateScheduleEndpoint:
             mock_engine_class.return_value = mock_engine
 
             response = client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -114,7 +114,7 @@ class TestGenerateScheduleEndpoint:
             mock_idempotency_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -140,7 +140,7 @@ class TestGenerateScheduleEndpoint:
             mock_engine_class.return_value = mock_engine
 
             response = client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -156,7 +156,7 @@ class TestGenerateScheduleEndpoint:
         """Test schedule generation with validation errors."""
         # Invalid date format
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "start_date": "invalid-date",
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -169,7 +169,7 @@ class TestGenerateScheduleEndpoint:
     def test_generate_invalid_algorithm(self, client: TestClient, auth_headers: dict):
         """Test schedule generation with invalid algorithm."""
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "start_date": date.today().isoformat(),
                 "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -182,7 +182,7 @@ class TestGenerateScheduleEndpoint:
     def test_generate_end_before_start(self, client: TestClient, auth_headers: dict):
         """Test schedule generation with end date before start date."""
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "start_date": (date.today() + timedelta(days=7)).isoformat(),
                 "end_date": date.today().isoformat(),
@@ -211,7 +211,7 @@ class TestGenerateScheduleEndpoint:
             mock_engine_class.return_value = mock_engine
 
             response = client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -238,7 +238,7 @@ class TestGenerateScheduleEndpoint:
             mock_engine_class.return_value = mock_engine
 
             response = client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 json={
                     "start_date": date.today().isoformat(),
                     "end_date": (date.today() + timedelta(days=7)).isoformat(),
@@ -279,7 +279,7 @@ class TestValidateScheduleEndpoint:
             end = (date.today() + timedelta(days=28)).isoformat()
 
             response = client.get(
-                f"/api/schedule/validate?start_date={start}&end_date={end}"
+                f"/api/v1/schedule/validate?start_date={start}&end_date={end}"
             )
 
             # May succeed or need auth
@@ -307,7 +307,7 @@ class TestValidateScheduleEndpoint:
             end = (date.today() + timedelta(days=28)).isoformat()
 
             response = client.get(
-                f"/api/schedule/validate?start_date={start}&end_date={end}"
+                f"/api/v1/schedule/validate?start_date={start}&end_date={end}"
             )
 
             assert response.status_code in [200, 401, 422, 500]
@@ -315,14 +315,14 @@ class TestValidateScheduleEndpoint:
     def test_validate_invalid_date_format(self, client: TestClient):
         """Test validation with invalid date format."""
         response = client.get(
-            "/api/schedule/validate?start_date=invalid&end_date=2025-01-31"
+            "/api/v1/schedule/validate?start_date=invalid&end_date=2025-01-31"
         )
 
         assert response.status_code in [400, 422]
 
     def test_validate_missing_parameters(self, client: TestClient):
         """Test validation with missing parameters."""
-        response = client.get("/api/schedule/validate")
+        response = client.get("/api/v1/schedule/validate")
 
         assert response.status_code in [400, 422]
 
@@ -341,7 +341,7 @@ class TestValidateScheduleEndpoint:
             end = (date.today() + timedelta(days=7)).isoformat()
 
             response = client.get(
-                f"/api/schedule/validate?start_date={start}&end_date={end}"
+                f"/api/v1/schedule/validate?start_date={start}&end_date={end}"
             )
 
             assert response.status_code in [200, 401, 422, 500]
@@ -365,7 +365,7 @@ class TestValidateScheduleEndpoint:
             end = (date.today() + timedelta(days=28)).isoformat()
 
             response = client.get(
-                f"/api/schedule/validate?start_date={start}&end_date={end}"
+                f"/api/v1/schedule/validate?start_date={start}&end_date={end}"
             )
 
             assert response.status_code in [200, 401, 422, 500]
@@ -382,7 +382,7 @@ class TestEmergencyCoverageEndpoint:
     def test_emergency_requires_auth(self, client: TestClient):
         """Test that emergency coverage requires authentication."""
         response = client.post(
-            "/api/schedule/emergency-coverage",
+            "/api/v1/schedule/emergency-coverage",
             json={
                 "person_id": str(uuid4()),
                 "start_date": date.today().isoformat(),
@@ -408,7 +408,7 @@ class TestEmergencyCoverageEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/emergency-coverage",
+                "/api/v1/schedule/emergency-coverage",
                 json={
                     "person_id": str(uuid4()),
                     "start_date": date.today().isoformat(),
@@ -438,7 +438,7 @@ class TestEmergencyCoverageEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/emergency-coverage",
+                "/api/v1/schedule/emergency-coverage",
                 json={
                     "person_id": str(uuid4()),
                     "start_date": date.today().isoformat(),
@@ -466,7 +466,7 @@ class TestEmergencyCoverageEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/emergency-coverage",
+                "/api/v1/schedule/emergency-coverage",
                 json={
                     "person_id": str(uuid4()),
                     "start_date": date.today().isoformat(),
@@ -482,7 +482,7 @@ class TestEmergencyCoverageEndpoint:
     def test_emergency_invalid_person_id(self, client: TestClient, auth_headers: dict):
         """Test emergency coverage with invalid person ID."""
         response = client.post(
-            "/api/schedule/emergency-coverage",
+            "/api/v1/schedule/emergency-coverage",
             json={
                 "person_id": "invalid-uuid",
                 "start_date": date.today().isoformat(),
@@ -498,7 +498,7 @@ class TestEmergencyCoverageEndpoint:
         """Test emergency coverage request validation."""
         # Missing required fields
         response = client.post(
-            "/api/schedule/emergency-coverage",
+            "/api/v1/schedule/emergency-coverage",
             json={
                 "person_id": str(uuid4()),
                 # Missing dates and reason
@@ -531,7 +531,7 @@ class TestEmergencyCoverageEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/schedule/emergency-coverage",
+                "/api/v1/schedule/emergency-coverage",
                 json={
                     "person_id": str(uuid4()),
                     "start_date": date.today().isoformat(),
@@ -555,9 +555,9 @@ class TestScheduleCoreIntegration:
     def test_endpoints_accessible(self, client: TestClient, auth_headers: dict):
         """Test that all core endpoints respond appropriately."""
         endpoints = [
-            ("/api/schedule/generate", "POST"),
-            ("/api/schedule/validate", "GET"),
-            ("/api/schedule/emergency-coverage", "POST"),
+            ("/api/v1/schedule/generate", "POST"),
+            ("/api/v1/schedule/validate", "GET"),
+            ("/api/v1/schedule/emergency-coverage", "POST"),
         ]
 
         for url, method in endpoints:
@@ -586,7 +586,7 @@ class TestScheduleCoreIntegration:
                 mock_engine_class.return_value = mock_engine
 
                 response = client.post(
-                    "/api/schedule/generate",
+                    "/api/v1/schedule/generate",
                     json={
                         "start_date": date.today().isoformat(),
                         "end_date": (date.today() + timedelta(days=7)).isoformat(),

@@ -38,7 +38,7 @@ class TestSwapWorkflow:
         block_b = sample_blocks[1]
 
         assignment_a_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(block_a.id),
                 "person_id": str(resident_a.id),
@@ -51,7 +51,7 @@ class TestSwapWorkflow:
         assignment_a_id = assignment_a_response.json()["id"]
 
         assignment_b_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(block_b.id),
                 "person_id": str(resident_b.id),
@@ -65,7 +65,7 @@ class TestSwapWorkflow:
 
         # Step 2: Create swap request
         swap_response = client.post(
-            "/api/swap/",
+            "/api/v1/swap/",
             json={
                 "requester_assignment_id": assignment_a_id,
                 "target_assignment_id": assignment_b_id,
@@ -80,7 +80,7 @@ class TestSwapWorkflow:
 
         # Step 3: Get swap details
         get_swap_response = client.get(
-            f"/api/swap/{swap_id}",
+            f"/api/v1/swap/{swap_id}",
             headers=auth_headers,
         )
         assert get_swap_response.status_code == 200
@@ -88,7 +88,7 @@ class TestSwapWorkflow:
 
         # Step 4: Approve swap (if approval required)
         approve_response = client.post(
-            f"/api/swap/{swap_id}/approve",
+            f"/api/v1/swap/{swap_id}/approve",
             headers=auth_headers,
         )
         # May succeed or require specific permissions
@@ -96,18 +96,18 @@ class TestSwapWorkflow:
 
         # Step 5: Execute swap
         execute_response = client.post(
-            f"/api/swap/{swap_id}/execute",
+            f"/api/v1/swap/{swap_id}/execute",
             headers=auth_headers,
         )
 
         if execute_response.status_code == 200:
             # Step 6: Verify assignments were swapped
             verify_a = client.get(
-                f"/api/assignments/{assignment_a_id}",
+                f"/api/v1/assignments/{assignment_a_id}",
                 headers=auth_headers,
             )
             verify_b = client.get(
-                f"/api/assignments/{assignment_b_id}",
+                f"/api/v1/assignments/{assignment_b_id}",
                 headers=auth_headers,
             )
 
@@ -132,7 +132,7 @@ class TestSwapWorkflow:
         block = sample_blocks[0]
 
         assignment_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(block.id),
                 "person_id": str(resident.id),
@@ -146,7 +146,7 @@ class TestSwapWorkflow:
 
         # Step 2: Create absorb swap request
         swap_response = client.post(
-            "/api/swap/",
+            "/api/v1/swap/",
             json={
                 "requester_assignment_id": assignment_id,
                 "swap_type": "absorb",
@@ -159,7 +159,7 @@ class TestSwapWorkflow:
 
         # Step 3: Find potential takers
         matches_response = client.get(
-            f"/api/swap/{swap_id}/matches",
+            f"/api/v1/swap/{swap_id}/matches",
             headers=auth_headers,
         )
         # May return matches or 404 if not implemented
@@ -182,7 +182,7 @@ class TestSwapWorkflow:
             block = sample_blocks[i]
 
             response = client.post(
-                "/api/assignments/",
+                "/api/v1/assignments/",
                 json={
                     "block_id": str(block.id),
                     "person_id": str(resident.id),
@@ -197,7 +197,7 @@ class TestSwapWorkflow:
         # Step 2: Create swap request
         if len(assignments) >= 2:
             swap_response = client.post(
-                "/api/swap/",
+                "/api/v1/swap/",
                 json={
                     "requester_assignment_id": assignments[0]["id"],
                     "swap_type": "absorb",
@@ -211,7 +211,7 @@ class TestSwapWorkflow:
 
                 # Step 3: Request auto-matching
                 match_response = client.post(
-                    f"/api/swap/{swap_id}/auto-match",
+                    f"/api/v1/swap/{swap_id}/auto-match",
                     headers=auth_headers,
                 )
                 # May return matches or 501 if not implemented
@@ -229,7 +229,7 @@ class TestSwapWorkflow:
         """Test that invalid swaps are rejected."""
         # Step 1: Create assignment
         assignment_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(sample_blocks[0].id),
                 "person_id": str(sample_resident.id),
@@ -243,7 +243,7 @@ class TestSwapWorkflow:
 
         # Step 2: Try to create invalid swap (swapping with self)
         invalid_swap_response = client.post(
-            "/api/swap/",
+            "/api/v1/swap/",
             json={
                 "requester_assignment_id": assignment_id,
                 "target_assignment_id": assignment_id,  # Same assignment
@@ -266,7 +266,7 @@ class TestSwapWorkflow:
         """Test cancelling a swap request."""
         # Step 1: Create assignments
         assignment_a_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(sample_blocks[0].id),
                 "person_id": str(sample_residents[0].id),
@@ -276,7 +276,7 @@ class TestSwapWorkflow:
             headers=auth_headers,
         )
         assignment_b_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(sample_blocks[1].id),
                 "person_id": str(sample_residents[1].id),
@@ -292,7 +292,7 @@ class TestSwapWorkflow:
         ] and assignment_b_response.status_code in [200, 201]:
             # Step 2: Create swap
             swap_response = client.post(
-                "/api/swap/",
+                "/api/v1/swap/",
                 json={
                     "requester_assignment_id": assignment_a_response.json()["id"],
                     "target_assignment_id": assignment_b_response.json()["id"],
@@ -306,14 +306,14 @@ class TestSwapWorkflow:
 
                 # Step 3: Cancel swap
                 cancel_response = client.post(
-                    f"/api/swap/{swap_id}/cancel",
+                    f"/api/v1/swap/{swap_id}/cancel",
                     headers=auth_headers,
                 )
                 assert cancel_response.status_code in [200, 404, 501]
 
                 # Step 4: Verify swap is cancelled
                 get_response = client.get(
-                    f"/api/swap/{swap_id}",
+                    f"/api/v1/swap/{swap_id}",
                     headers=auth_headers,
                 )
                 if get_response.status_code == 200:
@@ -331,7 +331,7 @@ class TestSwapWorkflow:
         """Test rolling back an executed swap."""
         # Step 1: Create and execute swap (abbreviated)
         assignment_a_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(sample_blocks[0].id),
                 "person_id": str(sample_residents[0].id),
@@ -341,7 +341,7 @@ class TestSwapWorkflow:
             headers=auth_headers,
         )
         assignment_b_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(sample_blocks[1].id),
                 "person_id": str(sample_residents[1].id),
@@ -356,7 +356,7 @@ class TestSwapWorkflow:
             201,
         ] and assignment_b_response.status_code in [200, 201]:
             swap_response = client.post(
-                "/api/swap/",
+                "/api/v1/swap/",
                 json={
                     "requester_assignment_id": assignment_a_response.json()["id"],
                     "target_assignment_id": assignment_b_response.json()["id"],
@@ -369,11 +369,11 @@ class TestSwapWorkflow:
                 swap_id = swap_response.json()["id"]
 
                 # Execute swap
-                client.post(f"/api/swap/{swap_id}/execute", headers=auth_headers)
+                client.post(f"/api/v1/swap/{swap_id}/execute", headers=auth_headers)
 
                 # Step 2: Rollback swap
                 rollback_response = client.post(
-                    f"/api/swap/{swap_id}/rollback",
+                    f"/api/v1/swap/{swap_id}/rollback",
                     headers=auth_headers,
                 )
                 # May succeed or return 404/501 if not implemented
@@ -391,7 +391,7 @@ class TestSwapWorkflow:
         """Test that swap notifications are generated."""
         # Step 1: Create swap
         assignment_a_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(sample_blocks[0].id),
                 "person_id": str(sample_residents[0].id),
@@ -401,7 +401,7 @@ class TestSwapWorkflow:
             headers=auth_headers,
         )
         assignment_b_response = client.post(
-            "/api/assignments/",
+            "/api/v1/assignments/",
             json={
                 "block_id": str(sample_blocks[1].id),
                 "person_id": str(sample_residents[1].id),
@@ -416,7 +416,7 @@ class TestSwapWorkflow:
             201,
         ] and assignment_b_response.status_code in [200, 201]:
             swap_response = client.post(
-                "/api/swap/",
+                "/api/v1/swap/",
                 json={
                     "requester_assignment_id": assignment_a_response.json()["id"],
                     "target_assignment_id": assignment_b_response.json()["id"],
@@ -429,7 +429,7 @@ class TestSwapWorkflow:
                 # Step 2: Check for notifications
                 # This would require notification endpoint
                 notifications_response = client.get(
-                    "/api/notifications/",
+                    "/api/v1/notifications/",
                     headers=auth_headers,
                 )
                 # May return notifications or 404 if endpoint doesn't exist
@@ -449,7 +449,7 @@ class TestSwapWorkflow:
         assignments = []
         for i in range(3):
             response = client.post(
-                "/api/assignments/",
+                "/api/v1/assignments/",
                 json={
                     "block_id": str(sample_blocks[i].id),
                     "person_id": str(sample_residents[i].id),
@@ -464,7 +464,7 @@ class TestSwapWorkflow:
         # Step 2: Create multi-way swap
         if len(assignments) == 3:
             multi_swap_response = client.post(
-                "/api/swap/multi",
+                "/api/v1/swap/multi",
                 json={
                     "assignment_ids": [a["id"] for a in assignments],
                     "swap_pattern": "circular",  # A->B->C->A
