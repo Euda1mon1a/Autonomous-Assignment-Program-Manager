@@ -21,9 +21,6 @@ from app.models.rotation_template import RotationTemplate
 class TestEmergencyCoverageScenarios:
     """Test emergency coverage scenarios."""
 
-    @pytest.mark.xfail(
-        reason="CHECK constraint on absences.absence_type rejects 'emergency'; valid types differ from test data"
-    )
     def test_sudden_absence_coverage_scenario(
         self,
         client: TestClient,
@@ -67,7 +64,7 @@ class TestEmergencyCoverageScenarios:
             person_id=resident.id,
             start_date=start_date,
             end_date=start_date + timedelta(days=2),
-            absence_type="emergency",
+            absence_type="emergency_leave",
             notes="Sudden illness",
         )
         db.add(absence)
@@ -85,9 +82,6 @@ class TestEmergencyCoverageScenarios:
         )
         assert coverage_response.status_code in [200, 404, 501]
 
-    @pytest.mark.xfail(
-        reason="CHECK constraint on assignments.role rejects 'supervisor'; valid roles differ from test data"
-    )
     def test_deployment_coverage_scenario(
         self,
         client: TestClient,
@@ -116,7 +110,7 @@ class TestEmergencyCoverageScenarios:
                 block_id=block.id,
                 person_id=faculty.id,
                 rotation_template_id=sample_rotation_template.id,
-                role="supervisor",
+                role="supervising",
             )
             db.add(assignment)
         db.commit()

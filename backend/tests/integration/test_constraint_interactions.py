@@ -112,7 +112,7 @@ class PreferenceConstraint(SoftConstraint):
         )
         self.preferences: dict = {}  # {person_id: preferred_session}
 
-    def add_preference(self, person_id, preferred_session: Session) -> None:
+    def add_preference(self, person_id, preferred_session: str) -> None:
         """Add a preference for a person."""
         self.preferences[person_id] = preferred_session
 
@@ -142,7 +142,7 @@ class PreferenceConstraint(SoftConstraint):
                 continue
 
             preferred = self.preferences[person_id]
-            if block.session != preferred:
+            if block.time_of_day != preferred:
                 # Violates preference
                 penalty += self.get_penalty(violation_count=1)
 
@@ -153,12 +153,12 @@ class PreferenceConstraint(SoftConstraint):
                         constraint_name=self.name,
                         constraint_type=self.constraint_type,
                         severity="LOW",
-                        message=f"Assignment does not match preference (prefers {preferred.value})",
+                        message=f"Assignment does not match preference (prefers {preferred})",
                         person_id=person_id,
                         block_id=assignment.block_id,
                         details={
-                            "preferred": preferred.value,
-                            "actual": block.session.value,
+                            "preferred": preferred,
+                            "actual": block.time_of_day,
                         },
                     )
                 )
@@ -260,9 +260,6 @@ class TestConstraintInteractions:
             "Assignment exists (conflict detected post-creation)"
         )
 
-    @pytest.mark.xfail(
-        reason="Block model has no 'session' attribute; test fixture uses invalid Block constructor kwargs"
-    )
     def test_soft_constraint_zero_weight(self, db):
         """
         Test soft constraint behavior when weight set to zero.
@@ -351,9 +348,6 @@ class TestConstraintInteractions:
         assert result_normal.penalty > 0.0, "Non-zero weight should produce penalty"
         assert len(result_normal.violations) > 0, "Should record preference violation"
 
-    @pytest.mark.xfail(
-        reason="Block constructor does not accept 'session' keyword; TypeError on Block instantiation"
-    )
     def test_credential_expiring_mid_block(self, db):
         """
         Test detection of credential expiring during assigned block.
@@ -386,7 +380,7 @@ class TestConstraintInteractions:
                     block = Block(
                         id=uuid4(),
                         date=block_date,
-                        session=session,
+                        time_of_day=session,
                         block_number=(week * 7 + day) * 2
                         + (0 if session == "AM" else 1),
                     )
@@ -412,7 +406,7 @@ class TestConstraintInteractions:
                 block_id=block.id,
                 person_id=faculty.id,
                 rotation_template_id=inpatient_template.id,
-                role="attending",
+                role="supervising",
             )
             assignments.append(assignment)
             db.add(assignment)
@@ -545,9 +539,6 @@ class TestConstraintInteractions:
         days_until = (bls_expiration - block_start).days
         assert violation.details["days_until_expiration"] == days_until
 
-    @pytest.mark.xfail(
-        reason="Block constructor does not accept 'session' keyword; TypeError on Block instantiation"
-    )
     def test_leave_overlapping_call_assignment(self, db):
         """
         Test leave request handling when call shift assigned.
@@ -577,7 +568,7 @@ class TestConstraintInteractions:
                 block = Block(
                     id=uuid4(),
                     date=call_start_date + timedelta(days=day_offset),
-                    session=session,
+                    time_of_day=session,
                     block_number=(14 + day_offset) * 2 + (0 if session == "AM" else 1),
                 )
                 call_blocks.append(block)
@@ -602,7 +593,7 @@ class TestConstraintInteractions:
                 block_id=block.id,
                 person_id=faculty.id,
                 rotation_template_id=call_template.id,
-                role="attending",
+                role="supervising",
             )
             call_assignments.append(assignment)
             db.add(assignment)
@@ -726,9 +717,6 @@ class TestConstraintInteractions:
         assert leave_in_db is not None
         assert leave_in_db.is_blocking is True
 
-    @pytest.mark.xfail(
-        reason="CHECK constraint on assignments.role rejects 'resident' value; valid roles differ"
-    )
     def test_multiple_constraints_validation(self, db):
         """
         Test validation with multiple constraints active.
@@ -784,14 +772,14 @@ class TestConstraintInteractions:
             block_id=am_block.id,
             person_id=resident.id,
             rotation_template_id=clinic_template.id,
-            role="resident",
+            role="primary",
         )
         resident_pm = Assignment(
             id=uuid4(),
             block_id=pm_block.id,
             person_id=resident.id,
             rotation_template_id=clinic_template.id,
-            role="resident",
+            role="primary",
         )
         db.add_all([resident_am, resident_pm])
         db.commit()
