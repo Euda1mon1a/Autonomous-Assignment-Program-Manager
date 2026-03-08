@@ -66,7 +66,7 @@ class IndexUsageStatsResponse(BaseModel):
 class TableStatisticsResponse(BaseModel):
     """Table statistics."""
 
-    schema: str
+    schema: str  # type: ignore[assignment]
     table: str
     total_size: str
     table_size: str

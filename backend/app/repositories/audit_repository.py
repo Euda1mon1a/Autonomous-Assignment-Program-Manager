@@ -6,6 +6,8 @@ SQLAlchemy-Continuum. It queries the transaction and version tables to
 retrieve historical changes to versioned models.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
 from typing import Any
@@ -90,12 +92,13 @@ class AuditRepository:
         try:
             # Determine which tables to query
             entity_type = filters.get("entity_type")
+            tables: dict[str, str | None] = {}
             if entity_type:
                 tables = {entity_type: self.VERSION_TABLES.get(entity_type)}
                 if not tables[entity_type]:
                     return [], 0
             else:
-                tables = self.VERSION_TABLES
+                tables = {k: v for k, v in self.VERSION_TABLES.items()}
 
             all_entries = []
 
@@ -218,7 +221,7 @@ class AuditRepository:
                 - most_active_day: Date with most changes
         """
         try:
-            stats = {
+            stats: dict[str, Any] = {
                 "total_changes": 0,
                 "changes_by_entity": {},
                 "changes_by_operation": {"insert": 0, "update": 0, "delete": 0},

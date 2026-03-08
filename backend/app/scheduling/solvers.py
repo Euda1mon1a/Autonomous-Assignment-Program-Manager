@@ -46,6 +46,8 @@ All four fixes applied 2025-12-24, filter corrected 2025-12-26. Solvers should n
 - Balance both resident workload AND template variety
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import time
@@ -327,10 +329,10 @@ class PuLPSolver(BaseSolver):
 
                 b_i = context.block_idx[block.id]
                 for fac in call_eligible:
-                    f_i = call_idx.get(fac.id)
-                    if f_i is not None:
-                        call[f_i, b_i, "overnight"] = pulp.LpVariable(
-                            f"call_{f_i}_{b_i}",
+                    call_f_i = call_idx.get(fac.id)
+                    if call_f_i is not None:
+                        call[call_f_i, b_i, "overnight"] = pulp.LpVariable(
+                            f"call_{call_f_i}_{b_i}",
                             cat=pulp.LpBinary,
                         )
 
@@ -441,8 +443,8 @@ class PuLPSolver(BaseSolver):
             template_balance_penalty = max_template_count
 
         # Build objective with all penalties
-        equity_penalty = variables.get("equity_penalty")
-        objective_terms = variables.get("objective_terms", [])
+        equity_penalty: Any = variables.get("equity_penalty")
+        objective_terms: Any = variables.get("objective_terms", [])
 
         if (
             equity_penalty is not None
@@ -610,6 +612,7 @@ class SolverProgressCallback:
             broadcast_callback: Optional async callback for WebSocket broadcast
         """
         self.broadcast_callback = broadcast_callback
+        self._callback: Any = None
 
         try:
             from ortools.sat.python import cp_model
@@ -695,7 +698,6 @@ class SolverProgressCallback:
 
         except ImportError:
             logger.warning("OR-Tools not available, progress callback disabled")
-            self._callback = None
 
     def _trigger_broadcast(self, data: dict) -> None:
         """Trigger async broadcast from sync context."""
@@ -955,10 +957,10 @@ class CPSATSolver(BaseSolver):
 
                 b_i = context.block_idx[block.id]
                 for faculty in call_eligible:
-                    f_i = call_idx.get(faculty.id)
-                    if f_i is not None:
-                        call[f_i, b_i, "overnight"] = model.NewBoolVar(
-                            f"call_{f_i}_{b_i}"
+                    call_f_i = call_idx.get(faculty.id)
+                    if call_f_i is not None:
+                        call[call_f_i, b_i, "overnight"] = model.NewBoolVar(
+                            f"call_{call_f_i}_{b_i}"
                         )
             logger.info(
                 f"Created {len(call)} call variables for {len(call_eligible)} "
@@ -1180,8 +1182,8 @@ class CPSATSolver(BaseSolver):
                             f"clinic_shortfall_{f_i}_{week_start}",
                         )
                         model.Add(shortfall >= weekly_min - sum(clinic_vars))
-                        objective_terms = variables.setdefault("objective_terms", [])
-                        objective_terms.append((shortfall, CLINIC_MIN_PENALTY))
+                        obj_terms: Any = variables.setdefault("objective_terms", [])
+                        obj_terms.append((shortfall, CLINIC_MIN_PENALTY))
 
         # Constraint: PCAT/DO linked to overnight call
         # If call[f, date] = 1, then pcat[f, date+1, AM] = 1 and do[f, date+1, PM] = 1
@@ -1360,16 +1362,16 @@ class CPSATSolver(BaseSolver):
             template_balance_penalty = max_template_count
 
         # Build objective with all penalties
-        equity_penalty = variables.get("equity_penalty")
-        objective_terms = variables.get("objective_terms", [])
+        equity_penalty_cpsat: Any = variables.get("equity_penalty")
+        objective_terms_cpsat: Any = variables.get("objective_terms", [])
 
         objective_expr = coverage * COVERAGE_WEIGHT
-        if equity_penalty is not None:
-            objective_expr -= equity_penalty * EQUITY_PENALTY_WEIGHT
+        if equity_penalty_cpsat is not None:
+            objective_expr -= equity_penalty_cpsat * EQUITY_PENALTY_WEIGHT
         if template_balance_penalty is not None:
             objective_expr -= template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
-        if objective_terms:
-            for term_var, weight in objective_terms:
+        if objective_terms_cpsat:
+            for term_var, weight in objective_terms_cpsat:
                 objective_expr -= term_var * int(weight)
 
         # Discourage unneeded faculty supervision (phantom AT)
@@ -2153,7 +2155,7 @@ class GreedySolver(BaseSolver):
                     block=block,
                     template=template,
                     all_candidates=eligible,
-                    candidate_scores=candidate_scores,
+                    candidate_scores=candidate_scores,  # type: ignore[arg-type]
                     assignment_counts=assignment_counts.copy(),
                     score_breakdown={
                         "equity_score": candidate_scores[selected.id],
@@ -2313,7 +2315,7 @@ class SolverFactory:
         ... )
     """
 
-    _solvers = {
+    _solvers: dict[str, type[BaseSolver] | None] = {
         "greedy": GreedySolver,
         "pulp": PuLPSolver,
         "cp_sat": CPSATSolver,
@@ -2325,7 +2327,7 @@ class SolverFactory:
     }
 
     @classmethod
-    def _get_pyomo_solver(cls) -> type:
+    def _get_pyomo_solver(cls) -> type[BaseSolver]:
         """Lazy-load PyomoSolver to avoid import errors if not installed."""
         if cls._solvers["pyomo"] is None:
             try:
@@ -2336,10 +2338,12 @@ class SolverFactory:
                 raise ValueError(
                     "PyomoSolver requires pyomo package: pip install pyomo"
                 )
-        return cls._solvers["pyomo"]
+        solver_cls = cls._solvers["pyomo"]
+        assert solver_cls is not None
+        return solver_cls
 
     @classmethod
-    def _get_quantum_solver(cls, solver_type: str) -> type:
+    def _get_quantum_solver(cls, solver_type: str) -> type[BaseSolver]:
         """
         Lazy-load quantum solvers to avoid import errors if not installed.
 
@@ -2380,7 +2384,9 @@ class SolverFactory:
                     f"Quantum solver '{solver_type}' requires quantum module. "
                     f"Error: {e}"
                 )
-        return cls._solvers[solver_type]
+        quantum_cls = cls._solvers[solver_type]
+        assert quantum_cls is not None
+        return quantum_cls
 
     @classmethod
     def create(
@@ -2430,6 +2436,7 @@ class SolverFactory:
             )
 
         # Handle lazy-loaded solvers
+        solver_class: type[BaseSolver] | None
         if name == "pyomo":
             solver_class = cls._get_pyomo_solver()
         elif name in ("quantum", "qubo", "quantum_sa"):
@@ -2437,6 +2444,7 @@ class SolverFactory:
         else:
             solver_class = cls._solvers[name]
 
+        assert solver_class is not None
         return solver_class(constraint_manager=constraint_manager, **kwargs)
 
     @classmethod
@@ -2445,6 +2453,11 @@ class SolverFactory:
         return list(cls._solvers.keys())
 
     @classmethod
-    def register(cls, name: str, solver_class: type) -> None:
+    def register(cls, name: str, solver_class: type[BaseSolver]) -> None:
         """Register a custom solver."""
         cls._solvers[name] = solver_class
+
+
+def get_solver(solver_type: str = "cp_sat", **kwargs: Any) -> BaseSolver:
+    """Module-level factory function for creating solvers."""
+    return SolverFactory.create(solver_type, **kwargs)

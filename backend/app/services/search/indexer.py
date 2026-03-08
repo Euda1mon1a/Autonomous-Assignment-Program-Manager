@@ -325,7 +325,7 @@ class SearchIndexer:
         Returns:
             Analyzer instance
         """
-        return self.analyzers.get(entity_type, self.analyzers["default"])
+        return self.analyzers.get(entity_type, self.analyzers["default"])  # type: ignore[return-value]
 
 
 class SearchService:

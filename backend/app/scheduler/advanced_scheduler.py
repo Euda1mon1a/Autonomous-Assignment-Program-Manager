@@ -25,7 +25,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import redis
-from croniter import croniter
+from croniter import croniter  # type: ignore[import-untyped]
 
 from app.core.config import get_settings
 from app.scheduler.jobs import get_job_function
@@ -580,7 +580,7 @@ class TaskRetryManager:
         self,
         task_execution: TaskExecution,
         config: RetryConfig,
-    ) -> int:
+    ) -> float:
         """
         Calculate delay before next retry attempt.
 
@@ -593,6 +593,7 @@ class TaskRetryManager:
         """
         attempt = task_execution.retry_count
 
+        delay: float
         if config.strategy == RetryStrategy.FIXED:
             delay = config.initial_delay
 

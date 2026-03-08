@@ -20,6 +20,8 @@ Usage:
     anonymized_data = k_anon.apply(records, quasi_identifiers=["age", "zipcode"])
 """
 
+from __future__ import annotations
+
 import secrets
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -33,7 +35,7 @@ class AnonymizationStrategy(ABC):
     """Base class for anonymization strategies."""
 
     @abstractmethod
-    def apply(self, data: Any, **kwargs) -> Any:
+    def apply(self, data: Any, **kwargs: Any) -> Any:
         """
         Apply anonymization strategy to data.
 
@@ -84,7 +86,7 @@ class PseudonymizationStrategy(AnonymizationStrategy):
                 self.key = Fernet.generate_key()
             self.cipher = Fernet(self.key)
         else:
-            self.cipher = None
+            self.cipher = None  # type: ignore[assignment]
 
             # Mapping for non-encrypted pseudonymization
         self._pseudonym_map: dict[str, str] = {}
@@ -94,7 +96,7 @@ class PseudonymizationStrategy(AnonymizationStrategy):
         """Pseudonymization is reversible."""
         return True
 
-    def apply(self, data: Any, fields: list[str] | None = None, **kwargs) -> Any:
+    def apply(self, data: Any, fields: list[str] | None = None, **kwargs: Any) -> Any:
         """
         Apply pseudonymization to data.
 
@@ -209,13 +211,13 @@ class KAnonymityStrategy(AnonymizationStrategy):
         """K-anonymity is not reversible (information loss)."""
         return False
 
-    def apply(
+    def apply(  # type: ignore[override]
         self,
-        data: list[dict],
+        data: list[dict[Any, Any]],
         quasi_identifiers: list[str],
         sensitive_attributes: list[str] | None = None,
-        **kwargs,
-    ) -> list[dict]:
+        **kwargs: Any,
+    ) -> list[dict[Any, Any]]:
         """
         Apply k-anonymity to dataset.
 
@@ -332,9 +334,9 @@ class KAnonymityStrategy(AnonymizationStrategy):
 
         elif isinstance(sample, (date, datetime)):
             # Date: return year or year-month
-            years = set(
-                v.year if isinstance(v, (date, datetime)) else None for v in values
-            )
+            years: set[int] = {
+                v.year for v in values if isinstance(v, (date, datetime))
+            }
             if len(years) == 1:
                 return f"{list(years)[0]}"
             return f"{min(years)}-{max(years)}"
@@ -415,13 +417,13 @@ class LDiversityStrategy(AnonymizationStrategy):
         """L-diversity is not reversible."""
         return False
 
-    def apply(
+    def apply(  # type: ignore[override]
         self,
-        data: list[dict],
+        data: list[dict[Any, Any]],
         quasi_identifiers: list[str],
         sensitive_attribute: str,
-        **kwargs,
-    ) -> list[dict]:
+        **kwargs: Any,
+    ) -> list[dict[Any, Any]]:
         """
         Apply l-diversity to dataset.
 
@@ -489,7 +491,7 @@ class GeneralizationStrategy(AnonymizationStrategy):
         """Generalization is not reversible."""
         return False
 
-    def apply(self, data: Any, **kwargs) -> Any:
+    def apply(self, data: Any, **kwargs: Any) -> Any:
         """
         Apply generalization to data.
 
@@ -575,9 +577,9 @@ class DataSuppressionStrategy(AnonymizationStrategy):
         """Suppression is not reversible."""
         return False
 
-    def apply(
-        self, data: list[dict], quasi_identifiers: list[str], **kwargs
-    ) -> list[dict]:
+    def apply(  # type: ignore[override]
+        self, data: list[dict[Any, Any]], quasi_identifiers: list[str], **kwargs: Any
+    ) -> list[dict[Any, Any]]:
         """
         Apply suppression to remove outliers.
 

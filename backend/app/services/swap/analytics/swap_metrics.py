@@ -147,11 +147,12 @@ class SwapMetricsCollector:
                 faculty_counts.get(swap.source_faculty_id, 0) + 1
             )
 
+        most_active_unsorted: list[dict[str, Any]] = [
+            {"faculty_id": str(fid), "swap_count": count}
+            for fid, count in faculty_counts.items()
+        ]
         most_active = sorted(
-            [
-                {"faculty_id": str(fid), "swap_count": count}
-                for fid, count in faculty_counts.items()
-            ],
+            most_active_unsorted,
             key=lambda x: x["swap_count"],
             reverse=True,
         )[:10]

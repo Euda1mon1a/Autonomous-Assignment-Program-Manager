@@ -133,8 +133,8 @@ class AdminUserListResponse(BaseModel):
     items: list[AdminUserResponse]
     total: int
     page: int
-    page_size: int = Field(alias="pageSize")
-    total_pages: int = Field(alias="totalPages")
+    page_size: int = Field(default=0, alias="pageSize")
+    total_pages: int = Field(default=0, alias="totalPages")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -156,8 +156,8 @@ class AccountLockRequest(BaseModel):
 class AccountLockResponse(BaseModel):
     """Response after locking/unlocking account."""
 
-    user_id: UUID = Field(alias="userId")
-    is_locked: bool = Field(alias="isLocked")
+    user_id: UUID = Field(default=None, alias="userId")  # type: ignore[assignment]
+    is_locked: bool = Field(default=False, alias="isLocked")
     lock_reason: str | None = Field(None, alias="lockReason")
     locked_at: datetime | None = Field(None, alias="lockedAt")
     locked_by: str | None = Field(None, alias="lockedBy")
@@ -187,9 +187,9 @@ class ResendInviteRequest(BaseModel):
 class ResendInviteResponse(BaseModel):
     """Response after resending invitation."""
 
-    user_id: UUID = Field(alias="userId")
+    user_id: UUID = Field(default=None, alias="userId")  # type: ignore[assignment]
     email: str
-    sent_at: datetime = Field(alias="sentAt")
+    sent_at: datetime = Field(default=None, alias="sentAt")  # type: ignore[assignment]
     message: str
 
     model_config = ConfigDict(populate_by_name=True)
@@ -224,8 +224,8 @@ class ActivityLogResponse(BaseModel):
     items: list[ActivityLogEntry]
     total: int
     page: int
-    page_size: int = Field(alias="pageSize")
-    total_pages: int = Field(alias="totalPages")
+    page_size: int = Field(default=0, alias="pageSize")
+    total_pages: int = Field(default=0, alias="totalPages")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -259,8 +259,8 @@ class BulkUserActionResponse(BaseModel):
     """Response for bulk user operations."""
 
     action: str
-    affected_count: int = Field(alias="affectedCount")
-    success_ids: list[UUID] = Field(alias="successIds")
+    affected_count: int = Field(default=0, alias="affectedCount")
+    success_ids: list[UUID] = Field(default_factory=list, alias="successIds")
     failed_ids: list[UUID] = Field(default_factory=list, alias="failedIds")
     errors: list[str] = Field(default_factory=list)
     message: str

@@ -138,6 +138,8 @@ REFERENCES
 - Adaptive Simulated Annealing: Ingber, L. (1989)
 """
 
+from __future__ import annotations
+
 import logging
 import math
 import random
@@ -235,11 +237,11 @@ class ParetoSolution:
     solution_id: int
     state: dict[int, int]
     objectives: dict[str, float]
-    assignments: list[tuple[UUID, UUID, UUID]]
+    assignments: list[tuple[UUID, UUID, UUID | None]]
     rank: int = 0
     crowding_distance: float = 0.0
 
-    def dominates(self, other: "ParetoSolution") -> bool:
+    def dominates(self, other: ParetoSolution) -> bool:
         """Check if this solution dominates another."""
         dominated = False
         for obj in self.objectives:
@@ -1780,6 +1782,7 @@ class HybridTemplatePipeline:
         Q: dict,
     ) -> tuple[dict[int, int], float]:
         """Run simulated annealing with adaptive temperature."""
+        assert self.formulation is not None
         n = self.formulation.num_variables
         rng = random.Random(self.config.seed)
 
@@ -1846,6 +1849,7 @@ class HybridTemplatePipeline:
             Continues until no improving flips found or max_iterations (1000)
             reached. Only accepts strictly improving moves (delta < -1e-6).
         """
+        assert self.formulation is not None
         n = self.formulation.num_variables
         current = sample.copy()
         current_energy = energy
@@ -1894,6 +1898,7 @@ class HybridTemplatePipeline:
             - If multiple templates assigned: Keep first, remove rest
             This ensures feasibility but may not be optimal.
         """
+        assert self.formulation is not None
         repaired = sample.copy()
         n_periods = len(self.formulation.rotation_periods)
         valid_templates = [
@@ -1981,7 +1986,7 @@ class QUBOTemplateSolver(BaseSolver):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """
         Solve template selection using QUBO.

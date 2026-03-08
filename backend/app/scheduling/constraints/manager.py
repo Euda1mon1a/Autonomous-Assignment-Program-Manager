@@ -237,6 +237,11 @@ class ConstraintManager:
         """
         return [c for c in self.constraints if c.enabled]
 
+    @property
+    def hard_constraints(self) -> list[HardConstraint]:
+        """Property alias for get_hard_constraints."""
+        return self.get_hard_constraints()
+
     def get_hard_constraints(self) -> list[HardConstraint]:
         """
         Get enabled hard constraints.

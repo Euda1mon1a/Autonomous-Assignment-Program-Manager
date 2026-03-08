@@ -14,7 +14,11 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    and_,
+    func,
+    select,
 )
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -141,9 +145,6 @@ class BlockAssignment(Base):
             return self.rotation_template.leave_eligible
         return True  # Assume eligible if no template assigned
 
-    from sqlalchemy.ext.hybrid import hybrid_property
-    from sqlalchemy import select, func, and_
-
     @hybrid_property
     def leave_days(self) -> int:
         """Calculate leave days dynamically from absences."""
@@ -169,7 +170,7 @@ class BlockAssignment(Base):
                     leave += (overlap_end - overlap_start).days + 1
         return leave
 
-    @leave_days.expression
+    @leave_days.expression  # type: ignore[no-redef]
     def leave_days(cls):
         from app.models.absence import Absence
         from app.models.academic_block import AcademicBlock
@@ -202,6 +203,6 @@ class BlockAssignment(Base):
         """Boolean flag indicating if any leave exists."""
         return self.leave_days > 0
 
-    @has_leave.expression
+    @has_leave.expression  # type: ignore[no-redef]
     def has_leave(cls):
         return cls.leave_days > 0

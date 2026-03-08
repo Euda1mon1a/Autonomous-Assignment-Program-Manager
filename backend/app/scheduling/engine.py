@@ -107,6 +107,7 @@ class SchedulingEngine:
 
     # Available algorithms
     ALGORITHMS = ["greedy", "cp_sat", "pulp", "hybrid"]
+    _off_activity_id: UUID
 
     def __init__(
         self,
@@ -1023,7 +1024,7 @@ class SchedulingEngine:
                 residents, block_number=block_number, academic_year=academic_year
             )
         else:
-            resident_template_map: dict[UUID, set[UUID]] = {}
+            resident_template_map: dict[UUID, set[UUID]] = {}  # type: ignore[no-redef]
 
         prior_calls: dict[UUID, dict[str, int]] = {}
         if academic_year is not None and self.start_date:
@@ -1159,7 +1160,7 @@ class SchedulingEngine:
         if weekly_reqs and self.constraint_manager:
             for c in self.constraint_manager.constraints:
                 if c.name == "ResidentWeeklyClinic":
-                    c._weekly_requirements = weekly_reqs
+                    c._weekly_requirements = weekly_reqs  # type: ignore[attr-defined]
                     break
             self.constraint_manager.enable("ResidentWeeklyClinic")
             logger.debug(
@@ -1170,7 +1171,7 @@ class SchedulingEngine:
         if halfday_reqs and self.constraint_manager:
             for c in self.constraint_manager.constraints:
                 if c.name == "HalfDayRequirement":
-                    c._requirements = halfday_reqs
+                    c._requirements = halfday_reqs  # type: ignore[attr-defined]
                     break
             self.constraint_manager.enable("HalfDayRequirement")
             logger.debug(
@@ -1316,11 +1317,11 @@ class SchedulingEngine:
             if hasattr(self.resilience, "hub_analyzer"):
                 # Get latest centrality data
                 for fac in faculty:
-                    centrality = self.resilience.hub_analyzer.calculate_centrality(
-                        cast(UUID, fac.id)
+                    centrality = self.resilience.hub_analyzer.calculate_centrality(  # type: ignore[call-arg]
+                        cast(UUID, fac.id)  # type: ignore[arg-type]
                     )
                     if centrality:
-                        hub_scores[cast(UUID, fac.id)] = centrality.composite_score
+                        hub_scores[cast(UUID, fac.id)] = centrality.composite_score  # type: ignore[attr-defined]
         except Exception as e:
             logger.debug(f"Could not get hub scores: {e}")
 

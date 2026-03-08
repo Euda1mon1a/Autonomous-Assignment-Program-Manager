@@ -52,10 +52,18 @@ class ActivityBase(BaseModel):
     requires_supervision: bool = Field(
         True, description="ACGME supervision requirement"
     )
+    provides_supervision: bool = Field(
+        False, description="Whether this activity provides supervision"
+    )
     is_protected: bool = Field(False, description="True for locked slots (e.g., LEC)")
     counts_toward_clinical_hours: bool = Field(
         True, description="ACGME clinical hour limit"
     )
+    counts_toward_physical_capacity: bool = Field(
+        False, description="Whether this counts toward physical capacity"
+    )
+    capacity_units: int | None = Field(None, description="Capacity units consumed")
+    procedure_id: UUID | None = Field(None, description="Associated procedure ID")
     display_order: int = Field(0, description="Sort order for UI")
 
     @field_validator("name")
@@ -107,8 +115,12 @@ class ActivityUpdate(BaseModel):
     font_color: str | None = None
     background_color: str | None = None
     requires_supervision: bool | None = None
+    provides_supervision: bool | None = None
     is_protected: bool | None = None
     counts_toward_clinical_hours: bool | None = None
+    counts_toward_physical_capacity: bool | None = None
+    capacity_units: int | None = None
+    procedure_id: UUID | None = None
     display_order: int | None = None
 
     @field_validator("code")

@@ -80,8 +80,8 @@ async def create_draft(
     """
     service = ScheduleDraftService(db)
     result = await service.create_draft(
-        source_type=request.source_type,
-        start_date=request.target_start_date,
+        source_type=request.source_type,  # type: ignore[arg-type]
+        start_date=request.target_start_date,  # type: ignore[arg-type]
         end_date=request.target_end_date,
         block_number=request.target_block,
         created_by_id=current_user.id,
@@ -369,8 +369,8 @@ async def add_assignment(
         time_of_day=request.time_of_day,
         activity_code=request.activity_code,
         rotation_id=request.rotation_id,
-        change_type=request.change_type,
-        existing_assignment_id=request.existing_assignment_id,
+        change_type=request.change_type,  # type: ignore[arg-type]
+        existing_assignment_id=request.existing_assignment_id,  # type: ignore[arg-type]
     )
 
     if not assignment_id:

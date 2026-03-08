@@ -59,8 +59,8 @@ class ChainStats:
     chain_id: str
     total_records: int
     head_sequence: int
-    head_hash: str
-    genesis_hash: str
+    head_hash: str | None
+    genesis_hash: str | None
     first_record_at: datetime | None
     last_record_at: datetime | None
     actions_by_type: dict[str, int]

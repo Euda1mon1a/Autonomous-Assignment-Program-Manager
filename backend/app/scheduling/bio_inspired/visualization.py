@@ -361,7 +361,7 @@ class EvolutionTracker:
             generation=generation,
             points=points,
             best_fitness=best_fitness,
-            mean_fitness=mean_fitness,
+            mean_fitness=float(mean_fitness),
             diversity=diversity,
             pareto_front=pareto_dicts,
         )
@@ -381,7 +381,7 @@ class EvolutionTracker:
                 sim = ind1.chromosome.similarity(ind2.chromosome)
                 similarities.append(sim)
 
-        return 1.0 - np.mean(similarities) if similarities else 0.0
+        return float(1.0 - np.mean(similarities)) if similarities else 0.0
 
     def _update_pca_basis(self) -> None:
         """Update PCA basis from collected chromosome samples."""
@@ -530,7 +530,7 @@ class FitnessLandscapeVisualizer:
             "surface": {
                 "x": x_grid.tolist(),
                 "y": y_grid.tolist(),
-                "z": z_grid.tolist(),
+                "z": z_grid if isinstance(z_grid, list) else z_grid.tolist(),  # type: ignore[union-attr]
             },
             "points": [
                 {
@@ -680,7 +680,7 @@ class FitnessLandscapeVisualizer:
                 point = {"id": ind.id}
                 for obj in objectives:
                     point[obj] = getattr(ind.fitness, obj, 0)
-                point["weighted_sum"] = ind.fitness.weighted_sum()
+                point["weighted_sum"] = ind.fitness.weighted_sum()  # type: ignore[assignment]
                 points.append(point)
 
         # Sort by first objective for line plot

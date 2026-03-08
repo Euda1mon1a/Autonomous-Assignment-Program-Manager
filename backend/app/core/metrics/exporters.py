@@ -14,6 +14,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, UTC
+from functools import partial
 from typing import Any
 
 import httpx
@@ -163,10 +164,12 @@ class PrometheusExporter(MetricExporter):
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(
                 None,
-                push_to_gateway,
-                self.push_gateway_url,
-                job=self.job_name,
-                registry=self.registry,
+                partial(
+                    push_to_gateway,
+                    self.push_gateway_url,
+                    job=self.job_name,
+                    registry=self.registry,
+                ),
             )
 
             logger.debug(

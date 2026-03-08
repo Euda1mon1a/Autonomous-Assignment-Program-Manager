@@ -995,19 +995,19 @@ class WorkflowEngine:
 
         if isinstance(node, ast.BoolOp):
             if isinstance(node.op, ast.And):
-                result = True
+                and_result: Any = True
                 for v in node.values:
-                    result = self._eval_ast_node(v, context)
-                    if not result:
-                        return result
-                return result
+                    and_result = self._eval_ast_node(v, context)
+                    if not and_result:
+                        return and_result
+                return and_result
             if isinstance(node.op, ast.Or):
-                result = False
+                result_or: Any = False
                 for v in node.values:
-                    result = self._eval_ast_node(v, context)
-                    if result:
-                        return result
-                return result
+                    result_or = self._eval_ast_node(v, context)
+                    if result_or:
+                        return result_or
+                return result_or
             raise ConditionEvaluationError("Unsupported boolean operator in condition")
 
         if isinstance(node, ast.Compare):

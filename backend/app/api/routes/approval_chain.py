@@ -13,7 +13,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
-from app.api.dependencies.role_filter import require_admin, require_coordinator_or_above
+from app.api.dependencies.role_filter import require_admin, require_coordinator_or_above  # type: ignore[attr-defined]
 from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.approval_record import ApprovalAction

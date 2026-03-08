@@ -24,7 +24,7 @@ from sqlalchemy import select, or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
-from app.models.activity import Activity
+from app.models.activity import Activity, ActivityCategory
 from app.models.block_assignment import BlockAssignment
 from app.models.call_assignment import CallAssignment
 from app.models.half_day_assignment import HalfDayAssignment
@@ -501,7 +501,8 @@ class HalfDayXMLExporter:
         call_elem = SubElement(parent, "call")
         for row in call_rows:
             night = SubElement(call_elem, "night")
-            night.set("date", row.get("date").isoformat())
+            call_date = row.get("date")
+            night.set("date", call_date.isoformat() if call_date else "")
             night.set("staff", row.get("staff", ""))
 
     def _get_activity_code(self, assignment: HalfDayAssignment | None) -> str:

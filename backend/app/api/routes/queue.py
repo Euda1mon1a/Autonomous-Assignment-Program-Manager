@@ -182,9 +182,9 @@ async def submit_task(
         if eta:
             estimated_execution = eta.isoformat()
         elif request.countdown:
-            estimated_execution = datetime.now(UTC).timestamp() + request.countdown
+            estimated_execution = datetime.now(UTC).timestamp() + request.countdown  # type: ignore[assignment]
             estimated_execution = datetime.fromtimestamp(
-                estimated_execution
+                estimated_execution  # type: ignore[arg-type]
             ).isoformat()
         else:
             estimated_execution = "immediate"
@@ -779,8 +779,8 @@ async def schedule_task(
         if eta:
             scheduled_for = eta.isoformat()
         elif request.countdown:
-            scheduled_for = datetime.now(UTC).timestamp() + request.countdown
-            scheduled_for = datetime.fromtimestamp(scheduled_for).isoformat()
+            scheduled_for = datetime.now(UTC).timestamp() + request.countdown  # type: ignore[assignment]
+            scheduled_for = datetime.fromtimestamp(scheduled_for).isoformat()  # type: ignore[arg-type]
         else:
             scheduled_for = "immediate"
 

@@ -389,7 +389,7 @@ class ConflictAutoResolver:
                 if should_auto_apply:
                     # Apply the resolution
                     alert = self._get_alert(conflict_id)
-                    result = self._apply_resolution(best_option, alert, None)
+                    result = self._apply_resolution(best_option, alert, None)  # type: ignore[arg-type]
                     results.append(result)
 
                     if result.success:

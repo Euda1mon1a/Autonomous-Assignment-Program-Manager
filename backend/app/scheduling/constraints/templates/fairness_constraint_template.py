@@ -62,7 +62,7 @@ class FairnessConstraintTemplate(SoftConstraint):
         penalty = self.get_penalty(int(total_deviation))
         return ConstraintResult(
             satisfied=len(violations) == 0,
-            violations=violations,
+            violations=violations,  # type: ignore[arg-type]
             penalty=penalty,
         )
 

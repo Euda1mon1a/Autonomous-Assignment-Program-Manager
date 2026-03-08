@@ -16,7 +16,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.certification import Certification
+from app.models.certification import Certification  # type: ignore[attr-defined]
 from app.models.person import Person
 from app.validators.common import ValidationError
 from app.validators.date_validators import validate_date_not_null, validate_future_date
@@ -483,7 +483,9 @@ async def validate_credential_update(
     return {
         "person_id": str(person_id),
         "credential_name": validated_name,
-        "new_expiration_date": validated_expiration.isoformat(),
+        "new_expiration_date": validated_expiration.isoformat()
+        if validated_expiration
+        else None,
         "issue_date": validated_issue.isoformat() if validated_issue else None,
         "is_renewal": is_renewal,
         "is_valid": True,

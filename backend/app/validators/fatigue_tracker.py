@@ -10,11 +10,13 @@ Tracks and predicts resident fatigue based on:
 """
 
 from datetime import date, timedelta
+from typing import Literal, cast
 
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from app.core.types import (
+    FatiguePredictionDay,
     FatigueScore,
     FatigueTrend,
     HighRiskResident,
@@ -73,8 +75,17 @@ class FatigueTracker:
         if not person or not person.is_resident:
             return {
                 "person_id": str(person_id),
+                "person_name": "",
+                "date": target_date.isoformat(),
                 "fatigue_score": 0,
                 "risk_level": "NONE",
+                "factors": {
+                    "consecutive_days": 0,
+                    "night_shifts": 0,
+                    "weekend_days": 0,
+                    "days_since_off": 0,
+                    "total_hours_14d": 0,
+                },
                 "error": "Person not found or not a resident",
             }
 
@@ -112,6 +123,7 @@ class FatigueTracker:
         )
 
         # Determine risk level
+        risk_level: Literal["NONE", "LOW", "MODERATE", "HIGH"]
         if fatigue_score >= self.FATIGUE_THRESHOLD_HIGH:
             risk_level = "HIGH"
         elif fatigue_score >= self.FATIGUE_THRESHOLD_MODERATE:
@@ -191,10 +203,16 @@ class FatigueTracker:
         if not person or not person.is_resident:
             return {
                 "person_id": str(person_id),
+                "person_name": "",
+                "start_date": start_date.isoformat(),
+                "days_ahead": days_ahead,
+                "current_fatigue": 0,
+                "trend": "STABLE",
+                "predictions": [],
                 "error": "Person not found or not a resident",
             }
 
-        predictions = []
+        predictions: list[FatiguePredictionDay] = []
         current_fatigue = self.calculate_fatigue_score(person_id, start_date)
 
         for day_offset in range(days_ahead):
@@ -203,26 +221,25 @@ class FatigueTracker:
             # Get fatigue score for this date
             day_fatigue = self.calculate_fatigue_score(person_id, forecast_date)
 
-            predictions.append(
-                {
-                    "date": forecast_date.isoformat(),
-                    "fatigue_score": day_fatigue.get("fatigue_score", 0),
-                    "risk_level": day_fatigue.get("risk_level", "LOW"),
-                }
-            )
+            prediction: FatiguePredictionDay = {
+                "date": forecast_date.isoformat(),
+                "fatigue_score": day_fatigue.get("fatigue_score", 0),
+                "risk_level": cast(
+                    Literal["NONE", "LOW", "MODERATE", "HIGH"],
+                    day_fatigue.get("risk_level", "LOW"),
+                ),
+            }
+            predictions.append(prediction)
 
             # Calculate trend
+        trend_direction: Literal["INCREASING", "DECREASING", "STABLE"]
         if len(predictions) >= 2:
-            trend_direction = (
-                "INCREASING"
-                if predictions[-1]["fatigue_score"] > predictions[0]["fatigue_score"]
-                else (
-                    "DECREASING"
-                    if predictions[-1]["fatigue_score"]
-                    < predictions[0]["fatigue_score"]
-                    else "STABLE"
-                )
-            )
+            if predictions[-1]["fatigue_score"] > predictions[0]["fatigue_score"]:
+                trend_direction = "INCREASING"
+            elif predictions[-1]["fatigue_score"] < predictions[0]["fatigue_score"]:
+                trend_direction = "DECREASING"
+            else:
+                trend_direction = "STABLE"
         else:
             trend_direction = "STABLE"
 
@@ -237,7 +254,7 @@ class FatigueTracker:
         }
 
     def get_high_risk_residents(
-        self, target_date: date, threshold: float = None
+        self, target_date: date, threshold: float | None = None
     ) -> list[HighRiskResident]:
         """
         Get list of residents approaching or exceeding fatigue limits.
@@ -255,7 +272,7 @@ class FatigueTracker:
             # Get all residents
         residents = self.db.query(Person).filter(Person.type == "resident").all()
 
-        high_risk = []
+        high_risk: list[HighRiskResident] = []
 
         for resident in residents:
             fatigue_data = self.calculate_fatigue_score(resident.id, target_date)
@@ -263,18 +280,20 @@ class FatigueTracker:
             if fatigue_data.get("fatigue_score", 0) >= threshold:
                 recovery = self.get_recovery_time_needed(resident.id, target_date)
 
-                high_risk.append(
-                    {
-                        "person_id": str(resident.id),
-                        "person_name": resident.name,
-                        "pgy_level": resident.pgy_level,
-                        "fatigue_score": fatigue_data.get("fatigue_score"),
-                        "risk_level": fatigue_data.get("risk_level"),
-                        "recovery_hours_needed": recovery.get("recovery_hours_needed"),
-                        "recommended_days_off": recovery.get("recommended_days_off"),
-                        "factors": fatigue_data.get("factors"),
-                    }
-                )
+                entry: HighRiskResident = {
+                    "person_id": str(resident.id),
+                    "person_name": resident.name,
+                    "pgy_level": resident.pgy_level,
+                    "fatigue_score": fatigue_data.get("fatigue_score", 0),
+                    "risk_level": cast(
+                        Literal["NONE", "LOW", "MODERATE", "HIGH"],
+                        fatigue_data.get("risk_level", "LOW"),
+                    ),
+                    "recovery_hours_needed": recovery.get("recovery_hours_needed", 0),
+                    "recommended_days_off": recovery.get("recommended_days_off", 0),
+                    "factors": fatigue_data["factors"],
+                }
+                high_risk.append(entry)
 
                 # Sort by fatigue score (highest first)
         high_risk.sort(key=lambda x: x["fatigue_score"], reverse=True)

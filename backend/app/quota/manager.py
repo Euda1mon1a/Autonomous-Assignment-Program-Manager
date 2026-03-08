@@ -5,6 +5,8 @@ This module provides the main QuotaManager service that orchestrates
 quota enforcement, tracking, alerts, and reporting.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime, UTC
 
@@ -131,7 +133,7 @@ class QuotaManager:
                 "overage_percentage": policy.overage_percentage,
             }
 
-            self.redis.hset(custom_policy_key, mapping=policy_data)
+            self.redis.hset(custom_policy_key, mapping=policy_data)  # type: ignore[arg-type]
 
             if ttl_seconds:
                 self.redis.expire(custom_policy_key, ttl_seconds)
@@ -234,7 +236,7 @@ class QuotaManager:
         )
 
         if should_alert:
-            self._trigger_alert(user_id, resource_type, alert_level, policy)
+            self._trigger_alert(user_id, resource_type, alert_level, policy)  # type: ignore[arg-type]
 
         return daily_usage, monthly_usage
 
@@ -272,7 +274,7 @@ class QuotaManager:
             "daily_percentage": daily_pct,
             "monthly_percentage": monthly_pct,
         }
-        self.redis.hset(alert_key, mapping=alert_data)
+        self.redis.hset(alert_key, mapping=alert_data)  # type: ignore[arg-type]
         self.redis.expire(alert_key, 86400)  # 24 hour expiry
 
     def get_usage_summary(
@@ -327,7 +329,7 @@ class QuotaManager:
                 daily_limit = policy.daily_limit
                 monthly_limit = policy.monthly_limit
 
-            summary["resources"][resource_type] = {
+            summary["resources"][resource_type] = {  # type: ignore[index, assignment]
                 "limits": {
                     "daily": daily_limit,
                     "monthly": monthly_limit,

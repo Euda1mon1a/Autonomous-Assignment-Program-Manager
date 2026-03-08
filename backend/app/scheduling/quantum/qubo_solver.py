@@ -23,6 +23,8 @@ References:
 - D-Wave Ocean SDK: https://docs.ocean.dwavesys.com
 """
 
+from __future__ import annotations
+
 import logging
 import math
 import os
@@ -370,7 +372,7 @@ class SimulatedQuantumAnnealingSolver(BaseSolver):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """
         Solve using quantum-inspired simulated annealing.
@@ -587,7 +589,7 @@ class QUBOSolver(BaseSolver):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """Solve using PyQUBO formulation."""
         if not PYQUBO_AVAILABLE:
@@ -847,7 +849,7 @@ class QuantumInspiredSolver(BaseSolver):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """Solve using best available quantum-inspired method."""
         formulation = QUBOFormulation(context)
@@ -880,7 +882,7 @@ class QuantumInspiredSolver(BaseSolver):
     def _solve_with_dwave(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """
         Solve using D-Wave quantum hardware with graceful fallback.
@@ -1025,7 +1027,7 @@ def get_quantum_solver_config() -> dict[str, Any]:
 def create_quantum_solver_from_env(
     constraint_manager: ConstraintManager | None = None,
     timeout_seconds: float = 60.0,
-) -> QuantumInspiredSolver | SimulatedQuantumAnnealingSolver:
+) -> QuantumInspiredSolver | SimulatedQuantumAnnealingSolver | None:
     """
     Create quantum solver instance from environment configuration.
 

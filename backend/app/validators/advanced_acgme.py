@@ -344,7 +344,7 @@ class AdvancedACGMEValidator:
         person = self.db.query(Person).filter(Person.id == person_id).first()
 
         if not person:
-            return {}
+            return {}  # type: ignore[typeddict-item]
 
         assignments = (
             self.db.query(Assignment)

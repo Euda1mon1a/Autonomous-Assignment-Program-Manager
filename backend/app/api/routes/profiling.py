@@ -572,14 +572,14 @@ async def analyze_profiling_data(
     """
     # Configure analyzers
     analyzer = PerformanceAnalyzer(
-        cpu_threshold_percent=request.cpu_threshold_percent,
-        memory_threshold_mb=request.memory_threshold_mb,
-        duration_threshold_ms=request.duration_threshold_ms,
+        cpu_threshold_percent=request.cpu_threshold_percent,  # type: ignore[arg-type]
+        memory_threshold_mb=request.memory_threshold_mb,  # type: ignore[arg-type]
+        duration_threshold_ms=request.duration_threshold_ms,  # type: ignore[arg-type]
     )
 
     detector = BottleneckDetector(
-        sql_slow_threshold_ms=request.sql_slow_threshold_ms,
-        request_slow_threshold_ms=request.request_slow_threshold_ms,
+        sql_slow_threshold_ms=request.sql_slow_threshold_ms,  # type: ignore[arg-type]
+        request_slow_threshold_ms=request.request_slow_threshold_ms,  # type: ignore[arg-type]
     )
 
     # Analyze profiles

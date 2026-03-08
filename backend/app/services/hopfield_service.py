@@ -740,8 +740,8 @@ class HopfieldService:
 
         elif pattern_type == "clustering_violation":
             # Simplified check - would need temporal data
-            variance = np.var(workloads) if workloads else 0
-            detected = variance > np.mean(workloads) * 2
+            variance = float(np.var(workloads)) if workloads else 0.0
+            detected = bool(variance > np.mean(workloads) * 2)
             return detected, min(1.0, variance / 10), int(variance * 5)
 
         elif pattern_type == "coverage_gap":

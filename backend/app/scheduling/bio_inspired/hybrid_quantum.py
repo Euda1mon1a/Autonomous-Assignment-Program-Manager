@@ -551,7 +551,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
                     f"qubo_calls={len(self.qubo_stats)}"
                 )
 
-        return self.best_individual
+        return self.best_individual  # type: ignore[return-value]
 
     def _initialize_islands(
         self,
@@ -918,7 +918,7 @@ class HybridGAQUBOSolver(BioInspiredSolver):
         mutation_mask = np.random.random(partition.shape) < self.config.mutation_rate
 
         # Random reassignment for mutated positions
-        mutated[mutation_mask] = np.random.randint(
+        mutated[mutation_mask] = np.random.randint(  # type: ignore[call-overload]
             0, n_subproblems, size=np.sum(mutation_mask)
         )
 
@@ -983,8 +983,8 @@ class HybridGAQUBOSolver(BioInspiredSolver):
             population_size=len(all_individuals),
             best_fitness=max(fitness_values) if fitness_values else 0,
             worst_fitness=min(fitness_values) if fitness_values else 0,
-            mean_fitness=np.mean(fitness_values) if fitness_values else 0,
-            std_fitness=np.std(fitness_values) if fitness_values else 0,
+            mean_fitness=float(np.mean(fitness_values)) if fitness_values else 0,  # type: ignore[arg-type]
+            std_fitness=float(np.std(fitness_values)) if fitness_values else 0,  # type: ignore[arg-type]
             diversity=0.0,  # Would need chromosome comparison
             pareto_front_size=1,
             hypervolume=max(fitness_values) if fitness_values else 0,

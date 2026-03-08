@@ -174,7 +174,7 @@ async def delete_credential(
 ) -> None:
     """Delete a credential. Requires authentication."""
     controller = CredentialController(db)
-    await controller.delete_credential(credential_id)
+    await controller.delete_credential(credential_id)  # type: ignore[func-returns-value]
 
 
 @router.post(

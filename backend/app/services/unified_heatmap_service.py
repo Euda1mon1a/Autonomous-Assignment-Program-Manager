@@ -325,7 +325,7 @@ class UnifiedHeatmapService:
         person_id_list = [p.id for p in people]
 
         # Build assignment map: (person_id, date) -> count
-        assignment_map: dict[tuple[UUID, date], int] = defaultdict(int)
+        assignment_map: dict[tuple[UUID, date], float] = defaultdict(float)
 
         # Get regular assignments
         assignments = (
@@ -366,7 +366,7 @@ class UnifiedHeatmapService:
 
         # Build z_values matrix
         z_values = []
-        total_assignments = 0
+        total_assignments: float = 0
 
         for person_id in person_id_list:
             row = []

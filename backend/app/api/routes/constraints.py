@@ -239,7 +239,7 @@ async def enable_constraint(
         return ConstraintEnableResponse(
             success=True,
             message=f"Successfully enabled constraint '{name}'",
-            constraint=_constraint_to_response(constraint),
+            constraint=_constraint_to_response(constraint),  # type: ignore[arg-type]
         )
     except HTTPException:
         raise
@@ -302,7 +302,7 @@ async def disable_constraint(
         return ConstraintEnableResponse(
             success=True,
             message=f"Successfully disabled constraint '{name}'",
-            constraint=_constraint_to_response(constraint),
+            constraint=_constraint_to_response(constraint),  # type: ignore[arg-type]
         )
     except HTTPException:
         raise
@@ -465,13 +465,13 @@ async def update_constraint(
     updated = config_manager.get(name)
     logger.info(
         f"Constraint '{name}' updated by {current_user.username}: "
-        f"enabled={updated.enabled}, weight={updated.weight}"
+        f"enabled={updated.enabled}, weight={updated.weight}"  # type: ignore[union-attr]
     )
 
     return ConstraintUpdateResponse(
         success=True,
         message=f"Constraint '{name}' updated and persisted",
-        constraint=_constraint_to_response(updated),
+        constraint=_constraint_to_response(updated),  # type: ignore[arg-type]
     )
 
 

@@ -243,7 +243,7 @@ class PenroseVisualizer:
         swap_numbers = list(range(1, len(executed_swaps) + 1))
 
         for swap in executed_swaps:
-            cumulative_value += swap.net_extraction
+            cumulative_value += swap.net_extraction  # type: ignore[assignment]
             cumulative_extraction.append(cumulative_value)
 
             # Plot 1: Cumulative extraction
@@ -526,7 +526,7 @@ class PenroseVisualizer:
                         fontweight="bold",
                     )
 
-                x_offset += width
+                x_offset += width  # type: ignore[assignment]
 
             y_position += 1
 

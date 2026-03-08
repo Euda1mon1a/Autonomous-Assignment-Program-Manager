@@ -107,8 +107,8 @@ def train_ml_models(
             try:
                 X, y = _run_async(
                     pipeline.extract_preference_training_data(
-                        start_date=date.today() - timedelta(days=lookback),
-                        end_date=date.today(),
+                        start_date=date.today() - timedelta(days=lookback),  # type: ignore[arg-type]
+                        end_date=date.today(),  # type: ignore[arg-type]
                     )
                 )
 
@@ -141,13 +141,13 @@ def train_ml_models(
             try:
                 X, y = _run_async(
                     pipeline.extract_conflict_training_data(
-                        start_date=date.today() - timedelta(days=lookback),
-                        end_date=date.today(),
+                        start_date=date.today() - timedelta(days=lookback),  # type: ignore[arg-type]
+                        end_date=date.today(),  # type: ignore[arg-type]
                     )
                 )
 
                 if len(X) >= min_samples:
-                    predictor = ConflictPredictor()
+                    predictor = ConflictPredictor()  # type: ignore[assignment]
                     metrics = predictor.train(X, y)
                     model_path = models_dir / "conflict_predictor"
                     predictor.save(model_path)
@@ -172,8 +172,8 @@ def train_ml_models(
             try:
                 X, y = _run_async(
                     pipeline.extract_workload_training_data(
-                        start_date=date.today() - timedelta(days=lookback),
-                        end_date=date.today(),
+                        start_date=date.today() - timedelta(days=lookback),  # type: ignore[arg-type]
+                        end_date=date.today(),  # type: ignore[arg-type]
                     )
                 )
 

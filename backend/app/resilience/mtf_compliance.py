@@ -947,7 +947,7 @@ class MFRGenerator:
         Returns:
             Generated MFR document
         """
-        template = self.MFR_TEMPLATES[mfr_type]
+        template: dict[str, Any] = self.MFR_TEMPLATES[mfr_type]
         mfr_id = uuid4()
         now = datetime.now()
 
@@ -983,10 +983,10 @@ class MFRGenerator:
 
         # Convert system_state to dict for snapshot
         state_snapshot: SystemStateDict = (
-            system_state.to_dict()
+            system_state.to_dict()  # type: ignore[assignment]
             if isinstance(system_state, SystemHealthState)
             else system_state
-        )  # type: ignore[assignment]
+        )
 
         return MFRDocument(
             id=mfr_id,
@@ -1026,10 +1026,10 @@ class MFRGenerator:
         else:
             n1_pass = system_state.get("n1_pass", True)
             n2_pass = system_state.get("n2_pass", True)
-            load_level = system_state.get("load_shedding_level")
+            load_level = system_state.get("load_shedding_level")  # type: ignore[assignment]
             coverage = system_state.get("coverage_rate", 1.0)
             avg_load = system_state.get("average_allostatic_load", 0)
-            eq_state = system_state.get("equilibrium_state")
+            eq_state = system_state.get("equilibrium_state")  # type: ignore[assignment]
             phase_risk = system_state.get("phase_transition_risk", "low")
 
             # N-1/N-2 analysis
@@ -1527,6 +1527,7 @@ class CircuitBreaker:
 
                 # If any threshold was breached, trip the circuit breaker
         if trigger:
+            assert details is not None  # always set alongside trigger
             self._trip(trigger, details)
             return True, trigger, details
 

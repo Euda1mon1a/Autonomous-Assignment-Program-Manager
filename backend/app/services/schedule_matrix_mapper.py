@@ -225,6 +225,7 @@ class ScheduleMatrixMapper:
 
         # 2. Read dates from the header row to determine block range
         dates: list[date] = []
+        assert schedule_start_col is not None  # guaranteed by date_row check above
         c = schedule_start_col
         max_col = schedule_start_col + 200  # safety limit
         while c < max_col:

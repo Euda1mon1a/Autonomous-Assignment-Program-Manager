@@ -164,8 +164,10 @@ class ShiftPattern:
     @property
     def is_circadian_aligned(self) -> bool:
         """Check if shift is aligned with normal circadian rhythm."""
-        return SHIFT_CHARACTERISTICS.get(self.shift_type, {}).get(
-            "circadian_aligned", True
+        return bool(
+            SHIFT_CHARACTERISTICS.get(self.shift_type, {}).get(
+                "circadian_aligned", True
+            )
         )
 
 

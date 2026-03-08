@@ -595,7 +595,8 @@ class MOEADAlgorithm:
             for wv in self.weight_vectors:
                 if wv.current_solution is None:
                     wv.current_solution = cast(
-                        Solution, np.random.choice(evaluated)
+                        Solution,
+                        np.random.choice(evaluated),  # type: ignore[arg-type]
                     ).copy()
                     obj_vec = self._get_normalized_objectives(wv.current_solution)
                     wv.subproblem_value = self.config.decomposition.scalarize(

@@ -21,6 +21,8 @@ Applications in Scheduling:
 - Optimizing transition costs between rotation types
 """
 
+from __future__ import annotations
+
 import logging
 import math
 import random
@@ -92,7 +94,7 @@ class AntPath:
         cls,
         resident_idx: int,
         row: np.ndarray,
-    ) -> "AntPath":
+    ) -> AntPath:
         """
         Create path from chromosome row.
 
@@ -511,9 +513,9 @@ class AntColonySolver(BioInspiredSolver):
 
             unavail = context.availability.get(resident.id, set())
             for b_idx in unavail:
-                if 0 <= b_idx < n_blocks:
+                if 0 <= b_idx < n_blocks:  # type: ignore[operator]
                     # Set all templates to low probability
-                    self.heuristic_matrix[r_idx, b_idx, :] = (
+                    self.heuristic_matrix[r_idx, b_idx, :] = (  # type: ignore[index]
                         ACO_UNAVAILABLE_SLOT_HEURISTIC
                     )
 
@@ -538,6 +540,9 @@ class AntColonySolver(BioInspiredSolver):
             Constructed chromosome
         """
         genes = np.zeros((n_residents, n_blocks), dtype=np.int32)
+
+        assert self.pheromone is not None
+        assert self.heuristic_matrix is not None
 
         for r_idx in range(n_residents):
             prev_template = 0  # Start unassigned
@@ -671,6 +676,7 @@ class AntColonySolver(BioInspiredSolver):
             for path in paths:
                 path.pheromone_contribution = pheromone_amount
 
+            assert self.pheromone is not None
             self.pheromone.deposit(paths, elite_factor=1.0)
 
     def _track_iteration(
@@ -680,6 +686,7 @@ class AntColonySolver(BioInspiredSolver):
         best_fitness: float,
     ) -> None:
         """Track statistics for this iteration."""
+        assert self.pheromone is not None
         fitness_values = [s[2] for s in solutions]
 
         stats = PopulationStats(
@@ -687,8 +694,8 @@ class AntColonySolver(BioInspiredSolver):
             population_size=len(solutions),
             best_fitness=best_fitness,
             worst_fitness=min(fitness_values),
-            mean_fitness=np.mean(fitness_values),
-            std_fitness=np.std(fitness_values),
+            mean_fitness=float(np.mean(fitness_values)),  # type: ignore[arg-type]
+            std_fitness=float(np.std(fitness_values)),  # type: ignore[arg-type]
             diversity=float(np.std(self.pheromone.assignment)),
             pareto_front_size=1,
             hypervolume=best_fitness,

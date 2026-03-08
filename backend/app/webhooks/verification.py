@@ -709,7 +709,7 @@ class WebhookVerificationService:
 
         # Optional: Send to monitoring/alerting system
         # This could trigger alerts for potential security issues
-        if "replay attack" in result.failure_reason.lower():
+        if result.failure_reason and "replay attack" in result.failure_reason.lower():
             logger.critical(
                 f"Potential replay attack detected from {log_data['client_ip']}",
                 extra={"security_alert": log_data},

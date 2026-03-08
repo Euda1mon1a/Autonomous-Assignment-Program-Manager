@@ -22,7 +22,7 @@ from datetime import date, datetime, timedelta
 from difflib import SequenceMatcher
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 import logging
 
 from openpyxl import load_workbook
@@ -142,11 +142,13 @@ class ProviderSchedule:
                 current_week_start = week_start
                 current_week_end = week_end
             elif week_start != current_week_start:
+                assert current_week_end is not None
                 weeks.append((current_week_start, current_week_end))
                 current_week_start = week_start
                 current_week_end = week_end
 
         if current_week_start:
+            assert current_week_end is not None
             weeks.append((current_week_start, current_week_end))
 
         return weeks
@@ -479,6 +481,7 @@ class ClinicScheduleImporter:
                     break
 
                     # Detect AM/PM columns (dates might have 2 columns each)
+        assert date_row is not None  # guaranteed by guard above
         expanded_date_cols = []
         for i, (col_idx, d) in enumerate(date_cols):
             # Check if next column is also for same date (AM/PM split)
@@ -1222,7 +1225,7 @@ def analyze_schedule_conflicts(
                 )
 
                 # Build recommendations
-    recommendations = []
+    recommendations: list[dict[str, Any]] = []
 
     alternating = [c for c in conflicts if c.conflict_type == "consecutive_weeks"]
     if alternating:

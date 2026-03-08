@@ -159,14 +159,14 @@ class PropagationAnalyzer:
         G = nx.Graph()
 
         # Add nodes for all blocks in scheduling context
-        for block in self.context.blocks.values():
+        for block in self.context.blocks.values():  # type: ignore[union-attr, attr-defined]
             G.add_node(block.id, date=block.date, session=block.session)
 
             # Add edges for temporal constraints (consecutive days)
-        for block in self.context.blocks.values():
+        for block in self.context.blocks.values():  # type: ignore[union-attr, attr-defined]
             # Connect to next day's blocks
             next_date = block.date + timedelta(days=1)
-            for next_block in self.context.blocks.values():
+            for next_block in self.context.blocks.values():  # type: ignore[union-attr, attr-defined]
                 if next_block.date == next_date:
                     # Weight based on duty hours coupling
                     G.add_edge(
@@ -179,7 +179,7 @@ class PropagationAnalyzer:
                     # Add edges for supervision constraints
                     # (blocks on same day requiring same faculty)
         blocks_by_date = defaultdict(list)
-        for block in self.context.blocks.values():
+        for block in self.context.blocks.values():  # type: ignore[union-attr, attr-defined]
             blocks_by_date[block.date].append(block.id)
 
         for block_ids in blocks_by_date.values():

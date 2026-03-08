@@ -148,7 +148,7 @@ async def create_assignment(
         - 409: Conflict (person already assigned to block)
     """
     controller = AssignmentController(db)
-    result = await controller.create_assignment(assignment_in, current_user)
+    result = await controller.create_assignment(assignment_in, current_user)  # type: ignore[misc]
 
     # Broadcast WebSocket event
     await broadcast_schedule_updated(
@@ -195,7 +195,7 @@ async def update_assignment(
             - 403: Insufficient permissions
     """
     controller = AssignmentController(db)
-    result = await controller.update_assignment(assignment_id, assignment_in)
+    result = await controller.update_assignment(assignment_id, assignment_in)  # type: ignore[misc]
 
     # Broadcast WebSocket event
     await broadcast_schedule_updated(
@@ -218,7 +218,7 @@ async def delete_assignment(
 ) -> None:
     """Delete an assignment. Requires scheduler role (admin or coordinator)."""
     controller = AssignmentController(db)
-    await controller.delete_assignment(assignment_id)
+    await controller.delete_assignment(assignment_id)  # type: ignore[func-returns-value]
 
     # Broadcast WebSocket event
     await broadcast_schedule_updated(
@@ -240,7 +240,7 @@ async def delete_assignments_bulk(
 ) -> None:
     """Delete all assignments in a date range. Requires scheduler role (admin or coordinator)."""
     controller = AssignmentController(db)
-    await controller.delete_assignments_bulk(start_date, end_date)
+    await controller.delete_assignments_bulk(start_date, end_date)  # type: ignore[misc]
 
     # Broadcast WebSocket event
     await broadcast_schedule_updated(

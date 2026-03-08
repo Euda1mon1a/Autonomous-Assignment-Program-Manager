@@ -185,8 +185,8 @@ class NotificationReporter(ErrorReporter):
             for recipient_id in recipients:
                 try:
                     await notification_service.send_notification(
-                        recipient_id=recipient_id,
-                        notification_type=NotificationType.SYSTEM_ALERT,
+                        recipient_id=recipient_id,  # type: ignore[arg-type]
+                        notification_type=NotificationType.SYSTEM_ALERT,  # type: ignore[attr-defined]
                         data=notification_data,
                         channels=["email"],  # Use email for error alerts
                     )

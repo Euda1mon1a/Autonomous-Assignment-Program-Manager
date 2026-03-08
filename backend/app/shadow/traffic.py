@@ -11,6 +11,8 @@ Provides comprehensive shadow traffic capabilities including:
 - Alerting on significant diffs
 """
 
+from __future__ import annotations
+
 import asyncio
 import hashlib
 import json
@@ -680,10 +682,14 @@ class ShadowTrafficManager:
 
             # Critical: Status code mismatch or errors
         if not comparison.status_match:
+            primary = comparison.primary_status
+            shadow = comparison.shadow_status
             # Both 2xx or both error is medium
             if (
-                200 <= comparison.primary_status < 300
-                and 200 <= comparison.shadow_status < 300
+                primary is not None
+                and shadow is not None
+                and 200 <= primary < 300
+                and 200 <= shadow < 300
             ):
                 return DiffSeverity.MEDIUM
             return DiffSeverity.HIGH

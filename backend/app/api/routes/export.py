@@ -247,7 +247,7 @@ async def export_schedule_xlsx(
         if block_number is None:
             block_number, academic_year = get_block_number_for_date(start_date)
         else:
-            _, academic_year = get_block_number_for_date(start_date)
+            _, academic_year = get_block_number_for_date(start_date)  # type: ignore[assignment]
 
         exporter = CanonicalScheduleExportService(db)
         xlsx_bytes = exporter.export_block_xlsx(

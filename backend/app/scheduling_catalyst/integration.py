@@ -207,7 +207,7 @@ class DefenseIntegration:
             },
         }
 
-        config = mechanism_configs.get(catalyst_id)
+        config: dict[str, Any] | None = mechanism_configs.get(catalyst_id)
         if not config:
             return None
 
@@ -624,13 +624,13 @@ class ResilienceFrameworkIntegration:
         }
 
         # Defense mechanisms
-        result["defense_mechanisms"] = self.defense.get_available_mechanisms(
+        result["defense_mechanisms"] = self.defense.get_available_mechanisms(  # type: ignore[assignment]
             current_defense_level
         )
 
         # Hub personnel
         if hub_metrics:
-            result["hub_personnel"] = self.hub.identify_catalyst_hubs(hub_metrics)
+            result["hub_personnel"] = self.hub.identify_catalyst_hubs(hub_metrics)  # type: ignore[assignment]
 
         # Sacrifice mechanisms
         utilization = 1.0 - coverage_rate
@@ -639,7 +639,7 @@ class ResilienceFrameworkIntegration:
         ]
 
         # Feedback mechanisms (placeholder metrics)
-        result["feedback_mechanisms"] = self.homeostasis.get_feedback_catalysts(
+        result["feedback_mechanisms"] = self.homeostasis.get_feedback_catalysts(  # type: ignore[assignment]
             {"coverage": coverage_rate},
             {"coverage": 0.95},
         )

@@ -296,10 +296,10 @@ class FairnessAuditService:
         # Total workload scores (preserve fractional precision from weighted scoring)
         scores = [w.total_score for w in workloads]
         workload_stats = CategoryStats(
-            min=min(scores) if scores else 0.0,
-            max=max(scores) if scores else 0.0,
+            min=int(min(scores)) if scores else 0,
+            max=int(max(scores)) if scores else 0,
             mean=sum(scores) / len(scores) if scores else 0.0,
-            spread=max(scores) - min(scores) if scores else 0.0,
+            spread=int(max(scores) - min(scores)) if scores else 0,
         )
 
         # Jain's fairness index

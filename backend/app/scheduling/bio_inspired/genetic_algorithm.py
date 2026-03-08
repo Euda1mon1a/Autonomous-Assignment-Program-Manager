@@ -149,7 +149,7 @@ class SelectionOperator:
         parents = []
         for _ in range(n_parents):
             r = random.random()
-            cumulative = 0
+            cumulative: float = 0
             for i, p in enumerate(probabilities):
                 cumulative += p
                 if r <= cumulative:
@@ -315,8 +315,8 @@ class CrossoverOperator:
         # Randomly select rows to swap
         swap_mask = np.random.random(n_rows) < 0.5
 
-        child1_genes = np.where(swap_mask[:, np.newaxis], c2.genes, c1.genes)
-        child2_genes = np.where(swap_mask[:, np.newaxis], c1.genes, c2.genes)
+        child1_genes = np.where(swap_mask[:, np.newaxis], c2.genes, c1.genes)  # type: ignore[index]
+        child2_genes = np.where(swap_mask[:, np.newaxis], c1.genes, c2.genes)  # type: ignore[index]
 
         return Chromosome(child1_genes), Chromosome(child2_genes)
 
@@ -331,8 +331,8 @@ class CrossoverOperator:
         # Randomly select columns to swap
         swap_mask = np.random.random(n_cols) < 0.5
 
-        child1_genes = np.where(swap_mask[np.newaxis, :], c2.genes, c1.genes)
-        child2_genes = np.where(swap_mask[np.newaxis, :], c1.genes, c2.genes)
+        child1_genes = np.where(swap_mask[np.newaxis, :], c2.genes, c1.genes)  # type: ignore[index]
+        child2_genes = np.where(swap_mask[np.newaxis, :], c1.genes, c2.genes)  # type: ignore[index]
 
         return Chromosome(child1_genes), Chromosome(child2_genes)
 
@@ -609,7 +609,7 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
 
         logger.info(
             f"GA initialized: pop_size={len(self.population)}, "
-            f"initial_best={self.best_individual.fitness.weighted_sum():.4f}"
+            f"initial_best={self.best_individual.fitness.weighted_sum():.4f}"  # type: ignore[union-attr]
         )
 
         # Evolution loop

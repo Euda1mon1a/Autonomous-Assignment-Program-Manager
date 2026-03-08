@@ -10,6 +10,8 @@ Provides functions to persist Tier 3 component data to the database:
 These functions bridge the in-memory Tier 3 components with database storage.
 """
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime, UTC
 from uuid import UUID
@@ -111,7 +113,7 @@ def update_cognitive_session(
 
 
 def persist_decision(
-    db: Session, decision: Decision, session_id: UUID = None
+    db: Session, decision: Decision, session_id: UUID | None = None
 ) -> CognitiveDecisionRecord:
     """
     Persist a decision to the database.
@@ -152,7 +154,7 @@ def update_decision_resolution(
     outcome: DecisionOutcome,
     chosen_option: str,
     decided_by: str,
-    actual_time_seconds: float = None,
+    actual_time_seconds: float | None = None,
 ) -> CognitiveDecisionRecord | None:
     """
     Update a decision record with resolution details.
@@ -188,7 +190,7 @@ def update_decision_resolution(
 
 def get_session_history(
     db: Session,
-    user_id: UUID = None,
+    user_id: UUID | None = None,
     limit: int = DEFAULT_SESSION_HISTORY_LIMIT,
 ) -> list[CognitiveSessionRecord]:
     """
@@ -300,7 +302,7 @@ def persist_trail_signal(
 
 
 def load_preference_trails(
-    db: Session, faculty_id: UUID = None
+    db: Session, faculty_id: UUID | None = None
 ) -> list[PreferenceTrailRecord]:
     """
     Load preference trails from database.
@@ -407,7 +409,7 @@ def persist_hub_analysis_results(
 def persist_hub_protection_plan(
     db: Session,
     plan: HubProtectionPlan,
-    created_by: str = None,
+    created_by: str | None = None,
 ) -> HubProtectionPlanRecord:
     """
     Persist a hub protection plan.

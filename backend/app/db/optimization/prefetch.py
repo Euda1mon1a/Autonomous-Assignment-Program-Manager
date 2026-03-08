@@ -196,7 +196,7 @@ def prefetch_schedule_data(
     start_date: date,
     end_date: date,
     person_ids: list[str] | None = None,
-) -> dict[str, any]:
+) -> dict[str, Any]:
     """
     Prefetch all data needed for schedule display/analysis.
 
@@ -335,7 +335,7 @@ def prefetch_person_workload_data(
     person_id: str,
     start_date: date,
     end_date: date,
-) -> dict[str, any]:
+) -> dict[str, Any]:
     """
     Prefetch all data needed for person workload analysis.
 
@@ -398,7 +398,7 @@ def prefetch_rotation_coverage_data(
     rotation_id: str,
     start_date: date,
     end_date: date,
-) -> dict[str, any]:
+) -> dict[str, Any]:
     """
     Prefetch all data for rotation coverage analysis.
 

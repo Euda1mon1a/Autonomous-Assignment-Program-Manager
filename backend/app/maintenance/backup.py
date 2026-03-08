@@ -131,6 +131,14 @@ class BackupService:
             self._write_backup(filepath, backup_data, compress)
 
             # Create metadata
+            record_counts: dict[str, int] = {
+                "people": len(backup_data["people"]),
+                "rotation_templates": len(backup_data["rotation_templates"]),
+                "blocks": len(backup_data["blocks"]),
+                "assignments": len(backup_data["assignments"]),
+                "absences": len(backup_data["absences"]),
+                "schedule_runs": len(backup_data["schedule_runs"]),
+            }
             metadata = {
                 "backup_id": backup_id,
                 "filename": filename,
@@ -139,14 +147,7 @@ class BackupService:
                 "size_bytes": filepath.stat().st_size,
                 "compressed": compress,
                 "status": "completed",
-                "record_counts": {
-                    "people": len(backup_data["people"]),
-                    "rotation_templates": len(backup_data["rotation_templates"]),
-                    "blocks": len(backup_data["blocks"]),
-                    "assignments": len(backup_data["assignments"]),
-                    "absences": len(backup_data["absences"]),
-                    "schedule_runs": len(backup_data["schedule_runs"]),
-                },
+                "record_counts": record_counts,
             }
 
             # Save metadata
@@ -154,7 +155,7 @@ class BackupService:
             logger.info(
                 f"Backup {backup_id} completed successfully. "
                 f"Size: {metadata['size_bytes']} bytes, "
-                f"Total records: {sum(metadata['record_counts'].values())}"
+                f"Total records: {sum(record_counts.values())}"
             )
             return metadata
 

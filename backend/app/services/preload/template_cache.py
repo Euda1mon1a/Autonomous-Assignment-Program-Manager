@@ -48,15 +48,12 @@ class TemplateCache:
         if rotation_type is None:
             return None
 
-        abbrev = (
-            (
-                rotation_type.value
-                if hasattr(rotation_type, "value")
-                else (rotation_type or "")
-            )
-            .strip()
-            .upper()
+        raw = (
+            rotation_type.value
+            if hasattr(rotation_type, "value")
+            else (rotation_type or "")
         )
+        abbrev = str(raw).strip().upper()
         if not abbrev:
             return None
 

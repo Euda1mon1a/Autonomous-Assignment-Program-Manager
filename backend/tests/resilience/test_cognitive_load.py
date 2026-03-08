@@ -342,7 +342,7 @@ class TestCognitiveLoadManagerInit:
         mgr = CognitiveLoadManager()
         assert mgr.max_decisions_per_session == 7
         assert mgr.auto_decide_when_fatigued is True
-        assert mgr.batch_similar_decisions is True
+        assert mgr._batch_similar_decisions is True
         assert mgr.sessions == {}
         assert mgr.pending_decisions == []
         assert mgr.decision_history == []
@@ -649,9 +649,7 @@ class TestBatchSimilarDecisions:
             "S1",
             ["z"],
         )
-        # Note: __init__ sets self.batch_similar_decisions = True (bool),
-        # shadowing the method. Call via unbound method.
-        batches = CognitiveLoadManager.batch_similar_decisions(mgr)
+        batches = mgr.batch_similar_decisions()
         assert DecisionCategory.ASSIGNMENT in batches
         assert len(batches[DecisionCategory.ASSIGNMENT]) == 2
         assert DecisionCategory.SWAP in batches
@@ -659,7 +657,7 @@ class TestBatchSimilarDecisions:
 
     def test_empty_queue(self):
         mgr = CognitiveLoadManager()
-        assert CognitiveLoadManager.batch_similar_decisions(mgr) == {}
+        assert mgr.batch_similar_decisions() == {}
 
 
 class TestPrioritizeDecisions:

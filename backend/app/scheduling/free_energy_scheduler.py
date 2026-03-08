@@ -130,7 +130,7 @@ class DemandForecast:
 
         return cls(
             predicted_coverage=predicted_coverage,
-            predicted_complexity=predicted_complexity,
+            predicted_complexity=float(predicted_complexity),
             confidence=confidence,
             forecast_horizon_days=forecast_horizon_days,
             metadata={"historical_sample_size": len(historical_assignments)},
@@ -283,7 +283,7 @@ class GenerativeModel:
 
         # Track prediction error
         prediction_error = np.linalg.norm(actual_vector - self.learned_weights)
-        self.error_history.append(prediction_error)
+        self.error_history.append(float(prediction_error))
 
         logger.debug(
             f"Model updated: outcomes_seen={self.outcomes_seen}, "
@@ -755,7 +755,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
             # Generate offspring
             while len(new_population) < self.population_size:
                 # Tournament selection
-                tournament = np.random.choice(self.population, size=3, replace=False)
+                tournament = np.random.choice(self.population, size=3, replace=False)  # type: ignore[arg-type]
                 parent = max(
                     tournament,
                     key=lambda ind: ind.fitness.weighted_sum() if ind.fitness else 0,

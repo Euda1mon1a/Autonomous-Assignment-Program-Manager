@@ -66,7 +66,7 @@ class EmailSender:
             # Create message
             msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
-            msg["From"] = from_address or settings.EMAIL_FROM_ADDRESS
+            msg["From"] = from_address or settings.EMAIL_FROM_ADDRESS  # type: ignore[attr-defined]
             msg["To"] = to_address
 
             if reply_to:

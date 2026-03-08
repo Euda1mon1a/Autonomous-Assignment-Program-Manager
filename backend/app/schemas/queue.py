@@ -72,7 +72,7 @@ class TaskGroupRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-class TaskDependencyRequest(BaseModel):
+class TaskDependencyRequest(BaseModel):  # type: ignore[no-redef]
     """Request to submit a task with dependencies."""
 
     task_name: str = Field(..., alias="taskName")
@@ -270,7 +270,7 @@ class WorkerControlResponse(BaseModel):
 # ============================================================================
 
 
-class ScheduleTaskRequest(BaseModel):
+class ScheduleTaskRequest(BaseModel):  # type: ignore[no-redef]
     """Request to schedule a task for future execution."""
 
     task_name: str = Field(..., alias="taskName")
@@ -294,7 +294,7 @@ class ScheduleTaskResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-class PeriodicTaskRequest(BaseModel):
+class PeriodicTaskRequest(BaseModel):  # type: ignore[no-redef]
     """Request to add a periodic task."""
 
     name: str = Field(..., description="Unique name for this periodic task")
@@ -363,7 +363,7 @@ class PeriodicTaskControlResponse(BaseModel):
 # ============================================================================
 
 
-class DeadLetterTask(BaseModel):
+class DeadLetterTask(BaseModel):  # type: ignore[no-redef]
     """Task in dead letter queue."""
 
     task_id: str = Field(..., alias="taskId")

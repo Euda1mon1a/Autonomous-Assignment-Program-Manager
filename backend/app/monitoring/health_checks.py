@@ -205,7 +205,7 @@ async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
 
     try:
         # Ping Redis
-        pong = await redis_client.ping()
+        pong = await redis_client.ping()  # type: ignore[misc]
 
         response_time = (time.time() - start_time) * 1000
 
@@ -218,7 +218,7 @@ async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
             )
 
             # Check memory usage
-        info = await redis_client.info("memory")
+        info = await redis_client.info("memory")  # type: ignore[misc]
         memory_used_mb = info.get("used_memory", 0) / (1024 * 1024)
         memory_max_mb = (
             info.get("maxmemory", 0) / (1024 * 1024) if info.get("maxmemory") else None
@@ -558,7 +558,7 @@ class HealthCheckCoordinator:
                     )
                 )
             else:
-                processed_results.append(result)
+                processed_results.append(result)  # type: ignore[arg-type]
 
         return OverallHealthResult(processed_results)
 

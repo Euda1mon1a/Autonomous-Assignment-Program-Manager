@@ -4,6 +4,7 @@ import base64
 import mimetypes
 from email.mime.application import MIMEApplication
 from email.mime.audio import MIMEAudio
+from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
 from pathlib import Path
@@ -68,6 +69,7 @@ class AttachmentHandler:
         # Create appropriate MIME part
         main_type, sub_type = mime_type.split("/", 1)
 
+        part: MIMEBase
         if main_type == "text":
             part = MIMEText(data.decode("utf-8"), _subtype=sub_type)
         elif main_type == "image":
@@ -106,6 +108,7 @@ class AttachmentHandler:
         """
         main_type, sub_type = mime_type.split("/", 1)
 
+        part: MIMEBase
         if main_type == "text":
             part = MIMEText(data.decode("utf-8"), _subtype=sub_type)
         elif main_type == "image":

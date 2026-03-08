@@ -352,9 +352,9 @@ class RecoveryDistanceCalculator:
             p95_index = min(
                 int(len(sorted_distances) * 0.95), len(sorted_distances) - 1
             )
-            rd_p95 = sorted_distances[p95_index]
+            rd_p95: float = float(sorted_distances[p95_index])
         else:
-            rd_p95: float = 0.0
+            rd_p95 = 0.0
 
             # Breakdown by event type
         by_event_type: dict[str, dict[str, float]] = {}

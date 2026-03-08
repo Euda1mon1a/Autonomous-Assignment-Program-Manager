@@ -1144,6 +1144,7 @@ class EventBus:
     async def _pubsub_listener(self) -> None:
         """Listen for Redis pub/sub messages."""
         try:
+            assert self._redis_pubsub is not None
             async for message in self._redis_pubsub.listen():
                 if message["type"] in ("message", "pmessage"):
                     try:
@@ -1250,7 +1251,7 @@ class EventBus:
 
             # Try to process with retries
         retry_count = 0
-        last_error = None
+        last_error: Exception | None = None
 
         while retry_count <= subscription.max_retries:
             try:
@@ -1281,7 +1282,11 @@ class EventBus:
             f"{retry_count} attempts. Error: {last_error}"
         )
 
-        if subscription.dead_letter_enabled and self._dead_letter_queue:
+        if (
+            subscription.dead_letter_enabled
+            and self._dead_letter_queue
+            and last_error is not None
+        ):
             await self._dead_letter_queue.add(
                 event, last_error, subscription.subscription_id
             )

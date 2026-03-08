@@ -534,7 +534,7 @@ class UnifiedCriticalIndexAnalyzer:
             faculty_list = list(faculty_set)
             for i, fac1 in enumerate(faculty_list):
                 for fac2 in faculty_list[i + 1 :]:
-                    pair = tuple(sorted([fac1, fac2]))
+                    pair: tuple[UUID, UUID] = tuple(sorted([fac1, fac2]))  # type: ignore[assignment]
                     shared_shifts[pair] = shared_shifts.get(pair, 0) + 1
 
                     # Add edges above threshold

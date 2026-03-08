@@ -210,7 +210,7 @@ def create_session(response: Response, user: User) -> dict:
         Dict with access_token and user info
     """
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token, jti, expires_at = create_access_token(
+    access_token, jti, expires_at = create_access_token(  # type: ignore[misc]
         data={"sub": str(user.id), "username": user.username},
         expires_delta=access_token_expires,
         return_details=True,

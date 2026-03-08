@@ -174,10 +174,10 @@ def create_trigger(trigger_type: str, config: dict[str, Any]) -> Any:
         trigger_config = CronTriggerConfig(**config)
         return trigger_config.to_apscheduler_trigger()
     elif trigger_type == "interval":
-        trigger_config = IntervalTriggerConfig(**config)
+        trigger_config = IntervalTriggerConfig(**config)  # type: ignore[assignment]
         return trigger_config.to_apscheduler_trigger()
     elif trigger_type == "date":
-        trigger_config = DateTriggerConfig(**config)
+        trigger_config = DateTriggerConfig(**config)  # type: ignore[assignment]
         return trigger_config.to_apscheduler_trigger()
     else:
         raise ValueError(f"Invalid trigger type: {trigger_type}")

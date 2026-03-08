@@ -159,6 +159,7 @@ class FileLogStorage(LogStorage):
         self.logger.handlers.clear()
 
         # Create appropriate handler
+        handler: logging.Handler
         if rotation_type == "size":
             handler = RotatingFileHandler(
                 log_path,
@@ -239,7 +240,7 @@ class FileLogStorage(LogStorage):
             # Support nested keys (e.g., "http.status_code")
             if "." in key:
                 parts = key.split(".")
-                current = log
+                current: Any = log
                 for part in parts:
                     if isinstance(current, dict):
                         current = current.get(part)
@@ -299,7 +300,7 @@ class DatabaseLogStorage(LogStorage):
     ) -> list[dict[str, Any]]:
         """Retrieve log entries from database."""
         # Implementation would query RequestLog model
-        pass
+        return []
 
     def clear(self) -> None:
         """Clear old log entries (with retention policy)."""

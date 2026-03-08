@@ -10,6 +10,8 @@ This service provides comprehensive usage metering capabilities including:
 - Usage analytics and reporting
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from dataclasses import dataclass, field
@@ -135,8 +137,8 @@ class UsageReport:
     total_cost: Decimal
     by_resource: dict[str, UsageAggregation]
     by_period: dict[str, UsageAggregation]
-    overages: list["OverageAlert"]
-    forecasted_usage: Optional["ForecastResult"] = None
+    overages: list[OverageAlert]
+    forecasted_usage: ForecastResult | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -982,8 +984,8 @@ class MeteringService:
                 "amount": int(billing_record.total * 100),  # Stripe uses cents
                 "description": f"Usage from {start_date.date()} to {end_date.date()}",
                 "metadata": {
-                    "billing_period_start": billing_period_start.isoformat(),
-                    "billing_period_end": billing_period_end.isoformat(),
+                    "billing_period_start": start_date.isoformat(),
+                    "billing_period_end": end_date.isoformat(),
                     "line_items_count": len(billing_record.line_items),
                 },
                 "line_items": billing_record.line_items,
@@ -1122,7 +1124,7 @@ class MeteringService:
         start_date = end_date - timedelta(days=days)
 
         # Get daily usage
-        daily_usage = []
+        daily_usage: list[dict[str, Any]] = []
         current = start_date
 
         while current <= end_date:
@@ -1143,7 +1145,7 @@ class MeteringService:
             current += timedelta(days=1)
 
             # Calculate statistics
-        usage_values = [d["usage"] for d in daily_usage]
+        usage_values: list[int] = [d["usage"] for d in daily_usage]
 
         if usage_values:
             avg_usage = sum(usage_values) / len(usage_values)

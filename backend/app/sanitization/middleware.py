@@ -13,6 +13,7 @@ The middleware can be configured with different sanitization rules and exclusion
 
 import json
 import logging
+from typing import Any
 from collections.abc import Callable
 
 from fastapi import Request, Response
@@ -343,7 +344,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
         if not isinstance(data, list):
             return data
 
-        sanitized = []
+        sanitized: list[Any] = []
         for item in data:
             if isinstance(item, str):
                 sanitized.append(self._sanitize_value(field_name, item))
@@ -455,4 +456,4 @@ def create_sanitization_middleware(
         allowed_html_fields=allowed_html_fields,
     )
 
-    return lambda app: SanitizationMiddleware(app, config=config)
+    return lambda app: SanitizationMiddleware(app, config=config)  # type: ignore[return-value]

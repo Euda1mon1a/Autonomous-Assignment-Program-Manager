@@ -257,12 +257,14 @@ class BurnoutContagionModel:
 
         # Create SIS model
         self.model = ep.SISModel(self.social_graph)
+        assert self.model is not None
 
         # Configure model
-        self.config = mc.Configuration()
-        self.config.add_model_parameter("beta", infection_rate)
-        self.config.add_model_parameter("lambda", recovery_rate)
-        self.model.set_initial_status(self.config)
+        config = mc.Configuration()
+        config.add_model_parameter("beta", infection_rate)
+        config.add_model_parameter("lambda", recovery_rate)
+        self.model.set_initial_status(config)
+        self.config = config
 
         logger.info(
             f"Configured SIS model: beta={infection_rate:.3f}, "

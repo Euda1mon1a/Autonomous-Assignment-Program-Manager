@@ -25,11 +25,15 @@ References:
 - 2025 Royal Society: "Universal early warning signals in climate systems"
 """
 
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from datetime import datetime, UTC
 from enum import Enum
+from typing import Any
 
 import numpy as np
 from scipy import stats
@@ -226,7 +230,7 @@ class PhaseTransitionDetector:
                 signal_type="increasing_variance",
                 metric_name=metric_name,
                 severity=severity,
-                value=variance_increase,
+                value=float(variance_increase),
                 threshold=0.5,
                 description=f"Variance increased {variance_increase:.1%} (fluctuations diverging)",
             )
@@ -422,7 +426,7 @@ class PhaseTransitionDetector:
         # Convert to hours (calibration factor)
         estimated_hours = time_constant * 10  # Calibrate based on empirical data
 
-        return estimated_hours
+        return float(estimated_hours)
 
     def _generate_recommendations(
         self, signals: list[CriticalSignal], severity: TransitionSeverity
@@ -509,11 +513,15 @@ class CriticalPhenomenaMonitor:
         """
         self.detector = PhaseTransitionDetector(window_size)
         self.risk_history: list[PhaseTransitionRisk] = []
-        self.alert_callbacks: list[callable] = []
+        self.alert_callbacks: list[
+            Callable[[PhaseTransitionRisk], Coroutine[Any, Any, None]]
+        ] = []
 
         logger.info("CriticalPhenomenaMonitor initialized")
 
-    def add_alert_callback(self, callback: callable) -> None:
+    def add_alert_callback(
+        self, callback: Callable[[PhaseTransitionRisk], Coroutine[Any, Any, None]]
+    ) -> None:
         """Register callback for critical alerts."""
         self.alert_callbacks.append(callback)
 

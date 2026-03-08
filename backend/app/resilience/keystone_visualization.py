@@ -292,7 +292,7 @@ class KeystoneVisualizer:
             ax.text(
                 0.5,
                 y_pos - level_height * 0.4,
-                level_data["label"],
+                level_data["label"],  # type: ignore[arg-type]
                 ha="center",
                 va="center",
                 fontsize=10,

@@ -383,8 +383,8 @@ async def batch_resolve_conflicts(
         BatchResolutionReport with summary of all resolutions
     """
     resolver = ConflictAutoResolver(db)
-    return resolver.batch_auto_resolve(
-        conflict_ids=conflict_ids,
+    return resolver.batch_auto_resolve(  # type: ignore[call-arg]
+        conflict_ids=conflict_ids,  # type: ignore[arg-type]
         max_conflicts=max_conflicts,
         severity_filter=severity_filter,
         dry_run=dry_run,

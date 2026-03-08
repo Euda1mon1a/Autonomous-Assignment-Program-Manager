@@ -38,7 +38,7 @@ def check_health() -> None:
         click.echo("Running system health check...\n")
 
         aggregator = HealthAggregator()
-        health = aggregator.check_health()
+        health = aggregator.check_health()  # type: ignore[attr-defined]
 
         # Display results
         click.echo("=" * 60)

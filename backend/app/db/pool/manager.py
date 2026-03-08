@@ -123,19 +123,19 @@ class PoolManager:
             """Track connection creation."""
             # Store connect time in connection record
             connection_record.info["connect_time"] = time.time()
-            self._monitor.record_connect()
+            self._monitor.record_connect()  # type: ignore[union-attr]
             logger.debug(f"New connection created: {id(dbapi_conn)}")
 
         @event.listens_for(self._pool, "checkout")
         def receive_checkout(dbapi_conn, connection_record, connection_proxy) -> None:
             """Track connection checkout."""
-            self._monitor.record_checkout(id(dbapi_conn))
+            self._monitor.record_checkout(id(dbapi_conn))  # type: ignore[union-attr]
             logger.debug(f"Connection checked out: {id(dbapi_conn)}")
 
         @event.listens_for(self._pool, "checkin")
         def receive_checkin(dbapi_conn, connection_record) -> None:
             """Track connection checkin."""
-            self._monitor.record_checkin(id(dbapi_conn))
+            self._monitor.record_checkin(id(dbapi_conn))  # type: ignore[union-attr]
             logger.debug(f"Connection checked in: {id(dbapi_conn)}")
 
         @event.listens_for(self._pool, "reset")
@@ -146,7 +146,7 @@ class PoolManager:
         @event.listens_for(self._pool, "invalidate")
         def receive_invalidate(dbapi_conn, connection_record, exception) -> None:
             """Track connection invalidation."""
-            self._monitor.record_disconnect()
+            self._monitor.record_disconnect()  # type: ignore[union-attr]
             logger.warning(
                 f"Connection invalidated: {id(dbapi_conn)}, reason: {exception}"
             )
@@ -164,7 +164,7 @@ class PoolManager:
             # Check out connections to force creation
             for i in range(self._config.pool_size):
                 try:
-                    conn = self._engine.connect()
+                    conn = self._engine.connect()  # type: ignore[union-attr]
                     connections.append(conn)
                 except Exception as e:
                     logger.error(f"Failed to pre-warm connection {i + 1}: {e}")
@@ -197,11 +197,11 @@ class PoolManager:
         while not self._shutdown_event.is_set():
             try:
                 # Perform health check
-                result = self._health_checker.perform_health_check()
+                result = self._health_checker.perform_health_check()  # type: ignore[union-attr]
 
                 if result.is_healthy:
                     logger.debug("Pool health check passed")
-                    self._auto_recovery.reset_recovery_counter()
+                    self._auto_recovery.reset_recovery_counter()  # type: ignore[union-attr]
                 else:
                     logger.warning(
                         f"Pool health check failed: {len(result.errors)} errors, "

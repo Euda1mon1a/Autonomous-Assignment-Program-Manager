@@ -238,7 +238,7 @@ def initialize_embeddings(
                         {
                             "filename": filename,
                             "status": "success",
-                            "chunks_created": ingest_result.chunks_created,
+                            "chunks_created": ingest_result.chunks_created,  # type: ignore[dict-item]
                             "doc_type": doc_type,
                         }
                     )

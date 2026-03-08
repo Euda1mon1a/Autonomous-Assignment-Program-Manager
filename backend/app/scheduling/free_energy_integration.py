@@ -297,7 +297,7 @@ class FreeEnergySolverAdapter:
                 )
 
                 # Attach forecast to context
-                context.historical_forecast = forecast
+                context.historical_forecast = forecast  # type: ignore[attr-defined]
 
             except Exception as e:
                 logger.warning(f"Failed to generate forecast from history: {e}")

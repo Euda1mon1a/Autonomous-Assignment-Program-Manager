@@ -290,6 +290,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
                 )
 
                 # Convert best position to schedule
+        assert self.global_best is not None
         best_weights = self._normalize_weights(self.global_best)
         best_chromosome = self._generate_schedule(context, best_weights)
         best_fitness = self.evaluate_fitness(best_chromosome, context)
@@ -660,8 +661,8 @@ class ParticleSwarmSolver(BioInspiredSolver):
             population_size=len(self.swarm),
             best_fitness=self.global_best_fitness,
             worst_fitness=min(fitness_values),
-            mean_fitness=np.mean(fitness_values),
-            std_fitness=np.std(fitness_values),
+            mean_fitness=float(np.mean(fitness_values)),  # type: ignore[arg-type]
+            std_fitness=float(np.std(fitness_values)),  # type: ignore[arg-type]
             diversity=diversity,
             pareto_front_size=1,  # PSO maintains single global best
             hypervolume=self.global_best_fitness,

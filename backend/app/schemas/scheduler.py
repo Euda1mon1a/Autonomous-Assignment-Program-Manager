@@ -84,7 +84,7 @@ class DateTriggerSchema(BaseModel):
     timezone: str = "UTC"
 
 
-class JobCreateSchema(BaseModel):
+class JobCreateSchema(BaseModel):  # type: ignore[no-redef]
     """
     Schema for creating a scheduled job.
 
@@ -143,7 +143,7 @@ class JobCreateSchema(BaseModel):
         return v
 
 
-class JobUpdateSchema(BaseModel):
+class JobUpdateSchema(BaseModel):  # type: ignore[no-redef]
     """
     Schema for updating a scheduled job.
 
@@ -168,7 +168,7 @@ class JobUpdateSchema(BaseModel):
     description: str | None = Field(default=None, max_length=1000)
 
 
-class JobResponseSchema(BaseModel):
+class JobResponseSchema(BaseModel):  # type: ignore[no-redef]
     """
     Schema for scheduled job response.
 

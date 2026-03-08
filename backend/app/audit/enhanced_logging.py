@@ -544,7 +544,7 @@ class EnhancedAuditLogger:
         page_size = min(1000, max(1, page_size))
 
         # Build query filters
-        query_filters = []
+        query_filters: list[tuple[str, str, Any]] = []
 
         if filters.entity_types:
             query_filters.append(("entity_type", "in", filters.entity_types))

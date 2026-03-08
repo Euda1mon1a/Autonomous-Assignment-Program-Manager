@@ -92,7 +92,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
                 logger.info("Throttling middleware connected to Redis")
             except Exception as e:
                 logger.error(f"Throttling middleware: Redis connection failed: {e}")
-                self.redis = None
+                self.redis = None  # type: ignore[assignment]
         else:
             self.redis = redis_client
 
@@ -123,7 +123,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
         }
 
         strategy_class = strategies.get(strategy_name, AdaptiveThrottleStrategy)
-        return strategy_class(self.storage)
+        return strategy_class(self.storage)  # type: ignore[abstract]
 
     def _extract_user_info(self, request: Request) -> tuple[str | None, str | None]:
         """

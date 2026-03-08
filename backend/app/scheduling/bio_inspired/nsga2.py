@@ -16,6 +16,8 @@ Key Features:
 - No scalarization required - finds full Pareto front
 """
 
+from __future__ import annotations
+
 import logging
 import math
 import random
@@ -119,7 +121,7 @@ class ParetoFront:
             )
             extremes[f"best_{obj}"] = best
 
-        return extremes
+        return extremes  # type: ignore[return-value]
 
     def get_knee_point(self) -> Individual | None:
         """
@@ -156,13 +158,13 @@ class ParetoFront:
 
         line_unit = line_vec / line_len
 
-        max_dist = 0
+        max_dist: float = 0.0
         knee_idx = sorted_indices[len(sorted_indices) // 2]
 
         for i in sorted_indices[1:-1]:
             point = np.array(points[i])
             proj = np.dot(point - first, line_unit) * line_unit + first
-            dist = np.linalg.norm(point - proj)
+            dist = float(np.linalg.norm(point - proj))
 
             if dist > max_dist:
                 max_dist = dist
@@ -207,8 +209,8 @@ class ParetoFront:
             ],
             "spread": self.compute_spread(),
             "knee_point": (
-                self.get_knee_point().fitness.to_dict()
-                if self.get_knee_point() and self.get_knee_point().fitness
+                _knee.fitness.to_dict()
+                if (_knee := self.get_knee_point()) and _knee.fitness
                 else None
             ),
         }
@@ -470,7 +472,7 @@ class NSGA2Solver(BioInspiredSolver):
         knee = final_pareto.get_knee_point()
         self.best_individual = knee
 
-        return knee if knee else (self.population[0] if self.population else None)
+        return knee if knee else (self.population[0] if self.population else None)  # type: ignore[return-value]
 
     def _fast_non_dominated_sort(
         self,

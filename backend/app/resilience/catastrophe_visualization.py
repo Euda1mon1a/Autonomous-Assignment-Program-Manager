@@ -148,7 +148,7 @@ class CatastropheVisualizer:
             D,
             S,
             surface.feasibility_grid,
-            cmap=cm.viridis,
+            cmap=cm.viridis,  # type: ignore[attr-defined]
             alpha=0.8,
             edgecolor="none",
         )

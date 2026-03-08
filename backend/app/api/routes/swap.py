@@ -351,7 +351,7 @@ async def execute_swap(
 
     # Execute the swap
     executor = SwapExecutor(db)
-    result = await executor.execute_swap(
+    result = await executor.execute_swap(  # type: ignore[misc]
         source_faculty_id=request.source_faculty_id,
         source_week=request.source_week,
         target_faculty_id=request.target_faculty_id,
@@ -581,14 +581,14 @@ async def rollback_swap(
     """
     executor = SwapExecutor(db)
 
-    can_rollback = await executor.can_rollback(swap_id)
+    can_rollback = await executor.can_rollback(swap_id)  # type: ignore[misc]
     if not can_rollback:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Swap cannot be rolled back (either not found, already rolled back, or outside rollback window)",
         )
 
-    result = await executor.rollback_swap(
+    result = await executor.rollback_swap(  # type: ignore[misc]
         swap_id=swap_id,
         reason=request.reason,
         rolled_back_by_id=current_user.id,

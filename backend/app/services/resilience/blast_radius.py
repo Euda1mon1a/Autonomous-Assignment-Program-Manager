@@ -468,10 +468,10 @@ class BlastRadiusService:
                 success=True,
                 incident_id=str(incident.id),
                 zone_id=str(zone_id),
-                containment_activated=containment_activated,
+                containment_activated=containment_activated,  # type: ignore[arg-type]
                 message=f"Incident recorded: {incident_type}",
                 started_at=incident.started_at,
-                capacity_lost=incident.capacity_lost,
+                capacity_lost=incident.capacity_lost,  # type: ignore[arg-type]
             )
 
         except Exception as e:

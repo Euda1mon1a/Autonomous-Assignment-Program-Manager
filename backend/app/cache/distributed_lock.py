@@ -55,7 +55,7 @@ class DistributedLock:
 
         while True:
             # Try to acquire lock
-            result = await self.cache._redis.set(
+            result = await self.cache._redis.set(  # type: ignore[union-attr]
                 self.name,
                 self.identifier,
                 nx=True,  # Only set if not exists
@@ -93,7 +93,7 @@ class DistributedLock:
         end
         """
 
-        result = await self.cache._redis.eval(
+        result = await self.cache._redis.eval(  # type: ignore[union-attr]  # Redis Lua script execution
             lua_script,
             1,
             self.name,
@@ -129,7 +129,7 @@ class DistributedLock:
         end
         """
 
-        result = await self.cache._redis.eval(
+        result = await self.cache._redis.eval(  # type: ignore[union-attr]  # Redis Lua script execution
             lua_script,
             1,
             self.name,

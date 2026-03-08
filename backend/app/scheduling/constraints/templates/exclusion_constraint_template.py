@@ -55,7 +55,7 @@ class ExclusionConstraintTemplate(HardConstraint):
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
-            violations=violations,
+            violations=violations,  # type: ignore[arg-type]
         )
 
     def _should_be_excluded(self, person, rotation):

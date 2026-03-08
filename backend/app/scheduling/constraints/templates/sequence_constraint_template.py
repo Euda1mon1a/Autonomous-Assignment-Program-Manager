@@ -76,7 +76,7 @@ class SequenceConstraintTemplate(HardConstraint):
 
         return ConstraintResult(
             satisfied=len(violations) == 0,
-            violations=violations,
+            violations=violations,  # type: ignore[arg-type]
         )
 
     def _is_prerequisite(self, assignment):

@@ -512,7 +512,7 @@ class CompoundStressScenario:
         physicians = self._calculate_effective_physicians()
 
         # Each physician can cover X sessions, modified by screener support
-        sessions_per_physician = self.config.sessions_per_faculty_sustainable
+        sessions_per_physician: float = self.config.sessions_per_faculty_sustainable
 
         # Screener penalty
         if screener_ratio < self.config.minimum_screener_ratio:

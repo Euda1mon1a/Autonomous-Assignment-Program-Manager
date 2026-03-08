@@ -3,6 +3,8 @@
 Provides a central interface for managing caching across different layers.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from datetime import timedelta
@@ -65,6 +67,20 @@ class CacheManager:
                     )
                     logger.info("Redis connection established")
 
+    async def _get_redis(self) -> redis.Redis:
+        """Get Redis connection, connecting if needed.
+
+        Returns:
+            Active Redis connection
+
+        Raises:
+            RuntimeError: If connection could not be established
+        """
+        await self.connect()
+        if self._redis is None:
+            raise RuntimeError("Failed to establish Redis connection")
+        return self._redis
+
     async def disconnect(self) -> None:
         """Close Redis connection."""
         if self._redis:
@@ -75,8 +91,8 @@ class CacheManager:
     async def get(
         self,
         key: str,
-        default: T | None = None,
-    ) -> T | None:
+        default: Any = None,
+    ) -> Any:
         """Get value from cache.
 
         Args:
@@ -86,10 +102,10 @@ class CacheManager:
         Returns:
             Cached value or default
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
-            value = await self._redis.get(key)
+            value = await r.get(key)
             if value is not None:
                 self.stats["hits"] += 1
                 logger.debug(f"Cache hit: {key}")
@@ -119,11 +135,11 @@ class CacheManager:
         Returns:
             True if successful
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
             ttl_seconds = ttl or self.config.default_ttl
-            await self._redis.setex(key, ttl_seconds, value)
+            await r.setex(key, ttl_seconds, value)
             self.stats["sets"] += 1
             logger.debug(f"Cache set: {key} (TTL: {ttl_seconds}s)")
             return True
@@ -141,10 +157,10 @@ class CacheManager:
         Returns:
             Number of keys deleted
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
-            count = await self._redis.delete(*keys)
+            count = await r.delete(*keys)
             self.stats["deletes"] += count
             logger.debug(f"Cache delete: {count} keys")
             return count
@@ -162,10 +178,10 @@ class CacheManager:
         Returns:
             True if key exists
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
-            return await self._redis.exists(key) > 0
+            return await r.exists(key) > 0
         except Exception as e:
             self.stats["errors"] += 1
             logger.error(f"Cache exists error for key {key}", exc_info=True)
@@ -188,11 +204,17 @@ class CacheManager:
             Cached or fetched value
         """
         # Try cache first
-        value = await self.get(key)
-        if value is not None:
-            return value
+        r = await self._get_redis()
+        try:
+            cached = await r.get(key)
+            if cached is not None:
+                self.stats["hits"] += 1
+                return cached
+            self.stats["misses"] += 1
+        except Exception:
+            self.stats["errors"] += 1
 
-            # Fetch fresh data
+        # Fetch fresh data
         value = await fetch_fn()
 
         # Cache it
@@ -209,16 +231,16 @@ class CacheManager:
         Returns:
             Number of keys invalidated
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
             cursor = 0
             count = 0
 
             while True:
-                cursor, keys = await self._redis.scan(cursor, match=pattern, count=100)
+                cursor, keys = await r.scan(cursor, match=pattern, count=100)
                 if keys:
-                    deleted = await self._redis.delete(*keys)
+                    deleted = await r.delete(*keys)
                     count += deleted
 
                 if cursor == 0:
@@ -242,10 +264,10 @@ class CacheManager:
         Returns:
             New value
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
-            new_value = await self._redis.incrby(key, amount)
+            new_value = await r.incrby(key, amount)
             logger.debug(f"Cache increment: {key} by {amount} = {new_value}")
             return new_value
         except Exception as e:
@@ -263,10 +285,10 @@ class CacheManager:
         Returns:
             New value
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
-            new_value = await self._redis.decrby(key, amount)
+            new_value = await r.decrby(key, amount)
             logger.debug(f"Cache decrement: {key} by {amount} = {new_value}")
             return new_value
         except Exception as e:
@@ -283,10 +305,10 @@ class CacheManager:
         Returns:
             Remaining TTL in seconds, -1 if no expiry, -2 if not exists
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
-            return await self._redis.ttl(key)
+            return await r.ttl(key)
         except Exception as e:
             self.stats["errors"] += 1
             logger.error(f"Cache TTL error for key {key}", exc_info=True)
@@ -302,10 +324,10 @@ class CacheManager:
         Returns:
             True if successful
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
-            result = await self._redis.expire(key, ttl)
+            result = await r.expire(key, ttl)
             logger.debug(f"Cache expire: {key} for {ttl}s")
             return result
         except Exception as e:
@@ -319,10 +341,10 @@ class CacheManager:
         Returns:
             True if successful
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
-            await self._redis.flushdb()
+            await r.flushdb()
             logger.warning("Cache flushed - all entries deleted")
             return True
         except Exception as e:
@@ -330,7 +352,7 @@ class CacheManager:
             logger.error("Cache flush error", exc_info=True)
             return False
 
-    async def get_stats(self) -> dict:
+    async def get_stats(self) -> dict[str, Any]:
         """Get cache statistics.
 
         Returns:
@@ -345,20 +367,20 @@ class CacheManager:
             "total_operations": total,
         }
 
-    async def health_check(self) -> dict:
+    async def health_check(self) -> dict[str, Any]:
         """Check cache health.
 
         Returns:
             Health status dictionary
         """
-        await self.connect()
+        r = await self._get_redis()
 
         try:
             # Ping Redis
-            await self._redis.ping()
+            await r.ping()
 
             # Get info
-            info = await self._redis.info()
+            info = await r.info()
 
             return {
                 "healthy": True,

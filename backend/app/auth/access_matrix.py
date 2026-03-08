@@ -26,7 +26,7 @@ Usage:
 
 import json
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
 from enum import Enum
 from functools import wraps
@@ -1278,7 +1278,7 @@ class PermissionCache:
             await redis.setex(key, ttl, data)
             logger.debug(f"Cached permissions for role {role} (TTL: {ttl}s)")
             return True
-        except (RedisError, json.JSONEncodeError) as e:
+        except (RedisError, TypeError) as e:
             logger.warning("Failed to cache role permissions", exc_info=True)
             return False
 
@@ -1312,7 +1312,7 @@ class PermissionCache:
             await redis.setex(key, ttl, data)
             logger.debug(f"Cached permissions for user {user_id} (TTL: {ttl}s)")
             return True
-        except (RedisError, json.JSONEncodeError) as e:
+        except (RedisError, TypeError) as e:
             logger.warning("Failed to cache user permissions", exc_info=True)
             return False
 
@@ -1441,7 +1441,7 @@ class PermissionCache:
                 "fallback_mode": True,
             }
 
-    def _calculate_hit_rate(self, info: dict) -> float:
+    def _calculate_hit_rate(self, info: Mapping[str, Any]) -> float:
         hits = info.get("keyspace_hits", 0)
         misses = info.get("keyspace_misses", 0)
         total = hits + misses

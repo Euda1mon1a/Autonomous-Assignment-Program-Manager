@@ -9,6 +9,7 @@ This service handles:
 
 import asyncio
 from datetime import datetime, UTC
+from collections.abc import Sequence
 from typing import Any, Union
 from uuid import UUID
 
@@ -927,7 +928,7 @@ class RotationTemplateService:
             if not template:
                 continue
 
-            export_item = {
+            export_item: dict[str, Any] = {
                 "template": {
                     "id": str(template.id),
                     "name": template.name,
@@ -1556,7 +1557,8 @@ class RotationTemplateService:
                     activity_type_value = resolved_activity.code
 
                     # Determine which weeks to apply to
-            target_weeks = week_numbers if week_numbers else [None]
+            _none_weeks: list[int | None] = [None]
+            target_weeks = week_numbers if week_numbers else _none_weeks
 
             for week_num in target_weeks:
                 if mode == "overlay":

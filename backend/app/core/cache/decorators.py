@@ -41,7 +41,7 @@ def cached(
 
 
 @overload
-def cached(
+def cached(  # type: ignore[overload-cannot-match]
     namespace: str = ...,
     ttl: int = ...,
     key_prefix: str | None = ...,
@@ -158,7 +158,7 @@ def cache_invalidate(
 
 
 @overload
-def cache_invalidate(
+def cache_invalidate(  # type: ignore[overload-cannot-match]
     namespace: str = ...,
     tags: list[str] | Callable[..., list[str]] | None = ...,
     patterns: list[str] | Callable[..., list[str]] | None = ...,
@@ -241,7 +241,7 @@ def cache_warm(
 
 
 @overload
-def cache_warm(
+def cache_warm(  # type: ignore[overload-cannot-match]
     namespace: str = ...,
     entries_func: Callable[..., dict[str, Any]] | None = ...,
     ttl: int = ...,
@@ -335,7 +335,7 @@ def invalidate_on_write(
 
 
 @overload
-def invalidate_on_write(
+def invalidate_on_write(  # type: ignore[overload-cannot-match]
     namespace: str = ...,
     key_builder: Callable[..., str | list[str]] | None = ...,
     invalidate_before: bool = ...,

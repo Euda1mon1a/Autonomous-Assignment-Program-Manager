@@ -1078,7 +1078,7 @@ async def rotate_api_keys(
     return results
 
 
-async def check_rotation_status(db: Session) -> dict[str, Any]:
+async def check_rotation_status(db: Session) -> dict[SecretType, dict[str, Any]]:
     """
     Check rotation status for all secrets.
 

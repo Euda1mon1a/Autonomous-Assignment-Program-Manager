@@ -9,7 +9,7 @@ from app.core.logging import get_logger
 from app.core.security import get_password_hash
 from app.db.session import SessionLocal
 from app.models.person import Person
-from app.models.user import Role, User
+from app.models.user import Role, User  # type: ignore[attr-defined]
 
 logger = get_logger(__name__)
 

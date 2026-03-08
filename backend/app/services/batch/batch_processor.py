@@ -220,13 +220,13 @@ class BatchProcessor:
                             assignment_data.rotation_template_id
                         )
                     if assignment_data.role is not None:
-                        update_dict["role"] = assignment_data.role
+                        update_dict["role"] = assignment_data.role  # type: ignore[assignment]
                     if assignment_data.activity_override is not None:
                         update_dict["activity_override"] = (
-                            assignment_data.activity_override
+                            assignment_data.activity_override  # type: ignore[assignment]
                         )
                     if assignment_data.notes is not None:
-                        update_dict["notes"] = assignment_data.notes
+                        update_dict["notes"] = assignment_data.notes  # type: ignore[assignment]
 
                         # Update assignment
                     assignment = self.assignment_repo.update(existing, update_dict)

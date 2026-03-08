@@ -279,19 +279,19 @@ class BlockFormatExporter:
 
                 # Find row by normalized name (convert DB "First Last" to template "last, first")
             person_name = normalize_db_name(a.person.name)
-            row = row_lookup.get(person_name)
-            if not row:
+            row_num: int | None = row_lookup.get(person_name)
+            if not row_num:
                 # Try last-name-only fallback (handles nickname mismatches)
                 db_last_name = get_last_name(a.person.name)
-                row = last_name_lookup.get(db_last_name)
-            if not row:
+                row_num = last_name_lookup.get(db_last_name)
+            if not row_num:
                 # Try partial match as last resort
                 for name, r in row_lookup.items():
                     if person_name in name or name in person_name:
-                        row = r
+                        row_num = r
                         break
 
-            if not row:
+            if not row_num:
                 logger.debug(f"No row found for {a.person.name}")
                 continue
 
@@ -307,7 +307,7 @@ class BlockFormatExporter:
             # Get abbreviation
             abbrev = self._get_assignment_abbrev(a)
             if abbrev:
-                ws.cell(row, col).value = abbrev
+                ws.cell(row_num, col).value = abbrev
                 filled_count += 1
 
         logger.info(f"Filled {filled_count} cells")

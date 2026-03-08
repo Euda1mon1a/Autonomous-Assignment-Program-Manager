@@ -253,7 +253,7 @@ class MetastabilityDetector:
         if abs(mean_val) < 1e-10:
             cv = 0.0
         else:
-            cv = std_val / abs(mean_val)
+            cv = float(std_val / abs(mean_val))
 
         is_plateaued = cv < self.plateau_threshold
 
@@ -469,14 +469,14 @@ class MetastabilityDetector:
         objectives = [state.objective_value for state in trajectory]
 
         # Find best solution
-        best_idx = np.argmin(objectives)
+        best_idx = int(np.argmin(objectives))
         best_objective = objectives[best_idx]
 
         # Check for plateau
         plateau_detected = self.detect_plateau(objectives)
 
         # Calculate stagnation duration (iterations since best)
-        stagnation = len(trajectory) - best_idx - 1
+        stagnation: int = len(trajectory) - best_idx - 1
 
         # Get current state
         current_state = trajectory[-1]
@@ -502,7 +502,7 @@ class MetastabilityDetector:
         )
 
         # Determine if metastable
-        is_metastable = (
+        is_metastable = bool(
             plateau_detected
             and stagnation >= self.min_stagnation
             and current_state.constraint_violations == 0  # Only feasible states

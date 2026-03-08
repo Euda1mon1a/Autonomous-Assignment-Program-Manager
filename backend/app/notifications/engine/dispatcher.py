@@ -75,7 +75,7 @@ class NotificationDispatcher:
                     )
                 )
             else:
-                final_results.append(result)
+                final_results.append(result)  # type: ignore[arg-type]
 
                 # Log summary
         success_count = sum(1 for r in final_results if r.success)

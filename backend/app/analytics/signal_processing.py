@@ -339,7 +339,7 @@ def _detrend_signal(
     else:  # linear
         x = np.arange(len(signal))
         coeffs = np.polyfit(x, signal, 1)
-        trend = np.polyval(coeffs, x)
+        trend = np.polyval(coeffs, x)  # type: ignore[assignment]
 
     return signal - trend, trend
 

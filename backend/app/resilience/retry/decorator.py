@@ -238,7 +238,7 @@ class RetryExecutor:
 
                 # Check if we should retry
                 if not self.should_retry(e):
-                    error = NonRetryableError(
+                    error = NonRetryableError(  # type: ignore[assignment]
                         f"Non-retryable exception in {operation_name}: {type(e).__name__}",
                         original_exception=e,
                     )
@@ -257,7 +257,7 @@ class RetryExecutor:
                     context.trigger_retry_callback(e, next_delay)
 
                     # All retries exhausted
-        error = MaxRetriesExceeded(
+        error = MaxRetriesExceeded(  # type: ignore[assignment]
             attempts=attempt,
             last_exception=last_exception,
             operation=operation_name,
@@ -355,7 +355,7 @@ class RetryExecutor:
 
                 # Check if we should retry
                 if not self.should_retry(e):
-                    error = NonRetryableError(
+                    error = NonRetryableError(  # type: ignore[assignment]
                         f"Non-retryable exception in {operation_name}: {type(e).__name__}",
                         original_exception=e,
                     )
@@ -374,7 +374,7 @@ class RetryExecutor:
                     context.trigger_retry_callback(e, next_delay)
 
                     # All retries exhausted
-        error = MaxRetriesExceeded(
+        error = MaxRetriesExceeded(  # type: ignore[assignment]
             attempts=attempt,
             last_exception=last_exception,
             operation=operation_name,

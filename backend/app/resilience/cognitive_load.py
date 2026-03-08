@@ -19,6 +19,8 @@ This module implements:
 6. Cognitive load scoring for schedules
 """
 
+from __future__ import annotations
+
 import logging
 import statistics
 from collections.abc import Callable
@@ -164,6 +166,11 @@ class CognitiveSession:
     # Completion
     ended_at: datetime | None = None
 
+    @property
+    def decisions_count(self) -> int:
+        """Number of decisions made in this session."""
+        return len(self.decisions_made)
+
     def add_decision(self, decision: Decision) -> None:
         """Add a decided decision to session."""
         self.decisions_made.append(decision)
@@ -271,7 +278,7 @@ class CognitiveLoadManager:
     ) -> None:
         self.max_decisions_per_session = max_decisions_per_session
         self.auto_decide_when_fatigued = auto_decide_when_fatigued
-        self.batch_similar_decisions = batch_similar_decisions
+        self._batch_similar_decisions = batch_similar_decisions
 
         self.sessions: dict[UUID, CognitiveSession] = {}
         self.pending_decisions: list[Decision] = []
@@ -284,7 +291,7 @@ class CognitiveLoadManager:
     def start_session(
         self,
         user_id: UUID,
-        max_decisions: int = None,
+        max_decisions: int | None = None,
     ) -> CognitiveSession:
         """
         Start a new cognitive session for a user.
@@ -325,10 +332,10 @@ class CognitiveLoadManager:
         complexity: DecisionComplexity,
         description: str,
         options: list[str],
-        recommended_option: str = None,
-        safe_default: str = None,
-        context: dict = None,
-        deadline: datetime = None,
+        recommended_option: str | None = None,
+        safe_default: str | None = None,
+        context: dict | None = None,
+        deadline: datetime | None = None,
         is_urgent: bool = False,
     ) -> Decision:
         """
@@ -374,7 +381,7 @@ class CognitiveLoadManager:
         self,
         session_id: UUID,
         decision: Decision,
-    ) -> tuple[str, DecisionOutcome]:
+    ) -> tuple[str | None, DecisionOutcome]:
         """
         Request a decision from the user, respecting cognitive load.
 
@@ -418,7 +425,7 @@ class CognitiveLoadManager:
         decision_id: UUID,
         chosen_option: str,
         decided_by: str,
-        actual_time_seconds: float = None,
+        actual_time_seconds: float | None = None,
     ) -> None:
         """
         Record a decision that was made.
@@ -453,7 +460,7 @@ class CognitiveLoadManager:
         self,
         decision: Decision,
         reason: str,
-    ) -> tuple[str, DecisionOutcome]:
+    ) -> tuple[str | None, DecisionOutcome]:
         """Apply safe default automatically."""
         decision.outcome = DecisionOutcome.AUTO_DEFAULT
         decision.chosen_option = decision.safe_default

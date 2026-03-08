@@ -4,6 +4,8 @@ Provides abstract message queue interface with implementations for
 RabbitMQ and Redis, supporting reliable messaging patterns.
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -109,7 +111,7 @@ class QueueConfig:
     reconnect_delay: float = 5.0
 
     @classmethod
-    def from_env(cls) -> "QueueConfig":
+    def from_env(cls) -> QueueConfig:
         """Load configuration from environment variables."""
         import os
 
@@ -354,11 +356,11 @@ class RabbitMQAdapter(MessageQueueAdapter):
             config: Queue configuration
         """
         super().__init__(config)
-        self._connection = None
-        self._channel = None
-        self._exchanges = {}
-        self._queues = {}
-        self._consumers = {}
+        self._connection: Any = None
+        self._channel: Any = None
+        self._exchanges: dict[str, Any] = {}
+        self._queues: dict[str, Any] = {}
+        self._consumers: dict[str, Any] = {}
 
     async def connect(self) -> None:
         """Establish connection to RabbitMQ."""
@@ -707,9 +709,9 @@ class RedisQueueAdapter(MessageQueueAdapter):
             config: Queue configuration
         """
         super().__init__(config)
-        self._redis = None
-        self._pubsub = None
-        self._consumer_tasks = []
+        self._redis: Any = None
+        self._pubsub: Any = None
+        self._consumer_tasks: list[asyncio.Task[None]] = []
 
     async def connect(self) -> None:
         """Establish connection to Redis."""

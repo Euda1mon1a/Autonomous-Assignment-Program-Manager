@@ -455,8 +455,8 @@ class BayesianAdapter(ParameterAdapter):
                 X.append(param_vec)
                 y.append(score)
 
-            X = np.array(X)
-            y = np.array(y)
+            X = np.array(X)  # type: ignore[assignment]
+            y = np.array(y)  # type: ignore[assignment]
 
             # Find best observed
             best_idx = np.argmax(y)
@@ -469,7 +469,7 @@ class BayesianAdapter(ParameterAdapter):
 
             # Sample new point using Expected Improvement heuristic
             # Move toward best observation with some randomness
-            new_x = best_x + np.random.normal(0, exploration_scale, size=best_x.shape)
+            new_x = best_x + np.random.normal(0, exploration_scale, size=best_x.shape)  # type: ignore[operator, attr-defined]
 
             # Clip to valid bounds
             new_x = np.clip(new_x, 0.0, 1.0)

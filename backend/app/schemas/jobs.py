@@ -18,11 +18,11 @@ from pydantic import BaseModel, ConfigDict, Field
 # ============================================================================
 
 
-class TaskInfo(BaseModel):
+class TaskInfo(BaseModel):  # type: ignore[no-redef]
     """Information about a Celery task."""
 
-    task_id: str = Field(alias="taskId")
-    task_name: str = Field(alias="taskName")
+    task_id: str = Field(default="", alias="taskId")
+    task_name: str = Field(default="", alias="taskName")
     worker: str | None = None
     queue: str | None = None
     status: str | None = None
@@ -40,11 +40,11 @@ class TaskInfo(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-class ScheduledTaskInfo(BaseModel):
+class ScheduledTaskInfo(BaseModel):  # type: ignore[no-redef]
     """Information about a scheduled task."""
 
     task_id: str | None = Field(None, alias="taskId")
-    task_name: str = Field(alias="taskName")
+    task_name: str = Field(default="", alias="taskName")
     worker: str | None = None
     eta: str | None = None
     priority: int | None = None
@@ -54,11 +54,11 @@ class ScheduledTaskInfo(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-class ReservedTaskInfo(BaseModel):
+class ReservedTaskInfo(BaseModel):  # type: ignore[no-redef]
     """Information about a reserved (queued) task."""
 
-    task_id: str = Field(alias="taskId")
-    task_name: str = Field(alias="taskName")
+    task_id: str = Field(default="", alias="taskId")
+    task_name: str = Field(default="", alias="taskName")
     worker: str | None = None
     queue: str | None = None
     priority: int | None = None
@@ -88,8 +88,8 @@ class WorkerInfo(BaseModel):
 class WorkerStats(BaseModel):
     """Statistics about Celery workers."""
 
-    total_workers: int = Field(alias="totalWorkers")
-    online_workers: int = Field(alias="onlineWorkers")
+    total_workers: int = Field(default=0, alias="totalWorkers")
+    online_workers: int = Field(default=0, alias="onlineWorkers")
     workers: list[WorkerInfo]
 
     model_config = ConfigDict(populate_by_name=True)
@@ -228,7 +228,7 @@ class WorkerUtilization(BaseModel):
 # ============================================================================
 
 
-class TaskHistoryRecord(BaseModel):
+class TaskHistoryRecord(BaseModel):  # type: ignore[no-redef]
     """Historical task execution record."""
 
     task_id: str = Field(alias="taskId")
@@ -252,7 +252,7 @@ class TaskHistoryResponse(BaseModel):
     """Response containing task history."""
 
     task_name: str | None = Field(None, alias="taskName")
-    total_count: int = Field(alias="totalCount")
+    total_count: int = Field(default=0, alias="totalCount")
     limit: int
     offset: int
     tasks: list[TaskHistoryRecord]
@@ -286,7 +286,7 @@ class TaskTimeline(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-class FailureRecord(BaseModel):
+class FailureRecord(BaseModel):  # type: ignore[no-redef]
     """Task failure record."""
 
     task_id: str = Field(alias="taskId")
@@ -338,8 +338,10 @@ class ScheduledTaskConfig(BaseModel):
 class ScheduledTasksSummary(BaseModel):
     """Summary of scheduled tasks."""
 
-    total_scheduled_tasks: int = Field(alias="totalScheduledTasks")
-    scheduled_tasks: list[ScheduledTaskConfig] = Field(alias="scheduledTasks")
+    total_scheduled_tasks: int = Field(default=0, alias="totalScheduledTasks")
+    scheduled_tasks: list[ScheduledTaskConfig] = Field(
+        default_factory=list, alias="scheduledTasks"
+    )
     timestamp: str
 
     model_config = ConfigDict(populate_by_name=True)
@@ -362,7 +364,7 @@ class TaskRevocationRequest(BaseModel):
 class TaskRevocationResponse(BaseModel):
     """Response to task revocation request."""
 
-    task_id: str = Field(alias="taskId")
+    task_id: str = Field(default="", alias="taskId")
     success: bool
     message: str | None = None
 
@@ -381,8 +383,8 @@ class QueuePurgeRequest(BaseModel):
 class QueuePurgeResponse(BaseModel):
     """Response to queue purge request."""
 
-    queue_name: str = Field(alias="queueName")
-    tasks_purged: int = Field(alias="tasksPurged")
+    queue_name: str = Field(default="", alias="queueName")
+    tasks_purged: int = Field(default=0, alias="tasksPurged")
     timestamp: str
 
     model_config = ConfigDict(populate_by_name=True)
@@ -396,13 +398,15 @@ class QueuePurgeResponse(BaseModel):
 class JobsDashboardOverview(BaseModel):
     """Overview data for jobs dashboard."""
 
-    active_tasks_count: int = Field(alias="activeTasksCount")
-    scheduled_tasks_count: int = Field(alias="scheduledTasksCount")
-    reserved_tasks_count: int = Field(alias="reservedTasksCount")
-    total_workers: int = Field(alias="totalWorkers")
-    online_workers: int = Field(alias="onlineWorkers")
-    queue_counts: dict[str, int] = Field(alias="queueCounts")
-    worker_utilization_percentage: float = Field(alias="workerUtilizationPercentage")
+    active_tasks_count: int = Field(default=0, alias="activeTasksCount")
+    scheduled_tasks_count: int = Field(default=0, alias="scheduledTasksCount")
+    reserved_tasks_count: int = Field(default=0, alias="reservedTasksCount")
+    total_workers: int = Field(default=0, alias="totalWorkers")
+    online_workers: int = Field(default=0, alias="onlineWorkers")
+    queue_counts: dict[str, int] = Field(default_factory=dict, alias="queueCounts")
+    worker_utilization_percentage: float = Field(
+        default=0.0, alias="workerUtilizationPercentage"
+    )
     timestamp: str
 
     model_config = ConfigDict(populate_by_name=True)

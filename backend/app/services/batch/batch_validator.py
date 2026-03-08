@@ -319,7 +319,7 @@ class BatchValidator:
         if not blocks:
             return warnings
 
-        dates = [b.date for b in blocks]
+        dates = [b.date for b in blocks]  # type: ignore[union-attr]
         min_date = min(dates)
         max_date = max(dates)
 

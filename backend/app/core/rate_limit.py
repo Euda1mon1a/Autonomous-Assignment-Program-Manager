@@ -9,6 +9,7 @@ import time
 
 import redis
 from fastapi import HTTPException, Request, status
+from redis import Redis
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -26,7 +27,9 @@ class RateLimiter:
     without the step-function behavior of fixed windows.
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None) -> None:
+    redis: Redis | None  # type: ignore[type-arg]
+
+    def __init__(self, redis_client: Redis | None = None) -> None:
         """
         Initialize the rate limiter.
 
@@ -364,7 +367,9 @@ class AccountLockout:
     MAX_LOCKOUT_SECONDS: int = 3600  # Maximum lockout: 1 hour
     BACKOFF_MULTIPLIER: float = 2.0  # Double lockout time each failure
 
-    def __init__(self, redis_client: redis.Redis | None = None) -> None:
+    redis: Redis | None  # type: ignore[type-arg]
+
+    def __init__(self, redis_client: Redis | None = None) -> None:
         """
         Initialize the account lockout handler.
 

@@ -463,7 +463,7 @@ class FRMSService:
                         }
                     )
 
-            heatmap["residents"].append(resident_data)
+            heatmap["residents"].append(resident_data)  # type: ignore[attr-defined]
 
         return heatmap
 

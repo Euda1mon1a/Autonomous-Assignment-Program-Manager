@@ -5,6 +5,7 @@ Creates point-in-time table snapshots before bulk operations for rollback.
 """
 
 import logging
+import os
 import subprocess
 from datetime import UTC, datetime
 from enum import Enum
@@ -210,7 +211,7 @@ async def create_snapshot(
 
             result = subprocess.run(
                 cmd,
-                env={**subprocess.os.environ, **env},
+                env={**os.environ, **env},
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -445,7 +446,7 @@ async def restore_snapshot(
 
             result = subprocess.run(
                 cmd,
-                env={**subprocess.os.environ, **env},
+                env={**os.environ, **env},
                 capture_output=True,
                 text=True,
                 timeout=120,
@@ -860,7 +861,7 @@ async def restore_from_backup(
             result = subprocess.run(
                 cmd,
                 shell=True,  # noqa: S602 - required for pipe  # nosec B602
-                env={**subprocess.os.environ, **env},
+                env={**os.environ, **env},
                 capture_output=True,
                 text=True,
                 timeout=600,  # 10 minute timeout

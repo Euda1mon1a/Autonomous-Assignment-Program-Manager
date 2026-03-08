@@ -75,7 +75,7 @@ def plot_energy_landscape(
     # Color by basin (if basin info available)
     if landscape.basin_sizes:
         # Assign colors to basins
-        basin_colors = plt.cm.tab10(np.linspace(0, 1, len(landscape.basin_sizes)))
+        basin_colors = plt.cm.tab10(np.linspace(0, 1, len(landscape.basin_sizes)))  # type: ignore[attr-defined]
         colors = []
         basin_assignments = _assign_replicas_to_basins(replicas, landscape)
 
@@ -83,7 +83,7 @@ def plot_energy_landscape(
             basin_id = basin_assignments.get(i, 0)
             colors.append(basin_colors[basin_id % len(basin_colors)])
     else:
-        colors = "blue"
+        colors = "blue"  # type: ignore[assignment]
 
     # Scatter plot
     ax.scatter(indices, energies, c=colors, alpha=0.6, s=50)
@@ -419,13 +419,13 @@ def plot_solution_basins(
     n_basins = len(landscape.basin_sizes)
 
     if n_basins > 0:
-        colors = plt.cm.tab10(np.linspace(0, 1, n_basins))
+        colors = plt.cm.tab10(np.linspace(0, 1, n_basins))  # type: ignore[attr-defined]
         replica_colors = [
             colors[basin_assignments.get(i, 0) % len(colors)]
             for i in range(len(replicas))
         ]
     else:
-        replica_colors = "blue"
+        replica_colors = "blue"  # type: ignore[assignment]
 
     # Scatter plot
     ax.scatter(

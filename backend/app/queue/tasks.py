@@ -185,7 +185,7 @@ class BaseQueueTask(Task):
             total: Total progress value
             message: Optional progress message
         """
-        progress = {
+        progress: dict[str, int | str] = {
             "current": current,
             "total": total,
             "percentage": int((current / total) * 100) if total > 0 else 0,

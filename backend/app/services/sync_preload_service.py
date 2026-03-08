@@ -185,9 +185,9 @@ class SyncPreloadService:
             current = max(absence.start_date, start_date)
             end = min(absence.end_date, end_date)
             while current <= end:
-                if self._create_preload(absence.person_id, current, "AM", lv_am_id):
+                if self._create_preload(absence.person_id, current, "AM", lv_am_id):  # type: ignore[arg-type]
                     count += 1
-                if self._create_preload(absence.person_id, current, "PM", lv_pm_id):
+                if self._create_preload(absence.person_id, current, "PM", lv_pm_id):  # type: ignore[arg-type]
                     count += 1
                 current += timedelta(days=1)
 
@@ -414,11 +414,17 @@ class SyncPreloadService:
                     continue
 
                 if self._create_preload(
-                    preload.person_id, current, "AM", am_activity_id
+                    preload.person_id,
+                    current,
+                    "AM",
+                    am_activity_id,  # type: ignore[arg-type]
                 ):
                     count += 1
                 if self._create_preload(
-                    preload.person_id, current, "PM", pm_activity_id
+                    preload.person_id,
+                    current,
+                    "PM",
+                    pm_activity_id,  # type: ignore[arg-type]
                 ):
                     count += 1
 
@@ -831,7 +837,10 @@ class SyncPreloadService:
             while current <= end:
                 if current.weekday() == target_dow:
                     if self._create_preload(
-                        preload.person_id, current, target_time, ci_id
+                        preload.person_id,
+                        current,
+                        target_time,
+                        ci_id,  # type: ignore[arg-type]
                     ):
                         count += 1
                 current += timedelta(days=1)
@@ -851,7 +860,10 @@ class SyncPreloadService:
 
         for preload in preloads:
             if self._create_preload(
-                preload.person_id, preload.call_date, "PM", call_id
+                preload.person_id,
+                preload.call_date,
+                "PM",
+                call_id,  # type: ignore[arg-type]
             ):
                 count += 1
 
@@ -880,9 +892,9 @@ class SyncPreloadService:
             # No CALL HDA — faculty work normal PM activity, call is overnight
             next_day = call.date + timedelta(days=1)
             if not self._is_on_fmit(call.person_id, next_day):
-                if self._create_preload(call.person_id, next_day, "AM", pcat_id):
+                if self._create_preload(call.person_id, next_day, "AM", pcat_id):  # type: ignore[arg-type]
                     count += 1
-                if self._create_preload(call.person_id, next_day, "PM", do_id):
+                if self._create_preload(call.person_id, next_day, "PM", do_id):  # type: ignore[arg-type]
                     count += 1
 
         logger.info(f"Loaded {count} faculty call preloads (PCAT/DO only)")
@@ -1195,11 +1207,17 @@ class SyncPreloadService:
 
                 if should_create_w:
                     if self._create_preload(
-                        assignment.resident_id, current, "AM", w_id
+                        assignment.resident_id,
+                        current,
+                        "AM",
+                        w_id,  # type: ignore[arg-type]
                     ):
                         count += 1
                     if self._create_preload(
-                        assignment.resident_id, current, "PM", w_id
+                        assignment.resident_id,
+                        current,
+                        "PM",
+                        w_id,  # type: ignore[arg-type]
                     ):
                         count += 1
 
@@ -1268,7 +1286,7 @@ class SyncPreloadService:
                     if existing.activity_id
                     else None
                 )
-                new_is_time_off = (
+                new_is_time_off = activity is not None and (
                     (activity.activity_category or "").lower() == "time_off"
                     or activity.counts_toward_clinical_hours is False
                 )

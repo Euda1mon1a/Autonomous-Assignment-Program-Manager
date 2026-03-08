@@ -1009,7 +1009,7 @@ class BlockSchedulerService:
                 (r for r in all_rotations if r.id == cap.rotation_template_id), None
             )
             if rotation:
-                resident_ids = [
+                resident_ids = [  # type: ignore[assignment]
                     str(a.resident_id)
                     for a in dashboard.current_assignments
                     if a.rotation_template_id == rotation.id

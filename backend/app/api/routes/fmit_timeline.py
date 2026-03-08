@@ -11,6 +11,7 @@ All endpoints include workload balance metrics and fairness indicators.
 
 import statistics
 from datetime import UTC, date, datetime, timedelta
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -120,7 +121,7 @@ def get_faculty_weekly_assignments(
     )
 
     # Group by week
-    weeks_map = {}
+    weeks_map: dict[str, dict[str, Any]] = {}
     for assignment in assignments:
         block = assignment.block
         week_start, week_end = get_week_bounds(block.date)

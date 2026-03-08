@@ -1136,7 +1136,7 @@ class CallAssignmentValidator:
             (is_valid, violations, metrics)
         """
         violations = []
-        metrics = {}
+        metrics: dict[str, Any] = {}
 
         # Build assignment maps
         by_night = defaultdict(list)

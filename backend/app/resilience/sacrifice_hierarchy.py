@@ -100,6 +100,8 @@ class LoadSheddingStatus:
     activities_protected: list[str]
     current_coverage: float
     target_coverage: float
+    capacity_available: float = 0.0
+    capacity_demand: float = 0.0
     decisions_log: list[SacrificeDecision] = field(default_factory=list)
 
 

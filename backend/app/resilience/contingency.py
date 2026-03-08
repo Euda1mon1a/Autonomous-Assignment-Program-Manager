@@ -21,11 +21,14 @@ Uses NetworkX for advanced graph-based centrality analysis:
 - PageRank: Google's algorithm adapted for faculty importance
 """
 
+from __future__ import annotations
+
 import functools
 import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from itertools import combinations
+from typing import Any
 from uuid import UUID
 
 try:
@@ -455,7 +458,7 @@ class ContingencyAnalyzer:
         blocks: list,
         assignments: list,
         services: dict[UUID, list[UUID]],
-    ) -> "nx.Graph":
+    ) -> nx.Graph:
         """
         Build a NetworkX graph representing the scheduling network.
 
@@ -791,7 +794,7 @@ class ContingencyAnalyzer:
         blocks: list,
         assignments: list,
         services: dict[UUID, list[UUID]],
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """
         Find faculty whose removal causes cascade failures.
 
@@ -807,7 +810,7 @@ class ContingencyAnalyzer:
         Returns:
             List of critical points with cascade impact
         """
-        critical_points = []
+        critical_points: list[dict[str, Any]] = []
 
         # Get centrality scores
         if NETWORKX_AVAILABLE:
@@ -926,7 +929,7 @@ class ContingencyAnalyzer:
         assignments: list,
         coverage_requirements: dict[UUID, int],
         current_utilization: float = 0.0,
-        recent_changes: list[dict] = None,
+        recent_changes: list[dict[str, Any]] | None = None,
     ) -> VulnerabilityReport:
         """
         Generate comprehensive vulnerability report.

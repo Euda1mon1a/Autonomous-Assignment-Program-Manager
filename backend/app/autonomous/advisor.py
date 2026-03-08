@@ -495,7 +495,7 @@ class MockLLMAdvisor(LLMAdvisor):
     def __init__(self) -> None:
         """Initialize mock advisor without LLM router."""
         # Don't call super().__init__ to avoid creating router
-        self.llm_router = None
+        self.llm_router = None  # type: ignore[assignment]
         self.model = "mock"
         self.max_tokens = 1024
         self.temperature = 0.3

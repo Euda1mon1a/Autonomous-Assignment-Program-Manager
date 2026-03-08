@@ -6,9 +6,12 @@ used by the MTF compliance system, replacing dict[str, Any] patterns with
 proper type safety.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
+from typing import Any
 
 from app.schemas.resilience import EquilibriumState, LoadSheddingLevel
 
@@ -107,7 +110,7 @@ class SystemHealthState:
     volatility_level: str = "normal"
     phase_transition_risk: str = "low"
 
-    def to_dict(self) -> dict[str, any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for backward compatibility."""
         return {
             "n1_pass": self.n1_pass,
@@ -136,7 +139,7 @@ class CascadePrediction:
     critical_faculty: list[int] = field(default_factory=list)
     projected_load_increase: float = 0.0
 
-    def to_dict(self) -> dict[str, any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for backward compatibility."""
         return {
             "days_until_exhaustion": self.days_until_exhaustion,
@@ -160,7 +163,7 @@ class PositiveFeedbackRisk:
     affected_entities: list[str] = field(default_factory=list)
     mitigation_required: bool = False
 
-    def to_dict(self) -> dict[str, any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for backward compatibility."""
         return {
             "risk_type": self.risk_type,
@@ -188,7 +191,7 @@ class SupportingMetrics:
     compensation_debt: float | None
     snapshot_timestamp: str
 
-    def to_dict(self) -> dict[str, any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "coverage_rate": self.coverage_rate,
@@ -214,7 +217,7 @@ class ProjectionWithoutSupport:
     outcomes: list[str] = field(default_factory=list)
     mission_failure_likely: bool = False
 
-    def to_dict(self) -> dict[str, any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "timeline_days": self.timeline_days,

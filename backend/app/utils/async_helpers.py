@@ -75,6 +75,7 @@ async def retry_async(
                 current_delay *= backoff
             else:
                 raise last_exception
+    raise RuntimeError("retry_async: unreachable")  # pragma: no cover
 
 
 def async_cache(

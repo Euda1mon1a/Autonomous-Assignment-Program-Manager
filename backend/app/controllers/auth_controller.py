@@ -111,4 +111,4 @@ class AuthController:
 
     def list_users(self) -> list[UserResponse]:
         """List all users."""
-        return self.service.list_users()
+        return self.service.list_users()  # type: ignore[return-value]

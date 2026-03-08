@@ -36,7 +36,7 @@ class FacultyPreferenceService:
 
     def __init__(self, db: Session) -> None:
         self.db = db
-        self._cache = None
+        self._cache: FacultyPreferenceCache | bool | None = None
 
     def _get_cache(self) -> FacultyPreferenceCache | None:
         """Lazy-load cache to avoid circular imports."""
@@ -48,7 +48,7 @@ class FacultyPreferenceService:
             except ImportError:
                 logger.debug("Faculty constraint cache not available")
                 self._cache = False  # Mark as unavailable
-        return self._cache if self._cache else None
+        return self._cache if self._cache else None  # type: ignore[return-value]
 
     def _invalidate_cache(self, faculty_id: UUID) -> None:
         """Invalidate cache for a faculty member after updates."""

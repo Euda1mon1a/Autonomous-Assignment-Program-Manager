@@ -10,7 +10,6 @@ This module provides:
 
 # Metrics
 from app.monitoring.metrics import (
-    alert_manager,
     assignment_latency,
     burnout_reproduction_number,
     cache_eviction,

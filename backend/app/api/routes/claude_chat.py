@@ -709,14 +709,14 @@ async def claude_chat_websocket(
         from app.db.session import SessionLocal
 
         db = SessionLocal()
-        user = await get_user_from_token(token, db)
+        user = await get_user_from_token(token, db)  # type: ignore[call-arg]
 
         if not user:
             await websocket.close(code=4001, reason="Invalid token")
             return
 
             # Check admin role
-        if user.role not in ["ADMIN", "COORDINATOR"]:
+        if user.role not in ["ADMIN", "COORDINATOR"]:  # type: ignore[attr-defined]
             await websocket.close(code=4003, reason="Admin access required")
             return
 
@@ -729,7 +729,7 @@ async def claude_chat_websocket(
     await websocket.accept()
 
     # Get or create session
-    session = get_or_create_session(str(user.id), session_id)
+    session = get_or_create_session(str(user.id), session_id)  # type: ignore[attr-defined]
     _connections[session.session_id] = websocket
 
     # Create interrupt event for this session

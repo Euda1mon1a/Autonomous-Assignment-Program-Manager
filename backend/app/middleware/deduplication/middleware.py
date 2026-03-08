@@ -65,6 +65,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
         """
         super().__init__(app)
         self.enabled = enabled
+        self.redis: redis.Redis | None  # type declaration for both branches
 
         # Initialize Redis connection
         if redis_client is None:

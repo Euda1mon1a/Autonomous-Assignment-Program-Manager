@@ -972,11 +972,11 @@ try:
     from app.services.constraints.acgme import ACGMEConstraintValidator
 except ImportError:
     # Fallback if services module not yet available (e.g., during initialization)
-    class ACGMEConstraintValidator:
+    class ACGMEConstraintValidator:  # type: ignore[no-redef]
         """Placeholder for backward compatibility during module initialization."""
 
         def __init__(self) -> None:
-            self.constraints = [
+            self.constraints: list[HardConstraint] = [
                 AvailabilityConstraint(),
                 EightyHourRuleConstraint(),
                 OneInSevenRuleConstraint(),
