@@ -9,6 +9,7 @@ from app.api.routes import (
     admin_delete_impact,
     admin_dashboard,
     admin_block_assignments,
+    annual_rotation,
     # approval_chain,  # QUARANTINED: requires_coordinator_or_above not implemented
     faculty_activities,
     faculty_schedule_preferences,
@@ -308,3 +309,8 @@ api_router.include_router(
     scheduler.router, prefix="/scheduler-jobs", tags=["scheduler-jobs"]
 )
 api_router.include_router(learners.router, prefix="/learners", tags=["learners"])
+api_router.include_router(
+    annual_rotation.router,
+    prefix="/annual-planner/plans",
+    tags=["annual-planner"],
+)
