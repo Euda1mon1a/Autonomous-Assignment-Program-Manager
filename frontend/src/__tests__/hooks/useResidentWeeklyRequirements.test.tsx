@@ -35,6 +35,9 @@ const mockRequirement: ResidentWeeklyRequirement = {
   fmClinicMaxPerWeek: 4,
   specialtyMinPerWeek: 1,
   specialtyMaxPerWeek: 3,
+  academicsRequired: true,
+  protectedSlots: {},
+  allowedClinicDays: [1, 2, 3, 4, 5],
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 }
@@ -293,6 +296,8 @@ describe('useCreateResidentWeeklyRequirement', () => {
       rotationTemplateId: mockTemplateId,
       fmClinicMinPerWeek: 2,
       fmClinicMaxPerWeek: 4,
+      specialtyMinPerWeek: 0,
+      specialtyMaxPerWeek: 0,
     })
 
     await waitFor(() => {
@@ -551,6 +556,8 @@ describe('useUpsertResidentWeeklyRequirement', () => {
     const upsertData = {
       fmClinicMinPerWeek: 3,
       fmClinicMaxPerWeek: 5,
+      specialtyMinPerWeek: 1,
+      specialtyMaxPerWeek: 3,
     }
 
     const updatedRequirement = { ...mockRequirement, ...upsertData }
@@ -585,6 +592,8 @@ describe('useUpsertResidentWeeklyRequirement', () => {
     const upsertData = {
       fmClinicMinPerWeek: 2,
       fmClinicMaxPerWeek: 4,
+      specialtyMinPerWeek: 1,
+      specialtyMaxPerWeek: 3,
     }
 
     mockedApi.post.mockResolvedValueOnce(mockRequirement)
@@ -634,6 +643,8 @@ describe('useUpsertResidentWeeklyRequirement', () => {
       data: {
         fmClinicMinPerWeek: 2,
         fmClinicMaxPerWeek: 4,
+        specialtyMinPerWeek: 0,
+        specialtyMaxPerWeek: 0,
       },
     })
 

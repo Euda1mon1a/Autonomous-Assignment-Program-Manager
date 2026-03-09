@@ -2436,9 +2436,7 @@ async def analyze_transcription_factors(
         constraint_weights = scheduler.get_constraint_weights()
         # Convert UUID keys to strings, filter to non-default weights
         constraint_modifications = {
-            str(k): round(v, 2)
-            for k, v in constraint_weights.items()
-            if v != 1.0  # type: ignore[call-overload]
+            str(k): round(v[0], 2) for k, v in constraint_weights.items() if v[0] != 1.0
         }
 
         # Build interpretation

@@ -50,6 +50,7 @@ jest.mock('@/lib/api', () => ({
 }));
 
 import { get, post, put, del } from '@/lib/api';
+import { AssignmentRole } from '@/types/api';
 
 const mockGet = get as jest.Mock;
 const mockPost = post as jest.Mock;
@@ -350,7 +351,7 @@ describe('useAssignments', () => {
           startDate: '2025-01-01',
           endDate: '2025-01-31',
           personId: 'person-1',
-          role: 'primary',
+          role: AssignmentRole.PRIMARY,
           pageSize: 50,
         }),
       { wrapper: createWrapper() }
@@ -452,7 +453,7 @@ describe('useCreateAssignment', () => {
       result.current.mutate({
         blockId: 'block-1',
         personId: 'person-1',
-        role: 'primary',
+        role: AssignmentRole.PRIMARY,
       });
     });
 

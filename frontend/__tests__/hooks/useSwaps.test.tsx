@@ -750,7 +750,7 @@ describe('useAutoMatch', () => {
           sourceFacultyId: 'faculty-1',
           sourceWeek: '2024-01-01',
           maxCandidates: 10,
-          prefer_oneToOne: true,
+          preferOneToOne: true,
         })
       })
 

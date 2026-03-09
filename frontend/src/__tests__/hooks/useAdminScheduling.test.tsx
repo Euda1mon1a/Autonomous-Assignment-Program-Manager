@@ -107,6 +107,8 @@ const mockConstraintConfig: ConstraintConfig = {
   name: '80-Hour Work Week',
   description: 'ACGME 80-hour work week limit',
   enabled: true,
+  weight: 100,
+  priority: 1,
   category: 'acgme',
   severity: 'hard',
 }

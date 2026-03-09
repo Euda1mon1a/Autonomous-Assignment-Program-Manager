@@ -13,6 +13,10 @@ import {
   useScheduleDraftPreview,
   useScheduleDrafts,
 } from './useScheduleDrafts';
+import {
+  ScheduleDraftStatus,
+  DraftSourceType,
+} from '@/types/schedule-draft';
 import type {
   BreakGlassApprovalResponse,
   DraftPreviewResponse,
@@ -52,8 +56,8 @@ const mockListResponse: ScheduleDraftListResponse = {
     {
       id: 'draft-1',
       createdAt: '2026-02-18T00:00:00Z',
-      status: 'draft',
-      sourceType: 'solver',
+      status: ScheduleDraftStatus.DRAFT,
+      sourceType: DraftSourceType.SOLVER,
       targetStartDate: '2026-02-01',
       targetEndDate: '2026-02-28',
       flagsTotal: 1,
@@ -73,8 +77,8 @@ const mockDraft: ScheduleDraftResponse = {
   createdAt: '2026-02-18T00:00:00Z',
   targetStartDate: '2026-02-01',
   targetEndDate: '2026-02-28',
-  status: 'draft',
-  sourceType: 'solver',
+  status: ScheduleDraftStatus.DRAFT,
+  sourceType: DraftSourceType.SOLVER,
   rollbackAvailable: false,
   flagsTotal: 1,
   flagsAcknowledged: 0,
@@ -125,7 +129,7 @@ describe('useScheduleDrafts', () => {
     mockListScheduleDrafts.mockResolvedValueOnce(mockListResponse);
 
     const { result } = renderHook(
-      () => useScheduleDrafts(2, 'draft', 10),
+      () => useScheduleDrafts(2, ScheduleDraftStatus.DRAFT, 10),
       {
         wrapper: createWrapper(),
       }

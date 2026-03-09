@@ -53,6 +53,7 @@ jest.mock('@/lib/api', () => ({
 }));
 
 import { get, post, put, del } from '@/lib/api';
+import { AbsenceType } from '@/types/api';
 
 const mockGet = get as jest.Mock;
 const mockPost = post as jest.Mock;
@@ -542,7 +543,7 @@ describe('useAbsenceCreate', () => {
         personId: 'person-1',
         startDate: '2025-07-01',
         endDate: '2025-07-14',
-        absenceType: 'vacation',
+        absenceType: AbsenceType.VACATION,
       });
     });
 
@@ -554,7 +555,7 @@ describe('useAbsenceCreate', () => {
       personId: 'person-1',
       startDate: '2025-07-01',
       endDate: '2025-07-14',
-      absenceType: 'vacation',
+      absenceType: AbsenceType.VACATION,
     });
     expect(result.current.data?.id).toBe('abs-1');
   });
@@ -574,7 +575,7 @@ describe('useAbsenceCreate', () => {
         personId: 'person-1',
         startDate: '2025-07-01',
         endDate: '2025-07-14',
-        absenceType: 'vacation',
+        absenceType: AbsenceType.VACATION,
       });
     });
 
@@ -595,7 +596,7 @@ describe('useAbsenceCreate', () => {
         personId: 'person-1',
         startDate: '2025-08-01',
         endDate: '2025-12-01',
-        absenceType: 'deployment',
+        absenceType: AbsenceType.DEPLOYMENT,
         deploymentOrders: true,
         notes: 'Overseas deployment',
       });

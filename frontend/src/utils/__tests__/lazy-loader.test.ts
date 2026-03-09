@@ -3,7 +3,7 @@ import type { RouteConfig } from '../lazy-loader';
 
 describe('RouteLazyLoader', () => {
   const mockComponent = () =>
-    Promise.resolve({ default: (() => null) as React.FC });
+    Promise.resolve({ default: (() => null) as React.ComponentType<unknown> });
 
   const routes: RouteConfig[] = [
     { path: '/home', component: mockComponent },

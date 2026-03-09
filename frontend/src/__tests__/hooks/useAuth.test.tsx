@@ -57,8 +57,9 @@ describe('useUser', () => {
       id: 'user-123',
       username: 'dr.smith',
       email: 'smith@example.com',
-      role: 'coordinator',
+      role: 'coordinator' as const,
       isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);
@@ -93,7 +94,9 @@ describe('useUser', () => {
       id: 'user-123',
       username: 'dr.smith',
       email: 'smith@example.com',
-      role: 'admin',
+      role: 'admin' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);
@@ -119,7 +122,9 @@ describe('useAuthCheck', () => {
         id: 'user-123',
         username: 'dr.smith',
         email: 'smith@example.com',
-        role: 'faculty',
+        role: 'faculty' as const,
+        isActive: true,
+        createdAt: '2026-01-01T00:00:00Z',
       },
     };
 
@@ -162,7 +167,9 @@ describe('useAuth', () => {
       id: 'user-123',
       username: 'coordinator',
       email: 'coord@example.com',
-      role: 'coordinator',
+      role: 'coordinator' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);
@@ -182,7 +189,10 @@ describe('useAuth', () => {
     const mockUser = {
       id: 'user-123',
       username: 'coordinator',
-      role: 'coordinator',
+      email: 'coord@example.com',
+      role: 'coordinator' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);
@@ -203,7 +213,10 @@ describe('useAuth', () => {
     const mockUser = {
       id: 'user-123',
       username: 'resident',
-      role: 'resident',
+      email: 'resident@example.com',
+      role: 'resident' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);
@@ -224,7 +237,10 @@ describe('useAuth', () => {
     const mockUser = {
       id: 'user-123',
       username: 'admin',
-      role: 'admin',
+      email: 'admin@example.com',
+      role: 'admin' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);
@@ -244,7 +260,10 @@ describe('useAuth', () => {
     const mockUser = {
       id: 'user-123',
       username: 'admin',
-      role: 'admin',
+      email: 'admin@example.com',
+      role: 'admin' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);
@@ -269,11 +288,14 @@ describe('useLogin', () => {
   it('should login successfully with valid credentials', async () => {
     const mockResponse = {
       accessToken: 'token-123',
+      tokenType: 'bearer',
       user: {
         id: 'user-123',
         username: 'dr.smith',
         email: 'smith@example.com',
-        role: 'admin',
+        role: 'admin' as const,
+        isActive: true,
+        createdAt: '2026-01-01T00:00:00Z',
       },
     };
 
@@ -319,11 +341,11 @@ describe('useLogin', () => {
 
   it('should show pending state during login', async () => {
     // Use a promise we control to keep the mutation pending
-    let resolveLogin: (value: unknown) => void;
-    const loginPromise = new Promise((resolve) => {
+    let resolveLogin: (value: authLib.LoginResponse) => void;
+    const loginPromise = new Promise<authLib.LoginResponse>((resolve) => {
       resolveLogin = resolve;
     });
-    mockedAuth.login.mockReturnValue(loginPromise as Promise<unknown>);
+    mockedAuth.login.mockReturnValue(loginPromise);
 
     const { result } = renderHook(() => useLogin(), {
       wrapper: createWrapper(),
@@ -339,7 +361,8 @@ describe('useLogin', () => {
     // Clean up
     resolveLogin!({
       accessToken: 'token-123',
-      user: { id: 'user-123', username: 'dr.smith', role: 'admin' },
+      tokenType: 'bearer',
+      user: { id: 'user-123', username: 'dr.smith', email: 'smith@example.com', role: 'admin' as const, isActive: true, createdAt: '2026-01-01T00:00:00Z' },
     });
   });
 });
@@ -404,7 +427,10 @@ describe('useValidateSession', () => {
     const mockUser = {
       id: 'user-123',
       username: 'dr.smith',
-      role: 'faculty',
+      email: 'smith@example.com',
+      role: 'faculty' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.validateToken.mockResolvedValue(mockUser);
@@ -440,7 +466,10 @@ describe('usePermissions', () => {
     const mockUser = {
       id: 'user-123',
       username: 'admin',
-      role: 'admin',
+      email: 'admin@example.com',
+      role: 'admin' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);
@@ -460,7 +489,10 @@ describe('usePermissions', () => {
     const mockUser = {
       id: 'user-123',
       username: 'resident',
-      role: 'resident',
+      email: 'resident@example.com',
+      role: 'resident' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);
@@ -486,7 +518,10 @@ describe('useRole', () => {
     const mockUser = {
       id: 'user-123',
       username: 'coordinator',
-      role: 'coordinator',
+      email: 'coord@example.com',
+      role: 'coordinator' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);
@@ -508,7 +543,10 @@ describe('useRole', () => {
     const mockUser = {
       id: 'user-123',
       username: 'faculty',
-      role: 'faculty',
+      email: 'faculty@example.com',
+      role: 'faculty' as const,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00Z',
     };
 
     mockedAuth.getCurrentUser.mockResolvedValue(mockUser);

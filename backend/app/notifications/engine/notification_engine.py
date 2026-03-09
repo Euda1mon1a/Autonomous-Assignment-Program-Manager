@@ -134,10 +134,12 @@ class NotificationEngine:
 
             # Step 4: Determine priority
         final_priority = priority or rendered.get("priority", "normal")
+        if isinstance(final_priority, list):
+            final_priority = final_priority[0] if final_priority else "normal"
         priority_score = self.priority_handler.calculate_priority_score(
             notification_type,
             final_priority,
-            data,  # type: ignore[arg-type]
+            data,
         )
 
         # Step 5: Determine target channels
