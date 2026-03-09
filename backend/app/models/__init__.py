@@ -2,6 +2,7 @@
 
 from app.models.absence import Absence
 from app.models.academic_block import AcademicBlock
+from app.models.annual_rotation import AnnualRotationAssignment, AnnualRotationPlan
 from app.models.activity import Activity, ActivityCategory
 from app.models.activity_log import ActivityActionType, ActivityLog
 from app.models.approval_record import ApprovalAction, ApprovalRecord
@@ -419,4 +420,7 @@ __all__ = [
     "LearnerTrack",
     "LearnerToTrack",
     "LearnerAssignment",
+    # Annual Rotation Optimizer models
+    "AnnualRotationPlan",
+    "AnnualRotationAssignment",
 ]
