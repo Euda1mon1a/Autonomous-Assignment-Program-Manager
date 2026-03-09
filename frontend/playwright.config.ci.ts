@@ -16,7 +16,7 @@ export default defineConfig({
     ['html', { open: 'never' }],
     ['junit', { outputFile: 'test-results/e2e-junit.xml' }]
   ],
-  globalSetup: require.resolve('./e2e/global-setup.ts'),
+
   globalTeardown: require.resolve('./e2e/global-teardown.ts'),
   use: {
     baseURL: 'http://localhost:3000',
