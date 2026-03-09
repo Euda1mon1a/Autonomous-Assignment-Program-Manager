@@ -67,6 +67,8 @@ class DocumentIngestRequest(BaseModel):
             "delegation_patterns",
             "exotic_concepts",
             "agent_spec",
+            "session_protocols",
+            "architecture",
             # Fallback
             "other",
         }
