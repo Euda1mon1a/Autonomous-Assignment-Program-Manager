@@ -577,7 +577,8 @@ class RestoreBackupRequest(BaseModel):
 # Full Database Backup Helper Functions
 # ============================================================================
 
-BACKUP_DIR = Path("backups/postgres")
+_PROJECT_ROOT = Path(__file__).resolve().parents[4]
+BACKUP_DIR = _PROJECT_ROOT / "backups" / "postgres"
 
 
 def get_backup_dir() -> Path:
@@ -630,21 +631,32 @@ async def create_backup(
         timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         backup_id = f"residency_scheduler_{timestamp}"
 
-        # Run backup script
-        script_path = Path("scripts/backup-db.sh")
+        # Run backup script from project root
+        script_path = _PROJECT_ROOT / "scripts" / "backup-db.sh"
         if not script_path.exists():
             raise HTTPException(
                 status_code=500,
-                detail="Backup script not found",
+                detail=f"Backup script not found at {script_path}",
             )
 
-        cmd = ["bash", str(script_path), "--docker"]
+        cmd = ["bash", str(script_path)]
+        # Ensure pg_dump is in PATH (Homebrew PG 17 on macOS)
+        env = os.environ.copy()
+        pg_paths = [
+            "/opt/homebrew/opt/postgresql@17/bin",
+            "/opt/homebrew/opt/postgresql@15/bin",
+        ]
+        for pg_path in pg_paths:
+            if Path(pg_path).exists():
+                env["PATH"] = f"{pg_path}:{env.get('PATH', '')}"
+                break
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=300,  # 5 minute timeout
-            cwd=Path(".").absolute(),
+            cwd=str(_PROJECT_ROOT),
+            env=env,
         )
 
         if result.returncode != 0:
