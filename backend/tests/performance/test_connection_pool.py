@@ -922,7 +922,39 @@ class TestConcurrentTransactionIsolation:
 
 @pytest.mark.performance
 class TestTaskSessionScope:
-    """Test the task_session_scope context manager used by Celery tasks."""
+    """Test the task_session_scope context manager used by Celery tasks.
+
+    Uses an in-memory SQLite engine to isolate from the production database.
+    Previous version used production SessionLocal, leaking synthetic records.
+    """
+
+    @pytest.fixture(autouse=True)
+    def isolated_task_session(self, monkeypatch, tmp_path):
+        """Patch SessionLocal so task_session_scope uses a temp SQLite DB.
+
+        Uses a file-based SQLite with WAL journal mode so concurrent threads
+        (test_task_session_scope_concurrent_tasks) can write without segfaults.
+        """
+        import app.db.session as session_mod
+
+        db_path = tmp_path / "task_session_test.db"
+        test_engine = create_engine(
+            f"sqlite:///{db_path}",
+            connect_args={"check_same_thread": False, "timeout": 30},
+        )
+        # Enable WAL mode for better concurrent write handling
+        with test_engine.connect() as conn:
+            conn.execute(text("PRAGMA journal_mode=WAL"))
+            conn.commit()
+        # Only create the people table (full metadata has JSONB cols incompatible with SQLite)
+        Person.__table__.create(test_engine, checkfirst=True)
+        test_session_factory = sessionmaker(
+            autocommit=False, autoflush=False, bind=test_engine
+        )
+
+        monkeypatch.setattr(session_mod, "SessionLocal", test_session_factory)
+        yield
+        test_engine.dispose()
 
     def test_task_session_scope_basic_usage(self):
         """Test basic usage of task_session_scope."""
