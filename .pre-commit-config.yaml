@@ -498,6 +498,23 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 26b: DOC_TYPE_MAP Consistency (doc-type-sync)
+  # ============================================================================
+
+  # Cross-checks DOC_TYPE_MAP in init_rag_embeddings.py vs rag_tasks.py,
+  # validates all docs/rag-knowledge/*.md have mappings, and checks
+  # doc_type values exist in rag.py allowed_types.
+  - repo: local
+    hooks:
+      - id: doc-type-sync
+        name: DOC_TYPE_MAP consistency check
+        entry: scripts/doc-type-sync-check.sh
+        language: script
+        pass_filenames: false
+        files: ^(scripts/init_rag_embeddings\.py|backend/app/tasks/rag_tasks\.py|backend/app/schemas/rag\.py|docs/rag-knowledge/)
+        stages: [pre-commit]
+
+  # ============================================================================
   # PHASE 26: Pre-Push Safety (Githyanki Gatekeeper)
   # ============================================================================
 
