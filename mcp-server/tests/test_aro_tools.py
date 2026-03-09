@@ -32,13 +32,13 @@ class TestModels:
     def test_annual_plan_assignment(self):
         a = AnnualPlanAssignment(
             id="uuid-1",
-            resident_name="Smith",
+            person_id="person-uuid-1",
             block_number=3,
             rotation_name="IM",
             is_fixed=False,
         )
         assert a.block_number == 3
-        assert a.rotation_name == "IM"
+        assert a.person_id == "person-uuid-1"
 
     def test_annual_plan_info(self):
         plan = AnnualPlanInfo(
@@ -56,9 +56,12 @@ class TestModels:
             academic_year=2026,
             name="Test Plan",
             status="optimized",
-            assignment_count=234,
+            solver_status="OPTIMAL",
+            objective_value=150,
+            solve_duration_ms=2500,
         )
-        assert summary.assignment_count == 234
+        assert summary.solver_status == "OPTIMAL"
+        assert summary.objective_value == 150
 
     def test_create_plan_result_success(self):
         result = CreatePlanResult(
@@ -105,7 +108,7 @@ MOCK_PLAN_RESPONSE = {
     "assignments": [
         {
             "id": "assign-1",
-            "resident_name": "R1",
+            "person_id": "person-uuid-1",
             "block_number": 1,
             "rotation_name": "IM",
             "is_fixed": False,
@@ -159,7 +162,7 @@ class TestListAnnualPlans:
                 "name": "Draft 1",
                 "status": "draft",
                 "created_at": "2026-03-09",
-                "assignment_count": 0,
+                "solver_status": None,
             },
             {
                 "id": "plan-2",
@@ -167,7 +170,9 @@ class TestListAnnualPlans:
                 "name": "Final",
                 "status": "published",
                 "created_at": "2026-03-08",
-                "assignment_count": 234,
+                "solver_status": "OPTIMAL",
+                "objective_value": 150,
+                "solve_duration_ms": 2500,
             },
         ]
 
@@ -192,6 +197,8 @@ class TestListAnnualPlans:
         result = await list_annual_plans()
 
         assert result.total_count == 0
+        assert result.error is not None
+        assert "Timeout" in result.error
 
 
 class TestGetAnnualPlan:

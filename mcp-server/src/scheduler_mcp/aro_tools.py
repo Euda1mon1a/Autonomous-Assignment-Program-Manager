@@ -23,7 +23,7 @@ class AnnualPlanAssignment(BaseModel):
     """A single rotation assignment within an annual plan."""
 
     id: str = Field(..., description="Assignment UUID")
-    resident_name: str = Field("", description="Resident name")
+    person_id: str = Field("", description="Person UUID")
     block_number: int = Field(..., description="Block number (1-13)")
     rotation_name: str = Field("", description="Rotation name")
     is_fixed: bool = Field(False, description="Whether this is a fixed assignment")
@@ -52,7 +52,9 @@ class AnnualPlanSummary(BaseModel):
     name: str = Field(..., description="Plan name")
     status: str = Field(..., description="Plan status")
     created_at: str = Field("", description="Creation timestamp")
-    assignment_count: int = Field(0, description="Number of assignments")
+    solver_status: str | None = Field(None, description="Solver status")
+    objective_value: int | None = Field(None, description="Objective value")
+    solve_duration_ms: int | None = Field(None, description="Solve duration in ms")
 
 
 class CreatePlanResult(BaseModel):
@@ -68,6 +70,7 @@ class ListPlansResult(BaseModel):
 
     plans: list[AnnualPlanSummary] = Field(default_factory=list, description="Plans")
     total_count: int = Field(0, description="Total number of plans")
+    error: str | None = Field(None, description="Error message if failed")
 
 
 class GetPlanResult(BaseModel):
@@ -112,7 +115,7 @@ def _parse_plan_info(data: dict) -> AnnualPlanInfo:
         assignments.append(
             AnnualPlanAssignment(
                 id=str(a.get("id", "")),
-                resident_name=a.get("resident_name", ""),
+                person_id=str(a.get("person_id", "")),
                 block_number=a.get("block_number", 0),
                 rotation_name=a.get("rotation_name", ""),
                 is_fixed=a.get("is_fixed", False),
@@ -185,13 +188,15 @@ async def list_annual_plans() -> ListPlansResult:
                     name=p.get("name", ""),
                     status=p.get("status", ""),
                     created_at=str(p.get("created_at", "")),
-                    assignment_count=p.get("assignment_count", 0),
+                    solver_status=p.get("solver_status"),
+                    objective_value=p.get("objective_value"),
+                    solve_duration_ms=p.get("solve_duration_ms"),
                 )
             )
         return ListPlansResult(plans=plans, total_count=len(plans))
     except Exception as e:
         logger.error(f"Failed to list annual plans: {e}")
-        return ListPlansResult(plans=[], total_count=0)
+        return ListPlansResult(plans=[], total_count=0, error=str(e))
 
 
 async def get_annual_plan(plan_id: str) -> GetPlanResult:

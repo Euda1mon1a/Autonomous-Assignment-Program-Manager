@@ -1126,7 +1126,7 @@ async def list_annual_plans_tool() -> ListPlansResult:
     Example:
         result = await list_annual_plans_tool()
         for plan in result.plans:
-            print(f"{plan.name}: {plan.status} ({plan.assignment_count} assignments)")
+            print(f"{plan.name}: {plan.status} (solver: {plan.solver_status})")
     """
     return await list_annual_plans()
 
@@ -1149,7 +1149,7 @@ async def get_annual_plan_tool(plan_id: str) -> GetPlanResult:
         result = await get_annual_plan_tool(plan_id="abc-123")
         if result.success:
             for a in result.plan.assignments:
-                print(f"Block {a.block_number}: {a.resident_name} → {a.rotation_name}")
+                print(f"Block {a.block_number}: {a.person_id} → {a.rotation_name}")
     """
     return await get_annual_plan(plan_id=plan_id)
 
