@@ -56,8 +56,7 @@ export default defineConfig({
     navigationTimeout: 30_000,
   },
 
-  /* Global setup and teardown */
-  globalSetup: require.resolve('./global-setup.ts'),
+  /* Global teardown */
   globalTeardown: require.resolve('./global-teardown.ts'),
 
   /* Configure projects for major browsers */

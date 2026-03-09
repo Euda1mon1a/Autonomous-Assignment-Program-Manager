@@ -159,15 +159,8 @@ def seed_test_data(project_root: Path) -> bool:
 
     print("  ✓ Blocks generated")
 
-    # Seed people
-    print("\n2. Seeding people...")
-    if not run_command(
-        [python_cmd, "../scripts/seed/seed_people.py"],
-        cwd=backend_dir,
-    ):
-        return False
-
-    print("  ✓ People seeded")
+    # People seeding: use local seed_people_local.py (gitignored, real roster)
+    # The committed seed_people.py was removed — it created synthetic data.
 
     # Seed templates
     print("\n3. Seeding rotation templates...")
