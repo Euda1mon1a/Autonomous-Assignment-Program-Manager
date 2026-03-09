@@ -252,8 +252,25 @@ class ImportStagingService:
                             error_code="BLOCK_MISMATCH",
                         )
 
-                    # Target academic year is inferred from start date or provided externally
-                    # For simplicity, if we have target_start_date, check if it matches AY somewhat or at least we can just check if AY was passed.
+                    # Infer academic year from target_start_date and validate
+                    if target_start_date is not None and meta.academic_year:
+                        # Academic year runs July-June: dates before July
+                        # belong to the AY that started the prior July.
+                        inferred_ay = (
+                            target_start_date.year - 1
+                            if target_start_date.month < 7
+                            else target_start_date.year
+                        )
+                        if inferred_ay != meta.academic_year:
+                            return StageResult(
+                                success=False,
+                                message=(
+                                    f"Academic year mismatch: file is for "
+                                    f"AY {meta.academic_year}, but the target "
+                                    f"dates imply AY {inferred_ay}."
+                                ),
+                                error_code="AY_MISMATCH",
+                            )
                 meta_wb.close()
             except Exception:
                 pass  # Legacy files may not have metadata — non-blocking
