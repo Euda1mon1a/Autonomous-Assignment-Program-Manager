@@ -8,7 +8,7 @@ This guide explains how to set up and use the Residency Scheduler MCP server wit
 
 1. [Overview](#overview)
 2. [Prerequisites](#prerequisites)
-3. [Quick Start (Docker - Recommended)](#quick-start-docker---recommended)
+3. [Quick Start (Native — Recommended)](#quick-start-native--recommended)
 4. [Claude Code CLI Setup](#claude-code-cli-setup)
 5. [VSCode Setup](#vscode-setup)
 6. [Zed Setup](#zed-setup)
@@ -59,12 +59,18 @@ FastAPI Backend → PostgreSQL Database
 
 ## Prerequisites
 
-### For Docker Method (Recommended)
+### For Native Method (Recommended)
+
+- Python 3.10 or later
+- PostgreSQL 15+ (running and accessible)
+- Redis (optional, for Celery tasks)
+
+### For Docker Method (Alternative)
 
 - Docker and Docker Compose installed
 - Project cloned locally
 
-### For Local Python Method (Alternative)
+### For Local Python Method (Custom)
 
 - Python 3.10 or later
 - PostgreSQL 15+ (running and accessible)
@@ -72,37 +78,39 @@ FastAPI Backend → PostgreSQL Database
 
 ---
 
-## Quick Start (Docker - Recommended)
+## Quick Start (Native — Recommended)
 
-The recommended approach is to run MCP via Docker, which includes all dependencies.
+Run MCP server directly on macOS — no Docker needed.
 
-### Step 1: Start Docker Services
+### Step 1: Install and Start MCP Server
 
 ```bash
-cd /path/to/Autonomous-Assignment-Program-Manager
-docker compose up -d
+cd mcp-server
+pip install -e .
+python -m scheduler_mcp.server
 ```
 
 ### Step 2: Verify MCP Server is Running
 
 ```bash
-# Check container status
-docker compose ps mcp-server
-
-# Verify MCP tools are loaded
-docker compose exec -T mcp-server python -c \
-  "from scheduler_mcp.server import mcp; print(f'Tools: {len(mcp._tools)}')"
-
-# Expected output: Tools: 36 (or similar)
+curl -s http://127.0.0.1:8080/health
 ```
 
 ### Step 3: Test Backend Connectivity
 
 ```bash
-docker compose exec -T mcp-server curl -s http://backend:8000/health
+curl -s http://localhost:8000/health
 ```
 
 Now your MCP server is ready for IDE integration!
+
+### Alternative: Docker
+
+```bash
+docker compose up -d
+docker compose ps mcp-server
+docker compose exec -T mcp-server curl -s http://backend:8000/health
+```
 
 ---
 

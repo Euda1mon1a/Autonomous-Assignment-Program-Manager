@@ -59,26 +59,7 @@ Coverage, fairness, and workload metrics with Pareto optimization for balanced s
 
 ## Quick Start
 
-=== "Docker (Recommended)"
-
-    ```bash
-    # Clone the repository
-    git clone https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager.git
-    cd Autonomous-Assignment-Program-Manager
-
-    # Configure environment
-    cp .env.example .env
-    # Edit .env with your settings
-
-    # Start all services
-    docker-compose up -d
-
-    # Access the application
-    # Frontend: http://localhost:3000
-    # API Docs: http://localhost:8000/docs
-    ```
-
-=== "Local Development"
+=== "Native macOS (Recommended)"
 
     ```bash
     # Backend
@@ -93,6 +74,25 @@ Coverage, fairness, and workload metrics with Pareto optimization for balanced s
     cd frontend
     npm install
     npm run dev
+
+    # Access the application
+    # Frontend: http://localhost:3000
+    # API Docs: http://localhost:8000/docs
+    ```
+
+=== "Docker (Alternative)"
+
+    ```bash
+    # Clone the repository
+    git clone https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager.git
+    cd Autonomous-Assignment-Program-Manager
+
+    # Configure environment
+    cp .env.example .env
+    # Edit .env with your settings
+
+    # Start all services
+    docker-compose up -d
     ```
 
 ---

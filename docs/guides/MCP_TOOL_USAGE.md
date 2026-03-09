@@ -220,7 +220,7 @@ python -m scheduler_mcp.server
 
 #### Claude Code Integration
 
-**Docker exec (Default - Recommended):**
+**HTTP transport (Default — works with native or Docker):**
 
 `.mcp.json`:
 ```json

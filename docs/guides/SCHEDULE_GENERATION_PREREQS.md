@@ -45,8 +45,15 @@ Query: `SELECT name, type, pgy_level FROM people ORDER BY type, pgy_level, name;
 
 ### Step 1: Verify People Exist
 
+**Native (recommended):**
 ```bash
 # Check people count
+psql -U scheduler -d residency_scheduler \
+  -c "SELECT type, COUNT(*) FROM people GROUP BY type;"
+```
+
+**Docker (alternative):**
+```bash
 docker compose -f docker-compose.local.yml exec -T db \
   psql -U scheduler -d residency_scheduler \
   -c "SELECT type, COUNT(*) FROM people GROUP BY type;"
@@ -60,7 +67,13 @@ Expected: 18 residents, 10 faculty
 - Imports absences from Excel files
 - Supports leave types: Annual, Sick, TDY, Conference, etc.
 
-**Usage:**
+**Native (recommended):**
+```bash
+cd backend && source venv/bin/activate
+python scripts/import_excel.py --file absences.xlsx --type absences
+```
+
+**Docker (alternative):**
 ```bash
 docker compose -f docker-compose.local.yml exec backend \
   python scripts/import_excel.py --file absences.xlsx --type absences
@@ -88,7 +101,13 @@ FMIT (Family Medicine Inpatient Team) is a high-priority rotation that must be a
 - Pre-assigns FMIT rotation slots
 - Creates assignments for Family Medicine Inpatient Team
 
-**Usage:**
+**Native (recommended):**
+```bash
+cd backend && source venv/bin/activate
+python scripts/seed/seed_inpatient_rotations.py --block 10
+```
+
+**Docker (alternative):**
 ```bash
 docker compose -f docker-compose.local.yml exec backend \
   python scripts/seed/seed_inpatient_rotations.py --block 10
@@ -98,12 +117,22 @@ docker compose -f docker-compose.local.yml exec backend \
 
 **Script:** `scripts/scheduling/generate_schedule.py`
 
+**Native (recommended):**
 ```bash
+cd backend && source venv/bin/activate
+
 # Dry run first (recommended)
+python scripts/scheduling/generate_schedule.py --block 10 --dry-run --verbose
+
+# Actual generation
+python scripts/scheduling/generate_schedule.py --block 10 --verbose
+```
+
+**Docker (alternative):**
+```bash
 docker compose -f docker-compose.local.yml exec backend \
   python scripts/scheduling/generate_schedule.py --block 10 --dry-run --verbose
 
-# Actual generation
 docker compose -f docker-compose.local.yml exec backend \
   python scripts/scheduling/generate_schedule.py --block 10 --verbose
 ```

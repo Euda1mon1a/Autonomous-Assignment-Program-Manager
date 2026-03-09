@@ -112,7 +112,9 @@ query.filter(not Person.is_active)  # Always True or False!
 
 ---
 
-## 2. Docker Environment Differences
+## 2. Docker Environment Differences (Reference)
+
+> **Primary workflow is native macOS (Apple Silicon).** This section is reference material for when you need Docker compatibility. For native setup, see [Development Setup](setup.md).
 
 ### Tool Availability
 

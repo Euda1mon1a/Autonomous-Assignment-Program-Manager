@@ -148,9 +148,17 @@ To use async task tools, you also need:
 
 ## Running the Server
 
-### Docker Container (Recommended)
+### Standalone Mode (Recommended — Native)
 
-The MCP server runs as a Docker container following Docker MCP Toolkit patterns:
+```bash
+cd mcp-server
+pip install -e .
+python -m scheduler_mcp.server
+```
+
+### Docker Container (Alternative)
+
+The MCP server can also run as a Docker container:
 
 ```bash
 # Start all services including MCP server
@@ -172,14 +180,6 @@ docker-compose exec mcp-server python -c \
 - Privilege dropping: `no-new-privileges:true`
 - Network isolation: Internal `app-network` only
 - No host filesystem access (production)
-
-### Standalone Mode (Development)
-
-```bash
-cd mcp-server
-pip install -e .
-python -m scheduler_mcp.server
-```
 
 ### Claude Code Integration
 

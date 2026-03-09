@@ -58,21 +58,31 @@ Located in `.claude/archive/identities/`. When spawning agents via `Task()`, inc
 
 ## For Human Developers
 
-### Quick Setup
+### Quick Setup (Native — Recommended)
 
 ```bash
-# Clone and setup backend
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# Start services natively (macOS with Homebrew)
+brew services start postgresql@15
+brew services start redis
 
-# Setup frontend
+# Backend
+cd backend
+source venv/bin/activate  # or create: python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload
+
+# Frontend (new terminal)
 cd frontend
 npm install
+npm run dev
+```
 
-# Start development
-docker-compose up -d  # Database, Redis
+#### Docker Alternative
+
+```bash
+# If you prefer Docker for database/Redis only:
+docker-compose up -d db redis
 cd backend && uvicorn app.main:app --reload
 cd frontend && npm run dev
 ```
@@ -224,7 +234,11 @@ cd frontend && rm -rf node_modules && npm install
 
 ### Database Issues
 ```bash
-# Reset database
+# Native reset
+brew services restart postgresql@15
+cd backend && alembic downgrade base && alembic upgrade head
+
+# Docker alternative
 docker-compose down -v
 docker-compose up -d
 cd backend && alembic upgrade head

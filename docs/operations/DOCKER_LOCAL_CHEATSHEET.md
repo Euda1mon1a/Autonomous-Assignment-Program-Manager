@@ -1,5 +1,7 @@
 # Docker Local Development - Quick Reference
 
+> **Compatibility reference.** Native macOS is the primary workflow. For native commands, use `make native-start/stop/status` or `brew services`. See [Development Setup](../development/setup.md).
+
 ## Quick Start
 
 ```bash

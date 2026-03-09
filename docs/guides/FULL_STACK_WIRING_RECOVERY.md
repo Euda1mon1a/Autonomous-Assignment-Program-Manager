@@ -44,7 +44,7 @@ Local (non-docker) backend uses `DATABASE_URL` + `REDIS_URL` from `backend/.env.
 
 ## Bring-Up Options
 
-### Option A: Docker Compose (recommended baseline)
+### Option A: Docker Compose (alternative — full-stack containers)
 
 ```
 cp .env.example .env
@@ -79,7 +79,7 @@ Notes:
 - Uses `NEXT_PUBLIC_API_URL=/api/v1` and `BACKEND_INTERNAL_URL=http://backend:8000`
 - MCP server runs on 8081.
 
-### Option D: Hybrid Local (Docker DB/Redis + local backend/frontend)
+### Option D: Hybrid Local (Recommended — Docker DB/Redis + local backend/frontend)
 
 ```
 docker compose up -d db redis

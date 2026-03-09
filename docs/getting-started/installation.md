@@ -4,7 +4,9 @@ This guide covers detailed installation instructions for Residency Scheduler.
 
 ---
 
-## Docker Installation (Recommended)
+## Docker Installation (Alternative)
+
+> **Note:** Native macOS is the primary development workflow. See [Local Development Setup](#local-development-setup-recommended) below. Docker is maintained for compatibility.
 
 > **Security Note:** Docker images are pinned to security-patched versions:
 > - PostgreSQL: 15.15+ (CVE-2025-12817/12818 patched)
@@ -61,7 +63,7 @@ docker-compose exec backend alembic upgrade head
 
 ---
 
-## Local Development Setup
+## Local Development Setup (Recommended)
 
 ### Backend Setup
 

@@ -32,7 +32,9 @@ docker info
 
 ---
 
-## Quick Deploy (Docker - Recommended)
+## Quick Deploy (Docker - Alternative)
+
+> **Note:** Native macOS with Homebrew services is the primary workflow. This Docker method is maintained for compatibility.
 
 ```bash
 # 1. Navigate to project root

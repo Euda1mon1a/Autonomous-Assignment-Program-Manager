@@ -8,7 +8,7 @@ Set up your development environment.
 
 - Python 3.11+
 - Node.js 18+
-- Docker & Docker Compose
+- Docker & Docker Compose (optional — for compatibility only)
 - Git
 - PostgreSQL 15.15+ (CVE-2025-12817/12818 patched)
 - Redis 7.4.2+ (CVE-2025-49844 defense)
@@ -55,7 +55,9 @@ npm run dev
 
 ---
 
-## Docker Development
+## Docker Development (Optional)
+
+> **Note:** Native macOS is the primary development workflow. Docker is maintained for compatibility only.
 
 For full-stack development with Docker:
 

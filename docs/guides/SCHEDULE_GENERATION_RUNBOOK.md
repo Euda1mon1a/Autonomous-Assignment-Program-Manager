@@ -9,7 +9,7 @@
 Copy these prompts to direct Claude Code:
 
 ```
-Step 1: "Check if all Docker containers are running and healthy"
+Step 1: "Check if services (PostgreSQL, Redis, backend) are running and healthy"
 Step 2: "Verify database connectivity and show me the counts of people, blocks, and rotations"
 Step 3: "Run the health check endpoints and show me the results"
 Step 4: "Generate a schedule for Block 10 (2026-03-12 to 2026-04-08) using the CP-SAT algorithm"
@@ -21,39 +21,53 @@ Step 6: "Show me a human-readable summary of the schedule"
 
 ## Detailed Steps
 
-### Step 1: Verify Docker Containers
+### Step 1: Verify Services Are Running
 
 **Prompt to Claude Code:**
 ```
-Check all Docker containers are running. Show me:
-1. Container names and their status
-2. Health check status for db, redis, backend, and celery-worker
-3. Any containers that are not healthy
+Check that all services are running and healthy. Show me:
+1. PostgreSQL, Redis, backend status
+2. Health check results
+3. Any services that are not healthy
 ```
 
-**What Claude Code should run:**
+**Native (recommended):**
+```bash
+# Check PostgreSQL
+pg_isready -U scheduler
+brew services list | grep -E 'postgresql|redis'
+
+# Check backend
+pgrep -a uvicorn
+pgrep -a celery
+
+# Check all services
+curl -s http://localhost:8000/api/v1/health/live | python -m json.tool
+```
+
+**Docker (alternative):**
 ```bash
 docker-compose ps
 docker-compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Health}}"
 ```
 
 **Expected Output (Healthy):**
-| Container | Status | Health |
-|-----------|--------|--------|
-| db | Up | healthy |
-| redis | Up | healthy |
-| backend | Up | running |
-| celery-worker | Up | healthy |
-| celery-beat | Up | running |
-| mcp-server | Up | healthy |
-| frontend | Up | running |
+| Service | Status |
+|---------|--------|
+| PostgreSQL | accepting connections |
+| Redis | PONG |
+| Backend (uvicorn) | running |
+| Celery worker | running |
+| Frontend (next) | running |
 
 **If NOT healthy:**
 ```bash
-# Restart unhealthy containers
-docker-compose restart <container-name>
+# Native
+brew services restart postgresql@15
+brew services restart redis
 
-# View logs for troubleshooting
+# Docker
+docker-compose restart <container-name>
 docker-compose logs -f <container-name>
 ```
 
@@ -71,13 +85,13 @@ Connect to the database and show me:
 5. Are there any existing assignments?
 ```
 
-**What Claude Code should run:**
+**Native (recommended):**
 ```bash
 # Test database connection
-docker-compose exec db psql -U scheduler -d residency_scheduler -c "SELECT 1 as connected;"
+psql -U scheduler -d residency_scheduler -c "SELECT 1 as connected;"
 
 # Count core entities
-docker-compose exec db psql -U scheduler -d residency_scheduler -c "
+psql -U scheduler -d residency_scheduler -c "
 SELECT
   (SELECT COUNT(*) FROM persons) as people_count,
   (SELECT COUNT(*) FROM blocks) as blocks_count,
@@ -86,8 +100,21 @@ SELECT
 "
 
 # Show people breakdown by role
-docker-compose exec db psql -U scheduler -d residency_scheduler -c "
+psql -U scheduler -d residency_scheduler -c "
 SELECT role, COUNT(*) FROM persons GROUP BY role ORDER BY role;
+"
+```
+
+**Docker (alternative):**
+```bash
+docker-compose exec db psql -U scheduler -d residency_scheduler -c "SELECT 1 as connected;"
+
+docker-compose exec db psql -U scheduler -d residency_scheduler -c "
+SELECT
+  (SELECT COUNT(*) FROM persons) as people_count,
+  (SELECT COUNT(*) FROM blocks) as blocks_count,
+  (SELECT COUNT(*) FROM rotation_templates) as rotation_templates_count,
+  (SELECT COUNT(*) FROM assignments) as assignments_count;
 "
 ```
 
@@ -209,13 +236,24 @@ Verify the generated schedule:
 Show me any issues found.
 ```
 
-**What Claude Code should run:**
+**Native (recommended):**
 ```bash
 # API validation endpoint
 curl -s "http://localhost:8000/api/v1/schedule/validate?start_date=2026-03-12&end_date=2026-04-08" \
   | python -m json.tool
 
-# Comprehensive verification script
+# Comprehensive verification script (from backend/ with venv activated)
+python ../scripts/verify_schedule.py \
+  --block 10 \
+  --start 2026-03-12 \
+  --end 2026-04-08
+```
+
+**Docker (alternative):**
+```bash
+curl -s "http://localhost:8000/api/v1/schedule/validate?start_date=2026-03-12&end_date=2026-04-08" \
+  | python -m json.tool
+
 docker-compose exec backend python ../scripts/verify_schedule.py \
   --block 10 \
   --start 2026-03-12 \
@@ -271,14 +309,14 @@ Show me a human-readable summary of the schedule:
 Format it as a table I can review.
 ```
 
-**What Claude Code should run:**
+**Native (recommended):**
 ```bash
 # Get schedule data
 curl -s "http://localhost:8000/api/v1/schedule/2026-03-12/2026-04-08" \
   | python -m json.tool
 
-# Or query directly for summary
-docker-compose exec db psql -U scheduler -d residency_scheduler -c "
+# Query directly for summary
+psql -U scheduler -d residency_scheduler -c "
 -- Coverage by rotation
 SELECT
   rt.name as rotation,
@@ -337,25 +375,43 @@ ORDER BY p.role, total_assignments DESC;
 
 ## Troubleshooting
 
-### Container Won't Start
+### Service Won't Start
+
+**Native (recommended):**
 ```bash
-# View logs
+# Check service status
+brew services list
+pg_isready -U scheduler
+redis-cli ping
+
+# Restart services
+brew services restart postgresql@15
+brew services restart redis
+```
+
+**Docker (alternative):**
+```bash
 docker-compose logs <container-name>
-
-# Rebuild container
 docker-compose up -d --build <container-name>
-
-# Reset everything
-docker-compose down -v
-docker-compose up -d
+docker-compose down -v && docker-compose up -d
 ```
 
 ### Database Connection Failed
+
+**Native (recommended):**
 ```bash
 # Check if postgres is accepting connections
-docker-compose exec db pg_isready -U scheduler
+pg_isready -U scheduler
 
 # Reset database (WARNING: destroys data)
+psql -U postgres -c "DROP DATABASE residency_scheduler;"
+psql -U postgres -c "CREATE DATABASE residency_scheduler OWNER scheduler;"
+cd backend && alembic upgrade head
+```
+
+**Docker (alternative):**
+```bash
+docker-compose exec db pg_isready -U scheduler
 docker-compose exec db psql -U scheduler -d postgres -c "DROP DATABASE residency_scheduler;"
 docker-compose exec db psql -U scheduler -d postgres -c "CREATE DATABASE residency_scheduler;"
 docker-compose exec backend alembic upgrade head
@@ -432,11 +488,14 @@ curl -s "http://localhost:8000/api/v1/absences?start_date=2026-03-12&end_date=20
 # Check active solver runs
 curl -s "http://localhost:8000/api/v1/scheduler/runs/active" | jq '.runs[]'
 
-# Check backend logs
-docker-compose logs --tail=100 backend | grep "Solver"
+# Check backend logs (native)
+tail -100 logs/app.log | grep "Solver"
 
-# Check container resource usage
-docker stats --no-stream
+# Check backend logs (Docker alternative)
+# docker-compose logs --tail=100 backend | grep "Solver"
+
+# Check resource usage
+top -l 1 -s 0 | grep -E 'uvicorn|celery|python'
 ```
 
 **Resolution:**
@@ -468,25 +527,21 @@ docker stats --no-stream
 
 **Diagnosis:**
 ```bash
-# Check container memory usage
-docker stats --no-stream backend
+# Native: check memory usage
+ps aux | grep -E 'uvicorn|celery' | awk '{print $2, $4, $11}'
 
-# Check logs for memory errors
-docker-compose logs backend | grep -i "memory\|oom"
+# Docker alternative
+# docker stats --no-stream backend
+# docker-compose logs backend | grep -i "memory\|oom"
 ```
 
 **Resolution:**
-1. **Increase Docker memory limit:**
-   Edit `docker-compose.yml`:
+1. **Native:** Check system memory with `vm_stat` or Activity Monitor. Kill other processes if needed.
+
+2. **Docker:** Increase memory limit in `docker-compose.yml`:
    ```yaml
    backend:
-     mem_limit: 4g  # Increase from default
-   ```
-
-2. **Restart Docker with new limits:**
-   ```bash
-   docker-compose down
-   docker-compose up -d
+     mem_limit: 4g
    ```
 
 3. **Optimize generation:**
@@ -597,30 +652,31 @@ curl -I "http://localhost:8000/api/v1/schedule/generate" \
 
 **Diagnosis:**
 ```bash
-# Check MCP server status
-docker-compose ps mcp-server
+# Native (recommended): check MCP server health
+curl -s "http://127.0.0.1:8080/health"
+pgrep -a "mcp"
 
-# Check MCP server health
-curl -s "http://localhost:8080/health"  # If using HTTP transport
-
-# Check logs
-docker-compose logs --tail=50 mcp-server
+# Docker alternative
+# docker-compose ps mcp-server
+# docker-compose logs --tail=50 mcp-server
 ```
 
 **Resolution:**
-1. **Restart MCP server:**
+1. **Native: restart MCP server:**
    ```bash
-   docker-compose restart mcp-server
+   # Kill and restart
+   pkill -f "scheduler_mcp" && cd mcp-server && python -m scheduler_mcp &
    ```
 
-2. **Rebuild if configuration changed:**
+2. **Docker alternative:**
    ```bash
+   docker-compose restart mcp-server
    docker-compose up -d --build mcp-server
    ```
 
-3. **Verify connectivity from backend:**
+3. **Verify connectivity:**
    ```bash
-   docker-compose exec backend curl -s http://mcp-server:8080/health
+   curl -s http://127.0.0.1:8080/health
    ```
 
 4. **Fallback:** Schedule generation will work without MCP but may have reduced resilience analysis
@@ -637,7 +693,7 @@ Before running schedule generation, verify:
   # Override if needed:
   # BLOCK_NUMBER=10 ACADEMIC_YEAR=2025 ./scripts/preflight-block10.sh
   ```
-- [ ] All containers are running (`docker-compose ps`)
+- [ ] All services are running (`brew services list` or `docker-compose ps`)
 - [ ] Database has people loaded (`persons` table not empty)
 - [ ] Database has blocks defined (`blocks` table not empty)
 - [ ] Rotation templates exist (`rotation_templates` table not empty)

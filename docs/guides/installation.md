@@ -31,7 +31,7 @@ This application has been tested on:
 
 ### Required Software
 
-#### 1. Docker & Docker Compose (Recommended)
+#### 1. Docker & Docker Compose (Optional — compatibility only)
 
 **macOS:**
 ```bash
@@ -303,7 +303,7 @@ redis-cli ping
 
 ## Quick Start (Docker)
 
-This is the **recommended** method for both development and production deployments.
+Docker is maintained for compatibility. For the recommended native setup, see [Development Setup (Recommended — Native)](#development-setup-recommended--native) below.
 
 ### Step 1: Clone the Repository
 
@@ -445,7 +445,7 @@ docker compose down -v
 
 ---
 
-## Development Setup (Manual)
+## Development Setup (Recommended — Native)
 
 For development without Docker, or when you need to run services individually.
 

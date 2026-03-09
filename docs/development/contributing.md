@@ -93,7 +93,9 @@ cp .env.example .env.local
 npm run generate-types
 ```
 
-#### Docker Setup (Recommended)
+#### Docker Setup (Alternative)
+
+> **Note:** Native macOS is the primary development workflow. Docker is maintained for compatibility.
 
 ```bash
 # Start all services (backend, frontend, database, Redis)
