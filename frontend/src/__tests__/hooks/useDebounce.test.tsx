@@ -237,7 +237,7 @@ describe('useDebouncedCallback', () => {
     const callback = jest.fn();
     const { result } = renderHook(() =>
       useDebouncedCallback(
-        (a: string, b: number, c: boolean) => callback(a, b, c),
+        (...args: unknown[]) => callback(args[0], args[1], args[2]),
         300
       )
     );

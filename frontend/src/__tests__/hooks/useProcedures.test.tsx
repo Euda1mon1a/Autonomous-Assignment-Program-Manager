@@ -286,7 +286,15 @@ describe('useCreateProcedure', () => {
 
     const mockResponse: Procedure = {
       id: 'proc-3',
-      ...newProcedure,
+      name: newProcedure.name,
+      description: newProcedure.description ?? null,
+      category: newProcedure.category ?? null,
+      specialty: newProcedure.specialty ?? null,
+      supervisionRatio: newProcedure.supervisionRatio ?? 1,
+      requiresCertification: newProcedure.requiresCertification ?? false,
+      complexityLevel: newProcedure.complexityLevel ?? 'basic',
+      minPgyLevel: newProcedure.minPgyLevel ?? 1,
+      isActive: newProcedure.isActive ?? true,
       createdAt: '2026-02-06T10:00:00Z',
       updatedAt: '2026-02-06T10:00:00Z',
     }
@@ -383,7 +391,8 @@ describe('useUpdateProcedure', () => {
 
     const mockResponse: Procedure = {
       ...mockProcedures[0],
-      ...updates,
+      description: updates.description ?? mockProcedures[0].description,
+      complexityLevel: updates.complexityLevel ?? mockProcedures[0].complexityLevel,
       updatedAt: '2026-02-06T10:00:00Z',
     }
     mockedApi.put.mockResolvedValueOnce(mockResponse)
@@ -687,7 +696,12 @@ describe('useCreateCredential', () => {
 
     const mockResponse: Credential = {
       id: 'cred-2',
-      ...newCredential,
+      personId: newCredential.personId,
+      procedureId: newCredential.procedureId,
+      status: newCredential.status ?? 'active',
+      competencyLevel: newCredential.competencyLevel ?? 'qualified',
+      issuedDate: newCredential.issuedDate ?? null,
+      expirationDate: newCredential.expirationDate ?? null,
       lastVerifiedDate: null,
       maxConcurrentResidents: null,
       maxPerWeek: null,
@@ -769,7 +783,8 @@ describe('useUpdateCredential', () => {
 
     const mockResponse: Credential = {
       ...mockCredentials[0],
-      ...updates,
+      status: updates.status ?? mockCredentials[0].status,
+      notes: updates.notes ?? mockCredentials[0].notes,
       updatedAt: '2026-02-06T10:00:00Z',
     }
     mockedApi.put.mockResolvedValueOnce(mockResponse)

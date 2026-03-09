@@ -577,7 +577,7 @@ describe('BulkImportModal', () => {
           }) as any;
         });
         // Trigger the onComplete callback to set step='complete'
-        capturedOnComplete?.();
+        capturedOnComplete?.({ success: true, totalProcessed: 8, successCount: 8, errorCount: 0, skippedCount: 0, errors: [], importedIds: [] });
       });
 
       const user = userEvent.setup();
@@ -721,7 +721,7 @@ describe('BulkImportModal', () => {
             progress: importExportMockFactories.importProgress({ status: 'complete' }),
           }) as any;
         });
-        capturedOnComplete?.();
+        capturedOnComplete?.({ success: true, totalProcessed: 8, successCount: 8, errorCount: 0, skippedCount: 0, errors: [], importedIds: [] });
       });
 
       const user = userEvent.setup();

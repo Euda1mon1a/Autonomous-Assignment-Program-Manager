@@ -47,12 +47,20 @@ const mockedApi = api as jest.Mocked<typeof api>
 const mockTemplate: RotationTemplate = {
   id: 'template-1',
   name: 'FM Clinic',
-  description: 'Family medicine clinic rotation',
-  activityType: 'fm_clinic',
-  isActive: true,
+  activityType: 'clinic',
+  templateCategory: 'rotation',
+  abbreviation: null,
+  displayAbbreviation: null,
+  fontColor: null,
+  backgroundColor: null,
+  clinicLocation: null,
+  maxResidents: null,
+  requiresSpecialty: null,
+  requiresProcedureCredential: false,
+  supervisionRequired: false,
+  maxSupervisionRatio: null,
   isArchived: false,
   createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z',
 }
 
 const mockTemplateListResponse: RotationTemplateListResponse = {
@@ -62,33 +70,38 @@ const mockTemplateListResponse: RotationTemplateListResponse = {
 
 const mockPreference: RotationPreference = {
   id: 'pref-1',
-  templateId: 'template-1',
-  personId: 'person-1',
-  preferenceLevel: 5,
-  notes: 'Preferred rotation',
+  rotationTemplateId: 'template-1',
+  preferenceType: 'full_day_grouping',
+  weight: 'medium',
+  configJson: {},
+  isActive: true,
+  description: 'Preferred rotation',
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 }
 
 const mockBatchResponse: BatchTemplateResponse = {
-  success: true,
-  successCount: 2,
-  failCount: 0,
+  operationType: 'update',
+  total: 2,
+  succeeded: 2,
+  failed: 0,
   results: [
-    { templateId: 'template-1', success: true, message: 'Updated' },
-    { templateId: 'template-2', success: true, message: 'Updated' },
+    { index: 0, templateId: 'template-1', success: true, error: null },
+    { index: 1, templateId: 'template-2', success: true, error: null },
   ],
+  dryRun: false,
 }
 
 const mockConflictResponse: ConflictCheckResponse = {
   hasConflicts: false,
   conflicts: [],
+  canProceed: true,
 }
 
 const mockExportResponse: TemplateExportResponse = {
-  templates: [mockTemplate],
-  exportDate: '2024-01-01T00:00:00Z',
-  format: 'json',
+  templates: [{ template: mockTemplate }],
+  exportedAt: '2024-01-01T00:00:00Z',
+  total: 1,
 }
 
 // Create a fresh QueryClient for each test
@@ -146,7 +159,7 @@ describe('useAdminTemplates', () => {
     mockedApi.get.mockResolvedValueOnce(mockTemplateListResponse)
 
     const { result } = renderHook(
-      () => useAdminTemplates('fm_clinic'),
+      () => useAdminTemplates('clinic'),
       { wrapper: createWrapper() }
     )
 
@@ -154,7 +167,7 @@ describe('useAdminTemplates', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/rotation-templates?activity_type=fm_clinic')
+    expect(mockedApi.get).toHaveBeenCalledWith('/rotation-templates?activity_type=clinic')
   })
 
   it('should include archived templates when requested', async () => {
@@ -243,8 +256,7 @@ describe('useCreateTemplate', () => {
 
     result.current.mutate({
       name: 'FM Clinic',
-      description: 'Family medicine clinic rotation',
-      activityType: 'fm_clinic',
+      activityType: 'clinic',
     })
 
     await waitFor(() => {
@@ -255,8 +267,7 @@ describe('useCreateTemplate', () => {
       '/rotation-templates',
       {
         name: 'FM Clinic',
-        description: 'Family medicine clinic rotation',
-        activityType: 'fm_clinic',
+        activityType: 'clinic',
       }
     )
     expect(invalidateSpy).toHaveBeenCalledWith({
@@ -385,7 +396,7 @@ describe('useBulkUpdateTemplates', () => {
 
     result.current.mutate({
       templateIds: ['template-1', 'template-2'],
-      updates: { isActive: false },
+      updates: { supervisionRequired: false },
     })
 
     await waitFor(() => {
@@ -396,8 +407,8 @@ describe('useBulkUpdateTemplates', () => {
     expect(callArgs[0]).toBe('/rotation-templates/batch')
     expect(callArgs[1]).toMatchObject({
       templates: [
-        { templateId: 'template-1', updates: { isActive: false } },
-        { templateId: 'template-2', updates: { isActive: false } },
+        { templateId: 'template-1', updates: { supervisionRequired: false } },
+        { templateId: 'template-2', updates: { supervisionRequired: false } },
       ],
       dryRun: false,
     })
@@ -452,7 +463,7 @@ describe('useReplaceTemplatePreferences', () => {
     result.current.mutate({
       templateId: 'template-1',
       preferences: [
-        { personId: 'person-1', preferenceLevel: 5 },
+        { preferenceType: 'full_day_grouping' as const, weight: 'high' as const },
       ],
     })
 
@@ -462,7 +473,7 @@ describe('useReplaceTemplatePreferences', () => {
 
     expect(mockedApi.put).toHaveBeenCalledWith(
       '/rotation-templates/template-1/preferences',
-      [{ personId: 'person-1', preferenceLevel: 5 }]
+      [{ preferenceType: 'full_day_grouping', weight: 'high' }]
     )
   })
 })
@@ -511,8 +522,8 @@ describe('useBulkCreateTemplates', () => {
     )
 
     result.current.mutate([
-      { name: 'Template 1', activityType: 'fm_clinic' },
-      { name: 'Template 2', activityType: 'er' },
+      { name: 'Template 1', activityType: 'clinic' },
+      { name: 'Template 2', activityType: 'inpatient' },
     ])
 
     await waitFor(() => {
@@ -523,8 +534,8 @@ describe('useBulkCreateTemplates', () => {
     expect(callArgs[0]).toBe('/rotation-templates/batch')
     expect(callArgs[1]).toMatchObject({
       templates: [
-        { name: 'Template 1', activityType: 'fm_clinic' },
-        { name: 'Template 2', activityType: 'er' },
+        { name: 'Template 1', activityType: 'clinic' },
+        { name: 'Template 2', activityType: 'inpatient' },
       ],
       dryRun: false,
     })
@@ -579,7 +590,6 @@ describe('useExportTemplates', () => {
 
     result.current.mutate({
       templateIds: ['template-1'],
-      format: 'json',
       includePatterns: true,
       includePreferences: true,
     })
@@ -593,7 +603,6 @@ describe('useExportTemplates', () => {
       '/rotation-templates/export',
       {
         templateIds: ['template-1'],
-        format: 'json',
         includePatterns: true,
         includePreferences: true,
       }

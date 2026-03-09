@@ -13,6 +13,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { PeopleTable, type PeopleTableProps } from '../PeopleTable';
+import { PersonType } from '@/types/api';
 import type { Person } from '@/types/api';
 
 // ============================================================================
@@ -24,7 +25,7 @@ const mockPeople: Person[] = [
     id: 'p1',
     name: 'Dr. Alice Smith',
     email: 'alice@example.com',
-    type: 'resident',
+    type: PersonType.RESIDENT,
     pgyLevel: 2,
     performsProcedures: false,
     specialties: ['Internal Medicine', 'Cardiology', 'Nephrology'],
@@ -37,7 +38,7 @@ const mockPeople: Person[] = [
     id: 'p2',
     name: 'Dr. Bob Jones',
     email: null,
-    type: 'faculty',
+    type: PersonType.FACULTY,
     pgyLevel: null,
     performsProcedures: true,
     specialties: ['Surgery'],
@@ -50,7 +51,7 @@ const mockPeople: Person[] = [
     id: 'p3',
     name: 'Dr. Carol White',
     email: 'carol@example.com',
-    type: 'resident',
+    type: PersonType.RESIDENT,
     pgyLevel: 1,
     performsProcedures: false,
     specialties: null,

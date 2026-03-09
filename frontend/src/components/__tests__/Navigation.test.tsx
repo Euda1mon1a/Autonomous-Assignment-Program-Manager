@@ -33,7 +33,7 @@ jest.mock('next/link', () => {
 
 // Mock Auth context
 const mockAuth = {
-  user: { id: '1', username: 'Test User', email: 'test@example.com', role: 'faculty' },
+  user: { id: '1', username: 'Test User', email: 'test@example.com', role: 'faculty' as const, isActive: true, createdAt: '2026-01-01T00:00:00Z' },
   isAuthenticated: true,
 };
 

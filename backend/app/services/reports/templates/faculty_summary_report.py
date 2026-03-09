@@ -83,9 +83,9 @@ class FacultySummaryReportTemplate:
             # Generate report for each faculty member
         for faculty_id in faculty_ids:
             faculty_data = self._get_faculty_data(
-                faculty_id,
+                str(faculty_id),
                 request.start_date,
-                request.end_date,  # type: ignore[arg-type]
+                request.end_date,
             )
 
             if not faculty_data:

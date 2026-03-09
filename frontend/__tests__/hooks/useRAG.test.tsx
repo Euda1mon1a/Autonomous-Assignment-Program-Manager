@@ -31,31 +31,31 @@ jest.mock('@/lib/api', () => ({
 const mockSearchResponse: RAGRetrieveResponse = {
   chunks: [
     {
-      chunk_id: 'chunk-1',
+      chunkId: 'chunk-1',
       category: 'acgme_rules',
       content: 'Work hour limits apply to all residents...',
       similarityScore: 0.95, // @gorgon-ok
-      metadata: { sourceFile: 'acgme_rules.md', section_title: 'Work Hours' },
+      metadata: { sourceFile: 'acgme_rules.md', sectionTitle: 'Work Hours' },
     },
     {
-      chunk_id: 'chunk-2',
+      chunkId: 'chunk-2',
       category: 'acgme_rules',
       content: 'Maximum 80 hours per week...',
       similarityScore: 0.89, // @gorgon-ok
-      metadata: { sourceFile: 'acgme_rules.md', section_title: '80-Hour Rule' },
+      metadata: { sourceFile: 'acgme_rules.md', sectionTitle: '80-Hour Rule' },
     },
   ],
   totalSearched: 150,
-  query_time_ms: 42, // @gorgon-ok
-  category_filter: 'acgme_rules',
+  queryTimeMs: 42,
+  categoryFilter: 'acgme_rules',
 }
 
 const mockHealthResponse: RAGHealthResponse = {
   status: 'healthy',
   vectorStoreAvailable: true, // @gorgon-ok
   documentCount: 67, // @gorgon-ok
-  embedding_model: 'text-embedding-3-small', // @gorgon-ok
-  last_updated: '2024-01-01T00:00:00Z',
+  embeddingModel: 'text-embedding-3-small',
+  lastUpdated: '2024-01-01T00:00:00Z',
 }
 
 // ============================================================================
@@ -97,7 +97,7 @@ describe('useRAGSearch', () => {
     const emptyResponse: RAGRetrieveResponse = {
       chunks: [],
       totalSearched: 150,
-      query_time_ms: 10, // @gorgon-ok
+      queryTimeMs: 10,
     }
     mockPost.mockResolvedValueOnce(emptyResponse)
 
@@ -210,7 +210,7 @@ describe('useRAGHealth', () => {
       status: 'unhealthy',
       vectorStoreAvailable: false, // @gorgon-ok
       documentCount: 0, // @gorgon-ok
-      embedding_model: 'text-embedding-3-small', // @gorgon-ok
+      embeddingModel: 'text-embedding-3-small',
     }
     mockGet.mockResolvedValueOnce(unhealthyResponse)
 

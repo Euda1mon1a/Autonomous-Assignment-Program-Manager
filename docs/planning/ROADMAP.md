@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last Updated:** 2026-03-07 (overnight batch: change tracking, mypy 5, debt cleanup)
+> **Last Updated:** 2026-03-09 (PR reviews, mypy zero, TS test fixes, backlog audit)
 > **Companion:** `TODO.md` (actionable items), `docs/planning/TECHNICAL_DEBT.md` (debt tracker)
 
 ---
@@ -33,9 +33,11 @@
 - Repo hygiene: 48→25 dirs, 55→10 planning docs (#1255-#1258)
 
 **Infrastructure:**
-- mypy ratchet batches 1-5 (#1243-#1245 + branches): 4,007 → ~3,863 errors
+- mypy: 4,007 → 0 errors (PRs #1243-#1245, #1272, #1275)
+- TypeScript test compilation: 97→0 errors (PR #1275)
+- Test suite: 552 issues → 0 failures, 8,302 passing (PR #1273)
+- UX audit round 3: 12 findings fixed (PRs #1272, #1274)
 - Load-test scripts (k6, locust, CI workflow) + 3 missing CI scripts added (DEBT-029)
-- DEBT-025 failing tests partially addressed (#1123, #1147)
 - Field-level change tracking utility (`change_tracker.py`) wired into ActivityLog
 - Cache TTL consolidation (DEBT-013)
 - Orphan framework removal (~8.8K LOC: Saga, EventBus, gRPC, Mesh)

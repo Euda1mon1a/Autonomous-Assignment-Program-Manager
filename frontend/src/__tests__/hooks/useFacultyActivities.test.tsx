@@ -30,7 +30,9 @@ import type {
   EffectiveWeekResponse,
   PermittedActivitiesResponse,
   FacultyMatrixResponse,
+  EffectiveSlot,
 } from '@/types/faculty-activity'
+import type { Activity } from '@/types/activity'
 
 // Mock the api module
 jest.mock('@/lib/api')
@@ -45,6 +47,7 @@ const mockTemplateSlot: FacultyTemplateSlot = {
   timeOfDay: 'AM',
   weekNumber: 1,
   activityId: 'activity-1',
+  activity: null,
   isLocked: false,
   priority: 50,
   notes: 'Test slot',
@@ -54,9 +57,10 @@ const mockTemplateSlot: FacultyTemplateSlot = {
 
 const mockTemplateResponse: FacultyTemplateResponse = {
   personId: 'person-1',
+  personName: 'Dr. Smith',
+  facultyRole: 'core',
   slots: [mockTemplateSlot],
-  createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z',
+  totalSlots: 1,
 }
 
 const mockOverride: FacultyOverride = {
@@ -66,33 +70,80 @@ const mockOverride: FacultyOverride = {
   dayOfWeek: 1,
   timeOfDay: 'AM',
   activityId: 'activity-2',
+  activity: null,
   isLocked: false,
   overrideReason: 'Conference',
+  createdBy: null,
   createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z',
 }
 
 const mockOverridesResponse: FacultyOverridesResponse = {
   personId: 'person-1',
   weekStart: '2024-01-08',
   overrides: [mockOverride],
+  total: 1,
+}
+
+const mockEffectiveSlot: EffectiveSlot = {
+  dayOfWeek: 1,
+  timeOfDay: 'AM',
+  activityId: 'activity-1',
+  activity: null,
+  isLocked: false,
+  priority: 50,
+  source: 'template',
+  notes: 'Test slot',
 }
 
 const mockEffectiveWeekResponse: EffectiveWeekResponse = {
   personId: 'person-1',
+  personName: 'Dr. Smith',
+  facultyRole: 'core',
   weekStart: '2024-01-08',
   weekNumber: 1,
-  slots: [mockTemplateSlot],
-  appliedOverrides: [],
+  slots: [mockEffectiveSlot],
+}
+
+const mockActivity1: Activity = {
+  id: 'activity-1',
+  name: 'Clinic',
+  code: 'CLINIC',
+  displayAbbreviation: 'C',
+  activityCategory: 'clinical',
+  fontColor: null,
+  backgroundColor: null,
+  requiresSupervision: false,
+  isProtected: false,
+  countsTowardClinicalHours: true,
+  displayOrder: 1,
+  isArchived: false,
+  archivedAt: null,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+}
+
+const mockActivity2: Activity = {
+  id: 'activity-2',
+  name: 'Admin',
+  code: 'ADMIN',
+  displayAbbreviation: 'A',
+  activityCategory: 'administrative',
+  fontColor: null,
+  backgroundColor: null,
+  requiresSupervision: false,
+  isProtected: false,
+  countsTowardClinicalHours: false,
+  displayOrder: 2,
+  isArchived: false,
+  archivedAt: null,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
 }
 
 const mockPermittedActivitiesResponse: PermittedActivitiesResponse = {
-  role: 'pd',
-  activities: [
-    { id: 'activity-1', name: 'Clinic', code: 'CLINIC' },
-    { id: 'activity-2', name: 'Admin', code: 'ADMIN' },
-  ],
-  defaultActivities: ['activity-1'],
+  facultyRole: 'pd',
+  activities: [mockActivity1, mockActivity2],
+  defaultActivities: [mockActivity1],
 }
 
 const mockMatrixResponse: FacultyMatrixResponse = {
@@ -102,16 +153,16 @@ const mockMatrixResponse: FacultyMatrixResponse = {
     {
       personId: 'person-1',
       name: 'Dr. Smith',
-      role: 'pd',
+      facultyRole: 'pd',
       weeks: [
         {
           weekStart: '2024-01-08',
-          weekNumber: 1,
-          slots: [mockTemplateSlot],
+          slots: [mockEffectiveSlot],
         },
       ],
     },
   ],
+  totalFaculty: 1,
 }
 
 // Create a fresh QueryClient for each test

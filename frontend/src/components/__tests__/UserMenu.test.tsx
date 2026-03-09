@@ -15,7 +15,9 @@ const mockUser = {
   id: '1',
   username: 'John Doe',
   email: 'john@example.com',
-  role: 'faculty',
+  role: 'faculty' as const,
+  isActive: true,
+  createdAt: '2026-01-01T00:00:00Z',
 };
 
 jest.mock('@/contexts/AuthContext', () => ({

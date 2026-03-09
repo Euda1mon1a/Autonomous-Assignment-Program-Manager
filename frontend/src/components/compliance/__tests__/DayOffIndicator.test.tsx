@@ -23,7 +23,6 @@ describe('DayOffIndicator', () => {
     const fixedDate = new Date('2024-06-13T12:00:00Z');
     const OriginalDate = global.Date;
 
-    // @ts-expect-error - overriding Date constructor for tests
     global.Date = class extends OriginalDate {
       constructor(...args: unknown[]) {
         if (args.length === 0) {

@@ -33,13 +33,11 @@ const mockedApi = api as jest.Mocked<typeof api>;
 const mockCallAssignment: CallAssignment = {
   id: 'call-1',
   personId: 'person-1',
-  personName: 'Dr. Jane Smith',
   date: '2024-03-01',
   callType: 'overnight',
-  blockId: 'block-1',
-  postCallStatus: 'available',
-  createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z',
+  isWeekend: false,
+  isHoliday: false,
+  person: { id: 'person-1', name: 'Dr. Jane Smith', facultyRole: null },
 };
 
 const mockCallAssignments: CallAssignment[] = [
@@ -47,34 +45,21 @@ const mockCallAssignments: CallAssignment[] = [
   {
     id: 'call-2',
     personId: 'person-2',
-    personName: 'Dr. John Doe',
     date: '2024-03-02',
     callType: 'overnight',
-    blockId: 'block-1',
-    postCallStatus: 'available',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
+    isWeekend: false,
+    isHoliday: false,
+    person: { id: 'person-2', name: 'Dr. John Doe', facultyRole: null },
   },
 ];
 
 const mockCoverageReport: CallCoverageReport = {
   startDate: '2024-03-01',
   endDate: '2024-03-31',
-  totalDays: 31,
-  coveredDays: 28,
-  uncoveredDays: 3,
-  coverageRate: 0.9,
-  assignmentsByType: {
-    overnight: 20,
-    weekend: 8,
-  },
-  /* eslint-disable @typescript-eslint/naming-convention -- ID keys */
-  assignmentsByPerson: {
-    'person-1': 14,
-    'person-2': 14,
-  },
-  /* eslint-enable @typescript-eslint/naming-convention */
-  gapDates: ['2024-03-10', '2024-03-15', '2024-03-22'],
+  totalExpectedNights: 31,
+  coveredNights: 28,
+  coveragePercentage: 0.9,
+  gaps: ['2024-03-10', '2024-03-15', '2024-03-22'],
 };
 
 // Create a fresh QueryClient for each test
@@ -112,6 +97,8 @@ describe('useCallAssignments', () => {
     const mockResponse: CallAssignmentListResponse = {
       items: mockCallAssignments,
       total: 2,
+      skip: 0,
+      limit: 50,
     };
     mockedApi.get.mockResolvedValueOnce(mockResponse);
 
@@ -134,6 +121,8 @@ describe('useCallAssignments', () => {
     const mockResponse: CallAssignmentListResponse = {
       items: [mockCallAssignment],
       total: 1,
+      skip: 0,
+      limit: 50,
     };
     mockedApi.get.mockResolvedValueOnce(mockResponse);
 
@@ -175,6 +164,8 @@ describe('useCallAssignments', () => {
     const mockResponse: CallAssignmentListResponse = {
       items: [],
       total: 0,
+      skip: 0,
+      limit: 50,
     };
     mockedApi.get.mockResolvedValueOnce(mockResponse);
 
@@ -230,6 +221,8 @@ describe('useCallAssignmentsByPerson', () => {
     const mockResponse: CallAssignmentListResponse = {
       items: [mockCallAssignment],
       total: 1,
+      skip: 0,
+      limit: 50,
     };
     mockedApi.get.mockResolvedValueOnce(mockResponse);
 
@@ -251,6 +244,8 @@ describe('useCallAssignmentsByPerson', () => {
     const mockResponse: CallAssignmentListResponse = {
       items: [mockCallAssignment],
       total: 1,
+      skip: 0,
+      limit: 50,
     };
     mockedApi.get.mockResolvedValueOnce(mockResponse);
 
@@ -279,6 +274,8 @@ describe('useCallAssignmentsByDate', () => {
     const mockResponse: CallAssignmentListResponse = {
       items: [mockCallAssignment],
       total: 1,
+      skip: 0,
+      limit: 50,
     };
     mockedApi.get.mockResolvedValueOnce(mockResponse);
 
@@ -311,9 +308,8 @@ describe('useCreateCallAssignment', () => {
 
     const createData = {
       personId: 'person-1',
-      date: '2024-03-01',
-      callType: 'overnight' as const,
-      blockId: 'block-1',
+      callDate: '2024-03-01',
+      callType: 'overnight',
     };
 
     result.current.mutate(createData);
@@ -344,9 +340,8 @@ describe('useCreateCallAssignment', () => {
 
     const createData = {
       personId: 'person-1',
-      date: '2024-03-01',
-      callType: 'overnight' as const,
-      blockId: 'block-1',
+      callDate: '2024-03-01',
+      callType: 'overnight',
     };
 
     result.current.mutate(createData);
@@ -367,7 +362,7 @@ describe('useUpdateCallAssignment', () => {
   it('should update call assignment', async () => {
     const updatedAssignment = {
       ...mockCallAssignment,
-      postCallStatus: 'pcat' as const,
+      callType: 'weekend' as const,
     };
     mockedApi.put.mockResolvedValueOnce(updatedAssignment);
 
@@ -377,7 +372,7 @@ describe('useUpdateCallAssignment', () => {
 
     result.current.mutate({
       id: 'call-1',
-      data: { postCallStatus: 'pcat' },
+      data: { callType: 'weekend' },
     });
 
     await waitFor(() => {
@@ -385,7 +380,7 @@ describe('useUpdateCallAssignment', () => {
     });
 
     expect(mockedApi.put).toHaveBeenCalledWith('/call-assignments/call-1', {
-      postCallStatus: 'pcat',
+      callType: 'weekend',
     });
   });
 });
@@ -456,7 +451,7 @@ describe('useCoverageReport', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data?.gapDates).toHaveLength(3);
-    expect(result.current.data?.coverageRate).toBe(0.9);
+    expect(result.current.data?.gaps).toHaveLength(3);
+    expect(result.current.data?.coveragePercentage).toBe(0.9);
   });
 });
