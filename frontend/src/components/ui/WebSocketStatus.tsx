@@ -66,12 +66,12 @@ export function WebSocketStatus({
 
   return (
     <Tooltip content={tooltipContent}>
-      <div
+      <span
         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.color}`}
       >
         <Icon className={`w-3 h-3 ${config.animate ? 'animate-spin' : ''}`} />
         <span>{config.label}</span>
-      </div>
+      </span>
     </Tooltip>
   );
 }

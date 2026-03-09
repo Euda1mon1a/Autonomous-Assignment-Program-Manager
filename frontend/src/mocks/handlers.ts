@@ -127,7 +127,7 @@ export const mockValidation = {
   valid: true,
   totalViolations: 0,
   violations: [],
-  coverageRate: 100,
+  coverageRate: 1.0,
   statistics: {
     totalBlocks: 100,
     assigned_blocks: 100, // eslint-disable-line @typescript-eslint/naming-convention -- mock API response (snake_case wire format)

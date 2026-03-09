@@ -98,7 +98,7 @@ class ACGMEValidator:
                 - valid (bool): True if no critical violations found
                 - total_violations (int): Count of all violations
                 - violations (list): List of Violation objects with details
-                - coverage_rate (float): Percentage of blocks assigned (0-100)
+                - coverage_rate (float): Ratio of blocks assigned (0.0-1.0)
                 - statistics (dict): Summary statistics
 
         Validation Process:
@@ -117,7 +117,7 @@ class ACGMEValidator:
             ...     end_date=date(2025, 1, 31)
             ... )
             >>> print(f"Valid: {result.valid}")
-            >>> print(f"Coverage: {result.coverage_rate:.1f}%")
+            >>> print(f"Coverage: {result.coverage_rate * 100:.1f}%")
             >>> print(f"Violations: {result.total_violations}")
             >>>
             >>> if result.total_violations > 0:
@@ -194,7 +194,7 @@ class ACGMEValidator:
             valid=len(violations) == 0,
             total_violations=len(violations),
             violations=violations,
-            coverage_rate=coverage_rate * 100,
+            coverage_rate=coverage_rate,
             statistics={
                 "total_assignments": len(assignments),
                 "total_blocks": total_blocks,

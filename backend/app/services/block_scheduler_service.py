@@ -833,7 +833,7 @@ class BlockSchedulerService:
 
         # Build health data
         health = {
-            "coverage": int(validation.coverage_rate)
+            "coverage": int(validation.coverage_rate * 100)
             if validation.coverage_rate
             else 0,
             "conflicts": validation.total_violations,

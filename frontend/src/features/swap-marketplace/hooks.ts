@@ -92,14 +92,6 @@ interface SwapRespondApiResponse {
   message: string;
 }
 
-interface AvailableWeeksApiResponse {
-  weeks: Array<{ date: string; hasConflict: boolean }>;
-}
-
-interface FacultyListApiResponse {
-  faculty: Array<{ id: string; name: string }>;
-}
-
 // ============================================================================
 // Query Keys
 // ============================================================================
@@ -263,7 +255,11 @@ export function useFacultyPreferences(
 }
 
 /**
- * Fetch available weeks for the current user to swap
+ * Fetch available weeks for the current user to swap.
+ *
+ * Derives data from the existing /portal/my/schedule endpoint, which returns
+ * FMIT weeks with conflict and swap-eligibility metadata. Only weeks where
+ * canRequestSwap is true are included.
  */
 export function useAvailableWeeks(
   options?: Omit<UseQueryOptions<Array<{ date: string; hasConflict: boolean }>, ApiError>, 'queryKey' | 'queryFn'>
@@ -271,8 +267,16 @@ export function useAvailableWeeks(
   return useQuery<Array<{ date: string; hasConflict: boolean }>, ApiError>({
     queryKey: ['swaps', 'available-weeks'] as const,
     queryFn: async () => {
-      const response = await get<AvailableWeeksApiResponse>('/portal/my/available-weeks');
-      return response.weeks || [];
+      const response = await get<{
+        fmitWeeks: Array<{
+          weekStart: string;
+          hasConflict: boolean;
+          canRequestSwap: boolean;
+        }>;
+      }>('/portal/my/schedule');
+      return (response.fmitWeeks || [])
+        .filter((w) => w.canRequestSwap)
+        .map((w) => ({ date: w.weekStart, hasConflict: w.hasConflict }));
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -281,7 +285,10 @@ export function useAvailableWeeks(
 }
 
 /**
- * Fetch list of faculty members for targeted swap requests
+ * Fetch list of faculty members for targeted swap requests.
+ *
+ * Uses the existing /people/faculty endpoint which returns PersonListResponse
+ * with items containing id and name.
  */
 export function useFacultyMembers(
   options?: Omit<UseQueryOptions<Array<{ id: string; name: string }>, ApiError>, 'queryKey' | 'queryFn'>
@@ -289,8 +296,8 @@ export function useFacultyMembers(
   return useQuery<Array<{ id: string; name: string }>, ApiError>({
     queryKey: ['swaps', 'faculty-members'] as const,
     queryFn: async () => {
-      const response = await get<FacultyListApiResponse>('/portal/faculty');
-      return response.faculty || [];
+      const response = await get<{ items: Array<{ id: string; name: string }>; total: number }>('/people/faculty');
+      return (response.items || []).map((p) => ({ id: p.id, name: p.name }));
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes

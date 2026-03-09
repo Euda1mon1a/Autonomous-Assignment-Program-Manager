@@ -6,86 +6,58 @@ import {
   ImpersonationBannerSpacer,
 } from "./ImpersonationBanner";
 import {
-  Activity,
-  AlertTriangle,
-  ArrowLeftRight,
-  BarChart3,
-  Beaker,
-  Brain,
-  BookOpen,
-  Bug,
   Calendar,
-  CalendarCheck,
-  CalendarDays,
-  CalendarOff,
-  CheckCircle,
-  ClipboardList,
-  Database,
-  Eye,
-  FileText,
-  FileUp,
-  HelpCircle,
-  Layers,
-  LineChart,
+  ChevronDown,
   LogIn,
-  Network,
-  Phone,
-  Settings,
-  Shield,
-  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
 import { MobileNav } from "./MobileNav";
+import { navItems } from "./navItems";
 import { UserMenu } from "./UserMenu";
 
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ElementType;
-  adminOnly?: boolean;
-}
-
-const navItems: NavItem[] = [
-  { href: "/", label: "Dashboard", icon: Calendar },
-  { href: "/my-schedule", label: "My Schedule", icon: CalendarCheck },
-  { href: "/schedule", label: "Schedule", icon: CalendarDays },
-  { href: "/people", label: "People", icon: Users },
-  { href: "/swaps", label: "Swaps", icon: ArrowLeftRight },
-  { href: "/call-hub", label: "Call", icon: Phone },
-  { href: "/ops", label: "Ops Hub", icon: Activity },
-  { href: "/compliance", label: "Compliance", icon: CheckCircle },
-  { href: "/rotations", label: "Rotations", icon: FileText },
-  { href: "/activities", label: "Activities", icon: Layers },
-  { href: "/procedures", label: "Procedures", icon: ClipboardList },
-  { href: "/absences", label: "Absences", icon: CalendarOff },
-  { href: "/analytics", label: "Analytics", icon: LineChart },
-  { href: "/hub/annual-planning", label: "Annual Planning", icon: CalendarDays },
-  { href: "/hub/import-export", label: "Import/Export", icon: FileUp },
-  { href: "/help", label: "Help", icon: HelpCircle },
-  // Core admin tools
-  { href: "/admin/scheduling", label: "Lab", icon: Beaker, adminOnly: true },
-  { href: "/admin/users", label: "Users", icon: Shield, adminOnly: true },
-  { href: "/admin/resilience-hub", label: "Resilience", icon: Activity, adminOnly: true },
-  { href: "/admin/schema", label: "Schema", icon: Database, adminOnly: true },
-  { href: "/admin/block-explorer", label: "Blocks", icon: Network, adminOnly: true },
-  { href: "/admin/labs", label: "Labs", icon: Beaker, adminOnly: true },
-  { href: "/admin/pec", label: "PEC", icon: ClipboardList, adminOnly: true },
-  { href: "/admin/board-review", label: "Board Review", icon: BookOpen, adminOnly: true },
-  { href: "/admin/resilience-overseer", label: "Overseer", icon: Eye, adminOnly: true },
-  { href: "/admin/debugger", label: "Debugger", icon: Bug, adminOnly: true },
-  { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
-];
+/**
+ * Number of user nav items shown directly in the top bar.
+ * The rest go into a "More" dropdown to prevent overflow at 1440px.
+ * 9 items keeps the bar comfortable at 1280px max-w-7xl minus logo/auth.
+ */
+const VISIBLE_COUNT = 9;
 
 export function Navigation() {
   const pathname = usePathname();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.role === "admin";
 
   // Split nav items: admin items for black bar, user items for white bar
   const adminNavItems = navItems.filter((item) => item.adminOnly);
   const userNavItems = navItems.filter((item) => !item.adminOnly);
+
+  const primaryItems = userNavItems.slice(0, VISIBLE_COUNT);
+  const overflowItems = userNavItems.slice(VISIBLE_COUNT);
+
+  // Is any overflow item the current page?
+  const overflowActive = overflowItems.some((item) => pathname === item.href);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!moreOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [moreOpen]);
+
+  // Close dropdown on route change
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
 
   return (
     <>
@@ -160,9 +132,9 @@ export function Navigation() {
               </Link>
             </div>
 
-            {/* Desktop Navigation Links - hidden on mobile, scrollable when overflow */}
-            <div className="hidden md:flex items-center gap-1 overflow-x-auto scrollbar-thin max-w-[calc(100vw-20rem)] flex-1">
-              {userNavItems.map((item) => {
+            {/* Desktop Navigation Links - hidden on mobile */}
+            <div className="hidden md:flex items-center gap-0.5">
+              {primaryItems.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
 
@@ -172,17 +144,65 @@ export function Navigation() {
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
                     aria-label={item.label}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-1.5 px-2 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                       isActive
                         ? "bg-blue-100 text-blue-700"
                         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                     }`}
                   >
-                    <Icon className="w-4 h-4" aria-hidden="true" />
+                    <Icon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                     {item.label}
                   </Link>
                 );
               })}
+
+              {/* "More" dropdown for overflow items */}
+              {overflowItems.length > 0 && (
+                <div className="relative" ref={moreRef}>
+                  <button
+                    type="button"
+                    onClick={() => setMoreOpen((v) => !v)}
+                    aria-expanded={moreOpen}
+                    aria-haspopup="true"
+                    className={`flex items-center gap-1 px-2 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                      overflowActive
+                        ? "bg-blue-100 text-blue-700"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
+                  >
+                    More
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform ${moreOpen ? "rotate-180" : ""}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+
+                  {moreOpen && (
+                    <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black/5 z-50 py-1">
+                      {overflowItems.map((item) => {
+                        const isActive = pathname === item.href;
+                        const Icon = item.icon;
+
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            aria-current={isActive ? "page" : undefined}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                              isActive
+                                ? "bg-blue-50 text-blue-700 font-medium"
+                                : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            <Icon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                            {item.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Right Side: Auth Section */}

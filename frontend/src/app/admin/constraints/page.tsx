@@ -84,83 +84,83 @@ export default function ConstraintConfigPage() {
 
   return (
     <ProtectedRoute requireAdmin>
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <Settings className="w-6 h-6 text-gray-700" />
-        <h1 className="text-2xl font-bold text-gray-900">
-          Constraint Configuration
-        </h1>
-      </div>
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="flex items-center gap-3 mb-6">
+          <Settings className="w-6 h-6 text-gray-700" />
+          <h1 className="text-2xl font-bold text-gray-900">
+            Constraint Configuration
+          </h1>
+        </div>
 
-      <div className="mb-4 flex gap-2 flex-wrap">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-3 py-1 rounded text-sm ${
-            filter === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          All ({constraints?.length ?? 0})
-        </button>
-        {categories.map((cat) => (
+        <div className="mb-4 flex gap-2 flex-wrap">
           <button
-            key={cat}
-            onClick={() => setFilter(cat)}
+            onClick={() => setFilter('all')}
             className={`px-3 py-1 rounded text-sm ${
-              filter === cat
+              filter === 'all'
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            {cat}
+            All ({constraints?.length ?? 0})
           </button>
-        ))}
-      </div>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              className={`px-3 py-1 rounded text-sm ${
+                filter === cat
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Constraint
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Category
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Priority
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Weight
-              </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                Enabled
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filtered.map((c) => (
-              <ConstraintRow
-                key={c.name}
-                constraint={c}
-                isUpdating={updateMutation.isPending}
-                editingWeight={editingWeight}
-                weightValue={weightValue}
-                onToggle={handleToggle}
-                onStartEditWeight={(name, weight) => {
-                  setEditingWeight(name);
-                  setWeightValue(String(weight));
-                }}
-                onWeightChange={setWeightValue}
-                onWeightSave={handleWeightSave}
-                onWeightCancel={() => setEditingWeight(null)}
-              />
-            ))}
-          </tbody>
-        </table>
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Constraint
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Category
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Priority
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Weight
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                  Enabled
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filtered.map((c) => (
+                <ConstraintRow
+                  key={c.name}
+                  constraint={c}
+                  isUpdating={updateMutation.isPending}
+                  editingWeight={editingWeight}
+                  weightValue={weightValue}
+                  onToggle={handleToggle}
+                  onStartEditWeight={(name, weight) => {
+                    setEditingWeight(name);
+                    setWeightValue(String(weight));
+                  }}
+                  onWeightChange={setWeightValue}
+                  onWeightSave={handleWeightSave}
+                  onWeightCancel={() => setEditingWeight(null)}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
     </ProtectedRoute>
   );
 }

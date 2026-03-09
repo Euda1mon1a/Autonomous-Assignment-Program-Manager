@@ -164,7 +164,7 @@ class ComplianceReportTemplate:
             ["Total Violations", str(validation_result.total_violations)],
             [
                 "Coverage Rate",
-                f"{validation_result.coverage_rate:.1f}%",
+                f"{validation_result.coverage_rate * 100:.1f}%",
             ],
             ["Compliance Status", "PASS" if validation_result.valid else "FAIL"],
         ]

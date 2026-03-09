@@ -105,7 +105,7 @@ class TestACGMEPerformance:
 
         # Log results
         print(f"Total violations: {result.total_violations}")
-        print(f"Coverage rate: {result.coverage_rate:.1f}%")
+        print(f"Coverage rate: {result.coverage_rate * 100:.1f}%")
         print(
             f"Validation rate: {len(residents) / metrics['duration']:.1f} residents/sec"
         )
@@ -308,7 +308,7 @@ class TestACGMEPerformance:
         assert result.statistics["residents_scheduled"] <= len(residents)
 
         print(f"Violations: {result.total_violations}")
-        print(f"Coverage: {result.coverage_rate:.1f}%")
+        print(f"Coverage: {result.coverage_rate * 100:.1f}%")
 
     def test_small_dataset_validation_speed(
         self,
@@ -740,8 +740,8 @@ class TestValidationEdgeCases:
         )
 
         # Coverage should be low
-        assert result.coverage_rate < 20.0  # < 20%
+        assert result.coverage_rate < 0.20  # < 20%
         assert result.statistics["total_assignments"] == assignment_count
 
-        print(f"Coverage: {result.coverage_rate:.1f}%")
+        print(f"Coverage: {result.coverage_rate * 100:.1f}%")
         print(f"Violations: {result.total_violations}")

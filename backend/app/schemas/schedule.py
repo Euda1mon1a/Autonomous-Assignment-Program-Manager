@@ -115,7 +115,7 @@ class ValidationResult(BaseModel):
     valid: bool
     total_violations: int
     violations: list[Violation]
-    coverage_rate: float  # Percentage of blocks covered
+    coverage_rate: float  # Ratio of blocks covered (0.0-1.0)
     statistics: dict | None = None
 
 

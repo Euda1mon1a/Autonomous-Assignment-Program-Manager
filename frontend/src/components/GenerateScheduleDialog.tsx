@@ -187,8 +187,8 @@ export function GenerateScheduleDialog({
             <div className="bg-gray-50 rounded-lg p-3">
               <p className="text-sm text-gray-500">Coverage Rate</p>
               <p className="text-2xl font-bold">
-                {result.validation?.coverageRate
-                  ? `${result.validation.coverageRate.toFixed(0)}%`
+                {result.validation?.coverageRate != null
+                  ? `${(result.validation.coverageRate * 100).toFixed(0)}%`
                   : '--'}
               </p>
             </div>

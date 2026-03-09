@@ -98,7 +98,7 @@ async def create_activity(
     except ValueError as e:
         logger.debug("Activity creation failed: %s", e)
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Invalid request")
+        raise HTTPException(status_code=400, detail=str(e))
 
         # =============================================================================
         # Single Activity Endpoints
@@ -163,7 +163,7 @@ async def update_activity(
     except ValueError as e:
         logger.debug("Activity update failed: %s", e)
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Invalid request")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.delete("/{activity_id}", status_code=204)
@@ -195,7 +195,7 @@ async def delete_activity(
     except ValueError as e:
         logger.debug("Activity deletion failed: %s", e)
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Invalid request")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.put("/{activity_id}/archive", response_model=ActivityResponse)

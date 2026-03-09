@@ -100,7 +100,7 @@ export function ACGMEComplianceTab() {
             {validation?.valid ? 'No Violations' : 'Violations Requiring Attention'}
           </h2>
           <p className="text-sm text-gray-500">
-            Coverage Rate: {Math.min(validation?.coverageRate ?? 0, 100).toFixed(1)}%
+            Coverage Rate: {((validation?.coverageRate ?? 0) * 100).toFixed(1)}%
           </p>
         </div>
 

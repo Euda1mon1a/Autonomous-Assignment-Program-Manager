@@ -20,8 +20,10 @@ import { RiskBar, type RiskTier } from '@/components/ui/RiskBar';
 import { useAuth, type UserRole } from '@/hooks/useAuth';
 import { PeopleDirectory } from '@/components/people/PeopleDirectory';
 import { PeopleAdminPanel } from '@/components/people/PeopleAdminPanel';
+import { EditPersonModal } from '@/components/EditPersonModal';
 import { FacultyWorkloadProfilesTab } from '@/features/people/components/FacultyWorkloadProfilesTab';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import type { Person } from '@/types/api';
 
 // ============================================================================
 // Types
@@ -44,12 +46,12 @@ function getRiskTier(role: UserRole | undefined, viewMode: ViewMode): RiskTier {
     return 2;
   }
 
-  // Tier 1: Coordinator/Admin in admin view (can edit roles/PGY) or workload view
-  if ((role === 'coordinator' || role === 'admin') && (viewMode === 'admin' || viewMode === 'workload')) {
+  // Tier 1: Coordinator/Admin can edit people in any view (directory, admin, workload)
+  if (role === 'coordinator' || role === 'admin') {
     return 1;
   }
 
-  // Tier 0: Everyone else or directory view
+  // Tier 0: Everyone else (faculty, resident)
   return 0;
 }
 
@@ -68,7 +70,9 @@ function getRiskBarConfig(tier: RiskTier, viewMode: ViewMode): { label: string; 
         label: 'Scoped Changes',
         tooltip: viewMode === 'workload'
           ? 'You can configure faculty workload boundaries used by the CP-SAT solver.'
-          : 'You can update role and PGY level for individuals. Changes are reversible.',
+          : viewMode === 'directory'
+            ? 'Click a person card to edit. Changes are reversible.'
+            : 'You can update role and PGY level for individuals. Changes are reversible.',
       };
     case 0:
     default:
@@ -100,6 +104,7 @@ function canBulkDelete(role: UserRole | undefined): boolean {
 export default function PeopleHubPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('directory');
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
 
   const userRole = user?.role as UserRole | undefined;
   const hasAdminAccess = canAccessAdmin(userRole);
@@ -237,7 +242,7 @@ export default function PeopleHubPage() {
             role="tabpanel"
             aria-labelledby="directory-tab"
           >
-            <PeopleDirectory />
+            <PeopleDirectory onPersonClick={hasAdminAccess ? setEditingPerson : undefined} />
           </div>
         )}
 
@@ -264,6 +269,13 @@ export default function PeopleHubPage() {
           </div>
         )}
       </main>
+
+      {/* Edit Person Modal (shared across Directory and Admin tabs) */}
+      <EditPersonModal
+        isOpen={editingPerson !== null}
+        onClose={() => setEditingPerson(null)}
+        person={editingPerson}
+      />
     </div>
   );
 }

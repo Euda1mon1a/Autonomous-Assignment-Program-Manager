@@ -103,8 +103,11 @@ async def list_constraints() -> list[ConstraintStatusResponse]:
         all_constraints = list(config_manager._configs.values())
         return [_constraint_to_response(c) for c in all_constraints]
     except Exception as e:
-        logger.error(f"Failed to list constraints: {e}")
-        return []
+        logger.error(f"Failed to list constraints: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list constraints",
+        )
 
 
 @router.get("/enabled", response_model=list[ConstraintStatusResponse])
