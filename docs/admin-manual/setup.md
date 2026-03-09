@@ -6,7 +6,7 @@ Initial system setup and deployment guide.
 
 ## Deployment Options
 
-### Docker Deployment (Recommended)
+### Docker Deployment (Alternative)
 
 See [Getting Started](../getting-started/installation.md) for Docker setup.
 

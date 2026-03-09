@@ -1,5 +1,7 @@
 # Local Development Docker Setup
 
+> **Compatibility reference.** Native macOS (Apple Silicon) is the primary development workflow. Docker is maintained as an alternative for cross-platform compatibility. For native setup, see [Development Setup](../development/setup.md).
+
 This guide explains how to use the local development Docker configuration for the Residency Scheduler application.
 
 ## Overview

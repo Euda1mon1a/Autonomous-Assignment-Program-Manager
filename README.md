@@ -282,6 +282,8 @@ locally; otherwise warnings are expected.
 - Homebrew (`brew install postgresql redis python node`)
 - Git
 
+> **Primary development target:** macOS with Apple Silicon (M-series). Docker is maintained for compatibility but is not the primary workflow.
+
 ### Native macOS (Recommended)
 
 ```bash

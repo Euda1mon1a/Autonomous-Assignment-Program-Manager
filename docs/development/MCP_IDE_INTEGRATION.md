@@ -15,7 +15,7 @@ This document provides an overview of the Model Context Protocol (MCP) server in
 > For help choosing between Claude for macOS (chat app), Claude Code (CLI), or IDE integration,
 > see [Choosing Your Claude Interface](./guides/AI_AGENT_USER_GUIDE.md#choosing-your-claude-interface).
 
-> **Quick Start:** The recommended approach is Docker. Just run `docker compose up -d` and the MCP configs are pre-configured to use Docker exec.
+> **Quick Start:** The recommended approach is native macOS. Install with `cd mcp-server && pip install -e .` and run directly. Docker is available as an alternative.
 
 ## What Was Created
 
@@ -58,26 +58,42 @@ Located in `/home/user/Autonomous-Assignment-Program-Manager/mcp-server/`:
 
 ## Quick Start
 
-### Option A: Docker (Recommended)
+### Option A: Native Python (Recommended)
 
-This is the recommended approach - no local Python dependencies needed.
+Run MCP server directly on macOS — no Docker needed.
+
+1. **Install MCP Server Package**
+   ```bash
+   cd mcp-server
+   pip install -e .
+   ```
+
+2. **Start MCP Server**
+   ```bash
+   cd mcp-server && python -m scheduler_mcp.server
+   # Or: uvicorn scheduler_mcp.server:app --port 8080
+   ```
+
+3. **Verify**
+   ```bash
+   curl -s http://127.0.0.1:8080/health
+   ```
+
+### Option B: Docker (Alternative)
+
+Docker includes all dependencies in the container:
 
 1. **Start Docker Services**
    ```bash
-   cd /home/user/Autonomous-Assignment-Program-Manager
    docker compose up -d
    ```
 
-2. **Verify MCP Server is Running**
+2. **Verify MCP Server**
    ```bash
    docker compose ps mcp-server
-   docker compose exec -T mcp-server python -c \
-     "from scheduler_mcp.server import mcp; print('MCP OK')"
    ```
 
-3. **Start Using** - The IDE configs are pre-configured to use Docker.
-
-### Option B: Local Python (Alternative)
+### Option C: Local Python (For MCP Development)
 
 Only use this if you need to develop/modify the MCP server itself.
 
@@ -99,21 +115,21 @@ Only use this if you need to develop/modify the MCP server itself.
 
 ### Using in VSCode
 
-1. **Ensure Docker is running**: `docker compose up -d`
+1. **Ensure MCP server is running**: `curl -s http://127.0.0.1:8080/health`
 2. **Open Command Palette**: `Cmd+Shift+P` or `Ctrl+Shift+P`
 3. **Run**: `MCP: Start Server`
 4. **Select**: `residency-scheduler`
 
 ### Using in Zed
 
-1. **Ensure Docker is running**: `docker compose up -d`
+1. **Ensure MCP server is running**: `curl -s http://127.0.0.1:8080/health`
 2. **Open Command Palette**: `Cmd+Shift+P` or `Ctrl+Shift+P`
 3. **Run**: `mcp start`
 4. **Select**: `residency-scheduler`
 
 ### Using with Claude Code CLI
 
-1. **Ensure Docker is running**: `docker compose up -d`
+1. **Ensure MCP server is running** (natively or via Docker)
 2. **Claude Code automatically reads** `.mcp.json` from the project root
 3. **MCP tools become available** in your Claude Code session
 

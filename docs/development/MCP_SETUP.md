@@ -184,16 +184,23 @@ To add a new tool with backend service integration:
 
 ## Prerequisites
 
-### Option A: Docker (Recommended)
+### Option A: Native Python (Recommended)
 
-Just have Docker and Docker Compose installed:
+Install and run the MCP server directly:
+```bash
+cd mcp-server
+pip install -e .
+python -m scheduler_mcp.server
+```
+
+### Option B: Docker (Alternative)
+
+Docker includes all dependencies in the container:
 ```bash
 docker compose up -d
 ```
 
-All dependencies (Python, fastmcp, httpx, etc.) are included in the container.
-
-### Option B: Local Python (For MCP Development Only)
+### Option C: Local Python (For MCP Development Only)
 
 If you need to modify the MCP server code:
 ```bash
@@ -209,20 +216,24 @@ Must be using Claude Code CLI or IDE with MCP support.
 
 ## Testing the Setup
 
-### 1. Docker Test (Recommended)
+### 1. Native Test (Recommended)
 ```bash
-# Start services
-docker compose up -d
+# Verify MCP server health
+curl -s http://127.0.0.1:8080/health
 
-# Test MCP server
+# Verify backend connectivity
+curl -s http://localhost:8000/health
+```
+
+### 2. Docker Test (Alternative)
+```bash
+docker compose up -d
 docker compose exec -T mcp-server python -c \
   "from scheduler_mcp.server import mcp; print(f'Tools: {len(mcp._tools)}')"
-
-# Test backend connectivity
 docker compose exec -T mcp-server curl -s http://backend:8000/health
 ```
 
-### 2. Full Integration Test
+### 3. Full Integration Test
 ```bash
 ./scripts/test-mcp-integration.sh
 ```
@@ -260,7 +271,7 @@ docker compose logs mcp-server
 
 **Cause**: Running local Python without dependencies installed
 
-**Fix**: Use Docker (recommended) or install deps:
+**Fix**: Install deps natively (recommended) or use Docker:
 ```bash
 cd mcp-server && pip install -e .
 ```

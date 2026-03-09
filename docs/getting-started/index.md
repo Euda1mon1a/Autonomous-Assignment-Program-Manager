@@ -6,40 +6,18 @@ Welcome to Residency Scheduler! This guide will help you get up and running quic
 
 ### Required Software
 
-- **Docker** 20.10+ and **Docker Compose** 2.0+
-- **Git** for version control
-
-### For Local Development (Optional)
-
 - **Python** 3.11+
 - **Node.js** 18+ and **npm** 9+
 - **PostgreSQL** 15
 - **Redis** 7
+- **Git** for version control
+- **Docker** 20.10+ and **Docker Compose** 2.0+ (optional — for compatibility)
 
 ---
 
 ## Quick Installation
 
-=== "Docker (Recommended)"
-
-    The easiest way to run Residency Scheduler:
-
-    ```bash
-    # Clone the repository
-    git clone https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager.git
-    cd Autonomous-Assignment-Program-Manager
-
-    # Copy environment file
-    cp .env.example .env
-
-    # Start all services
-    docker-compose up -d
-
-    # View logs
-    docker-compose logs -f
-    ```
-
-=== "Local Development"
+=== "Native macOS (Recommended)"
 
     For development with hot reloading:
 
@@ -60,6 +38,25 @@ Welcome to Residency Scheduler! This guide will help you get up and running quic
     npm run dev
     ```
 
+=== "Docker (Alternative)"
+
+    Docker Compose runs all services in containers:
+
+    ```bash
+    # Clone the repository
+    git clone https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager.git
+    cd Autonomous-Assignment-Program-Manager
+
+    # Copy environment file
+    cp .env.example .env
+
+    # Start all services
+    docker-compose up -d
+
+    # View logs
+    docker-compose logs -f
+    ```
+
 ---
 
 ## Verify Installation
@@ -67,6 +64,11 @@ Welcome to Residency Scheduler! This guide will help you get up and running quic
 ### Check Services
 
 ```bash
+# Native
+brew services list | grep -E 'postgresql|redis'
+pgrep -a uvicorn
+
+# Docker alternative
 docker-compose ps
 ```
 
