@@ -22,8 +22,10 @@ export function HalfDayEditModal({ assignment, isOpen, onClose }: HalfDayEditMod
 
   if (!isOpen) return null
 
+  const canSave = !!assignment.id
+
   const handleSave = () => {
-    if (!selectedCode) return
+    if (!selectedCode || !canSave) return
     mutation.mutate(
       {
         id: assignment.id,
@@ -112,14 +114,18 @@ export function HalfDayEditModal({ assignment, isOpen, onClose }: HalfDayEditMod
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         />
 
-        {/* Error */}
+        {!canSave && (
+          <p className="text-sm text-amber-600 mt-2">
+            This slot has no half-day record yet. Generate the schedule first to enable editing.
+          </p>
+        )}
+
         {mutation.isError && (
           <p className="text-sm text-red-600 mt-2">
             {mutation.error?.message || 'Failed to update assignment'}
           </p>
         )}
 
-        {/* Actions */}
         <div className="flex justify-end gap-3 mt-6">
           <button
             type="button"
@@ -131,7 +137,7 @@ export function HalfDayEditModal({ assignment, isOpen, onClose }: HalfDayEditMod
           <button
             type="button"
             onClick={handleSave}
-            disabled={!selectedCode || mutation.isPending}
+            disabled={!canSave || !selectedCode || mutation.isPending}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {mutation.isPending ? 'Saving...' : 'Save'}

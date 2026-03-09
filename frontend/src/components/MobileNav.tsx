@@ -7,56 +7,10 @@ import {
   Menu,
   X,
   Calendar,
-  CalendarCheck,
-  CalendarDays,
-  CalendarOff,
-  Users,
-  FileText,
-  Settings,
   LogIn,
-  HelpCircle,
-  ArrowLeftRight,
-  Phone,
-  Activity,
-  FileUp,
-  ClipboardList,
-  CheckCircle,
-  LineChart,
-  Beaker,
-  Database,
-  Network,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-
-interface NavItem {
-  href: string
-  label: string
-  icon: React.ElementType
-  adminOnly?: boolean
-}
-
-const navItems: NavItem[] = [
-  { href: '/', label: 'Dashboard', icon: Calendar },
-  { href: '/my-schedule', label: 'My Schedule', icon: CalendarCheck },
-  { href: '/schedule', label: 'Schedule', icon: CalendarDays },
-  { href: '/people', label: 'People', icon: Users },
-  { href: '/swaps', label: 'Swaps', icon: ArrowLeftRight },
-  { href: '/call-hub', label: 'Call', icon: Phone },
-  { href: '/ops', label: 'Ops Hub', icon: Activity },
-  { href: '/compliance', label: 'Compliance', icon: CheckCircle },
-  { href: '/activities', label: 'Activities', icon: FileText },
-  { href: '/rotations', label: 'Rotations', icon: FileText },
-  { href: '/procedures', label: 'Procedures', icon: ClipboardList },
-  { href: '/absences', label: 'Absences', icon: CalendarOff },
-  { href: '/analytics', label: 'Analytics', icon: LineChart },
-  { href: '/hub/annual-planning', label: 'Annual Planning', icon: CalendarDays },
-  { href: '/hub/import-export', label: 'Import/Export', icon: FileUp },
-  { href: '/help', label: 'Help', icon: HelpCircle },
-  { href: '/admin/scheduling', label: 'Lab', icon: Beaker, adminOnly: true },
-  { href: '/admin/schema', label: 'Schema', icon: Database, adminOnly: true },
-  { href: '/admin/block-explorer', label: 'Blocks', icon: Network, adminOnly: true },
-  { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
-]
+import { navItems } from './navItems'
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false)

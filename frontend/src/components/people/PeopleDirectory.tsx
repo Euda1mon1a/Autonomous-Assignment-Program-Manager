@@ -59,15 +59,21 @@ const exportColumns = [
 
 interface PersonCardProps {
   person: Person;
+  onClick?: (person: Person) => void;
 }
 
-function PersonCard({ person }: PersonCardProps) {
+function PersonCard({ person, onClick }: PersonCardProps) {
   const isResident = person.type === 'resident';
+  const isClickable = !!onClick;
 
   return (
     <article
-      className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4"
-      aria-label={`${person.name}, ${isResident ? `PGY-${person.pgyLevel} Resident` : 'Faculty'}`}
+      className={`bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4${isClickable ? ' cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all' : ''}`}
+      aria-label={`${person.name}, ${isResident ? `PGY-${person.pgyLevel} Resident` : 'Faculty'}${isClickable ? '. Click to edit.' : ''}`}
+      onClick={isClickable ? () => onClick(person) : undefined}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(person); } } : undefined}
     >
       <div className="flex items-start gap-4">
         {/* Avatar */}
@@ -148,7 +154,12 @@ function PersonCard({ person }: PersonCardProps) {
 // Main Component
 // ============================================================================
 
-export function PeopleDirectory() {
+interface PeopleDirectoryProps {
+  /** Optional click handler for person cards (enables edit for admin/coordinator users) */
+  onPersonClick?: (person: Person) => void;
+}
+
+export function PeopleDirectory({ onPersonClick }: PeopleDirectoryProps) {
   // Filters state
   const [filters, setFilters] = useState<DirectoryFilters>({
     type: 'all',
@@ -357,7 +368,7 @@ export function PeopleDirectory() {
         >
           {filteredPeople.map((person) => (
             <div key={person.id} role="listitem">
-              <PersonCard person={person} />
+              <PersonCard person={person} onClick={onPersonClick} />
             </div>
           ))}
         </div>

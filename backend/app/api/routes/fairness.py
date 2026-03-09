@@ -9,7 +9,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_db
+from app.db.session import get_async_db
 from app.services.fairness_audit_service import FairnessAuditService
 
 router = APIRouter(prefix="/fairness", tags=["fairness"])
@@ -22,7 +22,7 @@ async def get_fairness_audit(
     include_titled_faculty: bool = Query(
         False, description="Include PD, APD, OIC, Dept Chief in analysis"
     ),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> dict:
     """
     Get fairness audit report for date range.
@@ -58,7 +58,7 @@ async def get_faculty_workload(
         True,
         description="Include PD, APD, OIC, Dept Chief (default True for individual lookup)",
     ),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> dict:
     """
     Get workload breakdown for a specific faculty member.
@@ -86,7 +86,7 @@ async def get_faculty_workload(
 async def get_fairness_summary(
     start_date: date = Query(..., description="Start date for analysis"),
     end_date: date = Query(..., description="End date for analysis"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
 ) -> dict:
     """
     Get a compact fairness summary (lighter than full audit).

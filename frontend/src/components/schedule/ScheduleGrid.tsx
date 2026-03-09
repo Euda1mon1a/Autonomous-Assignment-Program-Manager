@@ -375,9 +375,29 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
       const hda = hdaMap.get(`${personId}_${dateStr}_${timeOfDay}`)
       if (hda) {
         setEditingHda(hda)
+        return
       }
+      const person = personMap.get(personId)
+      const now = new Date().toISOString()
+      setEditingHda({
+        id: '',
+        personId,
+        personName: person?.name ?? null,
+        personType: person?.type ?? null,
+        pgyLevel: person?.pgyLevel ?? null,
+        date: dateStr,
+        timeOfDay,
+        activityId: null,
+        activityCode: null,
+        activityName: null,
+        displayAbbreviation: null,
+        source: 'manual',
+        isLocked: false,
+        createdAt: now,
+        updatedAt: now,
+      })
     },
-    [personRowOrder, days, hdaMap]
+    [personRowOrder, days, hdaMap, personMap]
   )
 
   const { gridProps, getCellProps } = useGridKeyboardNavigation({

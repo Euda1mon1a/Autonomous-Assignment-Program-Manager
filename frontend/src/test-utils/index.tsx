@@ -372,7 +372,7 @@ export const mockFactories = {
     valid: true,
     totalViolations: 0,
     violations: [],
-    coverageRate: 100,
+    coverageRate: 1.0,
     statistics: null,
     ...overrides,
   }),
