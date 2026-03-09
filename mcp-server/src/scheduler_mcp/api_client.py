@@ -1037,6 +1037,192 @@ class SchedulerAPIClient:
         response.raise_for_status()
         return response.json()
 
+    # ==================== ARO (Annual Rotation Optimizer) METHODS ====================
+
+    async def create_annual_plan(
+        self,
+        academic_year: int,
+        name: str,
+        solver_time_limit: float = 30.0,
+    ) -> dict[str, Any]:
+        """Create a new annual rotation plan."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/annual-planner/plans/",
+            headers=headers,
+            json={
+                "academic_year": academic_year,
+                "name": name,
+                "solver_time_limit": solver_time_limit,
+            },
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def list_annual_plans(self) -> list[dict[str, Any]]:
+        """List all annual rotation plans."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/annual-planner/plans/",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_annual_plan(self, plan_id: str) -> dict[str, Any]:
+        """Get a specific annual rotation plan with assignments."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/annual-planner/plans/{plan_id}",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def optimize_annual_plan(
+        self,
+        plan_id: str,
+        solver_time_limit: float | None = None,
+    ) -> dict[str, Any]:
+        """Run CP-SAT optimizer on an annual rotation plan."""
+        headers = await self._ensure_authenticated()
+        json_body = {}
+        if solver_time_limit is not None:
+            json_body["solver_time_limit"] = solver_time_limit
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/annual-planner/plans/{plan_id}/optimize",
+            headers=headers,
+            json=json_body or None,
+            timeout=max(300.0, self.config.timeout),  # Solver can take up to 300s
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def publish_annual_plan(self, plan_id: str) -> dict[str, Any]:
+        """Publish a plan's assignments to block_assignments."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/annual-planner/plans/{plan_id}/publish",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    # ==================== CONSTRAINT METHODS ====================
+
+    async def list_constraints(self, filter: str = "all") -> list[dict[str, Any]]:
+        """List constraints, optionally filtered by enabled/disabled."""
+        headers = await self._ensure_authenticated()
+        if filter == "enabled":
+            url = f"{self.config.api_prefix}/constraints/enabled"
+        elif filter == "disabled":
+            url = f"{self.config.api_prefix}/constraints/disabled"
+        else:
+            url = f"{self.config.api_prefix}/constraints"
+        response = await self._request_with_retry("GET", url, headers=headers)
+        response.raise_for_status()
+        return response.json()
+
+    async def get_constraint(self, name: str) -> dict[str, Any]:
+        """Get details of a specific constraint."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/constraints/{name}",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def list_constraints_by_category(self, category: str) -> list[dict[str, Any]]:
+        """List constraints in a specific category."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/constraints/category/{category}",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def toggle_constraint(self, name: str, enabled: bool) -> dict[str, Any]:
+        """Enable or disable a constraint."""
+        headers = await self._ensure_authenticated()
+        action = "enable" if enabled else "disable"
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/constraints/{name}/{action}",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def apply_constraint_preset(self, preset: str) -> dict[str, Any]:
+        """Apply a constraint preset configuration."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/constraints/preset/{preset}",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    # ==================== EXCEL EXPORT METHODS ====================
+
+    async def export_block_xlsx(
+        self,
+        start_date: str,
+        end_date: str,
+        block_number: int | None = None,
+        include_qa_sheet: bool = True,
+        include_overrides: bool = True,
+    ) -> bytes:
+        """Export block schedule as Excel file. Returns raw bytes."""
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "include_qa_sheet": include_qa_sheet,
+            "include_overrides": include_overrides,
+        }
+        if block_number is not None:
+            params["block_number"] = block_number
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/export/schedule/xlsx",
+            headers=headers,
+            params=params,
+            timeout=max(120.0, self.config.timeout),
+        )
+        response.raise_for_status()
+        return response.content
+
+    async def export_year_xlsx(
+        self,
+        academic_year: int,
+        include_overrides: bool = True,
+    ) -> bytes:
+        """Export full academic year schedule as Excel file. Returns raw bytes."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/export/schedule/year/xlsx",
+            headers=headers,
+            params={
+                "academic_year": academic_year,
+                "include_overrides": include_overrides,
+            },
+            timeout=max(300.0, self.config.timeout),  # Year export can be slow
+        )
+        response.raise_for_status()
+        return response.content
+
     # ==================== BACKUP METHODS ====================
 
     async def create_backup(

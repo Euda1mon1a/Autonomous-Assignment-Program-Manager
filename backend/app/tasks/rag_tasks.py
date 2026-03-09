@@ -48,6 +48,11 @@ DOC_TYPE_MAP = {
     "kimi-k2-5.md": "ai_patterns",
     "architecture-overview.md": "technical_doc",
     "troubleshooting-guide.md": "technical_doc",
+    "scheduling-engine-internals.md": "scheduling_policy",
+    "constraint-catalog-summary.md": "scheduling_policy",
+    "annual-rotation-optimizer.md": "scheduling_policy",
+    "excel-roundtrip.md": "architecture",
+    "DIAGRAM_BUNDLE.md": "reference",
 }
 
 

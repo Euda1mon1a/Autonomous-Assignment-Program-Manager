@@ -61,12 +61,13 @@ class DocumentIngestRequest(BaseModel):
             "military_specific",
             "resilience_concepts",
             "user_guide_faq",
-            "session_handoff",
             "ai_patterns",
-            "ai_decisions",
             "delegation_patterns",
             "exotic_concepts",
             "agent_spec",
+            "session_protocols",
+            "architecture",
+            "reference",
             # Fallback
             "other",
         }

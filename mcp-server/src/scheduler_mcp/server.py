@@ -29,6 +29,20 @@ except ImportError:
 
 # Import API client for RAG tools
 from .api_client import get_api_client
+
+# Import ARO (Annual Rotation Optimizer) tools
+from .aro_tools import (
+    CreatePlanResult,
+    GetPlanResult,
+    ListPlansResult,
+    OptimizeResult,
+    PublishResult,
+    create_annual_plan,
+    get_annual_plan,
+    list_annual_plans,
+    optimize_annual_plan,
+    publish_annual_plan,
+)
 from .async_tools import (
     ActiveTasksResult,
     BackgroundTaskResult,
@@ -82,6 +96,19 @@ from .composite_resilience_tools import (
     assess_creep_fatigue,
     calculate_recovery_distance,
     get_unified_critical_index,
+)
+
+# Import constraint management tools
+from .constraint_tools import (
+    ApplyPresetResult,
+    GetConstraintResult,
+    ListConstraintsResult,
+    ToggleConstraintResult,
+    apply_constraint_preset,
+    get_constraint,
+    list_constraints,
+    list_constraints_by_category,
+    toggle_constraint,
 )
 from .deployment_tools import (
     DeploymentStatusResult,
@@ -150,6 +177,13 @@ from .empirical_tools import (
     benchmark_resilience,
     benchmark_solvers,
     module_usage_analysis,
+)
+
+# Import Excel export tools
+from .excel_tools import (
+    ExcelExportResult,
+    export_block_xlsx,
+    export_year_xlsx,
 )
 
 # Import FRMS (Fatigue Risk Management System) tools
@@ -1035,6 +1069,359 @@ async def get_backup_status_tool() -> BackupStatusResult:
             print(f"Warnings: {result.warnings}")
     """
     return await get_backup_status()
+
+
+# =============================================================================
+# Annual Rotation Optimizer (ARO) Tools
+# =============================================================================
+
+
+@mcp.tool()
+async def create_annual_plan_tool(
+    academic_year: int,
+    name: str,
+    solver_time_limit: float = 30.0,
+) -> CreatePlanResult:
+    """
+    Create a new annual rotation plan in draft status.
+
+    Creates a plan for assigning rotations to blocks for all residents
+    across an academic year. The plan starts in draft status and must
+    be optimized before publishing.
+
+    Args:
+        academic_year: Academic year (e.g. 2026 for AY 26-27)
+        name: Descriptive name for the plan
+        solver_time_limit: CP-SAT solver time limit in seconds (default 30)
+
+    Returns:
+        CreatePlanResult with plan details or error
+
+    Example:
+        result = await create_annual_plan_tool(
+            academic_year=2026,
+            name="AY 26-27 Draft 1"
+        )
+        if result.success:
+            print(f"Created plan: {result.plan.id}")
+    """
+    return await create_annual_plan(
+        academic_year=academic_year,
+        name=name,
+        solver_time_limit=solver_time_limit,
+    )
+
+
+@mcp.tool()
+async def list_annual_plans_tool() -> ListPlansResult:
+    """
+    List all annual rotation plans.
+
+    Returns summaries of all plans with their status
+    (draft/optimized/published) and assignment counts.
+
+    Returns:
+        ListPlansResult with plan summaries
+
+    Example:
+        result = await list_annual_plans_tool()
+        for plan in result.plans:
+            print(f"{plan.name}: {plan.status} (solver: {plan.solver_status})")
+    """
+    return await list_annual_plans()
+
+
+@mcp.tool()
+async def get_annual_plan_tool(plan_id: str) -> GetPlanResult:
+    """
+    Get a specific annual rotation plan with all assignments.
+
+    Returns full plan details including every rotation assignment
+    (resident, block, rotation).
+
+    Args:
+        plan_id: UUID of the plan to retrieve
+
+    Returns:
+        GetPlanResult with full plan details
+
+    Example:
+        result = await get_annual_plan_tool(plan_id="abc-123")
+        if result.success:
+            for a in result.plan.assignments:
+                print(f"Block {a.block_number}: {a.person_id} → {a.rotation_name}")
+    """
+    return await get_annual_plan(plan_id=plan_id)
+
+
+@mcp.tool()
+async def optimize_annual_plan_tool(
+    plan_id: str,
+    solver_time_limit: float | None = None,
+) -> OptimizeResult:
+    """
+    Run the CP-SAT optimizer on an annual rotation plan.
+
+    Loads residents from the database, solves rotation assignments using
+    constraint programming, and saves results. The solver maximizes
+    leave preference satisfaction while respecting rotation requirements,
+    capacity limits, and sequencing rules.
+
+    Can take up to 300 seconds for large plans.
+
+    Args:
+        plan_id: UUID of the plan to optimize
+        solver_time_limit: Override solver time limit in seconds (optional)
+
+    Returns:
+        OptimizeResult with solver status and assignment counts
+
+    Example:
+        result = await optimize_annual_plan_tool(
+            plan_id="abc-123",
+            solver_time_limit=60.0
+        )
+        if result.success:
+            print(f"Solver: {result.solver_status}")
+            print(f"Leave satisfied: {result.leave_satisfied}/{result.leave_total}")
+    """
+    return await optimize_annual_plan(
+        plan_id=plan_id,
+        solver_time_limit=solver_time_limit,
+    )
+
+
+@mcp.tool()
+async def publish_annual_plan_tool(plan_id: str) -> PublishResult:
+    """
+    Publish an annual plan's assignments to block_assignments.
+
+    Writes the optimized rotation assignments into the operational
+    schedule tables. Only optimized plans can be published. This is
+    a one-way operation — published plans cannot be unpublished.
+
+    Args:
+        plan_id: UUID of the plan to publish
+
+    Returns:
+        PublishResult with published plan details
+
+    Example:
+        result = await publish_annual_plan_tool(plan_id="abc-123")
+        if result.success:
+            print(f"Published! Status: {result.plan.status}")
+    """
+    return await publish_annual_plan(plan_id=plan_id)
+
+
+# =============================================================================
+# Constraint Management Tools
+# =============================================================================
+
+
+@mcp.tool()
+async def list_constraints_tool(
+    filter: str = "all",
+) -> ListConstraintsResult:
+    """
+    List scheduling constraints with optional filter.
+
+    Returns all constraints with their enabled/disabled status, priority,
+    weight, and category. Use the filter to see only enabled or disabled.
+
+    Args:
+        filter: "all" (default), "enabled", or "disabled"
+
+    Returns:
+        ListConstraintsResult with constraint list and counts
+
+    Example:
+        result = await list_constraints_tool(filter="disabled")
+        print(f"Disabled: {result.disabled_count}")
+        for c in result.constraints:
+            print(f"  {c.name}: {c.disable_reason}")
+    """
+    return await list_constraints(filter=filter)
+
+
+@mcp.tool()
+async def get_constraint_tool(name: str) -> GetConstraintResult:
+    """
+    Get details of a specific scheduling constraint.
+
+    Returns full constraint information including priority, weight,
+    category, dependencies, and enable/disable conditions.
+
+    Args:
+        name: Constraint name (e.g. "OvernightCallGeneration")
+
+    Returns:
+        GetConstraintResult with constraint details
+
+    Example:
+        result = await get_constraint_tool(name="CallEquityConstraint")
+        if result.success:
+            print(f"Weight: {result.constraint.weight}")
+            print(f"Category: {result.constraint.category}")
+    """
+    return await get_constraint(name=name)
+
+
+@mcp.tool()
+async def list_constraints_by_category_tool(
+    category: str,
+) -> ListConstraintsResult:
+    """
+    List constraints in a specific category.
+
+    Categories: ACGME, CAPACITY, COVERAGE, CALL, EQUITY,
+    PREFERENCE, SCHEDULING, FACULTY, CUSTOM.
+
+    Args:
+        category: Category name (case-insensitive)
+
+    Returns:
+        ListConstraintsResult with constraints in the category
+
+    Example:
+        result = await list_constraints_by_category_tool(category="CALL")
+        for c in result.constraints:
+            print(f"{c.name}: {'ON' if c.enabled else 'OFF'}")
+    """
+    return await list_constraints_by_category(category=category)
+
+
+@mcp.tool()
+async def toggle_constraint_tool(
+    name: str,
+    enabled: bool,
+) -> ToggleConstraintResult:
+    """
+    Enable or disable a scheduling constraint.
+
+    Changes take effect on the next schedule generation run.
+    Requires admin privileges on the backend.
+
+    Args:
+        name: Constraint name
+        enabled: True to enable, False to disable
+
+    Returns:
+        ToggleConstraintResult with updated constraint state
+
+    Example:
+        # Disable a constraint
+        result = await toggle_constraint_tool(
+            name="ResidentWeeklyClinic",
+            enabled=False
+        )
+        print(result.message)
+    """
+    return await toggle_constraint(name=name, enabled=enabled)
+
+
+@mcp.tool()
+async def apply_constraint_preset_tool(
+    preset: str,
+) -> ApplyPresetResult:
+    """
+    Apply a constraint preset configuration.
+
+    Presets configure multiple constraints at once for common scenarios:
+    - minimal: Only essential constraints
+    - strict: All constraints enabled with doubled weights
+    - resilience_tier1: Core resilience constraints
+    - resilience_tier2: All resilience constraints
+    - call_scheduling: Call scheduling constraints
+    - sports_medicine: Sports medicine constraints
+
+    Args:
+        preset: Preset name
+
+    Returns:
+        ApplyPresetResult with enabled/disabled constraint lists
+
+    Example:
+        result = await apply_constraint_preset_tool(preset="strict")
+        print(f"Enabled: {len(result.enabled_constraints)}")
+    """
+    return await apply_constraint_preset(preset=preset)
+
+
+# =============================================================================
+# Excel Export Tools
+# =============================================================================
+
+
+@mcp.tool()
+async def export_block_xlsx_tool(
+    start_date: str,
+    end_date: str,
+    block_number: int | None = None,
+    include_qa_sheet: bool = True,
+    include_overrides: bool = True,
+) -> ExcelExportResult:
+    """
+    Export a block schedule as Excel (.xlsx) file.
+
+    Generates an Excel file in the canonical Block Template2 format,
+    populated from half_day_assignments. Saves to the exports directory
+    (configurable via EXCEL_EXPORT_DIR env var).
+
+    Args:
+        start_date: Block start date (YYYY-MM-DD)
+        end_date: Block end date (YYYY-MM-DD)
+        block_number: Block number for header (auto-calculated if omitted)
+        include_qa_sheet: Include QA validation sheet (default True)
+        include_overrides: Include override assignments (default True)
+
+    Returns:
+        ExcelExportResult with file path and size
+
+    Example:
+        result = await export_block_xlsx_tool(
+            start_date="2026-05-07",
+            end_date="2026-06-03"
+        )
+        if result.success:
+            print(f"Saved: {result.file_path} ({result.file_size_bytes} bytes)")
+    """
+    return await export_block_xlsx(
+        start_date=start_date,
+        end_date=end_date,
+        block_number=block_number,
+        include_qa_sheet=include_qa_sheet,
+        include_overrides=include_overrides,
+    )
+
+
+@mcp.tool()
+async def export_year_xlsx_tool(
+    academic_year: int,
+    include_overrides: bool = True,
+) -> ExcelExportResult:
+    """
+    Export all blocks for an academic year as a single Excel (.xlsx) file.
+
+    Generates a multi-sheet workbook with blocks 0-13 in the canonical
+    Block Template2 format. Saves to the exports directory.
+
+    Args:
+        academic_year: Academic year (e.g. 2025 for AY 25-26)
+        include_overrides: Include override assignments (default True)
+
+    Returns:
+        ExcelExportResult with file path and size
+
+    Example:
+        result = await export_year_xlsx_tool(academic_year=2025)
+        if result.success:
+            print(f"Saved: {result.file_path}")
+    """
+    return await export_year_xlsx(
+        academic_year=academic_year,
+        include_overrides=include_overrides,
+    )
 
 
 # Resilience Framework Tools
