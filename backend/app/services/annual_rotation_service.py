@@ -17,6 +17,7 @@ from sqlalchemy.orm import selectinload
 from app.models.annual_rotation import AnnualRotationAssignment, AnnualRotationPlan
 from app.models.block_assignment import BlockAssignment
 from app.models.person import Person
+from app.models.rotation_template import RotationTemplate
 from app.scheduling.annual.context import AnnualContext, ResidentInfo
 from app.scheduling.annual.pgy_config import FIXED_ASSIGNMENTS
 from app.scheduling.annual.solver import SolverResult, solve
@@ -240,6 +241,34 @@ async def publish_plan(plan_id: UUID, db: AsyncSession) -> AnnualRotationPlan:
             detail="Plan has no assignments to publish",
         )
 
+    # Build rotation name → template ID lookup
+    rotation_names = {a.rotation_name for a in plan.assignments}
+    template_stmt = select(RotationTemplate).where(
+        RotationTemplate.name.in_(rotation_names)
+    )
+    template_result = await db.execute(template_stmt)
+    template_map: dict[str, UUID] = {
+        t.name: t.id for t in template_result.scalars().all()
+    }
+
+    unmapped = rotation_names - set(template_map.keys())
+    if unmapped:
+        logger.warning(
+            "ARO: no RotationTemplate found for rotation names: %s", unmapped
+        )
+
+    # Delete existing block_assignments for this AY + these residents
+    # to avoid IntegrityError on the unique constraint
+    person_ids = {a.person_id for a in plan.assignments}
+    existing_stmt = select(BlockAssignment).where(
+        BlockAssignment.academic_year == plan.academic_year,
+        BlockAssignment.resident_id.in_(person_ids),
+    )
+    existing_result = await db.execute(existing_stmt)
+    for existing in existing_result.scalars().all():
+        await db.delete(existing)
+    await db.flush()
+
     # Write to block_assignments
     for assignment in plan.assignments:
         db.add(
@@ -247,7 +276,7 @@ async def publish_plan(plan_id: UUID, db: AsyncSession) -> AnnualRotationPlan:
                 block_number=assignment.block_number,
                 academic_year=plan.academic_year,
                 resident_id=assignment.person_id,
-                rotation_template_id=None,  # ARO uses rotation_name, not template ID
+                rotation_template_id=template_map.get(assignment.rotation_name),
                 assignment_reason="balanced",
                 notes=f"ARO plan: {plan.name}",
                 created_by="annual_rotation_optimizer",
