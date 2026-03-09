@@ -30,7 +30,7 @@ Resources provide read-only access to scheduling data:
 
 ## Available Tools
 
-The MCP server exposes **97+ tools** organized into functional categories.
+The MCP server exposes **49 tools** organized into functional categories.
 
 ### Core Scheduling Tools
 

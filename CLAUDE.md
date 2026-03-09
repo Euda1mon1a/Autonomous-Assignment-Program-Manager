@@ -33,7 +33,7 @@
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Next.js | 14.2.35 | App Router |
+| Next.js | 15.5.12 | App Router |
 | React | 18.2.0 | UI |
 | TypeScript | 5.0+ | Type safety |
 | TailwindCSS | 3.4.1 | Styling |
@@ -41,7 +41,7 @@
 
 ### Infrastructure
 
-Native macOS (Apple Silicon/MLX primary), Docker Compose (compatibility), MCP Server (97+ AI tools), Prometheus, Grafana
+Native macOS (Apple Silicon/MLX primary), Docker Compose (compatibility), MCP Server (49 AI tools), Prometheus, Grafana
 
 ### AI Models (Claude 4.5/4.6 — February 2026)
 
@@ -430,7 +430,7 @@ Examples of things to report:
 
 ### Resources Available
 
-**Tools:** 97+ MCP tools via `mcp__*` prefix. Key domains: scheduling, validation, resilience, RAG search.
+**Tools:** 49 MCP tools via `mcp__*` prefix. Key domains: scheduling, validation, resilience, RAG search.
 **Hazards:** Run `rag_search('common pitfalls')` before novel approaches. Known issues: CCW token bugs, import removal, docker volume masking.
 **Codebase:** `backend/app/` (FastAPI), `frontend/src/` (Next.js), `mcp-server/` (MCP tools).
 

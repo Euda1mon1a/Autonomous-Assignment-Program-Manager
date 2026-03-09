@@ -9,7 +9,7 @@ The Residency Scheduler is a full-stack application for medical residency schedu
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Client Layer                             │
-│                   Next.js 14 (React 18)                          │
+│                   Next.js 15 (React 18)                          │
 └─────────────────────────────────────────────────────────────────┘
                              │
                              ▼
@@ -57,10 +57,10 @@ The Residency Scheduler is a full-stack application for medical residency schedu
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | Python | 3.11+ | Core language |
-| FastAPI | 0.109.0 | Web framework |
-| SQLAlchemy | 2.0.25 | ORM (async) |
-| Pydantic | 2.5.3 | Validation |
-| Alembic | 1.13.1 | Migrations |
+| FastAPI | 0.128.0 | Web framework |
+| SQLAlchemy | 2.0.45 | ORM (async) |
+| Pydantic | 2.12.5 | Validation |
+| Alembic | 1.17.2 | Migrations |
 | PostgreSQL | 15 | Database |
 | Redis | Latest | Cache/broker |
 | Celery | 5.x | Background tasks |
@@ -69,11 +69,11 @@ The Residency Scheduler is a full-stack application for medical residency schedu
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Next.js | 14.0.4 | App Router |
+| Next.js | 15.5.12 | App Router |
 | React | 18.2.0 | UI library |
 | TypeScript | 5.0+ | Type safety |
-| TailwindCSS | 3.3.0 | Styling |
-| TanStack Query | 5.17.0 | Data fetching |
+| TailwindCSS | 3.4.1 | Styling |
+| TanStack Query | 5.90.14 | Data fetching |
 
 ## Layered Architecture
 
@@ -134,7 +134,7 @@ Route → Controller → Service → Repository → Model
 │   │   ├── features/       # Feature modules
 │   │   └── lib/            # Utilities
 │   └── tests/
-├── mcp-server/             # MCP tools server (34+ tools)
+├── mcp-server/             # MCP tools server (49 tools)
 ├── docs/                   # Human documentation
 └── .claude/                # AI agent infrastructure
 ```
@@ -222,7 +222,7 @@ The scheduling engine uses a two-solver pipeline:
 
 ## MCP Integration
 
-The MCP (Model Context Protocol) server provides 50+ AI tools:
+The MCP (Model Context Protocol) server provides 49 AI tools:
 - Schedule validation and generation
 - ACGME compliance checking
 - Resilience analysis (defense levels, burnout detection)
