@@ -509,6 +509,7 @@ class CanonicalScheduleExportService:
                     row.append(day.get("am"))
                     row.append(day.get("pm"))
                 rows.append(row)
+        rows.sort()  # Deterministic ordering for stable checksums
         return rows
 
     # Faculty excluded from export (placeholders and removed staff)
