@@ -15,12 +15,34 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.models.activity import Activity
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
 
 
 class TestPutWeeklyPatterns:
     """Tests for PUT /rotation-templates/{template_id}/patterns."""
+
+    @pytest.fixture
+    def sample_activities(self, db: Session) -> dict[str, Activity]:
+        """Create sample activities required by WeeklyPattern FK."""
+        activities = {}
+        for code, name, category in [
+            ("fm_clinic", "FM Clinic", "clinical"),
+            ("specialty", "Specialty", "clinical"),
+            ("off", "Day Off", "time_off"),
+            ("conference", "Conference", "educational"),
+        ]:
+            activity = Activity(
+                id=uuid4(),
+                name=name,
+                code=code,
+                activity_category=category,
+            )
+            db.add(activity)
+            activities[code] = activity
+        db.commit()
+        return activities
 
     @pytest.fixture
     def sample_template(self, db: Session) -> RotationTemplate:
@@ -38,10 +60,11 @@ class TestPutWeeklyPatterns:
 
     @pytest.fixture
     def existing_patterns(
-        self, db: Session, sample_template: RotationTemplate
+        self, db: Session, sample_template: RotationTemplate, sample_activities: dict
     ) -> list[WeeklyPattern]:
         """Create existing patterns that will be replaced."""
         now = datetime.utcnow()
+        off_activity = sample_activities["off"]
         patterns = [
             WeeklyPattern(
                 id=uuid4(),
@@ -49,6 +72,7 @@ class TestPutWeeklyPatterns:
                 day_of_week=0,  # Sunday
                 time_of_day="AM",
                 activity_type="off",
+                activity_id=off_activity.id,
                 is_protected=False,
                 created_at=now,
                 updated_at=now,
@@ -65,6 +89,7 @@ class TestPutWeeklyPatterns:
         auth_headers: dict,
         sample_template: RotationTemplate,
         existing_patterns: list[WeeklyPattern],
+        sample_activities: dict,
     ):
         """Test successful atomic replacement of patterns."""
         new_patterns = {
@@ -92,7 +117,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=new_patterns,
         )
@@ -115,10 +140,11 @@ class TestPutWeeklyPatterns:
         auth_headers: dict,
         sample_template: RotationTemplate,
         existing_patterns: list[WeeklyPattern],
+        sample_activities: dict,
     ):
         """Test that empty patterns list clears all existing patterns."""
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json={"patterns": []},
         )
@@ -129,7 +155,7 @@ class TestPutWeeklyPatterns:
 
         # Verify patterns are actually deleted
         get_response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
         assert get_response.status_code == 200
@@ -140,6 +166,7 @@ class TestPutWeeklyPatterns:
         client: TestClient,
         auth_headers: dict,
         sample_template: RotationTemplate,
+        sample_activities: dict,
     ):
         """Test that maximum 14 patterns (7 days x 2 times) are allowed."""
         # Create full 14-slot grid
@@ -156,7 +183,7 @@ class TestPutWeeklyPatterns:
                 )
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json={"patterns": patterns},
         )
@@ -184,7 +211,7 @@ class TestPutWeeklyPatterns:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json={"patterns": patterns},
         )
@@ -197,6 +224,7 @@ class TestPutWeeklyPatterns:
         client: TestClient,
         auth_headers: dict,
         sample_template: RotationTemplate,
+        sample_activities: dict,
     ):
         """Test that duplicate day/time slots fail validation."""
         patterns = {
@@ -217,7 +245,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -225,7 +253,8 @@ class TestPutWeeklyPatterns:
         assert response.status_code == 400
         error = response.json()
         assert "detail" in error
-        assert "duplicate" in error["detail"].lower()
+        # Route catches ValueError and returns generic "Invalid request"
+        assert error["detail"] == "Invalid request"
 
     def test_replace_patterns_invalid_day_fails(
         self,
@@ -246,7 +275,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -272,7 +301,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -296,7 +325,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{fake_id}/patterns",
+            f"/api/v1/rotation-templates/{fake_id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -304,14 +333,15 @@ class TestPutWeeklyPatterns:
         assert response.status_code == 400  # Service raises ValueError -> 400
         error = response.json()
         assert "detail" in error
-        assert "not found" in error["detail"].lower()
+        # Route catches ValueError and returns generic "Invalid request"
+        assert error["detail"] == "Invalid request"
 
     def test_replace_patterns_unauthorized(
         self, client: TestClient, sample_template: RotationTemplate
     ):
         """Test 401 for unauthenticated request."""
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             json={"patterns": []},
         )
 
@@ -323,13 +353,14 @@ class TestPutWeeklyPatterns:
         auth_headers: dict,
         db: Session,
         sample_template: RotationTemplate,
+        sample_activities: dict,
     ):
         """Test patterns can reference linked templates."""
         # Create template to link to
         linked_template = RotationTemplate(
             id=uuid4(),
             name="Specialty Template",
-            activity_type="specialty",
+            rotation_type="outpatient",
             created_at=datetime.utcnow(),
         )
         db.add(linked_template)
@@ -348,7 +379,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -363,6 +394,7 @@ class TestPutWeeklyPatterns:
         client: TestClient,
         auth_headers: dict,
         sample_template: RotationTemplate,
+        sample_activities: dict,
     ):
         """Test patterns can include notes."""
         patterns = {
@@ -378,7 +410,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -395,6 +427,7 @@ class TestPutWeeklyPatterns:
         auth_headers: dict,
         sample_template: RotationTemplate,
         existing_patterns: list[WeeklyPattern],
+        sample_activities: dict,
         db: Session,
     ):
         """Test that on validation error, existing patterns are not deleted."""
@@ -417,7 +450,7 @@ class TestPutWeeklyPatterns:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
             json=patterns,
         )
@@ -426,7 +459,7 @@ class TestPutWeeklyPatterns:
 
         # Verify existing patterns still exist
         get_response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
         assert get_response.status_code == 200

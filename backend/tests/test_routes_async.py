@@ -68,7 +68,7 @@ class TestAsyncRouteMigration:
         # Create multiple concurrent requests
         tasks = []
         for i in range(10):
-            task = async_client.get("/api/health")
+            task = async_client.get("/api/v1/health")
             tasks.append(task)
 
         # Execute concurrently
@@ -176,13 +176,13 @@ class TestCriticalRoutesAsync:
     async def test_swap_routes_async(self, async_client: AsyncClient, auth_headers):
         """Verify swap routes are async and handle concurrent requests."""
         # This would be a more detailed test in practice
-        response = await async_client.get("/api/swaps/history", headers=auth_headers)
+        response = await async_client.get("/api/v1/swaps/history", headers=auth_headers)
         assert response.status_code in [200, 401, 404]
 
     @pytest.mark.asyncio
     async def test_schedule_routes_async(self, async_client: AsyncClient, auth_headers):
         """Verify schedule routes are async."""
-        response = await async_client.get("/api/schedule", headers=auth_headers)
+        response = await async_client.get("/api/v1/schedule", headers=auth_headers)
         assert response.status_code in [200, 401, 404]
 
     @pytest.mark.asyncio
@@ -190,7 +190,7 @@ class TestCriticalRoutesAsync:
         self, async_client: AsyncClient, auth_headers
     ):
         """Verify assignment routes are async."""
-        response = await async_client.get("/api/assignments", headers=auth_headers)
+        response = await async_client.get("/api/v1/assignments", headers=auth_headers)
         assert response.status_code in [200, 401, 404]
 
 

@@ -28,6 +28,24 @@ from app.scheduling.constraints.base import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _allow_abstract_instantiation():
+    """Temporarily allow instantiation of abstract HardConstraint/SoftConstraint.
+
+    The ConstraintBuilder.build() intentionally instantiates these ABCs
+    (with ``# type: ignore[abstract]``).  Python 3.11+ enforces the ABC
+    contract at runtime, so we must remove the abstract-methods set for tests
+    that exercise the builder path.
+    """
+    hard_abs = HardConstraint.__abstractmethods__
+    soft_abs = SoftConstraint.__abstractmethods__
+    HardConstraint.__abstractmethods__ = frozenset()
+    SoftConstraint.__abstractmethods__ = frozenset()
+    yield
+    HardConstraint.__abstractmethods__ = hard_abs
+    SoftConstraint.__abstractmethods__ = soft_abs
+
+
 class TestConstraintBuilder:
     """Tests for fluent ConstraintBuilder."""
 
@@ -198,7 +216,7 @@ class TestCompositeConstraintBuilder:
             .enabled(False)
         )
 
-        assert builder.enabled is False
+        assert builder._enabled is False
         assert len(builder.constraints) == 2
 
 

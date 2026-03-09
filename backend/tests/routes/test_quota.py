@@ -49,7 +49,8 @@ def client_with_mock_quota(db, mock_redis_client, mock_quota_manager):
     with TestClient(app) as test_client:
         yield test_client
 
-    app.dependency_overrides.clear()
+    app.dependency_overrides.pop(get_redis_client, None)
+    app.dependency_overrides.pop(get_quota_manager, None)
 
 
 class TestQuotaRoutes:
@@ -61,22 +62,22 @@ class TestQuotaRoutes:
 
     def test_quota_status_requires_auth(self, client: TestClient):
         """Test that quota status endpoint requires authentication."""
-        response = client.get("/api/quota/status")
+        response = client.get("/api/v1/quota/status")
         assert response.status_code == 401
 
     def test_quota_alerts_requires_auth(self, client: TestClient):
         """Test that quota alerts endpoint requires authentication."""
-        response = client.get("/api/quota/alerts")
+        response = client.get("/api/v1/quota/alerts")
         assert response.status_code == 401
 
     def test_quota_report_requires_auth(self, client: TestClient):
         """Test that quota report endpoint requires authentication."""
-        response = client.get("/api/quota/report")
+        response = client.get("/api/v1/quota/report")
         assert response.status_code == 401
 
     def test_quota_policies_requires_auth(self, client: TestClient):
         """Test that quota policies endpoint requires authentication."""
-        response = client.get("/api/quota/policies")
+        response = client.get("/api/v1/quota/policies")
         assert response.status_code == 401
 
     # ========================================================================
@@ -101,7 +102,7 @@ class TestQuotaRoutes:
     ):
         """Test that resetting quota requires admin role."""
         response = client.post(
-            "/api/quota/reset",
+            "/api/v1/quota/reset",
             json={
                 "user_id": str(uuid4()),
                 "resource_type": "api",
@@ -140,7 +141,9 @@ class TestQuotaRoutes:
             },
         }
 
-        response = client_with_mock_quota.get("/api/quota/status", headers=auth_headers)
+        response = client_with_mock_quota.get(
+            "/api/v1/quota/status", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -157,7 +160,9 @@ class TestQuotaRoutes:
         """Test quota status error handling."""
         mock_quota_manager.get_usage_summary.side_effect = Exception("Redis error")
 
-        response = client_with_mock_quota.get("/api/quota/status", headers=auth_headers)
+        response = client_with_mock_quota.get(
+            "/api/v1/quota/status", headers=auth_headers
+        )
         assert response.status_code == 500
         assert "quota status" in response.json()["detail"].lower()
 
@@ -183,7 +188,9 @@ class TestQuotaRoutes:
             }
         ]
 
-        response = client_with_mock_quota.get("/api/quota/alerts", headers=auth_headers)
+        response = client_with_mock_quota.get(
+            "/api/v1/quota/alerts", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -200,7 +207,9 @@ class TestQuotaRoutes:
         """Test empty alerts response."""
         mock_quota_manager.get_alerts.return_value = []
 
-        response = client_with_mock_quota.get("/api/quota/alerts", headers=auth_headers)
+        response = client_with_mock_quota.get(
+            "/api/v1/quota/alerts", headers=auth_headers
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -232,7 +241,7 @@ class TestQuotaRoutes:
         }
 
         response = client_with_mock_quota.get(
-            "/api/quota/report?period=daily", headers=auth_headers
+            "/api/v1/quota/report?period=daily", headers=auth_headers
         )
         assert response.status_code == 200
 
@@ -264,7 +273,7 @@ class TestQuotaRoutes:
         }
 
         response = client_with_mock_quota.get(
-            "/api/quota/report?period=monthly", headers=auth_headers
+            "/api/v1/quota/report?period=monthly", headers=auth_headers
         )
         assert response.status_code == 200
 
@@ -277,7 +286,9 @@ class TestQuotaRoutes:
         auth_headers: dict,
     ):
         """Test quota report with invalid period."""
-        response = client.get("/api/quota/report?period=weekly", headers=auth_headers)
+        response = client.get(
+            "/api/v1/quota/report?period=weekly", headers=auth_headers
+        )
         assert response.status_code == 400
         assert "daily" in response.json()["detail"].lower()
         assert "monthly" in response.json()["detail"].lower()
@@ -292,7 +303,7 @@ class TestQuotaRoutes:
         auth_headers: dict,
     ):
         """Test successful quota policies retrieval."""
-        response = client.get("/api/quota/policies", headers=auth_headers)
+        response = client.get("/api/v1/quota/policies", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -312,7 +323,7 @@ class TestQuotaRoutes:
         auth_headers: dict,
     ):
         """Test quota policies response format."""
-        response = client.get("/api/quota/policies", headers=auth_headers)
+        response = client.get("/api/v1/quota/policies", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -342,7 +353,7 @@ class TestQuotaRoutes:
 
         user_id = str(uuid4())
         response = client_with_mock_quota.post(
-            "/api/quota/custom",
+            "/api/v1/quota/custom",
             headers=auth_headers,
             json={
                 "user_id": user_id,
@@ -378,7 +389,7 @@ class TestQuotaRoutes:
         mock_quota_manager.set_custom_policy.return_value = False
 
         response = client_with_mock_quota.post(
-            "/api/quota/custom",
+            "/api/v1/quota/custom",
             headers=auth_headers,
             json={
                 "user_id": str(uuid4()),
@@ -413,7 +424,7 @@ class TestQuotaRoutes:
 
         user_id = str(uuid4())
         response = client_with_mock_quota.delete(
-            f"/api/quota/custom/{user_id}",
+            f"/api/v1/quota/custom/{user_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -437,7 +448,7 @@ class TestQuotaRoutes:
 
         user_id = str(uuid4())
         response = client_with_mock_quota.post(
-            "/api/quota/reset",
+            "/api/v1/quota/reset",
             headers=auth_headers,
             json={
                 "user_id": user_id,
@@ -467,7 +478,7 @@ class TestQuotaRoutes:
 
         user_id = str(uuid4())
         response = client_with_mock_quota.post(
-            "/api/quota/record",
+            "/api/v1/quota/record",
             headers=auth_headers,
             json={
                 "user_id": user_id,
@@ -507,8 +518,8 @@ class TestQuotaRoutes:
         app.dependency_overrides[get_redis_client] = raise_redis_error
 
         with TestClient(app) as test_client:
-            response = test_client.get("/api/quota/status", headers=auth_headers)
+            response = test_client.get("/api/v1/quota/status", headers=auth_headers)
             assert response.status_code == 503
             assert "unavailable" in response.json()["detail"].lower()
 
-        app.dependency_overrides.clear()
+        app.dependency_overrides.pop(get_redis_client, None)

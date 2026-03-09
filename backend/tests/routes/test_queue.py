@@ -9,7 +9,7 @@ Tests the async task queue system including:
 - Scheduled and periodic tasks
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
@@ -29,7 +29,7 @@ class TestQueueRoutes:
     def test_submit_task_requires_auth(self, client: TestClient):
         """Test that task submission requires authentication."""
         response = client.post(
-            "/api/queue/tasks/submit",
+            "/api/v1/queue/tasks/submit",
             json={
                 "task_name": "app.tasks.process",
                 "args": [1, 2],
@@ -39,25 +39,25 @@ class TestQueueRoutes:
 
     def test_get_task_status_requires_auth(self, client: TestClient):
         """Test that task status requires authentication."""
-        response = client.get(f"/api/queue/tasks/{uuid4()}/status")
+        response = client.get(f"/api/v1/queue/tasks/{uuid4()}/status")
         assert response.status_code == 401
 
     def test_cancel_task_requires_auth(self, client: TestClient):
         """Test that task cancellation requires authentication."""
         response = client.post(
-            "/api/queue/tasks/cancel",
+            "/api/v1/queue/tasks/cancel",
             json={"task_id": str(uuid4())},
         )
         assert response.status_code == 401
 
     def test_queue_stats_requires_auth(self, client: TestClient):
         """Test that queue stats requires authentication."""
-        response = client.get("/api/queue/queues/stats")
+        response = client.get("/api/v1/queue/queues/stats")
         assert response.status_code == 401
 
     def test_worker_health_requires_auth(self, client: TestClient):
         """Test that worker health requires authentication."""
-        response = client.get("/api/queue/workers/health")
+        response = client.get("/api/v1/queue/workers/health")
         assert response.status_code == 401
 
     # ========================================================================
@@ -78,7 +78,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/submit",
+            "/api/v1/queue/tasks/submit",
             headers=auth_headers,
             json={
                 "task_name": "app.tasks.process_data",
@@ -90,7 +90,7 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["task_id"] == task_id
+        assert data["taskId"] == task_id
         assert data["status"] == "submitted"
 
     @patch("app.api.routes.queue.QueueManager")
@@ -107,7 +107,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/submit",
+            "/api/v1/queue/tasks/submit",
             headers=auth_headers,
             json={
                 "task_name": "app.tasks.delayed_task",
@@ -131,12 +131,12 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/submit-chain",
+            "/api/v1/queue/tasks/submit-chain",
             headers=auth_headers,
             json={
                 "tasks": [
-                    {"taskName": "task1", "args": [1], "kwargs": {}},
-                    {"taskName": "task2", "args": [], "kwargs": {}},
+                    {"taskName": "app.tasks.step1", "args": [1], "kwargs": {}},
+                    {"taskName": "app.tasks.step2", "args": [], "kwargs": {}},
                 ],
                 "priority": 5,
             },
@@ -144,7 +144,7 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["task_name"] == "chain"
+        assert data["taskName"] == "chain"
         assert "2 tasks" in data["message"]
 
     @patch("app.api.routes.queue.QueueManager")
@@ -161,12 +161,12 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/submit-group",
+            "/api/v1/queue/tasks/submit-group",
             headers=auth_headers,
             json={
                 "tasks": [
-                    {"taskName": "parallel1", "args": [1]},
-                    {"taskName": "parallel2", "args": [2]},
+                    {"taskName": "app.tasks.parallel1", "args": [1]},
+                    {"taskName": "app.tasks.parallel2", "args": [2]},
                 ],
                 "priority": 5,
             },
@@ -174,7 +174,7 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["task_name"] == "group"
+        assert data["taskName"] == "group"
 
     @patch("app.api.routes.queue.QueueManager")
     def test_submit_task_with_dependencies(
@@ -190,10 +190,10 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/submit-with-dependencies",
+            "/api/v1/queue/tasks/submit-with-dependencies",
             headers=auth_headers,
             json={
-                "task_name": "aggregate_results",
+                "task_name": "app.tasks.aggregate_results",
                 "dependencies": ["task-id-1", "task-id-2"],
                 "priority": 7,
             },
@@ -218,18 +218,20 @@ class TestQueueRoutes:
         task_id = str(uuid4())
         mock_get_status.return_value = {
             "task_id": task_id,
-            "status": "SUCCESS",
+            "state": "SUCCESS",
+            "ready": True,
+            "successful": True,
             "result": {"data": "processed"},
         }
 
         response = client.get(
-            f"/api/queue/tasks/{task_id}/status",
+            f"/api/v1/queue/tasks/{task_id}/status",
             headers=auth_headers,
         )
         assert response.status_code == 200
 
         data = response.json()
-        assert data["task_id"] == task_id
+        assert data["taskId"] == task_id
 
     @patch("app.api.routes.queue.QueueManager")
     def test_get_task_progress_success(
@@ -244,12 +246,12 @@ class TestQueueRoutes:
         mock_manager.get_task_progress.return_value = {
             "current": 50,
             "total": 100,
-            "percent": 50.0,
+            "percentage": 50,
         }
         mock_queue_manager.return_value = mock_manager
 
         response = client.get(
-            f"/api/queue/tasks/{task_id}/progress",
+            f"/api/v1/queue/tasks/{task_id}/progress",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -272,7 +274,7 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/tasks/cancel",
+            "/api/v1/queue/tasks/cancel",
             headers=auth_headers,
             json={"task_id": task_id, "terminate": False},
         )
@@ -281,7 +283,7 @@ class TestQueueRoutes:
         data = response.json()
         assert data["success"] is True
 
-    @patch("app.api.routes.queue.retry_task")
+    @patch("app.queue.tasks.retry_task")
     def test_retry_task_success(
         self,
         mock_retry: MagicMock,
@@ -294,15 +296,15 @@ class TestQueueRoutes:
         mock_retry.return_value = new_id
 
         response = client.post(
-            "/api/queue/tasks/retry",
+            "/api/v1/queue/tasks/retry",
             headers=auth_headers,
             json={"task_id": original_id, "countdown": 60},
         )
         assert response.status_code == 200
 
         data = response.json()
-        assert data["original_task_id"] == original_id
-        assert data["new_task_id"] == new_id
+        assert data["originalTaskId"] == original_id
+        assert data["newTaskId"] == new_id
 
     # ========================================================================
     # Queue Statistics Tests
@@ -318,14 +320,15 @@ class TestQueueRoutes:
         """Test getting queue statistics."""
         mock_manager = MagicMock()
         mock_manager.get_queue_stats.return_value = {
-            "queue_length": 25,
-            "active_tasks": 5,
-            "reserved_tasks": 10,
+            "queues": {
+                "default": {"active": 5, "reserved": 10, "pending": 25},
+            },
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         mock_queue_manager.return_value = mock_manager
 
         response = client.get(
-            "/api/queue/queues/stats",
+            "/api/v1/queue/queues/stats",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -339,7 +342,7 @@ class TestQueueRoutes:
     ):
         """Test queue purge requires confirmation."""
         response = client.post(
-            "/api/queue/queues/purge",
+            "/api/v1/queue/queues/purge",
             headers=auth_headers,
             json={"queue_name": "test_queue", "confirm": False},
         )
@@ -359,14 +362,14 @@ class TestQueueRoutes:
         mock_queue_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/queues/purge",
+            "/api/v1/queue/queues/purge",
             headers=auth_headers,
             json={"queue_name": "test_queue", "confirm": True},
         )
         assert response.status_code == 200
 
         data = response.json()
-        assert data["tasks_purged"] == 15
+        assert data["tasksPurged"] == 15
 
     # ========================================================================
     # Worker Management Tests
@@ -383,13 +386,15 @@ class TestQueueRoutes:
         mock_manager = MagicMock()
         mock_manager.get_worker_health.return_value = {
             "healthy": True,
+            "workers": {"celery@worker1": {"status": "online"}},
             "total_workers": 4,
             "online_workers": 4,
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         mock_worker_manager.return_value = mock_manager
 
         response = client.get(
-            "/api/queue/workers/health",
+            "/api/v1/queue/workers/health",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -404,13 +409,14 @@ class TestQueueRoutes:
         """Test getting worker statistics."""
         mock_manager = MagicMock()
         mock_manager.get_worker_stats.return_value = {
+            "workers": {"celery@worker1": {"active": 3}},
             "total_workers": 4,
-            "active_workers": 3,
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         mock_worker_manager.return_value = mock_manager
 
         response = client.get(
-            "/api/queue/workers/stats",
+            "/api/v1/queue/workers/stats",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -428,7 +434,7 @@ class TestQueueRoutes:
         mock_worker_manager.return_value = mock_manager
 
         response = client.post(
-            "/api/queue/workers/control",
+            "/api/v1/queue/workers/control",
             headers=auth_headers,
             json={
                 "worker_name": "celery@worker1",
@@ -451,7 +457,7 @@ class TestQueueRoutes:
     ):
         """Test worker control with invalid action."""
         response = client.post(
-            "/api/queue/workers/control",
+            "/api/v1/queue/workers/control",
             headers=auth_headers,
             json={
                 "worker_name": "celery@worker1",
@@ -479,10 +485,10 @@ class TestQueueRoutes:
         mock_scheduler.return_value = mock_sched
 
         response = client.post(
-            "/api/queue/schedule/task",
+            "/api/v1/queue/schedule/task",
             headers=auth_headers,
             json={
-                "task_name": "send_reminder",
+                "task_name": "app.tasks.send_reminder",
                 "countdown": 3600,
                 "priority": 7,
             },
@@ -490,7 +496,7 @@ class TestQueueRoutes:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["task_id"] == task_id
+        assert data["taskId"] == task_id
 
     @patch("app.api.routes.queue.TaskScheduler")
     def test_add_periodic_task_success(
@@ -504,7 +510,7 @@ class TestQueueRoutes:
         mock_scheduler.return_value = mock_sched
 
         response = client.post(
-            "/api/queue/schedule/periodic",
+            "/api/v1/queue/schedule/periodic",
             headers=auth_headers,
             json={
                 "name": "daily-cleanup",
@@ -527,15 +533,16 @@ class TestQueueRoutes:
         """Test getting periodic tasks."""
         mock_sched = MagicMock()
         mock_sched.get_periodic_tasks.return_value = {
-            "tasks": [
-                {"name": "daily-cleanup", "task": "app.tasks.cleanup"},
-            ],
-            "count": 1,
+            "tasks": {
+                "daily-cleanup": {"task": "app.tasks.cleanup", "schedule": "0 2 * * *"},
+            },
+            "total_tasks": 1,
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         mock_scheduler.return_value = mock_sched
 
         response = client.get(
-            "/api/queue/schedule/periodic",
+            "/api/v1/queue/schedule/periodic",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -553,7 +560,7 @@ class TestQueueRoutes:
         mock_scheduler.return_value = mock_sched
 
         response = client.post(
-            "/api/queue/schedule/periodic/control",
+            "/api/v1/queue/schedule/periodic/control",
             headers=auth_headers,
             json={"name": "daily-cleanup", "action": "disable"},
         )

@@ -21,12 +21,26 @@ from app.scheduling.constraints.acgme import (
 )
 from app.scheduling.constraints.base import (
     ConstraintPriority,
+    ConstraintResult,
     ConstraintType,
     HardConstraint,
     SchedulingContext,
 )
 from app.scheduling.constraints.capacity import CoverageConstraint
 from app.scheduling.constraints.manager import ConstraintManager
+
+
+class _ConcreteHardConstraint(HardConstraint):
+    """Minimal concrete subclass for testing purposes."""
+
+    def add_to_cpsat(self, model, variables, context):
+        pass
+
+    def add_to_pulp(self, model, variables, context):
+        pass
+
+    def validate(self, assignments, context):
+        return ConstraintResult(satisfied=True)
 
 
 @pytest.fixture
@@ -80,7 +94,7 @@ class TestConstraintValidator:
         manager = ConstraintManager()
 
         # Create constraint without name
-        bad_constraint = HardConstraint(
+        bad_constraint = _ConcreteHardConstraint(
             name="",
             constraint_type=ConstraintType.AVAILABILITY,
         )
@@ -176,7 +190,7 @@ class TestConstraintFeasibilityChecker:
 
         # Add 25 hard constraints
         for i in range(25):
-            constraint = HardConstraint(
+            constraint = _ConcreteHardConstraint(
                 name=f"Constraint{i}",
                 constraint_type=ConstraintType.CAPACITY,
                 priority=ConstraintPriority.HIGH,

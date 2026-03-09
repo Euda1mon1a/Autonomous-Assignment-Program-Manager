@@ -81,7 +81,7 @@ class TestVersioningMiddleware:
             version = get_api_version()
             return {"version": version.value, "data": "v1"}
 
-        @test_app.get("/api/v2/test")
+        @test_app.get("/api/v1/v2/test")
         async def test_v2():
             version = get_api_version()
             return {"version": version.value, "data": "v2"}
@@ -104,7 +104,7 @@ class TestVersioningMiddleware:
         assert response.status_code == 200
         assert response.json()["version"] == "v1"
 
-        response = client.get("/api/v2/test")
+        response = client.get("/api/v1/v2/test")
         assert response.status_code == 200
         assert response.json()["version"] == "v2"
 
@@ -126,7 +126,7 @@ class TestVersioningMiddleware:
     def test_version_priority_order(self, client):
         """Test version detection priority: URL > Header > Query > Default."""
         # URL takes precedence over header
-        response = client.get("/api/v2/test", headers={"Accept-Version": "v1"})
+        response = client.get("/api/v1/v2/test", headers={"Accept-Version": "v1"})
         assert response.json()["version"] == "v2"
 
     def test_default_version(self, client):
@@ -136,7 +136,7 @@ class TestVersioningMiddleware:
 
     def test_version_headers_added_to_response(self, client):
         """Test that version headers are added to response."""
-        response = client.get("/api/v2/test")
+        response = client.get("/api/v1/v2/test")
         assert "X-API-Version" in response.headers
         assert response.headers["X-API-Version"] == "v2"
         assert "X-API-Latest-Version" in response.headers
@@ -157,18 +157,18 @@ class TestDeprecationManager:
             version="v1",
             status=VersionStatus.DEPRECATED,
             sunset_date=datetime(2025, 12, 31),
-            replacement="/api/v2/new",
+            replacement="/api/v1/v2/new",
             message="Use v2 endpoint",
         )
 
         assert deprecation_mgr.is_deprecated("/api/v1/old")
         warning = deprecation_mgr.get_deprecation("/api/v1/old")
         assert warning is not None
-        assert warning.replacement == "/api/v2/new"
+        assert warning.replacement == "/api/v1/v2/new"
 
     def test_is_deprecated(self, deprecation_mgr):
         """Test checking if endpoint is deprecated."""
-        assert not deprecation_mgr.is_deprecated("/api/v2/new")
+        assert not deprecation_mgr.is_deprecated("/api/v1/v2/new")
 
         deprecation_mgr.register_deprecation(
             endpoint="/api/v1/old",
@@ -217,7 +217,7 @@ class TestDeprecationManager:
             version="v1",
             status=VersionStatus.DEPRECATED,
             sunset_date=datetime(2025, 12, 31),
-            replacement="/api/v2/test",
+            replacement="/api/v1/v2/test",
         )
 
         warning = deprecation_mgr.get_deprecation("/api/v1/test")
@@ -225,7 +225,7 @@ class TestDeprecationManager:
 
         assert 'version="v1"' in header_value
         assert 'sunset="2025-12-31' in header_value
-        assert 'replacement="/api/v2/test"' in header_value
+        assert 'replacement="/api/v1/v2/test"' in header_value
 
     def test_version_status(self, deprecation_mgr):
         """Test version status management."""
@@ -267,7 +267,7 @@ class TestVersionedAPIRouter:
         )
 
         v2_router = VersionedAPIRouter(
-            prefix="/api/v2",
+            prefix="/api/v1/v2",
             min_version=APIVersion.V2,
         )
 
@@ -295,7 +295,7 @@ class TestVersionedAPIRouter:
         assert v1_response.status_code == 200
         assert v1_response.json()["format"] == "v1"
 
-        v2_response = client.get("/api/v2/users")
+        v2_response = client.get("/api/v1/v2/users")
         assert v2_response.status_code == 200
         assert v2_response.json()["format"] == "v2"
 
@@ -303,7 +303,7 @@ class TestVersionedAPIRouter:
         """Test that version requirements are enforced."""
         # Try to access v2 endpoint with v3 version
         # This should work since no max_version set
-        response = client.get("/api/v2/users", headers={"Accept-Version": "v3"})
+        response = client.get("/api/v1/v2/users", headers={"Accept-Version": "v3"})
         assert response.status_code == 200
 
 

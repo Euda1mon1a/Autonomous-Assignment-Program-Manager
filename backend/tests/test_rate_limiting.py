@@ -341,7 +341,7 @@ class TestRateLimitingOnAuthEndpoints:
 
         for i in range(max_attempts):
             response = client.post(
-                "/api/auth/login/json",
+                "/api/v1/auth/login/json",
                 json={"username": "testuser", "password": "wrongpassword"},
             )
             # Should get 401 (unauthorized) not 429 (rate limited)
@@ -350,7 +350,7 @@ class TestRateLimitingOnAuthEndpoints:
 
         # Next request should be rate limited
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testuser", "password": "wrongpassword"},
         )
 
@@ -370,7 +370,7 @@ class TestRateLimitingOnAuthEndpoints:
         """Test that register endpoint blocks after rate limit is exceeded."""
         # Get auth headers
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testadmin", "password": "testpass123"},
         )
         token = response.json()["access_token"]
@@ -380,7 +380,7 @@ class TestRateLimitingOnAuthEndpoints:
 
         for i in range(max_attempts):
             response = client.post(
-                "/api/auth/register",
+                "/api/v1/auth/register",
                 json={
                     "username": f"newuser{i}",
                     "email": f"newuser{i}@test.com",
@@ -398,7 +398,7 @@ class TestRateLimitingOnAuthEndpoints:
 
         # Next request might be rate limited
         response = client.post(
-            "/api/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "anothernewuser",
                 "email": "another@test.com",
@@ -416,7 +416,7 @@ class TestRateLimitingOnAuthEndpoints:
         # Exhaust login limit
         for _ in range(settings.RATE_LIMIT_LOGIN_ATTEMPTS + 1):
             client.post(
-                "/api/auth/login/json",
+                "/api/v1/auth/login/json",
                 json={"username": "testuser", "password": "wrongpassword"},
             )
 
@@ -429,7 +429,7 @@ class TestRateLimitingOnAuthEndpoints:
         # Make enough requests to trigger rate limit
         for _ in range(settings.RATE_LIMIT_LOGIN_ATTEMPTS + 2):
             response = client.post(
-                "/api/auth/login/json",
+                "/api/v1/auth/login/json",
                 json={"username": "testuser", "password": "wrongpassword"},
             )
 
@@ -473,7 +473,7 @@ class TestRateLimitingEdgeCases:
             # Make many requests - none should be rate limited
             for _ in range(20):
                 response = client.post(
-                    "/api/auth/login/json",
+                    "/api/v1/auth/login/json",
                     json={"username": "testuser", "password": "wrongpassword"},
                 )
                 # Should get 401 (unauthorized) not 429 (rate limited)

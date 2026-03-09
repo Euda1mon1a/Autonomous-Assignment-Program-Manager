@@ -29,7 +29,7 @@ class TestInitializeAdminEndpoint:
         db.query(User).delete()
         db.commit()
 
-        response = client.post("/api/auth/initialize-admin")
+        response = client.post("/api/v1/auth/initialize-admin")
 
         assert response.status_code == 200
         data = response.json()
@@ -47,11 +47,11 @@ class TestInitializeAdminEndpoint:
 
     def test_initialize_admin_idempotent(self, client: TestClient, db: Session):
         """Test that initialize-admin is idempotent."""
-        response1 = client.post("/api/auth/initialize-admin")
+        response1 = client.post("/api/v1/auth/initialize-admin")
         assert response1.status_code == 200
         assert response1.json()["status"] == "created"
 
-        response2 = client.post("/api/auth/initialize-admin")
+        response2 = client.post("/api/v1/auth/initialize-admin")
         assert response2.status_code == 200
         data = response2.json()
         assert data["status"] == "already_initialized"
@@ -64,14 +64,14 @@ class TestInitializeAdminEndpoint:
         db.query(User).delete()
         db.commit()
 
-        response1 = client.post("/api/auth/initialize-admin")
+        response1 = client.post("/api/v1/auth/initialize-admin")
         pw1 = response1.json()["password"]
 
         # Reset for second call
         db.query(User).delete()
         db.commit()
 
-        response2 = client.post("/api/auth/initialize-admin")
+        response2 = client.post("/api/v1/auth/initialize-admin")
         pw2 = response2.json()["password"]
 
         assert pw1 != pw2
@@ -80,7 +80,7 @@ class TestInitializeAdminEndpoint:
         """Test that initialize-admin is forbidden when DEBUG=False."""
         with patch("app.api.routes.auth.get_settings") as mock_settings:
             mock_settings.return_value.DEBUG = False
-            response = client.post("/api/auth/initialize-admin")
+            response = client.post("/api/v1/auth/initialize-admin")
             assert response.status_code == 403
 
     def test_login_with_initialized_admin(self, client: TestClient, db: Session):
@@ -88,12 +88,12 @@ class TestInitializeAdminEndpoint:
         db.query(User).delete()
         db.commit()
 
-        init_response = client.post("/api/auth/initialize-admin")
+        init_response = client.post("/api/v1/auth/initialize-admin")
         assert init_response.status_code == 200
         generated_password = init_response.json()["password"]
 
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "admin", "password": generated_password},
         )
 
@@ -107,10 +107,10 @@ class TestInitializeAdminEndpoint:
         db.query(User).delete()
         db.commit()
 
-        client.post("/api/auth/initialize-admin")
+        client.post("/api/v1/auth/initialize-admin")
 
         login_response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "admin", "password": "wrongpassword"},
         )
 
@@ -121,7 +121,7 @@ class TestInitializeAdminEndpoint:
         # The endpoint should return generic error messages, not str(e)
         # This is tested implicitly - if the endpoint errors, we verify
         # the detail field doesn't contain exception class names
-        response = client.post("/api/auth/initialize-admin")
+        response = client.post("/api/v1/auth/initialize-admin")
         if response.status_code == 500:
             detail = response.json().get("detail", "")
             assert "Traceback" not in detail

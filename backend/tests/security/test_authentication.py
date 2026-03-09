@@ -390,7 +390,7 @@ class TestLoginEndpoint:
     def test_login_success(self, client: TestClient, test_user: User):
         """Login with valid credentials returns access token."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "logintest", "password": "testpass123"},
         )
 
@@ -402,7 +402,7 @@ class TestLoginEndpoint:
     def test_login_wrong_password(self, client: TestClient, test_user: User):
         """Login with wrong password fails."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "logintest", "password": "wrongpassword"},
         )
 
@@ -411,7 +411,7 @@ class TestLoginEndpoint:
     def test_login_nonexistent_user(self, client: TestClient):
         """Login with non-existent username fails."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "nonexistent", "password": "testpass123"},
         )
 
@@ -431,7 +431,7 @@ class TestLoginEndpoint:
         db.commit()
 
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "inactive_login", "password": "testpass123"},
         )
 
@@ -440,7 +440,7 @@ class TestLoginEndpoint:
     def test_login_missing_fields(self, client: TestClient):
         """Login with missing fields fails."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "test"},  # Missing password
         )
 
@@ -465,7 +465,7 @@ class TestLogoutEndpoint:
         db.commit()
 
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "logouttest", "password": "testpass123"},
         )
 
@@ -477,7 +477,7 @@ class TestLogoutEndpoint:
         client, token = authenticated_client
         headers = {"Authorization": f"Bearer {token}"}
 
-        response = client.post("/api/auth/logout", headers=headers)
+        response = client.post("/api/v1/auth/logout", headers=headers)
 
         # Logout should succeed (or endpoint may not exist yet)
         if response.status_code != status.HTTP_404_NOT_FOUND:
@@ -485,7 +485,7 @@ class TestLogoutEndpoint:
 
     def test_logout_without_token(self, client: TestClient):
         """Logout without token fails."""
-        response = client.post("/api/auth/logout")
+        response = client.post("/api/v1/auth/logout")
 
         # Should be unauthorized or not found
         assert response.status_code in [
@@ -512,7 +512,7 @@ class TestRateLimiting:
         # Make many failed login attempts
         for _ in range(20):
             response = client.post(
-                "/api/auth/login/json",
+                "/api/v1/auth/login/json",
                 json={"username": "test", "password": "wrong"},
             )
             # Eventually should hit rate limit (429)

@@ -11,7 +11,7 @@ class TestSitrepEndpoint:
         self, client: TestClient, auth_headers: dict
     ):
         """Test that sitrep endpoint returns valid structure."""
-        response = client.get("/api/scheduler/sitrep", headers=auth_headers)
+        response = client.get("/api/v1/scheduler/sitrep", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -31,7 +31,7 @@ class TestSitrepEndpoint:
         self, client: TestClient, auth_headers: dict
     ):
         """Test task metrics have correct structure."""
-        response = client.get("/api/scheduler/sitrep", headers=auth_headers)
+        response = client.get("/api/v1/scheduler/sitrep", headers=auth_headers)
 
         assert response.status_code == 200
         metrics = response.json()["task_metrics"]
@@ -51,7 +51,7 @@ class TestSitrepEndpoint:
 
     def test_sitrep_coverage_metrics(self, client: TestClient, auth_headers: dict):
         """Test coverage metrics have correct structure."""
-        response = client.get("/api/scheduler/sitrep", headers=auth_headers)
+        response = client.get("/api/v1/scheduler/sitrep", headers=auth_headers)
 
         assert response.status_code == 200
         coverage = response.json()["coverage_metrics"]
@@ -67,7 +67,7 @@ class TestSitrepEndpoint:
 
     def test_sitrep_requires_authentication(self, client: TestClient):
         """Test that sitrep requires authentication."""
-        response = client.get("/api/scheduler/sitrep")
+        response = client.get("/api/v1/scheduler/sitrep")
         assert response.status_code == 401
 
 
@@ -77,7 +77,7 @@ class TestFixItEndpoint:
     def test_fix_it_dry_run(self, client: TestClient, auth_headers: dict):
         """Test fix-it in dry-run mode."""
         response = client.post(
-            "/api/scheduler/fix-it",
+            "/api/v1/scheduler/fix-it",
             headers=auth_headers,
             json={
                 "mode": "balanced",
@@ -100,7 +100,7 @@ class TestFixItEndpoint:
     def test_fix_it_balanced_mode(self, client: TestClient, auth_headers: dict):
         """Test fix-it in balanced mode."""
         response = client.post(
-            "/api/scheduler/fix-it",
+            "/api/v1/scheduler/fix-it",
             headers=auth_headers,
             json={
                 "mode": "balanced",
@@ -125,7 +125,7 @@ class TestFixItEndpoint:
     def test_fix_it_greedy_mode(self, client: TestClient, auth_headers: dict):
         """Test fix-it in greedy mode with warnings."""
         response = client.post(
-            "/api/scheduler/fix-it",
+            "/api/v1/scheduler/fix-it",
             headers=auth_headers,
             json={
                 "mode": "greedy",
@@ -146,7 +146,7 @@ class TestFixItEndpoint:
     def test_fix_it_conservative_mode(self, client: TestClient, auth_headers: dict):
         """Test fix-it in conservative mode."""
         response = client.post(
-            "/api/scheduler/fix-it",
+            "/api/v1/scheduler/fix-it",
             headers=auth_headers,
             json={
                 "mode": "conservative",
@@ -166,7 +166,7 @@ class TestFixItEndpoint:
     def test_fix_it_requires_authentication(self, client: TestClient):
         """Test that fix-it requires authentication."""
         response = client.post(
-            "/api/scheduler/fix-it",
+            "/api/v1/scheduler/fix-it",
             json={
                 "mode": "balanced",
                 "max_retries": 3,
@@ -180,7 +180,7 @@ class TestFixItEndpoint:
         """Test that max_retries is validated."""
         # Too few retries
         response = client.post(
-            "/api/scheduler/fix-it",
+            "/api/v1/scheduler/fix-it",
             headers=auth_headers,
             json={
                 "mode": "balanced",
@@ -193,7 +193,7 @@ class TestFixItEndpoint:
 
         # Too many retries
         response = client.post(
-            "/api/scheduler/fix-it",
+            "/api/v1/scheduler/fix-it",
             headers=auth_headers,
             json={
                 "mode": "balanced",
@@ -211,7 +211,7 @@ class TestApproveEndpoint:
     def test_generate_approval_token(self, client: TestClient, auth_headers: dict):
         """Test generating an approval token."""
         response = client.post(
-            "/api/scheduler/approve/token/generate",
+            "/api/v1/scheduler/approve/token/generate",
             headers=auth_headers,
             json={
                 "task_ids": ["task-1", "task-2"],
@@ -234,7 +234,7 @@ class TestApproveEndpoint:
     def test_approve_with_invalid_token(self, client: TestClient, auth_headers: dict):
         """Test approval with invalid token."""
         response = client.post(
-            "/api/scheduler/approve",
+            "/api/v1/scheduler/approve",
             headers=auth_headers,
             json={
                 "token": "invalid_token_that_does_not_exist",
@@ -254,7 +254,7 @@ class TestApproveEndpoint:
         """Test approval with valid token."""
         # First generate a token
         token_response = client.post(
-            "/api/scheduler/approve/token/generate",
+            "/api/v1/scheduler/approve/token/generate",
             headers=auth_headers,
             json={
                 "task_ids": ["test-task-1"],
@@ -265,7 +265,7 @@ class TestApproveEndpoint:
 
         # Then approve with that token
         response = client.post(
-            "/api/scheduler/approve",
+            "/api/v1/scheduler/approve",
             headers=auth_headers,
             json={
                 "token": token,
@@ -287,7 +287,7 @@ class TestApproveEndpoint:
         """Test denial with valid token."""
         # First generate a token
         token_response = client.post(
-            "/api/scheduler/approve/token/generate",
+            "/api/v1/scheduler/approve/token/generate",
             headers=auth_headers,
             json={
                 "task_ids": ["test-task-2"],
@@ -298,7 +298,7 @@ class TestApproveEndpoint:
 
         # Then deny with that token
         response = client.post(
-            "/api/scheduler/approve",
+            "/api/v1/scheduler/approve",
             headers=auth_headers,
             json={
                 "token": token,
@@ -319,7 +319,7 @@ class TestApproveEndpoint:
         """Test approving a specific task from multi-task token."""
         # Generate token for multiple tasks
         token_response = client.post(
-            "/api/scheduler/approve/token/generate",
+            "/api/v1/scheduler/approve/token/generate",
             headers=auth_headers,
             json={
                 "task_ids": ["task-1", "task-2", "task-3"],
@@ -330,7 +330,7 @@ class TestApproveEndpoint:
 
         # Approve only task-2
         response = client.post(
-            "/api/scheduler/approve",
+            "/api/v1/scheduler/approve",
             headers=auth_headers,
             json={
                 "token": token,
@@ -349,7 +349,7 @@ class TestApproveEndpoint:
     def test_approve_requires_authentication(self, client: TestClient):
         """Test that approve requires authentication."""
         response = client.post(
-            "/api/scheduler/approve",
+            "/api/v1/scheduler/approve",
             json={
                 "token": "some_token",
                 "action": "approve",

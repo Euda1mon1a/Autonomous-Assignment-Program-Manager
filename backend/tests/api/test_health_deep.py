@@ -60,7 +60,7 @@ class TestDeepHealthEndpoint:
             ),
             patch("app.api.routes.health._read_backend_version", return_value="1.0.0"),
         ):
-            response = client.get("/api/health/deep")
+            response = client.get("/api/v1/health/deep")
 
         assert response.status_code == 200
         payload = response.json()

@@ -288,7 +288,7 @@ class TestDailyManifestAuthentication:
     ):
         """Test that the daily manifest endpoint requires authentication."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
         )
         assert response.status_code == 401
@@ -302,7 +302,7 @@ class TestDailyManifestAuthentication:
     ):
         """Test that authenticated users can access the daily manifest."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -330,7 +330,7 @@ class TestDailyManifestBasicFunctionality:
     ):
         """Test retrieving daily manifest for a specific date."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -354,7 +354,7 @@ class TestDailyManifestBasicFunctionality:
         # Use a date far in the future with no assignments
         future_date = date(2026, 12, 31)
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": future_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -372,7 +372,7 @@ class TestDailyManifestBasicFunctionality:
     ):
         """Test that manifest response has correct schema structure."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -432,7 +432,7 @@ class TestDailyManifestDateFiltering:
     ):
         """Test that date parameter is required."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             headers={"Authorization": f"Bearer {auth_token}"},
         )
         # FastAPI will return 422 for missing required query parameter
@@ -480,7 +480,7 @@ class TestDailyManifestDateFiltering:
 
         # Query for the test date
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -517,7 +517,7 @@ class TestDailyManifestTimeOfDayFiltering:
     ):
         """Test filtering manifest to show only AM assignments."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={
                 "date": manifest_test_date.isoformat(),
                 "time_of_day": "AM",
@@ -548,7 +548,7 @@ class TestDailyManifestTimeOfDayFiltering:
     ):
         """Test filtering manifest to show only PM assignments."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={
                 "date": manifest_test_date.isoformat(),
                 "time_of_day": "PM",
@@ -579,7 +579,7 @@ class TestDailyManifestTimeOfDayFiltering:
     ):
         """Test that omitting time_of_day parameter shows both AM and PM."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -613,7 +613,7 @@ class TestDailyManifestTimeOfDayFiltering:
 
         for invalid_value in invalid_values:
             response = client.get(
-                "/api/assignments/daily-manifest",
+                "/api/v1/assignments/daily-manifest",
                 params={
                     "date": manifest_test_date.isoformat(),
                     "time_of_day": invalid_value,
@@ -641,7 +641,7 @@ class TestDailyManifestLocationGrouping:
     ):
         """Test that assignments are grouped by clinic location."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -665,7 +665,7 @@ class TestDailyManifestLocationGrouping:
     ):
         """Test that assignments without clinic_location are grouped as 'Unassigned'."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -694,7 +694,7 @@ class TestDailyManifestLocationGrouping:
     ):
         """Test that locations are sorted alphabetically with 'Unassigned' last."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -723,7 +723,7 @@ class TestDailyManifestLocationGrouping:
     ):
         """Test that assignments are properly separated by time slot within each location."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -772,7 +772,7 @@ class TestDailyManifestStaffingSummary:
     ):
         """Test that resident count in staffing summary is accurate."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -801,7 +801,7 @@ class TestDailyManifestStaffingSummary:
     ):
         """Test that faculty count in staffing summary is accurate."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -830,7 +830,7 @@ class TestDailyManifestStaffingSummary:
     ):
         """Test that total count equals residents + faculty."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -851,7 +851,7 @@ class TestDailyManifestStaffingSummary:
         """Test that staffing summary is accurate when filtering by time of day."""
         # Get AM only
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={
                 "date": manifest_test_date.isoformat(),
                 "time_of_day": "AM",
@@ -924,7 +924,7 @@ class TestDailyManifestStaffingSummary:
 
         # Query manifest
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -977,7 +977,7 @@ class TestDailyManifestStaffingSummary:
 
         # Query manifest
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -1014,7 +1014,7 @@ class TestDailyManifestAssignmentDetails:
     ):
         """Test that person details are included in assignments."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -1042,7 +1042,7 @@ class TestDailyManifestAssignmentDetails:
     ):
         """Test that role is included in assignment details."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -1065,7 +1065,7 @@ class TestDailyManifestAssignmentDetails:
     ):
         """Test that activity name is included in assignment details."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -1108,7 +1108,7 @@ class TestDailyManifestAssignmentDetails:
 
         # Query manifest
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -1169,7 +1169,7 @@ class TestDailyManifestEdgeCases:
 
         # Query manifest
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -1217,7 +1217,7 @@ class TestDailyManifestEdgeCases:
 
         # Query should still work
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             params={"date": manifest_test_date.isoformat()},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
@@ -1238,7 +1238,7 @@ class TestDailyManifestEdgeCases:
 
         for invalid_date in invalid_dates:
             response = client.get(
-                "/api/assignments/daily-manifest",
+                "/api/v1/assignments/daily-manifest",
                 params={"date": invalid_date},
                 headers={"Authorization": f"Bearer {auth_token}"},
             )

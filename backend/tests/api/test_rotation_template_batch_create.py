@@ -39,7 +39,7 @@ class TestBatchCreateRotationTemplates:
         ]
 
         response = client.post(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": templates, "dry_run": False},
         )
@@ -64,7 +64,7 @@ class TestBatchCreateRotationTemplates:
         # Verify templates are actually created
         for created_id in data["created_ids"]:
             get_response = client.get(
-                f"/api/rotation-templates/{created_id}",
+                f"/api/v1/rotation-templates/{created_id}",
                 headers=auth_headers,
             )
             assert get_response.status_code == 200
@@ -82,7 +82,7 @@ class TestBatchCreateRotationTemplates:
         ]
 
         response = client.post(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": templates, "dry_run": True},
         )
@@ -100,7 +100,7 @@ class TestBatchCreateRotationTemplates:
 
         # Verify templates are NOT created
         all_templates = client.get(
-            "/api/rotation-templates",
+            "/api/v1/rotation-templates",
             headers=auth_headers,
         )
         template_names = [t["name"] for t in all_templates.json()["items"]]
@@ -119,7 +119,7 @@ class TestBatchCreateRotationTemplates:
         ]
 
         response = client.post(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": templates, "dry_run": False},
         )
@@ -152,7 +152,7 @@ class TestBatchCreateRotationTemplates:
         ]
 
         response = client.post(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": templates, "dry_run": False},
         )
@@ -173,7 +173,7 @@ class TestBatchCreateRotationTemplates:
         ]
 
         response = client.post(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": templates, "dry_run": False},
         )
@@ -191,7 +191,7 @@ class TestBatchCreateRotationTemplates:
         ]
 
         response = client.post(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             json={"templates": templates},
         )
 
@@ -202,7 +202,7 @@ class TestBatchCreateRotationTemplates:
     ):
         """Test that empty templates array fails validation."""
         response = client.post(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": []},
         )
@@ -234,7 +234,7 @@ class TestBatchCreateRotationTemplates:
         ]
 
         response = client.post(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": templates, "dry_run": False},
         )
@@ -246,7 +246,7 @@ class TestBatchCreateRotationTemplates:
         # Verify fields are saved correctly
         created_id = data["created_ids"][0]
         get_response = client.get(
-            f"/api/rotation-templates/{created_id}",
+            f"/api/v1/rotation-templates/{created_id}",
             headers=auth_headers,
         )
         template = get_response.json()
@@ -266,7 +266,7 @@ class TestBatchCreateRotationTemplates:
         ]
 
         response = client.post(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": templates, "dry_run": False},
         )

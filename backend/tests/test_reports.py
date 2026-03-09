@@ -372,7 +372,7 @@ class TestReportAPIRoutes:
     ):
         """Test schedule report generation endpoint."""
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             json={
                 "start_date": str(date.today()),
                 "end_date": str(date.today() + timedelta(days=6)),
@@ -393,7 +393,7 @@ class TestReportAPIRoutes:
     ):
         """Test compliance report generation endpoint."""
         response = client.post(
-            "/api/reports/compliance",
+            "/api/v1/reports/compliance",
             json={
                 "start_date": str(date.today()),
                 "end_date": str(date.today() + timedelta(days=6)),
@@ -413,7 +413,7 @@ class TestReportAPIRoutes:
     ):
         """Test analytics report generation endpoint."""
         response = client.post(
-            "/api/reports/analytics",
+            "/api/v1/reports/analytics",
             json={
                 "start_date": str(date.today()),
                 "end_date": str(date.today() + timedelta(days=6)),
@@ -430,7 +430,7 @@ class TestReportAPIRoutes:
     def test_report_requires_authentication(self, client: TestClient):
         """Test that report endpoints require authentication."""
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             json={
                 "start_date": str(date.today()),
                 "end_date": str(date.today() + timedelta(days=6)),
@@ -447,7 +447,7 @@ class TestReportAPIRoutes:
     ):
         """Test faculty summary report generation endpoint."""
         response = client.post(
-            "/api/reports/faculty-summary",
+            "/api/v1/reports/faculty-summary",
             json={
                 "start_date": str(date.today()),
                 "end_date": str(date.today() + timedelta(days=6)),

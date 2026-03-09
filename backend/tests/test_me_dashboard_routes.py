@@ -56,7 +56,7 @@ def user_auth_headers(
     """Get authentication headers for user with person profile."""
     _, user = person_with_user
     response = client.post(
-        "/api/auth/login/json",
+        "/api/v1/auth/login/json",
         json={"username": "testuser", "password": "testpass123"},
     )
     if response.status_code == 200:
@@ -174,7 +174,7 @@ class TestDashboardSuccess:
         person, _ = person_with_user
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -222,7 +222,7 @@ class TestDashboardSuccess:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -288,7 +288,7 @@ class TestDashboardSuccess:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -348,7 +348,7 @@ class TestDashboardSuccess:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -401,7 +401,7 @@ class TestDashboardSuccess:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -420,7 +420,7 @@ class TestDashboardSuccess:
     ):
         """Test dashboard includes calendar sync URL."""
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -463,7 +463,7 @@ class TestDashboardSuccess:
         )
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -507,7 +507,7 @@ class TestDashboardSuccess:
         )
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -536,7 +536,7 @@ class TestDashboardSuccess:
         mock_create.side_effect = Exception("Calendar service unavailable")
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -601,7 +601,7 @@ class TestDashboardSuccess:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -632,7 +632,7 @@ class TestDashboardQueryParameters:
     ):
         """Test dashboard uses default 30 days ahead."""
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -666,7 +666,7 @@ class TestDashboardQueryParameters:
 
         # Request only 7 days ahead
         response = client.get(
-            "/api/me/dashboard?days_ahead=7",
+            "/api/v1/me/dashboard?days_ahead=7",
             headers=user_auth_headers,
         )
 
@@ -685,7 +685,7 @@ class TestDashboardQueryParameters:
     ):
         """Test dashboard with maximum days_ahead (365)."""
         response = client.get(
-            "/api/me/dashboard?days_ahead=365",
+            "/api/v1/me/dashboard?days_ahead=365",
             headers=user_auth_headers,
         )
 
@@ -698,7 +698,7 @@ class TestDashboardQueryParameters:
     ):
         """Test dashboard rejects days_ahead > 365."""
         response = client.get(
-            "/api/me/dashboard?days_ahead=400",
+            "/api/v1/me/dashboard?days_ahead=400",
             headers=user_auth_headers,
         )
 
@@ -712,7 +712,7 @@ class TestDashboardQueryParameters:
     ):
         """Test dashboard rejects days_ahead < 1."""
         response = client.get(
-            "/api/me/dashboard?days_ahead=0",
+            "/api/v1/me/dashboard?days_ahead=0",
             headers=user_auth_headers,
         )
 
@@ -726,7 +726,7 @@ class TestDashboardQueryParameters:
     ):
         """Test dashboard rejects negative days_ahead."""
         response = client.get(
-            "/api/me/dashboard?days_ahead=-10",
+            "/api/v1/me/dashboard?days_ahead=-10",
             headers=user_auth_headers,
         )
 
@@ -771,7 +771,7 @@ class TestDashboardSummary:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -824,7 +824,7 @@ class TestDashboardSummary:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -877,7 +877,7 @@ class TestDashboardSummary:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -911,7 +911,7 @@ class TestDashboardSummary:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -927,7 +927,7 @@ class TestDashboardSummary:
     ):
         """Test summary with no schedule shows correct defaults."""
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -971,7 +971,7 @@ class TestDashboardScheduleDetails:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1016,7 +1016,7 @@ class TestDashboardScheduleDetails:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1053,7 +1053,7 @@ class TestDashboardScheduleDetails:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1092,7 +1092,7 @@ class TestDashboardScheduleDetails:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1138,7 +1138,7 @@ class TestDashboardScheduleDetails:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1193,7 +1193,7 @@ class TestDashboardSwapDetails:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1228,7 +1228,7 @@ class TestDashboardSwapDetails:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1263,7 +1263,7 @@ class TestDashboardSwapDetails:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1309,7 +1309,7 @@ class TestDashboardSwapDetails:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1349,7 +1349,7 @@ class TestDashboardErrors:
 
         # Login
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "noperson", "password": "testpass123"},
         )
         assert response.status_code == 200
@@ -1358,7 +1358,7 @@ class TestDashboardErrors:
 
         # Try to get dashboard
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=headers,
         )
 
@@ -1370,7 +1370,7 @@ class TestDashboardErrors:
         client: TestClient,
     ):
         """Test dashboard requires authentication."""
-        response = client.get("/api/me/dashboard")
+        response = client.get("/api/v1/me/dashboard")
 
         assert response.status_code == 401
 
@@ -1389,7 +1389,7 @@ class TestDashboardErrors:
 
         # Try to login
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "testuser", "password": "testpass123"},
         )
 
@@ -1416,7 +1416,7 @@ class TestDashboardFaculty:
 
         # Login as faculty
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={"username": "facultyuser", "password": "testpass123"},
         )
         assert response.status_code == 200
@@ -1424,7 +1424,7 @@ class TestDashboardFaculty:
         headers = {"Authorization": f"Bearer {token}"}
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=headers,
         )
 
@@ -1451,7 +1451,7 @@ class TestDashboardEdgeCases:
     ):
         """Test dashboard with no schedule, swaps, or absences."""
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1488,7 +1488,7 @@ class TestDashboardEdgeCases:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard",
+            "/api/v1/me/dashboard",
             headers=user_auth_headers,
         )
 
@@ -1525,7 +1525,7 @@ class TestDashboardEdgeCases:
         db.commit()
 
         response = client.get(
-            "/api/me/dashboard?days_ahead=60",
+            "/api/v1/me/dashboard?days_ahead=60",
             headers=user_auth_headers,
         )
 

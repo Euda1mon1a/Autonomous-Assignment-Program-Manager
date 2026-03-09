@@ -60,7 +60,7 @@ class TestImportAnalyzeEndpoint:
             }
 
             response = client.post(
-                "/api/schedule/import/analyze",
+                "/api/v1/schedule/import/analyze",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -100,7 +100,7 @@ class TestImportAnalyzeEndpoint:
             }
 
             response = client.post(
-                "/api/schedule/import/analyze",
+                "/api/v1/schedule/import/analyze",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -125,7 +125,7 @@ class TestImportAnalyzeEndpoint:
             mock_validate.side_effect = FileValidationError("Invalid file format")
 
             response = client.post(
-                "/api/schedule/import/analyze",
+                "/api/v1/schedule/import/analyze",
                 files={
                     "fmit_file": (
                         "bad.xlsx",
@@ -140,7 +140,7 @@ class TestImportAnalyzeEndpoint:
     def test_analyze_empty_file(self, client: TestClient):
         """Test analysis with empty file."""
         response = client.post(
-            "/api/schedule/import/analyze",
+            "/api/v1/schedule/import/analyze",
             files={
                 "fmit_file": (
                     "empty.xlsx",
@@ -173,7 +173,7 @@ class TestImportAnalyzeEndpoint:
             }
 
             response = client.post(
-                "/api/schedule/import/analyze",
+                "/api/v1/schedule/import/analyze",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -192,7 +192,7 @@ class TestImportAnalyzeEndpoint:
             mock_validate.return_value = None
 
             response = client.post(
-                "/api/schedule/import/analyze",
+                "/api/v1/schedule/import/analyze",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -208,7 +208,7 @@ class TestImportAnalyzeEndpoint:
     def test_analyze_file_read_error(self, client: TestClient):
         """Test analysis when file read fails."""
         # Test with missing file
-        response = client.post("/api/schedule/import/analyze", files={})
+        response = client.post("/api/v1/schedule/import/analyze", files={})
 
         assert response.status_code == 422
 
@@ -225,7 +225,7 @@ class TestImportAnalyzeEndpoint:
             }
 
             response = client.post(
-                "/api/schedule/import/analyze",
+                "/api/v1/schedule/import/analyze",
                 files={
                     "fmit_file": (
                         "fmit.xlsx",
@@ -270,7 +270,7 @@ class TestImportAnalyzeFileEndpoint:
             mock_importer_class.return_value = mock_importer
 
             response = client.post(
-                "/api/schedule/import/analyze-file",
+                "/api/v1/schedule/import/analyze-file",
                 files={
                     "file": (
                         "schedule.xlsx",
@@ -307,7 +307,7 @@ class TestImportAnalyzeFileEndpoint:
             mock_importer_class.return_value = mock_importer
 
             response = client.post(
-                "/api/schedule/import/analyze-file",
+                "/api/v1/schedule/import/analyze-file",
                 files={
                     "file": (
                         "fmit.xlsx",
@@ -344,7 +344,7 @@ class TestImportAnalyzeFileEndpoint:
             mock_importer_class.return_value = mock_importer
 
             response = client.post(
-                "/api/schedule/import/analyze-file",
+                "/api/v1/schedule/import/analyze-file",
                 files={
                     "file": (
                         "clinic.xlsx",
@@ -365,7 +365,7 @@ class TestImportAnalyzeFileEndpoint:
             mock_validate.side_effect = FileValidationError("Invalid file")
 
             response = client.post(
-                "/api/schedule/import/analyze-file",
+                "/api/v1/schedule/import/analyze-file",
                 files={"file": ("bad.txt", b"not excel", "text/plain")},
             )
 
@@ -382,7 +382,7 @@ class TestImportAnalyzeFileEndpoint:
             mock_validate.side_effect = FileValidationError("File too large")
 
             response = client.post(
-                "/api/schedule/import/analyze-file",
+                "/api/v1/schedule/import/analyze-file",
                 files={
                     "file": (
                         "large.xlsx",
@@ -413,7 +413,7 @@ class TestImportAnalyzeFileEndpoint:
             mock_importer_class.return_value = mock_importer
 
             response = client.post(
-                "/api/schedule/import/analyze-file",
+                "/api/v1/schedule/import/analyze-file",
                 files={
                     "file": (
                         "bad.xlsx",
@@ -457,7 +457,7 @@ class TestImportAnalyzeFileEndpoint:
             mock_importer_class.return_value = mock_importer
 
             response = client.post(
-                "/api/schedule/import/analyze-file",
+                "/api/v1/schedule/import/analyze-file",
                 files={
                     "file": (
                         "schedule.xlsx",
@@ -481,7 +481,7 @@ class TestImportBlockEndpoint:
     def test_block_requires_auth(self, client: TestClient):
         """Test that block import requires authentication."""
         response = client.post(
-            "/api/schedule/import/block",
+            "/api/v1/schedule/import/block",
             files={
                 "file": (
                     "block.xlsx",
@@ -521,7 +521,7 @@ class TestImportBlockEndpoint:
             mock_fmit.return_value = []
 
             response = client.post(
-                "/api/schedule/import/block",
+                "/api/v1/schedule/import/block",
                 files={
                     "file": (
                         "block.xlsx",
@@ -538,7 +538,7 @@ class TestImportBlockEndpoint:
     def test_block_invalid_number(self, client: TestClient, auth_headers: dict):
         """Test block parsing with invalid block number."""
         response = client.post(
-            "/api/schedule/import/block",
+            "/api/v1/schedule/import/block",
             files={
                 "file": (
                     "block.xlsx",
@@ -555,7 +555,7 @@ class TestImportBlockEndpoint:
     def test_block_zero_number(self, client: TestClient, auth_headers: dict):
         """Test block parsing with block number 0."""
         response = client.post(
-            "/api/schedule/import/block",
+            "/api/v1/schedule/import/block",
             files={
                 "file": (
                     "block.xlsx",
@@ -596,7 +596,7 @@ class TestImportBlockEndpoint:
             mock_fmit.return_value = []
 
             response = client.post(
-                "/api/schedule/import/block",
+                "/api/v1/schedule/import/block",
                 files={
                     "file": (
                         "block.xlsx",
@@ -621,7 +621,7 @@ class TestImportBlockEndpoint:
             mock_validate.return_value = None
 
             response = client.post(
-                "/api/schedule/import/block",
+                "/api/v1/schedule/import/block",
                 files={
                     "file": (
                         "block.xlsx",
@@ -659,7 +659,7 @@ class TestImportBlockEndpoint:
             mock_parse.return_value = mock_result
 
             response = client.post(
-                "/api/schedule/import/block",
+                "/api/v1/schedule/import/block",
                 files={
                     "file": (
                         "block.xlsx",
@@ -686,7 +686,7 @@ class TestImportBlockEndpoint:
             mock_parse.side_effect = ValueError("Could not find block header")
 
             response = client.post(
-                "/api/schedule/import/block",
+                "/api/v1/schedule/import/block",
                 files={
                     "file": (
                         "block.xlsx",
@@ -703,7 +703,7 @@ class TestImportBlockEndpoint:
     def test_block_missing_fields(self, client: TestClient, auth_headers: dict):
         """Test block parsing with missing required fields."""
         response = client.post(
-            "/api/schedule/import/block",
+            "/api/v1/schedule/import/block",
             files={
                 "file": (
                     "block.xlsx",
@@ -725,7 +725,7 @@ class TestImportBlockEndpoint:
             mock_validate.side_effect = FileValidationError("Invalid file")
 
             response = client.post(
-                "/api/schedule/import/block",
+                "/api/v1/schedule/import/block",
                 files={
                     "file": (
                         "bad.xlsx",
@@ -751,9 +751,9 @@ class TestScheduleImportIntegration:
     def test_endpoints_accessible(self, client: TestClient, auth_headers: dict):
         """Test that all import endpoints respond appropriately."""
         endpoints = [
-            "/api/schedule/import/analyze",
-            "/api/schedule/import/analyze-file",
-            "/api/schedule/import/block",
+            "/api/v1/schedule/import/analyze",
+            "/api/v1/schedule/import/analyze-file",
+            "/api/v1/schedule/import/block",
         ]
 
         for url in endpoints:
@@ -767,7 +767,7 @@ class TestScheduleImportIntegration:
         """Test that all endpoints handle empty file uploads."""
         endpoints_and_files = [
             (
-                "/api/schedule/import/analyze",
+                "/api/v1/schedule/import/analyze",
                 {
                     "fmit_file": (
                         "empty.xlsx",
@@ -777,7 +777,7 @@ class TestScheduleImportIntegration:
                 },
             ),
             (
-                "/api/schedule/import/analyze-file",
+                "/api/v1/schedule/import/analyze-file",
                 {
                     "file": (
                         "empty.xlsx",
@@ -787,7 +787,7 @@ class TestScheduleImportIntegration:
                 },
             ),
             (
-                "/api/schedule/import/block",
+                "/api/v1/schedule/import/block",
                 {
                     "file": (
                         "empty.xlsx",

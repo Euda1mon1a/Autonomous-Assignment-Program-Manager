@@ -22,7 +22,7 @@ class TestNotificationWorkflow:
     ):
         """Test sending a notification."""
         notification_response = client.post(
-            "/api/notifications/",
+            "/api/v1/notifications/",
             json={
                 "recipient_id": str(sample_resident.id),
                 "type": "schedule_change",
@@ -40,7 +40,7 @@ class TestNotificationWorkflow:
     ):
         """Test retrieving user notifications."""
         notifications_response = client.get(
-            "/api/notifications/",
+            "/api/v1/notifications/",
             headers=auth_headers,
         )
         assert notifications_response.status_code in [200, 404]
@@ -53,7 +53,7 @@ class TestNotificationWorkflow:
         """Test marking notifications as read."""
         # Send notification first
         send_response = client.post(
-            "/api/notifications/",
+            "/api/v1/notifications/",
             json={
                 "type": "test",
                 "message": "Test notification",
@@ -66,7 +66,7 @@ class TestNotificationWorkflow:
             if notification_id:
                 # Mark as read
                 read_response = client.post(
-                    f"/api/notifications/{notification_id}/read",
+                    f"/api/v1/notifications/{notification_id}/read",
                     headers=auth_headers,
                 )
                 assert read_response.status_code in [200, 404]
@@ -79,14 +79,14 @@ class TestNotificationWorkflow:
         """Test managing notification preferences."""
         # Get preferences
         get_prefs = client.get(
-            "/api/notifications/preferences",
+            "/api/v1/notifications/preferences",
             headers=auth_headers,
         )
         assert get_prefs.status_code in [200, 404, 501]
 
         # Update preferences
         update_prefs = client.put(
-            "/api/notifications/preferences",
+            "/api/v1/notifications/preferences",
             json={
                 "email_enabled": True,
                 "sms_enabled": False,
@@ -104,7 +104,7 @@ class TestNotificationWorkflow:
     ):
         """Test sending bulk notifications."""
         bulk_response = client.post(
-            "/api/notifications/bulk",
+            "/api/v1/notifications/bulk",
             json={
                 "recipient_ids": [str(r.id) for r in sample_residents],
                 "type": "announcement",
@@ -122,7 +122,7 @@ class TestNotificationWorkflow:
         """Test notification templates."""
         # List templates
         list_response = client.get(
-            "/api/notifications/templates",
+            "/api/v1/notifications/templates",
             headers=auth_headers,
         )
         assert list_response.status_code in [200, 404, 501]
@@ -135,7 +135,7 @@ class TestNotificationWorkflow:
     ):
         """Test email notification delivery."""
         email_response = client.post(
-            "/api/notifications/email",
+            "/api/v1/notifications/email",
             json={
                 "recipient_email": sample_resident.email,
                 "subject": "Test Email",

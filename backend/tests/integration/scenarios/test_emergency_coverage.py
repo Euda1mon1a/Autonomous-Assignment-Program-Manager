@@ -64,7 +64,7 @@ class TestEmergencyCoverageScenarios:
             person_id=resident.id,
             start_date=start_date,
             end_date=start_date + timedelta(days=2),
-            absence_type="emergency",
+            absence_type="emergency_leave",
             notes="Sudden illness",
         )
         db.add(absence)
@@ -72,7 +72,7 @@ class TestEmergencyCoverageScenarios:
 
         # Step 3: Find coverage
         coverage_response = client.post(
-            "/api/emergency/find-coverage",
+            "/api/v1/emergency/find-coverage",
             json={
                 "absent_person_id": str(resident.id),
                 "start_date": start_date.isoformat(),
@@ -110,7 +110,7 @@ class TestEmergencyCoverageScenarios:
                 block_id=block.id,
                 person_id=faculty.id,
                 rotation_template_id=sample_rotation_template.id,
-                role="supervisor",
+                role="supervising",
             )
             db.add(assignment)
         db.commit()
@@ -129,7 +129,7 @@ class TestEmergencyCoverageScenarios:
 
         # Find replacement
         replacement_response = client.post(
-            "/api/emergency/find-replacement",
+            "/api/v1/emergency/find-replacement",
             json={
                 "person_id": str(faculty.id),
                 "start_date": start_date.isoformat(),
@@ -186,7 +186,7 @@ class TestEmergencyCoverageScenarios:
 
         # Check if system can handle
         coverage_response = client.get(
-            f"/api/emergency/coverage-status?date={start_date.isoformat()}",
+            f"/api/v1/emergency/coverage-status?date={start_date.isoformat()}",
             headers=auth_headers,
         )
         assert coverage_response.status_code in [200, 404, 501]
@@ -204,7 +204,7 @@ class TestEmergencyCoverageScenarios:
 
         # Check resilience
         resilience_response = client.post(
-            "/api/resilience/test-n-minus-2",
+            "/api/v1/resilience/test-n-minus-2",
             json={
                 "start_date": start_date.isoformat(),
                 "person_ids": [str(r.id) for r in sample_residents[:2]],
@@ -223,7 +223,7 @@ class TestEmergencyCoverageScenarios:
         """Test urgent procedure requiring specialist."""
         # Find available specialist
         specialist_response = client.post(
-            "/api/emergency/find-specialist",
+            "/api/v1/emergency/find-specialist",
             json={
                 "specialty": "Sports Medicine",
                 "date": date.today().isoformat(),

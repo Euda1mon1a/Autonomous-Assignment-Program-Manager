@@ -34,7 +34,7 @@ class TestAnalyzeConflictsEndpoint:
         """Test that analyze requires authentication."""
         today = date.today()
         response = client.get(
-            f"/api/conflicts/analyze?start_date={today}&end_date={today + timedelta(days=7)}"
+            f"/api/v1/conflicts/analyze?start_date={today}&end_date={today + timedelta(days=7)}"
         )
 
         assert response.status_code in [401, 403]
@@ -57,7 +57,7 @@ class TestAnalyzeConflictsEndpoint:
 
             today = date.today()
             response = client.get(
-                f"/api/conflicts/analyze?start_date={today}&end_date={today + timedelta(days=7)}",
+                f"/api/v1/conflicts/analyze?start_date={today}&end_date={today + timedelta(days=7)}",
                 headers=auth_headers,
             )
 
@@ -82,7 +82,7 @@ class TestAnalyzeConflictsEndpoint:
             today = date.today()
             person_id = str(uuid4())
             response = client.get(
-                f"/api/conflicts/analyze?start_date={today}&end_date={today + timedelta(days=7)}&person_id={person_id}",
+                f"/api/v1/conflicts/analyze?start_date={today}&end_date={today + timedelta(days=7)}&person_id={person_id}",
                 headers=auth_headers,
             )
 
@@ -92,7 +92,7 @@ class TestAnalyzeConflictsEndpoint:
         """Test analysis with invalid date range (end before start)."""
         today = date.today()
         response = client.get(
-            f"/api/conflicts/analyze?start_date={today + timedelta(days=7)}&end_date={today}",
+            f"/api/v1/conflicts/analyze?start_date={today + timedelta(days=7)}&end_date={today}",
             headers=auth_headers,
         )
 
@@ -101,7 +101,7 @@ class TestAnalyzeConflictsEndpoint:
     def test_analyze_requires_dates(self, client: TestClient, auth_headers: dict):
         """Test analysis requires date parameters."""
         response = client.get(
-            "/api/conflicts/analyze",
+            "/api/v1/conflicts/analyze",
             headers=auth_headers,
         )
 
@@ -115,7 +115,7 @@ class TestConflictSummaryEndpoint:
         """Test that summary requires authentication."""
         today = date.today()
         response = client.get(
-            f"/api/conflicts/summary?start_date={today}&end_date={today + timedelta(days=7)}"
+            f"/api/v1/conflicts/summary?start_date={today}&end_date={today + timedelta(days=7)}"
         )
 
         assert response.status_code in [401, 403]
@@ -136,7 +136,7 @@ class TestConflictSummaryEndpoint:
 
             today = date.today()
             response = client.get(
-                f"/api/conflicts/summary?start_date={today}&end_date={today + timedelta(days=7)}",
+                f"/api/v1/conflicts/summary?start_date={today}&end_date={today + timedelta(days=7)}",
                 headers=auth_headers,
             )
 
@@ -150,7 +150,7 @@ class TestConflictTimelineEndpoint:
         """Test that timeline requires authentication."""
         today = date.today()
         response = client.get(
-            f"/api/conflicts/timeline?start_date={today}&end_date={today + timedelta(days=7)}"
+            f"/api/v1/conflicts/timeline?start_date={today}&end_date={today + timedelta(days=7)}"
         )
 
         assert response.status_code in [401, 403]
@@ -173,7 +173,7 @@ class TestConflictTimelineEndpoint:
 
             today = date.today()
             response = client.get(
-                f"/api/conflicts/timeline?start_date={today}&end_date={today + timedelta(days=7)}",
+                f"/api/v1/conflicts/timeline?start_date={today}&end_date={today + timedelta(days=7)}",
                 headers=auth_headers,
             )
 
@@ -187,7 +187,7 @@ class TestConflictHeatmapEndpoint:
         """Test that heatmap requires authentication."""
         today = date.today()
         response = client.get(
-            f"/api/conflicts/visualizations/heatmap?start_date={today}&end_date={today + timedelta(days=7)}"
+            f"/api/v1/conflicts/visualizations/heatmap?start_date={today}&end_date={today + timedelta(days=7)}"
         )
 
         assert response.status_code in [401, 403]
@@ -210,7 +210,7 @@ class TestConflictHeatmapEndpoint:
 
             today = date.today()
             response = client.get(
-                f"/api/conflicts/visualizations/heatmap?start_date={today}&end_date={today + timedelta(days=7)}",
+                f"/api/v1/conflicts/visualizations/heatmap?start_date={today}&end_date={today + timedelta(days=7)}",
                 headers=auth_headers,
             )
 
@@ -224,7 +224,7 @@ class TestConflictGanttEndpoint:
         """Test that gantt requires authentication."""
         today = date.today()
         response = client.get(
-            f"/api/conflicts/visualizations/gantt?start_date={today}&end_date={today + timedelta(days=7)}"
+            f"/api/v1/conflicts/visualizations/gantt?start_date={today}&end_date={today + timedelta(days=7)}"
         )
 
         assert response.status_code in [401, 403]
@@ -245,7 +245,7 @@ class TestConflictGanttEndpoint:
 
             today = date.today()
             response = client.get(
-                f"/api/conflicts/visualizations/gantt?start_date={today}&end_date={today + timedelta(days=7)}",
+                f"/api/v1/conflicts/visualizations/gantt?start_date={today}&end_date={today + timedelta(days=7)}",
                 headers=auth_headers,
             )
 
@@ -259,7 +259,7 @@ class TestConflictDistributionEndpoint:
         """Test that distribution requires authentication."""
         today = date.today()
         response = client.get(
-            f"/api/conflicts/visualizations/distribution?start_date={today}&end_date={today + timedelta(days=7)}"
+            f"/api/v1/conflicts/visualizations/distribution?start_date={today}&end_date={today + timedelta(days=7)}"
         )
 
         assert response.status_code in [401, 403]
@@ -282,7 +282,7 @@ class TestConflictDistributionEndpoint:
 
             today = date.today()
             response = client.get(
-                f"/api/conflicts/visualizations/distribution?start_date={today}&end_date={today + timedelta(days=7)}",
+                f"/api/v1/conflicts/visualizations/distribution?start_date={today}&end_date={today + timedelta(days=7)}",
                 headers=auth_headers,
             )
 
@@ -296,7 +296,7 @@ class TestPersonImpactEndpoint:
         """Test that person impact requires authentication."""
         today = date.today()
         response = client.get(
-            f"/api/conflicts/visualizations/person-impact?start_date={today}&end_date={today + timedelta(days=7)}"
+            f"/api/v1/conflicts/visualizations/person-impact?start_date={today}&end_date={today + timedelta(days=7)}"
         )
 
         assert response.status_code in [401, 403]
@@ -317,7 +317,7 @@ class TestPersonImpactEndpoint:
 
             today = date.today()
             response = client.get(
-                f"/api/conflicts/visualizations/person-impact?start_date={today}&end_date={today + timedelta(days=7)}",
+                f"/api/v1/conflicts/visualizations/person-impact?start_date={today}&end_date={today + timedelta(days=7)}",
                 headers=auth_headers,
             )
 
@@ -330,7 +330,7 @@ class TestResolutionSuggestionsEndpoint:
     def test_suggestions_requires_auth(self, client: TestClient):
         """Test that suggestions requires authentication."""
         conflict_id = str(uuid4())
-        response = client.post(f"/api/conflicts/resolve/{conflict_id}/suggestions")
+        response = client.post(f"/api/v1/conflicts/resolve/{conflict_id}/suggestions")
 
         assert response.status_code in [401, 403]
 
@@ -338,7 +338,7 @@ class TestResolutionSuggestionsEndpoint:
         """Test suggestions returns not implemented (feature pending)."""
         conflict_id = str(uuid4())
         response = client.post(
-            f"/api/conflicts/resolve/{conflict_id}/suggestions",
+            f"/api/v1/conflicts/resolve/{conflict_id}/suggestions",
             headers=auth_headers,
         )
 
@@ -354,7 +354,7 @@ class TestBatchAnalyzeEndpoint:
         today = date.today()
         person_id = str(uuid4())
         response = client.post(
-            f"/api/conflicts/batch-analyze?person_ids={person_id}&start_date={today}&end_date={today + timedelta(days=7)}"
+            f"/api/v1/conflicts/batch-analyze?person_ids={person_id}&start_date={today}&end_date={today + timedelta(days=7)}"
         )
 
         assert response.status_code in [401, 403]
@@ -378,7 +378,7 @@ class TestBatchAnalyzeEndpoint:
             today = date.today()
             person_ids = [str(uuid4()) for _ in range(3)]
             response = client.post(
-                f"/api/conflicts/batch-analyze?start_date={today}&end_date={today + timedelta(days=7)}&person_ids={person_ids[0]}&person_ids={person_ids[1]}&person_ids={person_ids[2]}",
+                f"/api/v1/conflicts/batch-analyze?start_date={today}&end_date={today + timedelta(days=7)}&person_ids={person_ids[0]}&person_ids={person_ids[1]}&person_ids={person_ids[2]}",
                 headers=auth_headers,
             )
 
@@ -390,7 +390,7 @@ class TestBatchAnalyzeEndpoint:
         person_ids = [str(uuid4()) for _ in range(51)]
         query_params = "&".join([f"person_ids={pid}" for pid in person_ids])
         response = client.post(
-            f"/api/conflicts/batch-analyze?start_date={today}&end_date={today + timedelta(days=7)}&{query_params}",
+            f"/api/v1/conflicts/batch-analyze?start_date={today}&end_date={today + timedelta(days=7)}&{query_params}",
             headers=auth_headers,
         )
 
@@ -441,13 +441,13 @@ class TestConflictsIntegration:
             mock_visualizer.return_value = mock_viz_instance
 
             endpoints = [
-                f"/api/conflicts/analyze?{base_params}",
-                f"/api/conflicts/summary?{base_params}",
-                f"/api/conflicts/timeline?{base_params}",
-                f"/api/conflicts/visualizations/heatmap?{base_params}",
-                f"/api/conflicts/visualizations/gantt?{base_params}",
-                f"/api/conflicts/visualizations/distribution?{base_params}",
-                f"/api/conflicts/visualizations/person-impact?{base_params}",
+                f"/api/v1/conflicts/analyze?{base_params}",
+                f"/api/v1/conflicts/summary?{base_params}",
+                f"/api/v1/conflicts/timeline?{base_params}",
+                f"/api/v1/conflicts/visualizations/heatmap?{base_params}",
+                f"/api/v1/conflicts/visualizations/gantt?{base_params}",
+                f"/api/v1/conflicts/visualizations/distribution?{base_params}",
+                f"/api/v1/conflicts/visualizations/person-impact?{base_params}",
             ]
 
             for endpoint in endpoints:
@@ -475,7 +475,7 @@ class TestConflictsIntegration:
 
             today = date.today()
             response = client.get(
-                f"/api/conflicts/analyze?start_date={today}&end_date={today + timedelta(days=7)}",
+                f"/api/v1/conflicts/analyze?start_date={today}&end_date={today + timedelta(days=7)}",
                 headers=auth_headers,
             )
 

@@ -51,7 +51,7 @@ class TestProfilingStatusEndpoint:
             mock_trace.enabled = True
             mock_trace.get_count.return_value = 0
 
-            response = client.get("/api/profiling/status")
+            response = client.get("/api/v1/profiling/status")
 
             assert response.status_code == 200
 
@@ -75,7 +75,7 @@ class TestProfilingStatusEndpoint:
             mock_trace.enabled = True
             mock_trace.get_count.return_value = 25
 
-            response = client.get("/api/profiling/status")
+            response = client.get("/api/v1/profiling/status")
 
             if response.status_code == 200:
                 data = response.json()
@@ -101,7 +101,7 @@ class TestProfilingStartEndpoint:
             patch("app.api.routes.profiling.trace_collector") as mock_trace,
         ):
             response = client.post(
-                "/api/profiling/start",
+                "/api/v1/profiling/start",
                 json={
                     "cpu": True,
                     "memory": True,
@@ -126,7 +126,7 @@ class TestProfilingStartEndpoint:
             patch("app.api.routes.profiling.trace_collector"),
         ):
             response = client.post(
-                "/api/profiling/start",
+                "/api/v1/profiling/start",
                 json={
                     "cpu": True,
                     "memory": False,
@@ -151,7 +151,7 @@ class TestProfilingStartEndpoint:
             patch("app.api.routes.profiling.trace_collector"),
         ):
             response = client.post(
-                "/api/profiling/start",
+                "/api/v1/profiling/start",
                 json={},
             )
 
@@ -176,7 +176,7 @@ class TestProfilingStopEndpoint:
             mock_req.get_count.return_value = 50
             mock_trace.get_count.return_value = 25
 
-            response = client.post("/api/profiling/stop")
+            response = client.post("/api/v1/profiling/stop")
 
             assert response.status_code == 200
             data = response.json()
@@ -212,7 +212,7 @@ class TestProfilingReportEndpoint:
             mock_report.to_dict.return_value = {"report_id": "test"}
             mock_reporter.generate_report.return_value = mock_report
 
-            response = client.get("/api/profiling/report?format=json")
+            response = client.get("/api/v1/profiling/report?format=json")
 
             assert response.status_code == 200
 
@@ -241,7 +241,7 @@ class TestProfilingReportEndpoint:
             mock_reporter.generate_report.return_value = mock_report
             mock_reporter.export_to_html.return_value = "<html>Report</html>"
 
-            response = client.get("/api/profiling/report?format=html")
+            response = client.get("/api/v1/profiling/report?format=html")
 
             assert response.status_code == 200
 
@@ -258,7 +258,7 @@ class TestProfilingQueriesEndpoint:
             mock_sql.get_failed_queries.return_value = []
             mock_sql.get_query_stats.return_value = {}
 
-            response = client.get("/api/profiling/queries")
+            response = client.get("/api/v1/profiling/queries")
 
             assert response.status_code == 200
             data = response.json()
@@ -275,7 +275,7 @@ class TestProfilingQueriesEndpoint:
             mock_sql.get_failed_queries.return_value = []
             mock_sql.get_query_stats.return_value = {}
 
-            response = client.get("/api/profiling/queries?limit=50")
+            response = client.get("/api/v1/profiling/queries?limit=50")
 
             assert response.status_code == 200
 
@@ -288,7 +288,7 @@ class TestProfilingQueriesEndpoint:
             mock_sql.get_query_stats.return_value = {}
 
             response = client.get(
-                "/api/profiling/queries?slow_only=true&threshold_ms=50"
+                "/api/v1/profiling/queries?slow_only=true&threshold_ms=50"
             )
 
             assert response.status_code == 200
@@ -306,7 +306,7 @@ class TestProfilingRequestsEndpoint:
             mock_req.get_failed_requests.return_value = []
             mock_req.get_request_stats.return_value = {}
 
-            response = client.get("/api/profiling/requests")
+            response = client.get("/api/v1/profiling/requests")
 
             assert response.status_code == 200
             data = response.json()
@@ -323,7 +323,7 @@ class TestProfilingRequestsEndpoint:
             mock_req.get_request_stats.return_value = {}
 
             response = client.get(
-                "/api/profiling/requests?slow_only=true&threshold_ms=500"
+                "/api/v1/profiling/requests?slow_only=true&threshold_ms=500"
             )
 
             assert response.status_code == 200
@@ -339,7 +339,7 @@ class TestProfilingTracesEndpoint:
             mock_trace.get_count.return_value = 0
             mock_trace.get_slow_traces.return_value = []
 
-            response = client.get("/api/profiling/traces")
+            response = client.get("/api/v1/profiling/traces")
 
             assert response.status_code == 200
             data = response.json()
@@ -354,7 +354,7 @@ class TestProfilingTracesEndpoint:
             mock_trace.get_count.return_value = 0
             mock_trace.get_slow_traces.return_value = []
 
-            response = client.get("/api/profiling/traces?trace_id=abc123")
+            response = client.get("/api/v1/profiling/traces?trace_id=abc123")
 
             assert response.status_code == 200
 
@@ -366,7 +366,7 @@ class TestProfilingTracesEndpoint:
             mock_trace.items = []
 
             response = client.get(
-                "/api/profiling/traces?slow_only=true&threshold_ms=500"
+                "/api/v1/profiling/traces?slow_only=true&threshold_ms=500"
             )
 
             assert response.status_code == 200
@@ -392,7 +392,7 @@ class TestProfilingBottlenecksEndpoint:
             mock_detector.detect_trace_bottlenecks.return_value = []
             mock_detector_class.return_value = mock_detector
 
-            response = client.get("/api/profiling/bottlenecks")
+            response = client.get("/api/v1/profiling/bottlenecks")
 
             assert response.status_code == 200
             data = response.json()
@@ -417,7 +417,7 @@ class TestProfilingBottlenecksEndpoint:
             mock_detector_class.return_value = mock_detector
 
             response = client.get(
-                "/api/profiling/bottlenecks?sql_threshold_ms=50&request_threshold_ms=500"
+                "/api/v1/profiling/bottlenecks?sql_threshold_ms=50&request_threshold_ms=500"
             )
 
             assert response.status_code == 200
@@ -431,7 +431,7 @@ class TestProfilingFlamegraphEndpoint:
         with patch("app.api.routes.profiling.cpu_profiler") as mock_cpu:
             mock_cpu.results = []
 
-            response = client.get("/api/profiling/flamegraph?type=cpu")
+            response = client.get("/api/v1/profiling/flamegraph?type=cpu")
 
             assert response.status_code == 404
 
@@ -440,13 +440,13 @@ class TestProfilingFlamegraphEndpoint:
         with patch("app.api.routes.profiling.trace_collector") as mock_trace:
             mock_trace.items = []
 
-            response = client.get("/api/profiling/flamegraph?type=traces")
+            response = client.get("/api/v1/profiling/flamegraph?type=traces")
 
             assert response.status_code == 404
 
     def test_flamegraph_invalid_type(self, client: TestClient):
         """Test flamegraph with invalid type."""
-        response = client.get("/api/profiling/flamegraph?type=invalid")
+        response = client.get("/api/v1/profiling/flamegraph?type=invalid")
 
         assert response.status_code == 400
 
@@ -464,7 +464,7 @@ class TestProfilingFlamegraphEndpoint:
                 "children": [],
             }
 
-            response = client.get("/api/profiling/flamegraph?type=cpu")
+            response = client.get("/api/v1/profiling/flamegraph?type=cpu")
 
             assert response.status_code == 200
             data = response.json()
@@ -504,7 +504,7 @@ class TestProfilingAnalyzeEndpoint:
             mock_qa.analyze_query_patterns.return_value = {}
 
             response = client.post(
-                "/api/profiling/analyze",
+                "/api/v1/profiling/analyze",
                 json={
                     "cpu_threshold_percent": 80.0,
                     "memory_threshold_mb": 1000.0,
@@ -550,7 +550,7 @@ class TestProfilingAnalyzeEndpoint:
             mock_qa.analyze_query_patterns.return_value = {}
 
             response = client.post(
-                "/api/profiling/analyze",
+                "/api/v1/profiling/analyze",
                 json={},
             )
 
@@ -570,7 +570,7 @@ class TestProfilingClearEndpoint:
             patch("app.api.routes.profiling.trace_collector") as mock_trace,
             patch("app.api.routes.profiling.profiler_context") as mock_ctx,
         ):
-            response = client.delete("/api/profiling/clear")
+            response = client.delete("/api/v1/profiling/clear")
 
             assert response.status_code == 200
             data = response.json()
@@ -627,17 +627,17 @@ class TestProfilingIntegration:
 
             # Start session
             start_response = client.post(
-                "/api/profiling/start",
+                "/api/v1/profiling/start",
                 json={"cpu": True, "memory": True},
             )
             assert start_response.status_code == 200
 
             # Stop session
-            stop_response = client.post("/api/profiling/stop")
+            stop_response = client.post("/api/v1/profiling/stop")
             assert stop_response.status_code == 200
 
             # Get report
-            report_response = client.get("/api/profiling/report")
+            report_response = client.get("/api/v1/profiling/report")
             assert report_response.status_code == 200
 
     def test_profiling_endpoints_accessible(self, client: TestClient):
@@ -671,10 +671,10 @@ class TestProfilingIntegration:
             mock_trace.get_slow_traces.return_value = []
 
             endpoints = [
-                ("/api/profiling/status", "GET"),
-                ("/api/profiling/queries", "GET"),
-                ("/api/profiling/requests", "GET"),
-                ("/api/profiling/traces", "GET"),
+                ("/api/v1/profiling/status", "GET"),
+                ("/api/v1/profiling/queries", "GET"),
+                ("/api/v1/profiling/requests", "GET"),
+                ("/api/v1/profiling/traces", "GET"),
             ]
 
             for url, method in endpoints:

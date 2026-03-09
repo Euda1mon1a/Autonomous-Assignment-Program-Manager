@@ -1,5 +1,6 @@
 """Tests for built-in notification templates."""
 
+import app.notifications.templates.built_in  # noqa: F401 — triggers auto-registration
 from app.notifications.templates.registry import get_template_registry
 
 

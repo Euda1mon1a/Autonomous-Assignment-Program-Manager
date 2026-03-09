@@ -91,7 +91,7 @@ class TestGetRotationPreferences:
     ):
         """Test successful retrieval of preferences."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
         )
 
@@ -122,7 +122,7 @@ class TestGetRotationPreferences:
     ):
         """Test preferences are returned ordered by preference_type."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
         )
 
@@ -138,7 +138,7 @@ class TestGetRotationPreferences:
     ):
         """Test returns empty list for template with no preferences."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
         )
 
@@ -152,7 +152,7 @@ class TestGetRotationPreferences:
         """Test 404 for non-existent template."""
         fake_id = uuid4()
         response = client.get(
-            f"/api/rotation-templates/{fake_id}/preferences",
+            f"/api/v1/rotation-templates/{fake_id}/preferences",
             headers=auth_headers,
         )
 
@@ -166,7 +166,7 @@ class TestGetRotationPreferences:
     ):
         """Test 401 for unauthenticated request."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/preferences"
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences"
         )
 
         assert response.status_code == 401
@@ -174,7 +174,7 @@ class TestGetRotationPreferences:
     def test_get_preferences_invalid_uuid(self, client: TestClient, auth_headers: dict):
         """Test 422 for invalid UUID format."""
         response = client.get(
-            "/api/rotation-templates/not-a-uuid/preferences",
+            "/api/v1/rotation-templates/not-a-uuid/preferences",
             headers=auth_headers,
         )
 
@@ -190,7 +190,7 @@ class TestGetRotationPreferences:
     ):
         """Test preferences include config_json correctly."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
         )
 
@@ -212,7 +212,7 @@ class TestGetRotationPreferences:
     ):
         """Test preferences include is_active correctly."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
         )
 
@@ -236,7 +236,7 @@ class TestGetRotationPreferences:
     ):
         """Test preferences have valid weight values."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
         )
 
@@ -277,7 +277,7 @@ class TestGetRotationPreferences:
         db.commit()
 
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
         )
 

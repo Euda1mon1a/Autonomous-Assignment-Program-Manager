@@ -29,8 +29,16 @@ class TestFacultyPreferenceCache:
 
     def test_cache_init_with_redis_unavailable(self):
         """Test cache falls back to local when Redis is unavailable."""
+        import redis as _redis
+
         with patch("app.services.constraints.faculty.redis") as mock_redis:
-            mock_redis.from_url.side_effect = Exception("Connection failed")
+            # Must raise a redis-specific exception since the service
+            # only catches (redis.ConnectionError, redis.TimeoutError)
+            mock_redis.ConnectionError = _redis.ConnectionError
+            mock_redis.TimeoutError = _redis.TimeoutError
+            mock_redis.from_url.return_value.ping.side_effect = _redis.ConnectionError(
+                "Connection failed"
+            )
             cache = FacultyPreferenceCache()
             assert cache._available is False
 

@@ -28,14 +28,14 @@ class TestVisualizationRoutes:
     def test_heatmap_requires_auth(self, client: TestClient):
         """Test that heatmap requires authentication."""
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31"
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31"
         )
         assert response.status_code == 401
 
     def test_unified_heatmap_requires_auth(self, client: TestClient):
         """Test that unified heatmap POST requires authentication."""
         response = client.post(
-            "/api/visualization/heatmap/unified",
+            "/api/v1/visualization/heatmap/unified",
             json={
                 "time_range": {"range_type": "month", "value": "2025-01"},
                 "group_by": "person",
@@ -46,28 +46,28 @@ class TestVisualizationRoutes:
     def test_heatmap_image_requires_auth(self, client: TestClient):
         """Test that heatmap image requires authentication."""
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31"
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31"
         )
         assert response.status_code == 401
 
     def test_coverage_requires_auth(self, client: TestClient):
         """Test that coverage heatmap requires authentication."""
         response = client.get(
-            "/api/visualization/coverage?start_date=2025-01-01&end_date=2025-01-31"
+            "/api/v1/visualization/coverage?start_date=2025-01-01&end_date=2025-01-31"
         )
         assert response.status_code == 401
 
     def test_workload_requires_auth(self, client: TestClient):
         """Test that workload heatmap requires authentication."""
         response = client.get(
-            f"/api/visualization/workload?person_ids={uuid4()}&start_date=2025-01-01&end_date=2025-01-31"
+            f"/api/v1/visualization/workload?person_ids={uuid4()}&start_date=2025-01-01&end_date=2025-01-31"
         )
         assert response.status_code == 401
 
     def test_export_requires_auth(self, client: TestClient):
         """Test that export requires authentication."""
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             json={
                 "heatmap_type": "unified",
                 "format": "png",
@@ -91,27 +91,32 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test successful heatmap generation."""
-        mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2, 3], [4, 5, 6]],
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
             x_labels=["2025-01-01", "2025-01-02", "2025-01-03"],
             y_labels=["Person 1", "Person 2"],
-            title="Schedule Heatmap",
+            z_values=[[1, 2, 3], [4, 5, 6]],
             color_scale="RdYlGn",
+            annotations=None,
+        )
+        mock_service = MagicMock()
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Schedule Heatmap",
             metadata={"total_assignments": 100},
         )
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31",
             headers=auth_headers,
         )
         assert response.status_code == 200
 
         data = response.json()
         assert "data" in data
-        assert "x_labels" in data
-        assert "y_labels" in data
+        assert "title" in data
 
     @patch("app.api.routes.visualization.CachedHeatmapService")
     def test_heatmap_with_filters(
@@ -121,19 +126,27 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test heatmap with person and rotation filters."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
         person_id = uuid4()
         rotation_id = uuid4()
-        mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]],
+        heatmap_data = HeatmapData(
             x_labels=["2025-01-01"],
             y_labels=["Person"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
+        mock_service = MagicMock()
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
             title="Filtered",
+            metadata=None,
         )
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31"
+            f"/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31"
             f"&person_ids={person_id}&rotation_ids={rotation_id}&include_fmit=false&group_by=rotation",
             headers=auth_headers,
         )
@@ -146,7 +159,7 @@ class TestVisualizationRoutes:
     ):
         """Test heatmap with invalid group_by parameter."""
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31&group_by=invalid",
+            "/api/v1/visualization/heatmap?start_date=2025-01-01&end_date=2025-01-31&group_by=invalid",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -159,7 +172,7 @@ class TestVisualizationRoutes:
     ):
         """Test heatmap with start_date after end_date."""
         response = client.get(
-            "/api/visualization/heatmap?start_date=2025-01-31&end_date=2025-01-01",
+            "/api/v1/visualization/heatmap?start_date=2025-01-31&end_date=2025-01-01",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -177,22 +190,29 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test unified heatmap with time range specification."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["Person"],
+            z_values=[[1, 2, 3]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
         mock_service.calculate_date_range.return_value = (
             date(2025, 1, 1),
             date(2025, 1, 31),
         )
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2, 3]],
-            x_labels=["2025-01-01"],
-            y_labels=["Person"],
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
             title="Monthly Heatmap",
             metadata=None,
         )
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/heatmap/unified",
+            "/api/v1/visualization/heatmap/unified",
             headers=auth_headers,
             json={
                 "time_range": {"range_type": "month", "value": "2025-01"},
@@ -215,7 +235,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/heatmap/unified",
+            "/api/v1/visualization/heatmap/unified",
             headers=auth_headers,
             json={
                 "time_range": {"range_type": "invalid", "value": "bad"},
@@ -236,15 +256,26 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test heatmap PNG image export."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["P1"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], title="Test Heatmap"
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Test Heatmap",
+            metadata=None,
         )
         mock_service.export_heatmap_image.return_value = b"\x89PNG fake image data"
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=png",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=png",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -258,15 +289,26 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test heatmap PDF image export."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["P1"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], title="Test Heatmap"
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Test Heatmap",
+            metadata=None,
         )
         mock_service.export_heatmap_image.return_value = b"%PDF-1.4 fake pdf"
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=pdf",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=pdf",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -280,15 +322,26 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test heatmap SVG image export."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["P1"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], title="Test Heatmap"
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Test Heatmap",
+            metadata=None,
         )
         mock_service.export_heatmap_image.return_value = b"<svg>fake svg</svg>"
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=svg",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=svg",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -301,7 +354,7 @@ class TestVisualizationRoutes:
     ):
         """Test heatmap image with invalid format."""
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=gif",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31&format=gif",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -315,15 +368,26 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test heatmap image handles export errors."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["P1"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], title="Test"
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Test",
+            metadata=None,
         )
         mock_service.export_heatmap_image.side_effect = Exception("Export failed")
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31",
+            "/api/v1/visualization/heatmap/image?start_date=2025-01-01&end_date=2025-01-31",
             headers=auth_headers,
         )
         assert response.status_code == 500
@@ -340,19 +404,26 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test successful coverage heatmap generation."""
-        mock_service = MagicMock()
-        mock_service.generate_coverage_heatmap.return_value = MagicMock(
-            data=[[3, 2, 4]],
+        from app.schemas.visualization import CoverageHeatmapResponse, HeatmapData
+
+        heatmap_data = HeatmapData(
             x_labels=["2025-01-01", "2025-01-02", "2025-01-03"],
             y_labels=["Cardiology", "Pulmonology"],
+            z_values=[[3, 2, 4]],
+            color_scale="RdYlGn",
+            annotations=None,
+        )
+        mock_service = MagicMock()
+        mock_service.generate_coverage_heatmap.return_value = CoverageHeatmapResponse(
+            data=heatmap_data,
+            coverage_percentage=95.0,
+            gaps=[],
             title="Coverage Heatmap",
-            gaps=[{"date": "2025-01-02", "rotation": "Pulmonology", "count": 1}],
-            summary={"total_gaps": 1, "coverage_rate": 0.95},
         )
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/visualization/coverage?start_date=2025-01-01&end_date=2025-01-31",
+            "/api/v1/visualization/coverage?start_date=2025-01-01&end_date=2025-01-31",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -364,7 +435,7 @@ class TestVisualizationRoutes:
     ):
         """Test coverage heatmap with invalid date range."""
         response = client.get(
-            "/api/visualization/coverage?start_date=2025-01-31&end_date=2025-01-01",
+            "/api/v1/visualization/coverage?start_date=2025-01-31&end_date=2025-01-01",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -381,18 +452,26 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test successful workload heatmap generation."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
         person_id = uuid4()
-        mock_service = MagicMock()
-        mock_service.generate_person_workload_heatmap.return_value = MagicMock(
-            data=[[8, 10, 6]],
+        heatmap_data = HeatmapData(
             x_labels=["2025-01-01", "2025-01-02", "2025-01-03"],
             y_labels=["Dr. Smith"],
+            z_values=[[8, 10, 6]],
+            color_scale="Viridis",
+            annotations=None,
+        )
+        mock_service = MagicMock()
+        mock_service.generate_person_workload_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
             title="Workload Heatmap",
+            metadata=None,
         )
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/visualization/workload?person_ids={person_id}&start_date=2025-01-01&end_date=2025-01-31",
+            f"/api/v1/visualization/workload?person_ids={person_id}&start_date=2025-01-01&end_date=2025-01-31",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -405,19 +484,27 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test workload heatmap for multiple persons."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
         person_id1 = uuid4()
         person_id2 = uuid4()
-        mock_service = MagicMock()
-        mock_service.generate_person_workload_heatmap.return_value = MagicMock(
-            data=[[8, 10], [6, 9]],
+        heatmap_data = HeatmapData(
             x_labels=["2025-01-01", "2025-01-02"],
             y_labels=["Dr. Smith", "Dr. Jones"],
+            z_values=[[8, 10], [6, 9]],
+            color_scale="Viridis",
+            annotations=None,
+        )
+        mock_service = MagicMock()
+        mock_service.generate_person_workload_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
             title="Workload Heatmap",
+            metadata=None,
         )
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/visualization/workload?person_ids={person_id1}&person_ids={person_id2}"
+            f"/api/v1/visualization/workload?person_ids={person_id1}&person_ids={person_id2}"
             f"&start_date=2025-01-01&end_date=2025-01-31&include_weekends=true",
             headers=auth_headers,
         )
@@ -431,7 +518,7 @@ class TestVisualizationRoutes:
         """Test workload heatmap with invalid date range."""
         person_id = uuid4()
         response = client.get(
-            f"/api/visualization/workload?person_ids={person_id}&start_date=2025-01-31&end_date=2025-01-01",
+            f"/api/v1/visualization/workload?person_ids={person_id}&start_date=2025-01-31&end_date=2025-01-01",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -448,15 +535,26 @@ class TestVisualizationRoutes:
         auth_headers: dict,
     ):
         """Test exporting unified heatmap."""
+        from app.schemas.visualization import HeatmapData, HeatmapResponse
+
+        heatmap_data = HeatmapData(
+            x_labels=["2025-01-01"],
+            y_labels=["P1"],
+            z_values=[[1, 2]],
+            color_scale="Viridis",
+            annotations=None,
+        )
         mock_service = MagicMock()
-        mock_service.generate_unified_heatmap.return_value = MagicMock(
-            data=[[1, 2]], title="Unified Heatmap"
+        mock_service.generate_unified_heatmap.return_value = HeatmapResponse(
+            data=heatmap_data,
+            title="Unified Heatmap",
+            metadata=None,
         )
         mock_service.export_heatmap_image.return_value = b"\x89PNG image data"
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             headers=auth_headers,
             json={
                 "heatmap_type": "unified",
@@ -489,7 +587,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             headers=auth_headers,
             json={
                 "heatmap_type": "coverage",
@@ -519,7 +617,7 @@ class TestVisualizationRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             headers=auth_headers,
             json={
                 "heatmap_type": "workload",
@@ -541,7 +639,7 @@ class TestVisualizationRoutes:
     ):
         """Test export with invalid format."""
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             headers=auth_headers,
             json={
                 "heatmap_type": "unified",
@@ -562,7 +660,7 @@ class TestVisualizationRoutes:
     ):
         """Test export with invalid heatmap type."""
         response = client.post(
-            "/api/visualization/export",
+            "/api/v1/visualization/export",
             headers=auth_headers,
             json={
                 "heatmap_type": "custom",

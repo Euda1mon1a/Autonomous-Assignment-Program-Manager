@@ -19,7 +19,7 @@ class TestSwapExecuteEndpoint:
         target = sample_faculty_members[1]
 
         response = client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(source.id),
                 "source_week": (date.today() + timedelta(days=30)).isoformat(),
@@ -44,7 +44,7 @@ class TestSwapExecuteEndpoint:
         target = sample_faculty_members[1]
 
         response = client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(source.id),
                 "source_week": (date.today() + timedelta(days=30)).isoformat(),
@@ -58,7 +58,7 @@ class TestSwapExecuteEndpoint:
     def test_execute_swap_invalid_faculty(self, client: TestClient, auth_headers: dict):
         """Test swap with non-existent faculty."""
         response = client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(uuid4()),
                 "source_week": (date.today() + timedelta(days=30)).isoformat(),
@@ -81,7 +81,7 @@ class TestSwapExecuteEndpoint:
         target = sample_faculty_members[1]
 
         response = client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(source.id),
                 "source_week": (date.today() - timedelta(days=7)).isoformat(),
@@ -108,7 +108,7 @@ class TestSwapExecuteEndpoint:
         target = sample_faculty_members[1]
 
         response = client.post(
-            "/api/swaps/execute",
+            "/api/v1/swaps/execute",
             json={
                 "source_faculty_id": str(source.id),
                 "source_week": (date.today() + timedelta(days=1)).isoformat(),
@@ -136,7 +136,7 @@ class TestSwapValidateEndpoint:
         target = sample_faculty_members[1]
 
         response = client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(source.id),
                 "source_week": (date.today() + timedelta(days=30)).isoformat(),
@@ -175,7 +175,7 @@ class TestSwapValidateEndpoint:
         db.commit()
 
         response = client.post(
-            "/api/swaps/validate",
+            "/api/v1/swaps/validate",
             json={
                 "source_faculty_id": str(source.id),
                 "source_week": swap_week.isoformat(),
@@ -197,7 +197,7 @@ class TestSwapHistoryEndpoint:
     def test_get_history_empty(self, client: TestClient, auth_headers: dict):
         """Test getting empty swap history."""
         response = client.get(
-            "/api/swaps/history",
+            "/api/v1/swaps/history",
             headers=auth_headers,
         )
 
@@ -212,7 +212,7 @@ class TestSwapHistoryEndpoint:
     ):
         """Test history with filter parameters."""
         response = client.get(
-            "/api/swaps/history",
+            "/api/v1/swaps/history",
             params={
                 "faculty_id": str(sample_faculty.id),
                 "status": "pending",
@@ -226,7 +226,7 @@ class TestSwapHistoryEndpoint:
 
     def test_get_history_unauthorized(self, client: TestClient):
         """Test history requires authentication."""
-        response = client.get("/api/swaps/history")
+        response = client.get("/api/v1/swaps/history")
         assert response.status_code == 401
 
 
@@ -236,7 +236,7 @@ class TestSwapRollbackEndpoint:
     def test_rollback_not_found(self, client: TestClient, auth_headers: dict):
         """Test rollback of non-existent swap."""
         response = client.post(
-            f"/api/swaps/{uuid4()}/rollback",
+            f"/api/v1/swaps/{uuid4()}/rollback",
             json={"reason": "Test rollback reason for testing purposes"},
             headers=auth_headers,
         )
@@ -246,7 +246,7 @@ class TestSwapRollbackEndpoint:
     def test_rollback_reason_required(self, client: TestClient, auth_headers: dict):
         """Test rollback requires reason with minimum length."""
         response = client.post(
-            f"/api/swaps/{uuid4()}/rollback",
+            f"/api/v1/swaps/{uuid4()}/rollback",
             json={"reason": "short"},  # Too short
             headers=auth_headers,
         )
@@ -260,7 +260,7 @@ class TestSwapGetEndpoint:
     def test_get_swap_not_found(self, client: TestClient, auth_headers: dict):
         """Test getting non-existent swap."""
         response = client.get(
-            f"/api/swaps/{uuid4()}",
+            f"/api/v1/swaps/{uuid4()}",
             headers=auth_headers,
         )
 

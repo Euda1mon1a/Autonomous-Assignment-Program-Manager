@@ -21,7 +21,7 @@ class TestAcademicYearScenarios:
         end_date = date(2025, 6, 30)  # June 30
 
         response = client.post(
-            "/api/scheduler/generate",
+            "/api/v1/scheduler/generate",
             json={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),

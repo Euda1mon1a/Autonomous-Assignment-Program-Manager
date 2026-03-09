@@ -52,28 +52,30 @@ class TestAPIClient:
 
     def create_person(self, data: dict) -> Any:
         """Create a person via API."""
-        return self.post("/api/people/", json=data)
+        return self.post("/api/v1/people/", json=data)
 
     def create_block(self, data: dict) -> Any:
         """Create a block via API."""
-        return self.post("/api/blocks/", json=data)
+        return self.post("/api/v1/blocks/", json=data)
 
     def create_assignment(self, data: dict) -> Any:
         """Create an assignment via API."""
-        return self.post("/api/assignments/", json=data)
+        return self.post("/api/v1/assignments/", json=data)
 
     def create_swap_request(self, data: dict) -> Any:
         """Create a swap request via API."""
-        return self.post("/api/swap/", json=data)
+        return self.post("/api/v1/swap/", json=data)
 
     def get_schedule(self, start_date: str, end_date: str) -> Any:
         """Get schedule for date range."""
-        return self.get(f"/api/schedule/?start_date={start_date}&end_date={end_date}")
+        return self.get(
+            f"/api/v1/schedule/?start_date={start_date}&end_date={end_date}"
+        )
 
     def validate_compliance(self, person_id: str, start_date: str) -> Any:
         """Validate ACGME compliance for person."""
         return self.get(
-            f"/api/analytics/acgme/compliance?person_id={person_id}&start_date={start_date}"
+            f"/api/v1/analytics/acgme/compliance?person_id={person_id}&start_date={start_date}"
         )
 
     def check_response(

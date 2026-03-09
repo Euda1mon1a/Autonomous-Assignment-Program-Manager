@@ -121,7 +121,7 @@ class TestAdminUserActivityLogging:
         # Skip if no auth headers (auth may not be set up in test)
 
         response = client.post(
-            "/api/admin/users",
+            "/api/v1/admin/users",
             json={
                 "email": "newuser@test.org",
                 "first_name": "New",
@@ -292,7 +292,7 @@ class TestActivityLogQuery:
         db.add(log_entry)
         db.commit()
 
-        response = client.get("/api/admin/users/activity-log", headers=auth_headers)
+        response = client.get("/api/v1/admin/users/activity-log", headers=auth_headers)
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["items"]

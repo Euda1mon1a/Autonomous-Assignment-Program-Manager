@@ -31,7 +31,7 @@ class TestExperimentsRoutes:
         }
 
         response = client.post(
-            "/api/experiments/",
+            "/api/v1/experiments/",
             json=experiment_data,
             headers=auth_headers,
         )
@@ -57,7 +57,7 @@ class TestExperimentsRoutes:
         }
 
         response = client.post(
-            "/api/experiments/",
+            "/api/v1/experiments/",
             json=experiment_data,
             headers=auth_headers,
         )
@@ -67,7 +67,7 @@ class TestExperimentsRoutes:
     def test_list_experiments(self, client: TestClient, auth_headers: dict):
         """Test listing experiments."""
         response = client.get(
-            "/api/experiments/",
+            "/api/v1/experiments/",
             headers=auth_headers,
         )
 
@@ -80,7 +80,7 @@ class TestExperimentsRoutes:
     def test_get_experiment_stats(self, client: TestClient, auth_headers: dict):
         """Test getting experiment statistics."""
         response = client.get(
-            "/api/experiments/stats",
+            "/api/v1/experiments/stats",
             headers=auth_headers,
         )
 
@@ -92,7 +92,7 @@ class TestExperimentsRoutes:
     def test_get_experiment_not_found(self, client: TestClient, auth_headers: dict):
         """Test getting non-existent experiment."""
         response = client.get(
-            "/api/experiments/nonexistent_key",
+            "/api/v1/experiments/nonexistent_key",
             headers=auth_headers,
         )
 
@@ -100,7 +100,7 @@ class TestExperimentsRoutes:
 
     def test_unauthorized_access(self, client: TestClient):
         """Test that unauthenticated requests are rejected."""
-        response = client.get("/api/experiments/")
+        response = client.get("/api/v1/experiments/")
 
         assert response.status_code == 401
 

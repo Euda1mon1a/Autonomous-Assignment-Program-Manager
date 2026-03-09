@@ -28,33 +28,33 @@ class TestJobsRoutes:
 
     def test_dashboard_requires_auth(self, client: TestClient):
         """Test that dashboard requires authentication."""
-        response = client.get("/api/jobs/dashboard")
+        response = client.get("/api/v1/jobs/dashboard")
         assert response.status_code == 401
 
     def test_active_tasks_requires_auth(self, client: TestClient):
         """Test that active tasks requires authentication."""
-        response = client.get("/api/jobs/active")
+        response = client.get("/api/v1/jobs/active")
         assert response.status_code == 401
 
     def test_workers_requires_auth(self, client: TestClient):
         """Test that workers endpoint requires authentication."""
-        response = client.get("/api/jobs/workers")
+        response = client.get("/api/v1/jobs/workers")
         assert response.status_code == 401
 
     def test_queues_requires_auth(self, client: TestClient):
         """Test that queues endpoint requires authentication."""
-        response = client.get("/api/jobs/queues")
+        response = client.get("/api/v1/jobs/queues")
         assert response.status_code == 401
 
     def test_task_statistics_requires_auth(self, client: TestClient):
         """Test that task statistics requires authentication."""
-        response = client.get("/api/jobs/statistics/tasks")
+        response = client.get("/api/v1/jobs/statistics/tasks")
         assert response.status_code == 401
 
     def test_revoke_task_requires_auth(self, client: TestClient):
         """Test that task revocation requires authentication."""
         response = client.post(
-            "/api/jobs/tasks/revoke",
+            "/api/v1/jobs/tasks/revoke",
             json={"task_id": str(uuid4())},
         )
         assert response.status_code == 401
@@ -93,7 +93,7 @@ class TestJobsRoutes:
         }
         mock_stats_service.return_value = mock_stats
 
-        response = client.get("/api/jobs/dashboard", headers=auth_headers)
+        response = client.get("/api/v1/jobs/dashboard", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -126,7 +126,7 @@ class TestJobsRoutes:
         ]
         mock_monitor_service.return_value = mock_monitor
 
-        response = client.get("/api/jobs/active", headers=auth_headers)
+        response = client.get("/api/v1/jobs/active", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -146,7 +146,7 @@ class TestJobsRoutes:
         mock_monitor_service.return_value = mock_monitor
 
         response = client.get(
-            "/api/jobs/active?queue=resilience",
+            "/api/v1/jobs/active?queue=resilience",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -172,7 +172,7 @@ class TestJobsRoutes:
         ]
         mock_monitor_service.return_value = mock_monitor
 
-        response = client.get("/api/jobs/scheduled", headers=auth_headers)
+        response = client.get("/api/v1/jobs/scheduled", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -198,7 +198,7 @@ class TestJobsRoutes:
         ]
         mock_monitor_service.return_value = mock_monitor
 
-        response = client.get("/api/jobs/reserved", headers=auth_headers)
+        response = client.get("/api/v1/jobs/reserved", headers=auth_headers)
         assert response.status_code == 200
 
     # ========================================================================
@@ -226,7 +226,7 @@ class TestJobsRoutes:
         mock_monitor_service.return_value = mock_monitor
 
         response = client.get(
-            f"/api/jobs/tasks/{task_id}",
+            f"/api/v1/jobs/tasks/{task_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -248,7 +248,7 @@ class TestJobsRoutes:
         mock_monitor_service.return_value = mock_monitor
 
         response = client.get(
-            f"/api/jobs/tasks/{uuid4()}",
+            f"/api/v1/jobs/tasks/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -280,7 +280,7 @@ class TestJobsRoutes:
         }
         mock_monitor_service.return_value = mock_monitor
 
-        response = client.get("/api/jobs/workers", headers=auth_headers)
+        response = client.get("/api/v1/jobs/workers", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -305,7 +305,7 @@ class TestJobsRoutes:
         }
         mock_monitor_service.return_value = mock_monitor
 
-        response = client.get("/api/jobs/workers/health", headers=auth_headers)
+        response = client.get("/api/v1/jobs/workers/health", headers=auth_headers)
         assert response.status_code == 200
 
     @patch("app.api.routes.jobs.JobStatsService")
@@ -327,7 +327,7 @@ class TestJobsRoutes:
         }
         mock_stats_service.return_value = mock_stats
 
-        response = client.get("/api/jobs/workers/utilization", headers=auth_headers)
+        response = client.get("/api/v1/jobs/workers/utilization", headers=auth_headers)
         assert response.status_code == 200
 
     # ========================================================================
@@ -359,7 +359,7 @@ class TestJobsRoutes:
         }
         mock_stats_service.return_value = mock_stats
 
-        response = client.get("/api/jobs/queues", headers=auth_headers)
+        response = client.get("/api/v1/jobs/queues", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -384,13 +384,19 @@ class TestJobsRoutes:
             "totalTasks": 96,
             "successfulTasks": 95,
             "failedTasks": 1,
+            "pendingTasks": 0,
+            "retriedTasks": 2,
             "successRate": 98.96,
+            "failureRate": 1.04,
             "averageRuntimeSeconds": 5.2,
+            "minRuntimeSeconds": 0.5,
+            "maxRuntimeSeconds": 30.0,
+            "timestamp": datetime.utcnow().isoformat(),
         }
         mock_stats_service.return_value = mock_stats
 
         response = client.get(
-            "/api/jobs/statistics/tasks?hours=24",
+            "/api/v1/jobs/statistics/tasks?hours=24",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -411,10 +417,12 @@ class TestJobsRoutes:
             "maxRetriesUsed": 3,
             "averageRetriesPerTask": 1.88,
             "retrySuccessRate": 87.5,
+            "commonRetryReasons": ["ConnectionError", "Timeout"],
+            "timestamp": datetime.utcnow().isoformat(),
         }
         mock_stats_service.return_value = mock_stats
 
-        response = client.get("/api/jobs/statistics/retries", headers=auth_headers)
+        response = client.get("/api/v1/jobs/statistics/retries", headers=auth_headers)
         assert response.status_code == 200
 
     @patch("app.api.routes.jobs.JobStatsService")
@@ -430,13 +438,23 @@ class TestJobsRoutes:
             "taskName": "all",
             "timeRangeHours": 24,
             "totalExecutions": 24,
+            "averageRuntimeSeconds": 4.5,
+            "medianRuntimeSeconds": 3.2,
             "p50RuntimeSeconds": 3.2,
+            "p75RuntimeSeconds": 4.8,
+            "p90RuntimeSeconds": 5.5,
             "p95RuntimeSeconds": 5.8,
             "p99RuntimeSeconds": 7.1,
+            "minRuntimeSeconds": 0.3,
+            "maxRuntimeSeconds": 12.0,
+            "stdDevRuntimeSeconds": 2.1,
+            "timestamp": datetime.utcnow().isoformat(),
         }
         mock_stats_service.return_value = mock_stats
 
-        response = client.get("/api/jobs/statistics/performance", headers=auth_headers)
+        response = client.get(
+            "/api/v1/jobs/statistics/performance", headers=auth_headers
+        )
         assert response.status_code == 200
 
     @patch("app.api.routes.jobs.JobStatsService")
@@ -452,13 +470,18 @@ class TestJobsRoutes:
             "queueName": "all",
             "timeRangeHours": 24,
             "totalTasksProcessed": 96,
-            "tasksPerHour": 4.0,
             "tasksPerMinute": 0.067,
+            "tasksPerHour": 4.0,
+            "peakThroughputPerHour": 8.0,
             "averageQueueTimeSeconds": 2.5,
+            "averageProcessingTimeSeconds": 5.2,
+            "timestamp": datetime.utcnow().isoformat(),
         }
         mock_stats_service.return_value = mock_stats
 
-        response = client.get("/api/jobs/statistics/throughput", headers=auth_headers)
+        response = client.get(
+            "/api/v1/jobs/statistics/throughput", headers=auth_headers
+        )
         assert response.status_code == 200
 
     # ========================================================================
@@ -483,7 +506,7 @@ class TestJobsRoutes:
         }
         mock_history_service.return_value = mock_history
 
-        response = client.get("/api/jobs/history?limit=50", headers=auth_headers)
+        response = client.get("/api/v1/jobs/history?limit=50", headers=auth_headers)
         assert response.status_code == 200
 
     @patch("app.api.routes.jobs.JobHistoryService")
@@ -507,7 +530,7 @@ class TestJobsRoutes:
         mock_history_service.return_value = mock_history
 
         response = client.get(
-            "/api/jobs/history/failures?limit=10", headers=auth_headers
+            "/api/v1/jobs/history/failures?limit=10", headers=auth_headers
         )
         assert response.status_code == 200
 
@@ -526,12 +549,14 @@ class TestJobsRoutes:
                 "taskName": "app.tasks.heavy_process",
                 "runtimeSeconds": 125.5,
                 "startedAt": datetime.utcnow().isoformat(),
+                "completedAt": datetime.utcnow().isoformat(),
+                "status": "SUCCESS",
             }
         ]
         mock_history_service.return_value = mock_history
 
         response = client.get(
-            "/api/jobs/history/slow?threshold=30.0",
+            "/api/v1/jobs/history/slow?threshold=30.0",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -554,7 +579,7 @@ class TestJobsRoutes:
         mock_monitor_service.return_value = mock_monitor
 
         response = client.post(
-            "/api/jobs/tasks/revoke",
+            "/api/v1/jobs/tasks/revoke",
             headers=auth_headers,
             json={"task_id": task_id, "terminate": False},
         )
@@ -572,7 +597,7 @@ class TestJobsRoutes:
     ):
         """Test queue purge requires confirmation."""
         response = client.post(
-            "/api/jobs/queues/purge",
+            "/api/v1/jobs/queues/purge",
             headers=auth_headers,
             json={"queue_name": "test", "confirm": False},
         )
@@ -591,7 +616,7 @@ class TestJobsRoutes:
         mock_monitor_service.return_value = mock_monitor
 
         response = client.post(
-            "/api/jobs/queues/purge",
+            "/api/v1/jobs/queues/purge",
             headers=auth_headers,
             json={"queue_name": "test_queue", "confirm": True},
         )
@@ -619,7 +644,7 @@ class TestJobsRoutes:
         ]
         mock_monitor_service.return_value = mock_monitor
 
-        response = client.get("/api/jobs/registered", headers=auth_headers)
+        response = client.get("/api/v1/jobs/registered", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -652,7 +677,7 @@ class TestJobsRoutes:
         }
         mock_stats_service.return_value = mock_stats
 
-        response = client.get("/api/jobs/scheduled-tasks", headers=auth_headers)
+        response = client.get("/api/v1/jobs/scheduled-tasks", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()

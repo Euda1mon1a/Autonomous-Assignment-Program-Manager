@@ -230,15 +230,16 @@ class TestWednesdayPMLecValidate:
         result = c.validate([a], ctx)
         assert result.satisfied is True
 
-    def test_wednesday_pm_non_lec_non_exempt_raises(self):
-        """Wednesday PM with CLINIC (non-exempt, non-LEC) -> TypeError (known bug)."""
+    def test_wednesday_pm_non_lec_non_exempt_violation(self):
+        """Wednesday PM with CLINIC (non-exempt, non-LEC) -> violation."""
         c = WednesdayPMLecConstraint()
         b = _block(block_date=date(2025, 3, 5), time_of_day="PM")
         t = _template(abbreviation="CLINIC")
         a = _rich_assignment(block=b, rotation_template=t)
         ctx = _context()
-        with pytest.raises(TypeError):
-            c.validate([a], ctx)
+        result = c.validate([a], ctx)
+        assert result.satisfied is False
+        assert len(result.violations) > 0
 
 
 # ==================== InternContinuityConstraint Init & Helpers ====================
@@ -342,16 +343,17 @@ class TestInternContinuityValidate:
         result = c.validate([a], ctx)
         assert result.satisfied is True
 
-    def test_pgy1_wednesday_am_non_continuity_raises(self):
-        """PGY-1 Wednesday AM with CLINIC -> TypeError (known bug)."""
+    def test_pgy1_wednesday_am_non_continuity_violation(self):
+        """PGY-1 Wednesday AM with CLINIC -> violation."""
         c = InternContinuityConstraint()
         res = _person(pgy_level=1)
         b = _block(block_date=date(2025, 3, 5), time_of_day="AM")
         t = _template(abbreviation="CLINIC")
         a = _rich_assignment(block=b, rotation_template=t, resident=res)
         ctx = _context()
-        with pytest.raises(TypeError):
-            c.validate([a], ctx)
+        result = c.validate([a], ctx)
+        assert result.satisfied is False
+        assert len(result.violations) > 0
 
 
 # ==================== NightFloatSlotConstraint Init & Helpers ====================
@@ -486,5 +488,6 @@ class TestNightFloatSlotValidate:
             block=am_block, rotation_template=wrong_am, resident=res
         )
         ctx = _context()
-        with pytest.raises(TypeError):
-            c.validate([pm_a, am_a], ctx)
+        result = c.validate([pm_a, am_a], ctx)
+        assert result.satisfied is False
+        assert len(result.violations) > 0

@@ -52,7 +52,7 @@ class TestBulkAbsencePreview:
         }
 
         response = client.post(
-            "/api/absences/bulk/preview",
+            "/api/v1/absences/bulk/preview",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -97,7 +97,7 @@ class TestBulkAbsencePreview:
         }
 
         response = client.post(
-            "/api/absences/bulk/preview",
+            "/api/v1/absences/bulk/preview",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -136,7 +136,7 @@ class TestBulkAbsencePreview:
         }
 
         response = client.post(
-            "/api/absences/bulk/preview",
+            "/api/v1/absences/bulk/preview",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -175,7 +175,7 @@ class TestBulkAbsencePreview:
         }
 
         response = client.post(
-            "/api/absences/bulk/preview",
+            "/api/v1/absences/bulk/preview",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -213,7 +213,7 @@ class TestBulkAbsencePreview:
         }
 
         response = client.post(
-            "/api/absences/bulk/preview",
+            "/api/v1/absences/bulk/preview",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -240,7 +240,7 @@ class TestBulkAbsencePreview:
         bulk_data = {"absences": []}
 
         response = client.post(
-            "/api/absences/bulk/preview",
+            "/api/v1/absences/bulk/preview",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -272,7 +272,7 @@ class TestBulkAbsencePreview:
         }
 
         response = client.post(
-            "/api/absences/bulk/preview",
+            "/api/v1/absences/bulk/preview",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -315,7 +315,7 @@ class TestBulkAbsenceApply:
         }
 
         response = client.post(
-            "/api/absences/bulk/apply",
+            "/api/v1/absences/bulk/apply",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -370,7 +370,7 @@ class TestBulkAbsenceApply:
         }
 
         response = client.post(
-            "/api/absences/bulk/apply",
+            "/api/v1/absences/bulk/apply",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -414,7 +414,7 @@ class TestBulkAbsenceApply:
         }
 
         response = client.post(
-            "/api/absences/bulk/apply",
+            "/api/v1/absences/bulk/apply",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -459,7 +459,7 @@ class TestBulkAbsenceApply:
         }
 
         response = client.post(
-            "/api/absences/bulk/apply",
+            "/api/v1/absences/bulk/apply",
             json=bulk_data,
             headers=auth_headers,
         )
@@ -500,7 +500,7 @@ class TestBulkAbsenceAuthentication:
         }
 
         response = client.post(
-            "/api/absences/bulk/preview",
+            "/api/v1/absences/bulk/preview",
             json=bulk_data,
             # No auth headers
         )
@@ -529,7 +529,7 @@ class TestBulkAbsenceAuthentication:
         }
 
         response = client.post(
-            "/api/absences/bulk/apply",
+            "/api/v1/absences/bulk/apply",
             json=bulk_data,
             # No auth headers
         )
@@ -576,7 +576,7 @@ class TestBulkAbsenceSummary:
         }
 
         response = client.post(
-            "/api/absences/bulk/preview",
+            "/api/v1/absences/bulk/preview",
             json=bulk_data,
             headers=auth_headers,
         )

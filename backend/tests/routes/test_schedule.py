@@ -11,7 +11,11 @@ from app.core.config import Settings
 def test_generate_schedule_rejects_non_cp_sat_in_production(
     client: TestClient, auth_headers: dict
 ) -> None:
-    settings = Settings(DEBUG=False)
+    settings = Settings(
+        DEBUG=False,
+        DATABASE_URL="postgresql://user:supersecretpassword123@localhost:5432/db",
+        REDIS_PASSWORD="supersecretredispassword123",
+    )
 
     payload = {
         "start_date": date(2025, 1, 1).isoformat(),

@@ -23,7 +23,7 @@ class TestDocsRoutes:
 
     def test_docs_index(self, client: TestClient):
         """Test documentation index endpoint."""
-        response = client.get("/api/docs/")
+        response = client.get("/api/v1/docs/")
         assert response.status_code == 200
 
         data = response.json()
@@ -44,7 +44,7 @@ class TestDocsRoutes:
 
     def test_get_enhanced_openapi(self, client: TestClient):
         """Test enhanced OpenAPI schema endpoint."""
-        response = client.get("/api/docs/openapi-enhanced.json")
+        response = client.get("/api/v1/docs/openapi-enhanced.json")
         assert response.status_code == 200
 
         data = response.json()
@@ -53,7 +53,7 @@ class TestDocsRoutes:
 
     def test_get_enhanced_openapi_is_json(self, client: TestClient):
         """Test that enhanced OpenAPI returns valid JSON."""
-        response = client.get("/api/docs/openapi-enhanced.json")
+        response = client.get("/api/v1/docs/openapi-enhanced.json")
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("application/json")
 
@@ -63,7 +63,7 @@ class TestDocsRoutes:
 
     def test_get_markdown_docs(self, client: TestClient):
         """Test Markdown documentation endpoint."""
-        response = client.get("/api/docs/markdown")
+        response = client.get("/api/v1/docs/markdown")
         assert response.status_code == 200
 
         # Should return plain text
@@ -74,7 +74,7 @@ class TestDocsRoutes:
 
     def test_get_markdown_docs_contains_headings(self, client: TestClient):
         """Test that Markdown docs contain expected headings."""
-        response = client.get("/api/docs/markdown")
+        response = client.get("/api/v1/docs/markdown")
         assert response.status_code == 200
 
         # Markdown should have some structure
@@ -89,8 +89,8 @@ class TestDocsRoutes:
     def test_get_endpoint_documentation_markdown(self, client: TestClient):
         """Test endpoint documentation in Markdown format."""
         response = client.get(
-            "/api/docs/endpoint",
-            params={"path": "/api/people", "method": "GET", "format": "markdown"},
+            "/api/v1/docs/endpoint",
+            params={"path": "/api/v1/people", "method": "GET", "format": "markdown"},
         )
         assert response.status_code == 200
         assert "text/plain" in response.headers["content-type"]
@@ -98,8 +98,8 @@ class TestDocsRoutes:
     def test_get_endpoint_documentation_json(self, client: TestClient):
         """Test endpoint documentation in JSON format."""
         response = client.get(
-            "/api/docs/endpoint",
-            params={"path": "/api/people", "method": "GET", "format": "json"},
+            "/api/v1/docs/endpoint",
+            params={"path": "/api/v1/people", "method": "GET", "format": "json"},
         )
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("application/json")
@@ -110,7 +110,7 @@ class TestDocsRoutes:
     def test_get_endpoint_documentation_requires_path(self, client: TestClient):
         """Test that path parameter is required."""
         response = client.get(
-            "/api/docs/endpoint",
+            "/api/v1/docs/endpoint",
             params={"method": "GET"},
         )
         assert response.status_code == 422  # Validation error
@@ -118,8 +118,8 @@ class TestDocsRoutes:
     def test_get_endpoint_documentation_requires_method(self, client: TestClient):
         """Test that method parameter is required."""
         response = client.get(
-            "/api/docs/endpoint",
-            params={"path": "/api/people"},
+            "/api/v1/docs/endpoint",
+            params={"path": "/api/v1/people"},
         )
         assert response.status_code == 422  # Validation error
 
@@ -130,8 +130,8 @@ class TestDocsRoutes:
     def test_get_code_examples(self, client: TestClient):
         """Test code examples endpoint."""
         response = client.get(
-            "/api/docs/examples",
-            params={"path": "/api/people", "method": "GET"},
+            "/api/v1/docs/examples",
+            params={"path": "/api/v1/people", "method": "GET"},
         )
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("application/json")
@@ -139,15 +139,15 @@ class TestDocsRoutes:
     def test_get_code_examples_with_language(self, client: TestClient):
         """Test code examples with specific language filter."""
         response = client.get(
-            "/api/docs/examples",
-            params={"path": "/api/people", "method": "GET", "language": "python"},
+            "/api/v1/docs/examples",
+            params={"path": "/api/v1/people", "method": "GET", "language": "python"},
         )
         assert response.status_code == 200
 
     def test_get_code_examples_requires_path(self, client: TestClient):
         """Test that path parameter is required for examples."""
         response = client.get(
-            "/api/docs/examples",
+            "/api/v1/docs/examples",
             params={"method": "GET"},
         )
         assert response.status_code == 422
@@ -158,13 +158,13 @@ class TestDocsRoutes:
 
     def test_get_error_documentation(self, client: TestClient):
         """Test error documentation endpoint."""
-        response = client.get("/api/docs/errors")
+        response = client.get("/api/v1/docs/errors")
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("application/json")
 
     def test_error_documentation_structure(self, client: TestClient):
         """Test error documentation response structure."""
-        response = client.get("/api/docs/errors")
+        response = client.get("/api/v1/docs/errors")
         assert response.status_code == 200
 
         # Should return dict or list of error codes
@@ -177,7 +177,7 @@ class TestDocsRoutes:
 
     def test_get_changelog(self, client: TestClient):
         """Test changelog endpoint."""
-        response = client.get("/api/docs/changelog")
+        response = client.get("/api/v1/docs/changelog")
         assert response.status_code == 200
         assert "text/plain" in response.headers["content-type"]
 
@@ -187,7 +187,7 @@ class TestDocsRoutes:
 
     def test_get_version_info(self, client: TestClient):
         """Test version info endpoint."""
-        response = client.get("/api/docs/version")
+        response = client.get("/api/v1/docs/version")
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("application/json")
 
@@ -201,7 +201,7 @@ class TestDocsRoutes:
 
     def test_get_documentation_stats(self, client: TestClient):
         """Test documentation stats endpoint."""
-        response = client.get("/api/docs/stats")
+        response = client.get("/api/v1/docs/stats")
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("application/json")
 
@@ -224,7 +224,7 @@ class TestDocsRoutes:
         mock_get_generator.return_value = mock_generator
 
         response = client.get(
-            "/api/docs/export/openapi",
+            "/api/v1/docs/export/openapi",
             params={"filepath": "/tmp/test-openapi.json"},
         )
         assert response.status_code == 200
@@ -245,7 +245,7 @@ class TestDocsRoutes:
         mock_get_generator.return_value = mock_generator
 
         response = client.get(
-            "/api/docs/export/markdown",
+            "/api/v1/docs/export/markdown",
             params={"filepath": "/tmp/test-docs.md"},
         )
         assert response.status_code == 200
@@ -269,7 +269,7 @@ class TestDocsRoutes:
         mock_generator.get_enhanced_openapi_schema.side_effect = Exception("Test error")
         mock_get_generator.return_value = mock_generator
 
-        response = client.get("/api/docs/openapi-enhanced.json")
+        response = client.get("/api/v1/docs/openapi-enhanced.json")
         assert response.status_code == 500
         assert "Failed to generate" in response.json()["detail"]
 
@@ -284,7 +284,7 @@ class TestDocsRoutes:
         mock_generator.get_markdown_documentation.side_effect = Exception("Test error")
         mock_get_generator.return_value = mock_generator
 
-        response = client.get("/api/docs/markdown")
+        response = client.get("/api/v1/docs/markdown")
         assert response.status_code == 500
 
     @patch("app.api.routes.docs._get_doc_generator")
@@ -299,7 +299,7 @@ class TestDocsRoutes:
         mock_get_generator.return_value = mock_generator
 
         response = client.get(
-            "/api/docs/export/openapi",
+            "/api/v1/docs/export/openapi",
             params={"filepath": "/invalid/path.json"},
         )
         assert response.status_code == 500

@@ -15,12 +15,32 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.models.activity import Activity
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
 
 
 class TestGetWeeklyPatterns:
     """Tests for GET /rotation-templates/{template_id}/patterns."""
+
+    @pytest.fixture
+    def sample_activities(self, db: Session) -> dict[str, Activity]:
+        """Create sample activities required by WeeklyPattern FK."""
+        activities = {}
+        for code, name, category in [
+            ("fm_clinic", "FM Clinic", "clinical"),
+            ("specialty", "Specialty", "clinical"),
+        ]:
+            activity = Activity(
+                id=uuid4(),
+                name=name,
+                code=code,
+                activity_category=category,
+            )
+            db.add(activity)
+            activities[code] = activity
+        db.commit()
+        return activities
 
     @pytest.fixture
     def sample_template(self, db: Session) -> RotationTemplate:
@@ -38,10 +58,12 @@ class TestGetWeeklyPatterns:
 
     @pytest.fixture
     def sample_patterns(
-        self, db: Session, sample_template: RotationTemplate
+        self, db: Session, sample_template: RotationTemplate, sample_activities: dict
     ) -> list[WeeklyPattern]:
         """Create sample weekly patterns for testing."""
         now = datetime.utcnow()
+        fm_clinic = sample_activities["fm_clinic"]
+        specialty = sample_activities["specialty"]
         patterns = [
             WeeklyPattern(
                 id=uuid4(),
@@ -49,6 +71,7 @@ class TestGetWeeklyPatterns:
                 day_of_week=1,  # Monday
                 time_of_day="AM",
                 activity_type="fm_clinic",
+                activity_id=fm_clinic.id,
                 is_protected=False,
                 created_at=now,
                 updated_at=now,
@@ -59,6 +82,7 @@ class TestGetWeeklyPatterns:
                 day_of_week=1,  # Monday
                 time_of_day="PM",
                 activity_type="fm_clinic",
+                activity_id=fm_clinic.id,
                 is_protected=False,
                 created_at=now,
                 updated_at=now,
@@ -69,6 +93,7 @@ class TestGetWeeklyPatterns:
                 day_of_week=2,  # Tuesday
                 time_of_day="AM",
                 activity_type="specialty",
+                activity_id=specialty.id,
                 is_protected=True,
                 created_at=now,
                 updated_at=now,
@@ -88,7 +113,7 @@ class TestGetWeeklyPatterns:
     ):
         """Test successful retrieval of weekly patterns."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
 
@@ -118,7 +143,7 @@ class TestGetWeeklyPatterns:
     ):
         """Test patterns are returned ordered by day_of_week and time_of_day."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
 
@@ -142,7 +167,7 @@ class TestGetWeeklyPatterns:
     ):
         """Test returns empty list for template with no patterns."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
 
@@ -156,7 +181,7 @@ class TestGetWeeklyPatterns:
         """Test 404 for non-existent template."""
         fake_id = uuid4()
         response = client.get(
-            f"/api/rotation-templates/{fake_id}/patterns",
+            f"/api/v1/rotation-templates/{fake_id}/patterns",
             headers=auth_headers,
         )
 
@@ -169,14 +194,16 @@ class TestGetWeeklyPatterns:
         self, client: TestClient, sample_template: RotationTemplate
     ):
         """Test 401 for unauthenticated request."""
-        response = client.get(f"/api/rotation-templates/{sample_template.id}/patterns")
+        response = client.get(
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns"
+        )
 
         assert response.status_code == 401
 
     def test_get_patterns_invalid_uuid(self, client: TestClient, auth_headers: dict):
         """Test 422 for invalid UUID format."""
         response = client.get(
-            "/api/rotation-templates/not-a-uuid/patterns",
+            "/api/v1/rotation-templates/not-a-uuid/patterns",
             headers=auth_headers,
         )
 
@@ -192,7 +219,7 @@ class TestGetWeeklyPatterns:
     ):
         """Test patterns include is_protected flag correctly."""
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
 
@@ -211,16 +238,19 @@ class TestGetWeeklyPatterns:
         auth_headers: dict,
         db: Session,
         sample_template: RotationTemplate,
+        sample_activities: dict,
     ):
         """Test patterns can include linked_template_id."""
         # Create another template to link to
         linked_template = RotationTemplate(
             id=uuid4(),
             name="Specialty Template",
-            activity_type="specialty",
+            rotation_type="outpatient",
             created_at=datetime.utcnow(),
         )
         db.add(linked_template)
+
+        specialty = sample_activities["specialty"]
 
         # Create pattern with linked template
         now = datetime.utcnow()
@@ -230,6 +260,7 @@ class TestGetWeeklyPatterns:
             day_of_week=3,
             time_of_day="AM",
             activity_type="specialty",
+            activity_id=specialty.id,
             linked_template_id=linked_template.id,
             is_protected=False,
             created_at=now,
@@ -239,7 +270,7 @@ class TestGetWeeklyPatterns:
         db.commit()
 
         response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/patterns",
+            f"/api/v1/rotation-templates/{sample_template.id}/patterns",
             headers=auth_headers,
         )
 

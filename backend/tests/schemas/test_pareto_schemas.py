@@ -298,32 +298,41 @@ class TestParetoOptimizeResponse:
 # ===========================================================================
 
 
+def _make_solution(solution_id: int) -> ParetoSolution:
+    """Helper to create a minimal ParetoSolution for testing."""
+    return ParetoSolution(
+        solution_id=solution_id,
+        objective_values={"fairness": 0.5, "coverage": 0.8},
+        decision_variables={"p1": "b1"},
+    )
+
+
 class TestSolutionRankRequest:
     def test_valid(self):
         r = SolutionRankRequest(
-            solution_ids=[1, 2, 3],
+            solutions=[_make_solution(i) for i in range(1, 4)],
             weights={"fairness": 0.6, "coverage": 0.4},
         )
         assert r.normalization == "minmax"
 
-    # --- solution_ids min_length=1 ---
+    # --- solutions min_length=1 ---
 
-    def test_empty_solution_ids(self):
+    def test_empty_solutions(self):
         with pytest.raises(ValidationError):
-            SolutionRankRequest(solution_ids=[], weights={"fairness": 1.0})
+            SolutionRankRequest(solutions=[], weights={"fairness": 1.0})
 
     # --- model_validator: weights positive ---
 
     def test_negative_weight(self):
         with pytest.raises(ValidationError):
             SolutionRankRequest(
-                solution_ids=[1],
+                solutions=[_make_solution(1)],
                 weights={"fairness": -0.5},
             )
 
     def test_zero_weight_allowed(self):
         r = SolutionRankRequest(
-            solution_ids=[1],
+            solutions=[_make_solution(1)],
             weights={"fairness": 0.0},
         )
         assert r.weights["fairness"] == 0.0

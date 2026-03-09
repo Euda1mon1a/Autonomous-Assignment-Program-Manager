@@ -36,7 +36,7 @@ class TestBatchRoutes:
     def test_batch_create_requires_auth(self, client: TestClient):
         """Test that batch create requires authentication."""
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             json={
                 "assignments": [
                     {
@@ -52,7 +52,7 @@ class TestBatchRoutes:
     def test_batch_update_requires_auth(self, client: TestClient):
         """Test that batch update requires authentication."""
         response = client.put(
-            "/api/batch/update",
+            "/api/v1/batch/update",
             json={
                 "assignments": [
                     {
@@ -67,15 +67,16 @@ class TestBatchRoutes:
 
     def test_batch_delete_requires_auth(self, client: TestClient):
         """Test that batch delete requires authentication."""
-        response = client.delete(
-            "/api/batch/delete",
+        response = client.request(
+            "DELETE",
+            "/api/v1/batch/delete",
             json={"assignments": [{"assignment_id": str(uuid4())}]},
         )
         assert response.status_code == 401
 
     def test_batch_status_requires_auth(self, client: TestClient):
         """Test that batch status requires authentication."""
-        response = client.get(f"/api/batch/status/{uuid4()}")
+        response = client.get(f"/api/v1/batch/status/{uuid4()}")
         assert response.status_code == 401
 
     # ========================================================================
@@ -114,7 +115,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -167,7 +168,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -214,7 +215,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -264,7 +265,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -326,7 +327,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -352,7 +353,7 @@ class TestBatchRoutes:
     def test_batch_create_invalid_role(self, client: TestClient, auth_headers: dict):
         """Test batch create with invalid role value."""
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -371,7 +372,7 @@ class TestBatchRoutes:
     ):
         """Test batch create with empty assignments list."""
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             headers=auth_headers,
             json={"assignments": []},
         )
@@ -410,7 +411,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.put(
-            "/api/batch/update",
+            "/api/v1/batch/update",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -466,7 +467,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.put(
-            "/api/batch/update",
+            "/api/v1/batch/update",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -506,7 +507,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.put(
-            "/api/batch/update",
+            "/api/v1/batch/update",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -557,8 +558,9 @@ class TestBatchRoutes:
         )
         mock_service_class.return_value = mock_service
 
-        response = client.delete(
-            "/api/batch/delete",
+        response = client.request(
+            "DELETE",
+            "/api/v1/batch/delete",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -604,8 +606,9 @@ class TestBatchRoutes:
         )
         mock_service_class.return_value = mock_service
 
-        response = client.delete(
-            "/api/batch/delete",
+        response = client.request(
+            "DELETE",
+            "/api/v1/batch/delete",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -645,8 +648,9 @@ class TestBatchRoutes:
         )
         mock_service_class.return_value = mock_service
 
-        response = client.delete(
-            "/api/batch/delete",
+        response = client.request(
+            "DELETE",
+            "/api/v1/batch/delete",
             headers=auth_headers,
             json={"assignments": [{"assignment_id": str(uuid4())}]},
         )
@@ -687,8 +691,9 @@ class TestBatchRoutes:
         )
         mock_service_class.return_value = mock_service
 
-        response = client.delete(
-            "/api/batch/delete",
+        response = client.request(
+            "DELETE",
+            "/api/v1/batch/delete",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -728,7 +733,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/batch/status/{operation_id}",
+            f"/api/v1/batch/status/{operation_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -762,7 +767,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/batch/status/{operation_id}",
+            f"/api/v1/batch/status/{operation_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -785,7 +790,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/batch/status/{uuid4()}",
+            f"/api/v1/batch/status/{uuid4()}",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -814,7 +819,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/batch/status/{operation_id}",
+            f"/api/v1/batch/status/{operation_id}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -840,7 +845,7 @@ class TestBatchRoutes:
         ]
 
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             headers=auth_headers,
             json={"assignments": assignments},
         )
@@ -851,7 +856,7 @@ class TestBatchRoutes:
     ):
         """Test batch update requires updated_at for optimistic locking."""
         response = client.put(
-            "/api/batch/update",
+            "/api/v1/batch/update",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -893,7 +898,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             headers=auth_headers,
             json={
                 "assignments": [
@@ -941,7 +946,7 @@ class TestBatchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/batch/create",
+            "/api/v1/batch/create",
             headers=auth_headers,
             json={
                 "assignments": [

@@ -27,7 +27,7 @@ class TestReportRoutes:
     def test_schedule_report_requires_auth(self, client: TestClient):
         """Test that schedule report requires authentication."""
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             json={
                 "start_date": "2025-01-01",
                 "end_date": "2025-01-31",
@@ -38,7 +38,7 @@ class TestReportRoutes:
     def test_compliance_report_requires_auth(self, client: TestClient):
         """Test that compliance report requires authentication."""
         response = client.post(
-            "/api/reports/compliance",
+            "/api/v1/reports/compliance",
             json={
                 "start_date": "2025-01-01",
                 "end_date": "2025-01-31",
@@ -49,7 +49,7 @@ class TestReportRoutes:
     def test_analytics_report_requires_auth(self, client: TestClient):
         """Test that analytics report requires authentication."""
         response = client.post(
-            "/api/reports/analytics",
+            "/api/v1/reports/analytics",
             json={
                 "start_date": "2025-01-01",
                 "end_date": "2025-01-31",
@@ -60,7 +60,7 @@ class TestReportRoutes:
     def test_faculty_summary_report_requires_auth(self, client: TestClient):
         """Test that faculty summary report requires authentication."""
         response = client.post(
-            "/api/reports/faculty-summary",
+            "/api/v1/reports/faculty-summary",
             json={
                 "start_date": "2025-01-01",
                 "end_date": "2025-01-31",
@@ -85,7 +85,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -110,7 +110,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -131,11 +131,11 @@ class TestReportRoutes:
     ):
         """Test schedule report handles generation errors."""
         mock_template = MagicMock()
-        mock_template.generate.side_effect = Exception("PDF generation failed")
+        mock_template.generate.side_effect = ValueError("PDF generation failed")
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -162,7 +162,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/compliance",
+            "/api/v1/reports/compliance",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -185,7 +185,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/compliance",
+            "/api/v1/reports/compliance",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -205,11 +205,11 @@ class TestReportRoutes:
     ):
         """Test compliance report handles generation errors."""
         mock_template = MagicMock()
-        mock_template.generate.side_effect = Exception("Data fetch failed")
+        mock_template.generate.side_effect = ValueError("Data fetch failed")
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/compliance",
+            "/api/v1/reports/compliance",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -235,7 +235,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/analytics",
+            "/api/v1/reports/analytics",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -258,7 +258,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/analytics",
+            "/api/v1/reports/analytics",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -281,11 +281,11 @@ class TestReportRoutes:
     ):
         """Test analytics report handles generation errors."""
         mock_template = MagicMock()
-        mock_template.generate.side_effect = Exception("Chart generation failed")
+        mock_template.generate.side_effect = ValueError("Chart generation failed")
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/analytics",
+            "/api/v1/reports/analytics",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -311,7 +311,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/faculty-summary",
+            "/api/v1/reports/faculty-summary",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -334,7 +334,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/faculty-summary",
+            "/api/v1/reports/faculty-summary",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -355,11 +355,11 @@ class TestReportRoutes:
     ):
         """Test faculty summary report handles generation errors."""
         mock_template = MagicMock()
-        mock_template.generate.side_effect = Exception("Faculty data not found")
+        mock_template.generate.side_effect = ValueError("Faculty data not found")
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/faculty-summary",
+            "/api/v1/reports/faculty-summary",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -386,7 +386,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -410,7 +410,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -434,7 +434,7 @@ class TestReportRoutes:
         mock_template_class.return_value = mock_template
 
         response = client.post(
-            "/api/reports/schedule",
+            "/api/v1/reports/schedule",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",

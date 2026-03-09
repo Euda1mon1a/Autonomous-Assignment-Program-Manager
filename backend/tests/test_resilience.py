@@ -570,13 +570,13 @@ class TestResilienceAPI:
 
     def test_health_endpoint(self, client: TestClient):
         """Test /api/resilience/health endpoint."""
-        response = client.get("/api/resilience/health?persist=false")
+        response = client.get("/api/v1/resilience/health?persist=false")
         # May fail if no data, but should return a response
         assert response.status_code in (200, 500)
 
     def test_load_shedding_endpoint(self, client: TestClient):
         """Test /api/resilience/load-shedding GET endpoint."""
-        response = client.get("/api/resilience/load-shedding")
+        response = client.get("/api/v1/resilience/load-shedding")
         assert response.status_code == 200
         data = response.json()
         assert "level" in data
@@ -584,7 +584,7 @@ class TestResilienceAPI:
 
     def test_fallbacks_list_endpoint(self, client: TestClient):
         """Test /api/resilience/fallbacks GET endpoint."""
-        response = client.get("/api/resilience/fallbacks")
+        response = client.get("/api/v1/resilience/fallbacks")
         assert response.status_code == 200
         data = response.json()
         assert "fallbacks" in data
@@ -592,7 +592,7 @@ class TestResilienceAPI:
 
     def test_history_health_endpoint(self, client: TestClient):
         """Test /api/resilience/history/health endpoint."""
-        response = client.get("/api/resilience/history/health")
+        response = client.get("/api/v1/resilience/history/health")
         assert response.status_code == 200
         data = response.json()
         assert "items" in data
@@ -600,7 +600,7 @@ class TestResilienceAPI:
 
     def test_history_events_endpoint(self, client: TestClient):
         """Test /api/resilience/history/events endpoint."""
-        response = client.get("/api/resilience/history/events")
+        response = client.get("/api/v1/resilience/history/events")
         assert response.status_code == 200
         data = response.json()
         assert "items" in data

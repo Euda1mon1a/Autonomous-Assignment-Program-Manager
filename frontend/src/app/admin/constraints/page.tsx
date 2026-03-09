@@ -14,6 +14,7 @@ import {
   useUpdateConstraint,
 } from '@/hooks/useAdminScheduling';
 import { useConstraintCategories } from '@/hooks/useEnums';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import type { ConstraintConfig } from '@/types/admin-scheduling';
 
 const PRIORITY_LABELS: Record<number, string> = {
@@ -82,6 +83,7 @@ export default function ConstraintConfigPage() {
       : (constraints ?? []).filter((c) => c.category === filter);
 
   return (
+    <ProtectedRoute requireAdmin>
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <Settings className="w-6 h-6 text-gray-700" />
@@ -159,6 +161,7 @@ export default function ConstraintConfigPage() {
         </table>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
 

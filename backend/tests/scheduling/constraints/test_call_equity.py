@@ -1282,11 +1282,11 @@ class TestLongitudinalEquityCPSAT:
 
         c.add_to_cpsat(model, variables, ctx)
 
-        # Minimize max
+        # MAD formulation produces one deviation term per faculty
         obj_terms = variables["objective_terms"]
-        assert len(obj_terms) == 1
-        max_var, weight = obj_terms[0]
-        model.Minimize(max_var)
+        assert len(obj_terms) == len(faculty)
+        # Minimize sum of weighted deviations
+        model.Minimize(sum(var * w for var, w in obj_terms))
 
         solver = cp_model.CpSolver()
         status = solver.Solve(model)
@@ -1338,9 +1338,9 @@ class TestLongitudinalEquityCPSAT:
 
         c.add_to_cpsat(model, variables, ctx)
 
+        # MAD formulation produces one deviation term per faculty
         obj_terms = variables["objective_terms"]
-        max_var, _ = obj_terms[0]
-        model.Minimize(max_var)
+        model.Minimize(sum(var * w for var, w in obj_terms))
 
         solver = cp_model.CpSolver()
         status = solver.Solve(model)
@@ -1392,9 +1392,9 @@ class TestLongitudinalEquityCPSAT:
 
         c.add_to_cpsat(model, variables, ctx)
 
+        # MAD formulation produces one deviation term per faculty
         obj_terms = variables["objective_terms"]
-        max_var, _ = obj_terms[0]
-        model.Minimize(max_var)
+        model.Minimize(sum(var * w for var, w in obj_terms))
 
         solver = cp_model.CpSolver()
         status = solver.Solve(model)

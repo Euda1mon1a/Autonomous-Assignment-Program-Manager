@@ -14,7 +14,7 @@ class TestListRotationTemplates:
 
     def test_list_templates_empty(self, client: TestClient, db: Session):
         """Test listing templates when database is empty."""
-        response = client.get("/api/rotation-templates")
+        response = client.get("/api/v1/rotation-templates")
 
         assert response.status_code == 200
         data = response.json()
@@ -27,7 +27,7 @@ class TestListRotationTemplates:
         self, client: TestClient, sample_rotation_template: RotationTemplate
     ):
         """Test listing templates with one template in database."""
-        response = client.get("/api/rotation-templates")
+        response = client.get("/api/v1/rotation-templates")
 
         assert response.status_code == 200
         data = response.json()
@@ -51,7 +51,7 @@ class TestListRotationTemplates:
             db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates")
+        response = client.get("/api/v1/rotation-templates")
 
         assert response.status_code == 200
         data = response.json()
@@ -71,7 +71,7 @@ class TestListRotationTemplates:
             db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates")
+        response = client.get("/api/v1/rotation-templates")
 
         assert response.status_code == 200
         data = response.json()
@@ -94,7 +94,7 @@ class TestListRotationTemplates:
             db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates?rotation_type=clinic")
+        response = client.get("/api/v1/rotation-templates?rotation_type=clinic")
 
         assert response.status_code == 200
         data = response.json()
@@ -116,7 +116,7 @@ class TestListRotationTemplates:
             db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates?rotation_type=inpatient")
+        response = client.get("/api/v1/rotation-templates?rotation_type=inpatient")
 
         assert response.status_code == 200
         data = response.json()
@@ -135,7 +135,7 @@ class TestListRotationTemplates:
         db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates?rotation_type=conference")
+        response = client.get("/api/v1/rotation-templates?rotation_type=conference")
 
         assert response.status_code == 200
         data = response.json()
@@ -154,7 +154,7 @@ class TestListRotationTemplates:
         db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates?rotation_type=CLINIC")
+        response = client.get("/api/v1/rotation-templates?rotation_type=CLINIC")
 
         assert response.status_code == 200
         data = response.json()
@@ -177,7 +177,7 @@ class TestListRotationTemplates:
         db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates")
+        response = client.get("/api/v1/rotation-templates")
 
         assert response.status_code == 200
         data = response.json()
@@ -202,7 +202,9 @@ class TestGetRotationTemplate:
         self, client: TestClient, sample_rotation_template: RotationTemplate
     ):
         """Test successfully retrieving a template by ID."""
-        response = client.get(f"/api/rotation-templates/{sample_rotation_template.id}")
+        response = client.get(
+            f"/api/v1/rotation-templates/{sample_rotation_template.id}"
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -213,7 +215,7 @@ class TestGetRotationTemplate:
     def test_get_template_not_found(self, client: TestClient):
         """Test getting a non-existent template returns 404."""
         non_existent_id = uuid4()
-        response = client.get(f"/api/rotation-templates/{non_existent_id}")
+        response = client.get(f"/api/v1/rotation-templates/{non_existent_id}")
 
         assert response.status_code == 404
         data = response.json()
@@ -222,7 +224,7 @@ class TestGetRotationTemplate:
 
     def test_get_template_invalid_uuid(self, client: TestClient):
         """Test getting template with invalid UUID format."""
-        response = client.get("/api/rotation-templates/not-a-uuid")
+        response = client.get("/api/v1/rotation-templates/not-a-uuid")
 
         assert response.status_code == 422  # Validation error
 
@@ -243,7 +245,7 @@ class TestGetRotationTemplate:
         db.add(template)
         db.commit()
 
-        response = client.get(f"/api/rotation-templates/{template.id}")
+        response = client.get(f"/api/v1/rotation-templates/{template.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -267,7 +269,7 @@ class TestGetRotationTemplate:
         db.add(template)
         db.commit()
 
-        response = client.get(f"/api/rotation-templates/{template.id}")
+        response = client.get(f"/api/v1/rotation-templates/{template.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -287,7 +289,7 @@ class TestCreateRotationTemplate:
             "rotation_type": "clinic",
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -320,7 +322,7 @@ class TestCreateRotationTemplate:
             "max_supervision_ratio": 2,
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -340,7 +342,7 @@ class TestCreateRotationTemplate:
             "rotation_type": "clinic",
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -350,7 +352,7 @@ class TestCreateRotationTemplate:
             "name": "Test Clinic",
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 422  # Validation error
 
@@ -365,7 +367,7 @@ class TestCreateRotationTemplate:
             "requires_specialty": None,
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -380,7 +382,7 @@ class TestCreateRotationTemplate:
             "abbreviation": "FMIT",
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -394,7 +396,7 @@ class TestCreateRotationTemplate:
             "requires_procedure_credential": True,
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -409,7 +411,7 @@ class TestCreateRotationTemplate:
             "supervision_required": False,
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -423,7 +425,7 @@ class TestCreateRotationTemplate:
             "max_residents": 0,
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -436,7 +438,7 @@ class TestCreateRotationTemplate:
             "rotation_type": "clinic",
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -450,7 +452,7 @@ class TestCreateRotationTemplate:
             "rotation_type": "clinic",
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -463,7 +465,7 @@ class TestCreateRotationTemplate:
             "rotation_type": "clinic",
         }
 
-        response = client.post("/api/rotation-templates", json=template_data)
+        response = client.post("/api/v1/rotation-templates", json=template_data)
 
         assert response.status_code == 201
         data = response.json()
@@ -485,7 +487,7 @@ class TestUpdateRotationTemplate:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_rotation_template.id}",
+            f"/api/v1/rotation-templates/{sample_rotation_template.id}",
             json=update_data,
         )
 
@@ -505,7 +507,7 @@ class TestUpdateRotationTemplate:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_rotation_template.id}",
+            f"/api/v1/rotation-templates/{sample_rotation_template.id}",
             json=update_data,
         )
 
@@ -532,7 +534,7 @@ class TestUpdateRotationTemplate:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_rotation_template.id}",
+            f"/api/v1/rotation-templates/{sample_rotation_template.id}",
             json=update_data,
         )
 
@@ -550,7 +552,7 @@ class TestUpdateRotationTemplate:
         update_data = {"name": "Updated Name"}
 
         response = client.put(
-            f"/api/rotation-templates/{non_existent_id}",
+            f"/api/v1/rotation-templates/{non_existent_id}",
             json=update_data,
         )
 
@@ -563,7 +565,7 @@ class TestUpdateRotationTemplate:
         update_data = {"name": "Updated Name"}
 
         response = client.put(
-            "/api/rotation-templates/invalid-uuid",
+            "/api/v1/rotation-templates/invalid-uuid",
             json=update_data,
         )
 
@@ -574,7 +576,7 @@ class TestUpdateRotationTemplate:
     ):
         """Test updating with empty body (no changes)."""
         response = client.put(
-            f"/api/rotation-templates/{sample_rotation_template.id}",
+            f"/api/v1/rotation-templates/{sample_rotation_template.id}",
             json={},
         )
 
@@ -601,7 +603,7 @@ class TestUpdateRotationTemplate:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{template.id}",
+            f"/api/v1/rotation-templates/{template.id}",
             json=update_data,
         )
 
@@ -619,7 +621,7 @@ class TestUpdateRotationTemplate:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_rotation_template.id}",
+            f"/api/v1/rotation-templates/{sample_rotation_template.id}",
             json=update_data,
         )
 
@@ -637,7 +639,7 @@ class TestUpdateRotationTemplate:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_rotation_template.id}",
+            f"/api/v1/rotation-templates/{sample_rotation_template.id}",
             json=update_data,
         )
 
@@ -658,7 +660,7 @@ class TestUpdateRotationTemplate:
         }
 
         response = client.put(
-            f"/api/rotation-templates/{sample_rotation_template.id}",
+            f"/api/v1/rotation-templates/{sample_rotation_template.id}",
             json=update_data,
         )
 
@@ -681,7 +683,7 @@ class TestDeleteRotationTemplate:
         """Test successfully deleting a template."""
         template_id = sample_rotation_template.id
 
-        response = client.delete(f"/api/rotation-templates/{template_id}")
+        response = client.delete(f"/api/v1/rotation-templates/{template_id}")
 
         assert response.status_code == 204
         assert response.content == b""
@@ -698,7 +700,7 @@ class TestDeleteRotationTemplate:
         """Test deleting non-existent template returns 404."""
         non_existent_id = uuid4()
 
-        response = client.delete(f"/api/rotation-templates/{non_existent_id}")
+        response = client.delete(f"/api/v1/rotation-templates/{non_existent_id}")
 
         assert response.status_code == 404
         data = response.json()
@@ -706,7 +708,7 @@ class TestDeleteRotationTemplate:
 
     def test_delete_template_invalid_uuid(self, client: TestClient):
         """Test deleting with invalid UUID format."""
-        response = client.delete("/api/rotation-templates/invalid-uuid")
+        response = client.delete("/api/v1/rotation-templates/invalid-uuid")
 
         assert response.status_code == 422
 
@@ -717,11 +719,11 @@ class TestDeleteRotationTemplate:
         template_id = sample_rotation_template.id
 
         # First delete
-        response = client.delete(f"/api/rotation-templates/{template_id}")
+        response = client.delete(f"/api/v1/rotation-templates/{template_id}")
         assert response.status_code == 204
 
         # Second delete
-        response = client.delete(f"/api/rotation-templates/{template_id}")
+        response = client.delete(f"/api/v1/rotation-templates/{template_id}")
         assert response.status_code == 404
 
     def test_delete_template_verify_list_updated(self, client: TestClient, db: Session):
@@ -735,16 +737,16 @@ class TestDeleteRotationTemplate:
         db.commit()
 
         # Verify it's in the list
-        response = client.get("/api/rotation-templates")
+        response = client.get("/api/v1/rotation-templates")
         assert response.status_code == 200
         assert response.json()["total"] == 1
 
         # Delete it
-        response = client.delete(f"/api/rotation-templates/{template.id}")
+        response = client.delete(f"/api/v1/rotation-templates/{template.id}")
         assert response.status_code == 204
 
         # Verify it's gone from list
-        response = client.get("/api/rotation-templates")
+        response = client.get("/api/v1/rotation-templates")
         assert response.status_code == 200
         assert response.json()["total"] == 0
 
@@ -755,15 +757,15 @@ class TestDeleteRotationTemplate:
         template_id = sample_rotation_template.id
 
         # Verify we can get it initially
-        response = client.get(f"/api/rotation-templates/{template_id}")
+        response = client.get(f"/api/v1/rotation-templates/{template_id}")
         assert response.status_code == 200
 
         # Delete it
-        response = client.delete(f"/api/rotation-templates/{template_id}")
+        response = client.delete(f"/api/v1/rotation-templates/{template_id}")
         assert response.status_code == 204
 
         # Verify GET now fails
-        response = client.get(f"/api/rotation-templates/{template_id}")
+        response = client.get(f"/api/v1/rotation-templates/{template_id}")
         assert response.status_code == 404
 
 
@@ -778,29 +780,29 @@ class TestRotationTemplateIntegration:
             "rotation_type": "clinic",
             "abbreviation": "LT",
         }
-        response = client.post("/api/rotation-templates", json=create_data)
+        response = client.post("/api/v1/rotation-templates", json=create_data)
         assert response.status_code == 201
         template_id = response.json()["id"]
 
         # Read
-        response = client.get(f"/api/rotation-templates/{template_id}")
+        response = client.get(f"/api/v1/rotation-templates/{template_id}")
         assert response.status_code == 200
         assert response.json()["name"] == "Lifecycle Test"
 
         # Update
         update_data = {"name": "Updated Lifecycle"}
         response = client.put(
-            f"/api/rotation-templates/{template_id}", json=update_data
+            f"/api/v1/rotation-templates/{template_id}", json=update_data
         )
         assert response.status_code == 200
         assert response.json()["name"] == "Updated Lifecycle"
 
         # Delete
-        response = client.delete(f"/api/rotation-templates/{template_id}")
+        response = client.delete(f"/api/v1/rotation-templates/{template_id}")
         assert response.status_code == 204
 
         # Verify deletion
-        response = client.get(f"/api/rotation-templates/{template_id}")
+        response = client.get(f"/api/v1/rotation-templates/{template_id}")
         assert response.status_code == 404
 
     def test_create_multiple_and_filter(self, client: TestClient, db: Session):
@@ -813,23 +815,23 @@ class TestRotationTemplateIntegration:
         ]
 
         for template in templates:
-            response = client.post("/api/rotation-templates", json=template)
+            response = client.post("/api/v1/rotation-templates", json=template)
             assert response.status_code == 201
 
         # Filter by clinic
-        response = client.get("/api/rotation-templates?rotation_type=clinic")
+        response = client.get("/api/v1/rotation-templates?rotation_type=clinic")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 2
         assert all(item["rotation_type"] == "clinic" for item in data["items"])
 
         # Filter by inpatient
-        response = client.get("/api/rotation-templates?rotation_type=inpatient")
+        response = client.get("/api/v1/rotation-templates?rotation_type=inpatient")
         assert response.status_code == 200
         assert response.json()["total"] == 1
 
         # No filter (all)
-        response = client.get("/api/rotation-templates")
+        response = client.get("/api/v1/rotation-templates")
         assert response.status_code == 200
         assert response.json()["total"] == 4
 
@@ -839,7 +841,7 @@ class TestRotationTemplateIntegration:
             "name": "Initial Name",
             "rotation_type": "clinic",
         }
-        response = client.post("/api/rotation-templates", json=create_data)
+        response = client.post("/api/v1/rotation-templates", json=create_data)
         assert response.status_code == 201
         template_id = response.json()["id"]
 
@@ -848,7 +850,7 @@ class TestRotationTemplateIntegration:
             "abbreviation": "UN",
         }
         response = client.put(
-            f"/api/rotation-templates/{template_id}", json=update_data
+            f"/api/v1/rotation-templates/{template_id}", json=update_data
         )
         assert response.status_code == 200
         data = response.json()
@@ -865,7 +867,7 @@ class TestRotationTemplateIntegration:
             "max_supervision_ratio": 2,
         }
 
-        response = client.post("/api/rotation-templates", json=create_data)
+        response = client.post("/api/v1/rotation-templates", json=create_data)
         assert response.status_code == 201
         data = response.json()
         assert data["requires_specialty"] == "Sports Medicine"
@@ -881,14 +883,14 @@ class TestRotationTemplateIntegration:
             "clinic_location": "Small Room A",
         }
 
-        response = client.post("/api/rotation-templates", json=create_data)
+        response = client.post("/api/v1/rotation-templates", json=create_data)
         assert response.status_code == 201
         template_id = response.json()["id"]
 
         # Update capacity
         update_data = {"max_residents": 5}
         response = client.put(
-            f"/api/rotation-templates/{template_id}", json=update_data
+            f"/api/v1/rotation-templates/{template_id}", json=update_data
         )
         assert response.status_code == 200
         assert response.json()["max_residents"] == 5
@@ -906,7 +908,7 @@ class TestRotationTemplateIntegration:
             db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates")
+        response = client.get("/api/v1/rotation-templates")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 4

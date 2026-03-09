@@ -52,7 +52,10 @@ export function WebSocketStatus({
   reconnectAttempts = 0,
 }: WebSocketStatusProps) {
   // Hide badge when connected — "Live" is visual noise; only show problems
+  // Also hide when permanently disconnected (gave up reconnecting) — the
+  // persistent banner is distracting and the page works fine without WS
   if (connectionState === 'connected') return null;
+  if (connectionState === 'disconnected' && reconnectAttempts === 0) return null;
 
   const config = statusConfig[connectionState];
   const Icon = config.icon;

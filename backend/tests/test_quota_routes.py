@@ -30,7 +30,7 @@ class TestQuotaStatusEndpoint:
 
     def test_status_requires_auth(self, client: TestClient):
         """Test that quota status requires authentication."""
-        response = client.get("/api/quota/status")
+        response = client.get("/api/v1/quota/status")
 
         assert response.status_code in [401, 403]
 
@@ -57,7 +57,7 @@ class TestQuotaStatusEndpoint:
             mock_get_manager.return_value = mock_manager
 
             response = client.get(
-                "/api/quota/status",
+                "/api/v1/quota/status",
                 headers=auth_headers,
             )
 
@@ -69,7 +69,7 @@ class TestQuotaAlertsEndpoint:
 
     def test_alerts_requires_auth(self, client: TestClient):
         """Test that alerts requires authentication."""
-        response = client.get("/api/quota/alerts")
+        response = client.get("/api/v1/quota/alerts")
 
         assert response.status_code in [401, 403]
 
@@ -81,7 +81,7 @@ class TestQuotaAlertsEndpoint:
             mock_get_manager.return_value = mock_manager
 
             response = client.get(
-                "/api/quota/alerts",
+                "/api/v1/quota/alerts",
                 headers=auth_headers,
             )
 
@@ -103,7 +103,7 @@ class TestQuotaAlertsEndpoint:
             mock_get_manager.return_value = mock_manager
 
             response = client.get(
-                "/api/quota/alerts",
+                "/api/v1/quota/alerts",
                 headers=auth_headers,
             )
 
@@ -115,7 +115,7 @@ class TestQuotaReportEndpoint:
 
     def test_report_requires_auth(self, client: TestClient):
         """Test that report requires authentication."""
-        response = client.get("/api/quota/report")
+        response = client.get("/api/v1/quota/report")
 
         assert response.status_code in [401, 403]
 
@@ -136,7 +136,7 @@ class TestQuotaReportEndpoint:
             mock_get_manager.return_value = mock_manager
 
             response = client.get(
-                "/api/quota/report?period=daily",
+                "/api/v1/quota/report?period=daily",
                 headers=auth_headers,
             )
 
@@ -159,7 +159,7 @@ class TestQuotaReportEndpoint:
             mock_get_manager.return_value = mock_manager
 
             response = client.get(
-                "/api/quota/report?period=monthly",
+                "/api/v1/quota/report?period=monthly",
                 headers=auth_headers,
             )
 
@@ -168,7 +168,7 @@ class TestQuotaReportEndpoint:
     def test_report_invalid_period(self, client: TestClient, auth_headers: dict):
         """Test report with invalid period."""
         response = client.get(
-            "/api/quota/report?period=weekly",
+            "/api/v1/quota/report?period=weekly",
             headers=auth_headers,
         )
 
@@ -180,14 +180,14 @@ class TestQuotaPoliciesEndpoint:
 
     def test_policies_requires_auth(self, client: TestClient):
         """Test that policies requires authentication."""
-        response = client.get("/api/quota/policies")
+        response = client.get("/api/v1/quota/policies")
 
         assert response.status_code in [401, 403]
 
     def test_policies_success(self, client: TestClient, auth_headers: dict):
         """Test successful policies retrieval."""
         response = client.get(
-            "/api/quota/policies",
+            "/api/v1/quota/policies",
             headers=auth_headers,
         )
 
@@ -201,7 +201,7 @@ class TestSetCustomQuotaEndpoint:
     def test_custom_quota_requires_admin(self, client: TestClient, auth_headers: dict):
         """Test that custom quota requires admin role."""
         response = client.post(
-            "/api/quota/custom",
+            "/api/v1/quota/custom",
             json={
                 "user_id": str(uuid4()),
                 "policy": {
@@ -232,7 +232,7 @@ class TestRemoveCustomQuotaEndpoint:
         """Test that remove custom quota requires admin role."""
         user_id = str(uuid4())
         response = client.delete(
-            f"/api/quota/custom/{user_id}",
+            f"/api/v1/quota/custom/{user_id}",
             headers=auth_headers,
         )
 
@@ -246,7 +246,7 @@ class TestResetQuotaEndpoint:
     def test_reset_requires_admin(self, client: TestClient, auth_headers: dict):
         """Test that reset quota requires admin role."""
         response = client.post(
-            "/api/quota/reset",
+            "/api/v1/quota/reset",
             json={
                 "user_id": str(uuid4()),
                 "resource_type": "api",
@@ -266,7 +266,7 @@ class TestRecordUsageEndpoint:
     def test_record_requires_admin(self, client: TestClient, auth_headers: dict):
         """Test that record usage requires admin role."""
         response = client.post(
-            "/api/quota/record",
+            "/api/v1/quota/record",
             json={
                 "user_id": str(uuid4()),
                 "resource_type": "api",
@@ -301,10 +301,10 @@ class TestQuotaIntegration:
             mock_get_manager.return_value = mock_manager
 
             endpoints = [
-                ("/api/quota/status", "GET"),
-                ("/api/quota/alerts", "GET"),
-                ("/api/quota/report", "GET"),
-                ("/api/quota/policies", "GET"),
+                ("/api/v1/quota/status", "GET"),
+                ("/api/v1/quota/alerts", "GET"),
+                ("/api/v1/quota/report", "GET"),
+                ("/api/v1/quota/policies", "GET"),
             ]
 
             for url, method in endpoints:

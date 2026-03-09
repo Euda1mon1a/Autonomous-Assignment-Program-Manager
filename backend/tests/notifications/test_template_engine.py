@@ -56,7 +56,7 @@ class TestTemplateEngine:
         with pytest.raises(TemplateRenderError) as exc_info:
             engine.render_string(template, {})
 
-        assert "Undefined variable" in str(exc_info.value)
+        assert "Operation failed" in str(exc_info.value)
 
     def test_validate_syntax_valid(self):
         """Test syntax validation with valid template."""

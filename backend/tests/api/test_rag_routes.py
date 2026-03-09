@@ -33,7 +33,7 @@ class TestRAGHealth:
 
     def test_rag_health_requires_auth(self, client: TestClient):
         """Test health endpoint requires authentication."""
-        response = client.get("/api/rag/health")
+        response = client.get("/api/v1/rag/health")
 
         assert response.status_code == 401
 
@@ -61,7 +61,7 @@ class TestRAGHealth:
             mock_service.get_health = AsyncMock(return_value=mock_health_response)
             MockRAGService.return_value = mock_service
 
-            response = client.get("/api/rag/health", headers=auth_headers)
+            response = client.get("/api/v1/rag/health", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -90,7 +90,7 @@ class TestRAGRetrieve:
     def test_rag_retrieve_requires_auth(self, client: TestClient):
         """Test unauthenticated request returns 401."""
         response = client.post(
-            "/api/rag/retrieve",
+            "/api/v1/rag/retrieve",
             json={"query": "What are the ACGME work hour limits?"},
         )
 
@@ -133,7 +133,7 @@ class TestRAGRetrieve:
             MockRAGService.return_value = mock_service
 
             response = client.post(
-                "/api/rag/retrieve",
+                "/api/v1/rag/retrieve",
                 json={"query": "What are the ACGME work hour limits?"},
                 headers=auth_headers,
             )
@@ -188,7 +188,7 @@ class TestRAGRetrieve:
             MockRAGService.return_value = mock_service
 
             response = client.post(
-                "/api/rag/retrieve",
+                "/api/v1/rag/retrieve",
                 json={
                     "query": "scheduling coverage",
                     "doc_type": "scheduling_policy",
@@ -214,7 +214,7 @@ class TestRAGRetrieve:
         """Test empty query returns 400."""
         # Test with empty string
         response = client.post(
-            "/api/rag/retrieve",
+            "/api/v1/rag/retrieve",
             json={"query": ""},
             headers=auth_headers,
         )
@@ -235,13 +235,14 @@ class TestRAGRetrieve:
             MockRAGService.return_value = mock_service
 
             response = client.post(
-                "/api/rag/retrieve",
+                "/api/v1/rag/retrieve",
                 json={"query": "   "},  # Whitespace only
                 headers=auth_headers,
             )
 
         assert response.status_code == 400
-        assert "empty" in response.json()["detail"].lower()
+        # Route catches ValueError and returns generic "Invalid request"
+        assert "invalid" in response.json()["detail"].lower()
 
     def test_rag_retrieve_with_similarity_threshold(
         self, client: TestClient, auth_headers: dict, admin_user: User
@@ -260,7 +261,7 @@ class TestRAGRetrieve:
             MockRAGService.return_value = mock_service
 
             response = client.post(
-                "/api/rag/retrieve",
+                "/api/v1/rag/retrieve",
                 json={
                     "query": "test query",
                     "min_similarity": 0.9,  # High threshold
@@ -288,7 +289,7 @@ class TestRAGIngest:
     def test_rag_ingest_requires_auth(self, client: TestClient):
         """Test ingest endpoint requires authentication."""
         response = client.post(
-            "/api/rag/ingest",
+            "/api/v1/rag/ingest",
             json={
                 "content": "Test document content.",
                 "doc_type": "user_guide",
@@ -317,7 +318,7 @@ class TestRAGIngest:
             MockRAGService.return_value = mock_service
 
             response = client.post(
-                "/api/rag/ingest",
+                "/api/v1/rag/ingest",
                 json={
                     "content": "This is a test document with enough content to be chunked into multiple pieces for the RAG system.",
                     "doc_type": "user_guide",
@@ -339,7 +340,7 @@ class TestRAGIngest:
     ):
         """Test ingestion with invalid doc_type returns 422."""
         response = client.post(
-            "/api/rag/ingest",
+            "/api/v1/rag/ingest",
             json={
                 "content": "Test document content.",
                 "doc_type": "invalid_type",  # Not in allowed list
@@ -362,7 +363,7 @@ class TestRAGContext:
     def test_rag_context_requires_auth(self, client: TestClient):
         """Test context endpoint requires authentication."""
         response = client.post(
-            "/api/rag/context",
+            "/api/v1/rag/context",
             json={"query": "What are the scheduling rules?"},
         )
 
@@ -401,7 +402,7 @@ class TestRAGContext:
             MockRAGService.return_value = mock_service
 
             response = client.post(
-                "/api/rag/context",
+                "/api/v1/rag/context",
                 json={
                     "query": "What are the scheduling rules?",
                     "max_tokens": 2000,
@@ -430,7 +431,7 @@ class TestRAGStats:
 
     def test_rag_stats_requires_auth(self, client: TestClient):
         """Test stats endpoint requires authentication."""
-        response = client.get("/api/rag/stats")
+        response = client.get("/api/v1/rag/stats")
 
         assert response.status_code == 401
 
@@ -457,7 +458,7 @@ class TestRAGStats:
             mock_service.get_health = AsyncMock(return_value=mock_health_response)
             MockRAGService.return_value = mock_service
 
-            response = client.get("/api/rag/stats", headers=auth_headers)
+            response = client.get("/api/v1/rag/stats", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -481,7 +482,7 @@ class TestRAGDelete:
 
     def test_rag_delete_requires_auth(self, client: TestClient):
         """Test delete endpoint requires authentication."""
-        response = client.delete("/api/rag/documents/acgme_rules")
+        response = client.delete("/api/v1/rag/documents/acgme_rules")
 
         assert response.status_code == 401
 
@@ -495,7 +496,7 @@ class TestRAGDelete:
             MockRAGService.return_value = mock_service
 
             response = client.delete(
-                "/api/rag/documents/acgme_rules",
+                "/api/v1/rag/documents/acgme_rules",
                 headers=auth_headers,
             )
 
@@ -526,7 +527,7 @@ class TestRAGErrorHandling:
             MockRAGService.return_value = mock_service
 
             response = client.post(
-                "/api/rag/retrieve",
+                "/api/v1/rag/retrieve",
                 json={"query": "test query"},
                 headers=auth_headers,
             )
@@ -546,7 +547,7 @@ class TestRAGErrorHandling:
             )
             MockRAGService.return_value = mock_service
 
-            response = client.get("/api/rag/health", headers=auth_headers)
+            response = client.get("/api/v1/rag/health", headers=auth_headers)
 
         # Should return 500 with generic error message
         assert response.status_code == 500

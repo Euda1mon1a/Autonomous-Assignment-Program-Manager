@@ -163,14 +163,14 @@ class TestAcademicBlocksAuthentication:
     def test_get_matrix_requires_authentication(self, client: TestClient):
         """Test that GET /matrix/academic-blocks requires authentication."""
         response = client.get(
-            "/api/matrix/academic-blocks", params={"academic_year": "2024-2025"}
+            "/api/v1/matrix/academic-blocks", params={"academic_year": "2024-2025"}
         )
         assert response.status_code == 401
 
     def test_list_blocks_requires_authentication(self, client: TestClient):
         """Test that GET /matrix/blocks requires authentication."""
         response = client.get(
-            "/api/matrix/blocks", params={"academic_year": "2024-2025"}
+            "/api/v1/matrix/blocks", params={"academic_year": "2024-2025"}
         )
         assert response.status_code == 401
 
@@ -193,7 +193,7 @@ class TestGetAcademicBlockMatrix:
     ):
         """Test successful retrieval of academic block matrix."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -233,7 +233,7 @@ class TestGetAcademicBlockMatrix:
     ):
         """Test filtering matrix by PGY level."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={
                 "academic_year": academic_year_2024,
                 "pgy_level": 2,
@@ -258,7 +258,7 @@ class TestGetAcademicBlockMatrix:
     ):
         """Test filtering for PGY-1 residents."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={
                 "academic_year": academic_year_2024,
                 "pgy_level": 1,
@@ -282,7 +282,7 @@ class TestGetAcademicBlockMatrix:
     ):
         """Test filtering for PGY-3 residents."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={
                 "academic_year": academic_year_2024,
                 "pgy_level": 3,
@@ -306,7 +306,7 @@ class TestGetAcademicBlockMatrix:
     ):
         """Test that rows have correct structure."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -333,7 +333,7 @@ class TestGetAcademicBlockMatrix:
     ):
         """Test that cells have correct structure."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -368,7 +368,7 @@ class TestGetAcademicBlockMatrix:
     ):
         """Test that summary has correct structure."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -394,7 +394,7 @@ class TestGetAcademicBlockMatrix:
     ):
         """Test matrix with actual assignments."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -416,7 +416,7 @@ class TestGetAcademicBlockMatrix:
     ):
         """Test matrix for academic year with no blocks/assignments."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": "2022-2023"},
             headers=auth_headers,
         )
@@ -444,7 +444,7 @@ class TestAcademicBlockMatrixValidation:
     ):
         """Test that academic_year parameter is required."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             headers=auth_headers,
         )
 
@@ -457,7 +457,7 @@ class TestAcademicBlockMatrixValidation:
     ):
         """Test invalid academic year format."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": "2024"},
             headers=auth_headers,
         )
@@ -472,7 +472,7 @@ class TestAcademicBlockMatrixValidation:
     ):
         """Test academic year with invalid year range."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": "2024-2026"},  # Should be 2024-2025
             headers=auth_headers,
         )
@@ -488,7 +488,7 @@ class TestAcademicBlockMatrixValidation:
     ):
         """Test PGY level below valid range."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={
                 "academic_year": academic_year_2024,
                 "pgy_level": 0,
@@ -506,7 +506,7 @@ class TestAcademicBlockMatrixValidation:
     ):
         """Test PGY level above valid range."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={
                 "academic_year": academic_year_2024,
                 "pgy_level": 4,
@@ -523,7 +523,7 @@ class TestAcademicBlockMatrixValidation:
     ):
         """Test malformed academic year string."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": "twenty-twenty-four"},
             headers=auth_headers,
         )
@@ -537,7 +537,7 @@ class TestAcademicBlockMatrixValidation:
     ):
         """Test empty academic year string."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": ""},
             headers=auth_headers,
         )
@@ -562,7 +562,7 @@ class TestListAcademicBlocks:
     ):
         """Test successful retrieval of academic blocks list."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -592,7 +592,7 @@ class TestListAcademicBlocks:
     ):
         """Test that block summaries have correct structure."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -621,7 +621,7 @@ class TestListAcademicBlocks:
     ):
         """Test that blocks are ordered correctly."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -644,7 +644,7 @@ class TestListAcademicBlocks:
     ):
         """Test that block date ranges are correct."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -675,7 +675,7 @@ class TestListAcademicBlocks:
     ):
         """Test block list with actual assignments."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -697,7 +697,7 @@ class TestListAcademicBlocks:
     ):
         """Test that block statistics are accurate."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -723,7 +723,7 @@ class TestListAcademicBlocks:
     ):
         """Test listing blocks for academic year with no data."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": "2020-2021"},
             headers=auth_headers,
         )
@@ -753,7 +753,7 @@ class TestListAcademicBlocksValidation:
     ):
         """Test that academic_year parameter is required."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             headers=auth_headers,
         )
 
@@ -766,7 +766,7 @@ class TestListAcademicBlocksValidation:
     ):
         """Test invalid academic year format."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": "2024/2025"},
             headers=auth_headers,
         )
@@ -781,7 +781,7 @@ class TestListAcademicBlocksValidation:
     ):
         """Test academic year with invalid year range."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": "2025-2024"},  # Reversed
             headers=auth_headers,
         )
@@ -795,7 +795,7 @@ class TestListAcademicBlocksValidation:
     ):
         """Test malformed academic year."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": "not-a-year"},
             headers=auth_headers,
         )
@@ -820,7 +820,7 @@ class TestAcademicBlocksEdgeCases:
     ):
         """Test matrix when no residents exist."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -843,7 +843,7 @@ class TestAcademicBlocksEdgeCases:
         """Test filtering by PGY level with no matches should still work."""
         # Note: All PGY levels 1-3 exist, so this tests the filtering logic
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={
                 "academic_year": academic_year_2024,
                 "pgy_level": 1,
@@ -866,13 +866,13 @@ class TestAcademicBlocksEdgeCases:
     ):
         """Test that different academic years return different data."""
         response_2024 = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
 
         response_2023 = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2023},
             headers=auth_headers,
         )
@@ -900,7 +900,7 @@ class TestAcademicBlocksEdgeCases:
     ):
         """Test ACGME compliance is calculated in matrix cells."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -925,7 +925,7 @@ class TestAcademicBlocksEdgeCases:
     ):
         """Test that compliance rate is always in valid range."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -947,7 +947,7 @@ class TestAcademicBlocksEdgeCases:
     ):
         """Test that matrix has correct number of cells."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -966,7 +966,7 @@ class TestAcademicBlocksEdgeCases:
     ):
         """Test matrix for future academic year."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": "2030-2031"},
             headers=auth_headers,
         )
@@ -985,7 +985,7 @@ class TestAcademicBlocksEdgeCases:
     ):
         """Test blocks for past academic year."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": "2010-2011"},
             headers=auth_headers,
         )
@@ -1014,7 +1014,7 @@ class TestAcademicBlocksResponseFormat:
     ):
         """Test that matrix response is valid JSON."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -1034,7 +1034,7 @@ class TestAcademicBlocksResponseFormat:
     ):
         """Test that blocks response is valid JSON."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -1054,7 +1054,7 @@ class TestAcademicBlocksResponseFormat:
     ):
         """Test that dates are in ISO format."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -1083,7 +1083,7 @@ class TestAcademicBlocksResponseFormat:
     ):
         """Test that block dates are in ISO format."""
         response = client.get(
-            "/api/matrix/blocks",
+            "/api/v1/matrix/blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )
@@ -1107,7 +1107,7 @@ class TestAcademicBlocksResponseFormat:
     ):
         """Test that resident IDs are valid UUIDs."""
         response = client.get(
-            "/api/matrix/academic-blocks",
+            "/api/v1/matrix/academic-blocks",
             params={"academic_year": academic_year_2024},
             headers=auth_headers,
         )

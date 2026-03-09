@@ -279,7 +279,7 @@ class TestFMITHealthEndpoint:
         auth_headers: dict,
     ):
         """Test basic health check without any data."""
-        response = client.get("/api/fmit/health", headers=auth_headers)
+        response = client.get("/api/v1/fmit/health", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -309,7 +309,7 @@ class TestFMITHealthEndpoint:
         sample_conflict_alerts: list[ConflictAlert],
     ):
         """Test health check with existing swap and alert data."""
-        response = client.get("/api/fmit/health", headers=auth_headers)
+        response = client.get("/api/v1/fmit/health", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -330,7 +330,7 @@ class TestFMITHealthEndpoint:
         sample_conflict_alerts: list[ConflictAlert],
     ):
         """Test health check returns degraded status with issues."""
-        response = client.get("/api/fmit/health", headers=auth_headers)
+        response = client.get("/api/v1/fmit/health", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -344,7 +344,7 @@ class TestFMITHealthEndpoint:
 
     def test_health_check_unauthorized(self, client: TestClient):
         """Test health check requires authentication."""
-        response = client.get("/api/fmit/health")
+        response = client.get("/api/v1/fmit/health")
 
         assert response.status_code == 401
 
@@ -358,7 +358,7 @@ class TestFMITStatusEndpoint:
         auth_headers: dict,
     ):
         """Test detailed status without any data."""
-        response = client.get("/api/fmit/status", headers=auth_headers)
+        response = client.get("/api/v1/fmit/status", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -392,7 +392,7 @@ class TestFMITStatusEndpoint:
         sample_swap_records: list[SwapRecord],
     ):
         """Test detailed status with swap records."""
-        response = client.get("/api/fmit/status", headers=auth_headers)
+        response = client.get("/api/v1/fmit/status", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -423,7 +423,7 @@ class TestFMITStatusEndpoint:
         sample_conflict_alerts: list[ConflictAlert],
     ):
         """Test detailed status with conflict alerts."""
-        response = client.get("/api/fmit/status", headers=auth_headers)
+        response = client.get("/api/v1/fmit/status", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -450,7 +450,7 @@ class TestFMITStatusEndpoint:
 
     def test_detailed_status_unauthorized(self, client: TestClient):
         """Test status endpoint requires authentication."""
-        response = client.get("/api/fmit/status")
+        response = client.get("/api/v1/fmit/status")
 
         assert response.status_code == 401
 
@@ -464,7 +464,7 @@ class TestFMITMetricsEndpoint:
         auth_headers: dict,
     ):
         """Test metrics without any data."""
-        response = client.get("/api/fmit/metrics", headers=auth_headers)
+        response = client.get("/api/v1/fmit/metrics", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -496,7 +496,7 @@ class TestFMITMetricsEndpoint:
         sample_conflict_alerts: list[ConflictAlert],
     ):
         """Test metrics with complete data."""
-        response = client.get("/api/fmit/metrics", headers=auth_headers)
+        response = client.get("/api/v1/fmit/metrics", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -530,7 +530,7 @@ class TestFMITMetricsEndpoint:
         sample_swap_records: list[SwapRecord],
     ):
         """Test swap approval rate calculation."""
-        response = client.get("/api/fmit/metrics", headers=auth_headers)
+        response = client.get("/api/v1/fmit/metrics", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -542,7 +542,7 @@ class TestFMITMetricsEndpoint:
 
     def test_metrics_unauthorized(self, client: TestClient):
         """Test metrics endpoint requires authentication."""
-        response = client.get("/api/fmit/metrics")
+        response = client.get("/api/v1/fmit/metrics")
 
         assert response.status_code == 401
 
@@ -557,7 +557,7 @@ class TestFMITCoverageEndpoint:
         sample_fmit_assignments: list[Assignment],
     ):
         """Test coverage report with default parameters."""
-        response = client.get("/api/fmit/coverage", headers=auth_headers)
+        response = client.get("/api/v1/fmit/coverage", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -596,7 +596,7 @@ class TestFMITCoverageEndpoint:
         end_date = start_date + timedelta(days=14)
 
         response = client.get(
-            "/api/fmit/coverage",
+            "/api/v1/fmit/coverage",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -622,7 +622,7 @@ class TestFMITCoverageEndpoint:
     ):
         """Test coverage report with daily grouping."""
         response = client.get(
-            "/api/fmit/coverage",
+            "/api/v1/fmit/coverage",
             params={"period": "daily"},
             headers=auth_headers,
         )
@@ -641,7 +641,7 @@ class TestFMITCoverageEndpoint:
     ):
         """Test coverage report with monthly grouping."""
         response = client.get(
-            "/api/fmit/coverage",
+            "/api/v1/fmit/coverage",
             params={"period": "monthly"},
             headers=auth_headers,
         )
@@ -659,7 +659,7 @@ class TestFMITCoverageEndpoint:
         sample_fmit_assignments: list[Assignment],
     ):
         """Test coverage report includes faculty names."""
-        response = client.get("/api/fmit/coverage", headers=auth_headers)
+        response = client.get("/api/v1/fmit/coverage", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -677,7 +677,7 @@ class TestFMITCoverageEndpoint:
 
     def test_coverage_report_unauthorized(self, client: TestClient):
         """Test coverage endpoint requires authentication."""
-        response = client.get("/api/fmit/coverage")
+        response = client.get("/api/v1/fmit/coverage")
 
         assert response.status_code == 401
 
@@ -692,7 +692,7 @@ class TestFMITCoverageGapsEndpoint:
         sample_fmit_blocks: list[Block],
     ):
         """Test coverage gaps detection with no assignments."""
-        response = client.get("/api/fmit/coverage/gaps", headers=auth_headers)
+        response = client.get("/api/v1/fmit/coverage/gaps", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -731,7 +731,7 @@ class TestFMITCoverageGapsEndpoint:
         sample_fmit_assignments: list[Assignment],
     ):
         """Test coverage gaps with partial coverage."""
-        response = client.get("/api/fmit/coverage/gaps", headers=auth_headers)
+        response = client.get("/api/v1/fmit/coverage/gaps", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -761,7 +761,7 @@ class TestFMITCoverageGapsEndpoint:
     ):
         """Test coverage gaps with severity filter."""
         response = client.get(
-            "/api/fmit/coverage/gaps",
+            "/api/v1/fmit/coverage/gaps",
             params={"severity_filter": "critical"},
             headers=auth_headers,
         )
@@ -784,7 +784,7 @@ class TestFMITCoverageGapsEndpoint:
         end_date = start_date + timedelta(days=30)
 
         response = client.get(
-            "/api/fmit/coverage/gaps",
+            "/api/v1/fmit/coverage/gaps",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -802,7 +802,7 @@ class TestFMITCoverageGapsEndpoint:
 
     def test_coverage_gaps_unauthorized(self, client: TestClient):
         """Test coverage gaps endpoint requires authentication."""
-        response = client.get("/api/fmit/coverage/gaps")
+        response = client.get("/api/v1/fmit/coverage/gaps")
 
         assert response.status_code == 401
 
@@ -818,7 +818,7 @@ class TestFMITCoverageSuggestionsEndpoint:
         sample_fmit_faculty: list[Person],
     ):
         """Test coverage suggestions generation."""
-        response = client.get("/api/fmit/coverage/suggestions", headers=auth_headers)
+        response = client.get("/api/v1/fmit/coverage/suggestions", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -852,7 +852,7 @@ class TestFMITCoverageSuggestionsEndpoint:
         sample_fmit_faculty: list[Person],
     ):
         """Test suggestions include faculty candidates."""
-        response = client.get("/api/fmit/coverage/suggestions", headers=auth_headers)
+        response = client.get("/api/v1/fmit/coverage/suggestions", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -876,7 +876,7 @@ class TestFMITCoverageSuggestionsEndpoint:
     ):
         """Test suggestions respect max_suggestions parameter."""
         response = client.get(
-            "/api/fmit/coverage/suggestions",
+            "/api/v1/fmit/coverage/suggestions",
             params={"max_suggestions": 5},
             headers=auth_headers,
         )
@@ -899,7 +899,7 @@ class TestFMITCoverageSuggestionsEndpoint:
         end_date = start_date + timedelta(days=14)
 
         response = client.get(
-            "/api/fmit/coverage/suggestions",
+            "/api/v1/fmit/coverage/suggestions",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -915,7 +915,7 @@ class TestFMITCoverageSuggestionsEndpoint:
 
     def test_coverage_suggestions_unauthorized(self, client: TestClient):
         """Test coverage suggestions endpoint requires authentication."""
-        response = client.get("/api/fmit/coverage/suggestions")
+        response = client.get("/api/v1/fmit/coverage/suggestions")
 
         assert response.status_code == 401
 
@@ -930,7 +930,7 @@ class TestFMITCoverageForecastEndpoint:
         sample_fmit_assignments: list[Assignment],
     ):
         """Test coverage forecast generation."""
-        response = client.get("/api/fmit/coverage/forecast", headers=auth_headers)
+        response = client.get("/api/v1/fmit/coverage/forecast", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -966,7 +966,7 @@ class TestFMITCoverageForecastEndpoint:
     ):
         """Test coverage forecast with custom weeks ahead."""
         response = client.get(
-            "/api/fmit/coverage/forecast",
+            "/api/v1/fmit/coverage/forecast",
             params={"weeks_ahead": 4},
             headers=auth_headers,
         )
@@ -985,7 +985,7 @@ class TestFMITCoverageForecastEndpoint:
     ):
         """Test forecast confidence decreases over time."""
         response = client.get(
-            "/api/fmit/coverage/forecast",
+            "/api/v1/fmit/coverage/forecast",
             params={"weeks_ahead": 12},
             headers=auth_headers,
         )
@@ -1010,7 +1010,7 @@ class TestFMITCoverageForecastEndpoint:
         sample_fmit_assignments: list[Assignment],
     ):
         """Test forecast predictions are in valid ranges."""
-        response = client.get("/api/fmit/coverage/forecast", headers=auth_headers)
+        response = client.get("/api/v1/fmit/coverage/forecast", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -1031,7 +1031,7 @@ class TestFMITCoverageForecastEndpoint:
 
     def test_coverage_forecast_unauthorized(self, client: TestClient):
         """Test coverage forecast endpoint requires authentication."""
-        response = client.get("/api/fmit/coverage/forecast")
+        response = client.get("/api/v1/fmit/coverage/forecast")
 
         assert response.status_code == 401
 
@@ -1045,7 +1045,7 @@ class TestFMITAlertsSummaryEndpoint:
         auth_headers: dict,
     ):
         """Test alerts summary without any data."""
-        response = client.get("/api/fmit/alerts/summary", headers=auth_headers)
+        response = client.get("/api/v1/fmit/alerts/summary", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -1076,7 +1076,7 @@ class TestFMITAlertsSummaryEndpoint:
         sample_conflict_alerts: list[ConflictAlert],
     ):
         """Test alerts summary with conflict alert data."""
-        response = client.get("/api/fmit/alerts/summary", headers=auth_headers)
+        response = client.get("/api/v1/fmit/alerts/summary", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -1099,7 +1099,7 @@ class TestFMITAlertsSummaryEndpoint:
         sample_conflict_alerts: list[ConflictAlert],
     ):
         """Test alerts summary includes counts by type."""
-        response = client.get("/api/fmit/alerts/summary", headers=auth_headers)
+        response = client.get("/api/v1/fmit/alerts/summary", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -1118,7 +1118,7 @@ class TestFMITAlertsSummaryEndpoint:
         sample_conflict_alerts: list[ConflictAlert],
     ):
         """Test alerts summary includes counts by status."""
-        response = client.get("/api/fmit/alerts/summary", headers=auth_headers)
+        response = client.get("/api/v1/fmit/alerts/summary", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -1142,7 +1142,7 @@ class TestFMITAlertsSummaryEndpoint:
         sample_conflict_alerts: list[ConflictAlert],
     ):
         """Test alerts summary includes oldest unresolved alert."""
-        response = client.get("/api/fmit/alerts/summary", headers=auth_headers)
+        response = client.get("/api/v1/fmit/alerts/summary", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -1163,7 +1163,7 @@ class TestFMITAlertsSummaryEndpoint:
         sample_conflict_alerts: list[ConflictAlert],
     ):
         """Test alerts summary includes average resolution time."""
-        response = client.get("/api/fmit/alerts/summary", headers=auth_headers)
+        response = client.get("/api/v1/fmit/alerts/summary", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -1174,7 +1174,7 @@ class TestFMITAlertsSummaryEndpoint:
 
     def test_alerts_summary_unauthorized(self, client: TestClient):
         """Test alerts summary endpoint requires authentication."""
-        response = client.get("/api/fmit/alerts/summary")
+        response = client.get("/api/v1/fmit/alerts/summary")
 
         assert response.status_code == 401
 
@@ -1197,31 +1197,33 @@ class TestFMITHealthIntegration:
     ):
         """Test complete workflow accessing all health endpoints."""
         # 1. Check overall health
-        health_response = client.get("/api/fmit/health", headers=auth_headers)
+        health_response = client.get("/api/v1/fmit/health", headers=auth_headers)
         assert health_response.status_code == 200
         health_data = health_response.json()
         assert health_data["status"] in ["healthy", "degraded", "critical"]
 
         # 2. Get detailed status
-        status_response = client.get("/api/fmit/status", headers=auth_headers)
+        status_response = client.get("/api/v1/fmit/status", headers=auth_headers)
         assert status_response.status_code == 200
         status_data = status_response.json()
         assert status_data["pending_swaps"] > 0
 
         # 3. Get metrics
-        metrics_response = client.get("/api/fmit/metrics", headers=auth_headers)
+        metrics_response = client.get("/api/v1/fmit/metrics", headers=auth_headers)
         assert metrics_response.status_code == 200
         metrics_data = metrics_response.json()
         assert metrics_data["total_swaps_this_month"] > 0
 
         # 4. Get coverage report
-        coverage_response = client.get("/api/fmit/coverage", headers=auth_headers)
+        coverage_response = client.get("/api/v1/fmit/coverage", headers=auth_headers)
         assert coverage_response.status_code == 200
         coverage_data = coverage_response.json()
         assert len(coverage_data["weeks"]) > 0
 
         # 5. Get alert summary
-        alerts_response = client.get("/api/fmit/alerts/summary", headers=auth_headers)
+        alerts_response = client.get(
+            "/api/v1/fmit/alerts/summary", headers=auth_headers
+        )
         assert alerts_response.status_code == 200
         alerts_data = alerts_response.json()
         assert alerts_data["total_count"] > 0
@@ -1243,13 +1245,13 @@ class TestFMITHealthIntegration:
     ):
         """Test coverage gaps and suggestions are consistent."""
         # Get gaps
-        gaps_response = client.get("/api/fmit/coverage/gaps", headers=auth_headers)
+        gaps_response = client.get("/api/v1/fmit/coverage/gaps", headers=auth_headers)
         assert gaps_response.status_code == 200
         gaps_data = gaps_response.json()
 
         # Get suggestions
         suggestions_response = client.get(
-            "/api/fmit/coverage/suggestions",
+            "/api/v1/fmit/coverage/suggestions",
             headers=auth_headers,
         )
         assert suggestions_response.status_code == 200

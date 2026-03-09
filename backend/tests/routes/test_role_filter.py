@@ -27,28 +27,28 @@ class TestRoleFilterRoutes:
 
     def test_get_permissions_requires_auth(self, client: TestClient):
         """Test that permissions endpoint requires authentication."""
-        response = client.get("/api/example/permissions")
+        response = client.get("/api/v1/example/permissions")
         assert response.status_code == 401
 
     def test_get_dashboard_requires_auth(self, client: TestClient):
         """Test that dashboard requires authentication."""
-        response = client.get("/api/example/dashboard")
+        response = client.get("/api/v1/example/dashboard")
         assert response.status_code == 401
 
     def test_get_schedules_requires_auth(self, client: TestClient):
         """Test that schedules requires authentication."""
-        response = client.get("/api/example/schedules")
+        response = client.get("/api/v1/example/schedules")
         assert response.status_code == 401
 
     def test_get_my_schedule_requires_auth(self, client: TestClient):
         """Test that my-schedule requires authentication."""
-        response = client.get("/api/example/my-schedule")
+        response = client.get("/api/v1/example/my-schedule")
         assert response.status_code == 401
 
     def test_create_user_requires_auth(self, client: TestClient):
         """Test that create user requires authentication."""
         response = client.post(
-            "/api/example/users",
+            "/api/v1/example/users",
             params={"username": "test", "email": "test@test.com", "role": "resident"},
         )
         assert response.status_code == 401
@@ -59,7 +59,7 @@ class TestRoleFilterRoutes:
 
     def test_list_roles_public(self, client: TestClient):
         """Test listing roles (public endpoint)."""
-        response = client.get("/api/example/roles")
+        response = client.get("/api/v1/example/roles")
         assert response.status_code == 200
 
         data = response.json()
@@ -87,7 +87,7 @@ class TestRoleFilterRoutes:
         ]
         mock_service.get_role_description.return_value = "Full access administrator"
 
-        response = client.get("/api/example/permissions", headers=auth_headers)
+        response = client.get("/api/v1/example/permissions", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -118,7 +118,7 @@ class TestRoleFilterRoutes:
             "call_roster": [{"name": "Dr. Smith"}],
         }
 
-        response = client.get("/api/example/dashboard", headers=auth_headers)
+        response = client.get("/api/v1/example/dashboard", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -140,7 +140,7 @@ class TestRoleFilterRoutes:
         # Mock the dependency to allow access
         mock_require_access.return_value = lambda: None
 
-        response = client.get("/api/example/schedules", headers=auth_headers)
+        response = client.get("/api/v1/example/schedules", headers=auth_headers)
         # Will either succeed (200) or fail based on role
         assert response.status_code in [200, 403]
 
@@ -157,7 +157,7 @@ class TestRoleFilterRoutes:
             {"id": 1, "person_id": str(admin_user.id), "date": "2025-01-15"},
         ]
 
-        response = client.get("/api/example/my-schedule", headers=auth_headers)
+        response = client.get("/api/v1/example/my-schedule", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -178,7 +178,7 @@ class TestRoleFilterRoutes:
         """Test getting daily manifest."""
         mock_require_access.return_value = lambda: None
 
-        response = client.get("/api/example/manifest", headers=auth_headers)
+        response = client.get("/api/v1/example/manifest", headers=auth_headers)
         # Will succeed or fail based on role
         assert response.status_code in [200, 403]
 
@@ -196,7 +196,7 @@ class TestRoleFilterRoutes:
         """Test compliance report is admin only."""
         mock_require_access.return_value = lambda: None
 
-        response = client.get("/api/example/compliance", headers=auth_headers)
+        response = client.get("/api/v1/example/compliance", headers=auth_headers)
         # Will succeed if admin, fail otherwise
         assert response.status_code in [200, 403]
 
@@ -218,7 +218,7 @@ class TestRoleFilterRoutes:
         mock_service.get_role_from_string.return_value = "resident"
 
         response = client.post(
-            "/api/example/users",
+            "/api/v1/example/users",
             headers=auth_headers,
             params={
                 "username": "newuser",
@@ -243,7 +243,7 @@ class TestRoleFilterRoutes:
         mock_service.get_role_from_string.side_effect = ValueError("Invalid role")
 
         response = client.post(
-            "/api/example/users",
+            "/api/v1/example/users",
             headers=auth_headers,
             params={
                 "username": "newuser",
@@ -269,7 +269,7 @@ class TestRoleFilterRoutes:
         mock_service.can_access_endpoint.return_value = True
 
         response = client.get(
-            "/api/example/access-check/schedules",
+            "/api/v1/example/access-check/schedules",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -289,7 +289,7 @@ class TestRoleFilterRoutes:
         mock_service.can_access_endpoint.return_value = False
 
         response = client.get(
-            "/api/example/access-check/compliance",
+            "/api/v1/example/access-check/compliance",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -311,7 +311,7 @@ class TestRoleFilterRoutes:
         for endpoint in endpoints:
             mock_service.can_access_endpoint.return_value = True
             response = client.get(
-                f"/api/example/access-check/{endpoint}",
+                f"/api/v1/example/access-check/{endpoint}",
                 headers=auth_headers,
             )
             assert response.status_code == 200

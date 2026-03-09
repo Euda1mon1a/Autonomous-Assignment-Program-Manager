@@ -66,7 +66,8 @@ def test_cpsat_pipeline_minimal_dataset(
             if not block:
                 continue
             is_sunday = block.date.weekday() == 6
-            mapped_call_type = "sunday" if is_sunday else "weekday"
+            # CHECK constraint: call_type IN ('overnight', 'weekend', 'backup')
+            mapped_call_type = "weekend" if is_sunday else "overnight"
             call_assignment = CallAssignment(
                 date=block.date,
                 person_id=person_id,
@@ -101,6 +102,8 @@ def test_cpsat_pipeline_minimal_dataset(
     _seed_activity(db, code="W", name="Weekend Off", category="time_off")
     _seed_activity(db, code="LEC", name="Lecture", category="educational")
     _seed_activity(db, code="ADV", name="Advising", category="educational")
+    _seed_activity(db, code="CV", name="CV Review", category="administrative")
+    _seed_activity(db, code="fm_clinic", name="FM Clinic", category="clinical")
 
     # Core scheduling data.
     resident_1 = Person(
@@ -124,6 +127,13 @@ def test_cpsat_pipeline_minimal_dataset(
         email="faculty1@test.org",
         faculty_role="core",
     )
+    faculty_2 = Person(
+        id=uuid4(),
+        name="Faculty Two",
+        type="faculty",
+        email="faculty2@test.org",
+        faculty_role="core",
+    )
     rotation = RotationTemplate(
         id=uuid4(),
         name="Outpatient Clinic",
@@ -132,7 +142,7 @@ def test_cpsat_pipeline_minimal_dataset(
         supervision_required=True,
     )
 
-    db.add_all([resident_1, resident_2, faculty, rotation])
+    db.add_all([resident_1, resident_2, faculty, faculty_2, rotation])
     db.commit()
 
     # Block assignments for resident filtering (template optional).

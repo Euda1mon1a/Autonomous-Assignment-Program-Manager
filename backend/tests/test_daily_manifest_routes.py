@@ -25,7 +25,7 @@ class TestDailyManifestEndpoint:
     def test_daily_manifest_requires_auth(self, client: TestClient):
         """Test that daily manifest requires authentication."""
         response = client.get(
-            f"/api/assignments/daily-manifest?date={date.today().isoformat()}"
+            f"/api/v1/assignments/daily-manifest?date={date.today().isoformat()}"
         )
 
         # Should require authentication
@@ -36,7 +36,7 @@ class TestDailyManifestEndpoint:
     ):
         """Test that daily manifest requires date parameter."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             headers=auth_headers,
         )
 
@@ -48,7 +48,7 @@ class TestDailyManifestEndpoint:
     ):
         """Test getting daily manifest with valid date."""
         response = client.get(
-            f"/api/assignments/daily-manifest?date={date.today().isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={date.today().isoformat()}",
             headers=auth_headers,
         )
 
@@ -60,7 +60,7 @@ class TestDailyManifestEndpoint:
     ):
         """Test daily manifest filtered by AM time slot."""
         response = client.get(
-            f"/api/assignments/daily-manifest?date={date.today().isoformat()}&time_of_day=AM",
+            f"/api/v1/assignments/daily-manifest?date={date.today().isoformat()}&time_of_day=AM",
             headers=auth_headers,
         )
 
@@ -71,7 +71,7 @@ class TestDailyManifestEndpoint:
     ):
         """Test daily manifest filtered by PM time slot."""
         response = client.get(
-            f"/api/assignments/daily-manifest?date={date.today().isoformat()}&time_of_day=PM",
+            f"/api/v1/assignments/daily-manifest?date={date.today().isoformat()}&time_of_day=PM",
             headers=auth_headers,
         )
 
@@ -82,7 +82,7 @@ class TestDailyManifestEndpoint:
     ):
         """Test daily manifest with invalid time_of_day parameter."""
         response = client.get(
-            f"/api/assignments/daily-manifest?date={date.today().isoformat()}&time_of_day=INVALID",
+            f"/api/v1/assignments/daily-manifest?date={date.today().isoformat()}&time_of_day=INVALID",
             headers=auth_headers,
         )
 
@@ -94,7 +94,7 @@ class TestDailyManifestEndpoint:
     ):
         """Test daily manifest response has correct structure."""
         response = client.get(
-            f"/api/assignments/daily-manifest?date={date.today().isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={date.today().isoformat()}",
             headers=auth_headers,
         )
 
@@ -112,7 +112,7 @@ class TestDailyManifestEndpoint:
 
         future_date = date.today() + timedelta(days=7)
         response = client.get(
-            f"/api/assignments/daily-manifest?date={future_date.isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={future_date.isoformat()}",
             headers=auth_headers,
         )
 
@@ -125,7 +125,7 @@ class TestDailyManifestEndpoint:
 
         past_date = date.today() - timedelta(days=7)
         response = client.get(
-            f"/api/assignments/daily-manifest?date={past_date.isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={past_date.isoformat()}",
             headers=auth_headers,
         )
 
@@ -150,7 +150,7 @@ class TestDailyManifestWithData:
         block_date = sample_assignment.block.date
 
         response = client.get(
-            f"/api/assignments/daily-manifest?date={block_date.isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={block_date.isoformat()}",
             headers=auth_headers,
         )
 
@@ -164,7 +164,7 @@ class TestDailyManifestWithData:
     ):
         """Test that assignments are grouped by location."""
         response = client.get(
-            f"/api/assignments/daily-manifest?date={date.today().isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={date.today().isoformat()}",
             headers=auth_headers,
         )
 
@@ -181,7 +181,7 @@ class TestDailyManifestWithData:
     ):
         """Test staffing summary calculation."""
         response = client.get(
-            f"/api/assignments/daily-manifest?date={date.today().isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={date.today().isoformat()}",
             headers=auth_headers,
         )
 
@@ -203,7 +203,7 @@ class TestDailyManifestEdgeCases:
     ):
         """Test daily manifest with invalid date format."""
         response = client.get(
-            "/api/assignments/daily-manifest?date=invalid-date",
+            "/api/v1/assignments/daily-manifest?date=invalid-date",
             headers=auth_headers,
         )
 
@@ -217,7 +217,7 @@ class TestDailyManifestEdgeCases:
         # Use a far future date unlikely to have assignments
         far_future = date.today() + timedelta(days=365 * 2)
         response = client.get(
-            f"/api/assignments/daily-manifest?date={far_future.isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={far_future.isoformat()}",
             headers=auth_headers,
         )
 
@@ -231,11 +231,11 @@ class TestDailyManifestEdgeCases:
         test_date = date.today().isoformat()
 
         # POST should not be allowed
-        response = client.post(f"/api/assignments/daily-manifest?date={test_date}")
+        response = client.post(f"/api/v1/assignments/daily-manifest?date={test_date}")
         assert response.status_code in [401, 405]
 
         # PUT should not be allowed
-        response = client.put(f"/api/assignments/daily-manifest?date={test_date}")
+        response = client.put(f"/api/v1/assignments/daily-manifest?date={test_date}")
         assert response.status_code in [401, 405]
 
 
@@ -250,7 +250,7 @@ class TestDailyManifestIntegration:
     def test_daily_manifest_json_response(self, client: TestClient, auth_headers: dict):
         """Test daily manifest returns valid JSON."""
         response = client.get(
-            f"/api/assignments/daily-manifest?date={date.today().isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={date.today().isoformat()}",
             headers=auth_headers,
         )
 
@@ -266,7 +266,7 @@ class TestDailyManifestIntegration:
 
         start = time.time()
         response = client.get(
-            f"/api/assignments/daily-manifest?date={date.today().isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={date.today().isoformat()}",
             headers=auth_headers,
         )
         elapsed = time.time() - start

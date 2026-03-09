@@ -448,7 +448,7 @@ async def test_full_orchestration_loop(
         person_id=seed_minimal_data["residents"][0].id,
         rotation_id=seed_minimal_data["rotations"][0].id,
         date=date.today() + timedelta(days=10),
-        session="AM",
+        time_of_day="AM",
     )
 
     # Create assignment

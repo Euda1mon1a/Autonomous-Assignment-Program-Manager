@@ -46,7 +46,7 @@ class TestListExpiringCredentials:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get("/api/credentials/expiring")
+            response = client.get("/api/v1/credentials/expiring")
 
             assert response.status_code == 200
             mock_instance.list_expiring_credentials.assert_called_once_with(days=30)
@@ -63,7 +63,7 @@ class TestListExpiringCredentials:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get("/api/credentials/expiring?days=60")
+            response = client.get("/api/v1/credentials/expiring?days=60")
 
             assert response.status_code == 200
             mock_instance.list_expiring_credentials.assert_called_once_with(days=60)
@@ -88,7 +88,7 @@ class TestListExpiringCredentials:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get("/api/credentials/expiring?days=30")
+            response = client.get("/api/v1/credentials/expiring?days=30")
 
             assert response.status_code == 200
             data = response.json()
@@ -113,7 +113,7 @@ class TestListCredentialsForPerson:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get(f"/api/credentials/by-person/{person_id}")
+            response = client.get(f"/api/v1/credentials/by-person/{person_id}")
 
             assert response.status_code == 200
             mock_instance.list_credentials_for_person.assert_called_once()
@@ -133,7 +133,7 @@ class TestListCredentialsForPerson:
             mock_controller.return_value = mock_instance
 
             response = client.get(
-                f"/api/credentials/by-person/{person_id}?status=active&include_expired=true"
+                f"/api/v1/credentials/by-person/{person_id}?status=active&include_expired=true"
             )
 
             assert response.status_code == 200
@@ -161,7 +161,7 @@ class TestListCredentialsForProcedure:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get(f"/api/credentials/by-procedure/{procedure_id}")
+            response = client.get(f"/api/v1/credentials/by-procedure/{procedure_id}")
 
             assert response.status_code == 200
             mock_instance.list_credentials_for_procedure.assert_called_once()
@@ -184,7 +184,9 @@ class TestGetQualifiedFaculty:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get(f"/api/credentials/qualified-faculty/{procedure_id}")
+            response = client.get(
+                f"/api/v1/credentials/qualified-faculty/{procedure_id}"
+            )
 
             assert response.status_code == 200
             mock_instance.get_qualified_faculty.assert_called_once_with(procedure_id)
@@ -208,7 +210,9 @@ class TestCheckQualification:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get(f"/api/credentials/check/{person_id}/{procedure_id}")
+            response = client.get(
+                f"/api/v1/credentials/check/{person_id}/{procedure_id}"
+            )
 
             assert response.status_code == 200
             data = response.json()
@@ -229,7 +233,9 @@ class TestCheckQualification:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get(f"/api/credentials/check/{person_id}/{procedure_id}")
+            response = client.get(
+                f"/api/v1/credentials/check/{person_id}/{procedure_id}"
+            )
 
             assert response.status_code == 200
             data = response.json()
@@ -256,7 +262,7 @@ class TestGetFacultyCredentialSummary:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get(f"/api/credentials/summary/{person_id}")
+            response = client.get(f"/api/v1/credentials/summary/{person_id}")
 
             assert response.status_code == 200
             data = response.json()
@@ -283,7 +289,7 @@ class TestGetCredentialById:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get(f"/api/credentials/{credential_id}")
+            response = client.get(f"/api/v1/credentials/{credential_id}")
 
             assert response.status_code == 200
             mock_instance.get_credential.assert_called_once_with(credential_id)
@@ -308,7 +314,7 @@ class TestCreateCredential:
             mock_controller.return_value = mock_instance
 
             response = client.post(
-                "/api/credentials",
+                "/api/v1/credentials",
                 json={
                     "person_id": str(uuid4()),
                     "procedure_id": str(uuid4()),
@@ -324,7 +330,7 @@ class TestCreateCredential:
     def test_create_credential_requires_auth(self, client: TestClient):
         """Test that creating a credential requires authentication."""
         response = client.post(
-            "/api/credentials",
+            "/api/v1/credentials",
             json={
                 "person_id": str(uuid4()),
                 "procedure_id": str(uuid4()),
@@ -354,7 +360,7 @@ class TestUpdateCredential:
             mock_controller.return_value = mock_instance
 
             response = client.put(
-                f"/api/credentials/{credential_id}",
+                f"/api/v1/credentials/{credential_id}",
                 json={"status": "suspended"},
                 headers=auth_headers,
             )
@@ -378,7 +384,7 @@ class TestDeleteCredential:
             mock_controller.return_value = mock_instance
 
             response = client.delete(
-                f"/api/credentials/{credential_id}",
+                f"/api/v1/credentials/{credential_id}",
                 headers=auth_headers,
             )
 
@@ -404,7 +410,7 @@ class TestSuspendCredential:
             mock_controller.return_value = mock_instance
 
             response = client.post(
-                f"/api/credentials/{credential_id}/suspend",
+                f"/api/v1/credentials/{credential_id}/suspend",
                 headers=auth_headers,
             )
 
@@ -428,7 +434,7 @@ class TestSuspendCredential:
             mock_controller.return_value = mock_instance
 
             response = client.post(
-                f"/api/credentials/{credential_id}/suspend?notes=Pending%20review",
+                f"/api/v1/credentials/{credential_id}/suspend?notes=Pending%20review",
                 headers=auth_headers,
             )
 
@@ -453,7 +459,7 @@ class TestActivateCredential:
             mock_controller.return_value = mock_instance
 
             response = client.post(
-                f"/api/credentials/{credential_id}/activate",
+                f"/api/v1/credentials/{credential_id}/activate",
                 headers=auth_headers,
             )
 
@@ -478,7 +484,7 @@ class TestVerifyCredential:
             mock_controller.return_value = mock_instance
 
             response = client.post(
-                f"/api/credentials/{credential_id}/verify",
+                f"/api/v1/credentials/{credential_id}/verify",
                 headers=auth_headers,
             )
 
@@ -506,7 +512,7 @@ class TestCredentialsIntegration:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get("/api/credentials/expiring")
+            response = client.get("/api/v1/credentials/expiring")
             assert response.status_code == 200
 
     def test_credentials_response_format(self, client: TestClient):
@@ -521,7 +527,7 @@ class TestCredentialsIntegration:
             }
             mock_controller.return_value = mock_instance
 
-            response = client.get("/api/credentials/expiring")
+            response = client.get("/api/v1/credentials/expiring")
 
             assert response.status_code == 200
             assert response.headers["content-type"] == "application/json"

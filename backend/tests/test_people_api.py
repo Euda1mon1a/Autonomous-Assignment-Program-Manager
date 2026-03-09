@@ -15,7 +15,7 @@ class TestListPeople:
 
     def test_list_people_empty(self, client: TestClient):
         """Should return empty list when no people exist."""
-        response = client.get("/api/people")
+        response = client.get("/api/v1/people")
         assert response.status_code == 200
         data = response.json()
         assert data["items"] == []
@@ -25,7 +25,7 @@ class TestListPeople:
         self, client: TestClient, sample_resident: Person, sample_faculty: Person
     ):
         """Should return all people."""
-        response = client.get("/api/people")
+        response = client.get("/api/v1/people")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 2
@@ -35,7 +35,7 @@ class TestListPeople:
         self, client: TestClient, sample_resident: Person, sample_faculty: Person
     ):
         """Should filter by type=resident."""
-        response = client.get("/api/people?type=resident")
+        response = client.get("/api/v1/people?type=resident")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
@@ -45,7 +45,7 @@ class TestListPeople:
         self, client: TestClient, sample_resident: Person, sample_faculty: Person
     ):
         """Should filter by type=faculty."""
-        response = client.get("/api/people?type=faculty")
+        response = client.get("/api/v1/people?type=faculty")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
@@ -55,7 +55,7 @@ class TestListPeople:
         self, client: TestClient, sample_residents: list[Person]
     ):
         """Should filter by PGY level."""
-        response = client.get("/api/people?pgy_level=1")
+        response = client.get("/api/v1/people?pgy_level=1")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
@@ -67,7 +67,7 @@ class TestListResidents:
 
     def test_list_residents_empty(self, client: TestClient):
         """Should return empty list when no residents exist."""
-        response = client.get("/api/people/residents")
+        response = client.get("/api/v1/people/residents")
         assert response.status_code == 200
         data = response.json()
         assert data["items"] == []
@@ -77,7 +77,7 @@ class TestListResidents:
         self, client: TestClient, sample_resident: Person, sample_faculty: Person
     ):
         """Should only return residents, not faculty."""
-        response = client.get("/api/people/residents")
+        response = client.get("/api/v1/people/residents")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
@@ -87,7 +87,7 @@ class TestListResidents:
         self, client: TestClient, sample_residents: list[Person]
     ):
         """Should filter residents by PGY level."""
-        response = client.get("/api/people/residents?pgy_level=2")
+        response = client.get("/api/v1/people/residents?pgy_level=2")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
@@ -99,7 +99,7 @@ class TestListFaculty:
 
     def test_list_faculty_empty(self, client: TestClient):
         """Should return empty list when no faculty exist."""
-        response = client.get("/api/people/faculty")
+        response = client.get("/api/v1/people/faculty")
         assert response.status_code == 200
         data = response.json()
         assert data["items"] == []
@@ -109,7 +109,7 @@ class TestListFaculty:
         self, client: TestClient, sample_resident: Person, sample_faculty: Person
     ):
         """Should only return faculty, not residents."""
-        response = client.get("/api/people/faculty")
+        response = client.get("/api/v1/people/faculty")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 1
@@ -121,7 +121,7 @@ class TestGetPerson:
 
     def test_get_person_success(self, client: TestClient, sample_resident: Person):
         """Should return person by ID."""
-        response = client.get(f"/api/people/{sample_resident.id}")
+        response = client.get(f"/api/v1/people/{sample_resident.id}")
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == str(sample_resident.id)
@@ -132,7 +132,7 @@ class TestGetPerson:
     def test_get_person_not_found(self, client: TestClient):
         """Should return 404 for non-existent person."""
         fake_id = "00000000-0000-4000-8000-000000000000"
-        response = client.get(f"/api/people/{fake_id}")
+        response = client.get(f"/api/v1/people/{fake_id}")
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
@@ -148,7 +148,7 @@ class TestCreatePerson:
             "email": "new.resident@hospital.org",
             "pgy_level": 1,
         }
-        response = client.post("/api/people", json=payload)
+        response = client.post("/api/v1/people", json=payload)
         assert response.status_code == 201
         data = response.json()
         assert data["name"] == payload["name"]
@@ -165,7 +165,7 @@ class TestCreatePerson:
             "performs_procedures": True,
             "specialties": ["Cardiology", "Internal Medicine"],
         }
-        response = client.post("/api/people", json=payload)
+        response = client.post("/api/v1/people", json=payload)
         assert response.status_code == 201
         data = response.json()
         assert data["name"] == payload["name"]
@@ -180,7 +180,7 @@ class TestCreatePerson:
             "email": "bad.resident@hospital.org",
             # Missing pgy_level
         }
-        response = client.post("/api/people", json=payload)
+        response = client.post("/api/v1/people", json=payload)
         assert response.status_code == 400
         assert "pgy" in response.json()["detail"].lower()
 
@@ -191,7 +191,7 @@ class TestCreatePerson:
             "type": "invalid_type",
             "email": "invalid@hospital.org",
         }
-        response = client.post("/api/people", json=payload)
+        response = client.post("/api/v1/people", json=payload)
         assert response.status_code == 422  # Pydantic validation error
 
     def test_create_person_invalid_pgy_level(self, client: TestClient):
@@ -202,7 +202,7 @@ class TestCreatePerson:
             "email": "invalid.pgy@hospital.org",
             "pgy_level": 5,  # Invalid: must be 1-3
         }
-        response = client.post("/api/people", json=payload)
+        response = client.post("/api/v1/people", json=payload)
         assert response.status_code == 422
 
 
@@ -215,7 +215,7 @@ class TestUpdatePerson:
             "name": "Dr. Updated Name",
             "email": "updated@hospital.org",
         }
-        response = client.put(f"/api/people/{sample_resident.id}", json=payload)
+        response = client.put(f"/api/v1/people/{sample_resident.id}", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Dr. Updated Name"
@@ -227,7 +227,7 @@ class TestUpdatePerson:
         """Should allow partial updates."""
         original_email = sample_resident.email
         payload = {"name": "Dr. Partial Update"}
-        response = client.put(f"/api/people/{sample_resident.id}", json=payload)
+        response = client.put(f"/api/v1/people/{sample_resident.id}", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Dr. Partial Update"
@@ -237,7 +237,7 @@ class TestUpdatePerson:
     def test_update_person_pgy_level(self, client: TestClient, sample_resident: Person):
         """Should update PGY level for residents."""
         payload = {"pgy_level": 3}
-        response = client.put(f"/api/people/{sample_resident.id}", json=payload)
+        response = client.put(f"/api/v1/people/{sample_resident.id}", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert data["pgy_level"] == 3
@@ -246,7 +246,7 @@ class TestUpdatePerson:
         """Should return 404 for non-existent person."""
         fake_id = "00000000-0000-4000-8000-000000000000"
         payload = {"name": "Ghost"}
-        response = client.put(f"/api/people/{fake_id}", json=payload)
+        response = client.put(f"/api/v1/people/{fake_id}", json=payload)
         assert response.status_code == 404
 
 
@@ -258,7 +258,7 @@ class TestDeletePerson:
     ):
         """Should delete person."""
         person_id = str(sample_resident.id)
-        response = client.delete(f"/api/people/{person_id}")
+        response = client.delete(f"/api/v1/people/{person_id}")
         assert response.status_code == 204
 
         # Verify person is deleted
@@ -268,7 +268,7 @@ class TestDeletePerson:
     def test_delete_person_not_found(self, client: TestClient):
         """Should return 404 for non-existent person."""
         fake_id = "00000000-0000-4000-8000-000000000000"
-        response = client.delete(f"/api/people/{fake_id}")
+        response = client.delete(f"/api/v1/people/{fake_id}")
         assert response.status_code == 404
 
     def test_delete_person_idempotent(
@@ -278,9 +278,9 @@ class TestDeletePerson:
         person_id = str(sample_resident.id)
 
         # First delete
-        response1 = client.delete(f"/api/people/{person_id}")
+        response1 = client.delete(f"/api/v1/people/{person_id}")
         assert response1.status_code == 204
 
         # Second delete
-        response2 = client.delete(f"/api/people/{person_id}")
+        response2 = client.delete(f"/api/v1/people/{person_id}")
         assert response2.status_code == 404

@@ -33,7 +33,7 @@ class TestCreateFeatureFlagEndpoint:
     def test_create_requires_auth(self, client: TestClient):
         """Test that creating feature flag requires authentication."""
         response = client.post(
-            "/api/features",
+            "/api/v1/features",
             json={
                 "key": "test-feature",
                 "name": "Test Feature",
@@ -55,7 +55,7 @@ class TestCreateFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/features",
+                "/api/v1/features",
                 json={
                     "key": "test-feature",
                     "name": "Test Feature",
@@ -78,7 +78,7 @@ class TestCreateFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/features",
+                "/api/v1/features",
                 json={
                     "key": "duplicate-key",
                     "name": "Duplicate Feature",
@@ -95,7 +95,7 @@ class TestListFeatureFlagsEndpoint:
 
     def test_list_requires_auth(self, client: TestClient):
         """Test that listing feature flags requires authentication."""
-        response = client.get("/api/features")
+        response = client.get("/api/v1/features")
 
         assert response.status_code in [401, 403]
 
@@ -107,7 +107,7 @@ class TestListFeatureFlagsEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.get(
-                "/api/features",
+                "/api/v1/features",
                 headers=auth_headers,
             )
 
@@ -121,7 +121,7 @@ class TestListFeatureFlagsEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.get(
-                "/api/features?enabled_only=true&environment=production",
+                "/api/v1/features?enabled_only=true&environment=production",
                 headers=auth_headers,
             )
 
@@ -135,7 +135,7 @@ class TestListFeatureFlagsEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.get(
-                "/api/features?page=2&page_size=25",
+                "/api/v1/features?page=2&page_size=25",
                 headers=auth_headers,
             )
 
@@ -147,7 +147,7 @@ class TestFeatureFlagStatsEndpoint:
 
     def test_stats_requires_auth(self, client: TestClient):
         """Test that stats requires authentication."""
-        response = client.get("/api/features/stats")
+        response = client.get("/api/v1/features/stats")
 
         assert response.status_code in [401, 403]
 
@@ -173,7 +173,7 @@ class TestFeatureFlagStatsEndpoint:
             mock_env.return_value = {}
 
             response = client.get(
-                "/api/features/stats",
+                "/api/v1/features/stats",
                 headers=auth_headers,
             )
 
@@ -185,7 +185,7 @@ class TestGetFeatureFlagEndpoint:
 
     def test_get_requires_auth(self, client: TestClient):
         """Test that getting feature flag requires authentication."""
-        response = client.get("/api/features/test-feature")
+        response = client.get("/api/v1/features/test-feature")
 
         assert response.status_code in [401, 403]
 
@@ -199,7 +199,7 @@ class TestGetFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.get(
-                "/api/features/test-feature",
+                "/api/v1/features/test-feature",
                 headers=auth_headers,
             )
 
@@ -213,7 +213,7 @@ class TestGetFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.get(
-                "/api/features/nonexistent-flag",
+                "/api/v1/features/nonexistent-flag",
                 headers=auth_headers,
             )
 
@@ -226,7 +226,7 @@ class TestUpdateFeatureFlagEndpoint:
     def test_update_requires_auth(self, client: TestClient):
         """Test that updating feature flag requires authentication."""
         response = client.put(
-            "/api/features/test-feature",
+            "/api/v1/features/test-feature",
             json={"enabled": False},
         )
 
@@ -243,7 +243,7 @@ class TestUpdateFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.put(
-                "/api/features/test-feature",
+                "/api/v1/features/test-feature",
                 json={"enabled": False},
                 headers=auth_headers,
             )
@@ -253,7 +253,7 @@ class TestUpdateFeatureFlagEndpoint:
     def test_update_no_changes(self, client: TestClient, auth_headers: dict):
         """Test updating feature flag with no changes."""
         response = client.put(
-            "/api/features/test-feature",
+            "/api/v1/features/test-feature",
             json={},
             headers=auth_headers,
         )
@@ -266,7 +266,7 @@ class TestDeleteFeatureFlagEndpoint:
 
     def test_delete_requires_auth(self, client: TestClient):
         """Test that deleting feature flag requires authentication."""
-        response = client.delete("/api/features/test-feature")
+        response = client.delete("/api/v1/features/test-feature")
 
         assert response.status_code in [401, 403]
 
@@ -278,7 +278,7 @@ class TestDeleteFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.delete(
-                "/api/features/test-feature",
+                "/api/v1/features/test-feature",
                 headers=auth_headers,
             )
 
@@ -292,7 +292,7 @@ class TestDeleteFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.delete(
-                "/api/features/nonexistent-flag",
+                "/api/v1/features/nonexistent-flag",
                 headers=auth_headers,
             )
 
@@ -305,7 +305,7 @@ class TestEvaluateFeatureFlagEndpoint:
     def test_evaluate_requires_auth(self, client: TestClient):
         """Test that evaluating feature flag requires authentication."""
         response = client.post(
-            "/api/features/evaluate",
+            "/api/v1/features/evaluate",
             json={"flag_key": "test-feature"},
         )
 
@@ -324,7 +324,7 @@ class TestEvaluateFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/features/evaluate",
+                "/api/v1/features/evaluate",
                 json={"flag_key": "test-feature"},
                 headers=auth_headers,
             )
@@ -344,7 +344,7 @@ class TestEvaluateFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/features/evaluate",
+                "/api/v1/features/evaluate",
                 json={
                     "flag_key": "test-feature",
                     "context": {"environment": "production"},
@@ -361,7 +361,7 @@ class TestBulkEvaluateEndpoint:
     def test_bulk_requires_auth(self, client: TestClient):
         """Test that bulk evaluation requires authentication."""
         response = client.post(
-            "/api/features/evaluate/bulk",
+            "/api/v1/features/evaluate/bulk",
             json={"flag_keys": ["feature1", "feature2"]},
         )
 
@@ -383,7 +383,7 @@ class TestBulkEvaluateEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/features/evaluate/bulk",
+                "/api/v1/features/evaluate/bulk",
                 json={"flag_keys": ["feature1", "feature2"]},
                 headers=auth_headers,
             )
@@ -396,7 +396,7 @@ class TestEnableFeatureFlagEndpoint:
 
     def test_enable_requires_auth(self, client: TestClient):
         """Test that enabling feature flag requires authentication."""
-        response = client.post("/api/features/test-feature/enable")
+        response = client.post("/api/v1/features/test-feature/enable")
 
         assert response.status_code in [401, 403]
 
@@ -411,7 +411,7 @@ class TestEnableFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/features/test-feature/enable",
+                "/api/v1/features/test-feature/enable",
                 headers=auth_headers,
             )
 
@@ -428,7 +428,7 @@ class TestEnableFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/features/test-feature/enable?reason=Testing%20new%20feature",
+                "/api/v1/features/test-feature/enable?reason=Testing%20new%20feature",
                 headers=auth_headers,
             )
 
@@ -440,7 +440,7 @@ class TestDisableFeatureFlagEndpoint:
 
     def test_disable_requires_auth(self, client: TestClient):
         """Test that disabling feature flag requires authentication."""
-        response = client.post("/api/features/test-feature/disable")
+        response = client.post("/api/v1/features/test-feature/disable")
 
         assert response.status_code in [401, 403]
 
@@ -455,7 +455,7 @@ class TestDisableFeatureFlagEndpoint:
             mock_service_class.return_value = mock_service
 
             response = client.post(
-                "/api/features/test-feature/disable",
+                "/api/v1/features/test-feature/disable",
                 headers=auth_headers,
             )
 
@@ -489,7 +489,7 @@ class TestFeaturesIntegration:
 
             # Create flag
             create_response = client.post(
-                "/api/features",
+                "/api/v1/features",
                 json={
                     "key": "new-feature",
                     "name": "New Feature",
@@ -505,9 +505,9 @@ class TestFeaturesIntegration:
     ):
         """Test that admin endpoints require admin role."""
         admin_endpoints = [
-            ("/api/features", "GET"),
-            ("/api/features/stats", "GET"),
-            ("/api/features/test-feature", "GET"),
+            ("/api/v1/features", "GET"),
+            ("/api/v1/features/stats", "GET"),
+            ("/api/v1/features/test-feature", "GET"),
         ]
 
         with patch("app.api.routes.features.FeatureFlagService") as mock_service_class:
@@ -549,7 +549,7 @@ class TestFeaturesEdgeCases:
     def test_create_invalid_flag_type(self, client: TestClient, auth_headers: dict):
         """Test creating flag with invalid type."""
         response = client.post(
-            "/api/features",
+            "/api/v1/features",
             json={
                 "key": "test-feature",
                 "name": "Test Feature",
@@ -563,7 +563,7 @@ class TestFeaturesEdgeCases:
     def test_list_invalid_pagination(self, client: TestClient, auth_headers: dict):
         """Test listing with invalid pagination parameters."""
         response = client.get(
-            "/api/features?page=0",  # page must be >= 1
+            "/api/v1/features?page=0",  # page must be >= 1
             headers=auth_headers,
         )
 
@@ -572,7 +572,7 @@ class TestFeaturesEdgeCases:
     def test_evaluate_missing_flag_key(self, client: TestClient, auth_headers: dict):
         """Test evaluating without flag key."""
         response = client.post(
-            "/api/features/evaluate",
+            "/api/v1/features/evaluate",
             json={},  # Missing flag_key
             headers=auth_headers,
         )
@@ -582,7 +582,7 @@ class TestFeaturesEdgeCases:
     def test_bulk_evaluate_empty_list(self, client: TestClient, auth_headers: dict):
         """Test bulk evaluation with empty flag list."""
         response = client.post(
-            "/api/features/evaluate/bulk",
+            "/api/v1/features/evaluate/bulk",
             json={"flag_keys": []},
             headers=auth_headers,
         )

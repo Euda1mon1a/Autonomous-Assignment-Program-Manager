@@ -35,7 +35,7 @@ class TestScheduleGenerationRoutes:
     ):
         """Test successful schedule generation."""
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             headers=auth_headers,
             json={
                 "start_date": "2025-01-01",
@@ -55,7 +55,7 @@ class TestScheduleGenerationRoutes:
     def test_post_schedule_generate_missing_dates(self, client, auth_headers):
         """Test schedule generation fails without required dates."""
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             headers=auth_headers,
             json={},
         )
@@ -64,7 +64,7 @@ class TestScheduleGenerationRoutes:
     def test_post_schedule_generate_invalid_date_range(self, client, auth_headers):
         """Test schedule generation fails with end_date before start_date."""
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             headers=auth_headers,
             json={
                 "start_date": "2025-12-31",
@@ -78,7 +78,7 @@ class TestScheduleGenerationRoutes:
     def test_post_schedule_generate_requires_auth(self, client):
         """Test schedule generation requires authentication."""
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             json={
                 "start_date": "2025-01-01",
                 "end_date": "2025-12-31",
@@ -101,7 +101,7 @@ class TestScheduleGenerationRoutes:
             schedule_routes.SchedulingEngine, "generate"
         ) as mock_generate:
             response = client.post(
-                "/api/schedule/generate",
+                "/api/v1/schedule/generate",
                 headers=auth_headers,
                 json={
                     "start_date": "2025-01-01",
@@ -122,7 +122,7 @@ class TestScheduleGenerationRoutes:
         """Test schedule validation endpoint."""
         # The validate endpoint is a GET, not POST, based on the routes
         response = client.get(
-            "/api/schedule/validate",
+            "/api/v1/schedule/validate",
             params={
                 "start_date": "2025-01-01",
                 "end_date": "2025-01-31",
@@ -136,7 +136,7 @@ class TestScheduleGenerationRoutes:
     def test_get_schedule_validate_acgme_compliance(self, client):
         """Test schedule validation returns ACGME compliance status."""
         response = client.get(
-            "/api/schedule/validate",
+            "/api/v1/schedule/validate",
             params={
                 "start_date": "2025-01-01",
                 "end_date": "2025-01-31",
@@ -156,7 +156,7 @@ class TestScheduleGenerationRoutes:
     ):
         """Test emergency coverage endpoint."""
         response = client.post(
-            "/api/schedule/emergency-coverage",
+            "/api/v1/schedule/emergency-coverage",
             headers=auth_headers,
             json={
                 "person_id": str(sample_resident.id),
@@ -172,7 +172,7 @@ class TestScheduleGenerationRoutes:
     def test_post_emergency_coverage_requires_auth(self, client, sample_resident):
         """Test emergency coverage requires authentication."""
         response = client.post(
-            "/api/schedule/emergency-coverage",
+            "/api/v1/schedule/emergency-coverage",
             json={
                 "person_id": str(sample_resident.id),
                 "start_date": "2025-01-15",
@@ -190,7 +190,7 @@ class TestScheduleRetrievalRoutes:
     def test_get_schedule_by_date_range(self, client):
         """Test retrieving schedule by date range."""
         # Based on routes, the endpoint is /api/schedule/{start_date}/{end_date}
-        response = client.get("/api/schedule/2025-01-01/2025-01-31")
+        response = client.get("/api/v1/schedule/2025-01-01/2025-01-31")
         assert response.status_code == 200
         data = response.json()
         assert "start_date" in data
@@ -199,7 +199,7 @@ class TestScheduleRetrievalRoutes:
 
     def test_get_schedule_invalid_date_format(self, client):
         """Test retrieving schedule with invalid date format."""
-        response = client.get("/api/schedule/invalid-date/2025-01-31")
+        response = client.get("/api/v1/schedule/invalid-date/2025-01-31")
         assert response.status_code == 400
         data = response.json()
         assert "detail" in data
@@ -212,7 +212,7 @@ class TestScheduleModificationRoutes:
         """Test schedule generation with idempotency key."""
         idempotency_key = str(uuid4())
         response = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             headers={**auth_headers, "Idempotency-Key": idempotency_key},
             json={
                 "start_date": "2025-01-01",
@@ -243,7 +243,7 @@ class TestScheduleRunRoutes:
         db.commit()
 
         response = client.get(
-            "/api/schedule/runs",
+            "/api/v1/schedule/runs",
             params={"page": 1, "pageSize": 1},
             headers=auth_headers,
         )
@@ -269,7 +269,7 @@ class TestScheduleRunRoutes:
         db.commit()
 
         response = client.get(
-            "/api/schedule/runs",
+            "/api/v1/schedule/runs",
             params={"status": "success"},
             headers=auth_headers,
         )
@@ -290,7 +290,7 @@ class TestScheduleRunRoutes:
 
         # First request
         response1 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             headers={**auth_headers, "Idempotency-Key": idempotency_key},
             json=request_data,
         )
@@ -298,7 +298,7 @@ class TestScheduleRunRoutes:
 
         # Second request with same key and params
         response2 = client.post(
-            "/api/schedule/generate",
+            "/api/v1/schedule/generate",
             headers={**auth_headers, "Idempotency-Key": idempotency_key},
             json=request_data,
         )

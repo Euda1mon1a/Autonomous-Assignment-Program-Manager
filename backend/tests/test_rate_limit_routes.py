@@ -27,7 +27,7 @@ class TestRateLimitStatusEndpoint:
 
     def test_status_requires_auth(self, client: TestClient):
         """Test that rate limit status requires authentication."""
-        response = client.get("/api/rate-limit/status")
+        response = client.get("/api/v1/rate-limit/status")
 
         assert response.status_code in [401, 403]
 
@@ -41,7 +41,7 @@ class TestRateLimitStatusEndpoint:
             mock_redis.return_value = mock_client
 
             response = client.get(
-                "/api/rate-limit/status",
+                "/api/v1/rate-limit/status",
                 headers=auth_headers,
             )
 
@@ -56,7 +56,7 @@ class TestRateLimitStatusEndpoint:
             mock_redis.side_effect = redis.ConnectionError("Connection refused")
 
             response = client.get(
-                "/api/rate-limit/status",
+                "/api/v1/rate-limit/status",
                 headers=auth_headers,
             )
 
@@ -73,7 +73,7 @@ class TestRateLimitStatusEndpoint:
             mock_redis.return_value = mock_client
 
             response = client.get(
-                "/api/rate-limit/status",
+                "/api/v1/rate-limit/status",
                 headers=auth_headers,
             )
 
@@ -91,14 +91,14 @@ class TestRateLimitTiersEndpoint:
 
     def test_tiers_requires_auth(self, client: TestClient):
         """Test that tiers endpoint requires authentication."""
-        response = client.get("/api/rate-limit/tiers")
+        response = client.get("/api/v1/rate-limit/tiers")
 
         assert response.status_code in [401, 403]
 
     def test_tiers_success(self, client: TestClient, auth_headers: dict):
         """Test successful tiers retrieval."""
         response = client.get(
-            "/api/rate-limit/tiers",
+            "/api/v1/rate-limit/tiers",
             headers=auth_headers,
         )
 
@@ -108,7 +108,7 @@ class TestRateLimitTiersEndpoint:
     def test_tiers_response_structure(self, client: TestClient, auth_headers: dict):
         """Test tiers response has correct structure."""
         response = client.get(
-            "/api/rate-limit/tiers",
+            "/api/v1/rate-limit/tiers",
             headers=auth_headers,
         )
 
@@ -125,7 +125,7 @@ class TestRateLimitTiersEndpoint:
     def test_tiers_includes_all_levels(self, client: TestClient, auth_headers: dict):
         """Test that all tier levels are returned."""
         response = client.get(
-            "/api/rate-limit/tiers",
+            "/api/v1/rate-limit/tiers",
             headers=auth_headers,
         )
 
@@ -143,14 +143,14 @@ class TestRateLimitEndpointsEndpoint:
 
     def test_endpoints_requires_auth(self, client: TestClient):
         """Test that endpoints endpoint requires authentication."""
-        response = client.get("/api/rate-limit/endpoints")
+        response = client.get("/api/v1/rate-limit/endpoints")
 
         assert response.status_code in [401, 403]
 
     def test_endpoints_success(self, client: TestClient, auth_headers: dict):
         """Test successful endpoints limits retrieval."""
         response = client.get(
-            "/api/rate-limit/endpoints",
+            "/api/v1/rate-limit/endpoints",
             headers=auth_headers,
         )
 
@@ -159,7 +159,7 @@ class TestRateLimitEndpointsEndpoint:
     def test_endpoints_response_structure(self, client: TestClient, auth_headers: dict):
         """Test endpoints response has correct structure."""
         response = client.get(
-            "/api/rate-limit/endpoints",
+            "/api/v1/rate-limit/endpoints",
             headers=auth_headers,
         )
 
@@ -179,7 +179,7 @@ class TestSetCustomLimitEndpoint:
     def test_custom_limit_requires_admin(self, client: TestClient, auth_headers: dict):
         """Test that setting custom limit requires admin role."""
         response = client.post(
-            "/api/rate-limit/custom",
+            "/api/v1/rate-limit/custom",
             json={
                 "user_id": str(uuid4()),
                 "config": {
@@ -199,7 +199,7 @@ class TestSetCustomLimitEndpoint:
     def test_custom_limit_requires_auth(self, client: TestClient):
         """Test that setting custom limit requires authentication."""
         response = client.post(
-            "/api/rate-limit/custom",
+            "/api/v1/rate-limit/custom",
             json={
                 "user_id": str(uuid4()),
                 "config": {
@@ -218,7 +218,7 @@ class TestSetCustomLimitEndpoint:
         """Test custom limit validation."""
         # Missing required fields
         response = client.post(
-            "/api/rate-limit/custom",
+            "/api/v1/rate-limit/custom",
             json={
                 "user_id": str(uuid4()),
                 # Missing config
@@ -236,7 +236,7 @@ class TestRemoveCustomLimitEndpoint:
         """Test that removing custom limit requires admin role."""
         user_id = str(uuid4())
         response = client.delete(
-            f"/api/rate-limit/custom/{user_id}",
+            f"/api/v1/rate-limit/custom/{user_id}",
             headers=auth_headers,
         )
 
@@ -246,7 +246,7 @@ class TestRemoveCustomLimitEndpoint:
     def test_remove_custom_requires_auth(self, client: TestClient):
         """Test that removing custom limit requires authentication."""
         user_id = str(uuid4())
-        response = client.delete(f"/api/rate-limit/custom/{user_id}")
+        response = client.delete(f"/api/v1/rate-limit/custom/{user_id}")
 
         assert response.status_code in [401, 403]
 
@@ -264,8 +264,8 @@ class TestRateLimitIntegration:
     ):
         """Test rate limit endpoints respond appropriately."""
         endpoints = [
-            ("/api/rate-limit/tiers", "GET"),
-            ("/api/rate-limit/endpoints", "GET"),
+            ("/api/v1/rate-limit/tiers", "GET"),
+            ("/api/v1/rate-limit/endpoints", "GET"),
         ]
 
         for url, method in endpoints:
@@ -278,7 +278,7 @@ class TestRateLimitIntegration:
     def test_rate_limit_json_responses(self, client: TestClient, auth_headers: dict):
         """Test rate limit endpoints return valid JSON."""
         response = client.get(
-            "/api/rate-limit/tiers",
+            "/api/v1/rate-limit/tiers",
             headers=auth_headers,
         )
 
@@ -307,7 +307,7 @@ class TestRateLimitEdgeCases:
             mock_redis.return_value = mock_client
 
             response = client.get(
-                "/api/rate-limit/status",
+                "/api/v1/rate-limit/status",
                 headers=auth_headers,
             )
 
@@ -316,7 +316,7 @@ class TestRateLimitEdgeCases:
     def test_invalid_user_id_format(self, client: TestClient, auth_headers: dict):
         """Test removing custom limit with invalid user ID format."""
         response = client.delete(
-            "/api/rate-limit/custom/not-a-uuid",
+            "/api/v1/rate-limit/custom/not-a-uuid",
             headers=auth_headers,
         )
 
@@ -328,7 +328,7 @@ class TestRateLimitEdgeCases:
     ):
         """Test setting custom limit with zero values."""
         response = client.post(
-            "/api/rate-limit/custom",
+            "/api/v1/rate-limit/custom",
             json={
                 "user_id": str(uuid4()),
                 "config": {
@@ -350,7 +350,7 @@ class TestRateLimitEdgeCases:
     ):
         """Test setting custom limit with negative TTL."""
         response = client.post(
-            "/api/rate-limit/custom",
+            "/api/v1/rate-limit/custom",
             json={
                 "user_id": str(uuid4()),
                 "config": {

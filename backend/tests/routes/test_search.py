@@ -27,20 +27,20 @@ class TestSearchRoutes:
     def test_search_requires_auth(self, client: TestClient):
         """Test that search requires authentication."""
         response = client.post(
-            "/api/search",
+            "/api/v1/search",
             json={"query": "test", "entity_types": ["person"]},
         )
         assert response.status_code == 401
 
     def test_quick_search_requires_auth(self, client: TestClient):
         """Test that quick search requires authentication."""
-        response = client.get("/api/search/quick?query=test")
+        response = client.get("/api/v1/search/quick?query=test")
         assert response.status_code == 401
 
     def test_people_search_requires_auth(self, client: TestClient):
         """Test that people search requires authentication."""
         response = client.post(
-            "/api/search/people",
+            "/api/v1/search/people",
             json={"query": "dr smith"},
         )
         assert response.status_code == 401
@@ -48,7 +48,7 @@ class TestSearchRoutes:
     def test_rotations_search_requires_auth(self, client: TestClient):
         """Test that rotations search requires authentication."""
         response = client.post(
-            "/api/search/rotations",
+            "/api/v1/search/rotations",
             json={"query": "cardiology"},
         )
         assert response.status_code == 401
@@ -56,27 +56,27 @@ class TestSearchRoutes:
     def test_procedures_search_requires_auth(self, client: TestClient):
         """Test that procedures search requires authentication."""
         response = client.post(
-            "/api/search/procedures",
+            "/api/v1/search/procedures",
             json={"query": "colonoscopy"},
         )
         assert response.status_code == 401
 
     def test_global_search_requires_auth(self, client: TestClient):
         """Test that global search requires authentication."""
-        response = client.post("/api/search/global?query=test")
+        response = client.post("/api/v1/search/global?query=test")
         assert response.status_code == 401
 
     def test_suggest_post_requires_auth(self, client: TestClient):
         """Test that suggestions (POST) requires authentication."""
         response = client.post(
-            "/api/search/suggest",
+            "/api/v1/search/suggest",
             json={"query": "sm"},
         )
         assert response.status_code == 401
 
     def test_suggest_get_requires_auth(self, client: TestClient):
         """Test that suggestions (GET) requires authentication."""
-        response = client.get("/api/search/suggest?query=sm")
+        response = client.get("/api/v1/search/suggest?query=sm")
         assert response.status_code == 401
 
     # ========================================================================
@@ -97,9 +97,9 @@ class TestSearchRoutes:
                 "items": [
                     {
                         "id": str(uuid4()),
-                        "entity_type": "person",
+                        "type": "person",
                         "title": "Dr. Smith",
-                        "description": "Faculty - Cardiology",
+                        "subtitle": "Faculty - Cardiology",
                         "score": 0.95,
                     }
                 ],
@@ -114,7 +114,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search",
+            "/api/v1/search",
             headers=auth_headers,
             json={
                 "query": "smith",
@@ -150,7 +150,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search",
+            "/api/v1/search",
             headers=auth_headers,
             json={
                 "query": "test",
@@ -177,7 +177,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search",
+            "/api/v1/search",
             headers=auth_headers,
             json={"query": "*", "entity_types": ["person"]},
         )
@@ -200,7 +200,7 @@ class TestSearchRoutes:
             return_value=[
                 {
                     "id": str(uuid4()),
-                    "entity_type": "person",
+                    "type": "person",
                     "title": "Dr. Johnson",
                     "score": 0.9,
                 }
@@ -211,7 +211,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/search/quick?query=john&entity_type=person&limit=5",
+            "/api/v1/search/quick?query=john&entity_type=person&limit=5",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -236,7 +236,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/search/quick?query=test",
+            "/api/v1/search/quick?query=test",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -265,9 +265,9 @@ class TestSearchRoutes:
                 "items": [
                     {
                         "id": str(uuid4()),
-                        "entity_type": "person",
+                        "type": "person",
                         "title": "Dr. Smith",
-                        "description": "PGY-2 Resident",
+                        "subtitle": "PGY-2 Resident",
                     }
                 ],
                 "total": 1,
@@ -280,7 +280,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search/people",
+            "/api/v1/search/people",
             headers=auth_headers,
             json={"query": "smith"},
         )
@@ -311,7 +311,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search/people",
+            "/api/v1/search/people",
             headers=auth_headers,
             json={
                 "query": "test",
@@ -341,9 +341,9 @@ class TestSearchRoutes:
                 "items": [
                     {
                         "id": str(uuid4()),
-                        "entity_type": "rotation",
+                        "type": "rotation",
                         "title": "Cardiology Clinic",
-                        "description": "Outpatient cardiology rotation",
+                        "subtitle": "Outpatient cardiology rotation",
                     }
                 ],
                 "total": 1,
@@ -358,7 +358,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search/rotations",
+            "/api/v1/search/rotations",
             headers=auth_headers,
             json={"query": "cardiology"},
         )
@@ -391,7 +391,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search/rotations",
+            "/api/v1/search/rotations",
             headers=auth_headers,
             json={"query": "test", "category": "outpatient"},
         )
@@ -415,9 +415,9 @@ class TestSearchRoutes:
                 "items": [
                     {
                         "id": str(uuid4()),
-                        "entity_type": "procedure",
+                        "type": "procedure",
                         "title": "Colonoscopy",
-                        "description": "CPT: 45378",
+                        "subtitle": "CPT: 45378",
                     }
                 ],
                 "total": 1,
@@ -432,7 +432,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search/procedures",
+            "/api/v1/search/procedures",
             headers=auth_headers,
             json={"query": "45378"},
         )
@@ -459,12 +459,12 @@ class TestSearchRoutes:
                 "items": [
                     {
                         "id": str(uuid4()),
-                        "entity_type": "person",
+                        "type": "person",
                         "title": "Dr. Test",
                     },
                     {
                         "id": str(uuid4()),
-                        "entity_type": "rotation",
+                        "type": "rotation",
                         "title": "Test Rotation",
                     },
                 ],
@@ -481,7 +481,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search/global?query=test",
+            "/api/v1/search/global?query=test",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -513,7 +513,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search/global?query=test&page=3&page_size=25",
+            "/api/v1/search/global?query=test&page=3&page_size=25",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -541,7 +541,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search/suggest",
+            "/api/v1/search/suggest",
             headers=auth_headers,
             json={
                 "query": "smi",
@@ -571,7 +571,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/search/suggest?query=card&entity_type=rotation&limit=3",
+            "/api/v1/search/suggest?query=card&entity_type=rotation&limit=3",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -593,7 +593,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/search/suggest?query=zzz",
+            "/api/v1/search/suggest?query=zzz",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -618,7 +618,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/search",
+            "/api/v1/search",
             headers=auth_headers,
             json={"query": "test", "entity_types": ["person"]},
         )
@@ -638,7 +638,7 @@ class TestSearchRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/search/suggest?query=test",
+            "/api/v1/search/suggest?query=test",
             headers=auth_headers,
         )
         assert response.status_code == 500

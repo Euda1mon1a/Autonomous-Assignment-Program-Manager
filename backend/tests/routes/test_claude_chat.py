@@ -1,6 +1,6 @@
 """Tests for Claude chat session helpers."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from app.api.routes import claude_chat
 
@@ -25,4 +25,4 @@ def test_get_or_create_session_creates_new_when_missing() -> None:
 
     assert created.session_id == "explicit-id"
     assert created.user_id == "user-2"
-    assert created.created_at <= datetime.utcnow() + timedelta(seconds=1)
+    assert created.created_at <= datetime.now(UTC) + timedelta(seconds=1)

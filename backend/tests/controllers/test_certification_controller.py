@@ -439,7 +439,8 @@ class TestCertificationController:
         result = controller.get_compliance_summary()
 
         assert result is not None
-        assert hasattr(result, "total_personnel")
+        # ComplianceSummaryResponse uses "total", not "total_personnel"
+        assert hasattr(result, "total")
 
     def test_get_person_compliance(self, db, setup_data):
         """Test getting compliance for a specific person."""

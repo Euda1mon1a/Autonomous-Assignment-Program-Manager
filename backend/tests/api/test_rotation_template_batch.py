@@ -17,6 +17,7 @@ Tests cover:
   - Partial updates (exclude_unset behavior)
 """
 
+import os
 from datetime import datetime
 from uuid import uuid4
 
@@ -25,6 +26,18 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.rotation_template import RotationTemplate
+
+# rotation_activity_requirements table uses JSONB columns and is not created
+# in SQLite test DB. Batch delete cascades to that table and fails.
+# Use `or` (not getenv defaults) to match conftest.py logic: empty string is falsy.
+_TEST_DB_URL = (
+    os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite:///:memory:"
+)
+_USE_SQLITE = _TEST_DB_URL.startswith("sqlite")
+_SKIP_SQLITE_CASCADE = pytest.mark.skipif(
+    _USE_SQLITE,
+    reason="Batch delete cascades to rotation_activity_requirements (JSONB, not in SQLite)",
+)
 
 
 class TestBatchDeleteRotationTemplates:
@@ -38,7 +51,7 @@ class TestBatchDeleteRotationTemplates:
             template = RotationTemplate(
                 id=uuid4(),
                 name=f"Test Template {i}",
-                rotation_type="clinic",
+                rotation_type="outpatient",
                 abbreviation=f"T{i}",
                 created_at=datetime.utcnow(),
             )
@@ -47,6 +60,7 @@ class TestBatchDeleteRotationTemplates:
         db.commit()
         return templates
 
+    @_SKIP_SQLITE_CASCADE
     def test_batch_delete_success(
         self,
         client: TestClient,
@@ -58,7 +72,7 @@ class TestBatchDeleteRotationTemplates:
 
         response = client.request(
             "DELETE",
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"template_ids": template_ids, "dry_run": False},
         )
@@ -81,7 +95,7 @@ class TestBatchDeleteRotationTemplates:
         # Verify templates are actually deleted
         for template_id in template_ids:
             get_response = client.get(
-                f"/api/rotation-templates/{template_id}",
+                f"/api/v1/rotation-templates/{template_id}",
                 headers=auth_headers,
             )
             assert get_response.status_code == 404
@@ -97,7 +111,7 @@ class TestBatchDeleteRotationTemplates:
 
         response = client.request(
             "DELETE",
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"template_ids": template_ids, "dry_run": True},
         )
@@ -114,7 +128,7 @@ class TestBatchDeleteRotationTemplates:
         # Verify templates are NOT deleted
         for template_id in template_ids:
             get_response = client.get(
-                f"/api/rotation-templates/{template_id}",
+                f"/api/v1/rotation-templates/{template_id}",
                 headers=auth_headers,
             )
             assert get_response.status_code == 200
@@ -132,7 +146,7 @@ class TestBatchDeleteRotationTemplates:
 
         response = client.request(
             "DELETE",
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"template_ids": template_ids, "dry_run": False},
         )
@@ -145,11 +159,12 @@ class TestBatchDeleteRotationTemplates:
         # Verify original templates are NOT deleted (atomic rollback)
         for template in sample_templates:
             get_response = client.get(
-                f"/api/rotation-templates/{template.id}",
+                f"/api/v1/rotation-templates/{template.id}",
                 headers=auth_headers,
             )
             assert get_response.status_code == 200
 
+    @_SKIP_SQLITE_CASCADE
     def test_batch_delete_single_template(
         self,
         client: TestClient,
@@ -161,7 +176,7 @@ class TestBatchDeleteRotationTemplates:
 
         response = client.request(
             "DELETE",
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"template_ids": [template_id], "dry_run": False},
         )
@@ -179,7 +194,7 @@ class TestBatchDeleteRotationTemplates:
 
         response = client.request(
             "DELETE",
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             json={"template_ids": template_ids},
         )
 
@@ -191,7 +206,7 @@ class TestBatchDeleteRotationTemplates:
         """Test that empty template_ids array fails validation."""
         response = client.request(
             "DELETE",
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"template_ids": []},
         )
@@ -211,7 +226,7 @@ class TestBatchUpdateRotationTemplates:
             template = RotationTemplate(
                 id=uuid4(),
                 name=f"Test Template {i}",
-                rotation_type="clinic",
+                rotation_type="outpatient",  # Use canonical form (Pydantic normalizes "clinic" -> "outpatient")
                 abbreviation=f"T{i}",
                 max_residents=i + 1,
                 supervision_required=True,
@@ -245,7 +260,7 @@ class TestBatchUpdateRotationTemplates:
         ]
 
         response = client.put(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": updates, "dry_run": False},
         )
@@ -262,7 +277,7 @@ class TestBatchUpdateRotationTemplates:
         # Verify updates were applied
         for i, template in enumerate(sample_templates):
             get_response = client.get(
-                f"/api/rotation-templates/{template.id}",
+                f"/api/v1/rotation-templates/{template.id}",
                 headers=auth_headers,
             )
             assert get_response.status_code == 200
@@ -297,7 +312,7 @@ class TestBatchUpdateRotationTemplates:
         ]
 
         response = client.put(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": updates, "dry_run": True},
         )
@@ -310,7 +325,7 @@ class TestBatchUpdateRotationTemplates:
         # Verify values are NOT changed
         for i, template in enumerate(sample_templates[:2]):
             get_response = client.get(
-                f"/api/rotation-templates/{template.id}",
+                f"/api/v1/rotation-templates/{template.id}",
                 headers=auth_headers,
             )
             assert get_response.status_code == 200
@@ -339,7 +354,7 @@ class TestBatchUpdateRotationTemplates:
         ]
 
         response = client.put(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": updates, "dry_run": False},
         )
@@ -351,7 +366,7 @@ class TestBatchUpdateRotationTemplates:
 
         # Verify first template was NOT updated (atomic rollback)
         get_response = client.get(
-            f"/api/rotation-templates/{sample_templates[0].id}",
+            f"/api/v1/rotation-templates/{sample_templates[0].id}",
             headers=auth_headers,
         )
         assert get_response.status_code == 200
@@ -381,7 +396,7 @@ class TestBatchUpdateRotationTemplates:
         ]
 
         response = client.put(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": updates, "dry_run": False},
         )
@@ -391,7 +406,7 @@ class TestBatchUpdateRotationTemplates:
         # Verify each template has its own value
         for i, template in enumerate(sample_templates):
             get_response = client.get(
-                f"/api/rotation-templates/{template.id}",
+                f"/api/v1/rotation-templates/{template.id}",
                 headers=auth_headers,
             )
             template_data = get_response.json()
@@ -409,7 +424,7 @@ class TestBatchUpdateRotationTemplates:
         ]
 
         response = client.put(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             json={"templates": updates},
         )
 
@@ -420,7 +435,7 @@ class TestBatchUpdateRotationTemplates:
     ):
         """Test that empty templates array fails validation."""
         response = client.put(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": []},
         )
@@ -443,7 +458,7 @@ class TestBatchUpdateRotationTemplates:
         ]
 
         response = client.put(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": updates, "dry_run": False},
         )
@@ -455,7 +470,7 @@ class TestBatchUpdateRotationTemplates:
 
         # Verify update
         get_response = client.get(
-            f"/api/rotation-templates/{sample_templates[0].id}",
+            f"/api/v1/rotation-templates/{sample_templates[0].id}",
             headers=auth_headers,
         )
         assert get_response.json()["name"] == "Updated Name"
@@ -478,7 +493,7 @@ class TestBatchUpdateRotationTemplates:
         ]
 
         response = client.put(
-            "/api/rotation-templates/batch",
+            "/api/v1/rotation-templates/batch",
             headers=auth_headers,
             json={"templates": updates, "dry_run": False},
         )
@@ -487,7 +502,7 @@ class TestBatchUpdateRotationTemplates:
 
         # Verify only max_residents changed, other fields preserved
         get_response = client.get(
-            f"/api/rotation-templates/{sample_templates[0].id}",
+            f"/api/v1/rotation-templates/{sample_templates[0].id}",
             headers=auth_headers,
         )
         template_data = get_response.json()

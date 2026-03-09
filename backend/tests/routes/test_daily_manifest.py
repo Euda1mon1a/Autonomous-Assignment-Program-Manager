@@ -26,7 +26,7 @@ class TestDailyManifest:
 
     def test_daily_manifest_requires_auth(self, client: TestClient):
         """Test that daily manifest endpoint requires authentication."""
-        response = client.get("/api/assignments/daily-manifest?date=2025-01-15")
+        response = client.get("/api/v1/assignments/daily-manifest?date=2025-01-15")
         assert response.status_code == 401
 
     def test_daily_manifest_with_auth(
@@ -34,7 +34,7 @@ class TestDailyManifest:
     ):
         """Test that authenticated users can access daily manifest."""
         response = client.get(
-            "/api/assignments/daily-manifest?date=2025-01-15",
+            "/api/v1/assignments/daily-manifest?date=2025-01-15",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -48,7 +48,7 @@ class TestDailyManifest:
     ):
         """Test that date parameter is required."""
         response = client.get(
-            "/api/assignments/daily-manifest",
+            "/api/v1/assignments/daily-manifest",
             headers=auth_headers,
         )
         assert response.status_code == 422  # Validation error
@@ -58,7 +58,7 @@ class TestDailyManifest:
     ):
         """Test that invalid time_of_day values are rejected."""
         response = client.get(
-            "/api/assignments/daily-manifest?date=2025-01-15&time_of_day=INVALID",
+            "/api/v1/assignments/daily-manifest?date=2025-01-15&time_of_day=INVALID",
             headers=auth_headers,
         )
         assert response.status_code == 400
@@ -69,7 +69,7 @@ class TestDailyManifest:
     ):
         """Test that AM is a valid time_of_day value."""
         response = client.get(
-            "/api/assignments/daily-manifest?date=2025-01-15&time_of_day=AM",
+            "/api/v1/assignments/daily-manifest?date=2025-01-15&time_of_day=AM",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -81,7 +81,7 @@ class TestDailyManifest:
     ):
         """Test that PM is a valid time_of_day value."""
         response = client.get(
-            "/api/assignments/daily-manifest?date=2025-01-15&time_of_day=PM",
+            "/api/v1/assignments/daily-manifest?date=2025-01-15&time_of_day=PM",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -97,7 +97,7 @@ class TestDailyManifest:
     ):
         """Test that empty manifest is returned when no assignments exist."""
         response = client.get(
-            "/api/assignments/daily-manifest?date=2025-01-15",
+            "/api/v1/assignments/daily-manifest?date=2025-01-15",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -134,13 +134,13 @@ class TestDailyManifest:
             block_id=block.id,
             person_id=sample_resident.id,
             role="primary",
-            activity_name="Morning Clinic",
+            activity_override="Morning Clinic",
         )
         db.add(assignment)
         db.commit()
 
         response = client.get(
-            f"/api/assignments/daily-manifest?date={test_date.isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={test_date.isoformat()}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -220,7 +220,7 @@ class TestDailyManifest:
         db.commit()
 
         response = client.get(
-            f"/api/assignments/daily-manifest?date={test_date.isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={test_date.isoformat()}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -264,14 +264,14 @@ class TestDailyManifest:
             block_id=block_am.id,
             person_id=sample_residents[0].id,
             role="primary",
-            activity_name="AM Activity",
+            activity_override="AM Activity",
         )
         assignment_pm = Assignment(
             id=uuid4(),
             block_id=block_pm.id,
             person_id=sample_residents[1].id,
             role="primary",
-            activity_name="PM Activity",
+            activity_override="PM Activity",
         )
         db.add(assignment_am)
         db.add(assignment_pm)
@@ -279,7 +279,7 @@ class TestDailyManifest:
 
         # Query AM only
         response_am = client.get(
-            f"/api/assignments/daily-manifest?date={test_date.isoformat()}&time_of_day=AM",
+            f"/api/v1/assignments/daily-manifest?date={test_date.isoformat()}&time_of_day=AM",
             headers=auth_headers,
         )
         assert response_am.status_code == 200
@@ -356,7 +356,7 @@ class TestDailyManifest:
         db.commit()
 
         response = client.get(
-            f"/api/assignments/daily-manifest?date={test_date.isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={test_date.isoformat()}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -387,7 +387,7 @@ class TestDailyManifest:
     ):
         """Test that response has correct format."""
         response = client.get(
-            "/api/assignments/daily-manifest?date=2025-01-15",
+            "/api/v1/assignments/daily-manifest?date=2025-01-15",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -435,7 +435,7 @@ class TestDailyManifest:
         db.commit()
 
         response = client.get(
-            f"/api/assignments/daily-manifest?date={test_date.isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={test_date.isoformat()}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -493,7 +493,7 @@ class TestDailyManifest:
         db.commit()
 
         response = client.get(
-            f"/api/assignments/daily-manifest?date={test_date.isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={test_date.isoformat()}",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -570,7 +570,7 @@ class TestDailyManifest:
         db.commit()
 
         response = client.get(
-            f"/api/assignments/daily-manifest?date={test_date.isoformat()}",
+            f"/api/v1/assignments/daily-manifest?date={test_date.isoformat()}",
             headers=auth_headers,
         )
         assert response.status_code == 200

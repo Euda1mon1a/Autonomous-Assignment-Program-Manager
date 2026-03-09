@@ -157,7 +157,7 @@ class TestAuthentication:
     ):
         """Test successful login with valid credentials."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={
                 "username": "admin_test",
                 "password": "admin_pass123",
@@ -174,7 +174,7 @@ class TestAuthentication:
     ):
         """Test login fails with incorrect password."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={
                 "username": "admin_test",
                 "password": "wrong_password",
@@ -188,7 +188,7 @@ class TestAuthentication:
     def test_login_with_nonexistent_user(self, client: TestClient):
         """Test login fails with non-existent username."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={
                 "username": "nonexistent",
                 "password": "any_password",
@@ -200,7 +200,7 @@ class TestAuthentication:
     def test_login_with_inactive_account(self, client: TestClient, inactive_user: User):
         """Test login fails for inactive account."""
         response = client.post(
-            "/api/auth/login/json",
+            "/api/v1/auth/login/json",
             json={
                 "username": "inactive_test",
                 "password": "inactive_pass123",
@@ -254,11 +254,11 @@ class TestRoleBasedAuthorization:
         headers = get_auth_headers(admin_user_obj)
 
         # Admin endpoints
-        response = client.get("/api/admin/users", headers=headers)
+        response = client.get("/api/v1/admin/users", headers=headers)
         assert response.status_code in [200, 404]  # Not forbidden
 
         # Regular endpoints
-        response = client.get("/api/people", headers=headers)
+        response = client.get("/api/v1/people", headers=headers)
         assert response.status_code == 200
 
     def test_coordinator_can_manage_schedules(
@@ -268,7 +268,7 @@ class TestRoleBasedAuthorization:
         headers = get_auth_headers(coordinator_user)
 
         # Should be able to view schedules
-        response = client.get("/api/assignments", headers=headers)
+        response = client.get("/api/v1/assignments", headers=headers)
         assert response.status_code == 200
 
         # Should be able to create assignments (if endpoint exists)
@@ -290,7 +290,7 @@ class TestRoleBasedAuthorization:
         db.add(person)
         db.commit()
 
-        response = client.get(f"/api/people/{person.id}", headers=headers)
+        response = client.get(f"/api/v1/people/{person.id}", headers=headers)
         assert response.status_code == 200
 
     def test_resident_cannot_access_admin_endpoints(
@@ -299,7 +299,7 @@ class TestRoleBasedAuthorization:
         """Test resident role cannot access admin endpoints."""
         headers = get_auth_headers(resident_user)
 
-        response = client.get("/api/admin/users", headers=headers)
+        response = client.get("/api/v1/admin/users", headers=headers)
         assert response.status_code == 403  # Forbidden
 
     def test_resident_can_request_swaps(self, client: TestClient, resident_user: User):
@@ -307,7 +307,7 @@ class TestRoleBasedAuthorization:
         headers = get_auth_headers(resident_user)
 
         # Should be able to view swap options
-        response = client.get("/api/swaps", headers=headers)
+        response = client.get("/api/v1/swaps", headers=headers)
         assert response.status_code in [200, 404]  # Not forbidden
 
     def test_clinical_staff_has_read_only_access(
@@ -317,7 +317,7 @@ class TestRoleBasedAuthorization:
         headers = get_auth_headers(clinical_staff_user)
 
         # Can read schedules
-        response = client.get("/api/assignments", headers=headers)
+        response = client.get("/api/v1/assignments", headers=headers)
         assert response.status_code == 200
 
         # Cannot create/modify (if enforced)
@@ -334,14 +334,14 @@ class TestTokenValidation:
 
     def test_missing_token_returns_401(self, client: TestClient):
         """Test request without token returns 401 Unauthorized."""
-        response = client.get("/api/people")
+        response = client.get("/api/v1/people")
 
         assert response.status_code == 401
 
     def test_invalid_token_format_returns_401(self, client: TestClient):
         """Test request with invalid token format returns 401."""
         response = client.get(
-            "/api/people",
+            "/api/v1/people",
             headers={"Authorization": "Bearer invalid_token_format"},
         )
 
@@ -361,7 +361,7 @@ class TestTokenValidation:
         )
 
         response = client.get(
-            "/api/people",
+            "/api/v1/people",
             headers={"Authorization": f"Bearer {expired_token}"},
         )
 
@@ -375,7 +375,7 @@ class TestTokenValidation:
         )
 
         response = client.get(
-            "/api/people",
+            "/api/v1/people",
             headers={"Authorization": f"Bearer {wrong_token}"},
         )
 
@@ -409,7 +409,7 @@ class TestPermissionEdgeCases:
         # Try to access private endpoints for other user
         # Implementation depends on privacy controls
         response = client.get(
-            f"/api/people/{other_person.id}/private",
+            f"/api/v1/people/{other_person.id}/private",
             headers=headers,
         )
 
@@ -441,7 +441,7 @@ class TestPermissionEdgeCases:
         db.commit()
 
         # Token should no longer work
-        response = client.get("/api/people", headers=headers)
+        response = client.get("/api/v1/people", headers=headers)
         assert response.status_code == 401
 
     def test_role_change_requires_new_token(
@@ -463,5 +463,5 @@ class TestPermissionEdgeCases:
         db.commit()
 
         # Role changes take effect immediately because authorization checks DB role.
-        response = client.get("/api/admin/users", headers=old_headers)
+        response = client.get("/api/v1/admin/users", headers=old_headers)
         assert response.status_code in [200, 404]

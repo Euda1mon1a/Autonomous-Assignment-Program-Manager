@@ -11,7 +11,7 @@ Tests cover:
 - Metrics collection
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, UTC
 from uuid import uuid4
 
 import pytest
@@ -269,7 +269,7 @@ class TestTokenValidationAndRotation:
         token_data, token_string = await token_service.create_refresh_token(request)
 
         # Manually expire token
-        token_data.expires_at = datetime.utcnow() - timedelta(hours=1)
+        token_data.expires_at = datetime.now(UTC) - timedelta(hours=1)
 
         (
             result_data,
@@ -503,8 +503,8 @@ class TestTokenCleanup:
 
         # Manually expire first two tokens
         all_tokens = list(token_service._token_storage.values())
-        all_tokens[0].expires_at = datetime.utcnow() - timedelta(hours=1)
-        all_tokens[1].expires_at = datetime.utcnow() - timedelta(minutes=1)
+        all_tokens[0].expires_at = datetime.now(UTC) - timedelta(hours=1)
+        all_tokens[1].expires_at = datetime.now(UTC) - timedelta(minutes=1)
 
         # Cleanup
         cleaned = await token_service.cleanup_expired_tokens()
@@ -592,7 +592,7 @@ class TestTokenRotationStrategies:
         token_data, token_string = await service.create_refresh_token(request)
 
         # Simulate time passing (>50% of lifetime)
-        token_data.created_at = datetime.utcnow() - timedelta(hours=13)
+        token_data.created_at = datetime.now(UTC) - timedelta(hours=13)
         token_data.expires_at = token_data.created_at + timedelta(days=1)
 
         # Should rotate

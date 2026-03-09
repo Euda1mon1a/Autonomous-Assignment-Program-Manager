@@ -1,6 +1,7 @@
 """Tests for leave approval workflow."""
 
 from datetime import date, timedelta
+from unittest.mock import patch
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -45,11 +46,13 @@ def test_leave_request_approval_flow(client: TestClient, auth_headers: dict, db)
     assert create_data["status"] == "pending"
     leave_id = create_data["leave_id"]
 
-    approve_response = client.post(
-        f"/api/v1/leave/{leave_id}/approval",
-        json={"approved": True, "notes": "Approved"},
-        headers=auth_headers,
-    )
+    with patch("app.notifications.tasks.detect_leave_conflicts") as mock_task:
+        mock_task.delay.return_value = None
+        approve_response = client.post(
+            f"/api/v1/leave/{leave_id}/approval",
+            json={"approved": True, "notes": "Approved"},
+            headers=auth_headers,
+        )
     assert approve_response.status_code == 200
     assert approve_response.json()["status"] == "approved"
 

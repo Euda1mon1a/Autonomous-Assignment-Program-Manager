@@ -68,7 +68,7 @@ class TestCascadeFailureScenarios:
 
         # Check if redistribution causes 80-hour violation
         compliance_response = client.get(
-            f"/api/analytics/acgme/compliance?start_date={start_date.isoformat()}",
+            f"/api/v1/analytics/acgme/compliance?start_date={start_date.isoformat()}",
             headers=auth_headers,
         )
         assert compliance_response.status_code in [200, 404]

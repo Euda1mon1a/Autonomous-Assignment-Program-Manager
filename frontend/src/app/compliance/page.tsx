@@ -129,12 +129,15 @@ export default function ComplianceHubPage() {
   }, [currentRiskTier]);
 
   // Reset to acgme if user doesn't have access to current tab
+  // Only enforce after auth has loaded (user is non-null) to avoid
+  // resetting deep-linked tabs during initial auth hydration
   useEffect(() => {
+    if (!user) return;
     const currentTabConfig = TABS.find((t) => t.id === activeTab);
     if (currentTabConfig && currentTabConfig.requiredTier > userTier) {
       setActiveTab('acgme');
     }
-  }, [activeTab, userTier]);
+  }, [activeTab, userTier, user]);
 
   return (
     <ProtectedRoute>

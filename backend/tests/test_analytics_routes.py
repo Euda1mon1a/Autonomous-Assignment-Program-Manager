@@ -25,13 +25,13 @@ class TestAnalyticsAuthentication:
 
     def test_current_metrics_requires_authentication(self, client: TestClient):
         """Test that GET /api/analytics/metrics/current requires authentication."""
-        response = client.get("/api/analytics/metrics/current")
+        response = client.get("/api/v1/analytics/metrics/current")
         assert response.status_code == 401
 
     def test_metrics_history_requires_authentication(self, client: TestClient):
         """Test that GET /api/analytics/metrics/history requires authentication."""
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             params={
                 "metric_name": "fairness",
                 "start_date": datetime.utcnow().isoformat(),
@@ -42,18 +42,18 @@ class TestAnalyticsAuthentication:
 
     def test_fairness_trend_requires_authentication(self, client: TestClient):
         """Test that GET /api/analytics/fairness/trend requires authentication."""
-        response = client.get("/api/analytics/fairness/trend")
+        response = client.get("/api/v1/analytics/fairness/trend")
         assert response.status_code == 401
 
     def test_compare_versions_requires_authentication(self, client: TestClient):
         """Test that GET /api/analytics/compare/{version_a}/{version_b} requires authentication."""
-        response = client.get(f"/api/analytics/compare/{uuid4()}/{uuid4()}")
+        response = client.get(f"/api/v1/analytics/compare/{uuid4()}/{uuid4()}")
         assert response.status_code == 401
 
     def test_what_if_requires_authentication(self, client: TestClient):
         """Test that POST /api/analytics/what-if requires authentication."""
         response = client.post(
-            "/api/analytics/what-if",
+            "/api/v1/analytics/what-if",
             json=[
                 {"personId": str(uuid4()), "blockId": str(uuid4()), "changeType": "add"}
             ],
@@ -63,7 +63,7 @@ class TestAnalyticsAuthentication:
     def test_research_export_requires_authentication(self, client: TestClient):
         """Test that GET /api/analytics/export/research requires authentication."""
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": datetime.utcnow().isoformat(),
                 "end_date": datetime.utcnow().isoformat(),
@@ -84,7 +84,7 @@ class TestCurrentMetricsEndpoint:
         self, client: TestClient, auth_headers: dict, db: Session
     ):
         """Test getting current metrics when no schedule runs exist."""
-        response = client.get("/api/analytics/metrics/current", headers=auth_headers)
+        response = client.get("/api/v1/analytics/metrics/current", headers=auth_headers)
 
         assert response.status_code == 404
         assert "no successful schedule runs" in response.json()["detail"].lower()
@@ -152,7 +152,7 @@ class TestCurrentMetricsEndpoint:
 
         db.commit()
 
-        response = client.get("/api/analytics/metrics/current", headers=auth_headers)
+        response = client.get("/api/v1/analytics/metrics/current", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -202,7 +202,7 @@ class TestCurrentMetricsEndpoint:
         db.add(failed_run)
         db.commit()
 
-        response = client.get("/api/analytics/metrics/current", headers=auth_headers)
+        response = client.get("/api/v1/analytics/metrics/current", headers=auth_headers)
 
         # Should still return 404 since no successful runs
         assert response.status_code == 404
@@ -248,7 +248,7 @@ class TestCurrentMetricsEndpoint:
 
         db.commit()
 
-        response = client.get("/api/analytics/metrics/current", headers=auth_headers)
+        response = client.get("/api/v1/analytics/metrics/current", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -273,7 +273,7 @@ class TestMetricsHistoryEndpoint:
         end_date = datetime.utcnow()
 
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             params={
                 "metric_name": "fairness",
                 "start_date": start_date.isoformat(),
@@ -318,7 +318,7 @@ class TestMetricsHistoryEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             params={
                 "metric_name": "fairness",
                 "start_date": datetime.combine(
@@ -380,7 +380,7 @@ class TestMetricsHistoryEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             params={
                 "metric_name": "coverage",
                 "start_date": datetime.combine(
@@ -426,7 +426,7 @@ class TestMetricsHistoryEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             params={
                 "metric_name": "compliance",
                 "start_date": datetime.combine(
@@ -473,7 +473,7 @@ class TestMetricsHistoryEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             params={
                 "metric_name": "violations",
                 "start_date": datetime.combine(
@@ -518,7 +518,7 @@ class TestMetricsHistoryEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             params={
                 "metric_name": "unknown_metric",
                 "start_date": datetime.combine(
@@ -567,7 +567,7 @@ class TestMetricsHistoryEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             params={
                 "metric_name": "fairness",
                 "start_date": datetime.combine(
@@ -593,7 +593,7 @@ class TestMetricsHistoryEndpoint:
         start_date = end_date - timedelta(days=366)
 
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             params={
                 "metric_name": "fairness",
                 "start_date": start_date.isoformat(),
@@ -613,7 +613,7 @@ class TestMetricsHistoryEndpoint:
         end_date = start_date - timedelta(days=1)
 
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             params={
                 "metric_name": "fairness",
                 "start_date": start_date.isoformat(),
@@ -639,7 +639,7 @@ class TestFairnessTrendEndpoint:
     ):
         """Test fairness trend when no runs exist."""
         response = client.get(
-            "/api/analytics/fairness/trend",
+            "/api/v1/analytics/fairness/trend",
             params={"months": 6},
             headers=auth_headers,
         )
@@ -682,7 +682,7 @@ class TestFairnessTrendEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/fairness/trend",
+            "/api/v1/analytics/fairness/trend",
             params={"months": 2},
             headers=auth_headers,
         )
@@ -744,7 +744,7 @@ class TestFairnessTrendEndpoint:
 
         # Test with 3 months
         response = client.get(
-            "/api/analytics/fairness/trend",
+            "/api/v1/analytics/fairness/trend",
             params={"months": 3},
             headers=auth_headers,
         )
@@ -781,7 +781,7 @@ class TestFairnessTrendEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/fairness/trend",
+            "/api/v1/analytics/fairness/trend",
             params={"months": 1},
             headers=auth_headers,
         )
@@ -816,7 +816,7 @@ class TestFairnessTrendEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/fairness/trend",
+            "/api/v1/analytics/fairness/trend",
             params={"months": 24},
             headers=auth_headers,
         )
@@ -830,7 +830,7 @@ class TestFairnessTrendEndpoint:
     ):
         """Test fairness trend with months below minimum."""
         response = client.get(
-            "/api/analytics/fairness/trend",
+            "/api/v1/analytics/fairness/trend",
             params={"months": 0},
             headers=auth_headers,
         )
@@ -843,7 +843,7 @@ class TestFairnessTrendEndpoint:
     ):
         """Test fairness trend with months above maximum."""
         response = client.get(
-            "/api/analytics/fairness/trend",
+            "/api/v1/analytics/fairness/trend",
             params={"months": 25},
             headers=auth_headers,
         )
@@ -880,7 +880,7 @@ class TestFairnessTrendEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/fairness/trend",
+            "/api/v1/analytics/fairness/trend",
             params={"months": 2},
             headers=auth_headers,
         )
@@ -908,7 +908,7 @@ class TestVersionComparisonEndpoint:
         version_b = str(uuid4())
 
         response = client.get(
-            f"/api/analytics/compare/{version_a}/{version_b}",
+            f"/api/v1/analytics/compare/{version_a}/{version_b}",
             headers=auth_headers,
         )
 
@@ -958,7 +958,7 @@ class TestVersionComparisonEndpoint:
         db.commit()
 
         response = client.get(
-            f"/api/analytics/compare/{run_a.id}/{run_b.id}",
+            f"/api/v1/analytics/compare/{run_a.id}/{run_b.id}",
             headers=auth_headers,
         )
 
@@ -1010,7 +1010,7 @@ class TestVersionComparisonEndpoint:
         fake_version_a = str(uuid4())
 
         response = client.get(
-            f"/api/analytics/compare/{fake_version_a}/{run_b.id}",
+            f"/api/v1/analytics/compare/{fake_version_a}/{run_b.id}",
             headers=auth_headers,
         )
 
@@ -1035,7 +1035,7 @@ class TestVersionComparisonEndpoint:
         fake_version_b = str(uuid4())
 
         response = client.get(
-            f"/api/analytics/compare/{run_a.id}/{fake_version_b}",
+            f"/api/v1/analytics/compare/{run_a.id}/{fake_version_b}",
             headers=auth_headers,
         )
 
@@ -1086,7 +1086,7 @@ class TestVersionComparisonEndpoint:
         db.commit()
 
         response = client.get(
-            f"/api/analytics/compare/{run_a.id}/{run_b.id}",
+            f"/api/v1/analytics/compare/{run_a.id}/{run_b.id}",
             headers=auth_headers,
         )
 
@@ -1116,7 +1116,7 @@ class TestWhatIfAnalysisEndpoint:
     ):
         """Test what-if analysis with no changes provided."""
         response = client.post(
-            "/api/analytics/what-if",
+            "/api/v1/analytics/what-if",
             json=[],
             headers=auth_headers,
         )
@@ -1132,7 +1132,7 @@ class TestWhatIfAnalysisEndpoint:
         block_id = str(uuid4())
 
         response = client.post(
-            "/api/analytics/what-if",
+            "/api/v1/analytics/what-if",
             json=[
                 {
                     "personId": person_id,
@@ -1189,7 +1189,7 @@ class TestWhatIfAnalysisEndpoint:
         db.commit()
 
         response = client.post(
-            "/api/analytics/what-if",
+            "/api/v1/analytics/what-if",
             json=[
                 {
                     "personId": str(resident.id),
@@ -1263,7 +1263,7 @@ class TestWhatIfAnalysisEndpoint:
         db.commit()
 
         response = client.post(
-            "/api/analytics/what-if",
+            "/api/v1/analytics/what-if",
             json=[
                 {
                     "personId": str(resident.id),
@@ -1333,7 +1333,7 @@ class TestWhatIfAnalysisEndpoint:
         ]
 
         response = client.post(
-            "/api/analytics/what-if",
+            "/api/v1/analytics/what-if",
             json=changes,
             headers=auth_headers,
         )
@@ -1393,7 +1393,7 @@ class TestWhatIfAnalysisEndpoint:
 
         # Try to add more (should trigger violation)
         response = client.post(
-            "/api/analytics/what-if",
+            "/api/v1/analytics/what-if",
             json=[
                 {
                     "personId": str(resident.id),
@@ -1447,7 +1447,7 @@ class TestWhatIfAnalysisEndpoint:
         db.commit()
 
         response = client.post(
-            "/api/analytics/what-if",
+            "/api/v1/analytics/what-if",
             json=[
                 {
                     "personId": str(resident.id),
@@ -1489,7 +1489,7 @@ class TestResearchExportEndpoint:
         start_date = end_date - timedelta(days=366)
 
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -1509,7 +1509,7 @@ class TestResearchExportEndpoint:
         end_date = start_date - timedelta(days=1)
 
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": start_date.isoformat(),
                 "end_date": end_date.isoformat(),
@@ -1553,7 +1553,7 @@ class TestResearchExportEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": datetime.combine(
                     start_date, datetime.min.time()
@@ -1605,7 +1605,7 @@ class TestResearchExportEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": datetime.combine(
                     start_date, datetime.min.time()
@@ -1659,7 +1659,7 @@ class TestResearchExportEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": datetime.combine(
                     start_date, datetime.min.time()
@@ -1716,7 +1716,7 @@ class TestResearchExportEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": datetime.combine(
                     start_date, datetime.min.time()
@@ -1755,7 +1755,7 @@ class TestResearchExportEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": datetime.combine(
                     start_date, datetime.min.time()
@@ -1790,7 +1790,7 @@ class TestResearchExportEndpoint:
         db.commit()
 
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": datetime.combine(
                     start_date, datetime.min.time()
@@ -1846,7 +1846,7 @@ class TestResearchExportEndpoint:
         original_resident_id = str(resident.id)
 
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": datetime.combine(
                     start_date, datetime.min.time()
@@ -1875,7 +1875,7 @@ class TestResearchExportEndpoint:
         end_date = start_date + timedelta(days=7)
 
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             params={
                 "start_date": datetime.combine(
                     start_date, datetime.min.time()
@@ -1907,7 +1907,7 @@ class TestAnalyticsErrorHandling:
     ):
         """Test metrics history without required parameters."""
         response = client.get(
-            "/api/analytics/metrics/history",
+            "/api/v1/analytics/metrics/history",
             headers=auth_headers,
         )
 
@@ -1919,7 +1919,7 @@ class TestAnalyticsErrorHandling:
     ):
         """Test research export without required parameters."""
         response = client.get(
-            "/api/analytics/export/research",
+            "/api/v1/analytics/export/research",
             headers=auth_headers,
         )
 
@@ -1962,7 +1962,7 @@ class TestAnalyticsErrorHandling:
 
         # Try with invalid change type
         response = client.post(
-            "/api/analytics/what-if",
+            "/api/v1/analytics/what-if",
             json=[
                 {
                     "personId": str(resident.id),
@@ -2004,7 +2004,7 @@ class TestAnalyticsErrorHandling:
         db.commit()
 
         response = client.get(
-            f"/api/analytics/compare/{run.id}/{run.id}",
+            f"/api/v1/analytics/compare/{run.id}/{run.id}",
             headers=auth_headers,
         )
 

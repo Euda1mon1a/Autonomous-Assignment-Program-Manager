@@ -15,8 +15,43 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.models.export_job import ExportJobStatus
+from app.models.export_job import ExportFormat, ExportJobStatus, ExportTemplate
 from app.models.user import User
+
+
+def _export_job_mock(**overrides):
+    """Helper to create a mock with all ExportJobResponse required attributes."""
+    defaults = {
+        "id": str(uuid4()),
+        "name": "Test Export",
+        "description": None,
+        "template": ExportTemplate.FULL_SCHEDULE,
+        "format": ExportFormat.CSV,
+        "delivery_method": "email",
+        "email_recipients": None,
+        "email_subject_template": None,
+        "email_body_template": None,
+        "s3_bucket": None,
+        "s3_key_prefix": None,
+        "s3_region": None,
+        "schedule_cron": None,
+        "schedule_enabled": False,
+        "filters": None,
+        "columns": None,
+        "include_headers": True,
+        "last_run_at": None,
+        "next_run_at": None,
+        "run_count": 0,
+        "enabled": True,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "created_by": None,
+    }
+    defaults.update(overrides)
+    mock = MagicMock()
+    for key, value in defaults.items():
+        setattr(mock, key, value)
+    return mock
 
 
 class TestExportRoutes:
@@ -29,7 +64,7 @@ class TestExportRoutes:
     def test_create_job_requires_auth(self, client: TestClient):
         """Test that creating export job requires authentication."""
         response = client.post(
-            "/api/exports",
+            "/api/v1/exports",
             json={
                 "name": "Test Export",
                 "template": "full_schedule",
@@ -40,50 +75,50 @@ class TestExportRoutes:
 
     def test_list_jobs_requires_auth(self, client: TestClient):
         """Test that listing export jobs requires authentication."""
-        response = client.get("/api/exports")
+        response = client.get("/api/v1/exports")
         assert response.status_code == 401
 
     def test_get_job_requires_auth(self, client: TestClient):
         """Test that getting export job requires authentication."""
-        response = client.get(f"/api/exports/{uuid4()}")
+        response = client.get(f"/api/v1/exports/{uuid4()}")
         assert response.status_code == 401
 
     def test_update_job_requires_auth(self, client: TestClient):
         """Test that updating export job requires authentication."""
         response = client.patch(
-            f"/api/exports/{uuid4()}",
+            f"/api/v1/exports/{uuid4()}",
             json={"enabled": False},
         )
         assert response.status_code == 401
 
     def test_delete_job_requires_auth(self, client: TestClient):
         """Test that deleting export job requires authentication."""
-        response = client.delete(f"/api/exports/{uuid4()}")
+        response = client.delete(f"/api/v1/exports/{uuid4()}")
         assert response.status_code == 401
 
     def test_run_job_requires_auth(self, client: TestClient):
         """Test that running export job requires authentication."""
-        response = client.post(f"/api/exports/{uuid4()}/run")
+        response = client.post(f"/api/v1/exports/{uuid4()}/run")
         assert response.status_code == 401
 
     def test_list_executions_requires_auth(self, client: TestClient):
         """Test that listing executions requires authentication."""
-        response = client.get(f"/api/exports/{uuid4()}/executions")
+        response = client.get(f"/api/v1/exports/{uuid4()}/executions")
         assert response.status_code == 401
 
     def test_get_execution_requires_auth(self, client: TestClient):
         """Test that getting execution requires authentication."""
-        response = client.get(f"/api/exports/executions/{uuid4()}")
+        response = client.get(f"/api/v1/exports/executions/{uuid4()}")
         assert response.status_code == 401
 
     def test_list_templates_requires_auth(self, client: TestClient):
         """Test that listing templates requires authentication."""
-        response = client.get("/api/exports/templates/list")
+        response = client.get("/api/v1/exports/templates/list")
         assert response.status_code == 401
 
     def test_get_stats_requires_auth(self, client: TestClient):
         """Test that getting stats requires authentication."""
-        response = client.get("/api/exports/stats/overview")
+        response = client.get("/api/v1/exports/stats/overview")
         assert response.status_code == 401
 
     # ========================================================================
@@ -102,27 +137,23 @@ class TestExportRoutes:
         job_id = str(uuid4())
         mock_service = MagicMock()
         mock_service.create_job = AsyncMock(
-            return_value=MagicMock(
+            return_value=_export_job_mock(
                 id=job_id,
                 name="Daily Schedule Export",
-                template="full_schedule",
-                format="csv",
-                enabled=True,
                 schedule_enabled=True,
-                cron_expression="0 6 * * *",
-                created_at=datetime.utcnow(),
+                schedule_cron="0 6 * * *",
             )
         )
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/exports",
+            "/api/v1/exports",
             headers=auth_headers,
             json={
                 "name": "Daily Schedule Export",
                 "template": "full_schedule",
                 "format": "csv",
-                "cron_expression": "0 6 * * *",
+                "schedule_cron": "0 6 * * *",
             },
         )
         assert response.status_code == 201
@@ -139,11 +170,11 @@ class TestExportRoutes:
     ):
         """Test export job creation handles errors."""
         mock_service = MagicMock()
-        mock_service.create_job = AsyncMock(side_effect=Exception("DB error"))
+        mock_service.create_job = AsyncMock(side_effect=ValueError("DB error"))
         mock_service_class.return_value = mock_service
 
         response = client.post(
-            "/api/exports",
+            "/api/v1/exports",
             headers=auth_headers,
             json={
                 "name": "Test Export",
@@ -169,15 +200,15 @@ class TestExportRoutes:
         mock_service.list_jobs = AsyncMock(
             return_value=(
                 [
-                    MagicMock(id=str(uuid4()), name="Job 1", enabled=True),
-                    MagicMock(id=str(uuid4()), name="Job 2", enabled=False),
+                    _export_job_mock(name="Job 1", enabled=True),
+                    _export_job_mock(name="Job 2", enabled=False),
                 ],
                 2,
             )
         )
         mock_service_class.return_value = mock_service
 
-        response = client.get("/api/exports", headers=auth_headers)
+        response = client.get("/api/v1/exports", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -197,7 +228,7 @@ class TestExportRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            "/api/exports?page=2&page_size=10&enabled_only=true",
+            "/api/v1/exports?page=2&page_size=10&enabled_only=true",
             headers=auth_headers,
         )
         assert response.status_code == 200
@@ -221,16 +252,11 @@ class TestExportRoutes:
         job_id = str(uuid4())
         mock_service = MagicMock()
         mock_service.get_job = AsyncMock(
-            return_value=MagicMock(
-                id=job_id,
-                name="Test Export",
-                template="full_schedule",
-                format="csv",
-            )
+            return_value=_export_job_mock(id=job_id, name="Test Export")
         )
         mock_service_class.return_value = mock_service
 
-        response = client.get(f"/api/exports/{job_id}", headers=auth_headers)
+        response = client.get(f"/api/v1/exports/{job_id}", headers=auth_headers)
         assert response.status_code == 200
 
     @patch("app.api.routes.exports.ExportSchedulerService")
@@ -245,7 +271,7 @@ class TestExportRoutes:
         mock_service.get_job = AsyncMock(return_value=None)
         mock_service_class.return_value = mock_service
 
-        response = client.get(f"/api/exports/{uuid4()}", headers=auth_headers)
+        response = client.get(f"/api/v1/exports/{uuid4()}", headers=auth_headers)
         assert response.status_code == 404
 
     # ========================================================================
@@ -263,16 +289,14 @@ class TestExportRoutes:
         job_id = str(uuid4())
         mock_service = MagicMock()
         mock_service.update_job = AsyncMock(
-            return_value=MagicMock(
-                id=job_id,
-                name="Updated Export",
-                enabled=False,
+            return_value=_export_job_mock(
+                id=job_id, name="Updated Export", enabled=False
             )
         )
         mock_service_class.return_value = mock_service
 
         response = client.patch(
-            f"/api/exports/{job_id}",
+            f"/api/v1/exports/{job_id}",
             headers=auth_headers,
             json={"name": "Updated Export", "enabled": False},
         )
@@ -291,7 +315,7 @@ class TestExportRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.patch(
-            f"/api/exports/{uuid4()}",
+            f"/api/v1/exports/{uuid4()}",
             headers=auth_headers,
             json={"enabled": False},
         )
@@ -314,7 +338,7 @@ class TestExportRoutes:
         mock_service.delete_job = AsyncMock(return_value=True)
         mock_service_class.return_value = mock_service
 
-        response = client.delete(f"/api/exports/{job_id}", headers=auth_headers)
+        response = client.delete(f"/api/v1/exports/{job_id}", headers=auth_headers)
         assert response.status_code == 204
 
     @patch("app.api.routes.exports.ExportSchedulerService")
@@ -329,7 +353,7 @@ class TestExportRoutes:
         mock_service.delete_job = AsyncMock(return_value=False)
         mock_service_class.return_value = mock_service
 
-        response = client.delete(f"/api/exports/{uuid4()}", headers=auth_headers)
+        response = client.delete(f"/api/v1/exports/{uuid4()}", headers=auth_headers)
         assert response.status_code == 404
 
     # ========================================================================
@@ -349,7 +373,7 @@ class TestExportRoutes:
         job_id = str(uuid4())
         mock_service = MagicMock()
         mock_service.get_job = AsyncMock(
-            return_value=MagicMock(id=job_id, name="Test Export")
+            return_value=_export_job_mock(id=job_id, name="Test Export")
         )
         mock_service_class.return_value = mock_service
 
@@ -357,7 +381,7 @@ class TestExportRoutes:
         mock_task.id = "task-123"
         mock_celery_task.delay.return_value = mock_task
 
-        response = client.post(f"/api/exports/{job_id}/run", headers=auth_headers)
+        response = client.post(f"/api/v1/exports/{job_id}/run", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -376,7 +400,7 @@ class TestExportRoutes:
         mock_service.get_job = AsyncMock(return_value=None)
         mock_service_class.return_value = mock_service
 
-        response = client.post(f"/api/exports/{uuid4()}/run", headers=auth_headers)
+        response = client.post(f"/api/v1/exports/{uuid4()}/run", headers=auth_headers)
         assert response.status_code == 404
 
     # ========================================================================
@@ -395,7 +419,7 @@ class TestExportRoutes:
         job_id = str(uuid4())
         mock_service = MagicMock()
         mock_service.get_job = AsyncMock(
-            return_value=MagicMock(id=job_id, name="Test Export")
+            return_value=_export_job_mock(id=job_id, name="Test Export")
         )
         mock_service_class.return_value = mock_service
 
@@ -410,7 +434,7 @@ class TestExportRoutes:
             mock_query.select_from.return_value = mock_query
 
             response = client.get(
-                f"/api/exports/{job_id}/executions",
+                f"/api/v1/exports/{job_id}/executions",
                 headers=auth_headers,
             )
             # Will be 200 if properly mocked, otherwise just verify auth works
@@ -429,7 +453,7 @@ class TestExportRoutes:
         mock_service_class.return_value = mock_service
 
         response = client.get(
-            f"/api/exports/{uuid4()}/executions",
+            f"/api/v1/exports/{uuid4()}/executions",
             headers=auth_headers,
         )
         assert response.status_code == 404
@@ -444,7 +468,7 @@ class TestExportRoutes:
         auth_headers: dict,
     ):
         """Test listing export templates."""
-        response = client.get("/api/exports/templates/list", headers=auth_headers)
+        response = client.get("/api/v1/exports/templates/list", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -463,7 +487,7 @@ class TestExportRoutes:
         auth_headers: dict,
     ):
         """Test that templates have required fields."""
-        response = client.get("/api/exports/templates/list", headers=auth_headers)
+        response = client.get("/api/v1/exports/templates/list", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -494,5 +518,5 @@ class TestExportRoutes:
         mock_get_db.return_value = mock_db
 
         # The response may fail due to complex mocking, but we verify auth works
-        response = client.get("/api/exports/stats/overview", headers=auth_headers)
+        response = client.get("/api/v1/exports/stats/overview", headers=auth_headers)
         assert response.status_code in [200, 500]

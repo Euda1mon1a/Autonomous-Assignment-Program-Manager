@@ -85,7 +85,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=new_preferences,
         )
@@ -111,7 +111,7 @@ class TestPutRotationPreferences:
     ):
         """Test that empty preferences list clears all existing preferences."""
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=[],
         )
@@ -122,7 +122,7 @@ class TestPutRotationPreferences:
 
         # Verify preferences are actually deleted
         get_response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
         )
         assert get_response.status_code == 200
@@ -155,7 +155,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=preferences,
         )
@@ -205,7 +205,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=preferences,
         )
@@ -242,7 +242,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=preferences,
         )
@@ -250,7 +250,8 @@ class TestPutRotationPreferences:
         assert response.status_code == 400
         error = response.json()
         assert "detail" in error
-        assert "duplicate" in error["detail"].lower()
+        # Route catches ValueError and returns generic "Invalid request"
+        assert error["detail"] == "Invalid request"
 
     def test_replace_preferences_invalid_type_fails(
         self,
@@ -269,7 +270,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=preferences,
         )
@@ -296,7 +297,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=preferences,
         )
@@ -318,7 +319,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{fake_id}/preferences",
+            f"/api/v1/rotation-templates/{fake_id}/preferences",
             headers=auth_headers,
             json=preferences,
         )
@@ -326,14 +327,15 @@ class TestPutRotationPreferences:
         assert response.status_code == 400  # Service raises ValueError -> 400
         error = response.json()
         assert "detail" in error
-        assert "not found" in error["detail"].lower()
+        # Route catches ValueError and returns generic "Invalid request"
+        assert error["detail"] == "Invalid request"
 
     def test_replace_preferences_unauthorized(
         self, client: TestClient, sample_template: RotationTemplate
     ):
         """Test 401 for unauthenticated request."""
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             json=[],
         )
 
@@ -366,7 +368,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=preferences,
         )
@@ -404,7 +406,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=preferences,
         )
@@ -440,7 +442,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=preferences,
         )
@@ -449,7 +451,7 @@ class TestPutRotationPreferences:
 
         # Verify existing preferences still exist
         get_response = client.get(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
         )
         assert get_response.status_code == 200
@@ -474,7 +476,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=preferences,
         )
@@ -496,7 +498,7 @@ class TestPutRotationPreferences:
         ]
 
         response = client.put(
-            f"/api/rotation-templates/{sample_template.id}/preferences",
+            f"/api/v1/rotation-templates/{sample_template.id}/preferences",
             headers=auth_headers,
             json=preferences,
         )

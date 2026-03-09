@@ -44,7 +44,7 @@ class TestSubmitTaskEndpoint:
     def test_submit_task_requires_auth(self, client: TestClient):
         """Test that submit task requires authentication."""
         response = client.post(
-            "/api/queue/tasks/submit",
+            "/api/v1/queue/tasks/submit",
             json={
                 "task_name": "app.tasks.test",
                 "args": [],
@@ -63,7 +63,7 @@ class TestSubmitTaskEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.post(
-                "/api/queue/tasks/submit",
+                "/api/v1/queue/tasks/submit",
                 json={
                     "task_name": "app.tasks.test",
                     "args": [1, 2],
@@ -83,7 +83,7 @@ class TestSubmitTaskEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.post(
-                "/api/queue/tasks/submit",
+                "/api/v1/queue/tasks/submit",
                 json={
                     "task_name": "app.tasks.test",
                     "args": [],
@@ -105,7 +105,7 @@ class TestSubmitTaskEndpoint:
 
             eta = datetime.utcnow().isoformat()
             response = client.post(
-                "/api/queue/tasks/submit",
+                "/api/v1/queue/tasks/submit",
                 json={
                     "task_name": "app.tasks.test",
                     "args": [],
@@ -125,7 +125,7 @@ class TestSubmitTaskChainEndpoint:
     def test_submit_chain_requires_auth(self, client: TestClient):
         """Test that submit chain requires authentication."""
         response = client.post(
-            "/api/queue/tasks/submit-chain",
+            "/api/v1/queue/tasks/submit-chain",
             json={
                 "tasks": [{"taskName": "task1", "args": [], "kwargs": {}}],
                 "priority": 5,
@@ -142,7 +142,7 @@ class TestSubmitTaskChainEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.post(
-                "/api/queue/tasks/submit-chain",
+                "/api/v1/queue/tasks/submit-chain",
                 json={
                     "tasks": [
                         {"taskName": "task1", "args": [1], "kwargs": {}},
@@ -162,7 +162,7 @@ class TestSubmitTaskGroupEndpoint:
     def test_submit_group_requires_auth(self, client: TestClient):
         """Test that submit group requires authentication."""
         response = client.post(
-            "/api/queue/tasks/submit-group",
+            "/api/v1/queue/tasks/submit-group",
             json={
                 "tasks": [{"taskName": "task1", "args": [], "kwargs": {}}],
                 "priority": 5,
@@ -179,7 +179,7 @@ class TestSubmitTaskGroupEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.post(
-                "/api/queue/tasks/submit-group",
+                "/api/v1/queue/tasks/submit-group",
                 json={
                     "tasks": [
                         {"taskName": "task1", "args": [1], "kwargs": {}},
@@ -199,7 +199,7 @@ class TestSubmitTaskWithDependenciesEndpoint:
     def test_submit_with_deps_requires_auth(self, client: TestClient):
         """Test that submit with dependencies requires authentication."""
         response = client.post(
-            "/api/queue/tasks/submit-with-dependencies",
+            "/api/v1/queue/tasks/submit-with-dependencies",
             json={
                 "task_name": "aggregate",
                 "dependencies": ["task-1", "task-2"],
@@ -219,7 +219,7 @@ class TestSubmitTaskWithDependenciesEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.post(
-                "/api/queue/tasks/submit-with-dependencies",
+                "/api/v1/queue/tasks/submit-with-dependencies",
                 json={
                     "task_name": "aggregate_results",
                     "dependencies": [str(uuid4()), str(uuid4())],
@@ -244,7 +244,7 @@ class TestTaskStatusEndpoint:
     def test_status_requires_auth(self, client: TestClient):
         """Test that status requires authentication."""
         task_id = str(uuid4())
-        response = client.get(f"/api/queue/tasks/{task_id}/status")
+        response = client.get(f"/api/v1/queue/tasks/{task_id}/status")
 
         assert response.status_code in [401, 403]
 
@@ -259,7 +259,7 @@ class TestTaskStatusEndpoint:
 
             task_id = str(uuid4())
             response = client.get(
-                f"/api/queue/tasks/{task_id}/status",
+                f"/api/v1/queue/tasks/{task_id}/status",
                 headers=auth_headers,
             )
 
@@ -272,7 +272,7 @@ class TestTaskProgressEndpoint:
     def test_progress_requires_auth(self, client: TestClient):
         """Test that progress requires authentication."""
         task_id = str(uuid4())
-        response = client.get(f"/api/queue/tasks/{task_id}/progress")
+        response = client.get(f"/api/v1/queue/tasks/{task_id}/progress")
 
         assert response.status_code in [401, 403]
 
@@ -289,7 +289,7 @@ class TestTaskProgressEndpoint:
 
             task_id = str(uuid4())
             response = client.get(
-                f"/api/queue/tasks/{task_id}/progress",
+                f"/api/v1/queue/tasks/{task_id}/progress",
                 headers=auth_headers,
             )
 
@@ -307,7 +307,7 @@ class TestCancelTaskEndpoint:
     def test_cancel_requires_auth(self, client: TestClient):
         """Test that cancel requires authentication."""
         response = client.post(
-            "/api/queue/tasks/cancel",
+            "/api/v1/queue/tasks/cancel",
             json={"task_id": str(uuid4()), "terminate": False},
         )
 
@@ -321,7 +321,7 @@ class TestCancelTaskEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.post(
-                "/api/queue/tasks/cancel",
+                "/api/v1/queue/tasks/cancel",
                 json={"task_id": str(uuid4()), "terminate": False},
                 headers=auth_headers,
             )
@@ -335,7 +335,7 @@ class TestRetryTaskEndpoint:
     def test_retry_requires_auth(self, client: TestClient):
         """Test that retry requires authentication."""
         response = client.post(
-            "/api/queue/tasks/retry",
+            "/api/v1/queue/tasks/retry",
             json={"task_id": str(uuid4())},
         )
 
@@ -347,7 +347,7 @@ class TestRetryTaskEndpoint:
             mock_retry.return_value = str(uuid4())
 
             response = client.post(
-                "/api/queue/tasks/retry",
+                "/api/v1/queue/tasks/retry",
                 json={"task_id": str(uuid4()), "countdown": 60},
                 headers=auth_headers,
             )
@@ -365,7 +365,7 @@ class TestQueueStatsEndpoint:
 
     def test_stats_requires_auth(self, client: TestClient):
         """Test that stats requires authentication."""
-        response = client.get("/api/queue/queues/stats")
+        response = client.get("/api/v1/queue/queues/stats")
 
         assert response.status_code in [401, 403]
 
@@ -381,7 +381,7 @@ class TestQueueStatsEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.get(
-                "/api/queue/queues/stats",
+                "/api/v1/queue/queues/stats",
                 headers=auth_headers,
             )
 
@@ -394,7 +394,7 @@ class TestQueuePurgeEndpoint:
     def test_purge_requires_auth(self, client: TestClient):
         """Test that purge requires authentication."""
         response = client.post(
-            "/api/queue/queues/purge",
+            "/api/v1/queue/queues/purge",
             json={"queue_name": "test", "confirm": True},
         )
 
@@ -403,7 +403,7 @@ class TestQueuePurgeEndpoint:
     def test_purge_requires_confirmation(self, client: TestClient, auth_headers: dict):
         """Test purge requires confirmation."""
         response = client.post(
-            "/api/queue/queues/purge",
+            "/api/v1/queue/queues/purge",
             json={"queue_name": "test", "confirm": False},
             headers=auth_headers,
         )
@@ -418,7 +418,7 @@ class TestQueuePurgeEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.post(
-                "/api/queue/queues/purge",
+                "/api/v1/queue/queues/purge",
                 json={"queue_name": "test", "confirm": True},
                 headers=auth_headers,
             )
@@ -436,7 +436,7 @@ class TestWorkerHealthEndpoint:
 
     def test_health_requires_auth(self, client: TestClient):
         """Test that worker health requires authentication."""
-        response = client.get("/api/queue/workers/health")
+        response = client.get("/api/v1/queue/workers/health")
 
         assert response.status_code in [401, 403]
 
@@ -452,7 +452,7 @@ class TestWorkerHealthEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.get(
-                "/api/queue/workers/health",
+                "/api/v1/queue/workers/health",
                 headers=auth_headers,
             )
 
@@ -464,7 +464,7 @@ class TestWorkerStatsEndpoint:
 
     def test_stats_requires_auth(self, client: TestClient):
         """Test that worker stats requires authentication."""
-        response = client.get("/api/queue/workers/stats")
+        response = client.get("/api/v1/queue/workers/stats")
 
         assert response.status_code in [401, 403]
 
@@ -479,7 +479,7 @@ class TestWorkerStatsEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.get(
-                "/api/queue/workers/stats",
+                "/api/v1/queue/workers/stats",
                 headers=auth_headers,
             )
 
@@ -492,7 +492,7 @@ class TestWorkerControlEndpoint:
     def test_control_requires_auth(self, client: TestClient):
         """Test that worker control requires authentication."""
         response = client.post(
-            "/api/queue/workers/control",
+            "/api/v1/queue/workers/control",
             json={
                 "worker_name": "celery@worker1",
                 "action": "shutdown",
@@ -510,7 +510,7 @@ class TestWorkerControlEndpoint:
             mock_manager.return_value = mock_instance
 
             response = client.post(
-                "/api/queue/workers/control",
+                "/api/v1/queue/workers/control",
                 json={
                     "worker_name": "celery@worker1",
                     "action": "autoscale",
@@ -533,7 +533,7 @@ class TestScheduleTaskEndpoint:
     def test_schedule_requires_auth(self, client: TestClient):
         """Test that schedule task requires authentication."""
         response = client.post(
-            "/api/queue/schedule/task",
+            "/api/v1/queue/schedule/task",
             json={
                 "task_name": "send_reminder",
                 "args": [],
@@ -553,7 +553,7 @@ class TestScheduleTaskEndpoint:
             mock_scheduler.return_value = mock_instance
 
             response = client.post(
-                "/api/queue/schedule/task",
+                "/api/v1/queue/schedule/task",
                 json={
                     "task_name": "send_reminder",
                     "args": [],
@@ -573,7 +573,7 @@ class TestPeriodicTaskEndpoint:
     def test_add_periodic_requires_auth(self, client: TestClient):
         """Test that add periodic task requires authentication."""
         response = client.post(
-            "/api/queue/schedule/periodic",
+            "/api/v1/queue/schedule/periodic",
             json={
                 "name": "daily-cleanup",
                 "task_name": "app.tasks.cleanup",
@@ -593,7 +593,7 @@ class TestPeriodicTaskEndpoint:
             mock_scheduler.return_value = mock_instance
 
             response = client.post(
-                "/api/queue/schedule/periodic",
+                "/api/v1/queue/schedule/periodic",
                 json={
                     "name": "daily-cleanup",
                     "task_name": "app.tasks.cleanup",
@@ -609,7 +609,7 @@ class TestPeriodicTaskEndpoint:
 
     def test_get_periodic_tasks_requires_auth(self, client: TestClient):
         """Test that get periodic tasks requires authentication."""
-        response = client.get("/api/queue/schedule/periodic")
+        response = client.get("/api/v1/queue/schedule/periodic")
 
         assert response.status_code in [401, 403]
 
@@ -621,7 +621,7 @@ class TestPeriodicTaskEndpoint:
             mock_scheduler.return_value = mock_instance
 
             response = client.get(
-                "/api/queue/schedule/periodic",
+                "/api/v1/queue/schedule/periodic",
                 headers=auth_headers,
             )
 
@@ -630,7 +630,7 @@ class TestPeriodicTaskEndpoint:
     def test_control_periodic_requires_auth(self, client: TestClient):
         """Test that control periodic requires authentication."""
         response = client.post(
-            "/api/queue/schedule/periodic/control",
+            "/api/v1/queue/schedule/periodic/control",
             json={"name": "daily-cleanup", "action": "disable"},
         )
 
@@ -676,15 +676,15 @@ class TestQueueIntegration:
             task_id = str(uuid4())
 
             endpoints = [
-                ("/api/queue/queues/stats", "GET"),
-                ("/api/queue/workers/health", "GET"),
-                ("/api/queue/workers/stats", "GET"),
-                ("/api/queue/workers/utilization", "GET"),
-                ("/api/queue/workers/tasks", "GET"),
-                ("/api/queue/schedule/periodic", "GET"),
-                ("/api/queue/schedule/scheduled", "GET"),
-                (f"/api/queue/tasks/{task_id}/status", "GET"),
-                (f"/api/queue/tasks/{task_id}/progress", "GET"),
+                ("/api/v1/queue/queues/stats", "GET"),
+                ("/api/v1/queue/workers/health", "GET"),
+                ("/api/v1/queue/workers/stats", "GET"),
+                ("/api/v1/queue/workers/utilization", "GET"),
+                ("/api/v1/queue/workers/tasks", "GET"),
+                ("/api/v1/queue/schedule/periodic", "GET"),
+                ("/api/v1/queue/schedule/scheduled", "GET"),
+                (f"/api/v1/queue/tasks/{task_id}/status", "GET"),
+                (f"/api/v1/queue/tasks/{task_id}/progress", "GET"),
             ]
 
             for url, method in endpoints:
