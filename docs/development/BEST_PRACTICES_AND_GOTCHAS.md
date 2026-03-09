@@ -434,6 +434,8 @@ async def test_create_person(db: AsyncSession):
 - Tests use a separate test database
 - Each test gets a fresh transaction that's rolled back
 - Don't rely on data from previous tests
+- **Never use production `SessionLocal` in tests.** If testing `task_session_scope()` or anything that calls `SessionLocal()`, monkeypatch it to a test engine. The original `TestTaskSessionScope` class leaked 21 synthetic "Celery Task Person" records to production because it used the real `SessionLocal` with no cleanup (fixed in PR #1279).
+- For concurrent-write tests with SQLite, use a file-based temp DB with WAL mode (`PRAGMA journal_mode=WAL`). In-memory SQLite with `StaticPool` segfaults under thread contention; shared-cache mode drops writes due to locking.
 
 ### FastAPI TestClient: Query Params Stripped on Non-Versioned Routes
 
