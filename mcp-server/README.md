@@ -39,7 +39,7 @@ The MCP server exposes **97+ tools** organized into functional categories.
 - **detect_conflicts** - Identify scheduling conflicts and auto-resolution options
 - **analyze_swap_candidates** - Find optimal swap matches for schedule changes
 
-### Resilience Framework Tools (77 tools)
+### Resilience Framework Tools (16 tools)
 
 See [RESILIENCE_MCP_INTEGRATION.md](./RESILIENCE_MCP_INTEGRATION.md) for full documentation.
 
