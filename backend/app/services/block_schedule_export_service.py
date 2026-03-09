@@ -3,14 +3,11 @@ Block Schedule Export Service.
 
 Full pipeline: DB → XML → xlsx
 
-This service connects the database to the ROSETTA-validated export pipeline:
+This service connects the database to the export pipeline:
 1. Query BlockAssignments from DB for a specific block
 2. Convert to schedule_xml_exporter format
 3. Generate validated XML
 4. Convert XML to xlsx using template
-
-The XML serves as the validation checkpoint - if XML matches ROSETTA patterns,
-the xlsx output will be correct.
 """
 
 from datetime import date, timedelta
@@ -33,26 +30,15 @@ from app.services.schedule_xml_exporter import ScheduleXMLExporter
 from app.services.call_override_service import CallOverrideService
 from app.services.xml_to_xlsx_converter import XMLToXlsxConverter
 from app.utils.academic_blocks import get_block_dates
-from app.utils.rosetta_xml_validator import compare_xml, get_mismatch_summary
 
 logger = get_logger(__name__)
-
-# Path to ROSETTA XML ground truth (generated from xlsx)
-# In container: /app/app/services/... → /app/docs/scheduling/...
-ROSETTA_XML_PATH = (
-    Path(__file__).parent.parent.parent  # app/services → app (backend root)
-    / "docs"
-    / "scheduling"
-    / "Block10_ROSETTA_CORRECT.xml"
-)
 
 
 class BlockScheduleExportService:
     """
     Full pipeline service: DB → XML → xlsx.
 
-    Uses ROSETTA-validated XML exporter to ensure correct rotation patterns,
-    then converts to xlsx format.
+    Uses XML exporter for rotation patterns, then converts to xlsx format.
     """
 
     def __init__(
@@ -105,18 +91,7 @@ class BlockScheduleExportService:
         xml_string = exporter.export(residents)
         logger.info("Generated XML schedule")
 
-        # Validate XML against ROSETTA ground truth (Block 10 only)
-        if block_number == 10:
-            validation_mismatches = self._validate_xml_against_rosetta(xml_string)
-            if validation_mismatches:
-                summary = get_mismatch_summary(validation_mismatches)
-                logger.warning(f"XML validation: {summary['total']} mismatches found")
-                for m in summary["sample_mismatches"]:
-                    logger.warning(f"  - {m}")
-            else:
-                logger.info("XML validation: PASSED (matches ROSETTA)")
-
-                # Convert XML to xlsx
+        # Convert XML to xlsx
         converter = XMLToXlsxConverter(template_path=self.template_path)
         xlsx_bytes = converter.convert_from_string(xml_string, output_path)
         logger.info(f"Generated xlsx ({len(xlsx_bytes)} bytes)")
@@ -467,22 +442,6 @@ class BlockScheduleExportService:
             return f"{last_name}, {first_names}"
 
         return name
-
-    def _validate_xml_against_rosetta(self, xml_string: str) -> list[str]:
-        """
-        Compare generated XML against ROSETTA XML ground truth.
-
-        This is the validation checkpoint in the "central dogma" pipeline.
-        Returns list of mismatches (empty = valid).
-        """
-        if not ROSETTA_XML_PATH.exists():
-            logger.warning(
-                f"ROSETTA XML not found at {ROSETTA_XML_PATH}, skipping validation. "
-                "Generate with: python -c 'from app.utils.rosetta_parser import save_rosetta_xml; save_rosetta_xml()'"
-            )
-            return []
-
-        return compare_xml(ROSETTA_XML_PATH, xml_string)
 
     def _validate_export_data(
         self,

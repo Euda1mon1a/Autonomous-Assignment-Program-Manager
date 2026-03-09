@@ -2,13 +2,8 @@
 Schedule XML Exporter.
 
 Generates XML schedule from resident data using rotation patterns.
-This is the validation checkpoint in the central dogma pipeline:
 
-    DB (BlockAssignments) → ScheduleXMLExporter → XML → compare to ROSETTA
-                                                      ↓ if match
-                                               XMLToXlsxConverter → xlsx
-
-The XML format matches ROSETTA ground truth for validation.
+    DB (BlockAssignments) → ScheduleXMLExporter → XML → XMLToXlsxConverter → xlsx
 """
 
 from datetime import date, timedelta
@@ -170,7 +165,7 @@ def _is_intern_continuity_exempt(rotation: str) -> bool:
 
 class ScheduleXMLExporter:
     """
-    Export schedule data to XML format matching ROSETTA ground truth.
+    Export schedule data to XML format.
 
     The XML format:
     ```xml
@@ -200,7 +195,7 @@ class ScheduleXMLExporter:
                 - rotation2: Secondary rotation code (for mid-block transition)
 
         Returns:
-            XML string matching ROSETTA format
+            XML string
         """
         root = Element("schedule")
         root.set("block_start", self.block_start.isoformat())

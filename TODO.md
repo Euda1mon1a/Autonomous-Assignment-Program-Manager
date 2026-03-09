@@ -18,25 +18,28 @@
 
 ## P1 — High / This Sprint
 
-### Annual Rotation Optimizer (ARO) — Backend Wiring
+### Annual Rotation Optimizer (ARO) — Frontend UI
 
-> Solver core implemented (48/48 tests passing). DB/service/API pending.
+> Backend fully wired (PR #1276): DB models, schemas, service, API, migration. Solver core 48/48 tests.
 
-- [ ] **ARO DB models** — `AnnualRotationPlan` + `AnnualRotationAssignment` staging tables + Alembic migration
-- [ ] **ARO Pydantic schemas** — Request/response models for plan CRUD, optimize, publish
-- [ ] **ARO service layer** — Lifecycle: create_plan → import_leave → optimize → approve → publish
-- [ ] **ARO API routes** — REST endpoints under `/api/v1/annual-planner/plans/...`
-- [ ] **ARO rotation mapping** — Rotation name → `rotation_template_id` for publish step
+- [x] **ARO DB models** — `AnnualRotationPlan` + `AnnualRotationAssignment` + migration (PR #1276)
+- [x] **ARO Pydantic schemas** — Request/response models for plan CRUD, optimize, publish (PR #1276)
+- [x] **ARO service layer** — create_plan → import_leave → optimize → approve → publish (PR #1276)
+- [x] **ARO API routes** — REST endpoints under `/api/v1/annual-planner/plans/...` (PR #1276)
+- [x] **ARO rotation mapping** — `publish_plan()` resolves rotation_template_id + conflict handling (PR #1276)
+- [ ] **ARO Frontend UI** — `/hub/annual-planning` page (blocked on frontend sprint)
 - **Doc:** `docs/architecture/ANNUAL_ROTATION_OPTIMIZER.md`
 
 ### Excel Pipeline — Stateful Roundtrip
 
-> All 4 phases designed, none implemented. Phases are independent and incrementally shippable.
+> Phases 1–3 and 4a/4b complete. Phase 4c (provenance comments) deferred.
 
-- [ ] **Phase 1: Phantom Database** — Hidden `__SYS_META__` sheet with export metadata (academic_year, block, timestamp, version). Reject stale imports.
-- [ ] **Phase 2: UUID Anchoring** — Hidden `__ANCHORS__` sheet with person_id, block_assignment_id, row_hash. Skip fuzzy matching on re-import, skip unchanged rows.
-- [ ] **Phase 3: Data Validation** — Excel DataValidation dropdowns from `ValidRotations`/`ValidActivities` named ranges.
-- [ ] **Phase 4: Leave Overlays & Provenance** — Dynamic conditional formatting, leave-day formulas, override provenance comments.
+- [x] **Phase 1: Phantom Database** — `__SYS_META__` veryHidden sheet with metadata JSON (PRs #1262-#1264)
+- [x] **Phase 2: UUID Anchoring** — `__ANCHORS__` + `__BASELINE__` sheets with person_id, row_hash (PRs #1262-#1264)
+- [x] **Phase 3: Data Validation** — `__REF__` sheet + Named Ranges + DataValidation dropdowns (PRs #1262-#1264)
+- [x] **Phase 4a: Dynamic CF** — CellIsRule per activity code (PRs #1262-#1264)
+- [x] **Phase 4b: Leave formula** — COUNTIF LV column formula (PRs #1262-#1264)
+- [ ] **Phase 4c: Provenance comments** — Override provenance comments on hand-jammed cells. Deferred.
 - **Doc:** `docs/architecture/excel-stateful-roundtrip-roadmap.md`
 
 ### Scheduling Engine
@@ -73,7 +76,7 @@
 ### Frontend
 
 - [ ] **Frontend Phase 2: Draft & Publish** — Generate button creates draft instead of direct write. DraftPreviewPanel diff visualization.
-- [ ] **Frontend Phase 3: ARO UI Hub** — `/hub/annual-planning` page (blocked on ARO backend API).
+- [ ] **Frontend Phase 3: ARO UI Hub** — `/hub/annual-planning` page (backend API ready, PR #1276).
 - [ ] **Wire remaining enum hooks** — `useActivityCategories()`, `useRotationTypes()`, `useConstraintCategories()`, `useFreezeScopes()` into dropdowns.
 - [ ] **Color scheme parity** — Tailwind classes matching `TAMC_Color_Scheme_Reference.xml` (ADV, C30/C40 distinctions).
 - [ ] **MCP placeholder tools (DEBT-009)** — 11 tools return mock data (Hopfield, immune, VaR, Shapley).
@@ -87,6 +90,10 @@
 
 ## Recently Completed (March 2026)
 
+- [x] **ARO backend wiring** — DB models, schemas, service, API, migration (PR #1276)
+- [x] **Excel Phases 1–3 + 4a/4b** — Stateful roundtrip pipeline complete (PRs #1262-#1264)
+- [x] **Excel checksum determinism** — Sorted rows for stable SHA-256 (PR #1277)
+- [x] **ROSETTA archive** — Stale Block 10 reference files archived to `docs/archived/scheduling/`
 - [x] **mypy zero** — 3,991→0 errors (PRs #1272, #1275)
 - [x] **TypeScript test compilation** — 97→0 errors (PR #1275)
 - [x] **Test suite zero-failure** — 8,302 passing from 552 issues (PR #1273)

@@ -11,7 +11,7 @@ Two Truths Architecture:
                                       ↓
                   HalfDayJSONExporter → JSON (canonical export)
 
-This XML exporter is kept for validation and legacy ROSETTA compatibility.
+This XML exporter is kept for validation and legacy compatibility.
 """
 
 from datetime import date
@@ -41,7 +41,7 @@ class HalfDayXMLExporter:
     It exports DESCRIPTIVE truth (what IS scheduled), not PRESCRIPTIVE truth
     (what SHOULD be scheduled).
 
-    XML format matches ROSETTA for validation:
+    XML format:
     ```xml
     <schedule block_start="2026-03-12" block_end="2026-04-08" source="half_day_assignments">
       <resident name="Name, First" pgy="1" rotation1="FMC" rotation2="">
@@ -80,7 +80,7 @@ class HalfDayXMLExporter:
             include_call: If True, include call assignments (default: False)
 
         Returns:
-            XML string in ROSETTA-compatible format
+            XML string
         """
         # Build root element
         root = Element("schedule")
@@ -513,7 +513,7 @@ class HalfDayXMLExporter:
         slots to maintain ROSETTA XML compatibility.
         """
         if assignment is None:
-            return ""  # Missing slot - empty for ROSETTA compatibility
+            return ""  # Missing slot - empty for compatibility
 
         if assignment.activity is None:
             # NULL activity_id - data integrity issue (EC-4)
@@ -523,7 +523,7 @@ class HalfDayXMLExporter:
                 f"date={assignment.date}, "
                 f"time_of_day={assignment.time_of_day}"
             )
-            return ""  # NULL activity - empty for ROSETTA compatibility
+            return ""  # NULL activity - empty for compatibility
 
             # Use display_abbreviation if available, else code
         activity = assignment.activity

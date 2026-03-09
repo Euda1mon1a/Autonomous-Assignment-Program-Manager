@@ -1,8 +1,8 @@
 # Stateful Round-Trip and Schema Hardening Roadmap
 
-> **Status:** Planning — Excel phases unstarted; Schema Track A partially implemented; Track E (ARO) solver core implemented
+> **Status:** Excel Phases 1–3 and 4a/4b complete; Phase 4c (provenance comments) pending. Track A partially implemented. Track E (ARO) backend wired.
 > **Created:** 2026-02-24
-> **Updated:** 2026-03-03 — Track E (ARO) solver core implemented with 48/48 tests passing. DB models, service layer, and API wiring pending. Track A call equity done (PRs #1199, #1202, #1217). Excel phases 1-4 remain backlog.
+> **Updated:** 2026-03-09 — Excel Phases 1–4b implemented in TAMCBlockExporter. Track E (ARO) fully wired: solver core + DB models + service layer + API routes (PRs #1276, #1277). Track A call equity done (PRs #1199, #1202, #1217).
 > **Origin:** Architectural proposal from external review of Excel import/export pipeline and database schema
 
 ---
@@ -32,20 +32,22 @@ Two parallel tracks, one new optimizer track, plus two evaluated-and-deferred pr
 
 | Capability | Status |
 |------------|--------|
-| Hidden metadata sheets | Not implemented |
-| UUID anchoring for person/row identity | Not implemented |
-| Data validation dropdowns | Not implemented |
-| Dynamic conditional formatting | Partial — `scripts/ops/stamp_template_cf.py` does static CF stamping |
-| Leave-day formulas | Not implemented |
-| Override provenance comments | Not implemented |
+| Hidden metadata sheets | **Done** — `__SYS_META__`, `__REF__`, `__BASELINE__`, `__OVERRIDES__` (excel_metadata.py + PR #1277) |
+| UUID anchoring for person/row identity | **Done** — `__ANCHORS__` sheet with person_id, block_assignment_id, row_hash (tamc_block_exporter.py:1059) |
+| Data validation dropdowns | **Done** — `ValidRotations`/`ValidActivities` Named Ranges + DataValidation (tamc_block_exporter.py:1014) |
+| Dynamic conditional formatting | **Done** — `CellIsRule` per activity code from color scheme (tamc_block_exporter.py:989) |
+| Leave-day formulas | **Done** — `COUNTIF(…,"LV")/2` formula column (tamc_block_exporter.py:1103) |
+| Override provenance comments | Not implemented — needs `openpyxl.comments.Comment` on overridden cells |
 
 ---
 
-## Phase 1: Phantom Database (Hidden Metadata Sheets)
+## Phase 1: Phantom Database (Hidden Metadata Sheets) — COMPLETE
 
 **Goal:** Import rejects wrong-block or stale files before parsing begins.
 
 **Value:** Eliminates the most common coordinator error — importing a Block 8 file into Block 9.
+
+> **Implemented:** `excel_metadata.py` (write/read functions), `canonical_schedule_export_service.py` (wiring), `import_staging_service.py` (AY mismatch rejection), `half_day_import_service.py` (block mismatch rejection). SHA-256 schedule checksum, forward-compatible reader, 31 tests. PRs pre-existing + #1277.
 
 ### Design
 
@@ -82,13 +84,15 @@ All new behavior is gated by `if "__SYS_META__" in wb.sheetnames:`. Legacy files
 
 ---
 
-## Phase 2: Spatial UUID Anchoring
+## Phase 2: Spatial UUID Anchoring — COMPLETE
 
 **Goal:** Deterministic person mapping (bypass fuzzy name matching); O(1) diff detection on unchanged rows.
 
 **Value:** Eliminates fuzzy matching errors and enables skip-unchanged-rows optimization during import.
 
 **Depends on:** Phase 1 (`compute_row_hash()` from `excel_metadata.py`)
+
+> **Implemented:** Export: `TAMCBlockExporter._write_anchor_sheet()` (lines 1059-1101). Import: `half_day_import_service.py` reads `__ANCHORS__`, populates `ParsedSlot.person_id`, computes row hash diff, skips unchanged rows (lines 960-1011). Legacy fuzzy fallback preserved for files without anchors.
 
 ### Design
 
@@ -123,13 +127,15 @@ Import reads anchors before processing:
 
 ---
 
-## Phase 3: Strict UI Contracts (Data Validation)
+## Phase 3: Strict UI Contracts (Data Validation) — COMPLETE
 
 **Goal:** Coordinators can only enter valid rotation and activity codes via Excel dropdowns.
 
 **Value:** Prevents typos at the source — invalid codes are rejected by Excel before the file is ever re-imported.
 
 **Depends on:** Phase 1 (Named Ranges from `__REF__` sheet)
+
+> **Implemented:** `TAMCBlockExporter._add_data_validation()` (lines 1014-1040). Rotation columns get `ValidRotations` dropdown, schedule cells get `ValidActivities` dropdown. Both reference Named Ranges from `__REF__` sheet.
 
 ### Design
 
@@ -167,13 +173,17 @@ for row in range(DATA_START_ROW, last_row + 1):
 
 ---
 
-## Phase 4: Stateful Leave Overlays and Provenance
+## Phase 4: Stateful Leave Overlays and Provenance — 4a/4b COMPLETE, 4c PENDING
 
 **Goal:** Leave codes auto-color, day counts auto-calculate, override provenance is preserved.
 
 **Value:** Eliminates the need for the separate `stamp_template_cf.py` script. Adds audit trail for manual overrides.
 
 **Depends on:** Phase 1 (reference data), Phase 2 (person identity for provenance)
+
+> **4a Done:** `_add_conditional_formatting()` (lines 989-1012) — dynamic CF rules from color scheme.
+> **4b Done:** `_add_leave_formula_column()` (lines 1103-1119) — `COUNTIF(…,"LV")/2` formula.
+> **4c Pending:** Provenance comments on overridden cells — needs `openpyxl.comments.Comment`.
 
 ### Design
 
@@ -458,11 +468,11 @@ stmt = select(Absence).where(
 
 **Priority: HIGH — AY 2026-27 planning needs to begin while AY 25-26 blocks 12-13 are still active**
 
-> **Solver core implemented:** Mar 3, 2026. 48/48 tests passing. Full design at `docs/architecture/ANNUAL_ROTATION_OPTIMIZER.md`.
+> **Backend fully wired:** Mar 9, 2026. Solver core (48/48 tests) + DB models + service layer + API routes + migration all merged (PRs #1276).
 >
-> **Implemented:** `pgy_config.py` (static rotation requirements), `context.py` (AnnualContext dataclass), `leave_parser.py` (Excel date parser with strict name matching), `solver.py` (CP-SAT model with H1/H3/H4/H6 hard constraints, S1/S2 soft constraints). Verified: feasibility with 6 residents/PGY, all constraint categories, leave satisfaction optimization, <0.05s solve time.
+> **Implemented:** `pgy_config.py` (static rotation requirements), `context.py` (AnnualContext dataclass), `leave_parser.py` (Excel date parser with strict name matching), `solver.py` (CP-SAT model with H1/H3/H4/H6 hard constraints, S1/S2 soft constraints), `AnnualRotationPlan` + `AnnualRotationAssignment` models, `annual_rotation_service.py` (create/optimize/publish lifecycle), `annual_rotation.py` API routes (6 endpoints), Alembic migration `20260309_annual_rot`. Publish resolves `rotation_template_id` from rotation name and handles existing assignment conflicts.
 >
-> **Remaining:** DB staging models (`AnnualRotationPlan`, `AnnualRotationAssignment`), Alembic migration, service layer (orchestration lifecycle, publish-to-block-assignments), API routes, rotation name → `rotation_template_id` mapping, Excel export of solution grid.
+> **Remaining:** Leave import endpoint, Excel export of solution grid, frontend UI (`/hub/annual-planning`), PersonAcademicYear integration (Track A dependency).
 
 **Goal:** CP-SAT-based optimizer that assigns rotations to blocks for all 18 residents across an entire academic year, maximizing leave preference satisfaction while respecting PGY-level constraints (sequencing, capacity, block eligibility).
 
@@ -508,10 +518,11 @@ Coordinators currently assign rotations to blocks manually. With 75 leave reques
 | `backend/app/scheduling/annual/solver.py` | ✅ Done | Monolithic CP-SAT solver (all constraints inline) |
 | `backend/tests/scheduling/annual/test_annual_solver.py` | ✅ Done | 27 solver tests |
 | `backend/tests/scheduling/annual/test_leave_parser.py` | ✅ Done | 21 parser/mapping tests |
-| `backend/app/models/annual_rotation_plan.py` | ⏳ Pending | Staging models (plan + assignments) |
-| `backend/app/services/annual_rotation_service.py` | ⏳ Pending | Orchestration lifecycle |
-| `backend/app/schemas/annual_rotation.py` | ⏳ Pending | Pydantic schemas |
-| `backend/app/api/routes/annual_rotation.py` | ⏳ Pending | REST endpoints |
+| `backend/app/models/annual_rotation.py` | ✅ Done | Staging models (plan + assignments) — PR #1276 |
+| `backend/app/services/annual_rotation_service.py` | ✅ Done | Orchestration lifecycle — PR #1276 |
+| `backend/app/schemas/annual_rotation.py` | ✅ Done | Pydantic schemas — PR #1276 |
+| `backend/app/api/routes/annual_rotation.py` | ✅ Done | REST endpoints (6 routes) — PR #1276 |
+| `backend/alembic/versions/20260309_annual_rot.py` | ✅ Done | Migration — PR #1276 |
 
 ---
 
