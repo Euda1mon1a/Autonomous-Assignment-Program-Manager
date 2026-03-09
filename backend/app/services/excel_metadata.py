@@ -1,24 +1,45 @@
-"""Excel metadata utility for stateful round-trips."""
+"""Excel metadata utility for stateful round-trips.
+
+Phase 1 of the Stateful Round-Trip roadmap ("Phantom Database").
+Hidden metadata sheets enable import-side validation (block/year mismatch
+rejection, stale-file detection) and schedule-level checksumming for
+smart diff.
+"""
+
+from __future__ import annotations
 
 import json
 import hashlib
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 from datetime import datetime, UTC
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from openpyxl import Workbook
 from openpyxl.workbook.defined_name import DefinedName
 
+METADATA_SHEET_NAME = "__SYS_META__"
+EXPORT_VERSION = "1.0"
+
 
 @dataclass
 class ExportMetadata:
-    """Metadata blob for exported Excel files."""
+    """Metadata blob for exported Excel files.
+
+    Stored as a JSON string in cell A1 of the veryHidden __SYS_META__ sheet.
+    Fields are additive — new fields MUST have defaults so that older
+    readers (``from_json``) can ignore them gracefully.
+    """
 
     academic_year: int
     export_timestamp: str
-    block_number: int | None = None  # Optional for year-level
-    export_version: int = 1
+    block_number: int | None = None  # Optional for year-level exports
+    export_version: str = EXPORT_VERSION
+    exported_by: str | None = None  # Username or system identifier
+    block_start_date: str | None = None  # ISO 8601 date
+    block_end_date: str | None = None  # ISO 8601 date
+    row_count: int = 0  # Number of data rows exported
+    checksum: str = ""  # SHA-256 of schedule data (compute_schedule_checksum)
     block_map: dict[str, str] | None = None  # sheet_name -> block_uuid
     llm_rules_of_engagement: str | None = (
         None  # AI agent instructions embedded in the workbook
@@ -31,29 +52,45 @@ class ExportMetadata:
         return json.dumps({k: v for k, v in d.items() if v is not None})
 
     @classmethod
-    def from_json(cls, data: str) -> "ExportMetadata":
-        """Load metadata from JSON string."""
-        return cls(**json.loads(data))
+    def from_json(cls, data: str) -> ExportMetadata:
+        """Load metadata from JSON string.
+
+        Tolerates unknown keys so that workbooks written by a newer
+        version of the exporter can still be read by older code.
+        """
+        raw = json.loads(data)
+        # Filter to only known fields for forward compatibility
+        known = {f.name for f in fields(cls)}
+        filtered = {k: v for k, v in raw.items() if k in known}
+        # Handle legacy int export_version -> str conversion
+        if "export_version" in filtered and isinstance(filtered["export_version"], int):
+            filtered["export_version"] = str(filtered["export_version"])
+        return cls(**filtered)
 
 
 def write_sys_meta_sheet(wb: Workbook, meta: ExportMetadata) -> None:
-    """
-    Create a veryHidden sheet __SYS_META__ with metadata JSON.
+    """Create a veryHidden sheet __SYS_META__ with metadata JSON.
 
-    veryHidden sheets cannot be unhidden via the Excel UI.
+    ``veryHidden`` sheets cannot be unhidden via the Excel UI — only VBA
+    or openpyxl can access them.  This prevents coordinators from
+    accidentally deleting the metadata.
     """
-    if "__SYS_META__" in wb.sheetnames:
-        del wb["__SYS_META__"]
-    ws = wb.create_sheet("__SYS_META__")
+    if METADATA_SHEET_NAME in wb.sheetnames:
+        del wb[METADATA_SHEET_NAME]
+    ws = wb.create_sheet(METADATA_SHEET_NAME)
     ws.sheet_state = "veryHidden"
     ws.cell(row=1, column=1, value=meta.to_json())
 
 
 def read_sys_meta(wb: Workbook) -> ExportMetadata | None:
-    """Read metadata from __SYS_META__ sheet if present."""
-    if "__SYS_META__" not in wb.sheetnames:
+    """Read metadata from __SYS_META__ sheet if present.
+
+    Returns ``None`` for legacy workbooks without metadata (backward
+    compatible — callers gate new behaviour on ``meta is not None``).
+    """
+    if METADATA_SHEET_NAME not in wb.sheetnames:
         return None
-    ws = wb["__SYS_META__"]
+    ws = wb[METADATA_SHEET_NAME]
     val = ws.cell(row=1, column=1).value
     if not val:
         return None
@@ -259,3 +296,22 @@ def compute_row_hash(
     nd = "|".join(normalize_for_hash(d) for d in days)
     data = f"{person_id}|{nr1}|{nr2}|{nd}"
     return hashlib.md5(data.encode()).hexdigest()  # nosec B324 — not for security
+
+
+def compute_schedule_checksum(data_rows: list[list[Any]]) -> str:
+    """SHA-256 checksum of schedule data for change detection.
+
+    Produces a deterministic fingerprint of the entire schedule grid so
+    that the import side can detect whether the file's content has been
+    modified since export (beyond what row-level hashes catch, e.g.
+    added/removed rows).
+
+    Args:
+        data_rows: List of rows, where each row is a list of cell values.
+            Typically the schedule grid (names + activity codes).
+
+    Returns:
+        Hex-encoded SHA-256 digest string.
+    """
+    content = json.dumps(data_rows, sort_keys=True, default=str)
+    return hashlib.sha256(content.encode()).hexdigest()

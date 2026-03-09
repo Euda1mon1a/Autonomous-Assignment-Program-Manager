@@ -27,6 +27,7 @@ from app.models.activity import Activity
 from app.models.rotation_template import RotationTemplate
 from app.services.excel_metadata import (
     ExportMetadata,
+    compute_schedule_checksum,
     write_baseline_sheet,
     write_ref_sheet,
     write_sys_meta_sheet,
@@ -83,10 +84,17 @@ class CanonicalScheduleExportService:
             a[0] for a in self.db.query(Activity.code).distinct().all() if a[0]
         ]
 
+        # Compute schedule-level checksum from resident + faculty day grids
+        checksum_rows = self._collect_checksum_rows(data)
+
         meta = ExportMetadata(
             academic_year=academic_year,
             block_number=block_number,
             export_timestamp=datetime.now(UTC).isoformat(),
+            block_start_date=block_dates.start_date.isoformat(),
+            block_end_date=block_dates.end_date.isoformat(),
+            row_count=len(data.get("residents", [])) + len(data.get("faculty", [])),
+            checksum=compute_schedule_checksum(checksum_rows),
         )
 
         exporter = TAMCBlockExporter(
@@ -484,6 +492,25 @@ class CanonicalScheduleExportService:
                     )
 
         return cells
+
+    @staticmethod
+    def _collect_checksum_rows(data: dict[str, Any]) -> list[list[Any]]:
+        """Build a deterministic grid of schedule values for checksumming.
+
+        Extracts person name + per-day AM/PM codes for every resident and
+        faculty member, producing a list-of-lists that
+        ``compute_schedule_checksum`` can hash.
+        """
+        rows: list[list[Any]] = []
+        for group_key in ("residents", "faculty"):
+            for person in data.get(group_key, []):
+                row: list[Any] = [person.get("name", "")]
+                for day in person.get("days", []):
+                    row.append(day.get("am"))
+                    row.append(day.get("pm"))
+                rows.append(row)
+        rows.sort()  # Deterministic ordering for stable checksums
+        return rows
 
     # Faculty excluded from export (placeholders and removed staff)
     _EXCLUDED_FACULTY_NAMES: set[str] = {"Kate Bohringer"}

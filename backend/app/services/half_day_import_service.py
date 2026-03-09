@@ -242,6 +242,17 @@ class HalfDayImportService:
                     f"Academic year mismatch: file is for AY {meta.academic_year}, "
                     f"but you selected AY {academic_year}."
                 )
+            # Audit trail: log metadata for traceability
+            logger.info(
+                "Import metadata: block=%s, AY=%s, exported=%s, "
+                "rows=%d, checksum=%.12s, version=%s",
+                meta.block_number,
+                meta.academic_year,
+                meta.export_timestamp,
+                meta.row_count,
+                meta.checksum or "n/a",
+                meta.export_version,
+            )
 
         block_dates = get_block_dates(block_number, academic_year)
 
@@ -907,7 +918,7 @@ class HalfDayImportService:
         if meta:
             logger.info(
                 "Import metadata: academic_year=%s, block_number=%s, "
-                "export_version=%d, export_timestamp=%s",
+                "export_version=%s, export_timestamp=%s",
                 meta.academic_year,
                 meta.block_number,
                 meta.export_version,

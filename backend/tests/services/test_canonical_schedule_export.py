@@ -561,7 +561,7 @@ class TestPhase1Metadata:
         assert meta is not None
         assert meta.academic_year == 2026
         assert meta.block_number == 10
-        assert meta.export_version == 1
+        assert meta.export_version == "1.0"
         wb.close()
 
     def test_inject_metadata_adds_ref_sheet(self):
