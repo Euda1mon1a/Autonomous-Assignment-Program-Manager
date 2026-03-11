@@ -113,7 +113,7 @@ class SyncPreloadService:
             if cleared:
                 logger.info(f"Cleared {cleared} stale faculty call PCAT/DO preloads")
 
-        total += self._load_absences(start_date, end_date)
+        total += self._load_absences(start_date, end_date, block_number, academic_year)
         total += self._load_institutional_events(start_date, end_date)
         total += self._load_rotation_protected_preloads(block_number, academic_year)
         total += self._load_inpatient_preloads(start_date, end_date)
@@ -166,10 +166,30 @@ class SyncPreloadService:
             self.session.flush()
         return deleted
 
-    def _load_absences(self, start_date: date, end_date: date) -> int:
+    def _load_absences(
+        self,
+        start_date: date,
+        end_date: date,
+        block_number: int,
+        academic_year: int,
+    ) -> int:
         count = 0
         lv_am_id = self._activity_cache.get("LV-AM")
         lv_pm_id = self._activity_cache.get("LV-PM")
+
+        # Build set of person_ids on leave-ineligible rotations for THIS block
+        leave_ineligible_stmt = (
+            select(BlockAssignment.resident_id)
+            .join(BlockAssignment.rotation_template)
+            .where(
+                BlockAssignment.block_number == block_number,
+                BlockAssignment.academic_year == academic_year,
+                BlockAssignment.rotation_template.has(leave_eligible=False),
+            )
+        )
+        leave_ineligible_ids = {
+            row[0] for row in self.session.execute(leave_ineligible_stmt).all()
+        }
 
         stmt = select(Absence).where(
             Absence.start_date <= end_date,
@@ -182,6 +202,12 @@ class SyncPreloadService:
         )
 
         for absence in absences:
+            if absence.person_id in leave_ineligible_ids:
+                logger.debug(
+                    f"Skipping absence for {absence.person_id} — "
+                    f"on leave-ineligible rotation"
+                )
+                continue
             current = max(absence.start_date, start_date)
             end = min(absence.end_date, end_date)
             while current <= end:
@@ -204,6 +230,26 @@ class SyncPreloadService:
         Returns:
             Number of new preloads created.
         """
+        # Check if person is on a leave-ineligible rotation for THIS block
+        block_number, academic_year = get_block_number_for_date(start_date)
+        leave_ineligible = self.session.execute(
+            select(BlockAssignment.id)
+            .join(BlockAssignment.rotation_template)
+            .where(
+                BlockAssignment.resident_id == person_id,
+                BlockAssignment.block_number == block_number,
+                BlockAssignment.academic_year == academic_year,
+                BlockAssignment.rotation_template.has(leave_eligible=False),
+            )
+            .limit(1)
+        ).first()
+        if leave_ineligible:
+            logger.debug(
+                f"Skipping leave refresh for {person_id} — "
+                f"leave-ineligible rotation in Block {block_number}"
+            )
+            return 0
+
         lv_am_id = self._activity_cache.get("LV-AM")
         lv_pm_id = self._activity_cache.get("LV-PM")
         lv_ids = [aid for aid in [lv_am_id, lv_pm_id] if aid]

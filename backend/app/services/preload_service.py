@@ -16,14 +16,6 @@ Order of Operations (per TAMC skill):
 9. Load conferences (HAFP, USAFP, LEC)
 10. Load protected time (SIM, PI, MM)
 
-Block 10 FMIT Faculty:
-- Week 1: Faculty A (overlaps from Block 9)
-- Week 2: Faculty B
-- Week 3: Faculty C
-- Week 4: Faculty B
-- (Faculty D overlaps into Block 11)
-
-FMIT Residents: Petrie (R3), Cataquiz (R2)
 """
 
 from datetime import date, timedelta
@@ -112,7 +104,9 @@ class PreloadService:
         total = 0
 
         # Order of operations (per TAMC skill)
-        total += await self._load_absences(start_date, end_date)
+        total += await self._load_absences(
+            start_date, end_date, block_number, academic_year
+        )
         total += await self._load_institutional_events(start_date, end_date)
         total += await self._load_rotation_protected_preloads(
             block_number, academic_year
@@ -130,8 +124,27 @@ class PreloadService:
         logger.info(f"Loaded {total} preload assignments")
         return total
 
-    async def _load_absences(self, start_date: date, end_date: date) -> int:
+    async def _load_absences(
+        self,
+        start_date: date,
+        end_date: date,
+        block_number: int,
+        academic_year: int,
+    ) -> int:
         """Load absences as LV-AM/LV-PM preloads."""
+        # Build set of person_ids on leave-ineligible rotations for THIS block
+        leave_ineligible_stmt = (
+            select(BlockAssignment.resident_id)
+            .join(BlockAssignment.rotation_template)
+            .where(
+                BlockAssignment.block_number == block_number,
+                BlockAssignment.academic_year == academic_year,
+                BlockAssignment.rotation_template.has(leave_eligible=False),
+            )
+        )
+        leave_ineligible_result = await self.session.execute(leave_ineligible_stmt)
+        leave_ineligible_ids = {row[0] for row in leave_ineligible_result.all()}
+
         stmt = (
             select(Absence)
             .where(
@@ -150,6 +163,14 @@ class PreloadService:
 
         count = 0
         for absence in absences:
+            # Skip persons on leave-ineligible rotations
+            if absence.person_id in leave_ineligible_ids:
+                logger.debug(
+                    f"Skipping absence for {absence.person_id} — "
+                    f"on leave-ineligible rotation"
+                )
+                continue
+
             # Only preload blocking absences (P2 Codex fix)
             if not absence.should_block_assignment:
                 logger.debug(
