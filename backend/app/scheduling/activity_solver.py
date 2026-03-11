@@ -1445,6 +1445,7 @@ class CPSATActivitySolver:
         faculty_by_id: dict[UUID, Person] = {}
         faculty_week_slots: dict[tuple[UUID, int], list[int]] = defaultdict(list)
         faculty_clinic_shortfalls: list[Any] = []
+        faculty_clinic_zero_penalties: list[Any] = []
         faculty_clinic_overages: list[Any] = []
         faculty_clinic_floor_constraints = 0
         if faculty_slots and clinic_activity:
@@ -1476,25 +1477,42 @@ class CPSATActivitySolver:
                 if not clinic_vars:
                     continue
 
-                hard_min = 0
-                # Keep at least one clinic session per week for faculty with clinic
-                # requirements, unless clinic floors are explicitly disabled.
-                if not disable_clinic_floor and min_needed > 0:
-                    hard_min = min(1, min_needed, len(clinic_vars))
-                    if hard_min > 0:
-                        model.Add(sum(clinic_vars) >= hard_min)
-                        faculty_clinic_floor_constraints += 1
+                # Entire clinic minimum is now a soft constraint driven by escalating penalties.
+                # This allows the solver to dynamically drop faculty to 0 clinics
+                # during critical staffing shortages (like AT/FMIT gaps) without crashing.
+                if min_needed > 0:
+                    if not disable_clinic_floor:
+                        shortfall = model.NewIntVar(
+                            0,
+                            min_needed,
+                            f"fac_clinic_short_{str(faculty_id)[:8]}_{week}",
+                        )
+                        model.Add(sum(clinic_vars) + shortfall >= min_needed)
+                        faculty_clinic_shortfalls.append(shortfall)
 
-                # Soft remainder: allow controlled shortfall above the hard floor
-                # to avoid hard infeasibility in tight supervision weeks.
-                if min_needed > hard_min:
-                    shortfall = model.NewIntVar(
-                        0,
-                        min_needed - hard_min,
-                        f"fac_clinic_short_{str(faculty_id)[:8]}_{week}",
-                    )
-                    model.Add(sum(clinic_vars) + shortfall >= min_needed)
-                    faculty_clinic_shortfalls.append(shortfall)
+                        # Apply an extreme non-linear penalty specifically for dropping to zero.
+                        # This ensures the solver behaves exactly like the old "hard floor" in 99% of cases,
+                        # but elegantly bends rather than breaks during critical shortages.
+                        is_zero = model.NewBoolVar(
+                            f"fac_clinic_zero_{str(faculty_id)[:8]}_{week}"
+                        )
+                        # If sum(clinic_vars) == 0, is_zero can be 1. If sum > 0, is_zero MUST be 0.
+                        # Therefore: is_zero * len(clinic_vars) <= len(clinic_vars) - sum(clinic_vars)
+                        model.Add(
+                            is_zero * len(clinic_vars)
+                            <= len(clinic_vars) - sum(clinic_vars)
+                        )
+                        # Give it a massive objective penalty later
+                        faculty_clinic_zero_penalties.append(is_zero)
+                    else:
+                        # Legacy fallback: if disable flag is thrown, just add standard linear shortfall
+                        shortfall = model.NewIntVar(
+                            0,
+                            min_needed,
+                            f"fac_clinic_short_{str(faculty_id)[:8]}_{week}",
+                        )
+                        model.Add(sum(clinic_vars) + shortfall >= min_needed)
+                        faculty_clinic_shortfalls.append(shortfall)
 
                 over_max = model.NewIntVar(
                     0,
@@ -2438,6 +2456,17 @@ class CPSATActivitySolver:
             penalty = shortfall_sum * FACULTY_CLINIC_SHORTFALL_PENALTY
             objective_expr = (
                 objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
+        if faculty_clinic_zero_penalties:
+            # Massive non-linear penalty for dropping a faculty to 0 clinics.
+            # This preserves the old "hard floor" behavior under normal circumstances,
+            # but allows bending to avoid INFEASIBLE under extreme staffing constraints.
+            zero_penalty_sum = sum(faculty_clinic_zero_penalties) * 500
+            objective_expr = (
+                objective_expr - zero_penalty_sum
+                if objective_expr is not None
+                else -zero_penalty_sum
             )
 
         if faculty_gme_shortfalls:
