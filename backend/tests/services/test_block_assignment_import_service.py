@@ -12,7 +12,6 @@ from unittest.mock import patch
 import pytest
 
 from app.services.block_assignment_import_service import (
-    COMBINED_ROTATION_MAPPINGS,
     ROTATION_SYNONYMS,
     BlockAssignmentImportService,
 )
@@ -171,57 +170,6 @@ class TestNormalizeRotationInput:
     def test_fmit_defaults_to_pgy1(self, service):
         """When no PGY info available, defaults to FMIT-PGY1."""
         assert service._normalize_rotation_input("FMIT", None) == "FMIT-PGY1"
-
-
-# ============================================================================
-# _match_combined_rotation
-# ============================================================================
-
-
-class TestMatchCombinedRotation:
-    """Tests for combined rotation pair matching."""
-
-    def test_combined_match(self, service):
-        rot_id = uuid.uuid4()
-        service._rotation_cache["NF-ENDO"] = (rot_id, "Night Float + Endo")
-        rid, name, conf = service._match_combined_rotation(
-            "NIGHT FLOAT", "ENDOCRINOLOGY"
-        )
-        assert rid == rot_id
-        assert conf == 1.0
-
-    def test_reverse_order_different_template(self, service):
-        """Some combined rotations have different templates based on order."""
-        nf_plus = uuid.uuid4()
-        c_plus_n = uuid.uuid4()
-        service._rotation_cache["NF+"] = (nf_plus, "NF+Cardio")
-        service._rotation_cache["C+N"] = (c_plus_n, "Cardio+NF")
-        rid1, _, _ = service._match_combined_rotation("NIGHT FLOAT", "CARDIOLOGY")
-        rid2, _, _ = service._match_combined_rotation("CARDIOLOGY", "NIGHT FLOAT")
-        assert rid1 == nf_plus
-        assert rid2 == c_plus_n
-
-    def test_empty_primary_returns_none(self, service):
-        rid, name, conf = service._match_combined_rotation("", "ENDOCRINOLOGY")
-        assert rid is None
-        assert conf == 0.0
-
-    def test_empty_secondary_returns_none(self, service):
-        rid, name, conf = service._match_combined_rotation("NIGHT FLOAT", "")
-        assert rid is None
-        assert conf == 0.0
-
-    def test_no_match_returns_none(self, service):
-        rid, name, conf = service._match_combined_rotation("UNKNOWN", "ALSO UNKNOWN")
-        assert rid is None
-        assert conf == 0.0
-
-    def test_abbreviation_match(self, service):
-        rot_id = uuid.uuid4()
-        service._rotation_cache["NF-ENDO"] = (rot_id, "NF-Endo")
-        rid, name, conf = service._match_combined_rotation("NF-PM", "ENDO")
-        assert rid == rot_id
-        assert conf == 1.0
 
 
 # ============================================================================
@@ -410,46 +358,6 @@ class TestSuggestRotationName:
 # ============================================================================
 # Constants validation
 # ============================================================================
-
-
-class TestCombinedRotationMappings:
-    """Tests for COMBINED_ROTATION_MAPPINGS constant."""
-
-    def test_not_empty(self):
-        assert len(COMBINED_ROTATION_MAPPINGS) > 0
-
-    def test_all_keys_are_tuples(self):
-        for key in COMBINED_ROTATION_MAPPINGS:
-            assert isinstance(key, tuple)
-            assert len(key) == 2
-
-    def test_all_values_are_strings(self):
-        for value in COMBINED_ROTATION_MAPPINGS.values():
-            assert isinstance(value, str)
-            assert len(value) > 0
-
-    def test_keys_are_uppercase(self):
-        for primary, secondary in COMBINED_ROTATION_MAPPINGS:
-            assert primary == primary.upper(), f"Key primary not uppercase: {primary}"
-            assert secondary == secondary.upper(), (
-                f"Key secondary not uppercase: {secondary}"
-            )
-
-    def test_night_float_endo_symmetric(self):
-        """NF + ENDO should map regardless of order (both keys exist)."""
-        assert ("NIGHT FLOAT", "ENDOCRINOLOGY") in COMBINED_ROTATION_MAPPINGS
-        assert ("ENDOCRINOLOGY", "NIGHT FLOAT") in COMBINED_ROTATION_MAPPINGS
-
-    def test_peds_ward_pnf_entries(self):
-        """Pediatrics ward + Peds NF should have both directions."""
-        assert (
-            "PEDIATRICS WARD",
-            "PEDIATRICS NIGHT FLOAT",
-        ) in COMBINED_ROTATION_MAPPINGS
-        assert (
-            "PEDIATRICS NIGHT FLOAT",
-            "PEDIATRICS WARD",
-        ) in COMBINED_ROTATION_MAPPINGS
 
 
 class TestRotationSynonyms:
