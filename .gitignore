@@ -254,6 +254,8 @@ docs/analysis/
 backend/data/
 backend/docs/
 backend/scripts/*.json
+backend/exports/
+exports/
 backend/tests/services/test_block_schedule_export_service.py
 backend/tests/services/test_xml_vs_rosetta.py
 
