@@ -39,6 +39,7 @@ NIGHT_FLOAT_ROTATIONS: set[str] = {
     "NF-DERM-PG",
     "CARDS-NF",
     "DERM-NF",
+    "FMIT-NF-PG",
 }
 LEC_EXEMPT_ROTATIONS: set[str] = {
     "NF",
@@ -49,6 +50,7 @@ LEC_EXEMPT_ROTATIONS: set[str] = {
     "NF-DERM-PG",
     "CARDS-NF",
     "DERM-NF",
+    "FMIT-NF-PG",
     "TDY",
     "HILO",
     "OKI",
@@ -64,6 +66,7 @@ INTERN_CONTINUITY_EXEMPT_ROTATIONS: set[str] = {
     "NF-DERM-PG",
     "CARDS-NF",
     "DERM-NF",
+    "FMIT-NF-PG",
     "TDY",
     "HILO",
     "OKI",
@@ -101,6 +104,7 @@ SATURDAY_OFF_ROTATIONS: set[str] = {
     "NF-DERM-PG",
     "CARDS-NF",
     "DERM-NF",
+    "FMIT-NF-PG",
 }
 
 # Rotation types that require translation to activity codes
@@ -127,6 +131,7 @@ NF_COMBINED_ACTIVITY_MAP: dict[str, str] = {
 REVERSE_NF_COMBINED_MAP: dict[str, str] = {
     "CARDS-NF": "CARDS",
     "DERM-NF": "DERM",
+    "FMIT-NF-PG": "FMIT",
 }
 
 
