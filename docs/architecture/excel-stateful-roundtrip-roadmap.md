@@ -619,3 +619,5 @@ Two of the four proposals from the external review were evaluated against the co
 - `backend/app/models/absence.py` — current absence model (source of truth for leave)
 - `backend/app/models/block_assignment.py` — current model with `has_leave`/`leave_days` columns
 - `backend/app/services/preload/sync_preload_service.py` — `_load_absences()` at line 161 (current leave preload logic)
+- We will fully transition to a 14-day micro-block architecture in the future. For now, we will virtualize the shredding in the solver to handle legacy split blocks natively without touching the DB schema (Block 0 fudge factor = 27 microblocks total).
+- **Solver Constraint Needed:** Add a severe-penalty soft constraint (or hard constraint) preventing PGY-1s from being assigned a split FMIT/NF block until the second half of the academic year, or until they have successfully completed a full FMIT-only block.
