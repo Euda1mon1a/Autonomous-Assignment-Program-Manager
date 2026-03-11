@@ -2650,11 +2650,18 @@ class CPSATActivitySolver:
             ci_act = self._get_activity_by_code("C-I")
             clinic_act_ids = [a.id for a in [c_act, ci_act] if a]
 
+            distinct_residents = {
+                slot.person
+                for slot in slots
+                if slot.person and slot.person.type != "faculty"
+            }
             pgy12_residents = [
-                r
-                for r in residents  # type: ignore[name-defined]
-                if getattr(r, "pgy_level", 0) in (1, 2)
+                r for r in distinct_residents if getattr(r, "pgy_level", 0) in (1, 2)
             ]
+
+            slots_by_person_date_time = {
+                (slot.person_id, slot.date, slot.time_of_day): slot for slot in slots
+            }
 
             final_wed_penalties = []
             for r in pgy12_residents:
@@ -2662,15 +2669,15 @@ class CPSATActivitySolver:
                 wed_pm_key = (r.id, final_wed_date, "PM")
 
                 # Check if this slot exists in our candidate space
-                if wed_pm_key not in slots_by_person_date_time:  # type: ignore[name-defined]
+                if wed_pm_key not in slots_by_person_date_time:
                     continue
 
-                slot = slots_by_person_date_time[wed_pm_key]  # type: ignore[name-defined]
+                slot = slots_by_person_date_time[wed_pm_key]
 
                 # Gather variables for C or C-I in this slot
                 clinic_vars = []
                 for act_id in clinic_act_ids:
-                    var = self._variables.get((slot.id, act_id))  # type: ignore[attr-defined]
+                    var = self._variables.get((slot.id, act_id))
                     if var is not None:
                         clinic_vars.append(var)
 
