@@ -124,6 +124,22 @@ def downgrade() -> None:
         """)
     )
 
+    # Repoint HDAs from half=2 rows back to half=1 rows before deleting
+    conn.execute(
+        sa.text("""
+        UPDATE half_day_assignments AS hda
+        SET block_assignment_id = h1.id
+        FROM block_assignments AS h2
+        JOIN block_assignments AS h1
+            ON h1.block_half = 1
+           AND h1.block_number = h2.block_number
+           AND h1.academic_year = h2.academic_year
+           AND h1.resident_id = h2.resident_id
+        WHERE hda.block_assignment_id = h2.id
+          AND h2.block_half = 2
+        """)
+    )
+
     # Delete the half=2 rows (now merged into secondary)
     conn.execute(
         sa.text("""
