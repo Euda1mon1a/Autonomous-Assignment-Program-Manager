@@ -256,7 +256,6 @@ class BlockScheduleExportService:
             .options(
                 selectinload(BlockAssignment.resident),
                 selectinload(BlockAssignment.rotation_template),
-                selectinload(BlockAssignment.secondary_rotation_template),
             )
             .where(BlockAssignment.block_number == block_number)
             .where(BlockAssignment.academic_year == academic_year)
@@ -369,30 +368,38 @@ class BlockScheduleExportService:
             - rotation1: Primary rotation code
             - rotation2: Secondary rotation code (optional)
         """
-        residents = []
-        for assignment in assignments:
-            if not assignment.resident:
-                continue
+        # Group by resident to merge block_half pairs
+        from collections import defaultdict
 
-                # Get rotation codes
+        by_resident: dict[UUID, dict[int | None, BlockAssignment]] = defaultdict(dict)
+        for assignment in assignments:
+            if assignment.resident:
+                by_resident[assignment.resident_id][assignment.block_half] = assignment
+
+        residents = []
+        for resident_id, halves in by_resident.items():
+            # Pick any assignment to get resident info
+            sample = next(iter(halves.values()))
+            name = self._convert_name_format(sample.resident.name)
+
             rotation1 = ""
             rotation2 = None
 
-            if assignment.rotation_template:
-                rotation1 = self._get_rotation_code(assignment.rotation_template)
+            half1 = halves.get(1)
+            half2 = halves.get(2)
+            full = halves.get(None)
 
-            if assignment.secondary_rotation_template:
-                rotation2 = self._get_rotation_code(
-                    assignment.secondary_rotation_template
-                )
-
-                # Convert name to "Last, First" format
-            name = self._convert_name_format(assignment.resident.name)
+            if half1 and half1.rotation_template:
+                rotation1 = self._get_rotation_code(half1.rotation_template)
+            if half2 and half2.rotation_template:
+                rotation2 = self._get_rotation_code(half2.rotation_template)
+            if full and full.rotation_template:
+                rotation1 = self._get_rotation_code(full.rotation_template)
 
             residents.append(
                 {
                     "name": name,
-                    "pgy": assignment.resident.pgy_level or 1,
+                    "pgy": sample.resident.pgy_level or 1,
                     "rotation1": rotation1,
                     "rotation2": rotation2,
                 }

@@ -442,15 +442,24 @@ def test_preload_compound_rotation_weekends(db):
 
     block_number = 10
     academic_year = 2025
-    assignment = BlockAssignment(
+    # Two block_half rows instead of single row with secondary
+    assignment1 = BlockAssignment(
         id=uuid4(),
         block_number=block_number,
         academic_year=academic_year,
         resident_id=resident.id,
         rotation_template_id=primary.id,
-        secondary_rotation_template_id=secondary.id,
+        block_half=1,
     )
-    db.add(assignment)
+    assignment2 = BlockAssignment(
+        id=uuid4(),
+        block_number=block_number,
+        academic_year=academic_year,
+        resident_id=resident.id,
+        rotation_template_id=secondary.id,
+        block_half=2,
+    )
+    db.add_all([assignment1, assignment2])
     db.commit()
 
     service = SyncPreloadService(db)
@@ -505,15 +514,24 @@ def test_preload_nf_split_secondary_rotation(db):
 
     block_number = 10
     academic_year = 2025
-    assignment = BlockAssignment(
+    # Two block_half rows instead of single row with secondary
+    assignment1 = BlockAssignment(
         id=uuid4(),
         block_number=block_number,
         academic_year=academic_year,
         resident_id=resident.id,
         rotation_template_id=primary.id,
-        secondary_rotation_template_id=secondary.id,
+        block_half=1,
     )
-    db.add(assignment)
+    assignment2 = BlockAssignment(
+        id=uuid4(),
+        block_number=block_number,
+        academic_year=academic_year,
+        resident_id=resident.id,
+        rotation_template_id=secondary.id,
+        block_half=2,
+    )
+    db.add_all([assignment1, assignment2])
     db.commit()
 
     service = SyncPreloadService(db)

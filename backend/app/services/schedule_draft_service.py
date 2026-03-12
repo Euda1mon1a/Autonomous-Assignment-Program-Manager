@@ -1291,26 +1291,26 @@ class ScheduleDraftService:
         self, person_id: UUID, assignment_date: date
     ) -> RotationTemplate | None:
         block_number, academic_year = get_block_number_for_date(assignment_date)
-        block_assignment = (
+        query = (
             self.db.query(BlockAssignment)
             .options(
                 selectinload(BlockAssignment.rotation_template),
-                selectinload(BlockAssignment.secondary_rotation_template),
             )
             .filter(
                 BlockAssignment.resident_id == person_id,
                 BlockAssignment.block_number == block_number,
                 BlockAssignment.academic_year == academic_year,
             )
-            .first()
+        )
+        # With block_half, half-block rows cover exactly their date range.
+        # Prefer the half-specific row if one exists.
+        half = get_block_half(assignment_date)
+        block_assignment = (
+            query.filter(BlockAssignment.block_half == half).first()
+            or query.filter(BlockAssignment.block_half.is_(None)).first()
         )
         if not block_assignment:
             return None
-        if (
-            block_assignment.secondary_rotation_template_id
-            and get_block_half(assignment_date) == 2
-        ):
-            return block_assignment.secondary_rotation_template
         return block_assignment.rotation_template
 
     def _resolve_fmc_capacity_flag(

@@ -2308,22 +2308,7 @@ class SchedulingEngine:
                     RotationTemplate.rotation_type == "outpatient",
                 )
             )
-            secondary_outpatient = (
-                self.db.query(BlockAssignment.resident_id)
-                .join(
-                    RotationTemplate,
-                    BlockAssignment.secondary_rotation_template_id
-                    == RotationTemplate.id,
-                )
-                .filter(
-                    BlockAssignment.block_number == block_number,
-                    BlockAssignment.academic_year == academic_year,
-                    RotationTemplate.rotation_type == "outpatient",
-                )
-            )
-            outpatient_resident_ids = (
-                primary_outpatient.union(secondary_outpatient).distinct().all()
-            )
+            outpatient_resident_ids = primary_outpatient.distinct().all()
             outpatient_ids = [row[0] for row in outpatient_resident_ids]
             if not outpatient_ids:
                 # Fall back to all residents if no outpatient found
@@ -2717,10 +2702,6 @@ class SchedulingEngine:
             rid = cast(UUID, ba.resident_id)
             if ba.rotation_template_id:
                 result.setdefault(rid, set()).add(cast(UUID, ba.rotation_template_id))
-            if ba.secondary_rotation_template_id:
-                result.setdefault(rid, set()).add(
-                    cast(UUID, ba.secondary_rotation_template_id)
-                )
         logger.debug(
             f"Loaded resident_template_map: {len(result)} mappings "
             f"for block {block_number}/{academic_year}"

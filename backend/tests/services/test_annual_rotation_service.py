@@ -388,8 +388,6 @@ class TestPublishCombinedRotations:
         )
         assert ba is not None
         assert ba.rotation_template_id == nf_cardio.id
-        # NF-CARDIO is a combined template (None secondary), so secondary should be NULL
-        assert ba.secondary_rotation_template_id is None
 
     def test_two_template_split_creates_half_block_rows(self, authed_client, db):
         """Two-template combined rotations create two rows with block_half."""
@@ -469,9 +467,7 @@ class TestPublishCombinedRotations:
         # First half: PSYCH
         assert assignments[0].rotation_template_id == psych.id
         assert assignments[0].block_half == 1
-        assert assignments[0].secondary_rotation_template_id is None
 
         # Second half: NF-AM
         assert assignments[1].rotation_template_id == nf_am.id
         assert assignments[1].block_half == 2
-        assert assignments[1].secondary_rotation_template_id is None

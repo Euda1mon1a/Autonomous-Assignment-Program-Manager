@@ -154,10 +154,8 @@ def _resident_penalty(
     if not block_assignment:
         return RESIDENT_PENALTY_OTHER
 
+    # With block_half, each row already covers its half of the block
     template = block_assignment.rotation_template
-    if block_assignment.secondary_rotation_template:
-        if (assignment_date - start_date).days >= 14:
-            template = block_assignment.secondary_rotation_template
 
     abbrev = _normalize(getattr(template, "abbreviation", ""))
     name = _normalize(getattr(template, "name", ""))
@@ -298,9 +296,6 @@ def main() -> int:
                 selectinload(HalfDayAssignment.activity),
                 selectinload(HalfDayAssignment.block_assignment).selectinload(
                     BlockAssignment.rotation_template
-                ),
-                selectinload(HalfDayAssignment.block_assignment).selectinload(
-                    BlockAssignment.secondary_rotation_template
                 ),
             )
             .filter(HalfDayAssignment.date >= start_date)

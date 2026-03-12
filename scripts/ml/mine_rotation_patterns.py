@@ -88,7 +88,11 @@ def fetch_hdas(cur, academic_year):
 
 
 def fetch_block_assignments(cur, academic_year):
-    """Fetch block_assignments → rotation template mappings."""
+    """Fetch block_assignments → rotation template mappings.
+
+    Split-block residents have two rows: block_half=1 (primary, days 1-14) and
+    block_half=2 (secondary, days 15-28). Full-block residents have block_half IS NULL.
+    """
     cur.execute("""
         SELECT
             ba.resident_id::text,
@@ -96,22 +100,30 @@ def fetch_block_assignments(cur, academic_year):
             rt.name AS template_name,
             rt.rotation_type,
             rt.template_category,
-            rt2.name AS secondary_template_name
+            ba.block_half
         FROM block_assignments ba
         LEFT JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
-        LEFT JOIN rotation_templates rt2 ON ba.secondary_rotation_template_id = rt2.id
         WHERE ba.academic_year = %s
+        ORDER BY ba.resident_id, ba.block_number, ba.block_half NULLS FIRST
     """, (academic_year,))
     # Key: (person_id, block_number) → template info
+    # Merge block_half=1 and block_half=2 rows into a single entry
     result = {}
     for row in cur.fetchall():
         key = (row[0], row[1])
-        result[key] = {
-            "template_name": row[2],
-            "rotation_type": row[3],
-            "template_category": row[4],
-            "secondary_template_name": row[5],
-        }
+        block_half = row[5]
+        if block_half == 2:
+            # Secondary rotation — attach to existing entry
+            if key in result:
+                result[key]["secondary_template_name"] = row[2]
+        else:
+            # Primary (block_half IS NULL or 1)
+            result[key] = {
+                "template_name": row[2],
+                "rotation_type": row[3],
+                "template_category": row[4],
+                "secondary_template_name": None,
+            }
     return result
 
 

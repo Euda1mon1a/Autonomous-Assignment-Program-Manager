@@ -73,15 +73,6 @@ class BlockAssignment(Base):
         ForeignKey("rotation_templates.id", ondelete="SET NULL"),
         nullable=True,
     )
-    # Secondary rotation for mid-block transitions (starts day 14 of 28-day block)
-    # Excel: Column 1 = primary rotation, Column 2 = secondary rotation
-    # DEPRECATED: Use block_half with two rows instead. Retained for backward compat.
-    secondary_rotation_template_id = Column(
-        GUID(),
-        ForeignKey("rotation_templates.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-
     # Half-block indicator: NULL = full block, 1 = days 1-14, 2 = days 15-28.
     # Combined rotations (e.g., NF + Cardiology) are expressed as two rows
     # with block_half=1 and block_half=2, each pointing to an atomic template.
@@ -104,11 +95,6 @@ class BlockAssignment(Base):
         "RotationTemplate",
         foreign_keys=[rotation_template_id],
         backref="block_assignments",
-    )
-    secondary_rotation_template = relationship(
-        "RotationTemplate",
-        foreign_keys=[secondary_rotation_template_id],
-        backref="secondary_block_assignments",
     )
     academic_block = relationship(
         "AcademicBlock",

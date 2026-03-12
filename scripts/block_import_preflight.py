@@ -6,7 +6,7 @@ Reusable script that catches common gotchas before a handjam import:
 3. Federal holidays are flagged in blocks table
 4. No graduated/departed residents have stale assignments
 5. All residents in block_assignments exist in people table
-6. Split-block residents have secondary_rotation_template_id set
+6. Split-block residents have a block_half=2 row for the secondary rotation
 
 Designed to be run before any block import (not just Block 12).
 
@@ -79,22 +79,34 @@ def check_block_assignments_exist(cur, block_num: int, ay: int) -> PreflightResu
 
 
 def check_block_assignment_roster(cur, block_num: int, ay: int) -> PreflightResult:
-    """List block_assignments for human review."""
+    """List block_assignments for human review.
+
+    Split-block residents have two rows: block_half=1 (days 1-14) and
+    block_half=2 (days 15-28). Full-block residents have block_half IS NULL.
+    """
     cur.execute("""
-        SELECT p.name, rt.abbreviation, rt2.abbreviation
+        SELECT p.name, rt.abbreviation, ba.block_half
         FROM block_assignments ba
         JOIN people p ON ba.resident_id = p.id
         JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
-        LEFT JOIN rotation_templates rt2 ON ba.secondary_rotation_template_id = rt2.id
         WHERE ba.block_number = %s AND ba.academic_year = %s
-        ORDER BY p.name
+        ORDER BY p.name, ba.block_half NULLS FIRST
     """, (block_num, ay))
     rows = cur.fetchall()
 
+    # Group by resident to show primary / secondary on one line
+    from collections import OrderedDict
+    roster = OrderedDict()
+    for name, rot, block_half in rows:
+        if name not in roster:
+            roster[name] = {"primary": rot, "secondary": None}
+        elif block_half == 2:
+            roster[name]["secondary"] = rot
+
     details = []
-    for name, rot, sec in rows:
-        sec_str = f" / {sec}" if sec else ""
-        details.append(f"  {name:30s} -> {rot}{sec_str}")
+    for name, rots in roster.items():
+        sec_str = f" / {rots['secondary']}" if rots["secondary"] else ""
+        details.append(f"  {name:30s} -> {rots['primary']}{sec_str}")
 
     return PreflightResult(
         name="block_assignment roster",
@@ -231,34 +243,51 @@ def check_stale_graduated_residents(cur, block_num: int, ay: int, block_start: d
 
 
 def check_split_block_completeness(cur, block_num: int, ay: int) -> PreflightResult:
-    """Check split-block residents have secondary_rotation_template_id set."""
+    """Check split-block residents have a block_half=2 row for the secondary rotation.
+
+    Split-block residents are represented as two block_assignment rows:
+    block_half=1 (days 1-14) and block_half=2 (days 15-28).
+    """
+    # Find residents with a block_half=1 row (first half of split)
     cur.execute("""
-        SELECT p.name, rt.abbreviation,
-               ba.secondary_rotation_template_id IS NOT NULL as has_secondary,
-               rt2.abbreviation as secondary_abbr
-        FROM block_assignments ba
-        JOIN people p ON ba.resident_id = p.id
-        JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
-        LEFT JOIN rotation_templates rt2 ON ba.secondary_rotation_template_id = rt2.id
-        WHERE ba.block_number = %s AND ba.academic_year = %s
+        SELECT ba1.resident_id, p.name,
+               rt1.abbreviation AS primary_abbr,
+               rt2.abbreviation AS secondary_abbr
+        FROM block_assignments ba1
+        JOIN people p ON ba1.resident_id = p.id
+        JOIN rotation_templates rt1 ON ba1.rotation_template_id = rt1.id
+        LEFT JOIN block_assignments ba2
+            ON ba2.resident_id = ba1.resident_id
+            AND ba2.block_number = ba1.block_number
+            AND ba2.academic_year = ba1.academic_year
+            AND ba2.block_half = 2
+        LEFT JOIN rotation_templates rt2 ON ba2.rotation_template_id = rt2.id
+        WHERE ba1.block_number = %s AND ba1.academic_year = %s
+          AND ba1.block_half = 1
         ORDER BY p.name
     """, (block_num, ay))
     rows = cur.fetchall()
 
     details = []
     split_count = 0
-    for name, rot, has_sec, sec_abbr in rows:
-        if has_sec:
+    missing_secondary = 0
+    for resident_id, name, primary_abbr, secondary_abbr in rows:
+        if secondary_abbr:
             split_count += 1
-            details.append(f"  {name}: {rot} / {sec_abbr} (split-block)")
+            details.append(f"  {name}: {primary_abbr} / {secondary_abbr} (split-block)")
+        else:
+            missing_secondary += 1
+            details.append(f"  {name}: {primary_abbr} / MISSING block_half=2 row!")
 
-    if split_count == 0:
+    if split_count == 0 and missing_secondary == 0:
         details.append("No split-block residents found (all single-rotation)")
 
+    passed = missing_secondary == 0
     return PreflightResult(
         name="split-block completeness",
-        passed=True,
+        passed=passed,
         details=details,
+        severity="WARNING" if not passed else "INFO",
     )
 
 

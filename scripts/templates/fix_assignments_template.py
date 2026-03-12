@@ -43,15 +43,29 @@ def main():
     ay = BLOCK_CONFIG["academic_year"]
 
     # Step 1: Get correct resident → rotation mappings from block_assignments
-    # Include secondary_rotation_template_id for split-block residents
+    # Split-block residents have two rows: block_half=1 (days 1-14) and
+    # block_half=2 (days 15-28). Full-block residents have block_half IS NULL.
     cur.execute(
-        """SELECT id, resident_id, rotation_template_id,
-                  secondary_rotation_template_id
+        """SELECT id, resident_id, rotation_template_id, block_half
         FROM block_assignments
-        WHERE block_number = %s AND academic_year = %s""",
+        WHERE block_number = %s AND academic_year = %s
+        ORDER BY resident_id, block_half NULLS FIRST""",
         (block_num, ay),
     )
-    block_assignments = cur.fetchall()
+    ba_rows = cur.fetchall()
+    # Merge into per-resident entries:
+    # (ba_id_primary, resident_id, primary_rotation_id, secondary_rotation_id, ba_id_secondary)
+    _ba_map = {}
+    for ba_id, resident_id, rotation_id, block_half in ba_rows:
+        if resident_id not in _ba_map:
+            _ba_map[resident_id] = [ba_id, resident_id, rotation_id, None, None]
+        if block_half == 2:
+            _ba_map[resident_id][3] = rotation_id
+            _ba_map[resident_id][4] = ba_id  # track half=2 ba_id
+        elif block_half is None or block_half == 1:
+            _ba_map[resident_id][0] = ba_id
+            _ba_map[resident_id][2] = rotation_id
+    block_assignments = [tuple(v) for v in _ba_map.values()]
     print(f"Found {len(block_assignments)} block_assignments for Block {block_num}")
 
     if not block_assignments:
@@ -68,7 +82,7 @@ def main():
 
     # Step 3: Delete stale resident assignments (preserve faculty/FMIT rows)
     slot_ids = [s[0] for s in block_slots]
-    resident_ids = [str(r) for _, r, _, _ in block_assignments]
+    resident_ids = [str(r) for _, r, _, _, _ in block_assignments]
     cur.execute(
         """DELETE FROM assignments
         WHERE block_id = ANY(%s::uuid[])
@@ -78,10 +92,10 @@ def main():
     print(f"Deleted {cur.rowcount} stale resident assignments")
 
     # Step 4: Create correct assignments
-    # For split-block residents, use secondary rotation after BLOCK_HALF_DAY (day 14)
+    # For split-block residents (block_half=2 row), use secondary rotation after day 14
     block_half_day = 14
     created = 0
-    for ba_id, resident_id, rotation_id, secondary_rotation_id in block_assignments:
+    for ba_id, resident_id, rotation_id, secondary_rotation_id, ba_id_secondary in block_assignments:
         for slot_id, slot_date in block_slots:
             day_in_block = (slot_date - start).days + 1
             effective_rotation = rotation_id
@@ -96,15 +110,26 @@ def main():
             created += 1
     print(f"Created {created} assignments")
 
-    # Step 5: Backfill block_assignment_id on HDAs
-    ba_lookup = {str(resident_id): str(ba_id) for ba_id, resident_id, _, _ in block_assignments}
+    # Step 5: Backfill block_assignment_id on HDAs (use correct ba_id per half)
+    mid_date = start + timedelta(days=block_half_day)
     updated = 0
-    for resident_id_str, ba_id_str in ba_lookup.items():
+    for ba_id, resident_id, _, _, ba_id_secondary in block_assignments:
+        rid = str(resident_id)
+        # First half (or full block)
+        cur.execute(
+            """UPDATE half_day_assignments
+            SET block_assignment_id = %s
+            WHERE person_id = %s AND date >= %s AND date < %s""",
+            (str(ba_id), rid, start, mid_date),
+        )
+        updated += cur.rowcount
+        # Second half — use half=2 ba_id if available
+        effective_ba = str(ba_id_secondary) if ba_id_secondary else str(ba_id)
         cur.execute(
             """UPDATE half_day_assignments
             SET block_assignment_id = %s
             WHERE person_id = %s AND date >= %s AND date <= %s""",
-            (ba_id_str, resident_id_str, start, end),
+            (effective_ba, rid, mid_date, end),
         )
         updated += cur.rowcount
     print(f"Backfilled block_assignment_id on {updated} HDAs")
