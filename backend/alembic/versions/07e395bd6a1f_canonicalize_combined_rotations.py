@@ -46,7 +46,7 @@ def upgrade() -> None:
         },
         "NICU/NF": {
             "name": "NICU/Night Float",
-            "aliases": ["NF-NICU", "NICU NF"],
+            "aliases": ["NF-NICU", "NICU NF", "NIC"],
         },
         "NEURO/NF": {
             "name": "Neurology/Night Float",
