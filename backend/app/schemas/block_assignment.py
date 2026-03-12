@@ -26,6 +26,8 @@ class BlockAssignmentBase(BaseModel):
     rotation_template_id: UUID | None = None
     block_half: int | None = Field(
         default=None,
+        ge=1,
+        le=2,
         description="Half-block indicator: null=full block, 1=days 1-14, 2=days 15-28",
     )
     has_leave: bool = False
@@ -60,7 +62,7 @@ class BlockAssignmentUpdate(BaseModel):
     """Schema for updating a block assignment."""
 
     rotation_template_id: UUID | None = None
-    block_half: int | None = None
+    block_half: int | None = Field(default=None, ge=1, le=2)
     has_leave: bool | None = None
     leave_days: int | None = Field(default=None, ge=0)
     assignment_reason: str | None = None

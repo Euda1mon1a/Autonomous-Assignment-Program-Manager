@@ -47,6 +47,13 @@ def downgrade() -> None:
         "rotation_templates",
         sa.Column("paired_template_id", sa.dialects.postgresql.UUID(), nullable=True),
     )
+    op.create_foreign_key(
+        "fk_paired_template",
+        "rotation_templates",
+        "rotation_templates",
+        ["paired_template_id"],
+        ["id"],
+    )
     op.add_column(
         "rotation_templates",
         sa.Column(

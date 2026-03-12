@@ -119,9 +119,10 @@ def downgrade() -> None:
     op.execute(sa.text("DROP FUNCTION IF EXISTS check_block_half_exclusion()"))
 
     # Merge half-block rows back into single full-block rows before restoring
-    # the old unique constraint. Keep the block_half=1 row (or the lower-ID row)
-    # as the surviving full-block row; delete the block_half=2 row. Copy the
-    # block_half=2 rotation_template_id into secondary_rotation_template_id.
+    # the old unique constraint.
+
+    # Step 1: For paired halves (both half=1 and half=2 exist), copy half=2's
+    # rotation into secondary_rotation_template_id on the half=1 row.
     conn.execute(
         sa.text("""
         UPDATE block_assignments AS keep
@@ -134,8 +135,23 @@ def downgrade() -> None:
           AND half2.block_half = 2
         """)
     )
-    conn.execute(sa.text("DELETE FROM block_assignments WHERE block_half = 2"))
-    # Clear block_half on remaining rows so the column can be dropped cleanly
+
+    # Step 2: Delete only paired half=2 rows (those with a matching half=1).
+    # Orphan half=2 rows (no matching half=1) are preserved and promoted below.
+    conn.execute(
+        sa.text("""
+        DELETE FROM block_assignments AS h2
+        USING block_assignments AS h1
+        WHERE h2.block_half = 2
+          AND h1.block_half = 1
+          AND h2.block_number = h1.block_number
+          AND h2.academic_year = h1.academic_year
+          AND h2.resident_id = h1.resident_id
+        """)
+    )
+
+    # Step 3: Clear block_half on all remaining rows (half=1 and orphan half=2)
+    # so they become full-block rows.
     conn.execute(sa.text("UPDATE block_assignments SET block_half = NULL"))
 
     # Drop partial unique indexes
