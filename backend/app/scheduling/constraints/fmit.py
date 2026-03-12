@@ -105,7 +105,13 @@ def _get_assignment_template(assignment: Any, context: SchedulingContext) -> Any
 def _identify_fmit_weeks_from_context(
     context: SchedulingContext,
 ) -> dict[Any, list[tuple[date, date]]]:
-    """Identify FMIT weeks from existing assignments in the context."""
+    """Identify FMIT weeks from existing assignments in the context.
+
+    Handles cross-block FMIT visibility: if an assignment's block_id
+    is not in context.blocks (e.g. from an adjacent block loaded with
+    a widened date filter), falls back to the eagerly loaded
+    assignment.block relationship.
+    """
     fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
 
     if not context.existing_assignments:
@@ -119,6 +125,9 @@ def _identify_fmit_weeks_from_context(
             continue
 
         block = blocks_by_id.get(assignment.block_id)
+        if not block:
+            # Cross-block: assignment from adjacent block, eagerly loaded
+            block = getattr(assignment, "block", None)
         if not block:
             continue
 

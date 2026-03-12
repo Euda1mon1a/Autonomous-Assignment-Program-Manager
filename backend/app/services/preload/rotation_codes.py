@@ -266,6 +266,11 @@ def get_rotation_preload_codes(
             return get_hilo_codes(current_date, block_start, block_end)
         if rotation_code == "PEDS-EM":
             return ("PEM", "PEM")
+        if rotation_code == "MIL":
+            dow = current_date.weekday()
+            if dow >= 5:  # Weekend
+                return ("W", "W")
+            return ("off", "off")
         return ("TDY", "TDY")
 
     if rotation_code in KAP_ROTATIONS:

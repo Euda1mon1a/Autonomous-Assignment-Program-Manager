@@ -209,3 +209,24 @@ def canonical_capacity_name(rotation_name: str) -> str:
 def get_capacity(rotation_name: str) -> int:
     """Return max residents per block for this rotation."""
     return CAPACITY_OVERRIDES.get(rotation_name, 1)
+
+
+# ── ARO Combined Template Map ──────────────────────────────────────────────
+# Maps ARO solver combined rotation names → DB rotation template abbreviations.
+#
+# Format: ARO_name → (primary_template_abbrev, secondary_template_abbrev | None)
+#   - None = combined template handles the split internally via NF_COMBINED_ACTIVITY_MAP
+#     (the template encodes both halves, e.g. NF-CARDIO = NF wk1-2 + CARDS wk3-4)
+#   - str  = two separate templates; primary gets rotation_template_id,
+#     secondary gets secondary_rotation_template_id on BlockAssignment
+ARO_COMBINED_TEMPLATE_MAP: dict[str, tuple[str, str | None]] = {
+    # PGY-1
+    "[Peds NF + Peds Ward]": ("PNF", None),  # Combined template: Peds NF → Peds Ward
+    "[FMIT 2 + NF]": ("FMIT-PGY1", "NF-AM"),  # Two-template split
+    # PGY-2
+    "[NF + Card]": ("NF-CARDIO", None),  # Combined template: NF → Cardiology
+    "[Derm + NF]": ("D+N", None),  # Combined template: Derm → NF
+    # PGY-3
+    "[NF + NICU]": ("NIC", None),  # Combined template: NICU-first
+    "[PSYCH + NF]": ("PSYCH", "NF-AM"),  # Two-template split
+}

@@ -19,7 +19,11 @@ from app.models.block_assignment import BlockAssignment
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.scheduling.annual.context import AnnualContext, ResidentInfo
-from app.scheduling.annual.pgy_config import FIXED_ASSIGNMENTS
+from app.scheduling.annual.pgy_config import (
+    ARO_COMBINED_TEMPLATE_MAP,
+    FIXED_ASSIGNMENTS,
+    PGY_ROTATIONS,
+)
 from app.scheduling.annual.solver import SolverResult, solve
 
 logger = logging.getLogger(__name__)
@@ -241,21 +245,33 @@ async def publish_plan(plan_id: UUID, db: AsyncSession) -> AnnualRotationPlan:
             detail="Plan has no assignments to publish",
         )
 
-    # Build rotation name → template ID lookup
-    rotation_names = {a.rotation_name for a in plan.assignments}
-    template_stmt = select(RotationTemplate).where(
-        RotationTemplate.name.in_(rotation_names)
+    # Build abbreviation → template lookup (multi-key: name, abbreviation, display_abbreviation)
+    all_templates_stmt = select(RotationTemplate).where(
+        ~RotationTemplate.is_archived,
     )
-    template_result = await db.execute(template_stmt)
-    template_map: dict[str, UUID] = {
-        t.name: t.id for t in template_result.scalars().all()
-    }
+    all_templates_result = await db.execute(all_templates_stmt)
+    all_templates = list(all_templates_result.scalars().all())
 
-    unmapped = rotation_names - set(template_map.keys())
-    if unmapped:
-        logger.warning(
-            "ARO: no RotationTemplate found for rotation names: %s", unmapped
-        )
+    # Index by multiple keys for flexible matching
+    abbrev_to_template: dict[str, RotationTemplate] = {}
+    name_to_template: dict[str, RotationTemplate] = {}
+    for t in all_templates:
+        if t.abbreviation:
+            abbrev_to_template[t.abbreviation.upper()] = t
+        if t.display_abbreviation:
+            abbrev_to_template[t.display_abbreviation.upper()] = t
+        if t.name:
+            name_to_template[t.name.upper()] = t
+
+    def _find_template(name: str) -> RotationTemplate | None:
+        """Look up template by name, abbreviation, or display_abbreviation."""
+        key = name.upper()
+        return name_to_template.get(key) or abbrev_to_template.get(key)
+
+    # Build set of combined rotation names from PGY_ROTATIONS
+    combined_names = {
+        rot.name for rots in PGY_ROTATIONS.values() for rot in rots if rot.is_combined
+    }
 
     # Delete existing block_assignments for this AY + these residents
     # to avoid IntegrityError on the unique constraint
@@ -269,18 +285,56 @@ async def publish_plan(plan_id: UUID, db: AsyncSession) -> AnnualRotationPlan:
         await db.delete(existing)
     await db.flush()
 
+    unmapped: set[str] = set()
+
     # Write to block_assignments
     for assignment in plan.assignments:
+        primary_template_id: UUID | None = None
+        secondary_template_id: UUID | None = None
+
+        if assignment.rotation_name in combined_names:
+            # Combined rotation — use ARO_COMBINED_TEMPLATE_MAP
+            mapping = ARO_COMBINED_TEMPLATE_MAP.get(assignment.rotation_name)
+            if mapping:
+                primary_abbrev, secondary_abbrev = mapping
+                primary_tmpl = abbrev_to_template.get(primary_abbrev.upper())
+                if primary_tmpl:
+                    primary_template_id = primary_tmpl.id
+                else:
+                    unmapped.add(f"{assignment.rotation_name}→{primary_abbrev}")
+
+                if secondary_abbrev:
+                    secondary_tmpl = abbrev_to_template.get(secondary_abbrev.upper())
+                    if secondary_tmpl:
+                        secondary_template_id = secondary_tmpl.id
+                    else:
+                        unmapped.add(f"{assignment.rotation_name}→{secondary_abbrev}")
+            else:
+                unmapped.add(assignment.rotation_name)
+        else:
+            # Non-combined: try name, abbreviation, display_abbreviation
+            tmpl = _find_template(assignment.rotation_name)
+            if tmpl:
+                primary_template_id = tmpl.id
+            else:
+                unmapped.add(assignment.rotation_name)
+
         db.add(
             BlockAssignment(
                 block_number=assignment.block_number,
                 academic_year=plan.academic_year,
                 resident_id=assignment.person_id,
-                rotation_template_id=template_map.get(assignment.rotation_name),
+                rotation_template_id=primary_template_id,
+                secondary_rotation_template_id=secondary_template_id,
                 assignment_reason="balanced",
                 notes=f"ARO plan: {plan.name}",
                 created_by="annual_rotation_optimizer",
             )
+        )
+
+    if unmapped:
+        logger.warning(
+            "ARO: no RotationTemplate found for rotation names: %s", unmapped
         )
 
     plan.status = "published"

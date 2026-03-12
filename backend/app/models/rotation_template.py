@@ -81,6 +81,20 @@ class RotationTemplate(Base):
         comment="True for half-block rotations (14 days instead of 28)",
     )
 
+    # Combined rotation component references (self-referential FKs).
+    # For NF-CARDIO: first_half_component → NF template, second_half_component → CARDIO template.
+    # Used by InpatientHeadcountConstraint for week-aware NF counting.
+    first_half_component_id = Column(
+        GUID(),
+        ForeignKey("rotation_templates.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    second_half_component_id = Column(
+        GUID(),
+        ForeignKey("rotation_templates.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     # Weekend work configuration
     # True = rotation includes weekend assignments (Night Float, FMIT, etc.)
     # False = weekends are automatically off (most outpatient rotations)
@@ -102,6 +116,16 @@ class RotationTemplate(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
+    first_half_component = relationship(
+        "RotationTemplate",
+        foreign_keys=[first_half_component_id],
+        remote_side="RotationTemplate.id",
+    )
+    second_half_component = relationship(
+        "RotationTemplate",
+        foreign_keys=[second_half_component_id],
+        remote_side="RotationTemplate.id",
+    )
     assignments = relationship("Assignment", back_populates="rotation_template")
     halfday_requirements = relationship(
         "RotationHalfDayRequirement",

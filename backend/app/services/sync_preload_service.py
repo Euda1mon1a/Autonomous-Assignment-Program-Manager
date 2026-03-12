@@ -113,7 +113,7 @@ class SyncPreloadService:
             if cleared:
                 logger.info(f"Cleared {cleared} stale faculty call PCAT/DO preloads")
 
-        total += self._load_absences(start_date, end_date)
+        total += self._load_absences(start_date, end_date, block_number, academic_year)
         total += self._load_institutional_events(start_date, end_date)
         total += self._load_rotation_protected_preloads(block_number, academic_year)
         total += self._load_inpatient_preloads(start_date, end_date)
@@ -166,10 +166,30 @@ class SyncPreloadService:
             self.session.flush()
         return deleted
 
-    def _load_absences(self, start_date: date, end_date: date) -> int:
+    def _load_absences(
+        self,
+        start_date: date,
+        end_date: date,
+        block_number: int,
+        academic_year: int,
+    ) -> int:
         count = 0
         lv_am_id = self._activity_cache.get("LV-AM")
         lv_pm_id = self._activity_cache.get("LV-PM")
+
+        # Build set of person_ids on leave-ineligible rotations for THIS block
+        leave_ineligible_stmt = (
+            select(BlockAssignment.resident_id)
+            .join(BlockAssignment.rotation_template)
+            .where(
+                BlockAssignment.block_number == block_number,
+                BlockAssignment.academic_year == academic_year,
+                BlockAssignment.rotation_template.has(leave_eligible=False),
+            )
+        )
+        leave_ineligible_ids = {
+            row[0] for row in self.session.execute(leave_ineligible_stmt).all()
+        }
 
         stmt = select(Absence).where(
             Absence.start_date <= end_date,
@@ -182,6 +202,12 @@ class SyncPreloadService:
         )
 
         for absence in absences:
+            if absence.person_id in leave_ineligible_ids:
+                logger.debug(
+                    f"Skipping absence for {absence.person_id} — "
+                    f"on leave-ineligible rotation"
+                )
+                continue
             current = max(absence.start_date, start_date)
             end = min(absence.end_date, end_date)
             while current <= end:
@@ -201,6 +227,10 @@ class SyncPreloadService:
 
         Called after Absence CRUD to keep preloads in sync.
 
+        Handles multi-block date ranges correctly: checks leave-ineligibility
+        per block so that eligible blocks are still rebuilt even when the first
+        block in the range is ineligible (Codex P1 fix).
+
         Returns:
             Number of new preloads created.
         """
@@ -208,7 +238,7 @@ class SyncPreloadService:
         lv_pm_id = self._activity_cache.get("LV-PM")
         lv_ids = [aid for aid in [lv_am_id, lv_pm_id] if aid]
 
-        # Delete existing LV preloads for this person in the date range
+        # Delete existing LV preloads for this person in the full date range
         if lv_ids:
             (
                 self.session.query(HalfDayAssignment)
@@ -232,6 +262,50 @@ class SyncPreloadService:
             )
             .all()
         )
+        if not absences:
+            return 0
+
+        # Build set of leave-ineligible dates by checking each block in range
+        ineligible_dates: set[date] = set()
+        cursor = start_date
+        last_block_key: tuple[int, int] | None = None
+        while cursor <= end_date:
+            block_number, academic_year = get_block_number_for_date(cursor)
+            block_key = (block_number, academic_year)
+            if block_key != last_block_key:
+                last_block_key = block_key
+                leave_ineligible = self.session.execute(
+                    select(BlockAssignment.id)
+                    .join(BlockAssignment.rotation_template)
+                    .where(
+                        BlockAssignment.resident_id == person_id,
+                        BlockAssignment.block_number == block_number,
+                        BlockAssignment.academic_year == academic_year,
+                        BlockAssignment.rotation_template.has(leave_eligible=False),
+                    )
+                    .limit(1)
+                ).first()
+                if leave_ineligible:
+                    # Mark all remaining days in this block as ineligible
+                    block_dates = get_block_dates(block_number, academic_year)
+                    block_end = min(block_dates.end_date, end_date)
+                    mark = cursor
+                    while mark <= block_end:
+                        ineligible_dates.add(mark)
+                        mark += timedelta(days=1)
+                    # Jump cursor past this block
+                    cursor = block_end + timedelta(days=1)
+                    continue
+            cursor += timedelta(days=1)
+
+        if len(ineligible_dates) > 0:
+            logger.debug(
+                "Leave-ineligible dates for %s in range %s–%s: %d days",
+                person_id,
+                start_date,
+                end_date,
+                len(ineligible_dates),
+            )
 
         count = 0
         for absence in absences:
@@ -240,14 +314,15 @@ class SyncPreloadService:
             current = max(absence.start_date, start_date)
             end = min(absence.end_date, end_date)
             while current <= end:
-                if lv_am_id and self._create_preload(
-                    person_id, current, "AM", lv_am_id
-                ):
-                    count += 1
-                if lv_pm_id and self._create_preload(
-                    person_id, current, "PM", lv_pm_id
-                ):
-                    count += 1
+                if current not in ineligible_dates:
+                    if lv_am_id and self._create_preload(
+                        person_id, current, "AM", lv_am_id
+                    ):
+                        count += 1
+                    if lv_pm_id and self._create_preload(
+                        person_id, current, "PM", lv_pm_id
+                    ):
+                        count += 1
                 current += timedelta(days=1)
 
         self.session.flush()

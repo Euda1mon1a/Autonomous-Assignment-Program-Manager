@@ -842,9 +842,9 @@ class TestFacultyImmutability:
             patch.object(
                 CPSATActivitySolver,
                 "_get_active_rotation_template",
-                side_effect=lambda slot, _start: template
-                if slot.person.type != "faculty"
-                else None,
+                side_effect=lambda slot, _start: (
+                    template if slot.person.type != "faculty" else None
+                ),
             ),
             patch.object(
                 CPSATActivitySolver,

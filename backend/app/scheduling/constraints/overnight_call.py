@@ -18,6 +18,8 @@ Exclusions:
 Classes:
     - OvernightCallGenerationConstraint: Creates call variables and coverage constraints
     - NoConsecutiveCallConstraint: Soft constraint penalizing back-to-back call nights
+    - FMITCallProximityConstraint: Distance-based exponential decay penalty near FMIT weeks
+    - FriSatCallWeekExclusionConstraint: Alias for FMITCallProximityConstraint (backward compat)
 """
 
 import logging
@@ -37,7 +39,7 @@ from .base import (
     SchedulingContext,
     SoftConstraint,
 )
-from .fmit import get_fmit_week_dates
+from .fmit import _identify_fmit_weeks_from_context, get_fmit_week_dates
 
 logger = logging.getLogger(__name__)
 
@@ -641,3 +643,286 @@ class NoConsecutiveCallConstraint(SoftConstraint):
             violations=violations,
             penalty=penalty,
         )
+
+
+class FMITCallProximityConstraint(SoftConstraint):
+    """
+    Distance-based exponential decay penalty for call near FMIT weeks.
+
+    FMIT is a grueling 7-day inpatient week with mandatory Fri+Sat call.
+    Having additional call anywhere near it is extremely undesirable.
+
+    For each FMIT week (friday_start, thursday_end), penalizes call nights
+    within `radius_days` of either boundary using exponential decay:
+
+        penalty = base_weight / 2^((gap - 1) / half_life_days)
+
+    where `gap` = days from call date to nearest FMIT boundary.
+
+    | Gap | Penalty (base=10000, half_life=1) | vs Coverage (1000) |
+    |-----|-----------------------------------|--------------------|
+    | 1   | 10,000                            | 10× stronger       |
+    | 2   | 5,000                             | 5× stronger        |
+    | 3   | 2,500                             | 2.5× stronger      |
+    | 4   | 1,250                             | 1.25× stronger     |
+    | 5   | 625                               | Still beats most   |
+    | 6   | 312                               | Moderate           |
+    | 7   | 156                               | Mild               |
+
+    Block-independent: Uses `_identify_fmit_weeks_from_context()` which
+    handles cross-block FMIT visibility via eagerly loaded assignment.block.
+    """
+
+    def __init__(
+        self,
+        base_weight: float = 10_000.0,
+        radius_days: int = 7,
+        half_life_days: float = 1.0,
+    ) -> None:
+        super().__init__(
+            name="FMITCallProximity",
+            constraint_type=ConstraintType.CALL,
+            priority=ConstraintPriority.HIGH,
+            weight=base_weight,
+        )
+        self.base_weight = base_weight
+        self.radius_days = radius_days
+        self.half_life_days = half_life_days
+
+    def _compute_penalty(self, gap: int) -> float:
+        """Compute penalty for a given gap in days from FMIT boundary."""
+        if gap < 1:
+            return 0.0
+        return self.base_weight / (2.0 ** ((gap - 1) / self.half_life_days))
+
+    def _get_proximity_dates(
+        self,
+        fmit_weeks: dict[Any, list[tuple[date, date]]],
+        faculty_id: Any,
+    ) -> dict[date, float]:
+        """
+        Build {call_date: max_penalty} for all dates in proximity zones.
+
+        If a date is near multiple FMIT weeks, uses the highest penalty.
+        """
+        date_penalties: dict[date, float] = {}
+
+        weeks = fmit_weeks.get(faculty_id, [])
+        for friday_start, thursday_end in weeks:
+            # Before FMIT: friday_start - radius_days .. friday_start - 1
+            for offset in range(1, self.radius_days + 1):
+                d = friday_start - timedelta(days=offset)
+                gap = offset
+                penalty = self._compute_penalty(gap)
+                if d in date_penalties:
+                    date_penalties[d] = max(date_penalties[d], penalty)
+                else:
+                    date_penalties[d] = penalty
+
+            # After FMIT: thursday_end + 1 .. thursday_end + radius_days
+            for offset in range(1, self.radius_days + 1):
+                d = thursday_end + timedelta(days=offset)
+                gap = offset
+                penalty = self._compute_penalty(gap)
+                if d in date_penalties:
+                    date_penalties[d] = max(date_penalties[d], penalty)
+                else:
+                    date_penalties[d] = penalty
+
+        return date_penalties
+
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Add proximity decay penalties to CP-SAT objective."""
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        fmit_weeks = _identify_fmit_weeks_from_context(context)
+        if not fmit_weeks:
+            return
+
+        # Build date→block_idx lookup for call nights
+        call_date_to_b_i: dict[date, int] = {}
+        for block in context.blocks:
+            if (
+                is_overnight_call_night(block.date)
+                and block.date not in call_date_to_b_i
+            ):
+                b_i = context.block_idx.get(block.id)
+                if b_i is not None:
+                    call_date_to_b_i[block.date] = b_i
+
+        call_idx = context.call_eligible_faculty_idx or {
+            f.id: i
+            for i, f in enumerate(context.call_eligible_faculty or context.faculty)
+        }
+
+        objective_terms = variables.get("objective_terms", [])
+        term_count = 0
+
+        for faculty_id, weeks in fmit_weeks.items():
+            f_i = call_idx.get(faculty_id)
+            if f_i is None:
+                continue
+
+            date_penalties = self._get_proximity_dates(fmit_weeks, faculty_id)
+
+            for call_date, penalty in date_penalties.items():
+                if not is_overnight_call_night(call_date):
+                    continue
+                b_i = call_date_to_b_i.get(call_date)
+                if b_i is None:
+                    continue
+                key = (f_i, b_i, "overnight")
+                if key in call_vars:
+                    objective_terms.append((call_vars[key], int(penalty)))
+                    term_count += 1
+
+        variables["objective_terms"] = objective_terms
+        if term_count:
+            logger.info(
+                f"Added {term_count} FMITCallProximity penalty terms "
+                f"(base_weight={self.base_weight}, radius={self.radius_days}d)"
+            )
+
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Add proximity decay penalties to PuLP objective."""
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        fmit_weeks = _identify_fmit_weeks_from_context(context)
+        if not fmit_weeks:
+            return
+
+        call_date_to_b_i: dict[date, int] = {}
+        for block in context.blocks:
+            if (
+                is_overnight_call_night(block.date)
+                and block.date not in call_date_to_b_i
+            ):
+                b_i = context.block_idx.get(block.id)
+                if b_i is not None:
+                    call_date_to_b_i[block.date] = b_i
+
+        call_idx = context.call_eligible_faculty_idx or {
+            f.id: i
+            for i, f in enumerate(context.call_eligible_faculty or context.faculty)
+        }
+
+        term_count = 0
+
+        for faculty_id, weeks in fmit_weeks.items():
+            f_i = call_idx.get(faculty_id)
+            if f_i is None:
+                continue
+
+            date_penalties = self._get_proximity_dates(fmit_weeks, faculty_id)
+
+            for call_date, penalty in date_penalties.items():
+                if not is_overnight_call_night(call_date):
+                    continue
+                b_i = call_date_to_b_i.get(call_date)
+                if b_i is None:
+                    continue
+                key = (f_i, b_i, "overnight")
+                if key in call_vars:
+                    if "objective" in variables:
+                        variables["objective"] += penalty * call_vars[key]
+                    term_count += 1
+
+        if term_count:
+            logger.info(
+                f"Added {term_count} FMITCallProximity penalty terms "
+                f"(base_weight={self.base_weight}, radius={self.radius_days}d)"
+            )
+
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
+        """Validate call proximity to FMIT weeks in finalized schedule."""
+        violations: list[ConstraintViolation] = []
+
+        fmit_weeks = _identify_fmit_weeks_from_context(context)
+        if not fmit_weeks:
+            return ConstraintResult(satisfied=True, violations=[], penalty=0.0)
+
+        # Build call dates per person from assignments
+        calls_by_person: dict[UUID, list[date]] = defaultdict(list)
+        for a in assignments:
+            if hasattr(a, "call_type") and a.call_type == "overnight":
+                if hasattr(a, "date"):
+                    calls_by_person[a.person_id].append(a.date)
+
+        penalty = 0.0
+        for person_id, weeks in fmit_weeks.items():
+            call_dates = sorted(calls_by_person.get(person_id, []))
+            if not call_dates:
+                continue
+
+            for call_date in call_dates:
+                # Find minimum gap to any FMIT boundary
+                min_gap = None
+                for friday_start, thursday_end in weeks:
+                    # Inside FMIT week — not our concern (hard-blocked)
+                    if friday_start <= call_date <= thursday_end:
+                        continue
+                    if call_date < friday_start:
+                        gap = (friday_start - call_date).days
+                    else:
+                        gap = (call_date - thursday_end).days
+                    if min_gap is None or gap < min_gap:
+                        min_gap = gap
+
+                if min_gap is None or min_gap > self.radius_days:
+                    continue
+
+                call_penalty = self._compute_penalty(min_gap)
+                penalty += call_penalty
+
+                if min_gap <= 2:
+                    severity = "HIGH"
+                elif min_gap <= 4:
+                    severity = "MEDIUM"
+                else:
+                    severity = "LOW"
+
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity=severity,
+                        message=(
+                            f"Call on {call_date} is {min_gap} day(s) from FMIT boundary "
+                            f"(penalty={call_penalty:.0f})"
+                        ),
+                        person_id=person_id,
+                        details={
+                            "call_date": str(call_date),
+                            "gap_days": min_gap,
+                            "penalty": call_penalty,
+                        },
+                    )
+                )
+
+        return ConstraintResult(
+            satisfied=True,  # Soft constraint
+            violations=violations,
+            penalty=penalty,
+        )
+
+
+# Backward-compatible alias
+FriSatCallWeekExclusionConstraint = FMITCallProximityConstraint

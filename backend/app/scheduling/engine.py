@@ -358,6 +358,9 @@ class SchedulingEngine:
                 and academic_year is not None
                 and not create_draft
             ):
+                # Clear stale preloads before re-creating so combined NF
+                # rotations get fresh HDAs on every generation run.
+                self._clear_stale_preloads()
                 preload_service = SyncPreloadService(self.db)
                 preload_count = preload_service.load_all_preloads(
                     block_number, academic_year, skip_faculty_call=True
@@ -2433,17 +2436,22 @@ class SchedulingEngine:
         Returns:
             List of Assignment objects for faculty on FMIT rotations
         """
+        # Widen by ±7 days so FMIT weeks in adjacent blocks are visible
+        # to FMITCallProximityConstraint (cross-block proximity detection)
         return (
             self.db.query(Assignment)
-            .options(selectinload(Assignment.rotation_template))
+            .options(
+                selectinload(Assignment.rotation_template),
+                selectinload(Assignment.block),
+            )
             .join(Block, Assignment.block_id == Block.id)
             .join(Person, Assignment.person_id == Person.id)
             .join(
                 RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
             )
             .filter(
-                Block.date >= self.start_date,
-                Block.date <= self.end_date,
+                Block.date >= self.start_date - timedelta(days=7),
+                Block.date <= self.end_date + timedelta(days=7),
                 Person.type == "faculty",
                 RotationTemplate.rotation_type == "inpatient",
             )
@@ -3338,10 +3346,36 @@ class SchedulingEngine:
             # SQLAlchemy may execute INSERTs before DELETEs without explicit flush
             self.db.flush()
 
+    def _clear_stale_preloads(self) -> None:
+        """Clear stale preload HDAs before re-creating them.
+
+        Called before SyncPreloadService.load_all_preloads() so that
+        combined NF rotations (and all other preloads) get fresh HDAs
+        on every generation run.
+        """
+        from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
+
+        deleted_count = (
+            self.db.query(HalfDayAssignment)
+            .filter(
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+                HalfDayAssignment.source == AssignmentSource.PRELOAD.value,
+            )
+            .delete(synchronize_session=False)
+        )
+        if deleted_count:
+            logger.info(
+                f"Cleared {deleted_count} stale preload HDAs "
+                f"for {self.start_date} to {self.end_date}"
+            )
+            self.db.flush()
+
     def _delete_existing_half_day_assignments(self) -> None:
         """
         Delete existing half-day assignments for the date range that are
-        solver/template generated. Preload/manual are preserved.
+        solver/template generated. Preloads are preserved — they were
+        re-created fresh by SyncPreloadService earlier in the pipeline.
         """
         from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
 
