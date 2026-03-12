@@ -221,12 +221,15 @@ def get_capacity(rotation_name: str) -> int:
 #     secondary gets secondary_rotation_template_id on BlockAssignment
 ARO_COMBINED_TEMPLATE_MAP: dict[str, tuple[str, str | None]] = {
     # PGY-1
-    "[Peds NF + Peds Ward]": ("PNF", None),  # Combined template: Peds NF → Peds Ward
+    "[Peds NF + Peds Ward]": (
+        "NF-PEDS-PG",
+        None,
+    ),  # NF-first: NF wk1-2, Peds Ward wk3-4
     "[FMIT 2 + NF]": ("FMIT-PGY1", "NF-AM"),  # Two-template split
     # PGY-2
-    "[NF + Card]": ("NF-CARDIO", None),  # Combined template: NF → Cardiology
-    "[Derm + NF]": ("D+N", None),  # Combined template: Derm → NF
+    "[NF + Card]": ("NF-CARDIO", None),  # NF-first: NF wk1-2, Cardiology wk3-4
+    "[Derm + NF]": ("DERM-NF", None),  # Specialty-first: Derm wk1-2, NF wk3-4
     # PGY-3
-    "[NF + NICU]": ("NIC", None),  # Combined template: NICU-first
+    "[NF + NICU]": ("NF-NICU-PG", None),  # NF-first: NF wk1-2, NICU wk3-4
     "[PSYCH + NF]": ("PSYCH", "NF-AM"),  # Two-template split
 }
