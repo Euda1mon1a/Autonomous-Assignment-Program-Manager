@@ -43,15 +43,27 @@ def main():
     ay = BLOCK_CONFIG["academic_year"]
 
     # Step 1: Get correct resident → rotation mappings from block_assignments
-    # Include secondary_rotation_template_id for split-block residents
+    # Split-block residents have two rows: block_half=1 (days 1-14) and
+    # block_half=2 (days 15-28). Full-block residents have block_half IS NULL.
     cur.execute(
-        """SELECT id, resident_id, rotation_template_id,
-                  secondary_rotation_template_id
+        """SELECT id, resident_id, rotation_template_id, block_half
         FROM block_assignments
-        WHERE block_number = %s AND academic_year = %s""",
+        WHERE block_number = %s AND academic_year = %s
+        ORDER BY resident_id, block_half NULLS FIRST""",
         (block_num, ay),
     )
-    block_assignments = cur.fetchall()
+    ba_rows = cur.fetchall()
+    # Merge into per-resident entries: (ba_id, resident_id, primary_rotation_id, secondary_rotation_id)
+    _ba_map = {}
+    for ba_id, resident_id, rotation_id, block_half in ba_rows:
+        if resident_id not in _ba_map:
+            _ba_map[resident_id] = [ba_id, resident_id, rotation_id, None]
+        if block_half == 2:
+            _ba_map[resident_id][3] = rotation_id
+        elif block_half is None or block_half == 1:
+            _ba_map[resident_id][0] = ba_id
+            _ba_map[resident_id][2] = rotation_id
+    block_assignments = [tuple(v) for v in _ba_map.values()]
     print(f"Found {len(block_assignments)} block_assignments for Block {block_num}")
 
     if not block_assignments:
@@ -78,7 +90,7 @@ def main():
     print(f"Deleted {cur.rowcount} stale resident assignments")
 
     # Step 4: Create correct assignments
-    # For split-block residents, use secondary rotation after BLOCK_HALF_DAY (day 14)
+    # For split-block residents (block_half=2 row), use secondary rotation after day 14
     block_half_day = 14
     created = 0
     for ba_id, resident_id, rotation_id, secondary_rotation_id in block_assignments:

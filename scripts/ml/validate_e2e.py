@@ -89,17 +89,18 @@ SNAPSHOT_SQL = text("""
 """)
 
 # SQL to get rotation template assignments for a block
+# Split-block residents have two rows: block_half=1 (primary) and block_half=2 (secondary).
+# Full-block residents have block_half IS NULL.
 BLOCK_ASSIGNMENTS_SQL = text("""
     SELECT
         ba.resident_id::text,
-        rt1.name AS primary_template,
-        rt2.name AS secondary_template,
-        rt1.rotation_type AS primary_type,
-        rt2.rotation_type AS secondary_type
+        rt.name AS template_name,
+        rt.rotation_type AS template_type,
+        ba.block_half
     FROM block_assignments ba
-    JOIN rotation_templates rt1 ON ba.rotation_template_id = rt1.id
-    LEFT JOIN rotation_templates rt2 ON ba.secondary_rotation_template_id = rt2.id
+    JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
     WHERE ba.block_number = :block_number AND ba.academic_year = :academic_year
+    ORDER BY ba.resident_id, ba.block_half NULLS FIRST
 """)
 
 # SQL to unlock manual slots (change source to 'template' and clear activity)
@@ -183,18 +184,31 @@ def snapshot_hdas(session, start_date, end_date):
 
 
 def get_block_templates(session, block_number, academic_year):
-    """Get rotation template assignments for a block."""
+    """Get rotation template assignments for a block.
+
+    Merges block_half=1 (primary) and block_half=2 (secondary) rows
+    into a single dict entry per resident.
+    """
     rows = session.execute(BLOCK_ASSIGNMENTS_SQL,
                            {"block_number": block_number,
                             "academic_year": academic_year}).fetchall()
     templates = {}
     for row in rows:
-        templates[row.resident_id] = {
-            "primary": row.primary_template,
-            "secondary": row.secondary_template,
-            "primary_type": row.primary_type,
-            "secondary_type": row.secondary_type,
-        }
+        rid = row.resident_id
+        bh = row.block_half
+        if bh == 2:
+            # Secondary rotation — attach to existing entry
+            if rid in templates:
+                templates[rid]["secondary"] = row.template_name
+                templates[rid]["secondary_type"] = row.template_type
+        else:
+            # Primary (block_half IS NULL or 1)
+            templates[rid] = {
+                "primary": row.template_name,
+                "secondary": None,
+                "primary_type": row.template_type,
+                "secondary_type": None,
+            }
     return templates
 
 

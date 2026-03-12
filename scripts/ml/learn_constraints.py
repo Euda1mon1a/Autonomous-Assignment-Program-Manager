@@ -7,7 +7,7 @@ min/max/target halfdays per activity code from observed data, then compares
 to existing rotation_activity_requirements.
 
 v2 changes (council recommendations):
-- Split-block awareness: learns from weeks 1-2 for primary, weeks 3-4 for secondary
+- Split-block awareness: learns from weeks 1-2 for block_half=1 row, weeks 3-4 for block_half=2 row
 - Confidence tiers: high (n>=8), medium (n=4-7, +/-2 padding), low (n=2-3, flag only)
 - Anomaly detection: z-score > 2 flagged as outliers
 - Applicable weeks output for split-block constraints
@@ -95,7 +95,10 @@ def fetch_existing_requirements(cur):
 
 
 def fetch_block_assignment_mapping(cur):
-    """Fetch primary block_assignment → template mapping."""
+    """Fetch primary block_assignment → template mapping.
+
+    Primary rows have block_half IS NULL (full block) or block_half = 1 (first half).
+    """
     cur.execute("""
         SELECT
             ba.resident_id::text,
@@ -104,6 +107,7 @@ def fetch_block_assignment_mapping(cur):
         FROM block_assignments ba
         JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
         WHERE ba.academic_year = 2025
+          AND (ba.block_half IS NULL OR ba.block_half = 1)
     """)
     mapping = {}
     for row in cur.fetchall():
@@ -113,16 +117,19 @@ def fetch_block_assignment_mapping(cur):
 
 
 def fetch_secondary_template_mapping(cur):
-    """Fetch secondary (split-block) template mapping."""
+    """Fetch secondary (split-block) template mapping.
+
+    Secondary rows have block_half = 2 (days 15-28).
+    """
     cur.execute("""
         SELECT
             ba.resident_id::text,
             ba.block_number,
             rt.name AS template_name
         FROM block_assignments ba
-        JOIN rotation_templates rt ON ba.secondary_rotation_template_id = rt.id
+        JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
         WHERE ba.academic_year = 2025
-            AND ba.secondary_rotation_template_id IS NOT NULL
+            AND ba.block_half = 2
     """)
     mapping = {}
     for row in cur.fetchall():

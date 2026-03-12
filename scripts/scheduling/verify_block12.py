@@ -276,29 +276,43 @@ def check_weekend_handling(conn) -> CheckResult:
         """
         SELECT ba.resident_id, rt.abbreviation,
                rt.includes_weekend_work,
-               rt2.abbreviation AS secondary_abbrev,
-               rt2.includes_weekend_work AS secondary_weekend
+               ba.block_half
         FROM block_assignments ba
         JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
-        LEFT JOIN rotation_templates rt2 ON ba.secondary_rotation_template_id = rt2.id
         WHERE ba.block_number = %s AND ba.academic_year = %s
+        ORDER BY ba.resident_id, ba.block_half NULLS FIRST
     """,
         (BLOCK_NUMBER, ACADEMIC_YEAR),
     )
-    resident_rotations = {}
+    # Build resident_rotations: group block_half=1 (primary) and block_half=2 (secondary)
+    _rot_build = {}  # resident_id → {"primary": ..., "secondary": ...}
     for r in rot_rows:
+        rid = r["resident_id"]
         canonical = _canonical_rotation(r["abbreviation"])
-        sec_canonical = (
-            _canonical_rotation(r["secondary_abbrev"])
-            if r["secondary_abbrev"]
-            else None
-        )
-        sec_weekend = r["secondary_weekend"] or False
-        resident_rotations[r["resident_id"]] = (
-            canonical,
-            r["includes_weekend_work"],
-            sec_canonical,
-            sec_weekend,
+        wknd = r["includes_weekend_work"]
+        bh = r["block_half"]
+        if rid not in _rot_build:
+            _rot_build[rid] = {
+                "primary": canonical,
+                "primary_weekend": wknd,
+                "secondary": None,
+                "secondary_weekend": False,
+            }
+        if bh == 2:
+            _rot_build[rid]["secondary"] = canonical
+            _rot_build[rid]["secondary_weekend"] = wknd or False
+        elif bh is None or bh == 1:
+            # Full-block or first-half row is the primary
+            _rot_build[rid]["primary"] = canonical
+            _rot_build[rid]["primary_weekend"] = wknd
+
+    resident_rotations = {}
+    for rid, info in _rot_build.items():
+        resident_rotations[rid] = (
+            info["primary"],
+            info["primary_weekend"],
+            info["secondary"],
+            info["secondary_weekend"],
         )
 
     weekend_rows = _q(
@@ -382,32 +396,45 @@ def _dow_name(pg_dow: int) -> str:
 # CHECK 6: Resident rotation alignment
 # ═══════════════════════════════════════════════════════════════════════════
 def check_resident_rotation_alignment(conn) -> CheckResult:
-    # Get rotation assignments
+    # Get rotation assignments (primary = block_half IS NULL or 1, secondary = block_half 2)
     rot_rows = _q(
         conn,
         """
         SELECT ba.resident_id, p.name, p.pgy_level,
                rt.abbreviation AS rotation, rt.rotation_type,
                rt.includes_weekend_work,
-               rt2.abbreviation AS secondary_rotation
+               ba.block_half
         FROM block_assignments ba
         JOIN people p ON ba.resident_id = p.id
         LEFT JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
-        LEFT JOIN rotation_templates rt2 ON ba.secondary_rotation_template_id = rt2.id
         WHERE ba.block_number = %s AND ba.academic_year = %s
-        ORDER BY p.pgy_level, p.name
+        ORDER BY p.pgy_level, p.name, ba.block_half NULLS FIRST
     """,
         (BLOCK_NUMBER, ACADEMIC_YEAR),
     )
 
-    # Canonicalize rotation abbreviations
+    # Build assignments dict, merging block_half=1 and block_half=2 rows
+    assignments = {}
     for r in rot_rows:
-        r["rotation"] = (
-            _canonical_rotation(r["rotation"]) if r["rotation"] else r["rotation"]
-        )
-        if r["secondary_rotation"]:
-            r["secondary_rotation"] = _canonical_rotation(r["secondary_rotation"])
-    assignments = {r["resident_id"]: r for r in rot_rows}
+        rid = r["resident_id"]
+        canonical = _canonical_rotation(r["rotation"]) if r["rotation"] else r["rotation"]
+        bh = r["block_half"]
+        if rid not in assignments:
+            assignments[rid] = {
+                "resident_id": rid,
+                "name": r["name"],
+                "pgy_level": r["pgy_level"],
+                "rotation": canonical,
+                "rotation_type": r["rotation_type"],
+                "includes_weekend_work": r["includes_weekend_work"],
+                "secondary_rotation": None,
+            }
+        if bh == 2:
+            assignments[rid]["secondary_rotation"] = canonical
+        elif bh is None or bh == 1:
+            assignments[rid]["rotation"] = canonical
+            assignments[rid]["rotation_type"] = r["rotation_type"]
+            assignments[rid]["includes_weekend_work"] = r["includes_weekend_work"]
 
     # Get schedule grid for residents
     grid = _q(
@@ -872,33 +899,39 @@ def check_call_chain_integrity(conn) -> CheckResult:
 # CHECK 10: Source consistency
 # ═══════════════════════════════════════════════════════════════════════════
 def check_source_consistency(conn) -> CheckResult:
-    # Get resident rotations
+    # Get resident rotations (block_half: NULL=full, 1=first half, 2=second half)
     rot_rows = _q(
         conn,
         """
-        SELECT ba.resident_id, rt.abbreviation as primary_abbrev,
-               rt2.abbreviation as secondary_abbrev
+        SELECT ba.resident_id, rt.abbreviation as abbrev, ba.block_half
         FROM block_assignments ba
         JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
-        LEFT JOIN rotation_templates rt2 ON ba.secondary_rotation_template_id = rt2.id
         WHERE ba.block_number = %s AND ba.academic_year = %s
+        ORDER BY ba.resident_id, ba.block_half NULLS FIRST
     """,
         (BLOCK_NUMBER, ACADEMIC_YEAR),
     )
-    inpatient_residents = set()
+    # Build per-resident primary/secondary from block_half rows
+    _src_build = {}  # resident_id → {"primary": ..., "secondary": ...}
     for r in rot_rows:
-        primary = (
-            _canonical_rotation(r["primary_abbrev"]) if r["primary_abbrev"] else None
-        )
-        secondary = (
-            _canonical_rotation(r["secondary_abbrev"])
-            if r["secondary_abbrev"]
-            else None
-        )
+        rid = r["resident_id"]
+        canonical = _canonical_rotation(r["abbrev"]) if r["abbrev"] else None
+        bh = r["block_half"]
+        if rid not in _src_build:
+            _src_build[rid] = {"primary": canonical, "secondary": None}
+        if bh == 2:
+            _src_build[rid]["secondary"] = canonical
+        elif bh is None or bh == 1:
+            _src_build[rid]["primary"] = canonical
+
+    inpatient_residents = set()
+    for rid, info in _src_build.items():
+        primary = info["primary"]
+        secondary = info["secondary"]
         if primary in PRELOADED_ROTATIONS or (
             secondary and secondary in PRELOADED_ROTATIONS
         ):
-            inpatient_residents.add(r["resident_id"])
+            inpatient_residents.add(rid)
 
     # Get resident grid with sources
     grid = _q(

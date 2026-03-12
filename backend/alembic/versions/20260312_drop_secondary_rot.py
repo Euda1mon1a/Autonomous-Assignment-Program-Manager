@@ -51,7 +51,29 @@ def upgrade() -> None:
         """)
     )
 
-    # Step 3: Drop the FK constraint (if it exists), then the column
+    # Step 3: Repoint half_day_assignments for second-half dates.
+    # Existing HalfDayAssignments for days >= mid-block still reference the
+    # original block_assignment (now half=1). Link them to the new half=2 row.
+    conn.execute(
+        sa.text("""
+        UPDATE half_day_assignments AS hda
+        SET block_assignment_id = h2.id
+        FROM block_assignments AS h1
+        JOIN block_assignments AS h2
+            ON h2.block_half = 2
+           AND h2.block_number = h1.block_number
+           AND h2.academic_year = h1.academic_year
+           AND h2.resident_id = h1.resident_id
+        JOIN academic_blocks AS ab
+            ON ab.block_number = h1.block_number
+           AND ab.academic_year = h1.academic_year
+        WHERE hda.block_assignment_id = h1.id
+          AND h1.block_half = 1
+          AND hda.date >= ab.start_date + INTERVAL '14 days'
+        """)
+    )
+
+    # Step 4: Drop the FK constraint (if it exists), then the column
     conn.execute(
         sa.text("""
         DO $$

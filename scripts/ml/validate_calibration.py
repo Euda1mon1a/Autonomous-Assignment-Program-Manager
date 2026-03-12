@@ -51,23 +51,29 @@ def confidence_tier(n):
 
 
 def fetch_template_mappings(cur):
-    """Fetch primary + secondary template mappings."""
+    """Fetch primary + secondary template mappings.
+
+    Primary rows have block_half IS NULL (full block) or block_half = 1 (first half).
+    Secondary rows have block_half = 2 (days 15-28).
+    """
     cur.execute("""
         SELECT ba.resident_id::text, ba.block_number,
-               rt1.name AS primary_template,
-               rt2.name AS secondary_template
+               rt.name AS template_name,
+               ba.block_half
         FROM block_assignments ba
-        JOIN rotation_templates rt1 ON ba.rotation_template_id = rt1.id
-        LEFT JOIN rotation_templates rt2 ON ba.secondary_rotation_template_id = rt2.id
+        JOIN rotation_templates rt ON ba.rotation_template_id = rt.id
         WHERE ba.academic_year = 2025
     """)
     primary = {}
     secondary = {}
     for row in cur.fetchall():
         key = (row[0], row[1])
-        primary[key] = row[2]
-        if row[3]:
-            secondary[key] = row[3]
+        block_half = row[3]
+        if block_half == 2:
+            secondary[key] = row[2]
+        else:
+            # block_half IS NULL (full block) or 1 (first half) → primary
+            primary[key] = row[2]
     return primary, secondary
 
 
