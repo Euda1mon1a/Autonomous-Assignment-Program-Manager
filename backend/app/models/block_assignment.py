@@ -11,6 +11,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    SmallInteger,
     String,
     Text,
     UniqueConstraint,
@@ -74,11 +75,17 @@ class BlockAssignment(Base):
     )
     # Secondary rotation for mid-block transitions (starts day 14 of 28-day block)
     # Excel: Column 1 = primary rotation, Column 2 = secondary rotation
+    # DEPRECATED: Use block_half with two rows instead. Retained for backward compat.
     secondary_rotation_template_id = Column(
         GUID(),
         ForeignKey("rotation_templates.id", ondelete="SET NULL"),
         nullable=True,
     )
+
+    # Half-block indicator: NULL = full block, 1 = days 1-14, 2 = days 15-28.
+    # Combined rotations (e.g., NF + Cardiology) are expressed as two rows
+    # with block_half=1 and block_half=2, each pointing to an atomic template.
+    block_half = Column(SmallInteger, nullable=True)
 
     # Assignment metadata
     assignment_reason = Column(String(50), nullable=False, default="balanced")
@@ -110,12 +117,10 @@ class BlockAssignment(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "block_number",
-            "academic_year",
-            "resident_id",
-            name="unique_resident_per_block",
-        ),
+        # Unique constraints are partial indexes (created in migration):
+        #   uq_resident_block_full: (block_number, academic_year, resident_id) WHERE block_half IS NULL
+        #   uq_resident_block_half: (block_number, academic_year, resident_id, block_half) WHERE block_half IS NOT NULL
+        # Plus trigger trg_block_half_exclusion prevents mixing full/half rows.
         CheckConstraint(
             "block_number >= 0 AND block_number <= 13",
             name="check_block_number_range",
@@ -124,6 +129,10 @@ class BlockAssignment(Base):
             "assignment_reason IN ('leave_eligible_match', 'coverage_priority', "
             "'balanced', 'manual', 'specialty_match')",
             name="check_assignment_reason",
+        ),
+        CheckConstraint(
+            "block_half IS NULL OR block_half IN (1, 2)",
+            name="check_block_half_range",
         ),
     )
 
