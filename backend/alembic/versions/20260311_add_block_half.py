@@ -110,11 +110,33 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    conn = op.get_bind()
+
     # Drop trigger and function
     op.execute(
         sa.text("DROP TRIGGER IF EXISTS trg_block_half_exclusion ON block_assignments")
     )
     op.execute(sa.text("DROP FUNCTION IF EXISTS check_block_half_exclusion()"))
+
+    # Merge half-block rows back into single full-block rows before restoring
+    # the old unique constraint. Keep the block_half=1 row (or the lower-ID row)
+    # as the surviving full-block row; delete the block_half=2 row. Copy the
+    # block_half=2 rotation_template_id into secondary_rotation_template_id.
+    conn.execute(
+        sa.text("""
+        UPDATE block_assignments AS keep
+        SET secondary_rotation_template_id = half2.rotation_template_id
+        FROM block_assignments AS half2
+        WHERE keep.block_number = half2.block_number
+          AND keep.academic_year = half2.academic_year
+          AND keep.resident_id = half2.resident_id
+          AND keep.block_half = 1
+          AND half2.block_half = 2
+        """)
+    )
+    conn.execute(sa.text("DELETE FROM block_assignments WHERE block_half = 2"))
+    # Clear block_half on remaining rows so the column can be dropped cleanly
+    conn.execute(sa.text("UPDATE block_assignments SET block_half = NULL"))
 
     # Drop partial unique indexes
     op.execute(sa.text("DROP INDEX IF EXISTS uq_resident_block_half"))

@@ -632,6 +632,7 @@ class BlockSchedulerService:
         academic_year: int,
         resident_id: UUID,
         rotation_template_id: UUID | None,
+        block_half: int | None = None,
         created_by: str | None = None,
         notes: str | None = None,
     ) -> BlockAssignment:
@@ -650,6 +651,7 @@ class BlockSchedulerService:
             "academic_year": academic_year,
             "resident_id": resident_id,
             "rotation_template_id": rotation_template_id,
+            "block_half": block_half,
             "has_leave": leave_data is not None,
             "leave_days": leave_data.leave_days if leave_data else 0,
             "assignment_reason": AssignmentReason.MANUAL.value,

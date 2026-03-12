@@ -86,6 +86,7 @@ class BlockSchedulerController:
             academic_year=assignment.academic_year,
             resident_id=assignment.resident_id,
             rotation_template_id=assignment.rotation_template_id,
+            block_half=assignment.block_half,
             has_leave=assignment.has_leave,
             leave_days=assignment.leave_days,
             assignment_reason=assignment.assignment_reason,
@@ -108,6 +109,7 @@ class BlockSchedulerController:
                 academic_year=assignment_in.academic_year,
                 resident_id=assignment_in.resident_id,
                 rotation_template_id=assignment_in.rotation_template_id,
+                block_half=assignment_in.block_half,
                 created_by=assignment_in.created_by,
                 notes=assignment_in.notes,
             )
