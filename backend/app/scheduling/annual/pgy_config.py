@@ -17,9 +17,7 @@ class Rotation:
     leave_eligible: bool
     allowed_blocks: frozenset[int] | None = None  # None = all blocks
     blocked_blocks: frozenset[int] | None = None  # None = no blocks restricted
-    is_combined: bool = (
-        False  # True = half-block split (uses secondary_rotation_template_id)
-    )
+    is_combined: bool = False  # True = half-block split (two rows with block_half=1,2)
     first_half: str | None = None  # For combined rotations: first 14 days
     second_half: str | None = None  # For combined rotations: days 15-28
 
@@ -217,8 +215,8 @@ def get_capacity(rotation_name: str) -> int:
 # Format: ARO_name → (primary_template_abbrev, secondary_template_abbrev | None)
 #   - None = combined template handles the split internally via NF_COMBINED_ACTIVITY_MAP
 #     (the template encodes both halves, e.g. NF-CARDIO = NF wk1-2 + CARDS wk3-4)
-#   - str  = two separate templates; primary gets rotation_template_id,
-#     secondary gets secondary_rotation_template_id on BlockAssignment
+#   - str  = two separate templates; written as two BlockAssignment rows
+#     with block_half=1 and block_half=2
 ARO_COMBINED_TEMPLATE_MAP: dict[str, tuple[str, str | None]] = {
     # PGY-1
     "[Peds NF + Peds Ward]": (

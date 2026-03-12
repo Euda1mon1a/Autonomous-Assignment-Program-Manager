@@ -523,9 +523,6 @@ class SyncPreloadService:
                 selectinload(BlockAssignment.rotation_template)
                 .selectinload(RotationTemplate.weekly_patterns)
                 .selectinload(WeeklyPattern.activity),
-                selectinload(BlockAssignment.secondary_rotation_template)
-                .selectinload(RotationTemplate.weekly_patterns)
-                .selectinload(WeeklyPattern.activity),
                 selectinload(BlockAssignment.resident),
             )
             .where(
@@ -563,12 +560,6 @@ class SyncPreloadService:
                     continue
 
                 active_template = assignment.rotation_template
-                if (
-                    assignment.block_half is None
-                    and assignment.secondary_rotation_template_id
-                    and current >= mid_block_date
-                ):
-                    active_template = assignment.secondary_rotation_template
                 rotation_type = (
                     (active_template.rotation_type or "").lower()
                     if active_template
@@ -636,15 +627,8 @@ class SyncPreloadService:
                 self._rotation_label(assignment.rotation_template)
             )
 
-        # Legacy: secondary_rotation_template_id split
-        template = assignment.rotation_template
-        if assignment.secondary_rotation_template_id and current_date >= mid_block_date:
-            template = assignment.secondary_rotation_template
-
-        raw_code = self._rotation_label(template)
+        raw_code = self._rotation_label(assignment.rotation_template)
         code = canonical_rotation_code(raw_code)
-        if assignment.secondary_rotation_template_id:
-            return code
 
         # String parsing for combined single-template rows (NF-CARDIO etc.)
         if "-1ST-" in code and "-2ND" in code:
@@ -1233,7 +1217,6 @@ class SyncPreloadService:
         stmt = (
             select(BlockAssignment)
             .options(selectinload(BlockAssignment.rotation_template))
-            .options(selectinload(BlockAssignment.secondary_rotation_template))
             .where(
                 BlockAssignment.block_number == block_number,
                 BlockAssignment.academic_year == academic_year,
@@ -1243,48 +1226,60 @@ class SyncPreloadService:
 
         mid_block_date = start_date + timedelta(days=11)
 
+        # Group block_half pairs by resident to detect NF splits
+        from collections import defaultdict
+
+        by_resident: dict[UUID, dict[int | None, BlockAssignment]] = defaultdict(dict)
         for assignment in assignments:
-            if not assignment.rotation_template:
-                continue
+            by_resident[assignment.resident_id][assignment.block_half] = assignment
 
-            primary_template = assignment.rotation_template
-            secondary_template = assignment.secondary_rotation_template
-            primary_code = canonical_rotation_code(
-                self._rotation_label(primary_template)
-            )
-            secondary_code = canonical_rotation_code(
-                self._rotation_label(secondary_template)
-            )
-
+        for resident_id, halves in by_resident.items():
             first_half_no_weekend = False
             second_half_no_weekend = False
 
-            if secondary_template:
-                first_is_night_float = primary_code in NIGHT_FLOAT_ROTATIONS
-                second_is_night_float = secondary_code in NIGHT_FLOAT_ROTATIONS
+            half1 = halves.get(1)
+            half2 = halves.get(2)
+            full = halves.get(None)
 
-                if not first_is_night_float and not second_is_night_float:
+            if half1 and half2:
+                # Two block_half rows — check if either is NF
+                t1 = half1.rotation_template
+                t2 = half2.rotation_template
+                if not t1 or not t2:
+                    continue
+                code1 = canonical_rotation_code(self._rotation_label(t1))
+                code2 = canonical_rotation_code(self._rotation_label(t2))
+
+                first_is_nf = code1 in NIGHT_FLOAT_ROTATIONS
+                second_is_nf = code2 in NIGHT_FLOAT_ROTATIONS
+                if not first_is_nf and not second_is_nf:
                     continue
 
                 if (
-                    not first_is_night_float
-                    and not primary_template.includes_weekend_work
-                    and primary_code not in OFFSITE_ROTATIONS
+                    not first_is_nf
+                    and not t1.includes_weekend_work
+                    and code1 not in OFFSITE_ROTATIONS
                 ):
                     first_half_no_weekend = True
-
                 if (
-                    not second_is_night_float
-                    and not secondary_template.includes_weekend_work
-                    and secondary_code not in OFFSITE_ROTATIONS
+                    not second_is_nf
+                    and not t2.includes_weekend_work
+                    and code2 not in OFFSITE_ROTATIONS
                 ):
                     second_half_no_weekend = True
-            else:
-                abbrev = primary_code
+            elif full:
+                # Single full-block row — check abbreviation patterns
+                if not full.rotation_template:
+                    continue
+                abbrev = canonical_rotation_code(
+                    self._rotation_label(full.rotation_template)
+                )
                 if "-1ST-NF-2ND" in abbrev or "-1ST-PEDNF-2ND" in abbrev:
                     first_half_no_weekend = True
                 elif abbrev.startswith("NF-1ST-") or abbrev.startswith("PEDNF-1ST-"):
                     second_half_no_weekend = True
+            else:
+                continue
 
             if not first_half_no_weekend and not second_half_no_weekend:
                 continue
@@ -1303,14 +1298,14 @@ class SyncPreloadService:
 
                 if should_create_w:
                     if self._create_preload(
-                        assignment.resident_id,
+                        resident_id,
                         current,
                         "AM",
                         w_id,  # type: ignore[arg-type]
                     ):
                         count += 1
                     if self._create_preload(
-                        assignment.resident_id,
+                        resident_id,
                         current,
                         "PM",
                         w_id,  # type: ignore[arg-type]

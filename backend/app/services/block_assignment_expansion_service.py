@@ -217,10 +217,6 @@ class BlockAssignmentExpansionService:
                 selectinload(BlockAssignment.rotation_template).selectinload(
                     RotationTemplate.weekly_patterns
                 ),
-                # Also load secondary rotation for mid-block transitions
-                selectinload(BlockAssignment.secondary_rotation_template).selectinload(
-                    RotationTemplate.weekly_patterns
-                ),
                 selectinload(BlockAssignment.resident),
             )
             .where(BlockAssignment.block_number == block_number)
@@ -351,17 +347,11 @@ class BlockAssignmentExpansionService:
         block_assignment: BlockAssignment,
         day_index: int,
     ) -> RotationTemplate | None:
-        """Get the active rotation for a given day (handles mid-block transitions).
+        """Get the active rotation for a given day.
 
-        Mid-block transitions: Some residents switch rotations at day 14.
-        - Days 0-13: Use primary rotation_template
-        - Days 14-27: Use secondary_rotation_template (if set)
+        With block_half, each BlockAssignment row covers its half of the block,
+        so the rotation_template is always correct for the row's date range.
         """
-        if (
-            block_assignment.secondary_rotation_template_id
-            and day_index >= MID_BLOCK_DAY
-        ):
-            return block_assignment.secondary_rotation_template
         return block_assignment.rotation_template
 
     def _is_wednesday(self, current_date: date) -> bool:
@@ -685,11 +675,6 @@ class BlockAssignmentExpansionService:
         patterns_cache[initial_rotation.id] = self._get_weekly_patterns(
             initial_rotation
         )
-        if block_assignment.secondary_rotation_template:
-            patterns_cache[block_assignment.secondary_rotation_template.id] = (
-                self._get_weekly_patterns(block_assignment.secondary_rotation_template)
-            )
-
         # Track consecutive work days for 1-in-7 rule
         consecutive_days = 0
         last_day_off = None

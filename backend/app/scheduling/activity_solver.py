@@ -3480,14 +3480,6 @@ class CPSATActivitySolver:
         """Resolve rotation template for a given slot (block_assignment or solver)."""
         if slot.block_assignment:
             ba = slot.block_assignment
-            # block_half rows: template IS the rotation for that half
-            if ba.block_half is not None:
-                return ba.rotation_template
-            # Legacy: secondary_rotation_template_id split
-            if ba.secondary_rotation_template_id:
-                day_in_block = (slot.date - block_start).days + 1
-                if day_in_block > BLOCK_HALF_DAY:
-                    return ba.secondary_rotation_template
             return ba.rotation_template
 
         return self._assignment_rotation_map.get(
@@ -3525,9 +3517,6 @@ class CPSATActivitySolver:
                 selectinload(HalfDayAssignment.person),
                 selectinload(HalfDayAssignment.block_assignment).selectinload(
                     BlockAssignment.rotation_template
-                ),
-                selectinload(HalfDayAssignment.block_assignment).selectinload(
-                    BlockAssignment.secondary_rotation_template
                 ),
             )
             .join(Person, HalfDayAssignment.person_id == Person.id)

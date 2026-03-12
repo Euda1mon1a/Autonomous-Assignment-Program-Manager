@@ -614,7 +614,6 @@ class BlockAssignmentImportService:
                                 # Two-template split: update primary to half=1,
                                 # create second row with half=2
                                 existing.block_half = 1
-                                existing.secondary_rotation_template_id = None
                                 second_assignment = BlockAssignment(
                                     block_number=existing.block_number,
                                     academic_year=existing.academic_year,
@@ -629,7 +628,6 @@ class BlockAssignmentImportService:
                                 self.session.add(second_assignment)
                             else:
                                 existing.block_half = None
-                                existing.secondary_rotation_template_id = None
                             existing.assignment_reason = "manual"
                             existing.created_by = "gui_import"
                             existing.updated_at = datetime.now(UTC)
@@ -861,27 +859,6 @@ class BlockAssignmentImportService:
 
             rotation_id, rotation_name, rotation_conf = None, None, 0.0
             secondary_id, secondary_name, secondary_conf = None, None, 0.0
-
-            # Check if this is a legacy split representing a canonical combined rotation
-            from app.services.legacy_combined_mapper import (
-                get_canonical_combined_rotation,
-            )
-
-            canonical_abbrev = get_canonical_combined_rotation(
-                a.rotation_template or "", a.secondary_rotation or ""
-            )
-
-            if canonical_abbrev:
-                # Map to the unified template and clear the secondary rotation
-                rotation_id, rotation_name, rotation_conf = self._match_rotation(
-                    canonical_abbrev
-                )
-                if rotation_id:
-                    row_warnings.append(
-                        f"Legacy split '{a.rotation_template}' + '{a.secondary_rotation}' mapped to '{canonical_abbrev}'"
-                    )
-                    a.rotation_template = canonical_abbrev
-                    a.secondary_rotation = None
 
             # Match primary rotation
             if a.rotation_template and not rotation_id:

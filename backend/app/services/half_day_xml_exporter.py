@@ -367,7 +367,6 @@ class HalfDayXMLExporter:
             select(BlockAssignment)
             .options(
                 selectinload(BlockAssignment.rotation_template),
-                selectinload(BlockAssignment.secondary_rotation_template),
             )
             .where(
                 BlockAssignment.resident_id.in_(person_ids),
@@ -381,28 +380,25 @@ class HalfDayXMLExporter:
 
         rotation_map: dict[UUID, dict[str, Any]] = {}
         for ba in block_assignments:
-            rotation1 = ""
-            rotation2 = ""
-
+            label = ""
             if ba.rotation_template:
-                rotation1 = (
+                label = (
                     ba.rotation_template.display_abbreviation
                     or ba.rotation_template.abbreviation
                     or ""
                 )
 
-            if ba.secondary_rotation_template:
-                rotation2 = (
-                    ba.secondary_rotation_template.display_abbreviation
-                    or ba.secondary_rotation_template.abbreviation
-                    or ""
-                )
-
-            rotation_map[ba.resident_id] = {
-                "id": str(ba.id),
-                "rotation1": rotation1,
-                "rotation2": rotation2,
-            }
+            existing = rotation_map.get(ba.resident_id)
+            if ba.block_half == 1:
+                entry = existing or {"id": str(ba.id), "rotation1": "", "rotation2": ""}
+                entry["rotation1"] = label
+                entry["id"] = str(ba.id)
+            elif ba.block_half == 2:
+                entry = existing or {"id": str(ba.id), "rotation1": "", "rotation2": ""}
+                entry["rotation2"] = label
+            else:
+                entry = {"id": str(ba.id), "rotation1": label, "rotation2": ""}
+            rotation_map[ba.resident_id] = entry
 
         return rotation_map
 

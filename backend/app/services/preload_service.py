@@ -437,9 +437,6 @@ class PreloadService:
                 selectinload(BlockAssignment.rotation_template)
                 .selectinload(RotationTemplate.weekly_patterns)
                 .selectinload(WeeklyPattern.activity),
-                selectinload(BlockAssignment.secondary_rotation_template)
-                .selectinload(RotationTemplate.weekly_patterns)
-                .selectinload(WeeklyPattern.activity),
                 selectinload(BlockAssignment.resident),
             )
             .where(
@@ -478,12 +475,6 @@ class PreloadService:
                     continue
 
                 active_template = assignment.rotation_template
-                if (
-                    assignment.block_half is None
-                    and assignment.secondary_rotation_template_id
-                    and current >= mid_block_date
-                ):
-                    active_template = assignment.secondary_rotation_template
                 is_outpatient = (
                     (active_template.rotation_type or "").lower() == "outpatient"
                     if active_template
@@ -558,15 +549,8 @@ class PreloadService:
                 self._rotation_label(assignment.rotation_template)
             )
 
-        # Legacy: secondary_rotation_template_id split
-        template = assignment.rotation_template
-        if assignment.secondary_rotation_template_id and current_date >= mid_block_date:
-            template = assignment.secondary_rotation_template
-
-        raw_code = self._rotation_label(template)
+        raw_code = self._rotation_label(assignment.rotation_template)
         code = self._canonical_rotation_code(raw_code)
-        if assignment.secondary_rotation_template_id:
-            return code
 
         # String parsing for combined single-template rows (NF-CARDIO etc.)
         if "-1ST-" in code and "-2ND" in code:
