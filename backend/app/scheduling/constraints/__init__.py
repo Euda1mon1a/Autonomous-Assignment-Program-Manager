@@ -55,6 +55,8 @@ from .call_coverage import (
 
 # Overnight call generation constraint (unified approach)
 from .overnight_call import (
+    FMITCallProximityConstraint,
+    FriSatCallWeekExclusionConstraint,
     OvernightCallGenerationConstraint,
     is_overnight_call_night,
 )
@@ -255,6 +257,8 @@ __all__ = [
     "OvernightCallCoverageConstraint",
     "OVERNIGHT_CALL_DAYS",
     # Overnight call generation constraint (unified)
+    "FMITCallProximityConstraint",
+    "FriSatCallWeekExclusionConstraint",
     "OvernightCallGenerationConstraint",
     "is_overnight_call_night",
     # Call equity and preference constraints (soft)

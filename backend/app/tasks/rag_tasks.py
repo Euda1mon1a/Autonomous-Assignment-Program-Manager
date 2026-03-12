@@ -52,7 +52,7 @@ DOC_TYPE_MAP = {
     "constraint-catalog-summary.md": "scheduling_policy",
     "annual-rotation-optimizer.md": "scheduling_policy",
     "excel-roundtrip.md": "architecture",
-    "DIAGRAM_BUNDLE.md": "reference",
+    "DIAGRAM_BUNDLE.md": "technical_doc",
 }
 
 

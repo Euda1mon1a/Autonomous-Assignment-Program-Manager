@@ -88,6 +88,8 @@ from .call_coverage import (
     OvernightCallCoverageConstraint,
 )
 from .overnight_call import (
+    FMITCallProximityConstraint,
+    FriSatCallWeekExclusionConstraint,
     NoConsecutiveCallConstraint,
     OvernightCallGenerationConstraint,
 )
@@ -432,6 +434,9 @@ class ConstraintManager:
         # Raised to compete with CLINIC_MIN_PENALTY=200 in solver
         # Preferences: Tuesday (2) > FacultyCallPreference (1)
         manager.add(NoConsecutiveCallConstraint(weight=50.0))
+        manager.add(FMITCallProximityConstraint())
+        # Disabled: requires FMIT data — enabled in faculty profile
+        manager.disable("FMITCallProximity")
         manager.add(SundayCallEquityConstraint(weight=50.0))
         manager.add(EscalatingCallEquityConstraint(weight=40.0))
         manager.add(HolidayCallEquityConstraint(weight=7.0))
@@ -463,6 +468,7 @@ class ConstraintManager:
             manager.enable("FMITWeekBlocking")
             manager.enable("FMITMandatoryCall")
             manager.enable("OvernightCallGeneration")
+            manager.enable("FMITCallProximity")
             manager.enable("DeptChiefWednesdayPreference")
 
         return manager
@@ -603,6 +609,7 @@ class ConstraintManager:
         manager.add(WeekdayCallEquityConstraint(weight=25.0))
         manager.add(FacultyCallPreferenceConstraint(weight=1.0))
         manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
+        manager.add(FMITCallProximityConstraint())
 
         # Tier 1: Core resilience constraints (ENABLED)
         manager.add(HubProtectionConstraint(weight=15.0))

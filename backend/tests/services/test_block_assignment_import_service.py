@@ -12,7 +12,6 @@ from unittest.mock import patch
 import pytest
 
 from app.services.block_assignment_import_service import (
-    COMBINED_ROTATION_MAPPINGS,
     ROTATION_SYNONYMS,
     BlockAssignmentImportService,
 )
@@ -410,46 +409,6 @@ class TestSuggestRotationName:
 # ============================================================================
 # Constants validation
 # ============================================================================
-
-
-class TestCombinedRotationMappings:
-    """Tests for COMBINED_ROTATION_MAPPINGS constant."""
-
-    def test_not_empty(self):
-        assert len(COMBINED_ROTATION_MAPPINGS) > 0
-
-    def test_all_keys_are_tuples(self):
-        for key in COMBINED_ROTATION_MAPPINGS:
-            assert isinstance(key, tuple)
-            assert len(key) == 2
-
-    def test_all_values_are_strings(self):
-        for value in COMBINED_ROTATION_MAPPINGS.values():
-            assert isinstance(value, str)
-            assert len(value) > 0
-
-    def test_keys_are_uppercase(self):
-        for primary, secondary in COMBINED_ROTATION_MAPPINGS:
-            assert primary == primary.upper(), f"Key primary not uppercase: {primary}"
-            assert secondary == secondary.upper(), (
-                f"Key secondary not uppercase: {secondary}"
-            )
-
-    def test_night_float_endo_symmetric(self):
-        """NF + ENDO should map regardless of order (both keys exist)."""
-        assert ("NIGHT FLOAT", "ENDOCRINOLOGY") in COMBINED_ROTATION_MAPPINGS
-        assert ("ENDOCRINOLOGY", "NIGHT FLOAT") in COMBINED_ROTATION_MAPPINGS
-
-    def test_peds_ward_pnf_entries(self):
-        """Pediatrics ward + Peds NF should have both directions."""
-        assert (
-            "PEDIATRICS WARD",
-            "PEDIATRICS NIGHT FLOAT",
-        ) in COMBINED_ROTATION_MAPPINGS
-        assert (
-            "PEDIATRICS NIGHT FLOAT",
-            "PEDIATRICS WARD",
-        ) in COMBINED_ROTATION_MAPPINGS
 
 
 class TestRotationSynonyms:

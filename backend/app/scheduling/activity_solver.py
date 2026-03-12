@@ -1445,6 +1445,7 @@ class CPSATActivitySolver:
         faculty_by_id: dict[UUID, Person] = {}
         faculty_week_slots: dict[tuple[UUID, int], list[int]] = defaultdict(list)
         faculty_clinic_shortfalls: list[Any] = []
+        faculty_clinic_zero_penalties: list[Any] = []
         faculty_clinic_overages: list[Any] = []
         faculty_clinic_floor_constraints = 0
         if faculty_slots and clinic_activity:
@@ -1476,25 +1477,42 @@ class CPSATActivitySolver:
                 if not clinic_vars:
                     continue
 
-                hard_min = 0
-                # Keep at least one clinic session per week for faculty with clinic
-                # requirements, unless clinic floors are explicitly disabled.
-                if not disable_clinic_floor and min_needed > 0:
-                    hard_min = min(1, min_needed, len(clinic_vars))
-                    if hard_min > 0:
-                        model.Add(sum(clinic_vars) >= hard_min)
-                        faculty_clinic_floor_constraints += 1
+                # Entire clinic minimum is now a soft constraint driven by escalating penalties.
+                # This allows the solver to dynamically drop faculty to 0 clinics
+                # during critical staffing shortages (like AT/FMIT gaps) without crashing.
+                if min_needed > 0:
+                    if not disable_clinic_floor:
+                        shortfall = model.NewIntVar(
+                            0,
+                            min_needed,
+                            f"fac_clinic_short_{str(faculty_id)[:8]}_{week}",
+                        )
+                        model.Add(sum(clinic_vars) + shortfall >= min_needed)
+                        faculty_clinic_shortfalls.append(shortfall)
 
-                # Soft remainder: allow controlled shortfall above the hard floor
-                # to avoid hard infeasibility in tight supervision weeks.
-                if min_needed > hard_min:
-                    shortfall = model.NewIntVar(
-                        0,
-                        min_needed - hard_min,
-                        f"fac_clinic_short_{str(faculty_id)[:8]}_{week}",
-                    )
-                    model.Add(sum(clinic_vars) + shortfall >= min_needed)
-                    faculty_clinic_shortfalls.append(shortfall)
+                        # Apply an extreme non-linear penalty specifically for dropping to zero.
+                        # This ensures the solver behaves exactly like the old "hard floor" in 99% of cases,
+                        # but elegantly bends rather than breaks during critical shortages.
+                        is_zero = model.NewBoolVar(
+                            f"fac_clinic_zero_{str(faculty_id)[:8]}_{week}"
+                        )
+                        # Bi-directional indicator: is_zero ⟺ sum(clinic_vars) == 0
+                        # Forward:  is_zero=1 ⟹ sum(clinic_vars)==0
+                        model.Add(sum(clinic_vars) == 0).OnlyEnforceIf(is_zero)
+                        # Reverse:  is_zero=0 ⟹ sum(clinic_vars)>0
+                        #           (contrapositive: sum==0 ⟹ is_zero=1)
+                        model.Add(sum(clinic_vars) > 0).OnlyEnforceIf(is_zero.Not())
+                        # Give it a massive objective penalty later
+                        faculty_clinic_zero_penalties.append(is_zero)
+                    else:
+                        # Legacy fallback: if disable flag is thrown, just add standard linear shortfall
+                        shortfall = model.NewIntVar(
+                            0,
+                            min_needed,
+                            f"fac_clinic_short_{str(faculty_id)[:8]}_{week}",
+                        )
+                        model.Add(sum(clinic_vars) + shortfall >= min_needed)
+                        faculty_clinic_shortfalls.append(shortfall)
 
                 over_max = model.NewIntVar(
                     0,
@@ -2440,6 +2458,17 @@ class CPSATActivitySolver:
                 objective_expr - penalty if objective_expr is not None else -penalty
             )
 
+        if faculty_clinic_zero_penalties:
+            # Massive non-linear penalty for dropping a faculty to 0 clinics.
+            # This preserves the old "hard floor" behavior under normal circumstances,
+            # but allows bending to avoid INFEASIBLE under extreme staffing constraints.
+            zero_penalty_sum = sum(faculty_clinic_zero_penalties) * 500
+            objective_expr = (
+                objective_expr - zero_penalty_sum
+                if objective_expr is not None
+                else -zero_penalty_sum
+            )
+
         if faculty_gme_shortfalls:
             penalty = sum(faculty_gme_shortfalls) * FACULTY_GME_SHORTFALL_PENALTY
             objective_expr = (
@@ -2621,11 +2650,18 @@ class CPSATActivitySolver:
             ci_act = self._get_activity_by_code("C-I")
             clinic_act_ids = [a.id for a in [c_act, ci_act] if a]
 
+            distinct_residents = {
+                slot.person
+                for slot in slots
+                if slot.person and slot.person.type != "faculty"
+            }
             pgy12_residents = [
-                r
-                for r in residents  # type: ignore[name-defined]
-                if getattr(r, "pgy_level", 0) in (1, 2)
+                r for r in distinct_residents if getattr(r, "pgy_level", 0) in (1, 2)
             ]
+
+            slots_by_person_date_time = {
+                (slot.person_id, slot.date, slot.time_of_day): slot for slot in slots
+            }
 
             final_wed_penalties = []
             for r in pgy12_residents:
@@ -2633,15 +2669,15 @@ class CPSATActivitySolver:
                 wed_pm_key = (r.id, final_wed_date, "PM")
 
                 # Check if this slot exists in our candidate space
-                if wed_pm_key not in slots_by_person_date_time:  # type: ignore[name-defined]
+                if wed_pm_key not in slots_by_person_date_time:
                     continue
 
-                slot = slots_by_person_date_time[wed_pm_key]  # type: ignore[name-defined]
+                slot = slots_by_person_date_time[wed_pm_key]
 
                 # Gather variables for C or C-I in this slot
                 clinic_vars = []
                 for act_id in clinic_act_ids:
-                    var = self._variables.get((slot.id, act_id))  # type: ignore[attr-defined]
+                    var = self._variables.get((slot.id, act_id))
                     if var is not None:
                         clinic_vars.append(var)
 

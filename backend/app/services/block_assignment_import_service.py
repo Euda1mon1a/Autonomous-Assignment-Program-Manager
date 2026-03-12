@@ -41,66 +41,6 @@ from app.schemas.block_assignment_import import (
 logger = get_logger(__name__)
 
 
-# Combined rotation mappings: (primary, secondary) -> combined template
-# Used when xlsx has two rotations that map to a single combined template
-# Includes mirror rotations where both orderings map to the same template
-# Keys use both full names AND DB abbreviations for flexibility
-COMBINED_ROTATION_MAPPINGS: dict[tuple[str, str], str] = {
-    # Night Float + Endocrinology (full names and abbreviations)
-    ("NIGHT FLOAT", "ENDOCRINOLOGY"): "NF-ENDO",
-    ("ENDOCRINOLOGY", "NIGHT FLOAT"): "NF-ENDO",
-    ("NF-PM", "ENDO"): "NF-ENDO",
-    ("ENDO", "NF-PM"): "NF-ENDO",
-    ("NF", "ENDO"): "NF-ENDO",
-    ("ENDO", "NF"): "NF-ENDO",
-    ("NF", "ENDOCRINOLOGY"): "NF-ENDO",
-    ("ENDOCRINOLOGY", "NF"): "NF-ENDO",
-    # Night Float + Cardiology (both directions)
-    ("NIGHT FLOAT", "CARDIOLOGY"): "NF+",
-    ("CARDIOLOGY", "NIGHT FLOAT"): "C+N",
-    ("NF-PM", "CARDIO"): "NF+",
-    ("CARDIO", "NF-PM"): "C+N",
-    ("NF", "CARDIOLOGY"): "NF+",
-    ("CARDIOLOGY", "NF"): "C+N",
-    # Night Float + Dermatology (both directions)
-    ("NIGHT FLOAT", "DERMATOLOGY"): "NF-DERM",
-    ("DERMATOLOGY", "NIGHT FLOAT"): "D+N",
-    ("NF-PM", "DERM"): "NF-DERM",
-    ("DERM", "NF-PM"): "D+N",
-    ("NF", "DERMATOLOGY"): "NF-DERM",
-    ("DERMATOLOGY", "NF"): "D+N",
-    # Night Float + Medical Selective
-    ("NIGHT FLOAT", "MEDICAL SELECTIVE"): "NF-MED",
-    ("MEDICAL SELECTIVE", "NIGHT FLOAT"): "NF-MED",
-    ("NF-PM", "MED SEL"): "NF-MED",
-    ("MED SEL", "NF-PM"): "NF-MED",
-    ("NF", "MED SEL"): "NF-MED",
-    ("MED SEL", "NF"): "NF-MED",
-    # Night Float + NICU
-    ("NIGHT FLOAT", "NICU"): "NF-NICU",
-    ("NICU", "NIGHT FLOAT"): "NIC",
-    ("NF-PM", "NICU"): "NF-NICU",
-    ("NICU", "NF-PM"): "NIC",
-    ("NF", "NICU"): "NF-NICU",
-    ("NICU", "NF"): "NIC",
-    # Neurology + Night Float (both directions)
-    ("NEUROLOGY", "NIGHT FLOAT"): "NEURO-NF",
-    ("NIGHT FLOAT", "NEUROLOGY"): "NEURO-NF",
-    ("NEURO", "NF-PM"): "NEURO-NF",
-    ("NF-PM", "NEURO"): "NEURO-NF",
-    ("NEURO", "NF"): "NEURO-NF",
-    ("NF", "NEURO"): "NEURO-NF",
-    ("NEURO", "NIGHT FLOAT"): "NEURO-NF",
-    ("NIGHT FLOAT", "NEURO"): "NEURO-NF",
-    # Pediatrics Ward <-> Pediatrics Night Float (full names and abbreviations)
-    ("PEDIATRICS WARD", "PEDIATRICS NIGHT FLOAT"): "PEDS-W",
-    ("PEDIATRICS NIGHT FLOAT", "PEDIATRICS WARD"): "PNF",
-    ("PEDS-W", "PNF"): "PEDS-W",
-    ("PNF", "PEDS-W"): "PNF",
-    ("PEDS WARD", "PEDS NF"): "PEDS-W",
-    ("PEDS NF", "PEDS WARD"): "PNF",
-}
-
 # Single-rotation synonym mappings (xlsx/CSV inputs -> canonical abbreviations)
 ROTATION_SYNONYMS: dict[str, str] = {
     # Surgical Experience
@@ -279,50 +219,6 @@ class BlockAssignmentImportService:
             return "FMIT-PGY1"
 
         return key
-
-    def _match_combined_rotation(
-        self, primary: str, secondary: str
-    ) -> tuple[uuid.UUID | None, str | None, float]:
-        """
-        Match a primary + secondary rotation pair to a combined template.
-
-        Args:
-            primary: Primary rotation from xlsx column A
-            secondary: Secondary rotation from xlsx column B
-
-        Returns:
-            Tuple of (rotation_id, rotation_name, confidence)
-        """
-        if not primary or not secondary:
-            return None, None, 0.0
-
-        key = (primary.upper().strip(), secondary.upper().strip())
-
-        # Look up in combined mappings
-        if key in COMBINED_ROTATION_MAPPINGS:
-            combined_abbrev = COMBINED_ROTATION_MAPPINGS[key]
-            # Look up the combined template
-            if combined_abbrev.upper() in self._rotation_cache:
-                rot_id, rot_name = self._rotation_cache[combined_abbrev.upper()]
-                logger.debug(
-                    f"Combined rotation match: {primary} + {secondary} -> {combined_abbrev}"
-                )
-                return rot_id, rot_name, 1.0
-
-                # Try variations of the keys
-        variations = [
-            (primary.upper().replace(" ", "-"), secondary.upper().replace(" ", "-")),
-            (primary.upper().replace("-", " "), secondary.upper().replace("-", " ")),
-        ]
-        for var_key in variations:
-            if var_key in COMBINED_ROTATION_MAPPINGS:
-                combined_abbrev = COMBINED_ROTATION_MAPPINGS[var_key]
-                if combined_abbrev.upper() in self._rotation_cache:
-                    rot_id, rot_name = self._rotation_cache[combined_abbrev.upper()]
-                    return rot_id, rot_name, 0.9
-
-        logger.warning(f"No combined template found for: {primary} + {secondary}")
-        return None, None, 0.0
 
     def _match_resident(self, name: str) -> tuple[uuid.UUID | None, str | None, float]:
         """
@@ -916,38 +812,40 @@ class BlockAssignmentImportService:
             errors: list[str] = []
             row_warnings: list[str] = []
 
-            # If secondary rotation is present, try combined rotation match first
             rotation_id, rotation_name, rotation_conf = None, None, 0.0
             secondary_id, secondary_name, secondary_conf = None, None, 0.0
-            used_combined = False
 
-            if a.secondary_rotation:
-                # Try to match to a combined template (e.g., "Night Float" + "Endo" -> "NF-ENDO")
-                combined_id, combined_name, combined_conf = (
-                    self._match_combined_rotation(
-                        a.rotation_template, a.secondary_rotation
-                    )
+            # Check if this is a legacy split representing a canonical combined rotation
+            from app.services.legacy_combined_mapper import (
+                get_canonical_combined_rotation,
+            )
+
+            canonical_abbrev = get_canonical_combined_rotation(
+                a.rotation_template or "", a.secondary_rotation or ""
+            )
+
+            if canonical_abbrev:
+                # Map to the unified template and clear the secondary rotation
+                rotation_id, rotation_name, rotation_conf = self._match_rotation(
+                    canonical_abbrev
                 )
-                if combined_id:
-                    # Use the combined template as the primary rotation
-                    rotation_id = combined_id
-                    rotation_name = combined_name
-                    rotation_conf = combined_conf
-                    used_combined = True
+                if rotation_id:
                     row_warnings.append(
-                        f"Combined: {a.rotation_template} + {a.secondary_rotation} -> {combined_name}"
+                        f"Legacy split '{a.rotation_template}' + '{a.secondary_rotation}' mapped to '{canonical_abbrev}'"
                     )
+                    a.rotation_template = canonical_abbrev
+                    a.secondary_rotation = None
 
-                    # Fall back to matching primary rotation separately
-            if not rotation_id:
+            # Match primary rotation
+            if a.rotation_template and not rotation_id:
                 rotation_id, rotation_name, rotation_conf = self._match_rotation(
                     a.rotation_template
                 )
-                if not rotation_id and a.rotation_template:
+                if not rotation_id:
                     unknown_rotation_counts[a.rotation_template.upper()] += 1
 
-                    # Match secondary rotation separately (if not using combined)
-            if a.secondary_rotation and not used_combined:
+            # Match secondary rotation
+            if a.secondary_rotation:
                 secondary_id, secondary_name, secondary_conf = self._match_rotation(
                     a.secondary_rotation
                 )
@@ -957,7 +855,7 @@ class BlockAssignmentImportService:
                         f"Secondary rotation '{a.secondary_rotation}' not found"
                     )
 
-                    # Match resident
+            # Match resident
             resident_id, resident_name, resident_conf = self._match_resident(
                 a.person_name
             )

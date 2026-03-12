@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.models.block_assignment import BlockAssignment
 from app.models.annual_rotation import AnnualRotationAssignment, AnnualRotationPlan
 from app.models.person import Person
+from app.models.rotation_template import RotationTemplate
 
 
 # ── Fixtures ────────────────────────────────────────────────────────────────
@@ -313,3 +314,155 @@ class TestStatusTransitions:
         )
         assert resp.status_code == 200
         assert resp.json()["status"] == "published"
+
+
+# ── Combined Rotation Publish Tests ────────────────────────────────────────
+
+
+class TestPublishCombinedRotations:
+    """Test that publish_plan correctly maps combined rotations."""
+
+    def test_combined_rotation_maps_to_template(self, authed_client, db):
+        """Combined rotation names use ARO_COMBINED_TEMPLATE_MAP to find templates."""
+        # Create a resident (not in the PGY 1-3 pool to avoid solver conflicts)
+        resident = Person(
+            id=uuid4(),
+            name="Res_Combined_Test",
+            type="resident",
+            email="combined_test@test.org",
+            pgy_level=2,
+        )
+        db.add(resident)
+
+        # Create the NF-CARDIO combined template in DB
+        nf_cardio = RotationTemplate(
+            id=uuid4(),
+            name="NF + Cardiology Combined",
+            rotation_type="inpatient",
+            abbreviation="NF-CARDIO",
+            display_abbreviation="NF-CARDIO",
+            is_block_half_rotation=False,
+            leave_eligible=False,
+        )
+        db.add(nf_cardio)
+        db.commit()
+
+        # Create plan directly in "optimized" state (skip solver)
+        plan = AnnualRotationPlan(
+            id=uuid4(),
+            academic_year=2026,
+            name="Combined Test",
+            status="optimized",
+            solver_status="OPTIMAL",
+        )
+        db.add(plan)
+        db.flush()
+
+        # Add a single combined assignment
+        db.add(
+            AnnualRotationAssignment(
+                plan_id=plan.id,
+                person_id=resident.id,
+                block_number=5,
+                rotation_name="[NF + Card]",
+                is_fixed=False,
+            )
+        )
+        db.commit()
+
+        # Publish via API
+        resp = authed_client.post(
+            f"/api/v1/annual-planner/plans/{plan.id}/publish",
+        )
+        assert resp.status_code == 200
+
+        # Check that the block assignment uses the NF-CARDIO template
+        ba = (
+            db.query(BlockAssignment)
+            .filter(
+                BlockAssignment.academic_year == 2026,
+                BlockAssignment.resident_id == resident.id,
+                BlockAssignment.block_number == 5,
+            )
+            .first()
+        )
+        assert ba is not None
+        assert ba.rotation_template_id == nf_cardio.id
+        # NF-CARDIO is a combined template (None secondary), so secondary should be NULL
+        assert ba.secondary_rotation_template_id is None
+
+    def test_two_template_split_sets_secondary(self, authed_client, db):
+        """Two-template combined rotations set secondary_rotation_template_id."""
+        resident = Person(
+            id=uuid4(),
+            name="Res_TwoTmpl_Test",
+            type="resident",
+            email="two_tmpl@test.org",
+            pgy_level=3,
+        )
+        db.add(resident)
+
+        # Create PSYCH and NF-AM templates
+        psych = RotationTemplate(
+            id=uuid4(),
+            name="Psychiatry",
+            rotation_type="outpatient",
+            abbreviation="PSYCH",
+            display_abbreviation="PSYCH",
+            is_block_half_rotation=False,
+            leave_eligible=True,
+        )
+        nf_am = RotationTemplate(
+            id=uuid4(),
+            name="Night Float AM",
+            rotation_type="inpatient",
+            abbreviation="NF-AM",
+            display_abbreviation="NF-AM",
+            is_block_half_rotation=True,
+            leave_eligible=False,
+        )
+        db.add(psych)
+        db.add(nf_am)
+        db.commit()
+
+        # Create plan directly in "optimized" state (skip solver)
+        plan = AnnualRotationPlan(
+            id=uuid4(),
+            academic_year=2026,
+            name="Two Template Split",
+            status="optimized",
+            solver_status="OPTIMAL",
+        )
+        db.add(plan)
+        db.flush()
+
+        # Add a single two-template combined assignment
+        db.add(
+            AnnualRotationAssignment(
+                plan_id=plan.id,
+                person_id=resident.id,
+                block_number=8,
+                rotation_name="[PSYCH + NF]",
+                is_fixed=False,
+            )
+        )
+        db.commit()
+
+        # Publish via API
+        resp = authed_client.post(
+            f"/api/v1/annual-planner/plans/{plan.id}/publish",
+        )
+        assert resp.status_code == 200
+
+        ba = (
+            db.query(BlockAssignment)
+            .filter(
+                BlockAssignment.academic_year == 2026,
+                BlockAssignment.resident_id == resident.id,
+                BlockAssignment.block_number == 8,
+            )
+            .first()
+        )
+        assert ba is not None
+        assert ba.rotation_template_id == psych.id
+        assert ba.secondary_rotation_template_id == nf_am.id

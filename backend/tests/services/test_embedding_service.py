@@ -132,9 +132,11 @@ class TestMPSDeviceDetection:
                 # Patch at the function level
                 with patch(
                     "builtins.__import__",
-                    side_effect=lambda name, *a, **kw: mock_torch
-                    if name == "torch"
-                    else __builtins__["__import__"](name, *a, **kw),
+                    side_effect=lambda name, *a, **kw: (
+                        mock_torch
+                        if name == "torch"
+                        else __builtins__["__import__"](name, *a, **kw)
+                    ),
                 ):
                     pass  # Detection is best tested via integration
 
