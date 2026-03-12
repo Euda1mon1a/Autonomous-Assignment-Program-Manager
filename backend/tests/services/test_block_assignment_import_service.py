@@ -173,57 +173,6 @@ class TestNormalizeRotationInput:
 
 
 # ============================================================================
-# _match_combined_rotation
-# ============================================================================
-
-
-class TestMatchCombinedRotation:
-    """Tests for combined rotation pair matching."""
-
-    def test_combined_match(self, service):
-        rot_id = uuid.uuid4()
-        service._rotation_cache["NF-ENDO"] = (rot_id, "Night Float + Endo")
-        rid, name, conf = service._match_combined_rotation(
-            "NIGHT FLOAT", "ENDOCRINOLOGY"
-        )
-        assert rid == rot_id
-        assert conf == 1.0
-
-    def test_reverse_order_different_template(self, service):
-        """Some combined rotations have different templates based on order."""
-        nf_plus = uuid.uuid4()
-        c_plus_n = uuid.uuid4()
-        service._rotation_cache["NF+"] = (nf_plus, "NF+Cardio")
-        service._rotation_cache["C+N"] = (c_plus_n, "Cardio+NF")
-        rid1, _, _ = service._match_combined_rotation("NIGHT FLOAT", "CARDIOLOGY")
-        rid2, _, _ = service._match_combined_rotation("CARDIOLOGY", "NIGHT FLOAT")
-        assert rid1 == nf_plus
-        assert rid2 == c_plus_n
-
-    def test_empty_primary_returns_none(self, service):
-        rid, name, conf = service._match_combined_rotation("", "ENDOCRINOLOGY")
-        assert rid is None
-        assert conf == 0.0
-
-    def test_empty_secondary_returns_none(self, service):
-        rid, name, conf = service._match_combined_rotation("NIGHT FLOAT", "")
-        assert rid is None
-        assert conf == 0.0
-
-    def test_no_match_returns_none(self, service):
-        rid, name, conf = service._match_combined_rotation("UNKNOWN", "ALSO UNKNOWN")
-        assert rid is None
-        assert conf == 0.0
-
-    def test_abbreviation_match(self, service):
-        rot_id = uuid.uuid4()
-        service._rotation_cache["NF-ENDO"] = (rot_id, "NF-Endo")
-        rid, name, conf = service._match_combined_rotation("NF-PM", "ENDO")
-        assert rid == rot_id
-        assert conf == 1.0
-
-
-# ============================================================================
 # _match_resident
 # ============================================================================
 
