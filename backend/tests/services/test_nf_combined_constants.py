@@ -2,7 +2,6 @@
 
 Validates that:
 - All combined NF codes resolve to themselves (not aliased away)
-- DB abbreviation aliases (D+N, C+N, NIC) resolve to canonical codes
 - NF-PEDS-PGY resolves to NF-PEDS-PG (combined), not PEDNF
 - Classification sets include all combined codes
 """
@@ -16,7 +15,6 @@ from app.services.preload.constants import (
     LEC_EXEMPT_ROTATIONS,
     NF_COMBINED_ACTIVITY_MAP,
     NIGHT_FLOAT_ROTATIONS,
-    REVERSE_NF_COMBINED_MAP,
     SATURDAY_OFF_ROTATIONS,
     canonical_rotation_code,
 )
@@ -28,24 +26,15 @@ class TestCanonicalRotationCode:
 
     @pytest.mark.parametrize(
         "code",
-        list(NF_COMBINED_ACTIVITY_MAP.keys()) + list(REVERSE_NF_COMBINED_MAP.keys()),
+        list(NF_COMBINED_ACTIVITY_MAP.keys()),
     )
     def test_combined_codes_are_canonical(self, code: str):
         """Every combined NF code should return itself."""
         assert canonical_rotation_code(code) == code
 
-    @pytest.mark.parametrize(
-        "raw,expected",
-        [
-            ("D+N", "DERM-NF"),
-            ("C+N", "CARDS-NF"),
-            ("NIC", "NICU-NF"),
-            ("NF-PEDS-PGY", "NF-PEDS-PG"),
-        ],
-    )
-    def test_db_abbreviation_aliases(self, raw: str, expected: str):
-        """DB template abbreviations should alias to canonical combined codes."""
-        assert canonical_rotation_code(raw) == expected
+    def test_nf_peds_pgy_alias(self):
+        """NF-PEDS-PGY should alias to NF-PEDS-PG (combined)."""
+        assert canonical_rotation_code("NF-PEDS-PGY") == "NF-PEDS-PG"
 
     def test_nf_peds_pg_not_aliased_to_pednf(self):
         """NF-PEDS-PG is a combined rotation, NOT standalone Peds NF."""
@@ -67,7 +56,7 @@ class TestCanonicalRotationCode:
 class TestClassificationSets:
     """All combined NF codes must be in the classification sets."""
 
-    ALL_COMBINED = set(NF_COMBINED_ACTIVITY_MAP) | set(REVERSE_NF_COMBINED_MAP)
+    ALL_COMBINED = set(NF_COMBINED_ACTIVITY_MAP)
 
     def test_all_in_night_float_rotations(self):
         missing = self.ALL_COMBINED - NIGHT_FLOAT_ROTATIONS
@@ -138,40 +127,12 @@ class TestNFCombinedPreloadCodes:
             f"{code} second-half Monday PM should be {specialty}, got {pm}"
         )
 
-    @pytest.mark.parametrize("code,specialty", list(REVERSE_NF_COMBINED_MAP.items()))
-    def test_reverse_nf_weekday_first_half(self, code: str, specialty: str):
-        """Weekdays in first half should be specialty for reverse-NF codes."""
-        d = self.BLOCK_START
-        while d.weekday() != 0:
-            d += timedelta(days=1)
-        am, pm = get_rotation_preload_codes(
-            code, d, self.BLOCK_START, self.BLOCK_END, pgy_level=2, is_outpatient=False
-        )
-        assert am == specialty, (
-            f"{code} first-half Monday AM should be {specialty}, got {am}"
-        )
-        assert pm == specialty, (
-            f"{code} first-half Monday PM should be {specialty}, got {pm}"
-        )
-
-    @pytest.mark.parametrize("code,specialty", list(REVERSE_NF_COMBINED_MAP.items()))
-    def test_reverse_nf_weekday_second_half(self, code: str, specialty: str):
-        """Weekdays in second half should be OFF/NF for reverse-NF codes."""
-        d = self.BLOCK_START + timedelta(days=15)
-        while d.weekday() != 0:
-            d += timedelta(days=1)
-        am, pm = get_rotation_preload_codes(
-            code, d, self.BLOCK_START, self.BLOCK_END, pgy_level=2, is_outpatient=False
-        )
-        assert am == "OFF", f"{code} second-half Monday AM should be OFF, got {am}"
-        assert pm == "NF", f"{code} second-half Monday PM should be NF, got {pm}"
-
     def test_sunday_off_for_combined(self):
         """Sundays should be W/W for all combined codes."""
         d = self.BLOCK_START
         while d.weekday() != 6:  # Sunday
             d += timedelta(days=1)
-        for code in list(NF_COMBINED_ACTIVITY_MAP) + list(REVERSE_NF_COMBINED_MAP):
+        for code in NF_COMBINED_ACTIVITY_MAP:
             am, pm = get_rotation_preload_codes(
                 code,
                 d,

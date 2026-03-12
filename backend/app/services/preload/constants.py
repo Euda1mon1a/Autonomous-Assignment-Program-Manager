@@ -30,11 +30,6 @@ ROTATION_ALIASES: dict[str, str] = {
     "JAPAN OFF-SITE ROTATION": "JAPAN",
     "PEDS EM": "PEDS-EM",
     "PEDIATRIC EMERGENCY MEDICINE": "PEDS-EM",
-    # Reverse-NF combined aliases: DB abbreviations → canonical codes
-    "D+N": "DERM-NF",
-    "C+N": "CARDS-NF",
-    "NIC": "NICU-NF",
-    "NEURO-1ST-": "NEURO-NF",
 }
 
 # Half-block NF combined rotations: abbreviation → specialty activity code.
@@ -49,21 +44,8 @@ NF_COMBINED_ACTIVITY_MAP: dict[str, str] = {
     "NF-MED-SEL": "SEL-MED",
 }
 
-# Mirror (specialty-first) combined rotations: specialty days 1-14, NF days 16-28.
-# These pair with NF-first templates to ensure continuous NF coverage.
-# Codes use "-NF" suffix (not "+N") because canonical_rotation_code rewrites
-# D+N → DERM-NF and C+N → CARDS-NF to prevent the "+" split in
-# _resolve_rotation_code_for_date.
-REVERSE_NF_COMBINED_MAP: dict[str, str] = {
-    "CARDS-NF": "CARDS",
-    "DERM-NF": "DERM",
-    "FMIT-NF-PG": "FMIT",
-    "NEURO-NF": "NEURO",
-    "NICU-NF": "NICU",
-}
-
-# All combined NF codes (union of both maps) for set membership checks.
-_ALL_NF_COMBINED = set(NF_COMBINED_ACTIVITY_MAP) | set(REVERSE_NF_COMBINED_MAP)
+# All combined NF codes for set membership checks.
+_ALL_NF_COMBINED = set(NF_COMBINED_ACTIVITY_MAP)
 
 NIGHT_FLOAT_ROTATIONS: set[str] = {
     "NF",
@@ -140,7 +122,7 @@ def canonical_rotation_code(raw_code: str | None) -> str:
     if not code:
         return ""
     # Preserve combined NF codes — they are canonical already.
-    if code in NF_COMBINED_ACTIVITY_MAP or code in REVERSE_NF_COMBINED_MAP:
+    if code in NF_COMBINED_ACTIVITY_MAP:
         return code
     if code.startswith("HILO"):
         return "HILO"

@@ -202,37 +202,27 @@
 
    Legacy Excel (2-column)          Current DB (1-column)
    ┌──────┬──────┐                  ┌────────────┐
-   │Rot 1 │Rot 2 │                  │ rotation   │
-   │ DERM │  NF  │                  │ DERM/NF    │
-   │ ENDO │  NF  │                  │ ENDO/NF    │
-   │ FMIT │  NF  │                  │ FMIT-NF-PG │
-   └──┬───┴──┬───┘                  └──────┬─────┘
-      │      │                             │
-      ▼      ▼                             │
-   get_canonical_combined_rotation()       │
-   (legacy_combined_mapper.py)             │
-      │                                    │
-      └──────── both produce ──────────────┘
-                     │
-                     ▼
-            rotation_template_id
-            (single canonical ref)
+   │Rot 1 │Rot 2 │
+   │ DERM │  NF  │
+   │ ENDO │  NF  │
+   │ FMIT │  NF  │
+   └──┬───┴──┬───┘
+      │      │
+      ▼      ▼
+   Two block_assignment rows
+   with block_half=1 and block_half=2:
+      │
+      ├── block_half=1: rotation_template → DERM
+      └── block_half=2: rotation_template → NF
                      │
                      ▼
             Activity Solver / Preloads
-            resolve to daily codes:
+            resolve per block_half row:
                      │
          ┌───────────┴───────────┐
          ▼                       ▼
     Week 1-2: DERM          Week 3-4: NF
-    (AM: DERM, PM: DERM)    (AM: NF, PM: NF)
-
-   8 Canonical Pairs:
-   ┌─────────────────────────────────┐
-   │  DERM/NF    ENDO/NF   CARDIO/NF│
-   │  MED/NF     NICU/NF   NEURO/NF │
-   │  PEDSW/NF   L&D/NF             │
-   └─────────────────────────────────┘
+    (AM: DERM, PM: DERM)    (AM: OFF, PM: NF)
 ```
 
 ---

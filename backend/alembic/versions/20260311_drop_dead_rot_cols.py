@@ -5,7 +5,7 @@ never referenced in the ORM model or any scheduling logic. They are
 DB-only ghosts.
 
 Revision ID: 20260311_drop_dead_rot_cols
-Revises: 07e395bd6a1f
+Revises: 20260309_annual_rot, 473e26e57e64
 Create Date: 2026-03-11
 """
 
@@ -16,7 +16,7 @@ import sqlalchemy as sa
 
 
 revision: str = "20260311_drop_dead_rot_cols"
-down_revision: str = "07e395bd6a1f"
+down_revision: tuple[str, ...] = ("20260309_annual_rot", "473e26e57e64")
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
