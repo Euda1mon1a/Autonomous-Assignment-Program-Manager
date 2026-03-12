@@ -73,7 +73,12 @@ def upgrade() -> None:
         """)
     )
 
-    # Step 4: Drop the FK constraint (if it exists), then the column
+    # Step 4: Drop index, FK constraint, then the column
+    op.drop_index(
+        "ix_block_assignments_secondary_rotation",
+        "block_assignments",
+        if_exists=True,
+    )
     conn.execute(
         sa.text("""
         DO $$
@@ -105,6 +110,11 @@ def downgrade() -> None:
         ["secondary_rotation_template_id"],
         ["id"],
         ondelete="SET NULL",
+    )
+    op.create_index(
+        "ix_block_assignments_secondary_rotation",
+        "block_assignments",
+        ["secondary_rotation_template_id"],
     )
 
     conn = op.get_bind()
