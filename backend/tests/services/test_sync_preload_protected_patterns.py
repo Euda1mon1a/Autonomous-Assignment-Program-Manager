@@ -770,61 +770,6 @@ def test_preload_nf_combined_half_block_pattern(db):
     assert _get_assignment_code(db, resident.id, second_monday, "AM") == "CARDS"
     assert _get_assignment_code(db, resident.id, second_monday, "PM") == "CARDS"
 
-
-def test_preload_reverse_nf_combined_pattern(db):
-    """Mirror NF combined (specialty-first): specialty days 1-14, recovery day 15, NF days 16+."""
-    _create_activity(db, "OFF", "OFF", ActivityCategory.TIME_OFF.value)
-    _create_activity(db, "NF", "NF", ActivityCategory.CLINICAL.value)
-    _create_activity(db, "DERM", "DERM", ActivityCategory.CLINICAL.value)
-    _create_activity(db, "W", "W", ActivityCategory.TIME_OFF.value)
-    _create_activity(db, "recovery", "recovery", ActivityCategory.TIME_OFF.value)
-    _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
-    _create_activity(db, "ADV", "ADV", ActivityCategory.EDUCATIONAL.value)
-
-    resident = Person(id=uuid4(), name="Resident Reverse", type="resident", pgy_level=2)
-    # Template abbreviation "D+N" gets canonicalized to "DERM-NF"
-    template = RotationTemplate(
-        id=uuid4(),
-        name="Derm + NF",
-        rotation_type="inpatient",
-        abbreviation="D+N",
-    )
-    db.add_all([resident, template])
-    db.commit()
-
-    block_number = 10
-    academic_year = 2025
-    assignment = BlockAssignment(
-        id=uuid4(),
-        block_number=block_number,
-        academic_year=academic_year,
-        resident_id=resident.id,
-        rotation_template_id=template.id,
-    )
-    db.add(assignment)
-    db.commit()
-
-    service = SyncPreloadService(db)
-    service._load_rotation_protected_preloads(block_number, academic_year)
-
-    block_dates = get_block_dates(block_number, academic_year)
-    start = block_dates.start_date
-    mid_block = start + timedelta(days=14)
-
-    # First-half weekday -> DERM/DERM (specialty first)
-    first_monday = _find_weekday(start, mid_block - timedelta(days=1), 0)
-    assert first_monday is not None
-    assert _get_assignment_code(db, resident.id, first_monday, "AM") == "DERM"
-    assert _get_assignment_code(db, resident.id, first_monday, "PM") == "DERM"
-
-    # Mid-block day -> recovery
-    assert _get_assignment_code(db, resident.id, mid_block, "AM") == "recovery"
-    assert _get_assignment_code(db, resident.id, mid_block, "PM") == "recovery"
-
-    # Second-half weekday -> OFF/NF (NF second)
-    second_monday = _find_weekday(
-        mid_block + timedelta(days=1), block_dates.end_date, 0
-    )
-    assert second_monday is not None
-    assert _get_assignment_code(db, resident.id, second_monday, "AM") == "OFF"
-    assert _get_assignment_code(db, resident.id, second_monday, "PM") == "NF"
+    # test_preload_reverse_nf_combined_pattern removed in Phase 4:
+    # REVERSE_NF_COMBINED_MAP was dead code (0 assignments). Specialty-first
+    # combined rotations now use two block_half rows instead.

@@ -467,9 +467,7 @@ class PreloadService:
 
             current = iter_start
             while current <= iter_end:
-                rotation_code = self._resolve_rotation_code_for_date(
-                    assignment, current, mid_block_date
-                )
+                rotation_code = self._resolve_rotation_code_for_date(assignment)
                 if not rotation_code:
                     current += timedelta(days=1)
                     continue
@@ -539,42 +537,11 @@ class PreloadService:
     def _resolve_rotation_code_for_date(
         self,
         assignment: BlockAssignment,
-        current_date: date,
-        mid_block_date: date,
     ) -> str:
-        """Resolve active rotation code for a date (supports mid-block transitions)."""
-        # block_half rows: template IS the rotation — no parsing needed
-        if assignment.block_half is not None:
-            return self._canonical_rotation_code(
-                self._rotation_label(assignment.rotation_template)
-            )
-
-        raw_code = self._rotation_label(assignment.rotation_template)
-        code = self._canonical_rotation_code(raw_code)
-
-        # String parsing for combined single-template rows (NF-CARDIO etc.)
-        if "-1ST-" in code and "-2ND" in code:
-            first, second = code.split("-1ST-", 1)
-            second = second.replace("-2ND", "")
-            first = self._canonical_rotation_code(first)
-            second = self._canonical_rotation_code(second)
-            return second if current_date >= mid_block_date else first
-
-        if "/" in code:
-            parts = [p.strip() for p in code.split("/") if p.strip()]
-            if len(parts) == 2:
-                first = self._canonical_rotation_code(parts[0])
-                second = self._canonical_rotation_code(parts[1])
-                return second if current_date >= mid_block_date else first
-
-        if "+" in code:
-            parts = [p.strip() for p in code.split("+") if p.strip()]
-            if len(parts) == 2:
-                first = self._canonical_rotation_code(parts[0])
-                second = self._canonical_rotation_code(parts[1])
-                return second if current_date >= mid_block_date else first
-
-        return code
+        """Resolve canonical rotation code for a block assignment."""
+        return self._canonical_rotation_code(
+            self._rotation_label(assignment.rotation_template)
+        )
 
     def _rotation_label(self, template: RotationTemplate | None) -> str:
         """Get the best available label for a rotation template."""
