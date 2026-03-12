@@ -319,18 +319,45 @@ async def publish_plan(plan_id: UUID, db: AsyncSession) -> AnnualRotationPlan:
             else:
                 unmapped.add(assignment.rotation_name)
 
-        db.add(
-            BlockAssignment(
-                block_number=assignment.block_number,
-                academic_year=plan.academic_year,
-                resident_id=assignment.person_id,
-                rotation_template_id=primary_template_id,
-                secondary_rotation_template_id=secondary_template_id,
-                assignment_reason="balanced",
-                notes=f"ARO plan: {plan.name}",
-                created_by="annual_rotation_optimizer",
+        if secondary_template_id:
+            # Two-template split → two rows with block_half
+            db.add(
+                BlockAssignment(
+                    block_number=assignment.block_number,
+                    academic_year=plan.academic_year,
+                    resident_id=assignment.person_id,
+                    rotation_template_id=primary_template_id,
+                    block_half=1,
+                    assignment_reason="balanced",
+                    notes=f"ARO plan: {plan.name}",
+                    created_by="annual_rotation_optimizer",
+                )
             )
-        )
+            db.add(
+                BlockAssignment(
+                    block_number=assignment.block_number,
+                    academic_year=plan.academic_year,
+                    resident_id=assignment.person_id,
+                    rotation_template_id=secondary_template_id,
+                    block_half=2,
+                    assignment_reason="balanced",
+                    notes=f"ARO plan: {plan.name}",
+                    created_by="annual_rotation_optimizer",
+                )
+            )
+        else:
+            # Non-combined or single combined template → one row
+            db.add(
+                BlockAssignment(
+                    block_number=assignment.block_number,
+                    academic_year=plan.academic_year,
+                    resident_id=assignment.person_id,
+                    rotation_template_id=primary_template_id,
+                    assignment_reason="balanced",
+                    notes=f"ARO plan: {plan.name}",
+                    created_by="annual_rotation_optimizer",
+                )
+            )
 
     if unmapped:
         logger.warning(

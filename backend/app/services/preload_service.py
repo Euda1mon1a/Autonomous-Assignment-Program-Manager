@@ -456,8 +456,20 @@ class PreloadService:
                 continue
 
             pgy = resident.pgy_level or 0
-            current = start_date
-            while current <= end_date:
+
+            # block_half-aware date range
+            if assignment.block_half == 1:
+                iter_start = start_date
+                iter_end = mid_block_date - timedelta(days=1)
+            elif assignment.block_half == 2:
+                iter_start = mid_block_date
+                iter_end = end_date
+            else:
+                iter_start = start_date
+                iter_end = end_date
+
+            current = iter_start
+            while current <= iter_end:
                 rotation_code = self._resolve_rotation_code_for_date(
                     assignment, current, mid_block_date
                 )
@@ -467,7 +479,8 @@ class PreloadService:
 
                 active_template = assignment.rotation_template
                 if (
-                    assignment.secondary_rotation_template_id
+                    assignment.block_half is None
+                    and assignment.secondary_rotation_template_id
                     and current >= mid_block_date
                 ):
                     active_template = assignment.secondary_rotation_template
@@ -539,6 +552,13 @@ class PreloadService:
         mid_block_date: date,
     ) -> str:
         """Resolve active rotation code for a date (supports mid-block transitions)."""
+        # block_half rows: template IS the rotation — no parsing needed
+        if assignment.block_half is not None:
+            return self._canonical_rotation_code(
+                self._rotation_label(assignment.rotation_template)
+            )
+
+        # Legacy: secondary_rotation_template_id split
         template = assignment.rotation_template
         if assignment.secondary_rotation_template_id and current_date >= mid_block_date:
             template = assignment.secondary_rotation_template
@@ -548,7 +568,7 @@ class PreloadService:
         if assignment.secondary_rotation_template_id:
             return code
 
-            # Fallback: parse compound codes like NEURO-1ST-NF-2ND or NEURO/NF
+        # String parsing for combined single-template rows (NF-CARDIO etc.)
         if "-1ST-" in code and "-2ND" in code:
             first, second = code.split("-1ST-", 1)
             second = second.replace("-2ND", "")

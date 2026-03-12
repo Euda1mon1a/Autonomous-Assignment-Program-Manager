@@ -595,11 +595,23 @@ class BlockAssignmentImportService:
                             existing.rotation_template_id = uuid.UUID(
                                 row_data["rotation_id"]
                             )
-                            # Update secondary rotation (or clear if not present)
                             if row_data.get("secondary_rotation_id"):
-                                existing.secondary_rotation_template_id = uuid.UUID(
-                                    row_data["secondary_rotation_id"]
+                                # Two-template split: update primary to half=1,
+                                # create second row with half=2
+                                existing.block_half = 1
+                                existing.secondary_rotation_template_id = None
+                                second_assignment = BlockAssignment(
+                                    block_number=existing.block_number,
+                                    academic_year=existing.academic_year,
+                                    resident_id=existing.resident_id,
+                                    rotation_template_id=uuid.UUID(
+                                        row_data["secondary_rotation_id"]
+                                    ),
+                                    block_half=2,
+                                    assignment_reason="manual",
+                                    created_by="gui_import",
                                 )
+                                self.session.add(second_assignment)
                             else:
                                 existing.secondary_rotation_template_id = None
                             existing.assignment_reason = "manual"
@@ -617,21 +629,40 @@ class BlockAssignmentImportService:
 
                 # Create new assignment
             try:
-                # Parse secondary rotation ID if present
-                secondary_rot_id = None
-                if row_data.get("secondary_rotation_id"):
-                    secondary_rot_id = uuid.UUID(row_data["secondary_rotation_id"])
+                secondary_rot_id_str = row_data.get("secondary_rotation_id")
 
-                assignment = BlockAssignment(
-                    block_number=row_data["block_number"],
-                    academic_year=request.academic_year,
-                    resident_id=uuid.UUID(row_data["resident_id"]),
-                    rotation_template_id=uuid.UUID(row_data["rotation_id"]),
-                    secondary_rotation_template_id=secondary_rot_id,
-                    assignment_reason="manual",
-                    created_by="gui_import",
-                )
-                self.session.add(assignment)
+                if secondary_rot_id_str:
+                    # Two-template split → two rows with block_half
+                    assignment = BlockAssignment(
+                        block_number=row_data["block_number"],
+                        academic_year=request.academic_year,
+                        resident_id=uuid.UUID(row_data["resident_id"]),
+                        rotation_template_id=uuid.UUID(row_data["rotation_id"]),
+                        block_half=1,
+                        assignment_reason="manual",
+                        created_by="gui_import",
+                    )
+                    self.session.add(assignment)
+                    second_assignment = BlockAssignment(
+                        block_number=row_data["block_number"],
+                        academic_year=request.academic_year,
+                        resident_id=uuid.UUID(row_data["resident_id"]),
+                        rotation_template_id=uuid.UUID(secondary_rot_id_str),
+                        block_half=2,
+                        assignment_reason="manual",
+                        created_by="gui_import",
+                    )
+                    self.session.add(second_assignment)
+                else:
+                    assignment = BlockAssignment(
+                        block_number=row_data["block_number"],
+                        academic_year=request.academic_year,
+                        resident_id=uuid.UUID(row_data["resident_id"]),
+                        rotation_template_id=uuid.UUID(row_data["rotation_id"]),
+                        assignment_reason="manual",
+                        created_by="gui_import",
+                    )
+                    self.session.add(assignment)
                 imported_count += 1
             except Exception as e:
                 logger.error(f"Row {row_num}: Import failed - {e}")
