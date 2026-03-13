@@ -43,6 +43,9 @@
 - `docs/architecture/FACULTY_FIX_ROADMAP.md` — Faculty scheduling (all phases complete)
 - `docs/scheduling/` — Solver models, block specs, domain knowledge
 
+### Agent Learning
+- `docs/planning/TASK_HISTORY_LEARNING_ROADMAP.md` — 7-phase plan to activate dormant `task_history` table (pgvector)
+
 ### Excel Import/Export
 - `docs/architecture/excel-stateful-roundtrip-roadmap.md` — Phases 1-4
 - `docs/archived/planning/BLOCK_12_ANNUAL_WORKBOOK_ROADMAP.md` — Annual workbook pipeline
