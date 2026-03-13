@@ -44,8 +44,11 @@ class SwapWorkflowService:
                 target_entity_type="SwapRecord",
                 target_entity_id=str(swap.id),
             )
+            self.db.commit()
         except Exception:
-            logger.warning("Failed to append approval record for swap %s", swap.id)
+            logger.error(
+                "Failed to append approval record for swap %s", swap.id, exc_info=True
+            )
 
         # Notify target faculty
         try:
@@ -79,8 +82,11 @@ class SwapWorkflowService:
                 target_entity_type="SwapRecord",
                 target_entity_id=str(swap.id),
             )
+            self.db.commit()
         except Exception:
-            logger.warning("Failed to append approval record for swap %s", swap.id)
+            logger.error(
+                "Failed to append approval record for swap %s", swap.id, exc_info=True
+            )
 
         # Broadcast approval
         await broadcast_swap_approved(
@@ -124,8 +130,11 @@ class SwapWorkflowService:
                 target_entity_type="SwapRecord",
                 target_entity_id=str(swap.id),
             )
+            self.db.commit()
         except Exception:
-            logger.warning("Failed to append rejection record for swap %s", swap.id)
+            logger.error(
+                "Failed to append rejection record for swap %s", swap.id, exc_info=True
+            )
 
         # Notify requester
         try:
@@ -165,8 +174,11 @@ class SwapWorkflowService:
                 target_entity_type="SwapRecord",
                 target_entity_id=str(swap.id),
             )
+            self.db.commit()
         except Exception:
-            logger.warning("Failed to append execution record for swap %s", swap.id)
+            logger.error(
+                "Failed to append execution record for swap %s", swap.id, exc_info=True
+            )
 
         # Broadcast events
         await broadcast_swap_approved(
@@ -229,8 +241,11 @@ class SwapWorkflowService:
                 target_entity_type="SwapRecord",
                 target_entity_id=str(swap.id),
             )
+            self.db.commit()
         except Exception:
-            logger.warning("Failed to append rollback record for swap %s", swap.id)
+            logger.error(
+                "Failed to append rollback record for swap %s", swap.id, exc_info=True
+            )
 
         # Broadcast update
         await broadcast_schedule_updated(
@@ -251,7 +266,7 @@ class SwapWorkflowService:
                 "target_week": str(swap.target_week) if swap.target_week else "N/A",
                 "swap_type": swap.swap_type.value if swap.swap_type else "unknown",
                 "rolled_back_by": str(actor_id),
-                "reason": reason or "No reason provided",
+                "rollback_reason": reason or "No reason provided",
                 "rolled_back_at": datetime.now(UTC).isoformat(),
             }
             await self.notifier.send_notification(

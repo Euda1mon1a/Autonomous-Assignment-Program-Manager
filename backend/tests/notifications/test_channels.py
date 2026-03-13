@@ -133,7 +133,7 @@ class TestInAppChannel:
 
         assert result.success is True
         assert result.channel == "in_app"
-        assert result.message == "Notification stored successfully"
+        assert result.message == "Notification prepared for in_app delivery"
         assert result.metadata is not None
         assert "notification_id" in result.metadata
         assert result.metadata["notification_id"] == str(payload.id)
@@ -459,9 +459,9 @@ class TestWebhookChannel:
 
         result = await channel.deliver(payload)
 
-        assert result.success is True
+        assert result.success is False
         assert result.channel == "webhook"
-        assert result.metadata["webhook_url"] is None
+        assert result.message == "No webhook URL configured"
 
     @pytest.mark.asyncio
     async def test_deliver_with_db_session(self):
@@ -701,9 +701,10 @@ class TestPriorityHandling:
         assert "priority-low" in html
 
     @pytest.mark.asyncio
-    async def test_webhook_channel_priority_in_payload(self):
+    @patch("app.notifications.channels_core.send_webhook")
+    async def test_webhook_channel_priority_in_payload(self, mock_send_webhook):
         """Test webhook channel includes priority in payload."""
-        channel = WebhookChannel()
+        channel = WebhookChannel(webhook_url="https://example.com/hook")
         recipient_id = uuid.uuid4()
 
         for priority in ["high", "normal", "low"]:

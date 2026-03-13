@@ -51,7 +51,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_active_user, get_current_user
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.swap import SwapRecord
 from app.models.user import User
@@ -68,11 +68,6 @@ from app.schemas.swap import (
     SwapValidationResult,
 )
 from app.core.logging import get_logger
-from app.models.approval_record import ApprovalAction
-from app.models.swap import SwapStatus, SwapType
-from app.notifications.notification_types import NotificationType
-from app.notifications.service import NotificationService
-from app.services.approval_chain_service import ApprovalChainService
 from app.services.swap_executor import SwapExecutor
 from app.services.swap.swap_workflow_service import SwapWorkflowService
 from app.services.swap_validation import SwapValidationService
