@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api import deps
+from app.core.security import get_scheduler_user
 from app.schemas.graduation_requirement import (
     GraduationRequirement,
     GraduationRequirementCreate,
@@ -32,7 +33,7 @@ def create_graduation_requirement(
     *,
     db: Session = Depends(deps.get_db),
     req_in: GraduationRequirementCreate,
-    current_user: dict = Depends(deps.get_current_active_user),
+    current_user: dict = Depends(get_scheduler_user),
 ) -> Any:
     """
     Create a new graduation requirement. Only available to superusers/coordinators.
@@ -54,7 +55,7 @@ def update_graduation_requirement(
     db: Session = Depends(deps.get_db),
     req_id: uuid.UUID,
     req_in: GraduationRequirementUpdate,
-    current_user: dict = Depends(deps.get_current_active_user),
+    current_user: dict = Depends(get_scheduler_user),
 ) -> Any:
     """
     Update a graduation requirement. Only available to superusers/coordinators.
@@ -70,7 +71,7 @@ def delete_graduation_requirement(
     *,
     db: Session = Depends(deps.get_db),
     req_id: uuid.UUID,
-    current_user: dict = Depends(deps.get_current_active_user),
+    current_user: dict = Depends(get_scheduler_user),
 ) -> Any:
     """
     Delete a graduation requirement. Only available to superusers/coordinators.
