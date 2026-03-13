@@ -47,6 +47,7 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.block_assignment import BlockAssignment
 from app.models.call_assignment import CallAssignment
+from app.models.half_day_assignment import HalfDayAssignment
 from app.models.faculty_schedule_preference import FacultySchedulePreference
 from app.models.person import FacultyRole, Person
 from app.models.resident_weekly_requirement import ResidentWeeklyRequirement
@@ -2886,7 +2887,6 @@ class SchedulingEngine:
                 HalfDayAssignment.date >= ay_start,
                 HalfDayAssignment.date <= ay_end,
                 HalfDayAssignment.rotation_template_id.isnot(None),
-                HalfDayAssignment.is_deleted == False,
             )
             .group_by(
                 HalfDayAssignment.person_id, HalfDayAssignment.rotation_template_id
