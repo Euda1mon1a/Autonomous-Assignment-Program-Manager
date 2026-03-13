@@ -1119,6 +1119,14 @@ class SchedulingEngine:
                         scale,
                     )
 
+        # Load graduation requirements and YTD clinic counts
+        graduation_requirements = self._load_graduation_requirements()
+        ytd_clinic_counts = {}
+        if academic_year is not None:
+            ytd_clinic_counts = self._load_ytd_clinic_counts(
+                resident_ids, academic_year
+            )
+
         context = SchedulingContext(
             residents=residents,
             faculty=faculty,
@@ -1139,6 +1147,8 @@ class SchedulingEngine:
             faculty_schedule_preferences=faculty_preferences,
             resident_template_map=resident_template_map,
             prior_calls=prior_calls,
+            graduation_requirements=graduation_requirements,
+            ytd_clinic_counts=ytd_clinic_counts,
         )
 
         # Enable activity requirement constraint if we have data
@@ -2828,6 +2838,68 @@ class SchedulingEngine:
         logger.debug(
             f"Loaded {len(result)} weekly requirements for {len(template_ids)} templates"
         )
+        return result
+
+    def _load_graduation_requirements(self) -> dict[int, dict[UUID, Any]]:
+        """
+        Load graduation requirements structured by PGY level.
+        Returns: {pgy_level: {rotation_template_id: GraduationRequirement}}
+        """
+        try:
+            from app.models.graduation_requirement import GraduationRequirement
+
+            reqs = self.db.query(GraduationRequirement).all()
+
+            result: dict[int, dict[UUID, Any]] = {}
+            for req in reqs:
+                if req.pgy_level not in result:
+                    result[req.pgy_level] = {}
+                result[req.pgy_level][cast(UUID, req.rotation_template_id)] = req
+
+            return result
+        except ImportError:
+            # Table might not exist yet if migrations haven't run
+            return {}
+
+    def _load_ytd_clinic_counts(
+        self, resident_ids: list[UUID], academic_year: int
+    ) -> dict[tuple[UUID, UUID], int]:
+        """
+        Load YTD half-day assignments for given residents in the given academic year,
+        grouped by (person_id, rotation_template_id).
+        """
+        if not resident_ids:
+            return {}
+
+        ay_start = date(academic_year, 7, 1)
+        # Assuming academic year ends June 30 of following year
+        ay_end = date(academic_year + 1, 6, 30)
+
+        stmt = (
+            select(
+                HalfDayAssignment.person_id,
+                HalfDayAssignment.rotation_template_id,
+                func.count().label("ytd_count"),
+            )
+            .where(
+                HalfDayAssignment.person_id.in_(resident_ids),
+                HalfDayAssignment.date >= ay_start,
+                HalfDayAssignment.date <= ay_end,
+                HalfDayAssignment.rotation_template_id.isnot(None),
+                HalfDayAssignment.is_deleted == False,
+            )
+            .group_by(
+                HalfDayAssignment.person_id, HalfDayAssignment.rotation_template_id
+            )
+        )
+
+        rows = self.db.execute(stmt).all()
+        result = {}
+        for row in rows:
+            result[
+                (cast(UUID, row.person_id), cast(UUID, row.rotation_template_id))
+            ] = row.ytd_count
+
         return result
 
     def _load_halfday_requirements(

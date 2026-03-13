@@ -110,6 +110,13 @@ class HalfDayAssignment(Base):
         index=True,
         comment="Activity for this slot (FK to activities)",
     )
+    rotation_template_id = Column(
+        GUID(),
+        ForeignKey("rotation_templates.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="Optional rotation template context for this assignment (enables counting clinic types)",
+    )
     counts_toward_fmc_capacity = Column(
         Boolean,
         nullable=True,
@@ -169,6 +176,7 @@ class HalfDayAssignment(Base):
     # Relationships
     person = relationship("Person", back_populates="half_day_assignments")
     activity = relationship("Activity")
+    rotation_template = relationship("RotationTemplate")
     block_assignment = relationship("BlockAssignment")
     overridden_by_user = relationship("User", foreign_keys=[overridden_by])
 

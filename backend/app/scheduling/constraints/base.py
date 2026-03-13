@@ -304,6 +304,18 @@ class SchedulingContext:
     # Populated by engine from weekly_patterns WHERE is_protected=True
     protected_patterns: dict[UUID, list[dict]] = field(default_factory=dict)
 
+    # =========================================================================
+    # Graduation Requirements Data (for GraduationRequirementConstraint)
+    # =========================================================================
+
+    # Graduation requirements per PGY level and template
+    # Structure: {pgy_level: {rotation_template_id: GraduationRequirement}}
+    graduation_requirements: dict[int, dict[UUID, Any]] = field(default_factory=dict)
+
+    # YTD clinic counts (number of half-days already assigned for each clinic type)
+    # Structure: {(person_id, rotation_template_id): count}
+    ytd_clinic_counts: dict[tuple[UUID, UUID], int] = field(default_factory=dict)
+
     def __post_init__(self: "SchedulingContext") -> None:
         """
         Build lookup dictionaries and indices for fast constraint evaluation.

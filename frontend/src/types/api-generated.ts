@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-03-13T04:53:24Z
+ * Generated at: 2026-03-13T05:20:57Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -20524,6 +20524,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/graduation-requirements/pgy/{pgy_level}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Graduation Requirements By Pgy
+         * @description Retrieve graduation requirements for a specific PGY level.
+         */
+        get: operations["read_graduation_requirements_by_pgy_api_v1_graduation_requirements_pgy__pgy_level__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/graduation-requirements/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Graduation Requirement
+         * @description Create a new graduation requirement. Only available to superusers/coordinators.
+         */
+        post: operations["create_graduation_requirement_api_v1_graduation_requirements__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/graduation-requirements/{req_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Graduation Requirement
+         * @description Update a graduation requirement. Only available to superusers/coordinators.
+         */
+        put: operations["update_graduation_requirement_api_v1_graduation_requirements__req_id__put"];
+        post?: never;
+        /**
+         * Delete Graduation Requirement
+         * @description Delete a graduation requirement. Only available to superusers/coordinators.
+         */
+        delete: operations["delete_graduation_requirement_api_v1_graduation_requirements__req_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/graphql": {
         parameters: {
             query?: never;
@@ -20976,7 +21040,7 @@ export interface components {
          *     Shows who is absent and why (vacation, sick, deployment, etc.)
          */
         AbsenceInfo: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Absence Type
              * @description Type of absence (vacation, sick, deployment)
@@ -22907,7 +22971,7 @@ export interface components {
          * @description Summary of an assignment for manifest display.
          */
         AssignmentSummary: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Role
              * @description primary, supervising, or backup
@@ -23043,9 +23107,9 @@ export interface components {
          */
         AttendingInfo: {
             /** @description AM attending */
-            am?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            am?: components["schemas"]["PersonSummary"] | null;
             /** @description PM attending */
-            pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            pm?: components["schemas"]["PersonSummary"] | null;
         };
         /**
          * AttractorInfoResponse
@@ -23878,14 +23942,12 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
+            /** Template Id */
+            templateId: string | null;
             /** Success */
             success: boolean;
-            /** Assignment Id */
-            assignmentId?: string | null;
             /** Error */
             error?: string | null;
-            /** Warnings */
-            warnings?: string[];
         };
         /**
          * BatchOperationStatus
@@ -24299,7 +24361,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__batch__BatchOperationResult"][];
             /**
              * Errors
              * @description Global errors
@@ -24446,7 +24508,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -25092,19 +25154,24 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
         BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academicYear: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            totalBlocks: number;
         };
         /**
          * BlockMatrixResponse
@@ -27828,29 +27895,15 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
+         * @description Response for conflict check.
          */
         ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            canAssign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
+            /** Has Conflicts */
+            hasConflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            canProceed: boolean;
         };
         /**
          * ConflictDetail
@@ -27997,93 +28050,15 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affectedPeopleCount": 8,
-         *       "autoResolvableCount": 6,
-         *       "averageImpactScore": 0.65,
-         *       "criticalCount": 3,
-         *       "highCount": 5,
-         *       "lowCount": 3,
-         *       "mediumCount": 4,
-         *       "totalConflicts": 15
-         *     }
+         * @description Summary of conflicts found.
          */
         ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
+            /** Total Conflicts */
             totalConflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            criticalCount: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            highCount: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            mediumCount: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            lowCount: number;
-            /** By Category */
-            byCategory?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            byType?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affectedPeopleCount: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affectedBlocksCount: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            autoResolvableCount: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requiresManualCount: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            averageImpactScore: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            averageUrgencyScore: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            averageComplexityScore: number;
-            /** Earliest Date */
-            earliestDate?: string | null;
-            /** Latest Date */
-            latestDate?: string | null;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
         /**
          * ConflictType
@@ -31142,7 +31117,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__certification__PersonSummary"];
             certificationType: components["schemas"]["CertificationTypeSummary"];
             /**
              * Expiration Date
@@ -32013,12 +31988,12 @@ export interface components {
          */
         FMITSection: {
             /** @description Attending physician for inpatient */
-            attending?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            attending?: components["schemas"]["PersonSummary"] | null;
             /**
              * Residents
              * @description Residents on FMIT
              */
-            residents?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"][];
+            residents?: components["schemas"]["PersonSummary"][];
         };
         /**
          * FMITWeekInfo
@@ -33797,6 +33772,99 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /**
+         * GraduationRequirement
+         * @description Schema for graduation requirement returned to client.
+         */
+        GraduationRequirement: {
+            /**
+             * Pgy Level
+             * @description PGY level this requirement applies to
+             */
+            pgyLevel: number;
+            /**
+             * Rotation Template Id
+             * Format: uuid
+             * @description The clinical template/type required
+             */
+            rotationTemplateId: string;
+            /**
+             * Min Halves
+             * @description Minimum number of half-days required
+             * @default 0
+             */
+            minHalves: number;
+            /**
+             * Target Halves
+             * @description Target number of half-days (optional)
+             */
+            targetHalves?: number | null;
+            /**
+             * By Date
+             * @description Date by which requirement must be met (optional)
+             */
+            byDate?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            createdAt: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updatedAt: string;
+        };
+        /**
+         * GraduationRequirementCreate
+         * @description Schema for creating a graduation requirement.
+         */
+        GraduationRequirementCreate: {
+            /**
+             * Pgy Level
+             * @description PGY level this requirement applies to
+             */
+            pgyLevel: number;
+            /**
+             * Rotation Template Id
+             * Format: uuid
+             * @description The clinical template/type required
+             */
+            rotationTemplateId: string;
+            /**
+             * Min Halves
+             * @description Minimum number of half-days required
+             * @default 0
+             */
+            minHalves: number;
+            /**
+             * Target Halves
+             * @description Target number of half-days (optional)
+             */
+            targetHalves?: number | null;
+            /**
+             * By Date
+             * @description Date by which requirement must be met (optional)
+             */
+            byDate?: string | null;
+        };
+        /**
+         * GraduationRequirementUpdate
+         * @description Schema for updating a graduation requirement.
+         */
+        GraduationRequirementUpdate: {
+            /** Min Halves */
+            minHalves?: number | null;
+            /** Target Halves */
+            targetHalves?: number | null;
+            /** By Date */
+            byDate?: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -35242,7 +35310,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
+            summary?: components["schemas"]["ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -37518,7 +37586,7 @@ export interface components {
          *     Shows who is on night call so staff know they're unavailable during day.
          */
         NightCallInfo: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Call Type
              * @description Type of call (night, backup)
@@ -38459,7 +38527,7 @@ export interface components {
          *     Shows person with their AM and PM assignments (if any).
          */
         PersonClinicCoverage: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /** @description AM assignment */
             am?: components["schemas"]["AssignmentInfo"] | null;
             /** @description PM assignment */
@@ -38470,7 +38538,7 @@ export interface components {
          * @description Certification compliance for a single person.
          */
         PersonComplianceResponse: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__certification__PersonSummary"];
             /** Total Required */
             totalRequired: number;
             /** Total Current */
@@ -38779,7 +38847,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Minimal person info for certification reports.
+         * @description Summary of person for manifest display.
          */
         PersonSummary: {
             /**
@@ -38789,10 +38857,11 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /** Type */
-            type: string;
-            /** Email */
-            email?: string | null;
+            /**
+             * Pgy Level
+             * @description PGY level for residents
+             */
+            pgyLevel?: number | null;
         };
         /**
          * PersonType
@@ -39992,19 +40061,24 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
         };
         /**
          * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * @description Response to queue purge request.
          */
         QueuePurgeResponse: {
-            /** Queuename */
+            /**
+             * Queuename
+             * @default
+             */
             queueName: string;
-            /** Taskspurged */
+            /**
+             * Taskspurged
+             * @default 0
+             */
             tasksPurged: number;
             /** Timestamp */
             timestamp: string;
@@ -40880,14 +40954,14 @@ export interface components {
          *     Shows who is away at a remote site and their local surrogate/proxy.
          */
         RemoteAssignment: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Location
              * @description Remote location name
              */
             location: string;
             /** @description Local proxy/surrogate if assigned */
-            surrogate?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            surrogate?: components["schemas"]["PersonSummary"] | null;
         };
         /**
          * RenewalRequest
@@ -43229,7 +43303,7 @@ export interface components {
             /** Components */
             components: components["schemas"]["ScoreComponentResponse"][];
             /** Suggestions */
-            suggestions?: components["schemas"]["SuggestionResponse"][];
+            suggestions?: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -45153,25 +45227,24 @@ export interface components {
         };
         /**
          * SuggestionResponse
-         * @description Response for improvement suggestion.
+         * @description Response schema for autocomplete suggestions.
          */
         SuggestionResponse: {
-            /** Type */
-            type: string;
             /**
-             * Priority
-             * @description high, medium, low
+             * Suggestions
+             * @description List of suggestions
              */
-            priority: string;
-            /** Description */
-            description: string;
+            suggestions: string[];
             /**
-             * Impact
-             * @description Expected improvement
+             * Query
+             * @description Original query string
              */
-            impact: number;
-            /** Affected Items */
-            affectedItems?: string[];
+            query: string;
+            /**
+             * Entity Type
+             * @description Entity type
+             */
+            entityType: string;
         };
         /**
          * SurveyFrequencyEnum
@@ -49279,7 +49352,7 @@ export interface components {
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancingSuggestions: components["schemas"]["SuggestionResponse"][];
+            rebalancingSuggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -49665,25 +49738,129 @@ export interface components {
             gapSize: number;
         };
         /**
-         * BlockListResponse
-         * @description Response for listing academic blocks.
+         * ConflictSummary
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affectedPeopleCount": 8,
+         *       "autoResolvableCount": 6,
+         *       "averageImpactScore": 0.65,
+         *       "criticalCount": 3,
+         *       "highCount": 5,
+         *       "lowCount": 3,
+         *       "mediumCount": 4,
+         *       "totalConflicts": 15
+         *     }
          */
-        app__schemas__academic_blocks__BlockListResponse: {
+        app__scheduling__conflicts__types__ConflictSummary: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Total Conflicts
+             * @default 0
              */
-            blocks: components["schemas"]["BlockSummary"][];
+            totalConflicts: number;
             /**
-             * Academic Year
-             * @description Academic year
+             * Critical Count
+             * @default 0
              */
-            academicYear: string;
+            criticalCount: number;
             /**
-             * Total Blocks
+             * High Count
+             * @default 0
+             */
+            highCount: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            mediumCount: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            lowCount: number;
+            /** By Category */
+            byCategory?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            byType?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affectedPeopleCount: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affectedBlocksCount: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            autoResolvableCount: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requiresManualCount: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            averageImpactScore: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            averageUrgencyScore: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            averageComplexityScore: number;
+            /** Earliest Date */
+            earliestDate?: string | null;
+            /** Latest Date */
+            latestDate?: string | null;
+        };
+        /**
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
+         */
+        app__schemas__batch__BatchOperationResult: {
+            /**
+             * Index
+             * @description Index of the operation in the batch
+             */
+            index: number;
+            /** Success */
+            success: boolean;
+            /** Assignment Id */
+            assignmentId?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Warnings */
+            warnings?: string[];
+        };
+        /**
+         * BlockListResponse
+         * @description Schema for list of blocks.
+         */
+        app__schemas__block__BlockListResponse: {
+            /**
+             * Items
+             * @description List of block responses
+             */
+            items: components["schemas"]["BlockResponse"][];
+            /**
+             * Total
              * @description Total number of blocks
              */
-            totalBlocks: number;
+            total: number;
         };
         /**
          * ExportFormat
@@ -49693,9 +49870,9 @@ export interface components {
         app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
         /**
          * PersonSummary
-         * @description Summary of person for manifest display.
+         * @description Minimal person info for certification reports.
          */
-        app__schemas__daily_manifest__PersonSummary: {
+        app__schemas__certification__PersonSummary: {
             /**
              * Id
              * Format: uuid
@@ -49703,42 +49880,58 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /**
-             * Pgy Level
-             * @description PGY level for residents
-             */
-            pgyLevel?: number | null;
+            /** Type */
+            type: string;
+            /** Email */
+            email?: string | null;
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
+         * ConflictCheckResponse
+         * @description Response for conflict checking before assignment.
          */
-        app__schemas__jobs__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
+        app__schemas__fmit_assignments__ConflictCheckResponse: {
             /**
-             * Confirm
-             * @default false
+             * Can Assign
+             * @description Whether assignment can proceed
              */
-            confirm: boolean;
+            canAssign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
-         * QueuePurgeResponse
-         * @description Response to queue purge request.
+         * SuggestionResponse
+         * @description Response for improvement suggestion.
          */
-        app__schemas__jobs__QueuePurgeResponse: {
+        app__schemas__ml__SuggestionResponse: {
+            /** Type */
+            type: string;
             /**
-             * Queuename
-             * @default
+             * Priority
+             * @description high, medium, low
              */
-            queueName: string;
+            priority: string;
+            /** Description */
+            description: string;
             /**
-             * Taskspurged
-             * @default 0
+             * Impact
+             * @description Expected improvement
              */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
+            impact: number;
+            /** Affected Items */
+            affectedItems?: string[];
         };
         /**
          * BatchOperationResult
@@ -49773,66 +49966,30 @@ export interface components {
             type: string;
         };
         /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
          */
-        app__schemas__rotation_template__BatchOperationResult: {
+        app__schemas__queue__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
             /**
-             * Index
-             * @description Index of the operation in the batch
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
              */
-            index: number;
-            /** Template Id */
-            templateId: string | null;
-            /** Success */
-            success: boolean;
-            /** Error */
-            error?: string | null;
+            confirm: boolean;
         };
         /**
-         * ConflictCheckResponse
-         * @description Response for conflict check.
+         * QueuePurgeResponse
+         * @description Response after purging a queue.
          */
-        app__schemas__rotation_template__ConflictCheckResponse: {
-            /** Has Conflicts */
-            hasConflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            canProceed: boolean;
-        };
-        /**
-         * ConflictSummary
-         * @description Summary of conflicts found.
-         */
-        app__schemas__schedule__ConflictSummary: {
-            /** Total Conflicts */
-            totalConflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
-        };
-        /**
-         * SuggestionResponse
-         * @description Response schema for autocomplete suggestions.
-         */
-        app__schemas__search__SuggestionResponse: {
-            /**
-             * Suggestions
-             * @description List of suggestions
-             */
-            suggestions: string[];
-            /**
-             * Query
-             * @description Original query string
-             */
-            query: string;
-            /**
-             * Entity Type
-             * @description Entity type
-             */
-            entityType: string;
+        app__schemas__queue__QueuePurgeResponse: {
+            /** Queuename */
+            queueName: string;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
         };
         /**
          * CoverageGap
@@ -52144,7 +52301,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -52271,7 +52428,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -52447,7 +52604,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -52875,7 +53032,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64185,7 +64342,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64218,7 +64375,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -69241,7 +69398,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -69436,7 +69593,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictSummary"];
+                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -70935,7 +71092,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -70945,7 +71102,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -71302,7 +71459,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -71312,7 +71469,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -75552,6 +75709,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnnualRotationPlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_graduation_requirements_by_pgy_api_v1_graduation_requirements_pgy__pgy_level__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pgy_level: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraduationRequirement"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_graduation_requirement_api_v1_graduation_requirements__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GraduationRequirementCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraduationRequirement"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_graduation_requirement_api_v1_graduation_requirements__req_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GraduationRequirementUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraduationRequirement"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_graduation_requirement_api_v1_graduation_requirements__req_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
