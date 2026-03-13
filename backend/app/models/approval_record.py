@@ -62,6 +62,7 @@ class ApprovalAction(str, enum.Enum):
     # Swap approvals
     SWAP_REQUESTED = "SWAP_REQUESTED"
     SWAP_APPROVED = "SWAP_APPROVED"
+    SWAP_REJECTED = "SWAP_REJECTED"
     SWAP_EXECUTED = "SWAP_EXECUTED"
     SWAP_ROLLED_BACK = "SWAP_ROLLED_BACK"
 

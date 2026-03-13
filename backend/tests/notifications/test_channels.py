@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -209,10 +209,17 @@ class TestEmailChannel:
         assert channel.channel_name == "email"
 
     @pytest.mark.asyncio
-    async def test_deliver_success(self):
-        """Test successful email payload preparation."""
+    @patch("app.notifications.channels_core.send_email")
+    async def test_deliver_success(self, mock_send_email):
+        """Test successful email payload preparation with db Person lookup."""
         channel = EmailChannel(from_address="test@example.com")
         recipient_id = uuid.uuid4()
+
+        # Mock db with Person that has an email
+        mock_person = MagicMock()
+        mock_person.email = "doctor@hospital.mil"
+        mock_db = MagicMock()
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_person
 
         payload = NotificationPayload(
             recipient_id=recipient_id,
@@ -222,7 +229,7 @@ class TestEmailChannel:
             priority="normal",
         )
 
-        result = await channel.deliver(payload)
+        result = await channel.deliver(payload, mock_db)
 
         assert result.success is True
         assert result.channel == "email"
@@ -231,18 +238,39 @@ class TestEmailChannel:
         assert "email_payload" in result.metadata
 
         email_payload = result.metadata["email_payload"]
-        assert email_payload["from"] == "test@example.com"
-        assert email_payload["to"] == f"user-{recipient_id}@example.com"
+        assert email_payload["to"] == "doctor@hospital.mil"
         assert email_payload["subject"] == "Schedule Reminder"
         assert email_payload["body"] == "You have an upcoming shift"
-        assert email_payload["priority"] == "normal"
         assert "html" in email_payload
+        mock_send_email.delay.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_deliver_with_db_session(self):
-        """Test email delivery with optional database session."""
+    async def test_deliver_no_db_returns_failure(self):
+        """Test email delivery without db session returns failure."""
         channel = EmailChannel()
+        recipient_id = uuid.uuid4()
+
+        payload = NotificationPayload(
+            recipient_id=recipient_id,
+            notification_type="test",
+            subject="Test",
+            body="Test body",
+        )
+
+        result = await channel.deliver(payload)
+
+        assert result.success is False
+        assert result.message == "Recipient email not found"
+
+    @pytest.mark.asyncio
+    @patch("app.notifications.channels_core.send_email")
+    async def test_deliver_with_db_session(self, mock_send_email):
+        """Test email delivery with database session and Person lookup."""
+        channel = EmailChannel()
+        mock_person = MagicMock()
+        mock_person.email = "resident@hospital.mil"
         db = MagicMock()
+        db.query.return_value.filter.return_value.first.return_value = mock_person
         recipient_id = uuid.uuid4()
 
         payload = NotificationPayload(
@@ -256,6 +284,7 @@ class TestEmailChannel:
 
         assert result.success is True
         assert result.channel == "email"
+        mock_send_email.delay.assert_called_once()
 
     def test_format_html_normal_priority(self):
         """Test HTML formatting with normal priority."""
@@ -375,7 +404,8 @@ class TestWebhookChannel:
         assert channel.channel_name == "webhook"
 
     @pytest.mark.asyncio
-    async def test_deliver_success(self):
+    @patch("app.notifications.channels_core.send_webhook")
+    async def test_deliver_success(self, mock_send_webhook):
         """Test successful webhook payload preparation."""
         webhook_url = "https://example.com/webhook"
         channel = WebhookChannel(webhook_url=webhook_url)
@@ -412,6 +442,7 @@ class TestWebhookChannel:
         assert "timestamp" in webhook_payload
         # Verify timestamp is ISO format
         datetime.fromisoformat(webhook_payload["timestamp"])
+        mock_send_webhook.delay.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_deliver_without_webhook_url(self):
@@ -625,18 +656,14 @@ class TestPriorityHandling:
     async def test_email_channel_high_priority(self):
         """Test email channel handles high priority correctly."""
         channel = EmailChannel()
-        recipient_id = uuid.uuid4()
 
         payload = NotificationPayload(
-            recipient_id=recipient_id,
+            recipient_id=uuid.uuid4(),
             notification_type="emergency",
             subject="Emergency",
             body="High priority message",
             priority="high",
         )
-
-        result = await channel.deliver(payload)
-        assert result.metadata["email_payload"]["priority"] == "high"
 
         html = channel._format_html(payload)
         assert "priority-high" in html
@@ -645,18 +672,14 @@ class TestPriorityHandling:
     async def test_email_channel_normal_priority(self):
         """Test email channel handles normal priority correctly."""
         channel = EmailChannel()
-        recipient_id = uuid.uuid4()
 
         payload = NotificationPayload(
-            recipient_id=recipient_id,
+            recipient_id=uuid.uuid4(),
             notification_type="info",
             subject="Information",
             body="Normal priority message",
             priority="normal",
         )
-
-        result = await channel.deliver(payload)
-        assert result.metadata["email_payload"]["priority"] == "normal"
 
         html = channel._format_html(payload)
         assert "priority-normal" in html
@@ -665,18 +688,14 @@ class TestPriorityHandling:
     async def test_email_channel_low_priority(self):
         """Test email channel handles low priority correctly."""
         channel = EmailChannel()
-        recipient_id = uuid.uuid4()
 
         payload = NotificationPayload(
-            recipient_id=recipient_id,
+            recipient_id=uuid.uuid4(),
             notification_type="info",
             subject="FYI",
             body="Low priority message",
             priority="low",
         )
-
-        result = await channel.deliver(payload)
-        assert result.metadata["email_payload"]["priority"] == "low"
 
         html = channel._format_html(payload)
         assert "priority-low" in html

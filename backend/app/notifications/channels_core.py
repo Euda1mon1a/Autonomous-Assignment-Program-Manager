@@ -59,6 +59,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
+from app.notifications.tasks import send_email, send_webhook
 
 logger = get_logger(__name__)
 
@@ -169,24 +170,21 @@ class InAppChannel(NotificationChannel):
             )
 
         try:
-            # NOTE: Database persistence disabled until Notification SQLAlchemy model exists
-            # Data structure prepared for future persistence:
-            {
-                "id": str(payload.id),
-                "recipient_id": str(payload.recipient_id),
-                "notification_type": payload.notification_type,
-                "subject": payload.subject,
-                "body": payload.body,
-                "data": payload.data,
-                "priority": payload.priority,
-                "is_read": False,
-                "created_at": payload.created_at,
-            }
+            from app.models.notification import Notification
 
-            # When model exists:
-            # notification = Notification(**notification_data)
-            # db.add(notification)
-            # db.commit()
+            notification = Notification(
+                id=payload.id,
+                recipient_id=payload.recipient_id,
+                notification_type=payload.notification_type,
+                subject=payload.subject,
+                body=payload.body,
+                data=payload.data,
+                priority=payload.priority,
+                channels_delivered="in_app",
+                is_read=False,
+            )
+            db.add(notification)
+            db.commit()
 
             return DeliveryResult(
                 success=True,
@@ -196,6 +194,7 @@ class InAppChannel(NotificationChannel):
             )
 
         except Exception as e:
+            logger.error("Failed to store in-app notification: %s", e)
             return DeliveryResult(
                 success=False,
                 channel=self.channel_name,
@@ -238,23 +237,41 @@ class EmailChannel(NotificationChannel):
             DeliveryResult with email payload in metadata
         """
         try:
-            # NOTE: Recipient email lookup needs Person model join
-            # Using placeholder email until database lookup is implemented
+            # Look up recipient email from Person model
+            recipient_email = None
+            if db:
+                from app.models.person import Person
+
+                person = (
+                    db.query(Person).filter(Person.id == payload.recipient_id).first()
+                )
+                if person and person.email:
+                    recipient_email = person.email
+
+            if not recipient_email:
+                logger.warning(
+                    "No email found for recipient %s, skipping email delivery",
+                    payload.recipient_id,
+                )
+                return DeliveryResult(
+                    success=False,
+                    channel=self.channel_name,
+                    message="Recipient email not found",
+                )
+
             email_payload = {
-                "from": self.from_address,
-                "to": f"user-{payload.recipient_id}@example.com",  # Placeholder
+                "to": recipient_email,
                 "subject": payload.subject,
                 "body": payload.body,
                 "html": self._format_html(payload),
-                "priority": payload.priority,
             }
 
-            # NOTE: Email sending requires Celery + Redis. See tasks.send_email()
-            # Uncomment when infrastructure ready:
-            # from app.notifications.tasks import send_email
-            # send_email.delay(**email_payload)
+            send_email.delay(**email_payload)
             logger.debug(
-                "Email prepared for %s: %s", payload.recipient_id, payload.subject
+                "Email queued for %s (%s): %s",
+                payload.recipient_id,
+                recipient_email,
+                payload.subject,
             )
 
             return DeliveryResult(
@@ -360,13 +377,10 @@ class WebhookChannel(NotificationChannel):
                 "data": payload.data,
             }
 
-            # NOTE: Webhook delivery requires Celery + Redis. See tasks.send_webhook()
-            # Uncomment when infrastructure ready:
-            # if self.webhook_url:
-            #     from app.notifications.tasks import send_webhook
-            #     send_webhook.delay(self.webhook_url, webhook_payload)
+            if self.webhook_url:
+                send_webhook.delay(self.webhook_url, webhook_payload)
             logger.debug(
-                "Webhook prepared for %s", self.webhook_url or "no URL configured"
+                "Webhook queued for %s", self.webhook_url or "no URL configured"
             )
 
             return DeliveryResult(

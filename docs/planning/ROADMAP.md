@@ -134,4 +134,5 @@ Detailed design documents for future features have been archived to `docs/archiv
 | `docs/planning/PERFORMANCE_TESTING.md` | Solver benchmarking infrastructure |
 | `docs/planning/STRATEGIC_DECISIONS.md` | 7 product direction decisions |
 | `docs/planning/TECHNICAL_DEBT.md` | 30 items tracked (23 resolved, 7 open) |
+| `docs/planning/PLATFORM_WIRING_ROADMAP.md` | 65 unwired tables, 14 features, parallelization matrix |
 | `docs/architecture/ANNUAL_WORKBOOK_ARCHITECTURE.md` | 14-sheet master workbook pipeline |

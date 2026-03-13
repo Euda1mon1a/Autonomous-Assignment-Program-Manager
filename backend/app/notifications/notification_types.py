@@ -80,6 +80,11 @@ class NotificationType(str, Enum):
     ACGME_WARNING = "acgme_warning"
     ABSENCE_APPROVED = "absence_approved"
     ABSENCE_REJECTED = "absence_rejected"
+    SWAP_REQUESTED = "swap_requested"
+    SWAP_APPROVED = "swap_approved"
+    SWAP_REJECTED = "swap_rejected"
+    SWAP_EXECUTED = "swap_executed"
+    SWAP_ROLLED_BACK = "swap_rolled_back"
 
 
 @dataclass
@@ -248,6 +253,93 @@ Reviewed at: $reviewed_at
 If you have questions or would like to discuss this, please contact your coordinator.""",
         channels=["in_app", "email"],
         priority="normal",
+    ),
+    NotificationType.SWAP_REQUESTED: NotificationTemplate(
+        type=NotificationType.SWAP_REQUESTED,
+        subject_template="Swap Request: $source_name week of $source_week",
+        body_template="""A schedule swap has been requested.
+
+Requester: $source_name
+Requester Week: $source_week
+Target: $target_name
+Target Week: $target_week
+Swap Type: $swap_type
+
+Reason: $reason
+
+Please review and approve or reject this request.
+
+Requested at: $requested_at""",
+        channels=["in_app", "email"],
+        priority="high",
+    ),
+    NotificationType.SWAP_APPROVED: NotificationTemplate(
+        type=NotificationType.SWAP_APPROVED,
+        subject_template="Swap Approved: $source_week",
+        body_template="""Your swap request has been approved.
+
+Source: $source_name ($source_week)
+Target: $target_name ($target_week)
+Swap Type: $swap_type
+
+Approved by: $approved_by
+Approved at: $approved_at
+
+The swap is now ready for execution.""",
+        channels=["in_app", "email"],
+        priority="high",
+    ),
+    NotificationType.SWAP_REJECTED: NotificationTemplate(
+        type=NotificationType.SWAP_REJECTED,
+        subject_template="Swap Request Declined: $source_week",
+        body_template="""Your swap request has been declined.
+
+Source: $source_name ($source_week)
+Target: $target_name ($target_week)
+Swap Type: $swap_type
+
+Reason: $rejection_reason
+
+Reviewed by: $reviewed_by
+Reviewed at: $reviewed_at
+
+If you have questions, please contact your coordinator.""",
+        channels=["in_app", "email"],
+        priority="normal",
+    ),
+    NotificationType.SWAP_EXECUTED: NotificationTemplate(
+        type=NotificationType.SWAP_EXECUTED,
+        subject_template="Swap Executed: $source_week",
+        body_template="""A schedule swap has been executed.
+
+Source: $source_name ($source_week)
+Target: $target_name ($target_week)
+Swap Type: $swap_type
+
+Please review your updated schedule.
+
+Executed by: $executed_by
+Executed at: $executed_at""",
+        channels=["in_app", "email"],
+        priority="high",
+    ),
+    NotificationType.SWAP_ROLLED_BACK: NotificationTemplate(
+        type=NotificationType.SWAP_ROLLED_BACK,
+        subject_template="Swap Rolled Back: $source_week",
+        body_template="""A previously executed swap has been rolled back.
+
+Source: $source_name ($source_week)
+Target: $target_name ($target_week)
+Swap Type: $swap_type
+
+Reason: $rollback_reason
+
+Your schedule has been restored to its pre-swap state.
+
+Rolled back by: $rolled_back_by
+Rolled back at: $rolled_back_at""",
+        channels=["in_app", "email"],
+        priority="high",
     ),
 }
 

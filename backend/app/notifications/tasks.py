@@ -320,3 +320,55 @@ def detect_leave_conflicts(
             "Operation failed",
         )
         raise
+
+
+@shared_task(
+    bind=True,
+    name="app.notifications.tasks.process_scheduled_notifications",
+    max_retries=2,
+    default_retry_delay=60,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=300,
+)
+def process_scheduled_notifications(self) -> dict:
+    """
+    Process scheduled notifications that are due for delivery.
+
+    Called periodically by Celery Beat to check for and send
+    notifications queued for future delivery via
+    NotificationService.schedule_notification().
+
+    Returns:
+        Dict with processing results.
+    """
+    import asyncio
+
+    from app.db.session import task_session_scope
+    from app.notifications.service import NotificationService
+
+    logger.info(
+        "Processing scheduled notifications (attempt %d)",
+        self.request.retries + 1,
+    )
+
+    try:
+        with task_session_scope() as db:
+            service = NotificationService(db)
+            sent_count = asyncio.run(service.process_scheduled_notifications())
+
+        return {
+            "timestamp": datetime.now(UTC).isoformat(),
+            "sent_count": sent_count,
+            "status": "completed",
+            "attempts": self.request.retries + 1,
+        }
+
+    except Exception as e:
+        logger.warning(
+            "Scheduled notification processing failed (attempt %d/%d): %s",
+            self.request.retries + 1,
+            self.max_retries + 1,
+            "Operation failed",
+        )
+        raise

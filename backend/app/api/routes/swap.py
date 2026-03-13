@@ -67,11 +67,18 @@ from app.schemas.swap import (
     SwapRequestCreateResponse,
     SwapValidationResult,
 )
+from app.core.logging import get_logger
+from app.models.approval_record import ApprovalAction
+from app.models.swap import SwapStatus, SwapType
+from app.notifications.notification_types import NotificationType
+from app.notifications.service import NotificationService
+from app.services.approval_chain_service import ApprovalChainService
 from app.services.swap_executor import SwapExecutor
 from app.services.swap_validation import SwapValidationService
 from app.services.swap.lock_window import check_swap_lock_window
 from app.websocket.manager import broadcast_schedule_updated, broadcast_swap_approved
-from app.models.swap import SwapStatus, SwapType
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/swaps", tags=["swaps"])
 
@@ -145,6 +152,51 @@ async def request_swap(
     db.commit()
     db.refresh(swap_record)
 
+    # Notify target faculty of the swap request
+    try:
+        notifier = NotificationService(db)
+        await notifier.send_notification(
+            recipient_id=request.target_faculty_id,
+            notification_type=NotificationType.SWAP_REQUESTED,
+            data={
+                "source_name": str(request.source_faculty_id),
+                "source_week": str(request.source_week),
+                "target_name": str(request.target_faculty_id),
+                "target_week": str(request.target_week)
+                if request.target_week
+                else "N/A",
+                "swap_type": request.swap_type.value,
+                "reason": request.reason or "No reason provided",
+                "requested_at": datetime.now(UTC).isoformat(),
+            },
+        )
+    except Exception:
+        logger.warning(
+            "Failed to send swap request notification for %s", swap_record.id
+        )
+
+    # Record in approval chain
+    try:
+        chain = ApprovalChainService(db)
+        chain.append_record(
+            action=ApprovalAction.SWAP_REQUESTED,
+            payload={
+                "source_faculty_id": str(request.source_faculty_id),
+                "source_week": str(request.source_week),
+                "target_faculty_id": str(request.target_faculty_id),
+                "target_week": str(request.target_week)
+                if request.target_week
+                else None,
+                "swap_type": request.swap_type.value,
+            },
+            actor_id=current_user.id,
+            reason=request.reason,
+            target_entity_type="SwapRecord",
+            target_entity_id=str(swap_record.id),
+        )
+    except Exception:
+        logger.warning("Failed to append approval record for swap %s", swap_record.id)
+
     return SwapRequestCreateResponse(
         success=True,
         swap_id=swap_record.id,
@@ -210,10 +262,77 @@ async def approve_swap(
             affected_assignments=[],
             message="Swap approved",
         )
+
+        # Notify requester of approval
+        try:
+            notifier = NotificationService(db)
+            await notifier.send_notification(
+                recipient_id=swap.source_faculty_id,
+                notification_type=NotificationType.SWAP_APPROVED,
+                data={
+                    "source_name": str(swap.source_faculty_id),
+                    "source_week": str(swap.source_week),
+                    "target_name": str(swap.target_faculty_id),
+                    "target_week": str(swap.target_week) if swap.target_week else "N/A",
+                    "swap_type": swap.swap_type.value if swap.swap_type else "unknown",
+                    "approved_by": str(current_user.id),
+                    "approved_at": datetime.now(UTC).isoformat(),
+                },
+            )
+        except Exception:
+            logger.warning("Failed to send swap approval notification for %s", swap_id)
+
+        # Record approval in chain
+        try:
+            chain = ApprovalChainService(db)
+            chain.append_record(
+                action=ApprovalAction.SWAP_APPROVED,
+                payload={"swap_id": str(swap_id), "notes": request.notes},
+                actor_id=current_user.id,
+                reason=request.notes,
+                target_entity_type="SwapRecord",
+                target_entity_id=str(swap_id),
+            )
+        except Exception:
+            logger.warning("Failed to append approval record for swap %s", swap_id)
     else:
         swap.status = SwapStatus.REJECTED
         swap.notes = request.notes
         db.commit()
+
+        # Notify requester of rejection
+        try:
+            notifier = NotificationService(db)
+            await notifier.send_notification(
+                recipient_id=swap.source_faculty_id,
+                notification_type=NotificationType.SWAP_REJECTED,
+                data={
+                    "source_name": str(swap.source_faculty_id),
+                    "source_week": str(swap.source_week),
+                    "target_name": str(swap.target_faculty_id),
+                    "target_week": str(swap.target_week) if swap.target_week else "N/A",
+                    "swap_type": swap.swap_type.value if swap.swap_type else "unknown",
+                    "rejection_reason": request.notes or "No reason provided",
+                    "reviewed_by": str(current_user.id),
+                    "reviewed_at": datetime.now(UTC).isoformat(),
+                },
+            )
+        except Exception:
+            logger.warning("Failed to send swap rejection notification for %s", swap_id)
+
+        # Record rejection in chain
+        try:
+            chain = ApprovalChainService(db)
+            chain.append_record(
+                action=ApprovalAction.SWAP_REJECTED,
+                payload={"swap_id": str(swap_id), "notes": request.notes},
+                actor_id=current_user.id,
+                reason=request.notes,
+                target_entity_type="SwapRecord",
+                target_entity_id=str(swap_id),
+            )
+        except Exception:
+            logger.warning("Failed to append rejection record for swap %s", swap_id)
 
     return SwapApprovalResponse(
         success=True,
@@ -265,6 +384,50 @@ async def execute_swap_by_id(
             affected_blocks_count=2,
             message="Approved swap executed",
         )
+
+        # Notify both parties of execution
+        try:
+            notifier = NotificationService(db)
+            notif_data = {
+                "source_name": str(swap.source_faculty_id),
+                "source_week": str(swap.source_week),
+                "target_name": str(swap.target_faculty_id),
+                "target_week": str(swap.target_week) if swap.target_week else "N/A",
+                "swap_type": swap.swap_type.value if swap.swap_type else "unknown",
+                "executed_by": str(current_user.id),
+                "executed_at": datetime.now(UTC).isoformat(),
+            }
+            await notifier.send_notification(
+                recipient_id=swap.source_faculty_id,
+                notification_type=NotificationType.SWAP_EXECUTED,
+                data=notif_data,
+            )
+            await notifier.send_notification(
+                recipient_id=swap.target_faculty_id,
+                notification_type=NotificationType.SWAP_EXECUTED,
+                data=notif_data,
+            )
+        except Exception:
+            logger.warning(
+                "Failed to send swap execution notifications for %s", swap_id
+            )
+
+        # Record execution in approval chain
+        try:
+            chain = ApprovalChainService(db)
+            chain.append_record(
+                action=ApprovalAction.SWAP_EXECUTED,
+                payload={
+                    "swap_id": str(swap_id),
+                    "source_faculty_id": str(swap.source_faculty_id),
+                    "target_faculty_id": str(swap.target_faculty_id),
+                },
+                actor_id=current_user.id,
+                target_entity_type="SwapRecord",
+                target_entity_id=str(swap_id),
+            )
+        except Exception:
+            logger.warning("Failed to append execution record for swap %s", swap_id)
 
     return SwapExecuteByIdResponse(
         success=True,
@@ -609,5 +772,51 @@ async def rollback_swap(
         affected_blocks_count=2,
         message="Swap rolled back",
     )
+
+    # Notify both parties of rollback
+    swap = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+    if swap:
+        try:
+            notifier = NotificationService(db)
+            notif_data = {
+                "source_name": str(swap.source_faculty_id),
+                "source_week": str(swap.source_week),
+                "target_name": str(swap.target_faculty_id),
+                "target_week": str(swap.target_week) if swap.target_week else "N/A",
+                "swap_type": swap.swap_type.value if swap.swap_type else "unknown",
+                "rollback_reason": request.reason,
+                "rolled_back_by": str(current_user.id),
+                "rolled_back_at": datetime.now(UTC).isoformat(),
+            }
+            await notifier.send_notification(
+                recipient_id=swap.source_faculty_id,
+                notification_type=NotificationType.SWAP_ROLLED_BACK,
+                data=notif_data,
+            )
+            await notifier.send_notification(
+                recipient_id=swap.target_faculty_id,
+                notification_type=NotificationType.SWAP_ROLLED_BACK,
+                data=notif_data,
+            )
+        except Exception:
+            logger.warning("Failed to send rollback notifications for %s", swap_id)
+
+        # Record rollback in approval chain
+        try:
+            chain = ApprovalChainService(db)
+            chain.append_record(
+                action=ApprovalAction.SWAP_ROLLED_BACK,
+                payload={
+                    "swap_id": str(swap_id),
+                    "source_faculty_id": str(swap.source_faculty_id),
+                    "target_faculty_id": str(swap.target_faculty_id),
+                },
+                actor_id=current_user.id,
+                reason=request.reason,
+                target_entity_type="SwapRecord",
+                target_entity_id=str(swap_id),
+            )
+        except Exception:
+            logger.warning("Failed to append rollback record for swap %s", swap_id)
 
     return {"message": result.message, "success": True}
