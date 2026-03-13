@@ -27,6 +27,7 @@ from typing import Any, cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, case, func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import get_settings
@@ -47,6 +48,7 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.block_assignment import BlockAssignment
 from app.models.call_assignment import CallAssignment
+from app.models.half_day_assignment import HalfDayAssignment
 from app.models.faculty_schedule_preference import FacultySchedulePreference
 from app.models.person import FacultyRole, Person
 from app.models.resident_weekly_requirement import ResidentWeeklyRequirement
@@ -1119,6 +1121,14 @@ class SchedulingEngine:
                         scale,
                     )
 
+        # Load graduation requirements and YTD clinic counts
+        graduation_requirements = self._load_graduation_requirements()
+        ytd_clinic_counts = {}
+        if academic_year is not None:
+            ytd_clinic_counts = self._load_ytd_clinic_counts(
+                resident_ids, academic_year
+            )
+
         context = SchedulingContext(
             residents=residents,
             faculty=faculty,
@@ -1139,6 +1149,8 @@ class SchedulingEngine:
             faculty_schedule_preferences=faculty_preferences,
             resident_template_map=resident_template_map,
             prior_calls=prior_calls,
+            graduation_requirements=graduation_requirements,
+            ytd_clinic_counts=ytd_clinic_counts,
         )
 
         # Enable activity requirement constraint if we have data
@@ -2828,6 +2840,77 @@ class SchedulingEngine:
         logger.debug(
             f"Loaded {len(result)} weekly requirements for {len(template_ids)} templates"
         )
+        return result
+
+    def _load_graduation_requirements(self) -> dict[int, dict[UUID, Any]]:
+        """
+        Load graduation requirements structured by PGY level.
+        Returns: {pgy_level: {rotation_template_id: GraduationRequirement}}
+        """
+        try:
+            from app.models.graduation_requirement import GraduationRequirement
+
+            reqs = self.db.query(GraduationRequirement).all()
+
+            result: dict[int, dict[UUID, Any]] = {}
+            for req in reqs:
+                if req.pgy_level not in result:
+                    result[req.pgy_level] = {}
+                result[req.pgy_level][cast(UUID, req.rotation_template_id)] = req
+
+            return result
+        except (ImportError, SQLAlchemyError):
+            # Table might not exist yet if migrations haven't run
+            return {}
+
+    def _load_ytd_clinic_counts(
+        self, resident_ids: list[UUID], academic_year: int
+    ) -> dict[tuple[UUID, UUID], int]:
+        """
+        Load YTD half-day assignments for given residents in the given academic year,
+        grouped by (person_id, rotation_template_id).
+        """
+        if not resident_ids:
+            return {}
+
+        ay_start = date(academic_year, 7, 1)
+        # Assuming academic year ends June 30 of following year
+        ay_end = date(academic_year + 1, 6, 30)
+
+        # COALESCE: prefer HDA's own rotation_template_id, fall back to
+        # the parent BlockAssignment's template for pre-existing rows that
+        # were created before the column was added.
+        effective_template = func.coalesce(
+            HalfDayAssignment.rotation_template_id,
+            BlockAssignment.rotation_template_id,
+        ).label("effective_template_id")
+
+        stmt = (
+            select(
+                HalfDayAssignment.person_id,
+                effective_template,
+                func.count().label("ytd_count"),
+            )
+            .outerjoin(
+                BlockAssignment,
+                HalfDayAssignment.block_assignment_id == BlockAssignment.id,
+            )
+            .where(
+                HalfDayAssignment.person_id.in_(resident_ids),
+                HalfDayAssignment.date >= ay_start,
+                HalfDayAssignment.date <= ay_end,
+                effective_template.isnot(None),
+            )
+            .group_by(HalfDayAssignment.person_id, effective_template)
+        )
+
+        rows = self.db.execute(stmt).all()
+        result = {}
+        for row in rows:
+            result[
+                (cast(UUID, row.person_id), cast(UUID, row.effective_template_id))
+            ] = row.ytd_count
+
         return result
 
     def _load_halfday_requirements(

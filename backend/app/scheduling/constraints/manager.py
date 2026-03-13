@@ -106,6 +106,7 @@ from .sports_medicine import SMResidentFacultyAlignmentConstraint
 # Protected slot and half-day requirement constraints
 from .protected_slot import ProtectedSlotConstraint
 from .halfday_requirement import HalfDayRequirementConstraint, WeekendWorkConstraint
+from .graduation import GraduationRequirementConstraint
 
 # Resident weekly clinic constraints
 from .resident_weekly_clinic import ResidentWeeklyClinicConstraint
@@ -413,6 +414,9 @@ class ConstraintManager:
         # section still simplified but does not cause INFEASIBLE.
         manager.add(HalfDayRequirementConstraint(weight=50.0))
 
+        # Graduation requirement constraint
+        manager.add(GraduationRequirementConstraint(weight=5.0))
+
         # Resident weekly clinic constraint - uses resident_weekly_requirements
         manager.add(ResidentWeeklyClinicConstraint())
         # Disabled by default: engine enables when weekly_requirements data exists
@@ -586,6 +590,9 @@ class ConstraintManager:
 
         # Half-day requirement constraint - enabled by default
         manager.add(HalfDayRequirementConstraint(weight=50.0))
+
+        # Graduation requirement constraint
+        manager.add(GraduationRequirementConstraint(weight=5.0))
 
         # Resident weekly clinic constraint - uses resident_weekly_requirements
         manager.add(ResidentWeeklyClinicConstraint())

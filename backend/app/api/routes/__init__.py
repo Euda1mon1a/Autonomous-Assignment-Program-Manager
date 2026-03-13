@@ -50,6 +50,7 @@ from app.api.routes import (
     fmit_health,
     fmit_timeline,
     game_theory,
+    graduation_requirements,
     half_day_assignments,
     health,
     impersonation,
@@ -312,4 +313,9 @@ api_router.include_router(
     annual_rotation.router,
     prefix="/annual-planner/plans",
     tags=["annual-planner"],
+)
+api_router.include_router(
+    graduation_requirements.router,
+    prefix="/graduation-requirements",
+    tags=["graduation-requirements"],
 )

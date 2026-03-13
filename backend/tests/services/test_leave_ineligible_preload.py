@@ -92,16 +92,25 @@ def _make_block_assignment(
     block_number: int,
     academic_year: int,
 ) -> BlockAssignment:
-    """Create a BlockAssignment linking resident to rotation for a block."""
-    ba = BlockAssignment(
-        id=uuid4(),
-        block_number=block_number,
-        academic_year=academic_year,
-        resident_id=resident.id,
-        rotation_template_id=template.id,
-    )
-    db.add(ba)
-    return ba
+    """Create BlockAssignment rows linking resident to rotation for a block.
+
+    Creates both block_half=1 and block_half=2 rows (full-block rotation).
+    Returns the block_half=1 row for backwards compatibility.
+    """
+    first_half = None
+    for bh in (1, 2):
+        ba = BlockAssignment(
+            id=uuid4(),
+            block_number=block_number,
+            academic_year=academic_year,
+            resident_id=resident.id,
+            rotation_template_id=template.id,
+            block_half=bh,
+        )
+        db.add(ba)
+        if bh == 1:
+            first_half = ba
+    return first_half
 
 
 def _make_absence(

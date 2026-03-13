@@ -1302,13 +1302,8 @@ class ScheduleDraftService:
                 BlockAssignment.academic_year == academic_year,
             )
         )
-        # With block_half, half-block rows cover exactly their date range.
-        # Prefer the half-specific row if one exists.
         half = get_block_half(assignment_date)
-        block_assignment = (
-            query.filter(BlockAssignment.block_half == half).first()
-            or query.filter(BlockAssignment.block_half.is_(None)).first()
-        )
+        block_assignment = query.filter(BlockAssignment.block_half == half).first()
         if not block_assignment:
             return None
         return block_assignment.rotation_template

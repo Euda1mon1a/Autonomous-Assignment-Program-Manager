@@ -539,15 +539,12 @@ class SyncPreloadService:
 
             pgy = resident.pgy_level or 0
 
-            # block_half-aware date range
+            # block_half-aware date range (always 1 or 2, never NULL)
             if assignment.block_half == 1:
                 iter_start = start_date
                 iter_end = mid_block_date - timedelta(days=1)
-            elif assignment.block_half == 2:
+            else:  # block_half == 2
                 iter_start = mid_block_date
-                iter_end = end_date
-            else:
-                iter_start = start_date
                 iter_end = end_date
 
             current = iter_start

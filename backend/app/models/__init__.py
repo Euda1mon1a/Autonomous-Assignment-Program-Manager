@@ -4,6 +4,7 @@ from app.models.absence import Absence
 from app.models.academic_block import AcademicBlock
 from app.models.annual_rotation import AnnualRotationAssignment, AnnualRotationPlan
 from app.models.activity import Activity, ActivityCategory
+from app.models.graduation_requirement import GraduationRequirement
 from app.models.activity_log import ActivityActionType, ActivityLog
 from app.models.approval_record import ApprovalAction, ApprovalRecord
 from app.models.agent_memory import AgentEmbedding, ModelTier, TaskHistory
@@ -423,4 +424,6 @@ __all__ = [
     # Annual Rotation Optimizer models
     "AnnualRotationPlan",
     "AnnualRotationAssignment",
+    # Graduation requirements
+    "GraduationRequirement",
 ]

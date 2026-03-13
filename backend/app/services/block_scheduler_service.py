@@ -567,6 +567,7 @@ class BlockSchedulerService:
                     academic_year=assignment.academic_year,
                     resident_id=assignment.resident_id,
                     rotation_template_id=assignment.rotation_template_id,
+                    block_half=assignment.block_half,
                     has_leave=assignment.has_leave,
                     leave_days=assignment.leave_days,
                     assignment_reason=assignment.assignment_reason,
@@ -646,12 +647,11 @@ class BlockSchedulerService:
             None,
         )
 
-        assignment_data = {
+        base_data = {
             "block_number": block_number,
             "academic_year": academic_year,
             "resident_id": resident_id,
             "rotation_template_id": rotation_template_id,
-            "block_half": block_half,
             "has_leave": leave_data is not None,
             "leave_days": leave_data.leave_days if leave_data else 0,
             "assignment_reason": AssignmentReason.MANUAL.value,
@@ -659,7 +659,19 @@ class BlockSchedulerService:
             "notes": notes,
         }
 
-        assignment = self.assignment_repo.create(assignment_data)
+        if block_half is not None:
+            # Specific half requested
+            base_data["block_half"] = block_half
+            assignment = self.assignment_repo.create(base_data)
+        else:
+            # No half specified — create both halves with same template
+            assignment = None
+            for bh in (1, 2):
+                data = {**base_data, "block_half": bh}
+                a = self.assignment_repo.create(data)
+                if assignment is None:
+                    assignment = a  # Return first half for backward compat
+
         self.assignment_repo.commit()
         self.assignment_repo.refresh(assignment)
         return assignment
