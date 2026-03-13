@@ -73,10 +73,10 @@ class BlockAssignment(Base):
         ForeignKey("rotation_templates.id", ondelete="SET NULL"),
         nullable=True,
     )
-    # Half-block indicator: NULL = full block, 1 = days 1-14, 2 = days 15-28.
-    # Combined rotations (e.g., NF + Cardiology) are expressed as two rows
-    # with block_half=1 and block_half=2, each pointing to an atomic template.
-    block_half = Column(SmallInteger, nullable=True)
+    # Half-block indicator: 1 = days 1-14, 2 = days 15-28.
+    # Every resident has exactly 2 rows per block. Full-block rotations
+    # use the same rotation_template_id in both rows.
+    block_half = Column(SmallInteger, nullable=False)
 
     # Assignment metadata
     assignment_reason = Column(String(50), nullable=False, default="balanced")
@@ -103,10 +103,15 @@ class BlockAssignment(Base):
     )
 
     __table_args__ = (
-        # Unique constraints are partial indexes (created in migration):
-        #   uq_resident_block_full: (block_number, academic_year, resident_id) WHERE block_half IS NULL
-        #   uq_resident_block_half: (block_number, academic_year, resident_id, block_half) WHERE block_half IS NOT NULL
-        # Plus trigger trg_block_half_exclusion prevents mixing full/half rows.
+        # Unique index: (block_number, academic_year, resident_id, block_half)
+        # Every resident has exactly 2 rows per block (block_half=1 and block_half=2).
+        UniqueConstraint(
+            "block_number",
+            "academic_year",
+            "resident_id",
+            "block_half",
+            name="uq_resident_block_half",
+        ),
         CheckConstraint(
             "block_number >= 0 AND block_number <= 13",
             name="check_block_number_range",
@@ -117,7 +122,7 @@ class BlockAssignment(Base):
             name="check_assignment_reason",
         ),
         CheckConstraint(
-            "block_half IS NULL OR block_half IN (1, 2)",
+            "block_half IN (1, 2)",
             name="check_block_half_range",
         ),
     )

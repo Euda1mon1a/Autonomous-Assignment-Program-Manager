@@ -346,18 +346,20 @@ async def publish_plan(plan_id: UUID, db: AsyncSession) -> AnnualRotationPlan:
                 )
             )
         else:
-            # Non-combined or single combined template → one row
-            db.add(
-                BlockAssignment(
-                    block_number=assignment.block_number,
-                    academic_year=plan.academic_year,
-                    resident_id=assignment.person_id,
-                    rotation_template_id=primary_template_id,
-                    assignment_reason="balanced",
-                    notes=f"ARO plan: {plan.name}",
-                    created_by="annual_rotation_optimizer",
+            # Non-combined or single combined template → two rows, same template
+            for bh in (1, 2):
+                db.add(
+                    BlockAssignment(
+                        block_number=assignment.block_number,
+                        academic_year=plan.academic_year,
+                        resident_id=assignment.person_id,
+                        rotation_template_id=primary_template_id,
+                        block_half=bh,
+                        assignment_reason="balanced",
+                        notes=f"ARO plan: {plan.name}",
+                        created_by="annual_rotation_optimizer",
+                    )
                 )
-            )
 
     if unmapped:
         logger.warning(

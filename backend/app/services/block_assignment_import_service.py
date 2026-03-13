@@ -627,7 +627,42 @@ class BlockAssignmentImportService:
                                 )
                                 self.session.add(second_assignment)
                             else:
-                                existing.block_half = None
+                                # Non-split: ensure both halves exist with same template
+                                existing.block_half = 1
+                                existing.rotation_template_id = uuid.UUID(
+                                    row_data["rotation_id"]
+                                )
+                                # Create or update sibling half=2 row
+                                sibling = (
+                                    self.session.query(BlockAssignment)
+                                    .filter(
+                                        BlockAssignment.block_number
+                                        == existing.block_number,
+                                        BlockAssignment.academic_year
+                                        == existing.academic_year,
+                                        BlockAssignment.resident_id
+                                        == existing.resident_id,
+                                        BlockAssignment.block_half == 2,
+                                    )
+                                    .first()
+                                )
+                                if not sibling:
+                                    sibling = BlockAssignment(
+                                        block_number=existing.block_number,
+                                        academic_year=existing.academic_year,
+                                        resident_id=existing.resident_id,
+                                        rotation_template_id=uuid.UUID(
+                                            row_data["rotation_id"]
+                                        ),
+                                        block_half=2,
+                                        assignment_reason="manual",
+                                        created_by="gui_import",
+                                    )
+                                    self.session.add(sibling)
+                                else:
+                                    sibling.rotation_template_id = uuid.UUID(
+                                        row_data["rotation_id"]
+                                    )
                             existing.assignment_reason = "manual"
                             existing.created_by = "gui_import"
                             existing.updated_at = datetime.now(UTC)
@@ -668,15 +703,18 @@ class BlockAssignmentImportService:
                     )
                     self.session.add(second_assignment)
                 else:
-                    assignment = BlockAssignment(
-                        block_number=row_data["block_number"],
-                        academic_year=request.academic_year,
-                        resident_id=uuid.UUID(row_data["resident_id"]),
-                        rotation_template_id=uuid.UUID(row_data["rotation_id"]),
-                        assignment_reason="manual",
-                        created_by="gui_import",
-                    )
-                    self.session.add(assignment)
+                    # Non-split: create two rows with same template
+                    for bh in (1, 2):
+                        ba = BlockAssignment(
+                            block_number=row_data["block_number"],
+                            academic_year=request.academic_year,
+                            resident_id=uuid.UUID(row_data["resident_id"]),
+                            rotation_template_id=uuid.UUID(row_data["rotation_id"]),
+                            block_half=bh,
+                            assignment_reason="manual",
+                            created_by="gui_import",
+                        )
+                        self.session.add(ba)
                 imported_count += 1
             except Exception as e:
                 logger.error(f"Row {row_num}: Import failed - {e}")

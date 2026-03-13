@@ -195,6 +195,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
+            block_half=1,
             assignment_reason="balanced",
             created_by="test",
         )
@@ -225,6 +226,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
+            block_half=1,
             assignment_reason="balanced",
         )
         db.add(assignment)
@@ -244,6 +246,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
+            block_half=1,
             assignment_reason="balanced",
         )
         db.add(assignment)
@@ -273,6 +276,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
+            block_half=1,
             created_by="test_user",
         )
 
@@ -295,6 +299,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
+            block_half=1,
             created_by="test_user",
             notes="Manual assignment for coverage",
         )
@@ -319,6 +324,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
+            block_half=1,
             assignment_reason="balanced",
         )
         db.add(assignment)
@@ -332,6 +338,7 @@ class TestBlockSchedulerController:
             academic_year=2025,  # Same year
             resident_id=setup_data["residents"][0].id,  # Same resident
             rotation_template_id=setup_data["templates"][1].id,
+            block_half=1,
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -352,6 +359,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
+            block_half=1,
             assignment_reason="balanced",
         )
         db.add(assignment)
@@ -376,6 +384,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
+            block_half=1,
             assignment_reason="balanced",
         )
         db.add(assignment)
@@ -411,6 +420,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
+            block_half=1,
             assignment_reason="balanced",
         )
         db.add(assignment)
@@ -456,6 +466,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=setup_data["templates"][0].id,
+            block_half=1,
             assignment_reason="manual",
             created_by="test",
         )
@@ -497,6 +508,7 @@ class TestBlockSchedulerController:
                 rotation_template_id=setup_data["templates"][
                     i % len(setup_data["templates"])
                 ].id,
+                block_half=1,
                 assignment_reason="manual",
                 created_by="test",
             )
@@ -524,6 +536,7 @@ class TestBlockSchedulerController:
             academic_year=2025,
             resident_id=setup_data["residents"][0].id,
             rotation_template_id=leave_template.id,
+            block_half=1,
             assignment_reason="manual",
             created_by="test",
         )
@@ -549,6 +562,7 @@ class TestBlockSchedulerController:
                 academic_year=year,
                 resident_id=setup_data["residents"][0].id,
                 rotation_template_id=setup_data["templates"][0].id,
+                block_half=1,
                 assignment_reason="manual",
                 created_by="test",
             )

@@ -24,11 +24,11 @@ class BlockAssignmentBase(BaseModel):
     academic_year: int = Field(..., ge=2020, le=2100, description="Academic year")
     resident_id: UUID
     rotation_template_id: UUID | None = None
-    block_half: int | None = Field(
-        default=None,
+    block_half: int = Field(
+        ...,
         ge=1,
         le=2,
-        description="Half-block indicator: null=full block, 1=days 1-14, 2=days 15-28",
+        description="Half-block indicator: 1=days 1-14, 2=days 15-28",
     )
     has_leave: bool = False
     leave_days: int = Field(default=0, ge=0, description="Number of leave days")
@@ -117,7 +117,7 @@ class BlockAssignmentResponse(BaseModel):
     academic_year: int
     resident_id: UUID
     rotation_template_id: UUID | None
-    block_half: int | None = None
+    block_half: int
     has_leave: bool
     leave_days: int
     assignment_reason: str

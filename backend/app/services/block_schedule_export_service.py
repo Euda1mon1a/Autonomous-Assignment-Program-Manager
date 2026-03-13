@@ -371,7 +371,7 @@ class BlockScheduleExportService:
         # Group by resident to merge block_half pairs
         from collections import defaultdict
 
-        by_resident: dict[UUID, dict[int | None, BlockAssignment]] = defaultdict(dict)
+        by_resident: dict[UUID, dict[int, BlockAssignment]] = defaultdict(dict)
         for assignment in assignments:
             if assignment.resident:
                 by_resident[assignment.resident_id][assignment.block_half] = assignment
@@ -387,14 +387,11 @@ class BlockScheduleExportService:
 
             half1 = halves.get(1)
             half2 = halves.get(2)
-            full = halves.get(None)
 
             if half1 and half1.rotation_template:
                 rotation1 = self._get_rotation_code(half1.rotation_template)
             if half2 and half2.rotation_template:
                 rotation2 = self._get_rotation_code(half2.rotation_template)
-            if full and full.rotation_template:
-                rotation1 = self._get_rotation_code(full.rotation_template)
 
             residents.append(
                 {

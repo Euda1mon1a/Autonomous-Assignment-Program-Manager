@@ -57,6 +57,7 @@ class TestBlockAssignmentBase:
             "block_number": 5,
             "academic_year": 2026,
             "resident_id": uuid4(),
+            "block_half": 1,
         }
 
     def test_valid_minimal(self):
@@ -170,6 +171,7 @@ class TestBlockAssignmentCreate:
             block_number=1,
             academic_year=2026,
             resident_id=uuid4(),
+            block_half=1,
         )
         assert r.created_by is None
 
@@ -178,6 +180,7 @@ class TestBlockAssignmentCreate:
             block_number=1,
             academic_year=2026,
             resident_id=uuid4(),
+            block_half=1,
             created_by="admin",
         )
         assert r.created_by == "admin"

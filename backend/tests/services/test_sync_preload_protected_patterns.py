@@ -94,14 +94,18 @@ def test_preload_wednesday_patterns_and_last_wednesday(db):
 
     block_number = 10
     academic_year = 2025
-    assignment = BlockAssignment(
-        id=uuid4(),
-        block_number=block_number,
-        academic_year=academic_year,
-        resident_id=resident.id,
-        rotation_template_id=template.id,
-    )
-    db.add(assignment)
+    # Full-block rotation: two rows with same template
+    for bh in (1, 2):
+        db.add(
+            BlockAssignment(
+                id=uuid4(),
+                block_number=block_number,
+                academic_year=academic_year,
+                resident_id=resident.id,
+                rotation_template_id=template.id,
+                block_half=bh,
+            )
+        )
     db.commit()
 
     service = SyncPreloadService(db)
@@ -147,14 +151,18 @@ def test_preload_hilo_pattern(db):
 
     block_number = 10
     academic_year = 2025
-    assignment = BlockAssignment(
-        id=uuid4(),
-        block_number=block_number,
-        academic_year=academic_year,
-        resident_id=resident.id,
-        rotation_template_id=template.id,
-    )
-    db.add(assignment)
+    # Full-block rotation: two rows with same template
+    for bh in (1, 2):
+        db.add(
+            BlockAssignment(
+                id=uuid4(),
+                block_number=block_number,
+                academic_year=academic_year,
+                resident_id=resident.id,
+                rotation_template_id=template.id,
+                block_half=bh,
+            )
+        )
     db.commit()
 
     service = SyncPreloadService(db)
@@ -207,14 +215,18 @@ def test_preload_okinawa_pattern(db):
 
     block_number = 10
     academic_year = 2025
-    assignment = BlockAssignment(
-        id=uuid4(),
-        block_number=block_number,
-        academic_year=academic_year,
-        resident_id=resident.id,
-        rotation_template_id=template.id,
-    )
-    db.add(assignment)
+    # Full-block rotation: two rows with same template
+    for bh in (1, 2):
+        db.add(
+            BlockAssignment(
+                id=uuid4(),
+                block_number=block_number,
+                academic_year=academic_year,
+                resident_id=resident.id,
+                rotation_template_id=template.id,
+                block_half=bh,
+            )
+        )
     db.commit()
 
     service = SyncPreloadService(db)
@@ -247,6 +259,7 @@ def test_preload_kapiolani_pattern(db):
     _create_activity(db, "KAP", "KAP", ActivityCategory.CLINICAL.value)
     _create_activity(db, "OFF", "OFF", ActivityCategory.TIME_OFF.value)
     _create_activity(db, "C", "C", ActivityCategory.CLINICAL.value)
+    _create_activity(db, "W", "W", ActivityCategory.TIME_OFF.value)
     _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
     _create_activity(db, "ADV", "ADV", ActivityCategory.EDUCATIONAL.value)
 
@@ -267,14 +280,18 @@ def test_preload_kapiolani_pattern(db):
 
     block_number = 10
     academic_year = 2025
-    assignment = BlockAssignment(
-        id=uuid4(),
-        block_number=block_number,
-        academic_year=academic_year,
-        resident_id=resident.id,
-        rotation_template_id=template.id,
-    )
-    db.add(assignment)
+    # Full-block rotation: two rows with same template
+    for bh in (1, 2):
+        db.add(
+            BlockAssignment(
+                id=uuid4(),
+                block_number=block_number,
+                academic_year=academic_year,
+                resident_id=resident.id,
+                rotation_template_id=template.id,
+                block_half=bh,
+            )
+        )
     db.commit()
 
     service = SyncPreloadService(db)
@@ -331,14 +348,18 @@ def test_preload_ldnf_pattern(db):
 
     block_number = 10
     academic_year = 2025
-    assignment = BlockAssignment(
-        id=uuid4(),
-        block_number=block_number,
-        academic_year=academic_year,
-        resident_id=resident.id,
-        rotation_template_id=template.id,
-    )
-    db.add(assignment)
+    # Full-block rotation: two rows with same template
+    for bh in (1, 2):
+        db.add(
+            BlockAssignment(
+                id=uuid4(),
+                block_number=block_number,
+                academic_year=academic_year,
+                resident_id=resident.id,
+                rotation_template_id=template.id,
+                block_half=bh,
+            )
+        )
     db.commit()
 
     service = SyncPreloadService(db)
@@ -387,14 +408,18 @@ def test_preload_pednf_pattern(db):
 
     block_number = 10
     academic_year = 2025
-    assignment = BlockAssignment(
-        id=uuid4(),
-        block_number=block_number,
-        academic_year=academic_year,
-        resident_id=resident.id,
-        rotation_template_id=template.id,
-    )
-    db.add(assignment)
+    # Full-block rotation: two rows with same template
+    for bh in (1, 2):
+        db.add(
+            BlockAssignment(
+                id=uuid4(),
+                block_number=block_number,
+                academic_year=academic_year,
+                resident_id=resident.id,
+                rotation_template_id=template.id,
+                block_half=bh,
+            )
+        )
     db.commit()
 
     service = SyncPreloadService(db)
@@ -410,8 +435,9 @@ def test_preload_pednf_pattern(db):
     assert _get_assignment_code(db, resident.id, monday, "AM") == "OFF"
     assert _get_assignment_code(db, resident.id, monday, "PM") == "PedNF"
 
-    assert _get_assignment_code(db, resident.id, sunday, "AM") == "W"
-    assert _get_assignment_code(db, resident.id, sunday, "PM") == "W"
+    # PEDNF has Saturday off only (not Sunday) per get_nf_codes
+    assert _get_assignment_code(db, resident.id, sunday, "AM") == "OFF"
+    assert _get_assignment_code(db, resident.id, sunday, "PM") == "PedNF"
 
 
 def test_preload_compound_rotation_weekends(db):
@@ -690,14 +716,18 @@ def test_preload_outpatient_time_off_patterns(db):
 
     block_number = 10
     academic_year = 2025
-    assignment = BlockAssignment(
-        id=uuid4(),
-        block_number=block_number,
-        academic_year=academic_year,
-        resident_id=resident.id,
-        rotation_template_id=template.id,
-    )
-    db.add(assignment)
+    # Full-block rotation: two rows with same template
+    for bh in (1, 2):
+        db.add(
+            BlockAssignment(
+                id=uuid4(),
+                block_number=block_number,
+                academic_year=academic_year,
+                resident_id=resident.id,
+                rotation_template_id=template.id,
+                block_half=bh,
+            )
+        )
     db.commit()
 
     service = SyncPreloadService(db)
@@ -735,14 +765,18 @@ def test_preload_nf_combined_half_block_pattern(db):
 
     block_number = 10
     academic_year = 2025
-    assignment = BlockAssignment(
-        id=uuid4(),
-        block_number=block_number,
-        academic_year=academic_year,
-        resident_id=resident.id,
-        rotation_template_id=template.id,
-    )
-    db.add(assignment)
+    # Full-block rotation: two rows with same template
+    for bh in (1, 2):
+        db.add(
+            BlockAssignment(
+                id=uuid4(),
+                block_number=block_number,
+                academic_year=academic_year,
+                resident_id=resident.id,
+                rotation_template_id=template.id,
+                block_half=bh,
+            )
+        )
     db.commit()
 
     service = SyncPreloadService(db)

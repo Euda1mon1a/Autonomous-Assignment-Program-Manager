@@ -146,22 +146,18 @@ def test_cpsat_pipeline_minimal_dataset(
     db.commit()
 
     # Block assignments for resident filtering (template optional).
-    db.add_all(
-        [
-            BlockAssignment(
-                id=uuid4(),
-                block_number=block_number,
-                academic_year=academic_year,
-                resident_id=resident_1.id,
-            ),
-            BlockAssignment(
-                id=uuid4(),
-                block_number=block_number,
-                academic_year=academic_year,
-                resident_id=resident_2.id,
-            ),
-        ]
-    )
+    # Full-block rotation: two rows per resident (block_half=1 and block_half=2).
+    for resident in (resident_1, resident_2):
+        for bh in (1, 2):
+            db.add(
+                BlockAssignment(
+                    id=uuid4(),
+                    block_number=block_number,
+                    academic_year=academic_year,
+                    resident_id=resident.id,
+                    block_half=bh,
+                )
+            )
     db.commit()
 
     constraint_manager = ConstraintManager.create_minimal()
