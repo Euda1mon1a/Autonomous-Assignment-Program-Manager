@@ -157,7 +157,7 @@ async def get_chain_stats(
         "The record is cryptographically linked to the previous record. "
         "Requires coordinator or above role."
     ),
-    dependencies=[Depends(require_coordinator_or_above)],
+    dependencies=[Depends(require_coordinator_or_above())],
 )
 async def create_approval_record(
     record: ApprovalRecordCreate,
@@ -361,7 +361,7 @@ async def get_approval_record(
         "of all records from the specified day. This can be stored externally "
         "for stronger verification. Requires admin role."
     ),
-    dependencies=[Depends(require_admin)],
+    dependencies=[Depends(require_admin())],
 )
 async def create_daily_seal(
     request: DailySealRequest,

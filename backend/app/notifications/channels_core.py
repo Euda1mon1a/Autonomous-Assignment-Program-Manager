@@ -170,26 +170,14 @@ class InAppChannel(NotificationChannel):
             )
 
         try:
-            from app.models.notification import Notification
-
-            notification = Notification(
-                id=payload.id,
-                recipient_id=payload.recipient_id,
-                notification_type=payload.notification_type,
-                subject=payload.subject,
-                body=payload.body,
-                data=payload.data,
-                priority=payload.priority,
-                channels_delivered="in_app",
-                is_read=False,
-            )
-            db.add(notification)
-            db.commit()
+            # We no longer write the Notification row here.
+            # NotificationService.send_notification handles the DB insert
+            # to avoid duplicate rows. This channel just confirms it's valid.
 
             return DeliveryResult(
                 success=True,
                 channel=self.channel_name,
-                message="Notification stored successfully",
+                message="Notification prepared for in_app delivery",
                 metadata={"notification_id": str(payload.id)},
             )
 
@@ -298,8 +286,15 @@ class EmailChannel(NotificationChannel):
         Returns:
             HTML-formatted email body
         """
+        import html
+
+        # Escape user-controlled data to prevent XSS injection
+        safe_subject = html.escape(payload.subject)
+        safe_body = html.escape(payload.body)
+        safe_priority = html.escape(payload.priority)
+
         # Simple HTML template - can be enhanced with proper email templates
-        html = f"""
+        html_content = f"""
         <html>
         <head>
             <style>
@@ -314,11 +309,11 @@ class EmailChannel(NotificationChannel):
         </head>
         <body>
             <div class="header">
-                <h2>{payload.subject}</h2>
+                <h2>{safe_subject}</h2>
             </div>
-            <div class="content priority-{payload.priority}">
+            <div class="content priority-{safe_priority}">
                 <pre style="white-space: pre-wrap; font-family: Arial, sans-serif;">
-{payload.body}
+{safe_body}
                 </pre>
             </div>
             <div class="footer">
@@ -327,7 +322,7 @@ class EmailChannel(NotificationChannel):
         </body>
         </html>
         """
-        return html
+        return html_content
 
 
 class WebhookChannel(NotificationChannel):
@@ -379,26 +374,35 @@ class WebhookChannel(NotificationChannel):
 
             if self.webhook_url:
                 send_webhook.delay(self.webhook_url, webhook_payload)
-            logger.debug(
-                "Webhook queued for %s", self.webhook_url or "no URL configured"
-            )
+                logger.debug("Webhook queued for %s", self.webhook_url)
 
-            return DeliveryResult(
-                success=True,
-                channel=self.channel_name,
-                message="Webhook queued for delivery",
-                metadata={"webhook_url": self.webhook_url, "payload": webhook_payload},
-            )
+                return DeliveryResult(
+                    success=True,
+                    channel=self.channel_name,
+                    message="Webhook queued for delivery",
+                    metadata={
+                        "webhook_url": self.webhook_url,
+                        "payload": webhook_payload,
+                    },
+                )
+            else:
+                logger.debug("Webhook skipped - no URL configured")
+                return DeliveryResult(
+                    success=False,
+                    channel=self.channel_name,
+                    message="No webhook URL configured",
+                )
 
         except Exception as e:
+            logger.error("Failed to prepare webhook notification: %s", e)
             return DeliveryResult(
                 success=False,
                 channel=self.channel_name,
                 message="Operation failed",
             )
 
-            # Channel registry
 
+# Channel registry
 
 AVAILABLE_CHANNELS = {
     "in_app": InAppChannel,
