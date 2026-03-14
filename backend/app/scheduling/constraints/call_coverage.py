@@ -37,8 +37,10 @@ from .base import (
 
 logger = logging.getLogger(__name__)
 
-# Re-export for backward compatibility (other modules import from here)
-OVERNIGHT_CALL_DAYS = get_overnight_call_weekdays()
+# Re-export for backward compatibility — delegates to calendar_policy.
+# This is a function reference, not a frozen set.  Use OVERNIGHT_CALL_DAYS()
+# for membership checks (or prefer is_overnight_call_day() directly).
+OVERNIGHT_CALL_DAYS = get_overnight_call_weekdays  # noqa: N806
 
 
 class OvernightCallCoverageConstraint(SoftConstraint):

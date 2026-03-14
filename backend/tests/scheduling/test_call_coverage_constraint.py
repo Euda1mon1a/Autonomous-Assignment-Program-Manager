@@ -65,16 +65,16 @@ def _context(residents=None, blocks=None, faculty=None, templates=None):
 
 
 class TestOvernightCallDaysConstant:
-    """Test OVERNIGHT_CALL_DAYS constant."""
+    """Test OVERNIGHT_CALL_DAYS callable (returns current overnight call weekdays)."""
 
     def test_contains_expected_days(self):
-        assert {0, 1, 2, 3, 6} == OVERNIGHT_CALL_DAYS
+        assert {0, 1, 2, 3, 6} == OVERNIGHT_CALL_DAYS()
 
     def test_does_not_contain_friday(self):
-        assert 4 not in OVERNIGHT_CALL_DAYS  # Friday
+        assert 4 not in OVERNIGHT_CALL_DAYS()  # Friday
 
     def test_does_not_contain_saturday(self):
-        assert 5 not in OVERNIGHT_CALL_DAYS  # Saturday
+        assert 5 not in OVERNIGHT_CALL_DAYS()  # Saturday
 
 
 # ==================== is_overnight_call_day Tests ====================

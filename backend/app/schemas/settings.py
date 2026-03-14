@@ -21,6 +21,16 @@ class SettingsBase(BaseModel):
         default=None,
         description="Lock date for system-initiated changes (null = no lock)",
     )
+    overnight_call_weekdays: list[int] = Field(
+        default=[0, 1, 2, 3, 6],
+        description="Weekdays requiring overnight call coverage (0=Mon, 6=Sun)",
+    )
+    fmit_week_start_weekday: int = Field(
+        default=4,
+        ge=0,
+        le=6,
+        description="Weekday FMIT week starts (4=Friday)",
+    )
 
 
 class SettingsCreate(SettingsBase):
@@ -39,6 +49,8 @@ class SettingsUpdate(BaseModel):
     enable_holiday_scheduling: bool | None = None
     default_block_duration_hours: int | None = None
     schedule_lock_date: date | None = None
+    overnight_call_weekdays: list[int] | None = None
+    fmit_week_start_weekday: int | None = None
 
 
 class SettingsResponse(SettingsBase):

@@ -113,7 +113,7 @@ def get_call_nights(blocks):
     Returns:
         list[MockBlock]: Blocks on overnight call days
     """
-    return [b for b in blocks if b.date.weekday() in OVERNIGHT_CALL_DAYS]
+    return [b for b in blocks if b.date.weekday() in OVERNIGHT_CALL_DAYS()]
 
 
 def get_non_call_nights(blocks):
@@ -126,7 +126,7 @@ def get_non_call_nights(blocks):
     Returns:
         list[MockBlock]: Blocks not on overnight call days
     """
-    return [b for b in blocks if b.date.weekday() not in OVERNIGHT_CALL_DAYS]
+    return [b for b in blocks if b.date.weekday() not in OVERNIGHT_CALL_DAYS()]
 
 
 # ============================================================================
@@ -356,14 +356,14 @@ class TestOvernightCallCoverageConstraint:
         all_days = [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
         blocks = [MockBlock(block_date=d) for d in all_days]
 
-        # Verify OVERNIGHT_CALL_DAYS constant
-        assert monday.weekday() in OVERNIGHT_CALL_DAYS  # 0
-        assert tuesday.weekday() in OVERNIGHT_CALL_DAYS  # 1
-        assert wednesday.weekday() in OVERNIGHT_CALL_DAYS  # 2
-        assert thursday.weekday() in OVERNIGHT_CALL_DAYS  # 3
-        assert friday.weekday() not in OVERNIGHT_CALL_DAYS  # 4
-        assert saturday.weekday() not in OVERNIGHT_CALL_DAYS  # 5
-        assert sunday.weekday() in OVERNIGHT_CALL_DAYS  # 6
+        # Verify OVERNIGHT_CALL_DAYS callable
+        assert monday.weekday() in OVERNIGHT_CALL_DAYS()  # 0
+        assert tuesday.weekday() in OVERNIGHT_CALL_DAYS()  # 1
+        assert wednesday.weekday() in OVERNIGHT_CALL_DAYS()  # 2
+        assert thursday.weekday() in OVERNIGHT_CALL_DAYS()  # 3
+        assert friday.weekday() not in OVERNIGHT_CALL_DAYS()  # 4
+        assert saturday.weekday() not in OVERNIGHT_CALL_DAYS()  # 5
+        assert sunday.weekday() in OVERNIGHT_CALL_DAYS()  # 6
 
         context = SchedulingContext(
             residents=[],

@@ -44,6 +44,15 @@ class CallAssignmentService:
             db: Async database session
         """
         self.db = db
+        self._calendar_policy_loaded = False
+
+    async def _ensure_calendar_policy_loaded(self) -> None:
+        """Load calendar policy from DB once per service instance."""
+        if not self._calendar_policy_loaded:
+            from app.scheduling.calendar_policy import async_load_from_settings
+
+            await async_load_from_settings(self.db)
+            self._calendar_policy_loaded = True
 
     async def _get_assignments_covered_by_person(
         self,
@@ -565,6 +574,9 @@ class CallAssignmentService:
         Returns:
             CallCoverageReport with coverage statistics and gaps
         """
+        # Ensure calendar policy is loaded from DB before using helpers
+        await self._ensure_calendar_policy_loaded()
+
         # Get all call assignments in range
         assignments = await self.get_call_assignments_by_date_range(
             start_date, end_date
@@ -902,6 +914,9 @@ class CallAssignmentService:
         Returns:
             PCATGenerationResponse with results of the operation
         """
+        # Ensure calendar policy is loaded from DB before using helpers
+        await self._ensure_calendar_policy_loaded()
+
         results: list[PCATAssignmentResult] = []
         errors: list[str] = []
         pcat_created_count = 0
