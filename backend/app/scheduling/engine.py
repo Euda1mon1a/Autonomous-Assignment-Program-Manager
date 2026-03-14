@@ -126,8 +126,17 @@ class SchedulingEngine:
         self.availability_matrix: dict = {}
         self.assignments: list[Assignment] = []
         self.validator = ACGMEValidator(db)
+
+        # Load settings for DB-backed ACGME values
+        from app.models.settings import ApplicationSettings
+
+        self._settings = self.db.query(ApplicationSettings).first()
+
         self.constraint_manager = (
-            constraint_manager or ConstraintManager.create_default(profile="faculty")
+            constraint_manager
+            or ConstraintManager.create_default(
+                profile="faculty", settings=self._settings
+            )
         )
         self._sync_constraints_from_db()
 
