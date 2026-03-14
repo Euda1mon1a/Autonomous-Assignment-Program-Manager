@@ -69,6 +69,7 @@ from app.api.routes import (
     pareto,
     people,
     portal,
+    primary_duty_configs,
     procedures,
     profiling,
     proxy_coverage,
@@ -214,6 +215,11 @@ api_router.include_router(
     scheduler_ops.router, prefix="/scheduler", tags=["scheduler-ops"]
 )
 api_router.include_router(procedures.router, prefix="/procedures", tags=["procedures"])
+api_router.include_router(
+    primary_duty_configs.router,
+    prefix="/primary-duty-configs",
+    tags=["primary-duty-configs"],
+)
 api_router.include_router(
     constraints.router, prefix="/constraints", tags=["constraints"]
 )
