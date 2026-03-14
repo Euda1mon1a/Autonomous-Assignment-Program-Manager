@@ -169,35 +169,37 @@ class TestPrimaryDutyConfig:
 
 
 class TestLoadPrimaryDutiesConfig:
-    def test_file_not_found(self):
-        result = load_primary_duties_config("/nonexistent/path.json")
-        assert result == {}
+    def test_missing_session_raises(self):
+        """Missing db_session raises ValueError."""
+        import pytest
 
-    def test_invalid_json(self, tmp_path):
-        bad_file = tmp_path / "bad.json"
-        bad_file.write_text("not json!!!")
-        result = load_primary_duties_config(str(bad_file))
-        assert result == {}
+        with pytest.raises(ValueError, match="db_session is required"):
+            load_primary_duties_config(db_session=None)
 
-    def test_valid_json(self, tmp_path):
-        import json
+    def test_wrong_type_session_raises(self):
+        """Wrong-type db_session raises TypeError."""
+        import pytest
 
-        data = {
-            "records": [
-                {
-                    "id": "rec1",
-                    "fields": {
-                        "primaryDuty": "Faculty Alpha",
-                        "Clinic Minimum Half-Days Per Week": 2,
-                    },
-                }
-            ]
-        }
-        f = tmp_path / "duties.json"
-        f.write_text(json.dumps(data))
-        result = load_primary_duties_config(str(f))
+        with pytest.raises(TypeError, match="SQLAlchemy Session"):
+            load_primary_duties_config(db_session="/some/path.json")
+
+    def test_valid_db_load(self):
+        """Mock DB session returns configs correctly."""
+        from unittest.mock import MagicMock
+
+        mock_row = MagicMock()
+        mock_row.id = "test-uuid"
+        mock_row.duty_name = "Faculty Alpha"
+        mock_row.clinic_min_per_week = 2
+        mock_row.clinic_max_per_week = 4
+        mock_row.available_days = [0, 1, 2, 3, 4]
+
+        mock_session = MagicMock()
+        mock_session.query.return_value.all.return_value = [mock_row]
+
+        result = load_primary_duties_config(db_session=mock_session)
         assert "Faculty Alpha" in result
-        assert "rec1" in result  # Also indexed by duty_id
+        assert result["Faculty Alpha"].clinic_min_per_week == 2
 
 
 # ---------------------------------------------------------------------------
