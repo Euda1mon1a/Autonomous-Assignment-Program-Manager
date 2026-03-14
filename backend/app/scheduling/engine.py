@@ -80,6 +80,7 @@ except Exception:
     _tracer = None
 from app.services.schedule_draft_service import ScheduleDraftService
 from app.models.schedule_draft import DraftSourceType
+from app.models.constraint_config import ConstraintConfiguration
 from app.models.person_academic_year import PersonAcademicYear
 from app.utils.academic_blocks import (
     get_academic_year_for_date,
@@ -128,6 +129,7 @@ class SchedulingEngine:
         self.constraint_manager = (
             constraint_manager or ConstraintManager.create_default(profile="faculty")
         )
+        self._sync_constraints_from_db()
 
         # Initialize resilience service for health monitoring
         self.resilience = ResilienceService(
@@ -147,6 +149,29 @@ class SchedulingEngine:
             self._pgy_by_person = {r.person_id: r.pgy_level for r in ay_records}
         except Exception:
             pass  # Table may not exist yet — fall back to Person.pgy_level
+
+    def _sync_constraints_from_db(self) -> None:
+        """Overlay constraint enabled/weight from constraint_configurations table.
+
+        Bridges the gap between DB-stored config (editable via API/frontend) and
+        the in-memory constraint instances that the solver actually uses. Falls
+        back silently to Python defaults if the table is unavailable.
+        """
+        try:
+            db_configs = self.db.query(ConstraintConfiguration).all()
+            synced = 0
+            for db_config in db_configs:
+                for constraint in self.constraint_manager.constraints:
+                    if constraint.name == db_config.name:
+                        constraint.enabled = db_config.enabled
+                        if hasattr(constraint, "weight"):
+                            constraint.weight = db_config.weight
+                        synced += 1
+                        break
+            if synced:
+                logger.info("Synced %d constraint configs from DB", synced)
+        except Exception as e:
+            logger.warning("Could not sync constraints from DB: %s", e)
 
     def _get_pgy_level(self, person: Person) -> int:
         """Get PGY level using AY-scoped record, falling back to Person.pgy_level."""
