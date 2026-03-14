@@ -193,61 +193,80 @@ def get_rotation_preload_codes(
     pgy_level: int,
     is_outpatient: bool,
     has_time_off_patterns: bool = False,
+    template=None,
 ) -> tuple[str | None, str | None]:
     """Return AM/PM activity codes for rotation-protected preloads.
 
     Used by ``_load_rotation_protected_preloads`` to determine what gets
     preloaded for each date of a block assignment.
+
+    When ``template`` is provided, reads classification flags from the DB
+    (is_offsite, is_lec_exempt, is_saturday_off, preload_activity_code)
+    instead of hardcoded Python constants.
     """
     if not rotation_code:
         return (None, None)
 
-    if is_last_wednesday(current_date, block_end):
+    # DB-driven classification (preferred) vs Python fallback
+    _is_lec_exempt = (
+        template.is_lec_exempt
+        if template and hasattr(template, "is_lec_exempt")
+        else is_lec_exempt(rotation_code)
+    )
+    _is_saturday_off = (
+        template.is_saturday_off
+        if template and hasattr(template, "is_saturday_off")
+        else rotation_code in SATURDAY_OFF_ROTATIONS
+    )
+    _is_continuity_exempt = (
+        template.is_continuity_exempt
+        if template and hasattr(template, "is_continuity_exempt")
+        else is_intern_continuity_exempt(rotation_code)
+    )
+    _preload_code = (
+        template.preload_activity_code
+        if template and hasattr(template, "preload_activity_code")
+        else None
+    )
+
+    # Last Wednesday: LEC/ADV for all (unless lec-exempt)
+    if is_last_wednesday(current_date, block_end) and not _is_lec_exempt:
         return ("LEC", "ADV")
 
-    if (
-        current_date.weekday() == 5
-        and rotation_code in SATURDAY_OFF_ROTATIONS
-        and not has_time_off_patterns
-    ):
+    # Saturday off
+    if current_date.weekday() == 5 and _is_saturday_off and not has_time_off_patterns:
         return ("W", "W")
 
+    # NF-combined rotations (complex day-of-week logic, stays hardcoded for now)
     if rotation_code in NF_COMBINED_ACTIVITY_MAP:
         dow = current_date.weekday()
         mid_block_date = block_start + timedelta(days=14)
 
-        if dow == 2:  # Wednesday — LEC/ADV handled by last-Wed check above
+        if dow == 2:  # Wednesday
             return ("OFF", "LEC")
 
         if current_date == mid_block_date:
-            # Day 15: Post-call recovery
             return ("recovery", "recovery")
 
-        if dow == 6:  # Sunday — off for both halves
+        if dow == 6:  # Sunday
             return ("W", "W")
 
-        # Saturday already handled by SATURDAY_OFF_ROTATIONS above
-
         if current_date < mid_block_date:
-            # First half: Night Float — sleep AM, work PM
             return ("OFF", "NF")
         else:
-            # Second half: Specialty — full day
             specialty = NF_COMBINED_ACTIVITY_MAP[rotation_code]
             return (specialty, specialty)
 
-    if rotation_code in OFFSITE_ROTATIONS:
-        if rotation_code in {"HILO", "OKI"}:
-            return get_hilo_codes(current_date, block_start, block_end)
-        if rotation_code == "PEDS-EM":
-            return ("PEM", "PEM")
-        if rotation_code == "MIL":
-            dow = current_date.weekday()
-            if dow >= 5:  # Weekend
-                return ("W", "W")
-            return ("off", "off")
-        return ("TDY", "TDY")
+    # DB-driven simple preload: fill all slots with preload_activity_code
+    if _preload_code:
+        dow = current_date.weekday()
+        if dow == 6:  # Sunday always off
+            return ("W", "W")
+        if dow == 5 and _is_saturday_off:
+            return ("W", "W")
+        return (_preload_code, _preload_code)
 
+    # Fallback: complex patterns not yet in DB (KAP day-of-week, HILO pre/post)
     if rotation_code in KAP_ROTATIONS:
         return get_kap_codes(current_date)
 
@@ -257,41 +276,14 @@ def get_rotation_preload_codes(
     if rotation_code in ("NF", "PEDNF"):
         return get_nf_codes(rotation_code, current_date)
 
-    # FMIT (inpatient, full-day): weekdays work, weekends off
-    if rotation_code == "FMIT":
-        dow = current_date.weekday()
-        if dow >= 5:  # Weekend
-            return ("W", "W")
-        return ("FMIT", "FMIT")
-
-    # NBN / Newborn Nursery (inpatient, full-day): weekdays work, weekends off
-    if rotation_code == "NBN":
-        dow = current_date.weekday()
-        if dow >= 5:  # Weekend
-            return ("W", "W")
-        return ("NBN", "NBN")
-
-    # PEDW / Pediatrics Ward (inpatient, full-day): weekdays work, Sat off
-    if rotation_code == "PEDW":
-        dow = current_date.weekday()
-        if dow == 5:  # Saturday
-            return ("W", "W")
-        if dow == 6:  # Sunday — inpatient coverage
-            return ("PEDW", "PEDW")
-        return ("PEDW", "PEDW")
-
-    # Wednesday protected patterns (intern continuity only for outpatient rotations)
+    # Wednesday protected patterns (intern continuity only for outpatient)
     if current_date.weekday() == 2:  # Wednesday
         am_code = None
-        if (
-            is_outpatient
-            and pgy_level == 1
-            and not is_intern_continuity_exempt(rotation_code)
-        ):
+        if is_outpatient and pgy_level == 1 and not _is_continuity_exempt:
             am_code = "C"
 
         pm_code = None
-        if not is_lec_exempt(rotation_code):
+        if not _is_lec_exempt:
             pm_code = "LEC"
 
         return (am_code, pm_code)
