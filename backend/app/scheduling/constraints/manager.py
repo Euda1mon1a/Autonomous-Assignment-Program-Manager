@@ -340,9 +340,18 @@ class ConstraintManager:
 
         Args:
             profile: Constraint profile ("resident" or "faculty")
-            settings: ApplicationSettings instance for DB-backed ACGME values.
-            db_session: SQLAlchemy session for loading primary duty configs from DB.
+            settings: ApplicationSettings instance. If None and db_session
+                      is provided, auto-loaded from DB.
+            db_session: SQLAlchemy session. Single required param for
+                        DB-backed behavior (settings + primary duty).
         """
+        # Auto-load settings from db_session if not explicitly provided.
+        # No try/except — if db_session is provided, the query must succeed.
+        if db_session is not None and settings is None:
+            from app.models.settings import ApplicationSettings
+
+            settings = db_session.query(ApplicationSettings).first()
+
         manager = cls()
 
         # === PHYSICALLY IMPOSSIBLE constraints (keep Hard) ===
@@ -507,6 +516,7 @@ class ConstraintManager:
         cls,
         target_utilization: float = 0.80,
         tier: int = 2,
+        db_session=None,
     ) -> "ConstraintManager":
         """
         Create manager with resilience-aware constraints enabled.
@@ -526,11 +536,19 @@ class ConstraintManager:
         """
         manager = cls()
 
-        # Hard constraints (ACGME compliance)
+        # Load settings from DB if session available.
+        # No try/except — if db_session is provided, the query must succeed.
+        settings = None
+        if db_session is not None:
+            from app.models.settings import ApplicationSettings
+
+            settings = db_session.query(ApplicationSettings).first()
+
+        # ACGME compliance constraints (read settings from DB)
         manager.add(AvailabilityConstraint())
-        manager.add(EightyHourRuleConstraint())
-        manager.add(OneInSevenRuleConstraint())
-        manager.add(SupervisionRatioConstraint())
+        manager.add(EightyHourRuleConstraint(settings=settings))
+        manager.add(OneInSevenRuleConstraint(settings=settings))
+        manager.add(SupervisionRatioConstraint(settings=settings))
         # Faculty supervision at half-day level (ACGME AT coverage)
         manager.add(FacultySupervisionConstraint())
         manager.add(ClinicCapacityConstraint())
@@ -654,9 +672,9 @@ class ConstraintManager:
         return manager
 
     @classmethod
-    def create_strict(cls) -> "ConstraintManager":
+    def create_strict(cls, db_session=None) -> "ConstraintManager":
         """Create manager with all constraints enabled at high weight."""
-        manager = cls.create_default()
+        manager = cls.create_default(db_session=db_session)
 
         # Increase soft constraint weights
         for c in manager._soft_constraints:

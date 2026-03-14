@@ -160,7 +160,8 @@ class ConstraintService:
         """
         self.db = db
         self.constraint_manager = (
-            constraint_manager or ConstraintManager.create_default()
+            constraint_manager
+            or ConstraintManager.create_default(profile="faculty", db_session=db)
         )
 
     @classmethod
@@ -567,12 +568,18 @@ class ConstraintService:
             Configured ConstraintManager
         """
         config_map = {
-            "default": ConstraintManager.create_default,
-            "faculty": lambda: ConstraintManager.create_default(profile="faculty"),
+            "default": lambda: ConstraintManager.create_default(db_session=self.db),
+            "faculty": lambda: ConstraintManager.create_default(
+                profile="faculty", db_session=self.db
+            ),
             "minimal": ConstraintManager.create_minimal,
-            "strict": ConstraintManager.create_strict,
-            "resilience": lambda: ConstraintManager.create_resilience_aware(tier=2),
+            "strict": lambda: ConstraintManager.create_strict(db_session=self.db),
+            "resilience": lambda: ConstraintManager.create_resilience_aware(
+                tier=2, db_session=self.db
+            ),
         }
 
-        factory = config_map.get(config, ConstraintManager.create_default)
+        factory = config_map.get(
+            config, lambda: ConstraintManager.create_default(db_session=self.db)
+        )
         return factory()  # type: ignore[operator]

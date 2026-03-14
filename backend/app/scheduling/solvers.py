@@ -133,6 +133,13 @@ class BaseSolver(ABC):
         constraint_manager: ConstraintManager | None = None,
         timeout_seconds: float = 60.0,
     ) -> None:
+        if constraint_manager is None:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "BaseSolver instantiated without constraint_manager — "
+                "using hardcoded defaults (no DB-backed settings or primary duty)"
+            )
         self.constraint_manager = (
             constraint_manager or ConstraintManager.create_default()
         )

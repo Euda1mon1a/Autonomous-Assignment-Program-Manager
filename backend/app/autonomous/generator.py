@@ -131,7 +131,7 @@ class CandidateGenerator:
         self.end_date = end_date
         self.config = config or GeneratorConfig()
         self.constraint_manager = (
-            constraint_manager or ConstraintManager.create_default()
+            constraint_manager or ConstraintManager.create_default(db_session=self.db)
         )
         self.resilience_config = resilience_config or ResilienceConfig()
 
