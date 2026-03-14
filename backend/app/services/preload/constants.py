@@ -53,6 +53,7 @@ NIGHT_FLOAT_ROTATIONS: set[str] = {
     "LDNF",
 } | _ALL_NF_COMBINED
 
+# Legacy fallback: prefer DB column rotation_templates.is_lec_exempt
 LEC_EXEMPT_ROTATIONS: set[str] = {
     "NF",
     "PEDNF",
@@ -65,6 +66,7 @@ LEC_EXEMPT_ROTATIONS: set[str] = {
     "MIL",
 } | _ALL_NF_COMBINED
 
+# Legacy fallback: prefer DB column rotation_templates.is_continuity_exempt
 INTERN_CONTINUITY_EXEMPT_ROTATIONS: set[str] = {
     "NF",
     "PEDNF",
@@ -78,11 +80,12 @@ INTERN_CONTINUITY_EXEMPT_ROTATIONS: set[str] = {
     "MIL",
 } | _ALL_NF_COMBINED
 
+# Legacy fallback: prefer DB column rotation_templates.is_offsite
 OFFSITE_ROTATIONS: set[str] = {"TDY", "HILO", "OKI", "JAPAN", "PEDS-EM", "MIL"}
 KAP_ROTATIONS: set[str] = {"KAP"}
 CLINIC_PATTERN_CODES: set[str] = {"C", "C-I", "C-N", "FM_CLINIC"}
 
-# Temporary Saturday-off rules for external/inpatient rotations (P6-2).
+# Legacy fallback: prefer DB column rotation_templates.is_saturday_off
 SATURDAY_OFF_ROTATIONS: set[str] = {
     "IM",
     "IMW",
@@ -114,6 +117,99 @@ ROTATION_TO_ACTIVITY: dict[str, str] = {
     "JAPAN": "TDY",
     "PEDS-EM": "PEM",
 }
+
+
+# ---------------------------------------------------------------------------
+# DB-backed classification helpers (fallback to Python constants)
+# ---------------------------------------------------------------------------
+
+
+def get_lec_exempt_codes(db_session=None) -> set[str]:
+    """Get LEC-exempt rotation codes from DB, with Python fallback.
+
+    Queries rotation_templates.is_lec_exempt when a DB session is provided.
+    Falls back to the hardcoded LEC_EXEMPT_ROTATIONS set otherwise.
+    """
+    if db_session is not None:
+        from app.models.rotation_template import RotationTemplate
+
+        rows = (
+            db_session.query(RotationTemplate.abbreviation)
+            .filter(
+                RotationTemplate.is_lec_exempt == True,  # noqa: E712
+                RotationTemplate.is_archived == False,  # noqa: E712
+            )
+            .all()
+        )
+        if rows:
+            return {r.abbreviation for r in rows if r.abbreviation}
+    return LEC_EXEMPT_ROTATIONS  # fallback
+
+
+def get_continuity_exempt_codes(db_session=None) -> set[str]:
+    """Get intern-continuity-exempt rotation codes from DB, with Python fallback.
+
+    Queries rotation_templates.is_continuity_exempt when a DB session is provided.
+    Falls back to the hardcoded INTERN_CONTINUITY_EXEMPT_ROTATIONS set otherwise.
+    """
+    if db_session is not None:
+        from app.models.rotation_template import RotationTemplate
+
+        rows = (
+            db_session.query(RotationTemplate.abbreviation)
+            .filter(
+                RotationTemplate.is_continuity_exempt == True,  # noqa: E712
+                RotationTemplate.is_archived == False,  # noqa: E712
+            )
+            .all()
+        )
+        if rows:
+            return {r.abbreviation for r in rows if r.abbreviation}
+    return INTERN_CONTINUITY_EXEMPT_ROTATIONS  # fallback
+
+
+def get_offsite_codes(db_session=None) -> set[str]:
+    """Get offsite rotation codes from DB, with Python fallback.
+
+    Queries rotation_templates.is_offsite when a DB session is provided.
+    Falls back to the hardcoded OFFSITE_ROTATIONS set otherwise.
+    """
+    if db_session is not None:
+        from app.models.rotation_template import RotationTemplate
+
+        rows = (
+            db_session.query(RotationTemplate.abbreviation)
+            .filter(
+                RotationTemplate.is_offsite == True,  # noqa: E712
+                RotationTemplate.is_archived == False,  # noqa: E712
+            )
+            .all()
+        )
+        if rows:
+            return {r.abbreviation for r in rows if r.abbreviation}
+    return OFFSITE_ROTATIONS  # fallback
+
+
+def get_saturday_off_codes(db_session=None) -> set[str]:
+    """Get Saturday-off rotation codes from DB, with Python fallback.
+
+    Queries rotation_templates.is_saturday_off when a DB session is provided.
+    Falls back to the hardcoded SATURDAY_OFF_ROTATIONS set otherwise.
+    """
+    if db_session is not None:
+        from app.models.rotation_template import RotationTemplate
+
+        rows = (
+            db_session.query(RotationTemplate.abbreviation)
+            .filter(
+                RotationTemplate.is_saturday_off == True,  # noqa: E712
+                RotationTemplate.is_archived == False,  # noqa: E712
+            )
+            .all()
+        )
+        if rows:
+            return {r.abbreviation for r in rows if r.abbreviation}
+    return SATURDAY_OFF_ROTATIONS  # fallback
 
 
 def canonical_rotation_code(raw_code: str | None) -> str:

@@ -31,6 +31,10 @@ from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
+from app.services.preload.constants import (
+    get_continuity_exempt_codes,
+    get_lec_exempt_codes,
+)
 from app.utils.academic_blocks import get_block_dates
 
 logger = get_logger(__name__)
@@ -70,7 +74,10 @@ PEDW_ROTATIONS = frozenset(["PedW", "Peds Ward", "Pediatrics Ward", "PEDS-W"])
 FMIT_ROTATIONS = frozenset(["FMIT", "FMIT 2", "FM Inpatient Team"])
 
 # Rotations exempt from Wednesday PM LEC (they work nights or are off-site)
-LEC_EXEMPT_ROTATIONS = frozenset(
+# Legacy fallback: prefer DB column rotation_templates.is_lec_exempt via
+# get_lec_exempt_codes(). This local set is kept for test environments
+# that may not have a full DB session.
+_LEC_EXEMPT_FALLBACK = frozenset(
     [
         "NF",
         "NF-ENDO",
@@ -97,7 +104,10 @@ MID_BLOCK_DAY = 11
 # Intern continuity rule: PGY-1 gets clinic on Wednesday AM (except exempt rotations)
 # These rotations are exempt because they work nights, are off-site, or have special scheduling
 # NOTE: FMIT removed - PGY-1 on FMIT now gets Wed AM = C (handled by explicit pattern method)
-INTERN_CONTINUITY_EXEMPT = frozenset(
+# Legacy fallback: prefer DB column rotation_templates.is_continuity_exempt via
+# get_continuity_exempt_codes(). This local set is kept for test environments
+# that may not have a full DB session.
+_CONTINUITY_EXEMPT_FALLBACK = frozenset(
     [
         "NF",
         "PNF",
@@ -109,6 +119,11 @@ INTERN_CONTINUITY_EXEMPT = frozenset(
         "Peds NF",
     ]
 )
+
+# Backward-compatible aliases (used by tests and external callers).
+# Legacy fallback: prefer DB columns via get_lec_exempt_codes() / get_continuity_exempt_codes().
+LEC_EXEMPT_ROTATIONS = _LEC_EXEMPT_FALLBACK
+INTERN_CONTINUITY_EXEMPT = _CONTINUITY_EXEMPT_FALLBACK
 
 # Clinic template abbreviation for intern continuity
 CLINIC_TEMPLATE_ABBREV = "C"
@@ -411,8 +426,13 @@ class BlockAssignmentExpansionService:
         if not resident or resident.pgy_level != 1:
             return False
 
-        # Check if rotation is exempt
-        if rotation.abbreviation in INTERN_CONTINUITY_EXEMPT:
+        # Check if rotation is exempt (DB-backed, falls back to Python constant).
+        # Merge DB canonical codes with local display-name aliases so both
+        # match regardless of which naming convention the rotation uses.
+        continuity_exempt = (
+            get_continuity_exempt_codes(self.db) | _CONTINUITY_EXEMPT_FALLBACK
+        )
+        if rotation.abbreviation in continuity_exempt:
             return False
 
         return True
@@ -421,7 +441,10 @@ class BlockAssignmentExpansionService:
         """Check if this slot should use LEC template (Wednesday PM, non-exempt rotation)."""
         if not self._is_wednesday(current_date):
             return False
-        if rotation.abbreviation in LEC_EXEMPT_ROTATIONS:
+        # Merge DB canonical codes with local display-name aliases so both
+        # match regardless of which naming convention the rotation uses.
+        lec_exempt = get_lec_exempt_codes(self.db) | _LEC_EXEMPT_FALLBACK
+        if rotation.abbreviation in lec_exempt:
             return False
         return True
 
