@@ -149,6 +149,37 @@ jobs:
           path: frontend/npm-audit-results.json
           retention-days: 30
 
+  # Trojan Source / GlassWorm defense — scan dependencies for invisible Unicode
+  # Weekly only — scans node_modules and site-packages after install
+  # Reference: https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode
+  trojan-source-scan:
+    if: github.event_name != 'pull_request'  # Weekly/push only
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: |
+          cd backend && pip install -r requirements.txt
+          cd ../frontend && npm ci
+
+      - name: Scan for trojan source in dependencies
+        run: |
+          chmod +x scripts/scan-deps-trojan-source.sh
+          ./scripts/scan-deps-trojan-source.sh
+
   # Bandit - Python security linter
   # Weekly only - informational, rarely actionable per-PR
   bandit-scan:
@@ -358,7 +389,7 @@ jobs:
   # Security summary
   security-summary:
     runs-on: ubuntu-latest
-    needs: [codeql-analysis, python-dependency-scan, npm-audit, bandit-scan, trivy-scan, secret-scan, semgrep]
+    needs: [codeql-analysis, python-dependency-scan, npm-audit, trojan-source-scan, bandit-scan, trivy-scan, secret-scan, semgrep]
     if: always()
 
     steps:
@@ -368,6 +399,7 @@ jobs:
           echo "CodeQL Analysis: ${{ needs.codeql-analysis.result }}"
           echo "Python Dependency Scan: ${{ needs.python-dependency-scan.result }}"
           echo "NPM Audit: ${{ needs.npm-audit.result }}"
+          echo "Trojan Source Scan: ${{ needs.trojan-source-scan.result }}"
           echo "Bandit Scan: ${{ needs.bandit-scan.result }}"
           echo "Trivy Scan: ${{ needs.trivy-scan.result }}"
           echo "Secret Scan: ${{ needs.secret-scan.result }}"
