@@ -345,14 +345,12 @@ class ConstraintManager:
             db_session: SQLAlchemy session. Single required param for
                         DB-backed behavior (settings + primary duty).
         """
-        # Auto-load settings from db_session if not explicitly provided
+        # Auto-load settings from db_session if not explicitly provided.
+        # No try/except — if db_session is provided, the query must succeed.
         if db_session is not None and settings is None:
-            try:
-                from app.models.settings import ApplicationSettings
+            from app.models.settings import ApplicationSettings
 
-                settings = db_session.query(ApplicationSettings).first()
-            except Exception:
-                pass
+            settings = db_session.query(ApplicationSettings).first()
 
         manager = cls()
 
@@ -538,15 +536,13 @@ class ConstraintManager:
         """
         manager = cls()
 
-        # Load settings from DB if session available
+        # Load settings from DB if session available.
+        # No try/except — if db_session is provided, the query must succeed.
         settings = None
         if db_session is not None:
-            try:
-                from app.models.settings import ApplicationSettings
+            from app.models.settings import ApplicationSettings
 
-                settings = db_session.query(ApplicationSettings).first()
-            except Exception:
-                pass
+            settings = db_session.query(ApplicationSettings).first()
 
         # ACGME compliance constraints (read settings from DB)
         manager.add(AvailabilityConstraint())
