@@ -137,7 +137,7 @@ def _identify_fmit_weeks_from_context(
     return {k: list(v) for k, v in fmit_weeks.items()}
 
 
-class FMITWeekBlockingConstraint(HardConstraint):
+class FMITWeekBlockingConstraint(SoftConstraint):
     """
     Blocks clinic and Sun-Thurs call during FMIT week.
 
@@ -157,6 +157,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         super().__init__(
             name="FMITWeekBlocking",
             constraint_type=ConstraintType.AVAILABILITY,
+            weight=200,
             priority=ConstraintPriority.CRITICAL,
         )
 
@@ -346,7 +347,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         return _identify_fmit_weeks_from_context(context)
 
 
-class FMITMandatoryCallConstraint(HardConstraint):
+class FMITMandatoryCallConstraint(SoftConstraint):
     """
     Ensures FMIT attending covers Friday and Saturday night call.
 
@@ -363,6 +364,7 @@ class FMITMandatoryCallConstraint(HardConstraint):
         super().__init__(
             name="FMITMandatoryCall",
             constraint_type=ConstraintType.CALL,
+            weight=200,
             priority=ConstraintPriority.CRITICAL,
         )
 
@@ -473,7 +475,7 @@ class FMITMandatoryCallConstraint(HardConstraint):
         return _identify_fmit_weeks_from_context(context)
 
 
-class PostFMITRecoveryConstraint(HardConstraint):
+class PostFMITRecoveryConstraint(SoftConstraint):
     """
     Blocks the Friday after FMIT week for recovery.
 
@@ -489,6 +491,7 @@ class PostFMITRecoveryConstraint(HardConstraint):
         super().__init__(
             name="PostFMITRecovery",
             constraint_type=ConstraintType.AVAILABILITY,
+            weight=200,
             priority=ConstraintPriority.HIGH,
         )
 

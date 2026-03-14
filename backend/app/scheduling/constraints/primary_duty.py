@@ -181,7 +181,7 @@ def load_primary_duties_config(
     return configs
 
 
-class FacultyPrimaryDutyClinicConstraint(HardConstraint):
+class FacultyPrimaryDutyClinicConstraint(SoftConstraint):
     """
     Enforces clinic half-day requirements based on primary duty configuration.
 
@@ -211,6 +211,7 @@ class FacultyPrimaryDutyClinicConstraint(HardConstraint):
         super().__init__(
             name="FacultyPrimaryDutyClinic",
             constraint_type=ConstraintType.CAPACITY,
+            weight=100,
             priority=ConstraintPriority.HIGH,
         )
         self._duty_configs = (
@@ -482,7 +483,7 @@ class FacultyPrimaryDutyClinicConstraint(HardConstraint):
         return any_date - timedelta(days=days_since_monday)
 
 
-class FacultyDayAvailabilityConstraint(HardConstraint):
+class FacultyDayAvailabilityConstraint(SoftConstraint):
     """
     Enforces day-of-week availability based on primary duty configuration.
 
@@ -499,6 +500,7 @@ class FacultyDayAvailabilityConstraint(HardConstraint):
         super().__init__(
             name="FacultyDayAvailability",
             constraint_type=ConstraintType.AVAILABILITY,
+            weight=100,
             priority=ConstraintPriority.CRITICAL,
         )
         self._duty_configs = (

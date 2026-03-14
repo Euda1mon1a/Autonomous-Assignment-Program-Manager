@@ -24,7 +24,7 @@ from .base import (
 logger = logging.getLogger(__name__)
 
 
-class WednesdayAMInternOnlyConstraint(HardConstraint):
+class WednesdayAMInternOnlyConstraint(SoftConstraint):
     """
     Ensures Wednesday morning clinic is staffed by interns (PGY-1) only.
 
@@ -45,6 +45,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
         super().__init__(
             name="WednesdayAMInternOnly",
             constraint_type=ConstraintType.ROTATION,
+            weight=50,
             priority=ConstraintPriority.HIGH,
         )
 

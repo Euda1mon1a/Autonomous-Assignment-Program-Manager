@@ -27,6 +27,7 @@ from .base import (
     ConstraintViolation,
     HardConstraint,
     SchedulingContext,
+    SoftConstraint,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ def is_overnight_call_day(date) -> bool:
     return date.weekday() in OVERNIGHT_CALL_DAYS
 
 
-class OvernightCallCoverageConstraint(HardConstraint):
+class OvernightCallCoverageConstraint(SoftConstraint):
     """
     Ensures exactly one faculty member is on overnight call each Sun-Thurs night.
 
@@ -70,6 +71,7 @@ class OvernightCallCoverageConstraint(HardConstraint):
         super().__init__(
             name="OvernightCallCoverage",
             constraint_type=ConstraintType.CALL,
+            weight=500,
             priority=ConstraintPriority.CRITICAL,
         )
 
@@ -228,7 +230,7 @@ class OvernightCallCoverageConstraint(HardConstraint):
         )
 
 
-class AdjunctCallExclusionConstraint(HardConstraint):
+class AdjunctCallExclusionConstraint(SoftConstraint):
     """
     Prevents adjunct faculty from being auto-assigned overnight call.
 
@@ -242,6 +244,7 @@ class AdjunctCallExclusionConstraint(HardConstraint):
         super().__init__(
             name="AdjunctCallExclusion",
             constraint_type=ConstraintType.CALL,
+            weight=500,
             priority=ConstraintPriority.HIGH,
         )
 
