@@ -547,7 +547,7 @@ class ConstraintManager:
         manager.add(PostFMITRecoveryConstraint())  # Faculty Friday PC after FMIT
         manager.add(PostFMITSundayBlockingConstraint())
 
-        # Faculty primary duty constraints (Airtable-driven)
+        # Faculty primary duty constraints (DB-backed, primary_duty_configs table)
         manager.add(FacultyPrimaryDutyClinicConstraint(db_session=db_session))
         manager.add(FacultyDayAvailabilityConstraint(db_session=db_session))
 
