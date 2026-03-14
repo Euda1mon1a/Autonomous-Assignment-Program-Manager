@@ -68,6 +68,25 @@ Effort estimates: **S** = a few hours, **M** = 1-2 days, **L** = 3-5 days, **XL*
 
 **Completed:** Engine calls `_sync_constraints_from_db()` at init. API routes read/write DB directly. Seed script populates from `ConstraintManager` instances. Admin UI toggles + weight edits persist and take effect on next generation. `SCHEDULING` category added to enum (PR #1298).
 
+### 1.4 Hard→Soft Constraint Refactor (PLANNED, not started)
+
+**Problem:** 16 of 23 active hard constraints are policy/compliance rules, not physical impossibilities. When a hard constraint can't be satisfied, the solver returns INFEASIBLE instead of best-effort with violations flagged.
+
+**Only 4 are truly hard:** Availability, CallAvailability, MaxPhysiciansInClinic, ProtectedSlot
+**Borderline (3):** ClinicCapacity, ResidentInpatientHeadcount, WeekendWork
+**Should be soft (16):** 80HourRule, 1in7Rule, SupervisionRatio, WednesdayAMInternOnly, NightFloatPostCall, PostFMITRecovery, FacultyPrimaryDutyClinic, FacultyDayAvailability, FacultyRoleClinic, OvernightCallCoverage, OvernightCallGeneration, SMResidentFacultyAlignment, SMFacultyNoRegularClinic, FMITWeekBlocking, FMITMandatoryCall, AdjunctCallExclusion
+
+**Why it matters:** Converting to soft with high weights (1000+) gives the same practical enforcement while allowing graceful degradation. Coordinators can then tune weights from the admin UI (now DB-backed per 1.3).
+
+**Recommended order:**
+1. ACGME rules (80HourRule, 1in7Rule, SupervisionRatio) — already have weight=1000, just need class change
+2. Faculty policy rules (FacultyPrimaryDutyClinic, FacultyDayAvailability, FacultyRoleClinic)
+3. Call/FMIT rules (most complex, highest regression risk)
+
+**Prerequisite:** 1.3 (DONE). Each conversion needs solver convergence testing.
+
+**Source:** Gemini deep audit, 2026-03-13.
+
 ---
 
 ## Tier 2: Production Quality (need before go-live, can build in parallel)
