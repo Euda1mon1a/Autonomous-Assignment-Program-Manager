@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime, timezone, UTC
 
-from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, String
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, String, ForeignKey
 
 from app.db.base import Base
 from app.db.types import GUID
@@ -32,6 +32,15 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     role = Column(String(50), nullable=False, default="coordinator")
     is_active = Column(Boolean, default=True)
+
+    # Optional link to a specific person (faculty/resident)
+    person_id = Column(
+        GUID(),
+        ForeignKey("people.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="Optional link to a Person record (faculty or resident)",
+    )
 
     # Timestamps
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))

@@ -517,7 +517,7 @@ class TestApprovalAction:
 
     def test_total_action_count(self):
         """Verify we have the expected number of actions."""
-        assert len(ApprovalAction) == 16
+        assert len(ApprovalAction) == 17
 
 
 # ============================================================================

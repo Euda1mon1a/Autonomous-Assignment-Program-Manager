@@ -167,6 +167,12 @@ celery_app.conf.update(
             "kwargs": {"retention_days": 730},
             "options": {"queue": "security"},
         },
+        # Notifications - Process scheduled notifications every 5 minutes
+        "notifications-process-scheduled": {
+            "task": "app.notifications.tasks.process_scheduled_notifications",
+            "schedule": crontab(minute="*/5"),
+            "options": {"queue": "notifications"},
+        },
         # Stack Health - Check codebase/infrastructure health every 4 hours
         "stack-health-periodic": {
             "task": "app.tasks.stack_health_tasks.stack_health_check",

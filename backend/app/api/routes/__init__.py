@@ -10,7 +10,7 @@ from app.api.routes import (
     admin_dashboard,
     admin_block_assignments,
     annual_rotation,
-    # approval_chain,  # QUARANTINED: requires_coordinator_or_above not implemented
+    approval_chain,
     faculty_activities,
     faculty_schedule_preferences,
     agent_matcher,
@@ -65,6 +65,7 @@ from app.api.routes import (
     me_dashboard,
     metrics,
     ml,
+    notifications,
     pareto,
     people,
     portal,
@@ -224,10 +225,9 @@ api_router.include_router(
 )
 api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
-# QUARANTINED: approval_chain requires require_coordinator_or_above (not implemented)
-# api_router.include_router(
-#     approval_chain.router, prefix="/approval-chain", tags=["approval-chain"]
-# )
+api_router.include_router(
+    approval_chain.router, prefix="/approval-chain", tags=["approval-chain"]
+)
 api_router.include_router(analytics.router, tags=["analytics"])
 api_router.include_router(fairness.router, tags=["fairness"])
 api_router.include_router(pareto.router, tags=["pareto"])
@@ -295,6 +295,9 @@ api_router.include_router(wellness.router)  # prefix="/wellness" defined in rout
 api_router.include_router(ws.router, tags=["websocket"])
 api_router.include_router(
     proxy_coverage.router, prefix="/proxy-coverage", tags=["proxy-coverage"]
+)
+api_router.include_router(
+    notifications.router, prefix="/notifications", tags=["notifications"]
 )
 
 # Previously orphaned routes (wired 2026-01-18)

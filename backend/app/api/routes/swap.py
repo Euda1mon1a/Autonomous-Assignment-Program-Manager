@@ -51,7 +51,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.security import get_current_active_user, get_current_user
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.swap import SwapRecord
 from app.models.user import User
@@ -67,11 +67,14 @@ from app.schemas.swap import (
     SwapRequestCreateResponse,
     SwapValidationResult,
 )
+from app.core.logging import get_logger
 from app.services.swap_executor import SwapExecutor
+from app.services.swap.swap_workflow_service import SwapWorkflowService
 from app.services.swap_validation import SwapValidationService
 from app.services.swap.lock_window import check_swap_lock_window
 from app.websocket.manager import broadcast_schedule_updated, broadcast_swap_approved
-from app.models.swap import SwapStatus, SwapType
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/swaps", tags=["swaps"])
 
@@ -145,6 +148,13 @@ async def request_swap(
     db.commit()
     db.refresh(swap_record)
 
+    workflow = SwapWorkflowService(db)
+    await workflow.notify_and_record_request(
+        swap=swap_record,
+        actor_id=current_user.id,
+        reason=request.reason,
+    )
+
     return SwapRequestCreateResponse(
         success=True,
         swap_id=swap_record.id,
@@ -202,18 +212,23 @@ async def approve_swap(
         swap.notes = request.notes
         db.commit()
 
-        await broadcast_swap_approved(
-            swap_id=swap.id,
-            requester_id=swap.source_faculty_id,
-            target_person_id=swap.target_faculty_id,
-            approved_by=current_user.id,
-            affected_assignments=[],
-            message="Swap approved",
+        workflow = SwapWorkflowService(db)
+        await workflow.notify_and_record_approval(
+            swap=swap,
+            actor_id=current_user.id,
+            notes=request.notes,
         )
     else:
         swap.status = SwapStatus.REJECTED
         swap.notes = request.notes
         db.commit()
+
+        workflow = SwapWorkflowService(db)
+        await workflow.notify_and_record_rejection(
+            swap=swap,
+            actor_id=current_user.id,
+            notes=request.notes,
+        )
 
     return SwapApprovalResponse(
         success=True,
@@ -249,21 +264,10 @@ async def execute_swap_by_id(
     # P2 fix: Broadcast WebSocket events on successful execution
     swap = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
     if swap:
-        await broadcast_swap_approved(
-            swap_id=swap_id,
-            requester_id=swap.source_faculty_id,
-            target_person_id=swap.target_faculty_id,
-            approved_by=current_user.id,
-            affected_assignments=[],
-            message=f"Swap executed: {swap.swap_type.value}",
-        )
-        await broadcast_schedule_updated(
-            schedule_id=None,
-            academic_year_id=None,
-            user_id=current_user.id,
-            update_type="modified",
-            affected_blocks_count=2,
-            message="Approved swap executed",
+        workflow = SwapWorkflowService(db)
+        await workflow.notify_and_record_execution(
+            swap=swap,
+            actor_id=current_user.id,
         )
 
     return SwapExecuteByIdResponse(
@@ -600,14 +604,14 @@ async def rollback_swap(
             detail=result.message,
         )
 
-    # Broadcast WebSocket event on successful rollback
-    await broadcast_schedule_updated(
-        schedule_id=None,
-        academic_year_id=None,
-        user_id=current_user.id,
-        update_type="modified",
-        affected_blocks_count=2,
-        message="Swap rolled back",
-    )
+    # Notify both parties of rollback
+    swap = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+    if swap:
+        workflow = SwapWorkflowService(db)
+        await workflow.notify_and_record_rollback(
+            swap=swap,
+            actor_id=current_user.id,
+            reason=request.reason,
+        )
 
     return {"message": result.message, "success": True}

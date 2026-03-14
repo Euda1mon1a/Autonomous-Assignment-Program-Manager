@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-03-13T06:21:56Z
+ * Generated at: 2026-03-13T21:01:04Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -11565,6 +11565,134 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/approval-chain/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Verify chain integrity
+         * @description Verify the cryptographic integrity of an approval chain. Returns OK if all records are valid and properly linked, or details about the first invalid record if tampering is detected.
+         */
+        get: operations["verify_chain_api_v1_approval_chain_verify_get"];
+        put?: never;
+        /**
+         * Verify chain integrity (POST)
+         * @description Same as GET /verify but accepts body parameters.
+         */
+        post: operations["verify_chain_post_api_v1_approval_chain_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approval-chain/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get chain statistics
+         * @description Get statistics about an approval chain including record counts and hashes.
+         */
+        get: operations["get_chain_stats_api_v1_approval_chain_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approval-chain/records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List approval records
+         * @description Query approval records with optional filters.
+         */
+        get: operations["list_approval_records_api_v1_approval_chain_records_get"];
+        put?: never;
+        /**
+         * Append approval record
+         * @description Append a new approval record to the chain. The record is cryptographically linked to the previous record. Requires coordinator or above role.
+         */
+        post: operations["create_approval_record_api_v1_approval_chain_records_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approval-chain/records/{record_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get approval record
+         * @description Get a specific approval record by ID.
+         */
+        get: operations["get_approval_record_api_v1_approval_chain_records__record_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approval-chain/seal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create daily seal
+         * @description Create a cryptographic checkpoint (daily seal) with a Merkle root of all records from the specified day. This can be stored externally for stronger verification. Requires admin role.
+         */
+        post: operations["create_daily_seal_api_v1_approval_chain_seal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/approval-chain/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List available actions
+         * @description Get the list of valid approval action types.
+         */
+        get: operations["list_actions_api_v1_approval_chain_actions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/analytics/metrics/current": {
         parameters: {
             query?: never;
@@ -19091,6 +19219,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Notifications
+         * @description List the current user's notifications with pagination.
+         */
+        get: operations["list_notifications_api_v1_notifications__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{notification_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Notification
+         * @description Get a single notification by ID.
+         */
+        get: operations["get_notification_api_v1_notifications__notification_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{notification_id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Mark Notification Read
+         * @description Mark a single notification as read.
+         */
+        patch: operations["mark_notification_read_api_v1_notifications__notification_id__read_patch"];
+        trace?: never;
+    };
+    "/api/v1/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Mark All Read
+         * @description Mark all of the current user's notifications as read.
+         */
+        patch: operations["mark_all_read_api_v1_notifications_read_all_patch"];
+        trace?: never;
+    };
     "/api/v1/sso/saml/metadata": {
         parameters: {
             query?: never;
@@ -22616,6 +22824,162 @@ export interface components {
          */
         ApprovalAction: "approve" | "deny";
         /**
+         * ApprovalRecordCreate
+         * @description Schema for creating a new approval record.
+         */
+        ApprovalRecordCreate: {
+            /**
+             * Action
+             * @description Type of approval action
+             */
+            action: string;
+            /**
+             * Payload
+             * @description Schedule change payload
+             */
+            payload: {
+                [key: string]: unknown;
+            };
+            /**
+             * Reason
+             * @description Justification for action
+             */
+            reason?: string | null;
+            /**
+             * Targetentitytype
+             * @description Type of affected entity
+             */
+            targetEntityType?: string | null;
+            /**
+             * Targetentityid
+             * @description ID of affected entity
+             */
+            targetEntityId?: string | null;
+            /**
+             * Chainid
+             * @description Chain to append to
+             * @default global
+             */
+            chainId: string;
+            /**
+             * Actortype
+             * @description Type of actor performing action
+             * @default human
+             * @enum {string}
+             */
+            actorType: "human" | "system" | "ai";
+        };
+        /**
+         * ApprovalRecordListResponse
+         * @description Paginated list of approval records.
+         */
+        ApprovalRecordListResponse: {
+            /**
+             * Items
+             * @description List of records
+             */
+            items: components["schemas"]["ApprovalRecordResponse"][];
+            /**
+             * Total
+             * @description Total matching records
+             */
+            total: number;
+            /**
+             * Limit
+             * @description Records per page
+             */
+            limit: number;
+            /**
+             * Offset
+             * @description Records skipped
+             */
+            offset: number;
+            /**
+             * Chainid
+             * @description Chain queried
+             */
+            chainId: string;
+        };
+        /**
+         * ApprovalRecordResponse
+         * @description Schema for approval record response.
+         */
+        ApprovalRecordResponse: {
+            /**
+             * Action
+             * @description Type of approval action
+             */
+            action: string;
+            /**
+             * Payload
+             * @description Schedule change payload
+             */
+            payload: {
+                [key: string]: unknown;
+            };
+            /**
+             * Reason
+             * @description Justification for action
+             */
+            reason?: string | null;
+            /**
+             * Targetentitytype
+             * @description Type of affected entity
+             */
+            targetEntityType?: string | null;
+            /**
+             * Targetentityid
+             * @description ID of affected entity
+             */
+            targetEntityId?: string | null;
+            /**
+             * Id
+             * @description Record UUID
+             */
+            id: string;
+            /**
+             * Chainid
+             * @description Chain identifier
+             */
+            chainId: string;
+            /**
+             * Sequencenum
+             * @description Position in chain
+             */
+            sequenceNum: number;
+            /**
+             * Prevhash
+             * @description SHA-256 hash of previous record
+             */
+            prevHash?: string | null;
+            /**
+             * Recordhash
+             * @description SHA-256 hash of this record
+             */
+            recordHash: string;
+            /**
+             * Actorid
+             * @description Actor UUID
+             */
+            actorId?: string | null;
+            /**
+             * Actortype
+             * @description Type of actor
+             */
+            actorType: string;
+            /**
+             * Createdat
+             * Format: date-time
+             * @description Record timestamp
+             */
+            createdAt: string;
+            /**
+             * Ipaddress
+             * @description Client IP
+             */
+            ipAddress?: string | null;
+        };
+        /**
          * ApprovalRequest
          * @description Request to approve or deny a task.
          */
@@ -23942,12 +24306,14 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
-            /** Template Id */
-            templateId: string | null;
             /** Success */
             success: boolean;
+            /** Assignment Id */
+            assignmentId?: string | null;
             /** Error */
             error?: string | null;
+            /** Warnings */
+            warnings?: string[];
         };
         /**
          * BatchOperationStatus
@@ -24361,7 +24727,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__batch__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Errors
              * @description Global errors
@@ -24508,7 +24874,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -24732,7 +25098,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -25154,19 +25520,24 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
         BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academicYear: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            totalBlocks: number;
         };
         /**
          * BlockMatrixResponse
@@ -25405,7 +25776,7 @@ export interface components {
             /** Residents With Leave */
             residentsWithLeave: number;
             /** Coverage Gaps */
-            coverageGaps: components["schemas"]["CoverageGap"][];
+            coverageGaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
             /** Leave Conflicts */
             leaveConflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -27189,6 +27560,128 @@ export interface components {
             isActive?: boolean | null;
         };
         /**
+         * ChainStatsResponse
+         * @description Statistics about an approval chain.
+         */
+        ChainStatsResponse: {
+            /**
+             * Chainid
+             * @description Chain identifier
+             */
+            chainId: string;
+            /**
+             * Totalrecords
+             * @description Total records
+             */
+            totalRecords: number;
+            /**
+             * Headsequence
+             * @description Sequence number of head
+             */
+            headSequence: number;
+            /**
+             * Headhash
+             * @description Hash of chain head
+             */
+            headHash: string;
+            /**
+             * Genesishash
+             * @description Hash of genesis record
+             */
+            genesisHash: string;
+            /**
+             * Firstrecordat
+             * @description Timestamp of genesis
+             */
+            firstRecordAt?: string | null;
+            /**
+             * Lastrecordat
+             * @description Timestamp of head
+             */
+            lastRecordAt?: string | null;
+            /**
+             * Actionsbytype
+             * @description Record counts by action type
+             */
+            actionsByType: {
+                [key: string]: number | undefined;
+            };
+        };
+        /**
+         * ChainVerificationRequest
+         * @description Request to verify a chain.
+         */
+        ChainVerificationRequest: {
+            /**
+             * Chainid
+             * @description Chain to verify
+             * @default global
+             */
+            chainId: string;
+            /**
+             * Stoponfirsterror
+             * @description Stop verification at first invalid record
+             * @default true
+             */
+            stopOnFirstError: boolean;
+        };
+        /**
+         * ChainVerificationResponse
+         * @description Result of chain verification.
+         */
+        ChainVerificationResponse: {
+            /**
+             * Valid
+             * @description Whether chain is valid
+             */
+            valid: boolean;
+            /**
+             * Chainid
+             * @description Chain identifier
+             */
+            chainId: string;
+            /**
+             * Totalrecords
+             * @description Total records in chain
+             */
+            totalRecords: number;
+            /**
+             * Verifiedcount
+             * @description Number of records verified
+             */
+            verifiedCount: number;
+            /**
+             * Firstinvalidseq
+             * @description Sequence number of first invalid record
+             */
+            firstInvalidSeq?: number | null;
+            /**
+             * Firstinvalidid
+             * @description ID of first invalid record
+             */
+            firstInvalidId?: string | null;
+            /**
+             * Errormessage
+             * @description Error description if invalid
+             */
+            errorMessage?: string | null;
+            /**
+             * Headhash
+             * @description Hash of chain head
+             */
+            headHash?: string | null;
+            /**
+             * Genesishash
+             * @description Hash of genesis record
+             */
+            genesisHash?: string | null;
+            /**
+             * Verifiedat
+             * @description Timestamp of verification
+             */
+            verifiedAt?: string | null;
+        };
+        /**
          * ChangelogRequest
          * @description Request to generate changelog between two versions.
          */
@@ -27890,29 +28383,15 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
+         * @description Response for conflict check.
          */
         ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            canAssign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
+            /** Has Conflicts */
+            hasConflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            canProceed: boolean;
         };
         /**
          * ConflictDetail
@@ -28312,23 +28791,35 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Identified coverage gap.
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
          */
         CoverageGap: {
             /**
-             * Rotation Template Id
-             * Format: uuid
+             * Date
+             * Format: date
+             * @description Date of the gap
              */
-            rotationTemplateId: string;
-            /** Rotation Name */
-            rotationName: string;
-            /** Required Coverage */
-            requiredCoverage: number;
-            /** Assigned Coverage */
-            assignedCoverage: number;
-            /** Gap */
-            gap: number;
-            /** Severity */
+            date: string;
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
+            timeOfDay: string;
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
             severity: string;
         };
         /**
@@ -28408,7 +28899,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
+            gaps?: components["schemas"]["CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -29074,6 +29565,64 @@ export interface components {
              * @description When this manifest was generated
              */
             generatedAt?: string;
+        };
+        /**
+         * DailySealRequest
+         * @description Request to create a daily seal.
+         */
+        DailySealRequest: {
+            /**
+             * Chainid
+             * @description Chain to seal
+             * @default global
+             */
+            chainId: string;
+            /**
+             * Sealdate
+             * @description Date to seal (defaults to today)
+             */
+            sealDate?: string | null;
+        };
+        /**
+         * DailySealResponse
+         * @description Response after creating a daily seal.
+         */
+        DailySealResponse: {
+            /**
+             * Id
+             * @description Seal record UUID
+             */
+            id: string;
+            /**
+             * Chainid
+             * @description Chain identifier
+             */
+            chainId: string;
+            /**
+             * Sequencenum
+             * @description Seal position
+             */
+            sequenceNum: number;
+            /**
+             * Sealdate
+             * @description Date sealed
+             */
+            sealDate: string;
+            /**
+             * Recordssealed
+             * @description Number of records in seal
+             */
+            recordsSealed: number;
+            /**
+             * Merkleroot
+             * @description Merkle root of sealed records
+             */
+            merkleRoot?: string | null;
+            /**
+             * Recordhash
+             * @description Hash of seal record
+             */
+            recordHash: string;
         };
         /**
          * DashboardAbsenceItem
@@ -31158,10 +31707,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Export file formats.
+         * @description Supported export formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        ExportFormat: "csv" | "xlsx";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -31189,7 +31738,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__models__export_job__ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -31506,7 +32055,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["ExportFormat"] | null;
+            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
             deliveryMethod?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             emailRecipients?: string[] | null;
@@ -37604,6 +38153,82 @@ export interface components {
             callType: string;
         };
         /**
+         * NotificationListResponse
+         * @description Paginated list of notifications.
+         */
+        NotificationListResponse: {
+            /** Items */
+            items: components["schemas"]["NotificationResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            pageSize: number;
+            /** Pages */
+            pages: number;
+        };
+        /**
+         * NotificationMarkReadResponse
+         * @description Response for marking notifications as read.
+         */
+        NotificationMarkReadResponse: {
+            /** Success */
+            success: boolean;
+            /** Message */
+            message: string;
+            /**
+             * Count
+             * @default 1
+             */
+            count: number;
+        };
+        /**
+         * NotificationResponse
+         * @description Response schema for a single notification.
+         */
+        NotificationResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Recipient Id
+             * Format: uuid
+             */
+            recipientId: string;
+            /** Notification Type */
+            notificationType: string;
+            /** Subject */
+            subject: string;
+            /** Body */
+            body: string;
+            /** Data */
+            data?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Priority
+             * @default normal
+             */
+            priority: string;
+            /** Channels Delivered */
+            channelsDelivered?: string | null;
+            /**
+             * Is Read
+             * @default false
+             */
+            isRead: boolean;
+            /** Read At */
+            readAt?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            createdAt: string;
+        };
+        /**
          * ObjectiveDirection
          * @description Direction for objective optimization.
          * @enum {string}
@@ -40067,7 +40692,6 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
@@ -49746,6 +50370,12 @@ export interface components {
             gapSize: number;
         };
         /**
+         * ExportFormat
+         * @description Export file formats.
+         * @enum {string}
+         */
+        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        /**
          * ConflictSummary
          * @description Summary statistics for a set of conflicts.
          *
@@ -49837,50 +50467,41 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Response for listing academic blocks.
+         * @description Schema for list of blocks.
          */
-        app__schemas__academic_blocks__BlockListResponse: {
+        app__schemas__block__BlockListResponse: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Items
+             * @description List of block responses
              */
-            blocks: components["schemas"]["BlockSummary"][];
+            items: components["schemas"]["BlockResponse"][];
             /**
-             * Academic Year
-             * @description Academic year
-             */
-            academicYear: string;
-            /**
-             * Total Blocks
+             * Total
              * @description Total number of blocks
              */
-            totalBlocks: number;
+            total: number;
         };
         /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
+         * CoverageGap
+         * @description Identified coverage gap.
          */
-        app__schemas__batch__BatchOperationResult: {
+        app__schemas__block_assignment__CoverageGap: {
             /**
-             * Index
-             * @description Index of the operation in the batch
+             * Rotation Template Id
+             * Format: uuid
              */
-            index: number;
-            /** Success */
-            success: boolean;
-            /** Assignment Id */
-            assignmentId?: string | null;
-            /** Error */
-            error?: string | null;
-            /** Warnings */
-            warnings?: string[];
+            rotationTemplateId: string;
+            /** Rotation Name */
+            rotationName: string;
+            /** Required Coverage */
+            requiredCoverage: number;
+            /** Assigned Coverage */
+            assignedCoverage: number;
+            /** Gap */
+            gap: number;
+            /** Severity */
+            severity: string;
         };
-        /**
-         * ExportFormat
-         * @description Supported export formats.
-         * @enum {string}
-         */
-        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
         /**
          * PersonSummary
          * @description Minimal person info for certification reports.
@@ -49917,17 +50538,30 @@ export interface components {
             pgyLevel?: number | null;
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
+         * ConflictCheckResponse
+         * @description Response for conflict checking before assignment.
          */
-        app__schemas__jobs__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
+        app__schemas__fmit_assignments__ConflictCheckResponse: {
             /**
-             * Confirm
-             * @default false
+             * Can Assign
+             * @description Whether assignment can proceed
              */
-            confirm: boolean;
+            canAssign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
          * BatchOperationResult
@@ -49947,6 +50581,20 @@ export interface components {
             error?: string | null;
         };
         /**
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
+         */
+        app__schemas__queue__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
+            /**
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /**
          * QueuePurgeResponse
          * @description Response after purging a queue.
          */
@@ -49959,16 +50607,21 @@ export interface components {
             timestamp: string;
         };
         /**
-         * ConflictCheckResponse
-         * @description Response for conflict check.
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
          */
-        app__schemas__rotation_template__ConflictCheckResponse: {
-            /** Has Conflicts */
-            hasConflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            canProceed: boolean;
+        app__schemas__rotation_template__BatchOperationResult: {
+            /**
+             * Index
+             * @description Index of the operation in the batch
+             */
+            index: number;
+            /** Template Id */
+            templateId: string | null;
+            /** Success */
+            success: boolean;
+            /** Error */
+            error?: string | null;
         };
         /**
          * SuggestionResponse
@@ -49990,39 +50643,6 @@ export interface components {
              * @description Entity type
              */
             entityType: string;
-        };
-        /**
-         * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
-         */
-        app__schemas__visualization__CoverageGap: {
-            /**
-             * Date
-             * Format: date
-             * @description Date of the gap
-             */
-            date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
-            timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
-            severity: string;
         };
     };
     responses: never;
@@ -52301,7 +52921,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -52428,7 +53048,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -52604,7 +53224,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -53032,7 +53652,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -65337,6 +65957,262 @@ export interface operations {
             };
         };
     };
+    verify_chain_api_v1_approval_chain_verify_get: {
+        parameters: {
+            query?: {
+                /** @description Chain to verify */
+                chainId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChainVerificationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_chain_post_api_v1_approval_chain_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChainVerificationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChainVerificationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_chain_stats_api_v1_approval_chain_stats_get: {
+        parameters: {
+            query?: {
+                /** @description Chain to analyze */
+                chainId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChainStatsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_approval_records_api_v1_approval_chain_records_get: {
+        parameters: {
+            query?: {
+                /** @description Chain to query */
+                chainId?: string;
+                /** @description Filter by action type */
+                action?: string | null;
+                /** @description Filter by entity type */
+                targetEntityType?: string | null;
+                /** @description Filter by entity ID */
+                targetEntityId?: string | null;
+                /** @description Max records to return */
+                limit?: number;
+                /** @description Records to skip */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalRecordListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_approval_record_api_v1_approval_chain_records_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovalRecordCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalRecordResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_approval_record_api_v1_approval_chain_records__record_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalRecordResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_daily_seal_api_v1_approval_chain_seal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DailySealRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailySealResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_actions_api_v1_approval_chain_actions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+        };
+    };
     get_current_metrics_api_v1_analytics_metrics_current_get: {
         parameters: {
             query?: never;
@@ -69398,7 +70274,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -71092,7 +71968,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -71459,7 +72335,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -73757,6 +74633,121 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_notifications_api_v1_notifications__get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                unread_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_notification_api_v1_notifications__notification_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_notification_read_api_v1_notifications__notification_id__read_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationMarkReadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_all_read_api_v1_notifications_read_all_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationMarkReadResponse"];
                 };
             };
         };

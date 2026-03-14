@@ -93,6 +93,44 @@ def require_admin() -> Callable:
     return check_admin
 
 
+def require_coordinator_or_above() -> Callable:
+    """Dependency to require coordinator or admin role.
+
+    Returns:
+        Dependency function that checks for coordinator or admin role
+
+    Example:
+        @router.post("/approval-chain")
+        def create_record(
+            user: User = Depends(get_current_active_user),
+            _: None = Depends(require_coordinator_or_above())
+        ):
+            # User has been verified to be coordinator or admin
+            pass
+    """
+
+    def check_coordinator_or_above(
+        current_user: User = Depends(get_current_active_user),
+    ) -> None:
+        """Check if user is coordinator or admin.
+
+        Raises:
+            HTTPException: If user is not coordinator or admin
+        """
+        from fastapi import HTTPException, status
+
+        role_str = str(current_user.role) if current_user.role else ""
+        if not (
+            RoleFilterService.is_admin(role_str) or role_str.lower() == "coordinator"
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Coordinator or Admin role required",
+            )
+
+    return check_coordinator_or_above
+
+
 def apply_role_filter(
     data: dict[str, Any], current_user: User = Depends(get_current_active_user)
 ) -> dict[str, Any]:
