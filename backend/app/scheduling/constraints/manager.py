@@ -334,14 +334,14 @@ class ConstraintManager:
 
     @classmethod
     def create_default(
-        cls, profile: str = "resident", settings=None
+        cls, profile: str = "resident", settings=None, db_session=None
     ) -> "ConstraintManager":
         """Create manager with default ACGME constraints.
 
         Args:
             profile: Constraint profile ("resident" or "faculty")
             settings: ApplicationSettings instance for DB-backed ACGME values.
-                      If None, constraints use hardcoded defaults.
+            db_session: SQLAlchemy session for loading primary duty configs from DB.
         """
         manager = cls()
 
@@ -366,8 +366,8 @@ class ConstraintManager:
         manager.add(ResidentInpatientHeadcountConstraint())
         manager.add(PostFMITRecoveryConstraint())
         manager.add(PostFMITSundayBlockingConstraint())
-        manager.add(FacultyPrimaryDutyClinicConstraint())
-        manager.add(FacultyDayAvailabilityConstraint())
+        manager.add(FacultyPrimaryDutyClinicConstraint(db_session=db_session))
+        manager.add(FacultyDayAvailabilityConstraint(db_session=db_session))
         manager.add(FacultyRoleClinicConstraint())
         manager.add(OvernightCallCoverageConstraint())
 
@@ -427,7 +427,9 @@ class ConstraintManager:
         manager.add(CoverageConstraint(weight=1000.0))
         manager.add(EquityConstraint(weight=10.0))
         manager.add(ContinuityConstraint(weight=5.0))
-        manager.add(FacultyClinicEquitySoftConstraint(weight=15.0))
+        manager.add(
+            FacultyClinicEquitySoftConstraint(weight=15.0, db_session=db_session)
+        )
 
         # Block 10 soft constraints - call equity (weight hierarchy documented)
         # Weight order: Consecutive (50) > Sunday (50) > Escalating (40) >
@@ -546,8 +548,8 @@ class ConstraintManager:
         manager.add(PostFMITSundayBlockingConstraint())
 
         # Faculty primary duty constraints (Airtable-driven)
-        manager.add(FacultyPrimaryDutyClinicConstraint())
-        manager.add(FacultyDayAvailabilityConstraint())
+        manager.add(FacultyPrimaryDutyClinicConstraint(db_session=db_session))
+        manager.add(FacultyDayAvailabilityConstraint(db_session=db_session))
 
         # Faculty role-based constraints
         manager.add(FacultyRoleClinicConstraint())
@@ -604,7 +606,9 @@ class ConstraintManager:
         manager.add(CoverageConstraint(weight=1000.0))
         manager.add(EquityConstraint(weight=10.0))
         manager.add(ContinuityConstraint(weight=5.0))
-        manager.add(FacultyClinicEquitySoftConstraint(weight=15.0))
+        manager.add(
+            FacultyClinicEquitySoftConstraint(weight=15.0, db_session=db_session)
+        )
 
         # Block 10 soft constraints - call equity
         manager.add(SundayCallEquityConstraint(weight=50.0))
