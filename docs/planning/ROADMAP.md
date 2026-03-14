@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last Updated:** 2026-03-09 (PR reviews, mypy zero, TS test fixes, backlog audit)
+> **Last Updated:** 2026-03-14 (hardcoded-to-Postgres migration, constraint DB wiring, hard→soft refactor)
 > **Companion:** `TODO.md` (actionable items), `docs/planning/TECHNICAL_DEBT.md` (debt tracker)
 
 ---
@@ -123,16 +123,32 @@ Detailed design documents for future features have been archived to `docs/archiv
 
 ## Active Sub-Roadmaps
 
+### Priority (active work)
+
+| File | Scope | Status |
+|------|-------|--------|
+| `HARDCODED_TO_POSTGRES_ROADMAP.md` | Move scheduling policy from Python to Postgres | Tracks 1-4 done, 5-7 backlog |
+| `POLICY_GUI_MIGRATION_BACKLOG_20260314.md` | Frontend + remaining DB migrations | Active backlog |
+| `MCP_FOLLOWUP_BACKLOG_20260314.md` | MCP tools for new DB surfaces | Active backlog |
+| `PLATFORM_WIRING_ROADMAP.md` | 65 unwired tables, 14 features | §1.3-1.4 done |
+| `TASK_HISTORY_LEARNING_ROADMAP.md` | Agent learning system (Phases 1-6 done) | Phase 7 gated on data |
+| `TECHNICAL_DEBT.md` | 30 items tracked (23 resolved, 7 open) | Ongoing |
+
+### Architecture references
+
 | File | Scope |
 |------|-------|
-| `docs/planning/CP_SAT_PIPELINE_ROADMAP.md` | Solver pipeline (preloads, activity solver, export) |
-| `docs/planning/E2E_GUI_TESTING_ROADMAP.md` | E2E testing phases (Phase 4 next: auth fixtures) |
-| `docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md` | 14 hubs: 1 complete, 5 partial, 8 to build |
-| `docs/planning/MCP_INTEGRATION_OPPORTUNITIES.md` | MCP Phase 6 (ongoing) |
-| `docs/planning/MCP_PLACEHOLDER_IMPLEMENTATION_PLAN.md` | 10 placeholder tools pending backend |
-| `docs/planning/MCP_PRIORITY_LIST.md` | Daily P0-P4 MCP priorities |
-| `docs/planning/PERFORMANCE_TESTING.md` | Solver benchmarking infrastructure |
-| `docs/planning/STRATEGIC_DECISIONS.md` | 7 product direction decisions |
-| `docs/planning/TECHNICAL_DEBT.md` | 30 items tracked (23 resolved, 7 open) |
-| `docs/planning/PLATFORM_WIRING_ROADMAP.md` | 65 unwired tables, 14 features, parallelization matrix |
+| `docs/architecture/GUI_EDITABILITY_BOUNDARY.md` | What's GUI-editable vs DB-only vs Python-only |
+| `docs/architecture/POLICY_STORAGE_BOUNDARY.md` | DB vs Python ownership rules |
+| `docs/development/AI_POLICY_STORAGE_BOUNDARY.md` | Agent rule: never build GUI for Python constants |
+
+### Secondary (lower priority)
+
+| File | Scope |
+|------|-------|
+| `CP_SAT_PIPELINE_ROADMAP.md` | Solver pipeline (preloads, activity solver, export) |
+| `FRONTEND_HUB_CONSOLIDATION_ROADMAP.md` | 14 hubs: 1 complete, 5 partial, 8 to build |
+| `E2E_GUI_TESTING_ROADMAP.md` | E2E testing phases |
+| `PERFORMANCE_TESTING.md` | Solver benchmarking infrastructure |
+| `STRATEGIC_DECISIONS.md` | 7 product direction decisions |
 | `docs/architecture/ANNUAL_WORKBOOK_ARCHITECTURE.md` | 14-sheet master workbook pipeline |
