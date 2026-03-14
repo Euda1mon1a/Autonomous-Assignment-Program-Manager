@@ -215,16 +215,17 @@ class OvernightCallGenerationConstraint(SoftConstraint):  # @archetype-ok
         context: SchedulingContext,
     ) -> None:
         """
-        Add per-night FMIT/absence blocking to existing solver call variables.
+        Penalize ineligible faculty call assignments in CP-SAT.
 
         The solver (solvers.py) creates call BoolVars for ALL call-eligible
-        faculty on ALL Sun-Thu nights. This constraint blocks ineligible
-        faculty (FMIT week, post-FMIT Sunday, absences) by forcing their
-        existing call vars to 0.
+        faculty on ALL Sun-Thu nights. This constraint penalizes ineligible
+        faculty (FMIT week, post-FMIT Sunday, absences) via objective terms.
         """
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
             return  # No solver-created variables to constrain
+
+        obj_terms = variables.setdefault("objective_terms", [])
 
         fmit_weeks = self._identify_fmit_weeks(context)
 
@@ -258,15 +259,19 @@ class OvernightCallGenerationConstraint(SoftConstraint):  # @archetype-ok
             if b_i is None:
                 continue
 
-            # Force ineligible faculty's call vars to 0 for this night
+            # Penalize ineligible faculty's call assignments for this night
             for f_i in range(len(call_eligible)):
                 key = (f_i, b_i, "overnight")
                 if f_i not in eligible_f_is and key in call_vars:
-                    model.Add(call_vars[key] == 0)
+                    violation = model.NewBoolVar(f"inelig_call_{f_i}_{target_date}")
+                    model.AddImplication(call_vars[key], violation)
+                    obj_terms.append((violation, int(self.weight)))
                     blocked_count += 1
 
         if blocked_count:
-            logger.info(f"Blocked {blocked_count} ineligible call slots (FMIT/absence)")
+            logger.info(
+                f"Added {blocked_count} ineligible call penalty terms (FMIT/absence)"
+            )
 
     def add_to_pulp(
         self,

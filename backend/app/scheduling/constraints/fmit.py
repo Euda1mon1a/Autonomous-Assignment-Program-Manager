@@ -190,6 +190,8 @@ class FMITWeekBlockingConstraint(SoftConstraint):
             if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
+        obj_terms = variables.setdefault("objective_terms", [])
+
         count = 0
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
             faculty_i = context.faculty_idx.get(faculty_id)
@@ -198,14 +200,14 @@ class FMITWeekBlockingConstraint(SoftConstraint):
                 continue
 
             for friday_start, thursday_end in fmit_weeks:
-                # Block clinic for entire FMIT week
+                # Penalize clinic during entire FMIT week
                 for block in context.blocks:
                     if not (friday_start <= block.date <= thursday_end):
                         continue
 
                     b_i = context.block_idx[block.id]
 
-                    # Block clinic templates (use faculty-scoped vars)
+                    # Penalize clinic templates (use faculty-scoped vars)
                     if faculty_template_vars:
                         for template_id in clinic_template_ids:
                             t_i = context.template_idx.get(template_id)
@@ -213,18 +215,27 @@ class FMITWeekBlockingConstraint(SoftConstraint):
                                 t_i is not None
                                 and (faculty_i, b_i, t_i) in faculty_template_vars
                             ):
-                                model.Add(
-                                    faculty_template_vars[faculty_i, b_i, t_i] == 0
+                                violation = model.NewBoolVar(
+                                    f"fmit_clinic_{faculty_i}_{b_i}_{t_i}"
                                 )
+                                model.AddImplication(
+                                    faculty_template_vars[faculty_i, b_i, t_i],
+                                    violation,
+                                )
+                                obj_terms.append((violation, int(self.weight)))
                                 count += 1
 
-                    # Block Sun-Thurs call
+                    # Penalize Sun-Thurs call during FMIT
                     if call_vars and is_sun_thurs(block.date) and call_i is not None:
                         if (call_i, b_i, "overnight") in call_vars:
-                            model.Add(call_vars[call_i, b_i, "overnight"] == 0)
+                            violation = model.NewBoolVar(f"fmit_call_{call_i}_{b_i}")
+                            model.AddImplication(
+                                call_vars[call_i, b_i, "overnight"], violation
+                            )
+                            obj_terms.append((violation, int(self.weight)))
                             count += 1
 
-        logger.info(f"Added {count} FMITWeekBlocking constraints")
+        logger.info(f"Added {count} FMITWeekBlocking penalty terms")
 
     def add_to_pulp(
         self,
@@ -374,10 +385,12 @@ class FMITMandatoryCallConstraint(SoftConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Force FMIT attending to take Fri/Sat call in CP-SAT model."""
+        """Penalize missing FMIT Fri/Sat call in CP-SAT model."""
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
             return
+
+        obj_terms = variables.setdefault("objective_terms", [])
 
         fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
         if not fmit_weeks_by_faculty:
@@ -395,17 +408,31 @@ class FMITMandatoryCallConstraint(SoftConstraint):
                     if block.date == friday_start:  # Friday
                         b_i = context.block_idx[block.id]
                         if (call_i, b_i, "overnight") in call_vars:
-                            model.Add(call_vars[call_i, b_i, "overnight"] == 1)
+                            missing = model.NewBoolVar(
+                                f"missing_fmit_fri_{call_i}_{b_i}"
+                            )
+                            model.AddImplication(
+                                call_vars[call_i, b_i, "overnight"].Not(),
+                                missing,
+                            )
+                            obj_terms.append((missing, int(self.weight)))
                             count += 1
 
                     saturday = friday_start + timedelta(days=1)
                     if block.date == saturday:
                         b_i = context.block_idx[block.id]
                         if (call_i, b_i, "overnight") in call_vars:
-                            model.Add(call_vars[call_i, b_i, "overnight"] == 1)
+                            missing = model.NewBoolVar(
+                                f"missing_fmit_sat_{call_i}_{b_i}"
+                            )
+                            model.AddImplication(
+                                call_vars[call_i, b_i, "overnight"].Not(),
+                                missing,
+                            )
+                            obj_terms.append((missing, int(self.weight)))
                             count += 1
 
-        logger.info(f"Added {count} FMITMandatoryCall constraints")
+        logger.info(f"Added {count} FMITMandatoryCall penalty terms")
 
     def add_to_pulp(
         self,
@@ -501,9 +528,11 @@ class PostFMITRecoveryConstraint(SoftConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Block post-FMIT Friday in CP-SAT model."""
+        """Penalize assignments on post-FMIT Friday in CP-SAT model."""
         template_vars = variables.get("faculty_template_assignments", {})
         call_vars = variables.get("call_assignments", {})
+
+        obj_terms = variables.setdefault("objective_terms", [])
 
         fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
         if not fmit_weeks_by_faculty:
@@ -520,14 +549,14 @@ class PostFMITRecoveryConstraint(SoftConstraint):
                 # Recovery Friday is the day after FMIT Thursday
                 recovery_friday = thursday_end + timedelta(days=1)
 
-                # Block all assignments on recovery Friday
+                # Penalize all assignments on recovery Friday
                 for block in context.blocks:
                     if block.date != recovery_friday:
                         continue
 
                     b_i = context.block_idx[block.id]
 
-                    # Block all template assignments
+                    # Penalize template assignments
                     if template_vars:
                         for template in context.templates:
                             t_i = context.template_idx.get(template.id)
@@ -535,17 +564,31 @@ class PostFMITRecoveryConstraint(SoftConstraint):
                                 t_i is not None
                                 and (faculty_i, b_i, t_i) in template_vars
                             ):
-                                model.Add(template_vars[faculty_i, b_i, t_i] == 0)
+                                violation = model.NewBoolVar(
+                                    f"post_fmit_{faculty_i}_{b_i}_{t_i}"
+                                )
+                                model.AddImplication(
+                                    template_vars[faculty_i, b_i, t_i],
+                                    violation,
+                                )
+                                obj_terms.append((violation, int(self.weight)))
                                 count += 1
 
-                    # Block call assignments
+                    # Penalize call assignments
                     if call_vars and call_i is not None:
                         for call_type in ["overnight", "weekend", "backup"]:
                             if (call_i, b_i, call_type) in call_vars:
-                                model.Add(call_vars[call_i, b_i, call_type] == 0)
+                                violation = model.NewBoolVar(
+                                    f"post_fmit_call_{call_i}_{b_i}_{call_type}"
+                                )
+                                model.AddImplication(
+                                    call_vars[call_i, b_i, call_type],
+                                    violation,
+                                )
+                                obj_terms.append((violation, int(self.weight)))
                                 count += 1
 
-        logger.info(f"Added {count} PostFMITRecovery constraints")
+        logger.info(f"Added {count} PostFMITRecovery penalty terms")
 
     def add_to_pulp(
         self,
