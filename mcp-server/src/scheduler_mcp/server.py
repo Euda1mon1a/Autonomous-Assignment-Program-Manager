@@ -5299,6 +5299,128 @@ async def rag_ingest(
     )
 
 
+# ==================== TASK HISTORY LEARNING TOOLS ====================
+
+
+@mcp.tool()
+async def log_task_tool(
+    task_description: str,
+    agent_used: str,
+    model_used: str,
+    success: bool,
+    duration_ms: int | None = None,
+    session_id: str | None = None,
+    notes: str | None = None,
+    failure_reason: str | None = None,
+    tags: list[str] | None = None,
+    files_touched: list[str] | None = None,
+) -> dict[str, Any]:
+    """
+    Log a completed task for the learning system.
+
+    Call this after completing (or failing) any significant task.
+    The system embeds the description for future similarity search,
+    so agents can learn from prior successes and failures.
+
+    Args:
+        task_description: What was attempted.
+        agent_used: Agent that performed the task.
+        model_used: Model tier used (haiku, sonnet, opus).
+        success: Whether the task completed successfully.
+        duration_ms: Task duration in milliseconds (optional).
+        session_id: Session ID for episodic grouping (optional).
+        notes: Free-text lesson learned (optional).
+        failure_reason: Failure category like schema_error, import_error (optional).
+        tags: Domain tags like ["scheduling", "hda"] (optional).
+        files_touched: Files involved like ["backend/app/scheduling/engine.py"] (optional).
+
+    Returns:
+        Created task history record with id and created_at.
+
+    Example:
+        result = await log_task_tool(
+            task_description="Add is_deleted filter to HalfDayAssignment query",
+            agent_used="scheduling-agent",
+            model_used="opus",
+            success=False,
+            failure_reason="schema_error",
+            notes="HalfDayAssignment has no is_deleted column. Only Person and RotationTemplate have soft deletes.",
+            tags=["scheduling", "hda", "schema"],
+            files_touched=["backend/app/scheduling/engine.py"]
+        )
+    """
+    api_client = await get_api_client()
+    payload: dict[str, Any] = {
+        "task_description": task_description,
+        "agent_used": agent_used,
+        "model_used": model_used,
+        "success": success,
+    }
+    if duration_ms is not None:
+        payload["duration_ms"] = duration_ms
+    if session_id is not None:
+        payload["session_id"] = session_id
+    if notes is not None:
+        payload["notes"] = notes
+    if failure_reason is not None:
+        payload["failure_reason"] = failure_reason
+    if tags is not None:
+        payload["tags"] = tags
+    if files_touched is not None:
+        payload["files_touched"] = files_touched
+
+    return await api_client.log_task_history(payload)
+
+
+@mcp.tool()
+async def query_similar_tasks_tool(
+    query: str,
+    top_k: int = 5,
+    success_filter: bool | None = None,
+    tags_filter: list[str] | None = None,
+    min_similarity: float = 0.5,
+) -> dict[str, Any]:
+    """
+    Search past task history for similar work.
+
+    Call this BEFORE starting a task to see if prior agents encountered
+    relevant issues. Returns similar tasks with lessons learned.
+
+    Args:
+        query: Describe what you're about to do (will be embedded for similarity search).
+        top_k: Number of results to return (default: 5).
+        success_filter: Filter by success (True), failure (False), or both (None).
+        tags_filter: Filter to tasks matching any of these tags.
+        min_similarity: Minimum cosine similarity threshold 0-1 (default: 0.5).
+
+    Returns:
+        Dict with:
+        - query: Original query
+        - results: List of similar tasks with notes, tags, similarity_score
+        - total_results: Number of matches
+
+    Example:
+        result = await query_similar_tasks_tool(
+            query="modify HalfDayAssignment query with is_deleted filter",
+            success_filter=False,
+            tags_filter=["hda"]
+        )
+        # Returns: "HDA has no is_deleted column" lesson from prior failure
+    """
+    api_client = await get_api_client()
+    payload: dict[str, Any] = {
+        "query": query,
+        "top_k": top_k,
+        "min_similarity": min_similarity,
+    }
+    if success_filter is not None:
+        payload["success_filter"] = success_filter
+    if tags_filter is not None:
+        payload["tags_filter"] = tags_filter
+
+    return await api_client.query_task_history(payload)
+
+
 # =============================================================================
 # Schema Drift Detection Tool
 # =============================================================================

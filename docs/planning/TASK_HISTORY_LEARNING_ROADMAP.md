@@ -1,6 +1,6 @@
 # Task History Learning System Roadmap
 
-> **Created:** 2026-03-12 | **Status:** Planning | **Author:** Antigravity (Opus 4.6)
+> **Created:** 2026-03-12 | **Status:** Phases 1-6 Complete (MVP + Skill) | **Author:** Antigravity (Opus 4.6)
 >
 > **Problem:** The `task_history` table (pgvector-indexed, Dec 2025) is fully functional but completely dormant. No agent writes to it, no agent reads from it. The PAI² design described a feedback loop and episodic memory layer that were never implemented.
 >
