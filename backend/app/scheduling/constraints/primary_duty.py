@@ -12,7 +12,7 @@ defaults, including:
 - Allowed clinic templates
 
 Classes:
-    - PrimaryDutyConfig: Data class for parsing Airtable primary duty records
+    - PrimaryDutyConfig: Data class for primary duty configuration
     - FacultyPrimaryDutyClinicConstraint: Enforce min/max clinic assignments (hard)
     - FacultyDayAvailabilityConstraint: Enforce day-of-week availability (hard)
 """
@@ -47,13 +47,13 @@ class PrimaryDutyConfig:
     Loaded from primary_duty_configs DB table (originally seeded from Airtable export).
 
     Attributes:
-        duty_id: Airtable record ID (e.g., "recgREn5x6J5HN5pz")
+        duty_id: Record ID (UUID from primary_duty_configs table)
         duty_name: Human-readable name (e.g., "Faculty Alpha", "Program Director")
         clinic_min_per_week: Minimum clinic half-days per week (0 = no requirement)
         clinic_max_per_week: Maximum clinic half-days per week
         available_days: Set of available weekdays (0=Mon, 1=Tue, ..., 4=Fri)
-        allowed_clinic_templates: Set of allowed clinic template Airtable IDs
-        faculty_ids: List of faculty Airtable IDs linked to this duty
+        allowed_clinic_templates: Set of allowed clinic template IDs
+        faculty_ids: List of faculty person IDs linked to this duty
     """
 
     duty_id: str
@@ -64,7 +64,7 @@ class PrimaryDutyConfig:
     allowed_clinic_templates: set[str] = field(default_factory=set)
     faculty_ids: list[str] = field(default_factory=list)
 
-    # Additional constraints from Airtable (for future use)
+    # Additional constraints (for future use)
     inpatient_weeks_min: int = 0
     inpatient_weeks_max: int = 0
     gme_min_per_week: int = 0
@@ -150,6 +150,12 @@ def load_primary_duties_config(
             "primary duty constraints cannot function without DB access"
         )
 
+    if not hasattr(db_session, "query"):
+        raise TypeError(
+            f"db_session must be a SQLAlchemy Session, got {type(db_session).__name__}. "
+            "The json_path parameter was removed in PR #1303."
+        )
+
     from sqlalchemy.exc import SQLAlchemyError
 
     from app.models.primary_duty_config import PrimaryDutyConfiguration
@@ -179,7 +185,7 @@ class FacultyPrimaryDutyClinicConstraint(HardConstraint):
     """
     Enforces clinic half-day requirements based on primary duty configuration.
 
-    This constraint uses Airtable primary duty data to enforce:
+    This constraint uses DB-backed primary duty data to enforce:
     - Minimum clinic half-days per week (hard requirement for coverage)
     - Maximum clinic half-days per week (hard limit)
 
@@ -199,16 +205,18 @@ class FacultyPrimaryDutyClinicConstraint(HardConstraint):
         Initialize the constraint.
 
         Args:
-            duty_configs: Pre-loaded duty configurations, or
-            json_path: Path to JSON file to load configs from
+            duty_configs: Pre-loaded duty configurations (None = load from DB).
+            db_session: SQLAlchemy session for DB loading.
         """
         super().__init__(
             name="FacultyPrimaryDutyClinic",
             constraint_type=ConstraintType.CAPACITY,
             priority=ConstraintPriority.HIGH,
         )
-        self._duty_configs = duty_configs or load_primary_duties_config(
-            db_session=db_session
+        self._duty_configs = (
+            duty_configs
+            if duty_configs is not None
+            else load_primary_duties_config(db_session=db_session)
         )
 
     def get_faculty_duty_config(self, faculty: Any) -> PrimaryDutyConfig | None:
@@ -493,8 +501,10 @@ class FacultyDayAvailabilityConstraint(HardConstraint):
             constraint_type=ConstraintType.AVAILABILITY,
             priority=ConstraintPriority.CRITICAL,
         )
-        self._duty_configs = duty_configs or load_primary_duties_config(
-            db_session=db_session
+        self._duty_configs = (
+            duty_configs
+            if duty_configs is not None
+            else load_primary_duties_config(db_session=db_session)
         )
 
     def get_faculty_duty_config(self, faculty: Any) -> PrimaryDutyConfig | None:
@@ -687,8 +697,10 @@ class FacultyClinicEquitySoftConstraint(SoftConstraint):
             weight=weight,
             priority=ConstraintPriority.MEDIUM,
         )
-        self._duty_configs = duty_configs or load_primary_duties_config(
-            db_session=db_session
+        self._duty_configs = (
+            duty_configs
+            if duty_configs is not None
+            else load_primary_duties_config(db_session=db_session)
         )
 
     def get_faculty_duty_config(self, faculty: Any) -> PrimaryDutyConfig | None:
