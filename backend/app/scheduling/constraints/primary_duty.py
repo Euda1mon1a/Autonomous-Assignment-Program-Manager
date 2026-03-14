@@ -2,7 +2,8 @@
 Faculty Primary Duty Clinic Constraints.
 
 This module contains constraints that enforce faculty clinic assignment rules
-based on Airtable primary duty configuration data.
+based on primary duty configuration from the primary_duty_configs DB table
+(migrated from Airtable JSON export in PR #1303).
 
 The primary duty configuration provides more granular control than role-based
 defaults, including:
@@ -43,7 +44,7 @@ class PrimaryDutyConfig:
     """
     Configuration for a faculty primary duty.
 
-    Parsed from Airtable primary_duties table export.
+    Loaded from primary_duty_configs DB table (originally seeded from Airtable export).
 
     Attributes:
         duty_id: Airtable record ID (e.g., "recgREn5x6J5HN5pz")
@@ -144,33 +145,34 @@ def load_primary_duties_config(
         Dict mapping duty_name to PrimaryDutyConfig
     """
     if db_session is None:
-        logger.warning(
-            "No DB session provided for primary duty config — no configs loaded"
+        raise ValueError(
+            "db_session is required for load_primary_duties_config — "
+            "primary duty constraints cannot function without DB access"
         )
-        return {}
+
+    from sqlalchemy.exc import SQLAlchemyError
+
+    from app.models.primary_duty_config import PrimaryDutyConfiguration
 
     try:
-        from app.models.primary_duty_config import PrimaryDutyConfiguration
-
         rows = db_session.query(PrimaryDutyConfiguration).all()
-        configs: dict[str, PrimaryDutyConfig] = {}
-        for row in rows:
-            available = (
-                set(row.available_days) if row.available_days else {0, 1, 2, 3, 4}
-            )
-            config = PrimaryDutyConfig(
-                duty_id=str(row.id),
-                duty_name=row.duty_name,
-                clinic_min_per_week=row.clinic_min_per_week,
-                clinic_max_per_week=row.clinic_max_per_week,
-                available_days=available,
-            )
-            configs[config.duty_name] = config
-        logger.info("Loaded %d primary duty configs from DB", len(rows))
-        return configs
-    except Exception as e:
-        logger.warning("Could not load primary duties from DB: %s", e)
-        return {}
+    except SQLAlchemyError as e:
+        logger.error("Failed to load primary duties from DB: %s", e)
+        raise
+
+    configs: dict[str, PrimaryDutyConfig] = {}
+    for row in rows:
+        available = set(row.available_days) if row.available_days else {0, 1, 2, 3, 4}
+        config = PrimaryDutyConfig(
+            duty_id=str(row.id),
+            duty_name=row.duty_name,
+            clinic_min_per_week=row.clinic_min_per_week,
+            clinic_max_per_week=row.clinic_max_per_week,
+            available_days=available,
+        )
+        configs[config.duty_name] = config
+    logger.info("Loaded %d primary duty configs from DB", len(rows))
+    return configs
 
 
 class FacultyPrimaryDutyClinicConstraint(HardConstraint):
