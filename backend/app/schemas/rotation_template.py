@@ -50,6 +50,18 @@ class RotationTemplateBase(BaseModel):
     supervision_required: bool | None = True
     max_supervision_ratio: int | None = 4
 
+    # Block duration
+    is_block_half_rotation: bool = False
+    includes_weekend_work: bool = False
+    leave_eligible: bool = True
+
+    # Preload classification (DB-backed, replaces Python constants)
+    is_offsite: bool = False
+    is_lec_exempt: bool = False
+    is_continuity_exempt: bool = False
+    is_saturday_off: bool = False
+    preload_activity_code: str | None = None
+
     @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:
