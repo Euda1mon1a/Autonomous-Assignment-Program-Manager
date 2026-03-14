@@ -55,8 +55,22 @@ def _classify_constraint(constraint: object) -> tuple[str, str]:
         category = "RESILIENCE"
     elif "Faculty" in name or "SM" in name:
         category = "FACULTY"
+    elif name in (
+        "ActivityRequirement",
+        "GraduationRequirements",
+        "HalfDayRequirement",
+        "ProtectedSlot",
+        "WeekendWork",
+        "WednesdayAMInternOnly",
+        "InvertedWednesday",
+        "DeptChiefWednesdayPreference",
+    ):
+        category = "SCHEDULING"
     else:
         category = "SCHEDULING"
+        logger.warning(
+            "Constraint %r fell through to default category SCHEDULING", name
+        )
 
     priority = "CRITICAL" if is_hard else "MEDIUM"
     if hasattr(constraint, "weight") and constraint.weight >= 100:
@@ -114,12 +128,24 @@ def seed_constraints() -> None:
                 db.add(new_config)
                 added_count += 1
 
+        # Clean up orphaned DB rows (constraint removed from code)
+        manager_names = {c.name for c in manager.constraints}
+        orphans = (
+            db.query(ConstraintConfiguration)
+            .filter(~ConstraintConfiguration.name.in_(manager_names))
+            .all()
+        )
+        for orphan in orphans:
+            logger.warning("Removing orphaned constraint config: %s", orphan.name)
+            db.delete(orphan)
+
         db.commit()
         logger.info(
-            "Seeded constraints: %d added, %d updated, %d renamed.",
+            "Seeded constraints: %d added, %d updated, %d renamed, %d orphans removed.",
             added_count,
             updated_count,
             renamed_count,
+            len(orphans),
         )
     except Exception as e:
         db.rollback()

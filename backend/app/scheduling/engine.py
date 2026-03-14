@@ -155,22 +155,33 @@ class SchedulingEngine:
 
         Bridges the gap between DB-stored config (editable via API/frontend) and
         the in-memory constraint instances that the solver actually uses. Falls
-        back silently to Python defaults if the table is unavailable.
+        back to Python defaults if the table is unavailable.
         """
+        from app.scheduling.constraints.base import HardConstraint
+
         try:
             db_configs = self.db.query(ConstraintConfiguration).all()
+            constraint_by_name = {
+                c.name: c for c in self.constraint_manager.constraints
+            }
             synced = 0
             for db_config in db_configs:
-                for constraint in self.constraint_manager.constraints:
-                    if constraint.name == db_config.name:
-                        constraint.enabled = db_config.enabled
-                        if hasattr(constraint, "weight"):
-                            constraint.weight = db_config.weight
-                        synced += 1
-                        break
+                constraint = constraint_by_name.get(db_config.name)
+                if constraint:
+                    constraint.enabled = db_config.enabled
+                    if hasattr(constraint, "weight") and not isinstance(
+                        constraint, HardConstraint
+                    ):
+                        constraint.weight = db_config.weight
+                    synced += 1
             if synced:
                 logger.info("Synced %d constraint configs from DB", synced)
-        except Exception as e:
+            unmatched = len(db_configs) - synced
+            if unmatched:
+                logger.warning(
+                    "%d DB constraint configs had no matching instance", unmatched
+                )
+        except SQLAlchemyError as e:
             logger.warning("Could not sync constraints from DB: %s", e)
 
     def _get_pgy_level(self, person: Person) -> int:
