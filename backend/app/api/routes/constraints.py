@@ -360,6 +360,7 @@ def apply_constraint_preset(
     _: None = Depends(require_admin()),
 ) -> PresetApplyResponse:
     """Apply a constraint preset (persisted to DB)."""
+    _ensure_seeded(db)
     if preset not in PRESETS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -159,6 +159,13 @@ class SchedulingEngine:
         """
         from app.scheduling.constraints.base import HardConstraint
 
+        # Legacy DB names → current constraint names
+        legacy_names = {
+            "EightyHourRule": "80HourRule",
+            "OneInSevenRule": "1in7Rule",
+            "OnePersonPerBlock": "ResidentInpatientHeadcount",
+        }
+
         try:
             db_configs = self.db.query(ConstraintConfiguration).all()
             constraint_by_name = {
@@ -166,7 +173,8 @@ class SchedulingEngine:
             }
             synced = 0
             for db_config in db_configs:
-                constraint = constraint_by_name.get(db_config.name)
+                name = legacy_names.get(db_config.name, db_config.name)
+                constraint = constraint_by_name.get(name)
                 if constraint:
                     constraint.enabled = db_config.enabled
                     if hasattr(constraint, "weight") and not isinstance(
