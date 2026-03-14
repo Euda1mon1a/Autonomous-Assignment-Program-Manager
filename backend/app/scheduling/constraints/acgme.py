@@ -45,6 +45,7 @@ from .base import (
     ConstraintViolation,
     HardConstraint,
     SchedulingContext,
+    SoftConstraint,
 )
 
 logger = logging.getLogger(__name__)
@@ -186,36 +187,19 @@ class AvailabilityConstraint(HardConstraint):
         )
 
 
-class EightyHourRuleConstraint(HardConstraint):
+class EightyHourRuleConstraint(SoftConstraint):
     """
     ACGME 80-hour rule: Maximum 80 hours per week, strictly calculated
     over a 4-week rolling average (28 consecutive days).
 
-    This constraint enforces one of the most critical ACGME requirements:
-    resident duty hours must not exceed 80 hours per week when averaged over
-    any 4-week (28 consecutive days) rolling window.
-
-    Implementation Details:
-        - Each half-day block (AM or PM) represents 6 hours of duty time
-        - Uses STRICT rolling 4-week (28-day) windows
-        - Checks ALL possible 28-day windows in the schedule period
-        - Maximum blocks per 4-week window: (80 * 4) / 6 = 53 blocks
+    Soft constraint with weight=1000: violations are heavily penalized but
+    the solver can still produce a best-effort schedule if preloaded data
+    makes strict compliance impossible (e.g., FMIT 7-day stretches).
 
     ACGME Reference:
         Common Program Requirements, Section VI.F.1:
         "Duty hours are limited to 80 hours per week, averaged over a four-week
         period, inclusive of all in-house clinical and educational activities."
-
-    Critical Notes:
-        - The 4-week period is STRICTLY 28 consecutive calendar days
-        - Rolling average means checking EVERY possible 28-day window
-        - This is a HARD constraint - violations make schedule invalid
-
-    Constants:
-        HOURS_PER_BLOCK: Hours per half-day block (6 hours)
-        MAX_WEEKLY_HOURS: Maximum hours per week (80 hours)
-        ROLLING_WEEKS: Window size for averaging (4 weeks = 28 days)
-        ROLLING_DAYS: Exact number of days in window (28 days)
     """
 
     HOURS_PER_BLOCK = 6  # Solver internal — hours per half-day block
@@ -223,8 +207,7 @@ class EightyHourRuleConstraint(HardConstraint):
     ROLLING_DAYS = 28  # 4 weeks * 7 days = 28 days (STRICT)
 
     def __init__(self, settings=None) -> None:
-        """
-        Initialize the 80-hour rule constraint.
+        """Initialize the 80-hour rule constraint.
 
         Reads MAX_WEEKLY_HOURS from ApplicationSettings if provided,
         otherwise defaults to 80 (ACGME standard).
@@ -232,6 +215,7 @@ class EightyHourRuleConstraint(HardConstraint):
         super().__init__(
             name="80HourRule",
             constraint_type=ConstraintType.DUTY_HOURS,
+            weight=1000.0,
             priority=ConstraintPriority.CRITICAL,
         )
         self.MAX_WEEKLY_HOURS = settings.work_hours_per_week if settings else 80
@@ -297,6 +281,7 @@ class EightyHourRuleConstraint(HardConstraint):
 
         preassigned_blocks = getattr(context, "preassigned_work_blocks", {})
 
+        obj_terms = variables.setdefault("objective_terms", [])
         warned_fixed_80 = set()
         count = 0
 
@@ -304,7 +289,6 @@ class EightyHourRuleConstraint(HardConstraint):
         for window_start in dates:
             window_end = window_start + timedelta(days=self.ROLLING_DAYS - 1)
 
-            # Get all blocks in this strict 28-day window
             window_blocks = [
                 b for b in context.blocks if window_start <= b.date <= window_end
             ]
@@ -312,7 +296,6 @@ class EightyHourRuleConstraint(HardConstraint):
             if not window_blocks:
                 continue
 
-                # For each resident, sum of blocks in window <= max
             for resident in context.residents:
                 r_i = context.resident_idx[resident.id]
                 resident_preassigned = preassigned_blocks.get(resident.id, set())
@@ -324,8 +307,11 @@ class EightyHourRuleConstraint(HardConstraint):
                         warned_fixed_80.add(resident.id)
                         logger.warning(
                             "80HourRule preassigned workload exceeds limit: "
-                            f"{resident.name} {window_start}→{window_end} "
-                            f"preassigned_blocks={preassigned_count}"
+                            "%s %s→%s preassigned=%d",
+                            getattr(resident, "name", r_i),
+                            window_start,
+                            window_end,
+                            preassigned_count,
                         )
                     continue
                 window_vars = [
@@ -333,24 +319,23 @@ class EightyHourRuleConstraint(HardConstraint):
                     for b in window_blocks
                     if (r_i, context.block_idx[b.id]) in x
                 ]
-                decision_count = len(window_vars)
-                if preassigned_count + decision_count > self.max_blocks_per_window:
-                    if resident.id not in warned_fixed_80:
-                        warned_fixed_80.add(resident.id)
-                        logger.warning(
-                            "80HourRule infeasible due to fixed workload: "
-                            f"{resident.name} {window_start}→{window_end} "
-                            f"fixed_blocks={preassigned_count + decision_count}"
-                        )
-                    continue
                 if window_vars or preassigned_count:
-                    model.Add(
-                        sum(window_vars) + preassigned_count
-                        <= self.max_blocks_per_window
+                    total = sum(window_vars) + preassigned_count
+                    # Soft penalty: how many blocks over the limit
+                    over = model.NewIntVar(
+                        0,
+                        len(window_blocks),
+                        f"80hr_over_r{r_i}_w{count}",
                     )
+                    model.Add(over >= total - self.max_blocks_per_window)
+                    obj_terms.append((over, int(self.weight)))
                     count += 1
 
-        logger.info(f"Added {count} EightyHourRule constraints")
+        logger.info(
+            "Added %d EightyHourRule soft penalties (weight=%d)",
+            count,
+            int(self.weight),
+        )
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """
@@ -515,11 +500,12 @@ class EightyHourRuleConstraint(HardConstraint):
         )
 
 
-class OneInSevenRuleConstraint(HardConstraint):
+class OneInSevenRuleConstraint(SoftConstraint):
     """
     ACGME 1-in-7 rule: At least one 24-hour period off every 7 days.
 
-    Simplified implementation: Cannot work more than 6 consecutive days.
+    Soft constraint with weight=1000: violations are heavily penalized but
+    the solver can still produce a best-effort schedule.
 
     ACGME Reference:
         Common Program Requirements, Section VI.F.3:
@@ -528,14 +514,11 @@ class OneInSevenRuleConstraint(HardConstraint):
     """
 
     def __init__(self, settings=None) -> None:
-        """Initialize 1-in-7 rule constraint.
-
-        Reads MAX_CONSECUTIVE_DAYS from ApplicationSettings if provided,
-        otherwise defaults to 6 (ACGME: 1 day off per 7).
-        """
+        """Initialize 1-in-7 rule constraint."""
         super().__init__(
             name="1in7Rule",
             constraint_type=ConstraintType.CONSECUTIVE_DAYS,
+            weight=1000.0,
             priority=ConstraintPriority.CRITICAL,
         )
         self.MAX_CONSECUTIVE_DAYS = settings.max_consecutive_days if settings else 6
@@ -570,6 +553,7 @@ class OneInSevenRuleConstraint(HardConstraint):
         if len(dates) < self.MAX_CONSECUTIVE_DAYS + 1:
             return
 
+        obj_terms = variables.setdefault("objective_terms", [])
         preassigned_days = getattr(context, "preassigned_work_days", {})
         warned_fixed_1in7 = set()
         count = 0
@@ -635,13 +619,21 @@ class OneInSevenRuleConstraint(HardConstraint):
                         )
                     continue
                 if day_worked_vars or preassigned_day_count:
-                    model.Add(
-                        sum(day_worked_vars) + preassigned_day_count
-                        <= self.MAX_CONSECUTIVE_DAYS
+                    total = sum(day_worked_vars) + preassigned_day_count
+                    over = model.NewIntVar(
+                        0,
+                        self.MAX_CONSECUTIVE_DAYS + 1,
+                        f"1in7_over_r{r_i}_w{count}",
                     )
+                    model.Add(over >= total - self.MAX_CONSECUTIVE_DAYS)
+                    obj_terms.append((over, int(self.weight)))
                     count += 1
 
-        logger.info(f"Added {count} OneInSevenRule constraints")
+        logger.info(
+            "Added %d OneInSevenRule soft penalties (weight=%d)",
+            count,
+            int(self.weight),
+        )
 
     def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """
@@ -794,33 +786,25 @@ class OneInSevenRuleConstraint(HardConstraint):
         )
 
 
-class SupervisionRatioConstraint(HardConstraint):
+class SupervisionRatioConstraint(SoftConstraint):
     """
     ACGME supervision ratios: Ensures adequate faculty supervision.
 
-    Supervision Ratios:
-        - PGY-1: 1 faculty : 2 residents (more intensive supervision)
-        - PGY-2/3: 1 faculty : 4 residents (greater independence)
+    Soft constraint with weight=1000. Violations penalized but solver
+    can still produce best-effort schedule.
 
     ACGME Reference:
         Common Program Requirements, Section VI.B:
         "The program must demonstrate that the appropriate level of supervision
         is in place for all residents who care for patients."
-
-    Constants:
-        PGY1_RATIO: Maximum PGY-1 residents per faculty (2)
-        OTHER_RATIO: Maximum PGY-2/3 residents per faculty (4)
     """
 
     def __init__(self, settings=None) -> None:
-        """Initialize supervision ratio constraint.
-
-        Reads PGY supervision ratios from ApplicationSettings if provided,
-        otherwise defaults to ACGME standard (1:2 PGY-1, 1:4 PGY-2/3).
-        """
+        """Initialize supervision ratio constraint."""
         super().__init__(
             name="SupervisionRatio",
             constraint_type=ConstraintType.SUPERVISION,
+            weight=1000.0,
             priority=ConstraintPriority.CRITICAL,
         )
         if settings and settings.pgy1_supervision_ratio:
