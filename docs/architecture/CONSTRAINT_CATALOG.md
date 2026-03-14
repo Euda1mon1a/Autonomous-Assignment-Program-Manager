@@ -67,13 +67,13 @@ Constraint (Abstract)
 | Name | Type | Category | Priority | Weight | File |
 |------|------|----------|----------|--------|------|
 | **Availability** | Hard | ACGME | CRITICAL | - | acgme.py |
-| **EightyHourRule** | Hard | ACGME | CRITICAL | - | acgme.py |
-| **OneInSevenRule** | Hard | ACGME | CRITICAL | - | acgme.py |
+| **80HourRule** | Hard | ACGME | CRITICAL | - | acgme.py |
+| **1in7Rule** | Hard | ACGME | CRITICAL | - | acgme.py |
 | **SupervisionRatio** | Hard | ACGME | CRITICAL | - | acgme.py |
-| **OnePersonPerBlock** | Hard | Capacity | HIGH | - | capacity.py |
+| **ResidentInpatientHeadcount** | Hard | Capacity | HIGH | - | capacity.py |
 | **ClinicCapacity** | Hard | Capacity | HIGH | - | capacity.py |
 | **MaxPhysiciansInClinic** | Hard | Capacity | HIGH | - | capacity.py |
-| **CoverageConstraint** | Soft | Coverage | HIGH | 1.0 | capacity.py |
+| **Coverage** | Soft | Coverage | HIGH | 1000 | capacity.py |
 | **PostCallAutoAssignment** | Hard | Call | CRITICAL | - | post_call.py |
 | **NightFloatPostCall** | Hard | Call | HIGH | - | night_float_post_call.py |
 | **OvernightCallCoverage** | Hard | Call | HIGH | - | call_coverage.py |
@@ -83,7 +83,7 @@ Constraint (Abstract)
 | **FacultyDayAvailability** | Hard | Faculty | HIGH | - | primary_duty.py |
 | **FacultyPrimaryDutyClinic** | Hard | Faculty | HIGH | - | primary_duty.py |
 | **FacultyRoleClinic** | Hard | Faculty | HIGH | - | faculty_role.py |
-| **SMFacultyClinic** | Hard | Faculty | HIGH | - | faculty_role.py |
+| **SMFacultyNoRegularClinic** | Hard | Faculty | HIGH | - | faculty_role.py |
 | **EquityConstraint** | Soft | Equity | MEDIUM | 2.0 | equity.py |
 | **ContinuityConstraint** | Soft | Equity | MEDIUM | 1.5 | equity.py |
 | **PreferenceConstraint** | Soft | Preference | MEDIUM | 1.0 | faculty.py |

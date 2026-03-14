@@ -1,5 +1,11 @@
 # Constraint Enablement Guide
 
+> **ARCHITECTURE CHANGE (PR #1297, 2026-03-13):** Constraint configuration is now DB-backed.
+> The `constraint_configurations` table (53 rows) is the single source of truth.
+> Code examples below that reference `get_constraint_config()` or `ConstraintConfigManager`
+> are **DEPRECATED** — use the API (`PATCH /api/v1/constraints/{name}`) or direct DB queries instead.
+> See `docs/rag-knowledge/constraint-catalog-summary.md` for the current architecture.
+
 ## Overview
 
 This guide explains which constraints are enabled by default, which are disabled, why they are disabled, and when you should enable them.
@@ -75,7 +81,7 @@ These constraints are disabled by default and can be enabled when needed:
 
 ### Capacity Constraints (Always Enabled)
 
-#### OnePersonPerBlock
+#### ResidentInpatientHeadcount (formerly OnePersonPerBlock)
 - **Status**: ENABLED
 - **Priority**: CRITICAL
 - **Purpose**: Ensures exactly one person is assigned to each block-rotation combination.
@@ -311,7 +317,7 @@ manager = ConstraintManager.create_minimal()
 config = get_constraint_config()
 config.apply_preset("minimal")
 ```
-- Only essential constraints enabled (Availability, OnePersonPerBlock, Coverage)
+- Only essential constraints enabled (Availability, ResidentInpatientHeadcount, Coverage)
 - All optional constraints disabled
 - **Use when**: Fast solving, testing, or simple schedules
 
