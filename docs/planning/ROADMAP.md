@@ -1,13 +1,13 @@
 # Roadmap
 
-> **Last Updated:** 2026-03-14 (hardcoded-to-Postgres migration, constraint DB wiring, hard→soft refactor)
+> **Last Updated:** 2026-03-14 (hardcoded-to-Postgres tracks 1-7 complete, PRs #1316-#1318 merged)
 > **Companion:** `TODO.md` (actionable items), `docs/planning/TECHNICAL_DEBT.md` (debt tracker)
 
 ---
 
 ## Current Release: v1.0.5 — Block 12 Schedule Generation & XLSX Last-Mile (March 2026)
 
-> **Status**: Stable. PRs #1214-#1219, #1231-#1236, #1243-#1260 merged.
+> **Status**: Stable. PRs #1214-#1219, #1231-#1236, #1243-#1260, #1293-#1318 merged.
 
 **Schedule Engine:**
 - 47/50 constraints active, call equity tuning, category-gate resolution
@@ -16,6 +16,7 @@
 - Category-gate AT/C template resolution Phase 4A/4B/4D
 - Final Wednesday faculty inverted schedule + activity code disambiguation
 - Mind Flayer's Probe: AST-based pre-commit hook for constraint archetype enforcement
+- Hardcoded-to-Postgres tracks 5-7 complete: penalty variable conversion (11 constraints), role clinic limits from DB, calendar policy centralized to `application_settings` with GUI (#1316-#1318)
 - ARO CP-SAT solver (#1238)
 - Solver checkpointing (Redis-backed `SolverSnapshotManager`)
 - Schedule diff guard (20% global max change ratio)

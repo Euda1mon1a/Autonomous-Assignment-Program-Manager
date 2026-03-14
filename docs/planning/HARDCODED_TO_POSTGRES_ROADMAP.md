@@ -1,6 +1,6 @@
 # Hardcoded-to-Postgres Migration Roadmap
 
-> **Created:** 2026-03-14 | **Updated:** 2026-03-14 | **Status:** Tracks 1-4 Complete, Track 5-6 Backlog | **Priority:** FOUNDATION
+> **Created:** 2026-03-14 | **Updated:** 2026-03-14 | **Status:** Tracks 1-7 Complete | **Priority:** FOUNDATION
 >
 > **Problem:** Almost nothing that is changeable by a human should be hardcoded in Python.
 > Multiple audits (Gemini, Claude) found that scheduling policy, preload rules, constraint
@@ -21,7 +21,7 @@
 
 ## Track 1: Constraint Hard→Soft Refactor
 
-**Status:** Classified (PR #1297 wired DB, §1.4 in PLATFORM_WIRING_ROADMAP)
+**Status:** ✅ Complete (PRs #1310-#1311 class change, PR #1316 penalty variables + faculty matrix wiring)
 
 16 of 23 active hard constraints are policy rules using `model.Add()` (infeasible if violated) when they should be soft constraints with high weights (best-effort with penalty). Hard/soft is Python inheritance — the DB cannot change it.
 
@@ -117,7 +117,7 @@ The preload service has a 300-line switch statement mapping rotation codes to AM
 
 ## Track 5: Role Defaults & Call Preferences → Postgres
 
-**Status:** 🟡 Derived in Python from `faculty_role`
+**Status:** ✅ Complete (PR #1317) — DB fields primary, role fallback only on NULL
 
 Role-based defaults (clinic limits, call preferences) are computed as Python properties on the Person model based on `faculty_role`. These are admin policy, not code.
 
@@ -135,7 +135,7 @@ Role-based defaults (clinic limits, call preferences) are computed as Python pro
 
 ## Track 6: Calendar/Timetable Policy → Postgres
 
-**Status:** 🟡 Hardcoded day-of-week checks
+**Status:** ✅ Complete (PR #1318) — overnight call weekdays + FMIT week start in `application_settings`, GUI-editable
 
 | What | Current Location | Target | Priority |
 |------|-----------------|--------|----------|
@@ -172,10 +172,10 @@ Role-based defaults (clinic limits, call preferences) are computed as Python pro
 | 1 | **3** | Wire ACGME constraints to ApplicationSettings | S | 🔴 | **DONE** (PR #1301) |
 | 2 | **2.1** | Preload classification columns on rotation_templates | M | 🟡 | **DONE** (PR #1302) |
 | 3 | **4** | Primary duty policy → Postgres | M | 🟡 | **DONE** (PRs #1303-#1305, #1308, #1312) |
-| 4 | **1** | Hard→soft constraint refactor | L | 🟡 | **DONE** class change (PRs #1310-#1311). Solver semantics partial. |
-| 5 | **5** | Role defaults from DB, remove code fallbacks | S | 🟡 | Backlog |
+| 4 | **1** | Hard→soft constraint refactor | L | 🟡 | **DONE** class change (PRs #1310-#1311) + penalty vars (PR #1316) |
+| 5 | **5** | Role defaults from DB, remove code fallbacks | S | 🟡 | **DONE** (PR #1317) — DB primary, NULL-only fallback |
 | 6 | **2.2** | Complex day-of-week patterns via weekly_patterns | M | 🟡 | Backlog |
-| 7 | **6** | Calendar policy → Postgres | S | 🟡 | Backlog |
+| 7 | **6** | Calendar policy → Postgres | S | 🟡 | **DONE** (PR #1318) — GUI-editable, solver wired |
 
 ## Related Planning Documents
 
