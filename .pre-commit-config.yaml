@@ -32,12 +32,13 @@ repos:
 
   # GlassWorm / Trojan Source defense - detect invisible Unicode attacks
   # Catches bidi controls, zero-width chars, variation selectors, PUA codepoints
-  # Uses category-based analysis (Cf, Cc, PUA) for future-proofing
-  - repo: https://github.com/lirantal/anti-trojan-source
-    rev: v1.3.3
+  - repo: local
     hooks:
       - id: anti-trojan-source
         name: Anti-Trojan Source (invisible Unicode scan)
+        entry: scripts/anti-trojan-source.sh
+        language: script
+        types_or: [python, ts, tsx, javascript, jsx, shell, markdown]
         stages: [pre-commit]
 
   # Secret detection - prevent accidentally committing credentials

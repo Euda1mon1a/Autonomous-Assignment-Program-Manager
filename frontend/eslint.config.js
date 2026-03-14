@@ -1,5 +1,4 @@
 import { dirname } from "path";
-import antiTrojanSource from "eslint-plugin-anti-trojan-source";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
 
@@ -13,9 +12,6 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    plugins: {
-      "anti-trojan-source": antiTrojanSource,
-    },
     rules: {
       "@typescript-eslint/no-unused-vars": ["warn", {
         argsIgnorePattern: "^_",
@@ -38,8 +34,6 @@ const eslintConfig = [
       // interfaces MUST use camelCase or runtime access returns undefined.
       // See: Session 079, 080 which fixed 180+ violations across 41 files.
       // TODO: Promote to "error" after bulk naming-convention fix PR
-      // GlassWorm/Trojan Source defense - detect invisible Unicode in source files
-      "anti-trojan-source/no-bidi": "error",
       "@typescript-eslint/naming-convention": [
         "warn",
         {

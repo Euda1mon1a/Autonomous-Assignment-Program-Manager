@@ -85,8 +85,7 @@
     "ts-jest": "^29.1.1",
     "typescript": "^5",
     "undici": "^7.16.0",
-    "xlsx-populate": "^1.21.0",
-    "eslint-plugin-anti-trojan-source": "^1.0.6"
+    "xlsx-populate": "^1.21.0"
   },
   "volta": {
     "node": "22.22.0",
