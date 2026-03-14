@@ -175,6 +175,7 @@ def list_enabled_constraints(
     db: Session = Depends(get_db),
 ) -> list[ConstraintStatusResponse]:
     """List enabled constraints."""
+    _ensure_seeded(db)
     rows = (
         db.query(ConstraintConfiguration)
         .filter(ConstraintConfiguration.enabled.is_(True))
@@ -189,6 +190,7 @@ def list_disabled_constraints(
     db: Session = Depends(get_db),
 ) -> list[ConstraintStatusResponse]:
     """List disabled constraints."""
+    _ensure_seeded(db)
     rows = (
         db.query(ConstraintConfiguration)
         .filter(ConstraintConfiguration.enabled.is_(False))
@@ -204,6 +206,7 @@ def list_constraints_by_category(
     db: Session = Depends(get_db),
 ) -> list[ConstraintStatusResponse]:
     """List constraints by category."""
+    _ensure_seeded(db)
     rows = (
         db.query(ConstraintConfiguration)
         .filter(ConstraintConfiguration.category == category.upper())
@@ -323,9 +326,11 @@ PRESETS: dict[str, dict[str, list[str]]] = {
     },
     "strict": {
         "enable_all": True,
+        "double_weights": True,
     },
     "resilience_tier1": {
         "enable": ["HubProtection", "UtilizationBuffer"],
+        "disable": ["ZoneBoundary", "PreferenceTrail", "N1Vulnerability"],
     },
     "resilience_tier2": {
         "enable": [
@@ -374,15 +379,22 @@ def apply_constraint_preset(
     if config.get("enable_all"):
         for row in all_rows:
             row.enabled = True
+        if config.get("double_weights"):
+            for row in all_rows:
+                if row.weight > 1.0:
+                    row.weight = row.weight * 2
     elif config.get("disable_rest"):
         enable_set = set(config.get("enable", []))
         for row in all_rows:
             row.enabled = row.name in enable_set
     else:
         enable_set = set(config.get("enable", []))
+        disable_set = set(config.get("disable", []))
         for row in all_rows:
             if row.name in enable_set:
                 row.enabled = True
+            elif row.name in disable_set:
+                row.enabled = False
 
     db.commit()
 
