@@ -333,31 +333,28 @@ class ConstraintManager:
         )
 
     @classmethod
-    def create_default(cls, profile: str = "resident") -> "ConstraintManager":
-        """Create manager with default ACGME constraints."""
+    def create_default(
+        cls, profile: str = "resident", settings=None
+    ) -> "ConstraintManager":
+        """Create manager with default ACGME constraints.
+
+        Args:
+            profile: Constraint profile ("resident" or "faculty")
+            settings: ApplicationSettings instance for DB-backed ACGME values.
+                      If None, constraints use hardcoded defaults.
+        """
         manager = cls()
 
         # === PHYSICALLY IMPOSSIBLE constraints (keep Hard) ===
-        # These represent facts that cannot be violated:
-        # - Can't schedule someone who is unavailable (leave, TDY, etc.)
-        # - Adjuncts contractually cannot take call
-        # - Can't assign call to someone not available for call
         manager.add(AvailabilityConstraint())
         manager.add(AdjunctCallExclusionConstraint())
         manager.add(CallAvailabilityConstraint())
 
-        # === POLICY constraints (registered but DISABLED) ===
-        # These are ACGME/institutional rules that use model.Add() (hard
-        # constraint pattern in CP-SAT). Until they are refactored to use
-        # indicator variables + penalties (true soft constraints), they must
-        # be disabled to prevent INFEASIBLE when preloaded data creates
-        # unavoidable conflicts (e.g., faculty FMIT 7-day stretches vs 1-in-7).
-        #
-        # An imperfect schedule beats no schedule. Re-enable one at a time
-        # as data quality improves and constraints are validated.
-        manager.add(EightyHourRuleConstraint())
-        manager.add(OneInSevenRuleConstraint())
-        manager.add(SupervisionRatioConstraint())
+        # === POLICY constraints ===
+        # ACGME rules read from ApplicationSettings (DB-backed).
+        manager.add(EightyHourRuleConstraint(settings=settings))
+        manager.add(OneInSevenRuleConstraint(settings=settings))
+        manager.add(SupervisionRatioConstraint(settings=settings))
         manager.add(FacultySupervisionConstraint())
         manager.add(ClinicCapacityConstraint())
         manager.add(MaxPhysiciansInClinicConstraint())

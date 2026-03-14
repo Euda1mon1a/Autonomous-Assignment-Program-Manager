@@ -218,24 +218,23 @@ class EightyHourRuleConstraint(HardConstraint):
         ROLLING_DAYS: Exact number of days in window (28 days)
     """
 
-    HOURS_PER_BLOCK = 6
-    MAX_WEEKLY_HOURS = 80
+    HOURS_PER_BLOCK = 6  # Solver internal — hours per half-day block
     ROLLING_WEEKS = 4
     ROLLING_DAYS = 28  # 4 weeks * 7 days = 28 days (STRICT)
 
-    def __init__(self) -> None:
+    def __init__(self, settings=None) -> None:
         """
         Initialize the 80-hour rule constraint.
 
-        Calculates the maximum number of blocks allowed in any 4-week window:
-        max_blocks = (80 hours/week * 4 weeks) / 6 hours/block = 53 blocks
+        Reads MAX_WEEKLY_HOURS from ApplicationSettings if provided,
+        otherwise defaults to 80 (ACGME standard).
         """
         super().__init__(
             name="80HourRule",
             constraint_type=ConstraintType.DUTY_HOURS,
             priority=ConstraintPriority.CRITICAL,
         )
-        # Max blocks per 4-week window: (80 * 4) / 6 = 53.33 -> 53
+        self.MAX_WEEKLY_HOURS = settings.work_hours_per_week if settings else 80
         self.max_blocks_per_window = (
             self.MAX_WEEKLY_HOURS * self.ROLLING_WEEKS
         ) // self.HOURS_PER_BLOCK
@@ -528,15 +527,18 @@ class OneInSevenRuleConstraint(HardConstraint):
         and clinical responsibilities, averaged over four weeks."
     """
 
-    MAX_CONSECUTIVE_DAYS = 6
+    def __init__(self, settings=None) -> None:
+        """Initialize 1-in-7 rule constraint.
 
-    def __init__(self) -> None:
-        """Initialize 1-in-7 rule constraint."""
+        Reads MAX_CONSECUTIVE_DAYS from ApplicationSettings if provided,
+        otherwise defaults to 6 (ACGME: 1 day off per 7).
+        """
         super().__init__(
             name="1in7Rule",
             constraint_type=ConstraintType.CONSECUTIVE_DAYS,
             priority=ConstraintPriority.CRITICAL,
         )
+        self.MAX_CONSECUTIVE_DAYS = settings.max_consecutive_days if settings else 6
 
     def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
@@ -810,16 +812,25 @@ class SupervisionRatioConstraint(HardConstraint):
         OTHER_RATIO: Maximum PGY-2/3 residents per faculty (4)
     """
 
-    PGY1_RATIO = 2  # 1 faculty per 2 PGY-1
-    OTHER_RATIO = 4  # 1 faculty per 4 PGY-2/3
+    def __init__(self, settings=None) -> None:
+        """Initialize supervision ratio constraint.
 
-    def __init__(self) -> None:
-        """Initialize supervision ratio constraint."""
+        Reads PGY supervision ratios from ApplicationSettings if provided,
+        otherwise defaults to ACGME standard (1:2 PGY-1, 1:4 PGY-2/3).
+        """
         super().__init__(
             name="SupervisionRatio",
             constraint_type=ConstraintType.SUPERVISION,
             priority=ConstraintPriority.CRITICAL,
         )
+        if settings and settings.pgy1_supervision_ratio:
+            self.PGY1_RATIO = int(settings.pgy1_supervision_ratio.split(":")[1])
+        else:
+            self.PGY1_RATIO = 2
+        if settings and settings.pgy2_supervision_ratio:
+            self.OTHER_RATIO = int(settings.pgy2_supervision_ratio.split(":")[1])
+        else:
+            self.OTHER_RATIO = 4
 
     def calculate_required_faculty(self, pgy1_count: int, other_count: int) -> int:
         """
