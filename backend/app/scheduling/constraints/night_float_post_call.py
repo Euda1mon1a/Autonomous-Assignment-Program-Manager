@@ -32,12 +32,13 @@ from .base import (
     ConstraintViolation,
     HardConstraint,
     SchedulingContext,
+    SoftConstraint,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class NightFloatPostCallConstraint(HardConstraint):
+class NightFloatPostCallConstraint(SoftConstraint):
     """
     Enforces PC (Post-Call) full day after Night Float ends.
 
@@ -65,6 +66,7 @@ class NightFloatPostCallConstraint(HardConstraint):
         super().__init__(
             name="NightFloatPostCall",
             constraint_type=ConstraintType.ROTATION,
+            weight=200,
             priority=ConstraintPriority.CRITICAL,
         )
 

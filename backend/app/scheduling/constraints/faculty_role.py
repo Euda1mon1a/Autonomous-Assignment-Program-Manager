@@ -30,12 +30,13 @@ from .base import (
     ConstraintViolation,
     HardConstraint,
     SchedulingContext,
+    SoftConstraint,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class FacultyRoleClinicConstraint(HardConstraint):
+class FacultyRoleClinicConstraint(SoftConstraint):
     """
     Enforces clinic half-day limits for faculty.
 
@@ -65,6 +66,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
         super().__init__(
             name="FacultyRoleClinic",
             constraint_type=ConstraintType.CAPACITY,
+            weight=100,
             priority=ConstraintPriority.HIGH,
         )
 
@@ -326,7 +328,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
         return any_date - timedelta(days=days_since_monday)
 
 
-class SMFacultyClinicConstraint(HardConstraint):
+class SMFacultyClinicConstraint(SoftConstraint):
     """
     Ensures Sports Medicine faculty is not assigned to regular clinic.
 
@@ -344,6 +346,7 @@ class SMFacultyClinicConstraint(HardConstraint):
         super().__init__(
             name="SMFacultyNoRegularClinic",
             constraint_type=ConstraintType.SPECIALTY,
+            weight=50,
             priority=ConstraintPriority.HIGH,
         )
 

@@ -57,7 +57,7 @@ def is_overnight_call_night(block_date: date) -> bool:
     return block_date.weekday() in (6, 0, 1, 2, 3)  # Sun=6, Mon-Thu=0-3
 
 
-class OvernightCallGenerationConstraint(HardConstraint):  # @archetype-ok
+class OvernightCallGenerationConstraint(SoftConstraint):  # @archetype-ok
     """
     Generates overnight call assignments for Sunday through Thursday nights.
 
@@ -82,6 +82,7 @@ class OvernightCallGenerationConstraint(HardConstraint):  # @archetype-ok
         super().__init__(
             name="OvernightCallGeneration",
             constraint_type=ConstraintType.CALL,
+            weight=500,
             priority=ConstraintPriority.HIGH,
         )
 

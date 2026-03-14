@@ -27,12 +27,13 @@ from .base import (
     ConstraintViolation,
     HardConstraint,
     SchedulingContext,
+    SoftConstraint,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class SMResidentFacultyAlignmentConstraint(HardConstraint):
+class SMResidentFacultyAlignmentConstraint(SoftConstraint):
     """
     Ensures SM residents are scheduled with SM faculty.
 
@@ -61,6 +62,7 @@ class SMResidentFacultyAlignmentConstraint(HardConstraint):
         super().__init__(
             name="SMResidentFacultyAlignment",
             constraint_type=ConstraintType.SPECIALTY,
+            weight=50,
             priority=ConstraintPriority.HIGH,
         )
 
