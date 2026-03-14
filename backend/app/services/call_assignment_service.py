@@ -926,8 +926,11 @@ class CallAssignmentService:
         Returns:
             PCATGenerationResponse with results of the operation
         """
-        # Ensure calendar policy is loaded from DB before using helpers
-        await self._ensure_calendar_policy_loaded()
+        # Write path — must not proceed with assumed defaults on DB failure.
+        # Raises on failure (unlike read-only _ensure_calendar_policy_loaded).
+        from app.scheduling.calendar_policy import async_load_from_settings
+
+        await async_load_from_settings(self.db)
 
         results: list[PCATAssignmentResult] = []
         errors: list[str] = []
