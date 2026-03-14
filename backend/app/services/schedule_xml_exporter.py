@@ -12,6 +12,10 @@ from defusedxml import minidom
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 from app.core.logging import get_logger
+from app.services.preload.constants import (
+    get_continuity_exempt_codes,
+    get_lec_exempt_codes,
+)
 
 logger = get_logger(__name__)
 
@@ -19,6 +23,10 @@ logger = get_logger(__name__)
 # ═══════════════════════════════════════════════════════════════════════════════
 # ROTATION PATTERNS - TAMC Scheduling Skill constants
 # These patterns define how each rotation maps to AM/PM codes.
+# TODO: Eventually migrate to weekly_patterns table on rotation_templates.
+# Each rotation's AM/PM default pair is more complex than a single
+# preload_activity_code (per-day patterns, continuity clinic rules, etc.),
+# so this dict stays until weekly_patterns fully covers all rotations.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Pattern: (default_am, default_pm)
@@ -75,6 +83,10 @@ ROTATION_PATTERNS: dict[str, tuple[str, str]] = {
 }
 
 # Rotations that include weekend work (don't mark W on Sat/Sun)
+# TODO: Replace with rotation_templates.rotation_type == 'inpatient' or
+# rotation_templates.includes_weekend_work == True from DB once all
+# rotation templates are fully seeded. Kept as Python set for now because
+# the XML exporter operates on display-name strings, not canonical codes.
 INPATIENT_ROTATIONS = frozenset(
     [
         "FMIT",
@@ -95,7 +107,9 @@ INPATIENT_ROTATIONS = frozenset(
 )
 
 # Rotations exempt from Wednesday PM LEC
-LEC_EXEMPT_ROTATIONS = frozenset(
+# Legacy display-name aliases kept for case-insensitive XML exporter matching.
+# Canonical codes come from get_lec_exempt_codes() (DB-backed).
+_LEC_EXEMPT_DISPLAY_ALIASES: frozenset[str] = frozenset(
     [
         "NF",
         "PedNF",
@@ -109,7 +123,9 @@ LEC_EXEMPT_ROTATIONS = frozenset(
 )
 
 # Rotations where PGY-1 interns get Wednesday AM clinic (intern continuity)
-INTERN_CONTINUITY_EXEMPT = frozenset(
+# Legacy display-name aliases kept for case-insensitive XML exporter matching.
+# Canonical codes come from get_continuity_exempt_codes() (DB-backed).
+_CONTINUITY_EXEMPT_DISPLAY_ALIASES: frozenset[str] = frozenset(
     [
         "NF",
         "PedNF",
@@ -126,10 +142,20 @@ INTERN_CONTINUITY_EXEMPT = frozenset(
     ]
 )
 
+# Backward-compatible aliases (used by tests and external callers).
+# Legacy fallback: prefer DB columns via get_lec_exempt_codes() / get_continuity_exempt_codes().
+LEC_EXEMPT_ROTATIONS = _LEC_EXEMPT_DISPLAY_ALIASES
+INTERN_CONTINUITY_EXEMPT = _CONTINUITY_EXEMPT_DISPLAY_ALIASES
+
 # Lowercase versions for case-insensitive matching
 _INPATIENT_ROTATIONS_LOWER = frozenset(r.lower() for r in INPATIENT_ROTATIONS)
-_LEC_EXEMPT_ROTATIONS_LOWER = frozenset(r.lower() for r in LEC_EXEMPT_ROTATIONS)
-_INTERN_CONTINUITY_EXEMPT_LOWER = frozenset(r.lower() for r in INTERN_CONTINUITY_EXEMPT)
+_LEC_EXEMPT_ROTATIONS_LOWER = frozenset(
+    r.lower() for r in (_LEC_EXEMPT_DISPLAY_ALIASES | get_lec_exempt_codes())
+)
+_INTERN_CONTINUITY_EXEMPT_LOWER = frozenset(
+    r.lower()
+    for r in (_CONTINUITY_EXEMPT_DISPLAY_ALIASES | get_continuity_exempt_codes())
+)
 
 # Build lowercase pattern lookup
 _ROTATION_PATTERNS_LOWER: dict[str, tuple[str, str]] = {

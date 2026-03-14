@@ -17,6 +17,8 @@ from .constants import (
     OFFSITE_ROTATIONS,
     ROTATION_TO_ACTIVITY,
     SATURDAY_OFF_ROTATIONS,
+    get_continuity_exempt_codes,
+    get_lec_exempt_codes,
 )
 from .date_helpers import is_last_wednesday
 
@@ -26,12 +28,24 @@ from .date_helpers import is_last_wednesday
 # ---------------------------------------------------------------------------
 
 
-def is_lec_exempt(rotation_code: str) -> bool:
-    return rotation_code in LEC_EXEMPT_ROTATIONS
+def is_lec_exempt(rotation_code: str, db_session=None) -> bool:
+    """Check if a rotation code is LEC-exempt.
+
+    When ``db_session`` is provided, queries the DB column
+    ``rotation_templates.is_lec_exempt`` first, falling back to the
+    hardcoded Python constant set.
+    """
+    return rotation_code in get_lec_exempt_codes(db_session)
 
 
-def is_intern_continuity_exempt(rotation_code: str) -> bool:
-    return rotation_code in INTERN_CONTINUITY_EXEMPT_ROTATIONS
+def is_intern_continuity_exempt(rotation_code: str, db_session=None) -> bool:
+    """Check if a rotation code is intern-continuity-exempt.
+
+    When ``db_session`` is provided, queries the DB column
+    ``rotation_templates.is_continuity_exempt`` first, falling back to
+    the hardcoded Python constant set.
+    """
+    return rotation_code in get_continuity_exempt_codes(db_session)
 
 
 # ---------------------------------------------------------------------------
