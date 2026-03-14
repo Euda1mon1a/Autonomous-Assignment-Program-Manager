@@ -576,11 +576,13 @@ class CallAssignmentService:
             if a.call_type == "overnight":
                 covered_dates.add(a.date)
 
-        # Find expected overnight call dates (Sun-Thu, weekday 0,1,2,3,6)
+        # Find expected overnight call dates from calendar policy
+        from app.scheduling.calendar_policy import is_overnight_call_day
+
         expected_dates = []
         current = start_date
         while current <= end_date:
-            if current.weekday() in (0, 1, 2, 3, 6):  # Sun-Thu
+            if is_overnight_call_day(current):
                 expected_dates.append(current)
             current = current + date.resolution
 
@@ -788,9 +790,10 @@ class CallAssignmentService:
     # =========================================================================
 
     def _is_sun_thurs(self, d: date) -> bool:
-        """Check if date is Sunday through Thursday (valid overnight call days)."""
-        # Sunday = 6, Monday = 0, Tuesday = 1, Wednesday = 2, Thursday = 3
-        return d.weekday() in (0, 1, 2, 3, 6)
+        """Check if date is an overnight call day (delegates to calendar_policy)."""
+        from app.scheduling.calendar_policy import is_overnight_call_day
+
+        return is_overnight_call_day(d)
 
     async def _find_template_by_abbrev(self, abbrev: str) -> RotationTemplate | None:
         """Find rotation template by abbreviation."""

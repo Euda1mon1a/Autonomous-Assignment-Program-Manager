@@ -1168,6 +1168,11 @@ class SchedulingEngine:
                         scale,
                     )
 
+        # Load calendar policy from application_settings
+        from app.scheduling.calendar_policy import load_from_settings
+
+        load_from_settings(self.db)
+
         # Load graduation requirements and YTD clinic counts
         graduation_requirements = self._load_graduation_requirements()
         ytd_clinic_counts = {}

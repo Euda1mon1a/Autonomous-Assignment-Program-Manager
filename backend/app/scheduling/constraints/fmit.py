@@ -45,32 +45,37 @@ logger = logging.getLogger(__name__)
 
 def get_fmit_week_dates(any_date: date) -> tuple[date, date]:
     """
-    Get the Friday-Thursday FMIT week containing the given date.
+    Get the FMIT week containing the given date.
 
-    FMIT weeks run from Friday to Thursday, independent of calendar weeks.
+    FMIT weeks run from a configurable start weekday (default Friday)
+    for 7 days. The start weekday is read from calendar_policy.
 
     Args:
         any_date: Any date within the FMIT week
 
     Returns:
-        tuple: (friday_start, thursday_end) of the FMIT week
+        Tuple of (week_start, week_end)  e.g. (friday, thursday)
     """
-    # Friday = weekday 4
+    from app.scheduling.calendar_policy import get_fmit_week_start_weekday
+
+    start_weekday = get_fmit_week_start_weekday()  # default 4 (Friday)
     day_of_week = any_date.weekday()
 
-    if day_of_week >= 4:  # Fri(4), Sat(5), Sun(6)
-        days_since_friday = day_of_week - 4
-    else:  # Mon(0), Tue(1), Wed(2), Thu(3)
-        days_since_friday = day_of_week + 3
+    if day_of_week >= start_weekday:
+        days_since_start = day_of_week - start_weekday
+    else:
+        days_since_start = day_of_week + (7 - start_weekday)
 
-    friday = any_date - timedelta(days=days_since_friday)
-    thursday = friday + timedelta(days=6)
-    return friday, thursday
+    week_start = any_date - timedelta(days=days_since_start)
+    week_end = week_start + timedelta(days=6)
+    return week_start, week_end
 
 
 def is_sun_thurs(any_date: date) -> bool:
-    """Check if date is Sunday through Thursday (call blocking days)."""
-    return any_date.weekday() in (6, 0, 1, 2, 3)  # Sun=6, Mon-Thu=0-3
+    """Check if date is an overnight call day (delegates to calendar_policy)."""
+    from app.scheduling.calendar_policy import is_overnight_call_day
+
+    return is_overnight_call_day(any_date)
 
 
 def _is_fmit_template(template: Any) -> bool:

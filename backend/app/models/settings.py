@@ -5,6 +5,7 @@ from datetime import datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, Integer, String
+from sqlalchemy.dialects.postgresql import JSONB
 
 from app.db.base import Base
 from app.db.types import GUID
@@ -80,6 +81,14 @@ class ApplicationSettings(Base):
         String(50), nullable=False, default=FreezeScope.NON_EMERGENCY_ONLY.value
     )
 
+    # Calendar policy (centralized from constraint modules)
+    # Weekdays for overnight call: [0,1,2,3,6] = Mon-Thu + Sun
+    overnight_call_weekdays = Column(
+        JSONB, nullable=False, server_default="[0,1,2,3,6]"
+    )
+    # FMIT week starts on this weekday (4 = Friday)
+    fmit_week_start_weekday = Column(Integer, nullable=False, server_default="4")
+
     # Schema versioning - for backup/restore compatibility detection
     # Stores current Alembic head revision to detect schema mismatches
     alembic_version = Column(String(255), nullable=True)
@@ -144,6 +153,8 @@ class ApplicationSettings(Base):
             else None,
             "freeze_horizon_days": self.freeze_horizon_days,
             "freeze_scope": self.freeze_scope,
+            "overnight_call_weekdays": self.overnight_call_weekdays,
+            "fmit_week_start_weekday": self.fmit_week_start_weekday,
             "alembic_version": self.alembic_version,
             "schema_timestamp": self.schema_timestamp.isoformat()
             if self.schema_timestamp
