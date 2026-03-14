@@ -439,18 +439,80 @@ class TestFMITMandatoryCallValidate:
         result = c.validate([], ctx)
         assert result.satisfied is True
 
-    def test_placeholder_always_satisfied(self):
-        """Current implementation is a placeholder that always returns satisfied."""
+    def test_fmit_with_both_calls_satisfied(self):
+        """FMIT faculty with Fri+Sat call assignments passes validation."""
         c = FMITMandatoryCallConstraint()
         fac = _person(name="Dr. A")
         fmit_tmpl = _fmit_template()
-        b = _block(block_date=date(2025, 3, 10))
-        fmit_assign = _assignment(fac.id, b.id, rotation_template_id=fmit_tmpl.id)
-        ctx = _context(faculty=[fac], blocks=[b], templates=[fmit_tmpl])
+        # Friday 2025-03-07 is a Friday
+        fri_block = _block(block_date=date(2025, 3, 7))
+        fmit_assign = _assignment(
+            fac.id, fri_block.id, rotation_template_id=fmit_tmpl.id
+        )
+        ctx = _context(
+            faculty=[fac],
+            blocks=[fri_block],
+            templates=[fmit_tmpl],
+        )
+        ctx.existing_assignments = [fmit_assign]
+
+        # Create call records with call_type + date (real CallAssignment shape)
+        fri_call = SimpleNamespace(
+            person_id=fac.id, call_type="overnight", date=date(2025, 3, 7)
+        )
+        sat_call = SimpleNamespace(
+            person_id=fac.id, call_type="overnight", date=date(2025, 3, 8)
+        )
+
+        result = c.validate([fri_call, sat_call], ctx)
+        assert result.satisfied is True
+        assert len(result.violations) == 0
+
+    def test_fmit_missing_saturday_call(self):
+        """FMIT faculty missing Saturday call reports violation."""
+        c = FMITMandatoryCallConstraint()
+        fac = _person(name="Dr. A")
+        fmit_tmpl = _fmit_template()
+        fri_block = _block(block_date=date(2025, 3, 7))
+        fmit_assign = _assignment(
+            fac.id, fri_block.id, rotation_template_id=fmit_tmpl.id
+        )
+        ctx = _context(
+            faculty=[fac],
+            blocks=[fri_block],
+            templates=[fmit_tmpl],
+        )
+        ctx.existing_assignments = [fmit_assign]
+
+        # Only Friday call, no Saturday
+        fri_call = SimpleNamespace(
+            person_id=fac.id, call_type="overnight", date=date(2025, 3, 7)
+        )
+
+        result = c.validate([fri_call], ctx)
+        assert result.satisfied is False
+        assert len(result.violations) == 1
+        assert "Saturday" in result.violations[0].message
+
+    def test_fmit_missing_both_calls(self):
+        """FMIT faculty with no call assignments reports two violations."""
+        c = FMITMandatoryCallConstraint()
+        fac = _person(name="Dr. A")
+        fmit_tmpl = _fmit_template()
+        fri_block = _block(block_date=date(2025, 3, 7))
+        fmit_assign = _assignment(
+            fac.id, fri_block.id, rotation_template_id=fmit_tmpl.id
+        )
+        ctx = _context(
+            faculty=[fac],
+            blocks=[fri_block],
+            templates=[fmit_tmpl],
+        )
         ctx.existing_assignments = [fmit_assign]
 
         result = c.validate([], ctx)
-        assert result.satisfied is True
+        assert result.satisfied is False
+        assert len(result.violations) == 2
 
 
 # ==================== PostFMITRecoveryConstraint Tests ====================

@@ -503,16 +503,14 @@ class FMITMandatoryCallConstraint(SoftConstraint):
         faculty_by_id = {f.id: f for f in context.faculty}
         block_by_id = {b.id: b for b in context.blocks}
 
-        # Build a lookup: (person_id, date) -> has call assignment
+        # Build a lookup: (person_id, date) -> has overnight call
+        # CallAssignment rows use call_type + date (not role/is_call)
         call_dates: set[tuple[Any, date]] = set()
         for a in assignments:
-            # Call assignments have role="call" or similar indicator
-            is_call = getattr(a, "role", None) == "call" or getattr(a, "is_call", False)
-            if not is_call:
+            if not hasattr(a, "call_type") or a.call_type != "overnight":
                 continue
-            block = block_by_id.get(a.block_id)
-            if block:
-                call_dates.add((a.person_id, block.date))
+            if hasattr(a, "date") and a.date is not None:
+                call_dates.add((a.person_id, a.date))
 
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
             faculty = faculty_by_id.get(faculty_id)
