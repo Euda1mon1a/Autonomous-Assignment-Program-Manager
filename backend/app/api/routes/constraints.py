@@ -1,24 +1,24 @@
 """
 Constraint Management API Routes
 
-Provides API endpoints for viewing and managing constraint configurations.
+DB-backed constraint configuration. The constraint_configurations table is the
+single source of truth — seeded from ConstraintManager instances, read by the
+engine at schedule generation time.
 
 Endpoints:
-    GET /api/v1/constraints/status - Get constraint status
-    GET /api/v1/constraints - List all constraints
+    GET /api/v1/constraints - List all constraints (from DB)
     GET /api/v1/constraints/enabled - List enabled constraints
     GET /api/v1/constraints/disabled - List disabled constraints
+    GET /api/v1/constraints/{name} - Get single constraint
+    PATCH /api/v1/constraints/{name} - Update enabled/weight (persisted to DB)
     POST /api/v1/constraints/{name}/enable - Enable a constraint
     POST /api/v1/constraints/{name}/disable - Disable a constraint
-    POST /api/v1/constraints/preset/{preset} - Apply a preset
 """
 
 import logging
-from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.role_filter import require_admin
@@ -26,11 +26,6 @@ from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.models.constraint_config import ConstraintConfiguration
 from app.models.user import User
-from app.scheduling.constraints.config import (
-    ConstraintCategory,
-    ConstraintConfig,
-    get_constraint_config,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -42,13 +37,10 @@ class ConstraintStatusResponse(BaseModel):
 
     name: str
     enabled: bool
-    priority: int
     weight: float
+    priority: str
     category: str
-    description: str
-    dependencies: list[str]
-    enable_condition: str | None
-    disable_reason: str | None
+    description: str | None
 
 
 class ConstraintListResponse(BaseModel):
@@ -68,328 +60,6 @@ class ConstraintEnableResponse(BaseModel):
     constraint: ConstraintStatusResponse
 
 
-class PresetApplyResponse(BaseModel):
-    """Response model for preset application."""
-
-    success: bool
-    message: str
-    enabled_constraints: list[str]
-    disabled_constraints: list[str]
-
-
-def _constraint_to_response(config: ConstraintConfig) -> ConstraintStatusResponse:
-    """Convert ConstraintConfig to response model."""
-    return ConstraintStatusResponse(
-        name=config.name,
-        enabled=config.enabled,
-        priority=config.priority.value,
-        weight=config.weight,
-        category=config.category.value,
-        description=config.description,
-        dependencies=config.dependencies,
-        enable_condition=config.enable_condition,
-        disable_reason=config.disable_reason,
-    )
-
-
-@router.get("", response_model=list[ConstraintStatusResponse])
-async def list_constraints() -> list[ConstraintStatusResponse]:
-    """
-    List all constraints as a flat array.
-    Used by the frontend admin scheduling laboratory.
-    """
-    try:
-        config_manager = get_constraint_config()
-        all_constraints = list(config_manager._configs.values())
-        return [_constraint_to_response(c) for c in all_constraints]
-    except Exception as e:
-        logger.error(f"Failed to list constraints: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list constraints",
-        )
-
-
-@router.get("/enabled", response_model=list[ConstraintStatusResponse])
-async def list_enabled_constraints() -> list[ConstraintStatusResponse]:
-    """
-    List enabled constraints.
-
-    Returns:
-        List[ConstraintStatusResponse]: List of enabled constraints
-    """
-    try:
-        config_manager = get_constraint_config()
-        enabled = config_manager.get_all_enabled()
-
-        return [_constraint_to_response(c) for c in enabled]
-    except (ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Error listing enabled constraints: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list enabled constraints",
-        )
-
-
-@router.get("/disabled", response_model=list[ConstraintStatusResponse])
-async def list_disabled_constraints() -> list[ConstraintStatusResponse]:
-    """
-    List disabled constraints.
-
-    Returns:
-        List[ConstraintStatusResponse]: List of disabled constraints
-    """
-    try:
-        config_manager = get_constraint_config()
-        disabled = config_manager.get_all_disabled()
-
-        return [_constraint_to_response(c) for c in disabled]
-    except Exception as e:
-        logger.error(f"Error listing disabled constraints: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list disabled constraints",
-        )
-
-
-@router.get("/category/{category}", response_model=list[ConstraintStatusResponse])
-async def list_constraints_by_category(category: str) -> list[ConstraintStatusResponse]:
-    """
-    List constraints by category.
-
-    Args:
-        category: Constraint category (ACGME, CAPACITY, COVERAGE, etc.)
-
-    Returns:
-        List[ConstraintStatusResponse]: List of constraints in category
-    """
-    try:
-        # Validate category
-        try:
-            cat_enum = ConstraintCategory(category.upper())
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid category: {category}. Valid categories: {[c.value for c in ConstraintCategory]}",
-            )
-
-        config_manager = get_constraint_config()
-
-        # Get all constraints in category (enabled and disabled)
-        constraints = [
-            c for c in config_manager._configs.values() if c.category == cat_enum
-        ]
-
-        return [_constraint_to_response(c) for c in constraints]
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error listing constraints by category: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list constraints by category",
-        )
-
-
-@router.post("/{name}/enable", response_model=ConstraintEnableResponse)
-async def enable_constraint(
-    name: str,
-    current_user: User = Depends(get_current_active_user),
-    _: None = Depends(require_admin()),
-) -> ConstraintEnableResponse:
-    """
-    Enable a constraint.
-
-    Args:
-        name: Constraint name
-
-    Returns:
-        ConstraintEnableResponse: Result of enable operation
-    """
-    try:
-        config_manager = get_constraint_config()
-
-        # Check if constraint exists
-        constraint = config_manager.get(name)
-        if not constraint:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Constraint '{name}' not found",
-            )
-
-        # Check if already enabled
-        if constraint.enabled:
-            return ConstraintEnableResponse(
-                success=True,
-                message=f"Constraint '{name}' is already enabled",
-                constraint=_constraint_to_response(constraint),
-            )
-
-        # Enable constraint
-        success = config_manager.enable(name)
-
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to enable constraint '{name}'",
-            )
-
-        # Get updated constraint
-        constraint = config_manager.get(name)
-
-        logger.info(f"Enabled constraint via API: {name}")
-
-        return ConstraintEnableResponse(
-            success=True,
-            message=f"Successfully enabled constraint '{name}'",
-            constraint=_constraint_to_response(constraint),  # type: ignore[arg-type]
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error enabling constraint: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to enable constraint",
-        )
-
-
-@router.post("/{name}/disable", response_model=ConstraintEnableResponse)
-async def disable_constraint(
-    name: str,
-    current_user: User = Depends(get_current_active_user),
-    _: None = Depends(require_admin()),
-) -> ConstraintEnableResponse:
-    """
-    Disable a constraint.
-
-    Args:
-        name: Constraint name
-
-    Returns:
-        ConstraintEnableResponse: Result of disable operation
-    """
-    try:
-        config_manager = get_constraint_config()
-
-        # Check if constraint exists
-        constraint = config_manager.get(name)
-        if not constraint:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Constraint '{name}' not found",
-            )
-
-        # Check if already disabled
-        if not constraint.enabled:
-            return ConstraintEnableResponse(
-                success=True,
-                message=f"Constraint '{name}' is already disabled",
-                constraint=_constraint_to_response(constraint),
-            )
-
-        # Disable constraint
-        success = config_manager.disable(name)
-
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to disable constraint '{name}'",
-            )
-
-        # Get updated constraint
-        constraint = config_manager.get(name)
-
-        logger.info(f"Disabled constraint via API: {name}")
-
-        return ConstraintEnableResponse(
-            success=True,
-            message=f"Successfully disabled constraint '{name}'",
-            constraint=_constraint_to_response(constraint),  # type: ignore[arg-type]
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error disabling constraint: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to disable constraint",
-        )
-
-
-@router.post("/preset/{preset}", response_model=PresetApplyResponse)
-async def apply_constraint_preset(
-    preset: str,
-    current_user: User = Depends(get_current_active_user),
-    _: None = Depends(require_admin()),
-) -> PresetApplyResponse:
-    """
-    Apply a constraint preset.
-
-    Valid presets:
-    - minimal: Only essential constraints
-    - strict: All constraints enabled with doubled weights
-    - resilience_tier1: Core resilience constraints
-    - resilience_tier2: All resilience constraints
-    - call_scheduling: Call scheduling constraints
-    - sports_medicine: Sports medicine constraints
-
-    Args:
-        preset: Preset name
-
-    Returns:
-        PresetApplyResponse: Result of preset application
-    """
-    try:
-        valid_presets = [
-            "minimal",
-            "strict",
-            "resilience_tier1",
-            "resilience_tier2",
-            "call_scheduling",
-            "sports_medicine",
-        ]
-
-        if preset not in valid_presets:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid preset: {preset}. Valid presets: {valid_presets}",
-            )
-
-        config_manager = get_constraint_config()
-
-        # Get before state
-        before_enabled = [c.name for c in config_manager.get_all_enabled()]
-
-        # Apply preset
-        config_manager.apply_preset(preset)
-
-        # Get after state
-        after_enabled = [c.name for c in config_manager.get_all_enabled()]
-        after_disabled = [c.name for c in config_manager.get_all_disabled()]
-
-        # Calculate what changed
-        newly_enabled = [c for c in after_enabled if c not in before_enabled]
-        newly_disabled = [c for c in before_enabled if c not in after_enabled]
-
-        logger.info(f"Applied constraint preset via API: {preset}")
-
-        return PresetApplyResponse(
-            success=True,
-            message=f"Successfully applied preset '{preset}'",
-            enabled_constraints=after_enabled,
-            disabled_constraints=after_disabled,
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error applying preset: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to apply preset",
-        )
-
-
 class ConstraintUpdateRequest(BaseModel):
     """Request model for updating constraint configuration."""
 
@@ -405,106 +75,180 @@ class ConstraintUpdateResponse(BaseModel):
     constraint: ConstraintStatusResponse
 
 
+def _db_to_response(row: ConstraintConfiguration) -> ConstraintStatusResponse:
+    """Convert DB row to response model."""
+    return ConstraintStatusResponse(
+        name=row.name,
+        enabled=row.enabled,
+        weight=row.weight,
+        priority=row.priority,
+        category=row.category,
+        description=row.description,
+    )
+
+
+def _get_or_404(db: Session, name: str) -> ConstraintConfiguration:
+    """Get constraint by name or raise 404."""
+    row = (
+        db.query(ConstraintConfiguration)
+        .filter(ConstraintConfiguration.name == name)
+        .first()
+    )
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Constraint '{name}' not found",
+        )
+    return row
+
+
+@router.get("", response_model=list[ConstraintStatusResponse])
+def list_constraints(
+    db: Session = Depends(get_db),
+) -> list[ConstraintStatusResponse]:
+    """List all constraints from DB."""
+    rows = (
+        db.query(ConstraintConfiguration)
+        .order_by(ConstraintConfiguration.category, ConstraintConfiguration.name)
+        .all()
+    )
+    return [_db_to_response(r) for r in rows]
+
+
+@router.get("/enabled", response_model=list[ConstraintStatusResponse])
+def list_enabled_constraints(
+    db: Session = Depends(get_db),
+) -> list[ConstraintStatusResponse]:
+    """List enabled constraints."""
+    rows = (
+        db.query(ConstraintConfiguration)
+        .filter(ConstraintConfiguration.enabled.is_(True))
+        .order_by(ConstraintConfiguration.category, ConstraintConfiguration.name)
+        .all()
+    )
+    return [_db_to_response(r) for r in rows]
+
+
+@router.get("/disabled", response_model=list[ConstraintStatusResponse])
+def list_disabled_constraints(
+    db: Session = Depends(get_db),
+) -> list[ConstraintStatusResponse]:
+    """List disabled constraints."""
+    rows = (
+        db.query(ConstraintConfiguration)
+        .filter(ConstraintConfiguration.enabled.is_(False))
+        .order_by(ConstraintConfiguration.category, ConstraintConfiguration.name)
+        .all()
+    )
+    return [_db_to_response(r) for r in rows]
+
+
+@router.get("/category/{category}", response_model=list[ConstraintStatusResponse])
+def list_constraints_by_category(
+    category: str,
+    db: Session = Depends(get_db),
+) -> list[ConstraintStatusResponse]:
+    """List constraints by category."""
+    rows = (
+        db.query(ConstraintConfiguration)
+        .filter(ConstraintConfiguration.category == category.upper())
+        .order_by(ConstraintConfiguration.name)
+        .all()
+    )
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No constraints found for category '{category}'",
+        )
+    return [_db_to_response(r) for r in rows]
+
+
+@router.get("/{name}", response_model=ConstraintStatusResponse)
+def get_constraint(
+    name: str,
+    db: Session = Depends(get_db),
+) -> ConstraintStatusResponse:
+    """Get a single constraint by name."""
+    return _db_to_response(_get_or_404(db, name))
+
+
 @router.patch("/{name}", response_model=ConstraintUpdateResponse)
-async def update_constraint(
+def update_constraint(
     name: str,
     body: ConstraintUpdateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ) -> ConstraintUpdateResponse:
-    """
-    Update constraint configuration (enable/disable, weight).
+    """Update constraint enabled/weight. Persisted to DB, read by engine at next generation."""
+    row = _get_or_404(db, name)
 
-    Persists changes to the database so they survive restarts.
-    """
-    config_manager = get_constraint_config()
-    constraint = config_manager.get(name)
-    if not constraint:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Constraint '{name}' not found",
-        )
-
-    # Apply in-memory changes
     if body.enabled is not None:
-        if body.enabled:
-            config_manager.enable(name)
-        else:
-            config_manager.disable(name)
-
+        row.enabled = body.enabled
     if body.weight is not None:
         if body.weight < 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Weight must be non-negative",
             )
-        constraint.weight = body.weight
+        row.weight = body.weight
 
-    # Persist to database
-    db_config = (
-        db.query(ConstraintConfiguration)
-        .filter(ConstraintConfiguration.name == name)
-        .first()
-    )
-    if db_config is None:
-        db_config = ConstraintConfiguration(
-            name=name,
-            enabled=constraint.enabled,
-            weight=constraint.weight,
-            priority=constraint.priority.name,
-            category=constraint.category.value,
-            description=constraint.description,
-            updated_by=current_user.username if current_user else None,
-        )
-        db.add(db_config)
-    else:
-        db_config.enabled = constraint.enabled
-        db_config.weight = constraint.weight
-        db_config.updated_by = current_user.username if current_user else None
-
+    row.updated_by = current_user.username if current_user else None
     db.commit()
+    db.refresh(row)
 
-    updated = config_manager.get(name)
     logger.info(
-        f"Constraint '{name}' updated by {current_user.username}: "
-        f"enabled={updated.enabled}, weight={updated.weight}"  # type: ignore[union-attr]
+        "Constraint '%s' updated by %s: enabled=%s, weight=%s",
+        name,
+        row.updated_by,
+        row.enabled,
+        row.weight,
     )
 
     return ConstraintUpdateResponse(
         success=True,
-        message=f"Constraint '{name}' updated and persisted",
-        constraint=_constraint_to_response(updated),  # type: ignore[arg-type]
+        message=f"Constraint '{name}' updated",
+        constraint=_db_to_response(row),
     )
 
 
-@router.get("/{name}", response_model=ConstraintStatusResponse)
-async def get_constraint(name: str) -> ConstraintStatusResponse:
-    """
-    Get details of a specific constraint.
+@router.post("/{name}/enable", response_model=ConstraintEnableResponse)
+def enable_constraint(
+    name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
+) -> ConstraintEnableResponse:
+    """Enable a constraint."""
+    row = _get_or_404(db, name)
+    row.enabled = True
+    row.updated_by = current_user.username if current_user else None
+    db.commit()
+    db.refresh(row)
+    logger.info("Enabled constraint via API: %s", name)
+    return ConstraintEnableResponse(
+        success=True,
+        message=f"Constraint '{name}' enabled",
+        constraint=_db_to_response(row),
+    )
 
-    Args:
-        name: Constraint name
 
-    Returns:
-        ConstraintStatusResponse: Constraint details
-    """
-    try:
-        config_manager = get_constraint_config()
-
-        constraint = config_manager.get(name)
-        if not constraint:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Constraint '{name}' not found",
-            )
-
-        return _constraint_to_response(constraint)
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting constraint: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get constraint",
-        )
+@router.post("/{name}/disable", response_model=ConstraintEnableResponse)
+def disable_constraint(
+    name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
+) -> ConstraintEnableResponse:
+    """Disable a constraint."""
+    row = _get_or_404(db, name)
+    row.enabled = False
+    row.updated_by = current_user.username if current_user else None
+    db.commit()
+    db.refresh(row)
+    logger.info("Disabled constraint via API: %s", name)
+    return ConstraintEnableResponse(
+        success=True,
+        message=f"Constraint '{name}' disabled",
+        constraint=_db_to_response(row),
+    )
