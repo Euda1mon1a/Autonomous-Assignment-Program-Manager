@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-03-13T21:01:04Z
+ * Generated at: 2026-03-14T22:50:30Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -5374,8 +5374,7 @@ export interface paths {
         };
         /**
          * List Constraints
-         * @description List all constraints as a flat array.
-         *     Used by the frontend admin scheduling laboratory.
+         * @description List all constraints from DB.
          */
         get: operations["list_constraints_api_v1_schedule_constraints_get"];
         put?: never;
@@ -5396,9 +5395,6 @@ export interface paths {
         /**
          * List Enabled Constraints
          * @description List enabled constraints.
-         *
-         *     Returns:
-         *         List[ConstraintStatusResponse]: List of enabled constraints
          */
         get: operations["list_enabled_constraints_api_v1_schedule_constraints_enabled_get"];
         put?: never;
@@ -5419,9 +5415,6 @@ export interface paths {
         /**
          * List Disabled Constraints
          * @description List disabled constraints.
-         *
-         *     Returns:
-         *         List[ConstraintStatusResponse]: List of disabled constraints
          */
         get: operations["list_disabled_constraints_api_v1_schedule_constraints_disabled_get"];
         put?: never;
@@ -5442,12 +5435,6 @@ export interface paths {
         /**
          * List Constraints By Category
          * @description List constraints by category.
-         *
-         *     Args:
-         *         category: Constraint category (ACGME, CAPACITY, COVERAGE, etc.)
-         *
-         *     Returns:
-         *         List[ConstraintStatusResponse]: List of constraints in category
          */
         get: operations["list_constraints_by_category_api_v1_schedule_constraints_category__category__get"];
         put?: never;
@@ -5456,6 +5443,30 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schedule/constraints/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Constraint
+         * @description Get a single constraint by name.
+         */
+        get: operations["get_constraint_api_v1_schedule_constraints__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Constraint
+         * @description Update constraint enabled/weight. Persisted to DB, read by engine at next generation.
+         */
+        patch: operations["update_constraint_api_v1_schedule_constraints__name__patch"];
         trace?: never;
     };
     "/api/v1/schedule/constraints/{name}/enable": {
@@ -5470,12 +5481,6 @@ export interface paths {
         /**
          * Enable Constraint
          * @description Enable a constraint.
-         *
-         *     Args:
-         *         name: Constraint name
-         *
-         *     Returns:
-         *         ConstraintEnableResponse: Result of enable operation
          */
         post: operations["enable_constraint_api_v1_schedule_constraints__name__enable_post"];
         delete?: never;
@@ -5496,12 +5501,6 @@ export interface paths {
         /**
          * Disable Constraint
          * @description Disable a constraint.
-         *
-         *     Args:
-         *         name: Constraint name
-         *
-         *     Returns:
-         *         ConstraintEnableResponse: Result of disable operation
          */
         post: operations["disable_constraint_api_v1_schedule_constraints__name__disable_post"];
         delete?: never;
@@ -5521,59 +5520,13 @@ export interface paths {
         put?: never;
         /**
          * Apply Constraint Preset
-         * @description Apply a constraint preset.
-         *
-         *     Valid presets:
-         *     - minimal: Only essential constraints
-         *     - strict: All constraints enabled with doubled weights
-         *     - resilience_tier1: Core resilience constraints
-         *     - resilience_tier2: All resilience constraints
-         *     - call_scheduling: Call scheduling constraints
-         *     - sports_medicine: Sports medicine constraints
-         *
-         *     Args:
-         *         preset: Preset name
-         *
-         *     Returns:
-         *         PresetApplyResponse: Result of preset application
+         * @description Apply a constraint preset (persisted to DB).
          */
         post: operations["apply_constraint_preset_api_v1_schedule_constraints_preset__preset__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/api/v1/schedule/constraints/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Constraint
-         * @description Get details of a specific constraint.
-         *
-         *     Args:
-         *         name: Constraint name
-         *
-         *     Returns:
-         *         ConstraintStatusResponse: Constraint details
-         */
-        get: operations["get_constraint_api_v1_schedule_constraints__name__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Update Constraint
-         * @description Update constraint configuration (enable/disable, weight).
-         *
-         *     Persists changes to the database so they survive restarts.
-         */
-        patch: operations["update_constraint_api_v1_schedule_constraints__name__patch"];
         trace?: never;
     };
     "/api/v1/schedule/metrics/health": {
@@ -10292,6 +10245,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/primary-duty-configs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Primary Duty Configs
+         * @description List all primary duty configurations.
+         */
+        get: operations["list_primary_duty_configs_api_v1_primary_duty_configs__get"];
+        put?: never;
+        /**
+         * Create Primary Duty Config
+         * @description Create a new primary duty configuration.
+         */
+        post: operations["create_primary_duty_config_api_v1_primary_duty_configs__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/primary-duty-configs/{config_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Primary Duty Config
+         * @description Get a single primary duty configuration.
+         */
+        get: operations["get_primary_duty_config_api_v1_primary_duty_configs__config_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Primary Duty Config
+         * @description Delete a primary duty configuration.
+         */
+        delete: operations["delete_primary_duty_config_api_v1_primary_duty_configs__config_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Primary Duty Config
+         * @description Update a primary duty configuration.
+         */
+        patch: operations["update_primary_duty_config_api_v1_primary_duty_configs__config_id__patch"];
+        trace?: never;
+    };
     "/api/v1/constraints": {
         parameters: {
             query?: never;
@@ -10301,8 +10306,7 @@ export interface paths {
         };
         /**
          * List Constraints
-         * @description List all constraints as a flat array.
-         *     Used by the frontend admin scheduling laboratory.
+         * @description List all constraints from DB.
          */
         get: operations["list_constraints_api_v1_constraints_get"];
         put?: never;
@@ -10323,9 +10327,6 @@ export interface paths {
         /**
          * List Enabled Constraints
          * @description List enabled constraints.
-         *
-         *     Returns:
-         *         List[ConstraintStatusResponse]: List of enabled constraints
          */
         get: operations["list_enabled_constraints_api_v1_constraints_enabled_get"];
         put?: never;
@@ -10346,9 +10347,6 @@ export interface paths {
         /**
          * List Disabled Constraints
          * @description List disabled constraints.
-         *
-         *     Returns:
-         *         List[ConstraintStatusResponse]: List of disabled constraints
          */
         get: operations["list_disabled_constraints_api_v1_constraints_disabled_get"];
         put?: never;
@@ -10369,12 +10367,6 @@ export interface paths {
         /**
          * List Constraints By Category
          * @description List constraints by category.
-         *
-         *     Args:
-         *         category: Constraint category (ACGME, CAPACITY, COVERAGE, etc.)
-         *
-         *     Returns:
-         *         List[ConstraintStatusResponse]: List of constraints in category
          */
         get: operations["list_constraints_by_category_api_v1_constraints_category__category__get"];
         put?: never;
@@ -10383,6 +10375,30 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/constraints/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Constraint
+         * @description Get a single constraint by name.
+         */
+        get: operations["get_constraint_api_v1_constraints__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Constraint
+         * @description Update constraint enabled/weight. Persisted to DB, read by engine at next generation.
+         */
+        patch: operations["update_constraint_api_v1_constraints__name__patch"];
         trace?: never;
     };
     "/api/v1/constraints/{name}/enable": {
@@ -10397,12 +10413,6 @@ export interface paths {
         /**
          * Enable Constraint
          * @description Enable a constraint.
-         *
-         *     Args:
-         *         name: Constraint name
-         *
-         *     Returns:
-         *         ConstraintEnableResponse: Result of enable operation
          */
         post: operations["enable_constraint_api_v1_constraints__name__enable_post"];
         delete?: never;
@@ -10423,12 +10433,6 @@ export interface paths {
         /**
          * Disable Constraint
          * @description Disable a constraint.
-         *
-         *     Args:
-         *         name: Constraint name
-         *
-         *     Returns:
-         *         ConstraintEnableResponse: Result of disable operation
          */
         post: operations["disable_constraint_api_v1_constraints__name__disable_post"];
         delete?: never;
@@ -10448,59 +10452,13 @@ export interface paths {
         put?: never;
         /**
          * Apply Constraint Preset
-         * @description Apply a constraint preset.
-         *
-         *     Valid presets:
-         *     - minimal: Only essential constraints
-         *     - strict: All constraints enabled with doubled weights
-         *     - resilience_tier1: Core resilience constraints
-         *     - resilience_tier2: All resilience constraints
-         *     - call_scheduling: Call scheduling constraints
-         *     - sports_medicine: Sports medicine constraints
-         *
-         *     Args:
-         *         preset: Preset name
-         *
-         *     Returns:
-         *         PresetApplyResponse: Result of preset application
+         * @description Apply a constraint preset (persisted to DB).
          */
         post: operations["apply_constraint_preset_api_v1_constraints_preset__preset__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/api/v1/constraints/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Constraint
-         * @description Get details of a specific constraint.
-         *
-         *     Args:
-         *         name: Constraint name
-         *
-         *     Returns:
-         *         ConstraintStatusResponse: Constraint details
-         */
-        get: operations["get_constraint_api_v1_constraints__name__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Update Constraint
-         * @description Update constraint configuration (enable/disable, weight).
-         *
-         *     Persists changes to the database so they survive restarts.
-         */
-        patch: operations["update_constraint_api_v1_constraints__name__patch"];
         trace?: never;
     };
     "/api/v1/credentials/expiring": {
@@ -14075,6 +14033,86 @@ export interface paths {
          *     Requires authentication.
          */
         get: operations["get_rag_stats_api_v1_rag_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/task-history/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Task Entry
+         * @description Log a completed task execution for the learning system.
+         */
+        post: operations["create_task_entry_api_v1_task_history__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/task-history/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Search Similar Tasks
+         * @description Search past tasks by vector similarity.
+         */
+        post: operations["search_similar_tasks_api_v1_task_history_search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/task-history/session/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Session Tasks
+         * @description Retrieve all tasks from a session (episodic recall).
+         */
+        get: operations["get_session_tasks_api_v1_task_history_session__session_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/task-history/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get File Lessons
+         * @description Find past task lessons involving specific files.
+         */
+        get: operations["get_file_lessons_api_v1_task_history_files_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -21248,7 +21286,7 @@ export interface components {
          *     Shows who is absent and why (vacation, sick, deployment, etc.)
          */
         AbsenceInfo: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Absence Type
              * @description Type of absence (vacation, sick, deployment)
@@ -23335,7 +23373,7 @@ export interface components {
          * @description Summary of an assignment for manifest display.
          */
         AssignmentSummary: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Role
              * @description primary, supervising, or backup
@@ -23471,9 +23509,9 @@ export interface components {
          */
         AttendingInfo: {
             /** @description AM attending */
-            am?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            am?: components["schemas"]["PersonSummary"] | null;
             /** @description PM attending */
-            pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            pm?: components["schemas"]["PersonSummary"] | null;
         };
         /**
          * AttractorInfoResponse
@@ -24306,14 +24344,12 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
+            /** Template Id */
+            templateId: string | null;
             /** Success */
             success: boolean;
-            /** Assignment Id */
-            assignmentId?: string | null;
             /** Error */
             error?: string | null;
-            /** Warnings */
-            warnings?: string[];
         };
         /**
          * BatchOperationStatus
@@ -24727,7 +24763,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__batch__BatchOperationResult"][];
             /**
              * Errors
              * @description Global errors
@@ -24874,7 +24910,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -25520,24 +25556,19 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Response for listing academic blocks.
+         * @description Schema for list of blocks.
          */
         BlockListResponse: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Items
+             * @description List of block responses
              */
-            blocks: components["schemas"]["BlockSummary"][];
+            items: components["schemas"]["BlockResponse"][];
             /**
-             * Academic Year
-             * @description Academic year
-             */
-            academicYear: string;
-            /**
-             * Total Blocks
+             * Total
              * @description Total number of blocks
              */
-            totalBlocks: number;
+            total: number;
         };
         /**
          * BlockMatrixResponse
@@ -28383,15 +28414,29 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict check.
+         * @description Response for conflict checking before assignment.
          */
         ConflictCheckResponse: {
-            /** Has Conflicts */
-            hasConflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            canProceed: boolean;
+            /**
+             * Can Assign
+             * @description Whether assignment can proceed
+             */
+            canAssign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
          * ConflictDetail
@@ -28623,20 +28668,14 @@ export interface components {
             name: string;
             /** Enabled */
             enabled: boolean;
-            /** Priority */
-            priority: number;
             /** Weight */
             weight: number;
+            /** Priority */
+            priority: number;
             /** Category */
             category: string;
             /** Description */
-            description: string;
-            /** Dependencies */
-            dependencies: string[];
-            /** Enable Condition */
-            enableCondition: string | null;
-            /** Disable Reason */
-            disableReason: string | null;
+            description: string | null;
         };
         /**
          * ConstraintUpdateRequest
@@ -28791,36 +28830,34 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
+         * @description Represents a coverage gap with details.
          */
         CoverageGap: {
+            /** Gap Id */
+            gapId: string;
             /**
              * Date
              * Format: date
-             * @description Date of the gap
              */
             date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
+            /** Time Of Day */
             timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
+            /** Block Id */
+            blockId: string;
+            /** Severity */
             severity: string;
+            /** Days Until */
+            daysUntil: number;
+            /** Affected Area */
+            affectedArea: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            currentAssignments: number;
+            /** Required Assignments */
+            requiredAssignments: number;
+            /** Gap Size */
+            gapSize: number;
         };
         /**
          * CoverageGapsResponse
@@ -28847,7 +28884,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
+            gaps: components["schemas"]["CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -28899,7 +28936,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["CoverageGap"][];
+            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -32546,12 +32583,12 @@ export interface components {
          */
         FMITSection: {
             /** @description Attending physician for inpatient */
-            attending?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            attending?: components["schemas"]["PersonSummary"] | null;
             /**
              * Residents
              * @description Residents on FMIT
              */
-            residents?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"][];
+            residents?: components["schemas"]["PersonSummary"][];
         };
         /**
          * FMITWeekInfo
@@ -38144,7 +38181,7 @@ export interface components {
          *     Shows who is on night call so staff know they're unavailable during day.
          */
         NightCallInfo: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Call Type
              * @description Type of call (night, backup)
@@ -39161,7 +39198,7 @@ export interface components {
          *     Shows person with their AM and PM assignments (if any).
          */
         PersonClinicCoverage: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /** @description AM assignment */
             am?: components["schemas"]["AssignmentInfo"] | null;
             /** @description PM assignment */
@@ -39481,7 +39518,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Minimal person info for embedding in credential responses.
+         * @description Summary of person for manifest display.
          */
         PersonSummary: {
             /**
@@ -39491,8 +39528,11 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /** Type */
-            type: string;
+            /**
+             * Pgy Level
+             * @description PGY level for residents
+             */
+            pgyLevel?: number | null;
         };
         /**
          * PersonType
@@ -39876,6 +39916,73 @@ export interface components {
             enabledConstraints: string[];
             /** Disabled Constraints */
             disabledConstraints: string[];
+        };
+        /**
+         * PrimaryDutyConfigCreate
+         * @description Request to create a primary duty configuration.
+         */
+        PrimaryDutyConfigCreate: {
+            /** Duty Name */
+            dutyName: string;
+            /**
+             * Clinic Min Per Week
+             * @default 0
+             */
+            clinicMinPerWeek: number;
+            /**
+             * Clinic Max Per Week
+             * @default 10
+             */
+            clinicMaxPerWeek: number;
+            /**
+             * Available Days
+             * @description Available weekdays (0=Mon, 4=Fri)
+             * @default [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       4
+             *     ]
+             */
+            availableDays: number[];
+        };
+        /**
+         * PrimaryDutyConfigResponse
+         * @description Response for a primary duty configuration.
+         */
+        PrimaryDutyConfigResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Duty Name */
+            dutyName: string;
+            /** Clinic Min Per Week */
+            clinicMinPerWeek: number;
+            /** Clinic Max Per Week */
+            clinicMaxPerWeek: number;
+            /** Available Days */
+            availableDays: number[];
+            /** Created At */
+            createdAt?: string | null;
+            /** Updated At */
+            updatedAt?: string | null;
+        };
+        /**
+         * PrimaryDutyConfigUpdate
+         * @description Request to update a primary duty configuration.
+         */
+        PrimaryDutyConfigUpdate: {
+            /** Duty Name */
+            dutyName?: string | null;
+            /** Clinic Min Per Week */
+            clinicMinPerWeek?: number | null;
+            /** Clinic Max Per Week */
+            clinicMaxPerWeek?: number | null;
+            /** Available Days */
+            availableDays?: number[] | null;
         };
         /**
          * PrioritizedDecisionsResponse
@@ -40576,7 +40683,7 @@ export interface components {
             /** Procedure Name */
             procedureName: string;
             /** Qualified Faculty */
-            qualifiedFaculty: components["schemas"]["PersonSummary"][];
+            qualifiedFaculty: components["schemas"]["app__schemas__procedure_credential__PersonSummary"][];
             /** Total */
             total: number;
         };
@@ -41585,14 +41692,14 @@ export interface components {
          *     Shows who is away at a remote site and their local surrogate/proxy.
          */
         RemoteAssignment: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Location
              * @description Remote location name
              */
             location: string;
             /** @description Local proxy/surrogate if assigned */
-            surrogate?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            surrogate?: components["schemas"]["PersonSummary"] | null;
         };
         /**
          * RenewalRequest
@@ -43072,6 +43179,43 @@ export interface components {
              * @default 4
              */
             maxSupervisionRatio: number | null;
+            /**
+             * Is Block Half Rotation
+             * @default false
+             */
+            isBlockHalfRotation: boolean;
+            /**
+             * Includes Weekend Work
+             * @default false
+             */
+            includesWeekendWork: boolean;
+            /**
+             * Leave Eligible
+             * @default true
+             */
+            leaveEligible: boolean;
+            /**
+             * Is Offsite
+             * @default false
+             */
+            isOffsite: boolean;
+            /**
+             * Is Lec Exempt
+             * @default false
+             */
+            isLecExempt: boolean;
+            /**
+             * Is Continuity Exempt
+             * @default false
+             */
+            isContinuityExempt: boolean;
+            /**
+             * Is Saturday Off
+             * @default false
+             */
+            isSaturdayOff: boolean;
+            /** Preload Activity Code */
+            preloadActivityCode?: string | null;
         };
         /**
          * RotationTemplateInfo
@@ -43148,6 +43292,43 @@ export interface components {
              * @default 4
              */
             maxSupervisionRatio: number | null;
+            /**
+             * Is Block Half Rotation
+             * @default false
+             */
+            isBlockHalfRotation: boolean;
+            /**
+             * Includes Weekend Work
+             * @default false
+             */
+            includesWeekendWork: boolean;
+            /**
+             * Leave Eligible
+             * @default true
+             */
+            leaveEligible: boolean;
+            /**
+             * Is Offsite
+             * @default false
+             */
+            isOffsite: boolean;
+            /**
+             * Is Lec Exempt
+             * @default false
+             */
+            isLecExempt: boolean;
+            /**
+             * Is Continuity Exempt
+             * @default false
+             */
+            isContinuityExempt: boolean;
+            /**
+             * Is Saturday Off
+             * @default false
+             */
+            isSaturdayOff: boolean;
+            /** Preload Activity Code */
+            preloadActivityCode?: string | null;
             /**
              * Id
              * Format: uuid
@@ -44519,6 +44700,24 @@ export interface components {
              * @description Lock date for system-initiated changes (null = no lock)
              */
             scheduleLockDate?: string | null;
+            /**
+             * Overnight Call Weekdays
+             * @description Weekdays requiring overnight call coverage (0=Mon, 6=Sun)
+             * @default [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       6
+             *     ]
+             */
+            overnightCallWeekdays: number[];
+            /**
+             * Fmit Week Start Weekday
+             * @description Weekday FMIT week starts (4=Friday)
+             * @default 4
+             */
+            fmitWeekStartWeekday: number;
         };
         /** SettingsResponse */
         SettingsResponse: {
@@ -44578,6 +44777,24 @@ export interface components {
              * @description Lock date for system-initiated changes (null = no lock)
              */
             scheduleLockDate?: string | null;
+            /**
+             * Overnight Call Weekdays
+             * @description Weekdays requiring overnight call coverage (0=Mon, 6=Sun)
+             * @default [
+             *       0,
+             *       1,
+             *       2,
+             *       3,
+             *       6
+             *     ]
+             */
+            overnightCallWeekdays: number[];
+            /**
+             * Fmit Week Start Weekday
+             * @description Weekday FMIT week starts (4=Friday)
+             * @default 4
+             */
+            fmitWeekStartWeekday: number;
         };
         /** SettingsUpdate */
         SettingsUpdate: {
@@ -44603,6 +44820,10 @@ export interface components {
             defaultBlockDurationHours?: number | null;
             /** Schedule Lock Date */
             scheduleLockDate?: string | null;
+            /** Overnight Call Weekdays */
+            overnightCallWeekdays?: number[] | null;
+            /** Fmit Week Start Weekday */
+            fmitWeekStartWeekday?: number | null;
         };
         /**
          * ShapleyFacultyResult
@@ -46781,6 +47002,62 @@ export interface components {
             priority: number;
         };
         /**
+         * TaskHistoryCreate
+         * @description Request to log a completed task.
+         */
+        TaskHistoryCreate: {
+            /**
+             * Task Description
+             * @description Description of the task that was attempted
+             */
+            taskDescription: string;
+            /**
+             * Agent Used
+             * @description Agent that performed the task
+             */
+            agentUsed: string;
+            /**
+             * Model Used
+             * @description Model tier used: haiku, sonnet, opus
+             */
+            modelUsed: string;
+            /**
+             * Success
+             * @description Whether the task completed successfully
+             */
+            success: boolean;
+            /**
+             * Duration Ms
+             * @description Task duration in milliseconds
+             */
+            durationMs?: number | null;
+            /**
+             * Session Id
+             * @description Session ID for episodic grouping
+             */
+            sessionId?: string | null;
+            /**
+             * Notes
+             * @description Free-text lesson learned
+             */
+            notes?: string | null;
+            /**
+             * Failure Reason
+             * @description Failure category (schema_error, import_error, etc.)
+             */
+            failureReason?: string | null;
+            /**
+             * Tags
+             * @description Domain tags: ["scheduling", "hda", "constraints"]
+             */
+            tags?: string[] | null;
+            /**
+             * Files Touched
+             * @description Files involved: ["backend/app/scheduling/engine.py"]
+             */
+            filesTouched?: string[] | null;
+        };
+        /**
          * TaskHistoryRecord
          * @description Historical task execution record.
          */
@@ -46838,6 +47115,98 @@ export interface components {
             } | null;
             /** Timestamp */
             timestamp: string;
+        };
+        /**
+         * TaskHistorySearchRequest
+         * @description Request to search similar past tasks via vector similarity.
+         */
+        TaskHistorySearchRequest: {
+            /**
+             * Query
+             * @description Search query (will be embedded for similarity search)
+             */
+            query: string;
+            /**
+             * Top K
+             * @description Maximum number of results
+             * @default 5
+             */
+            topK: number;
+            /**
+             * Success Filter
+             * @description Filter by success/failure (None = both)
+             */
+            successFilter?: boolean | null;
+            /**
+             * Tags Filter
+             * @description Filter to tasks matching any of these tags
+             */
+            tagsFilter?: string[] | null;
+            /**
+             * Min Similarity
+             * @description Minimum cosine similarity threshold
+             * @default 0.5
+             */
+            minSimilarity: number;
+        };
+        /**
+         * TaskHistorySearchResponse
+         * @description Response from similarity search.
+         */
+        TaskHistorySearchResponse: {
+            /** Query */
+            query: string;
+            /** Results */
+            results: components["schemas"]["TaskHistorySimilarResult"][];
+            /** Total Results */
+            totalResults: number;
+        };
+        /**
+         * TaskHistorySessionResponse
+         * @description All tasks from a single session.
+         */
+        TaskHistorySessionResponse: {
+            /** Session Id */
+            sessionId: string;
+            /** Tasks */
+            tasks: components["schemas"]["app__schemas__task_history__TaskHistoryResponse"][];
+            /** Total Tasks */
+            totalTasks: number;
+        };
+        /**
+         * TaskHistorySimilarResult
+         * @description Task history entry with similarity score.
+         */
+        TaskHistorySimilarResult: {
+            /** Id */
+            id: number;
+            /** Task Description */
+            taskDescription: string;
+            /** Agent Used */
+            agentUsed: string;
+            /** Model Used */
+            modelUsed: string;
+            /** Success */
+            success: boolean;
+            /** Duration Ms */
+            durationMs?: number | null;
+            /** Session Id */
+            sessionId?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Failure Reason */
+            failureReason?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Files Touched */
+            filesTouched?: string[] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Similarity Score */
+            similarityScore: number;
         };
         /**
          * TaskInfo
@@ -50339,37 +50708,6 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * CoverageGap
-         * @description Represents a coverage gap with details.
-         */
-        app__api__routes__fmit_health__CoverageGap: {
-            /** Gap Id */
-            gapId: string;
-            /**
-             * Date
-             * Format: date
-             */
-            date: string;
-            /** Time Of Day */
-            timeOfDay: string;
-            /** Block Id */
-            blockId: string;
-            /** Severity */
-            severity: string;
-            /** Days Until */
-            daysUntil: number;
-            /** Affected Area */
-            affectedArea: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            currentAssignments: number;
-            /** Required Assignments */
-            requiredAssignments: number;
-            /** Gap Size */
-            gapSize: number;
-        };
-        /**
          * ExportFormat
          * @description Export file formats.
          * @enum {string}
@@ -50467,19 +50805,43 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
-        app__schemas__block__BlockListResponse: {
+        app__schemas__academic_blocks__BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academicYear: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            totalBlocks: number;
+        };
+        /**
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
+         */
+        app__schemas__batch__BatchOperationResult: {
+            /**
+             * Index
+             * @description Index of the operation in the batch
+             */
+            index: number;
+            /** Success */
+            success: boolean;
+            /** Assignment Id */
+            assignmentId?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Warnings */
+            warnings?: string[];
         };
         /**
          * CoverageGap
@@ -50520,50 +50882,6 @@ export interface components {
             email?: string | null;
         };
         /**
-         * PersonSummary
-         * @description Summary of person for manifest display.
-         */
-        app__schemas__daily_manifest__PersonSummary: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /**
-             * Pgy Level
-             * @description PGY level for residents
-             */
-            pgyLevel?: number | null;
-        };
-        /**
-         * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
-         */
-        app__schemas__fmit_assignments__ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            canAssign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
-        };
-        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
@@ -50579,6 +50897,21 @@ export interface components {
             success: boolean;
             /** Error */
             error?: string | null;
+        };
+        /**
+         * PersonSummary
+         * @description Minimal person info for embedding in credential responses.
+         */
+        app__schemas__procedure_credential__PersonSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
         };
         /**
          * QueuePurgeRequest
@@ -50607,21 +50940,16 @@ export interface components {
             timestamp: string;
         };
         /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
+         * ConflictCheckResponse
+         * @description Response for conflict check.
          */
-        app__schemas__rotation_template__BatchOperationResult: {
-            /**
-             * Index
-             * @description Index of the operation in the batch
-             */
-            index: number;
-            /** Template Id */
-            templateId: string | null;
-            /** Success */
-            success: boolean;
-            /** Error */
-            error?: string | null;
+        app__schemas__rotation_template__ConflictCheckResponse: {
+            /** Has Conflicts */
+            hasConflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            canProceed: boolean;
         };
         /**
          * SuggestionResponse
@@ -50643,6 +50971,72 @@ export interface components {
              * @description Entity type
              */
             entityType: string;
+        };
+        /**
+         * TaskHistoryResponse
+         * @description Single task history entry.
+         */
+        app__schemas__task_history__TaskHistoryResponse: {
+            /** Id */
+            id: number;
+            /** Task Description */
+            taskDescription: string;
+            /** Agent Used */
+            agentUsed: string;
+            /** Model Used */
+            modelUsed: string;
+            /** Success */
+            success: boolean;
+            /** Duration Ms */
+            durationMs?: number | null;
+            /** Session Id */
+            sessionId?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Failure Reason */
+            failureReason?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Files Touched */
+            filesTouched?: string[] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            createdAt: string;
+        };
+        /**
+         * CoverageGap
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
+         */
+        app__schemas__visualization__CoverageGap: {
+            /**
+             * Date
+             * Format: date
+             * @description Date of the gap
+             */
+            date: string;
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
+            timeOfDay: string;
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
+            severity: string;
         };
     };
     responses: never;
@@ -52921,7 +53315,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -53048,7 +53442,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -53224,7 +53618,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -53652,7 +54046,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -57340,6 +57734,72 @@ export interface operations {
             };
         };
     };
+    get_constraint_api_v1_schedule_constraints__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConstraintStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_constraint_api_v1_schedule_constraints__name__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConstraintUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConstraintUpdateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     enable_constraint_api_v1_schedule_constraints__name__enable_post: {
         parameters: {
             query?: never;
@@ -57420,72 +57880,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PresetApplyResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_constraint_api_v1_schedule_constraints__name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConstraintStatusResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_constraint_api_v1_schedule_constraints__name__patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ConstraintUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConstraintUpdateResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64030,6 +64424,154 @@ export interface operations {
             };
         };
     };
+    list_primary_duty_configs_api_v1_primary_duty_configs__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrimaryDutyConfigResponse"][];
+                };
+            };
+        };
+    };
+    create_primary_duty_config_api_v1_primary_duty_configs__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrimaryDutyConfigCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrimaryDutyConfigResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_primary_duty_config_api_v1_primary_duty_configs__config_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                config_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrimaryDutyConfigResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_primary_duty_config_api_v1_primary_duty_configs__config_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                config_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_primary_duty_config_api_v1_primary_duty_configs__config_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                config_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrimaryDutyConfigUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrimaryDutyConfigResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_constraints_api_v1_constraints_get: {
         parameters: {
             query?: never;
@@ -64108,6 +64650,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConstraintStatusResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_constraint_api_v1_constraints__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConstraintStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_constraint_api_v1_constraints__name__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConstraintUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConstraintUpdateResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64201,72 +64809,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PresetApplyResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_constraint_api_v1_constraints__name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConstraintStatusResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_constraint_api_v1_constraints__name__patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ConstraintUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConstraintUpdateResponse"];
                 };
             };
             /** @description Validation Error */
@@ -68813,6 +69355,136 @@ export interface operations {
             };
         };
     };
+    create_task_entry_api_v1_task_history__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskHistoryCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__schemas__task_history__TaskHistoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_similar_tasks_api_v1_task_history_search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskHistorySearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskHistorySearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_session_tasks_api_v1_task_history_session__session_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskHistorySessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_file_lessons_api_v1_task_history_files_get: {
+        parameters: {
+            query: {
+                /** @description File paths to search for lessons */
+                paths: string[];
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__schemas__task_history__TaskHistoryResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     optimize_template_selection_api_v1_qubo_templates_optimize_post: {
         parameters: {
             query?: never;
@@ -70274,7 +70946,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */

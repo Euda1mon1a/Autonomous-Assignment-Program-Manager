@@ -48,13 +48,17 @@ def is_overnight_call_night(block_date: date) -> bool:
     """
     Check if date requires overnight call assignment.
 
+    Delegates to centralized calendar_policy for the weekday set.
+
     Args:
         block_date: Date to check
 
     Returns:
-        True for Sunday-Thursday (weekday 6, 0, 1, 2, 3)
+        True for overnight call days (default: Sun-Thu)
     """
-    return block_date.weekday() in (6, 0, 1, 2, 3)  # Sun=6, Mon-Thu=0-3
+    from app.scheduling.calendar_policy import is_overnight_call_day
+
+    return is_overnight_call_day(block_date)
 
 
 class OvernightCallGenerationConstraint(SoftConstraint):  # @archetype-ok

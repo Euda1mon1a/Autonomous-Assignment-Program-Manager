@@ -57,8 +57,8 @@ class TestOvernightCallDays:
         assert not is_overnight_call_day(saturday)
 
     def test_overnight_call_days_constant(self):
-        """Verify the OVERNIGHT_CALL_DAYS constant matches Sun-Thu."""
-        assert {0, 1, 2, 3, 6} == OVERNIGHT_CALL_DAYS
+        """Verify the OVERNIGHT_CALL_DAYS callable matches Sun-Thu."""
+        assert {0, 1, 2, 3, 6} == OVERNIGHT_CALL_DAYS()
 
 
 class TestOvernightCallCoverageConstraint:

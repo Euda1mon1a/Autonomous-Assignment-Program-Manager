@@ -324,10 +324,11 @@ class PuLPSolver(BaseSolver):
         )
 
         if call_eligible:
+            from app.scheduling.calendar_policy import is_overnight_call_day
+
             call_dates_processed = set()
             for block in workday_blocks:
-                # Only Sun-Thurs nights (Sun=6, Mon=0, Tue=1, Wed=2, Thu=3)
-                if block.date.weekday() not in (0, 1, 2, 3, 6):
+                if not is_overnight_call_day(block.date):
                     continue
                 # Only one variable per date (not per block/session)
                 if block.date in call_dates_processed:
@@ -952,10 +953,10 @@ class CPSATSolver(BaseSolver):
         if call_eligible:
             # Track dates already processed (one call per date, not per block)
             call_dates_processed = set()
+            from app.scheduling.calendar_policy import is_overnight_call_day
+
             call_blocks = [
-                block
-                for block in context.blocks
-                if block.date.weekday() in (0, 1, 2, 3, 6)  # Mon-Thu, Sun
+                block for block in context.blocks if is_overnight_call_day(block.date)
             ]
             for block in call_blocks:
                 if block.date in call_dates_processed:
@@ -2192,12 +2193,12 @@ class GreedySolver(BaseSolver):
             # Track call assignments per faculty for equity
             call_counts = {fac.id: 0 for fac in call_eligible}
 
-            # Get unique call dates (Sun-Thu nights)
+            # Get unique call dates from calendar policy
+            from app.scheduling.calendar_policy import is_overnight_call_day
+
             call_dates_processed = set()
             call_blocks = [
-                block
-                for block in context.blocks
-                if block.date.weekday() in (0, 1, 2, 3, 6)  # Mon-Thu, Sun
+                block for block in context.blocks if is_overnight_call_day(block.date)
             ]
 
             for block in call_blocks:

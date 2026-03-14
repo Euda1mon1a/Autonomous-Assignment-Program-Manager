@@ -20,6 +20,11 @@ Coverage Pattern:
 import logging
 from typing import Any
 
+from app.scheduling.calendar_policy import (
+    get_overnight_call_weekdays,
+    is_overnight_call_day,
+)
+
 from .base import (
     ConstraintPriority,
     ConstraintResult,
@@ -32,25 +37,10 @@ from .base import (
 
 logger = logging.getLogger(__name__)
 
-# Weekdays for overnight call (Mon=0, Tue=1, Wed=2, Thu=3, Sun=6)
-# Note: The call is FOR that night, meaning the faculty covers overnight INTO next day
-OVERNIGHT_CALL_DAYS = {0, 1, 2, 3, 6}  # Mon-Thu + Sunday
-
-
-def is_overnight_call_day(date) -> bool:
-    """
-    Check if a date is an overnight call day.
-
-    Overnight call happens Sun-Thu nights.
-    Friday-Saturday nights are covered by FMIT faculty (not solver-generated).
-
-    Args:
-        date: A date object to check
-
-    Returns:
-        True if the date is a Sun-Thu (overnight call day), False otherwise
-    """
-    return date.weekday() in OVERNIGHT_CALL_DAYS
+# Re-export for backward compatibility — delegates to calendar_policy.
+# This is a function reference, not a frozen set.  Use OVERNIGHT_CALL_DAYS()
+# for membership checks (or prefer is_overnight_call_day() directly).
+OVERNIGHT_CALL_DAYS = get_overnight_call_weekdays  # noqa: N806
 
 
 class OvernightCallCoverageConstraint(SoftConstraint):
@@ -96,7 +86,7 @@ class OvernightCallCoverageConstraint(SoftConstraint):
         # Group blocks by date (we only need one assignment per date)
         dates_covered = set()
         for block in context.blocks:
-            if block.date.weekday() not in OVERNIGHT_CALL_DAYS:
+            if not is_overnight_call_day(block.date):
                 continue  # Skip Fri-Sat
             if block.date in dates_covered:
                 continue  # Only process each date once
@@ -147,7 +137,7 @@ class OvernightCallCoverageConstraint(SoftConstraint):
 
         dates_covered = set()
         for block in context.blocks:
-            if block.date.weekday() not in OVERNIGHT_CALL_DAYS:
+            if not is_overnight_call_day(block.date):
                 continue
             if block.date in dates_covered:
                 continue
@@ -190,7 +180,7 @@ class OvernightCallCoverageConstraint(SoftConstraint):
             if not block:
                 continue
 
-            if block.date.weekday() not in OVERNIGHT_CALL_DAYS:
+            if not is_overnight_call_day(block.date):
                 continue
 
             calls_per_date[block.date].append(assignment.person_id)
@@ -200,7 +190,7 @@ class OvernightCallCoverageConstraint(SoftConstraint):
         dates_checked = set()
 
         for block in context.blocks:
-            if block.date.weekday() not in OVERNIGHT_CALL_DAYS:
+            if not is_overnight_call_day(block.date):
                 continue
             if block.date in dates_checked:
                 continue
@@ -421,7 +411,7 @@ class CallAvailabilityConstraint(HardConstraint):
             faculty_availability = context.availability.get(faculty.id, {})
 
             for block in context.blocks:
-                if block.date.weekday() not in OVERNIGHT_CALL_DAYS:
+                if not is_overnight_call_day(block.date):
                     continue
 
                 b_i = context.block_idx[block.id]
@@ -464,7 +454,7 @@ class CallAvailabilityConstraint(HardConstraint):
             faculty_availability = context.availability.get(faculty.id, {})
 
             for block in context.blocks:
-                if block.date.weekday() not in OVERNIGHT_CALL_DAYS:
+                if not is_overnight_call_day(block.date):
                     continue
 
                 b_i = context.block_idx[block.id]

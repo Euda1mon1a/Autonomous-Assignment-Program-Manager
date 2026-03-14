@@ -44,6 +44,31 @@ class CallAssignmentService:
             db: Async database session
         """
         self.db = db
+        self._calendar_policy_loaded = False
+
+    async def _ensure_calendar_policy_loaded(self) -> None:
+        """Load calendar policy from DB once per service instance.
+
+        For read-only service paths (reports, PCAT), catches and logs at
+        ERROR so the endpoint still returns data with defaults rather than
+        crashing.  The error is visible in logs for investigation.
+        """
+        if not self._calendar_policy_loaded:
+            try:
+                from app.scheduling.calendar_policy import async_load_from_settings
+
+                await async_load_from_settings(self.db)
+                self._calendar_policy_loaded = True
+            except Exception:
+                # Intentional: read-only paths (coverage reports) degrade
+                # gracefully with defaults rather than crashing the UI.
+                # Write paths (generate_pcat) call async_load_from_settings
+                # directly and let failures propagate.
+                logger.error(
+                    "Failed to load calendar policy from DB — "
+                    "proceeding with defaults for read-only operation",
+                    exc_info=True,
+                )
 
     async def _get_assignments_covered_by_person(
         self,
@@ -565,6 +590,9 @@ class CallAssignmentService:
         Returns:
             CallCoverageReport with coverage statistics and gaps
         """
+        # Ensure calendar policy is loaded from DB before using helpers
+        await self._ensure_calendar_policy_loaded()
+
         # Get all call assignments in range
         assignments = await self.get_call_assignments_by_date_range(
             start_date, end_date
@@ -576,11 +604,13 @@ class CallAssignmentService:
             if a.call_type == "overnight":
                 covered_dates.add(a.date)
 
-        # Find expected overnight call dates (Sun-Thu, weekday 0,1,2,3,6)
+        # Find expected overnight call dates from calendar policy
+        from app.scheduling.calendar_policy import is_overnight_call_day
+
         expected_dates = []
         current = start_date
         while current <= end_date:
-            if current.weekday() in (0, 1, 2, 3, 6):  # Sun-Thu
+            if is_overnight_call_day(current):
                 expected_dates.append(current)
             current = current + date.resolution
 
@@ -788,9 +818,10 @@ class CallAssignmentService:
     # =========================================================================
 
     def _is_sun_thurs(self, d: date) -> bool:
-        """Check if date is Sunday through Thursday (valid overnight call days)."""
-        # Sunday = 6, Monday = 0, Tuesday = 1, Wednesday = 2, Thursday = 3
-        return d.weekday() in (0, 1, 2, 3, 6)
+        """Check if date is an overnight call day (delegates to calendar_policy)."""
+        from app.scheduling.calendar_policy import is_overnight_call_day
+
+        return is_overnight_call_day(d)
 
     async def _find_template_by_abbrev(self, abbrev: str) -> RotationTemplate | None:
         """Find rotation template by abbreviation."""
@@ -899,6 +930,12 @@ class CallAssignmentService:
         Returns:
             PCATGenerationResponse with results of the operation
         """
+        # Write path — must not proceed with assumed defaults on DB failure.
+        # Raises on failure (unlike read-only _ensure_calendar_policy_loaded).
+        from app.scheduling.calendar_policy import async_load_from_settings
+
+        await async_load_from_settings(self.db)
+
         results: list[PCATAssignmentResult] = []
         errors: list[str] = []
         pcat_created_count = 0
