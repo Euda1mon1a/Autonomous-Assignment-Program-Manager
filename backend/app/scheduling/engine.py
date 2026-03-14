@@ -135,7 +135,9 @@ class SchedulingEngine:
         self.constraint_manager = (
             constraint_manager
             or ConstraintManager.create_default(
-                profile="faculty", settings=self._settings
+                profile="faculty",
+                settings=self._settings,
+                db_session=self.db,
             )
         )
         self._sync_constraints_from_db()

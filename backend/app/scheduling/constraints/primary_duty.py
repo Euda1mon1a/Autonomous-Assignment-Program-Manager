@@ -127,45 +127,49 @@ class PrimaryDutyConfig:
 
 
 def load_primary_duties_config(
-    json_path: str | Path | None = None,
+    db_session=None,
+    **kwargs,
 ) -> dict[str, PrimaryDutyConfig]:
     """
-    Load primary duty configurations from JSON file.
+    Load primary duty configurations from Postgres.
+
+    Reads from primary_duty_configs table. No JSON fallback —
+    the migration seeds from the Airtable export, and subsequent
+    changes happen via the admin UI.
 
     Args:
-        json_path: Path to sanitized_primary_duties.json. If None, uses default.
+        db_session: SQLAlchemy session (required).
 
     Returns:
         Dict mapping duty_name to PrimaryDutyConfig
     """
-    if json_path is None:
-        # Default to sanitized file in docs/schedules
-        json_path = (
-            Path(__file__).parents[4]
-            / "docs"
-            / "schedules"
-            / "sanitized_primary_duties.json"
+    if db_session is None:
+        logger.warning(
+            "No DB session provided for primary duty config — no configs loaded"
         )
+        return {}
 
     try:
-        with open(json_path) as f:
-            data = json.load(f)
+        from app.models.primary_duty_config import PrimaryDutyConfiguration
 
+        rows = db_session.query(PrimaryDutyConfiguration).all()
         configs: dict[str, PrimaryDutyConfig] = {}
-        for record in data.get("records", []):
-            config = PrimaryDutyConfig.from_airtable_record(record)
+        for row in rows:
+            available = (
+                set(row.available_days) if row.available_days else {0, 1, 2, 3, 4}
+            )
+            config = PrimaryDutyConfig(
+                duty_id=str(row.id),
+                duty_name=row.duty_name,
+                clinic_min_per_week=row.clinic_min_per_week,
+                clinic_max_per_week=row.clinic_max_per_week,
+                available_days=available,
+            )
             configs[config.duty_name] = config
-            # Also index by duty_id for lookup
-            configs[config.duty_id] = config
-
-        logger.info(f"Loaded {len(data.get('records', []))} primary duty configs")
+        logger.info("Loaded %d primary duty configs from DB", len(rows))
         return configs
-
-    except FileNotFoundError:
-        logger.warning(f"Primary duties config not found at {json_path}")
-        return {}
-    except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in primary duties config: {e}")
+    except Exception as e:
+        logger.warning("Could not load primary duties from DB: %s", e)
         return {}
 
 
@@ -187,7 +191,7 @@ class FacultyPrimaryDutyClinicConstraint(HardConstraint):
     def __init__(
         self,
         duty_configs: dict[str, PrimaryDutyConfig] | None = None,
-        json_path: str | Path | None = None,
+        db_session=None,
     ) -> None:
         """
         Initialize the constraint.
@@ -201,7 +205,9 @@ class FacultyPrimaryDutyClinicConstraint(HardConstraint):
             constraint_type=ConstraintType.CAPACITY,
             priority=ConstraintPriority.HIGH,
         )
-        self._duty_configs = duty_configs or load_primary_duties_config(json_path)
+        self._duty_configs = duty_configs or load_primary_duties_config(
+            db_session=db_session
+        )
 
     def get_faculty_duty_config(self, faculty: Any) -> PrimaryDutyConfig | None:
         """
@@ -477,7 +483,7 @@ class FacultyDayAvailabilityConstraint(HardConstraint):
     def __init__(
         self,
         duty_configs: dict[str, PrimaryDutyConfig] | None = None,
-        json_path: str | Path | None = None,
+        db_session=None,
     ) -> None:
         """Initialize the constraint."""
         super().__init__(
@@ -485,7 +491,9 @@ class FacultyDayAvailabilityConstraint(HardConstraint):
             constraint_type=ConstraintType.AVAILABILITY,
             priority=ConstraintPriority.CRITICAL,
         )
-        self._duty_configs = duty_configs or load_primary_duties_config(json_path)
+        self._duty_configs = duty_configs or load_primary_duties_config(
+            db_session=db_session
+        )
 
     def get_faculty_duty_config(self, faculty: Any) -> PrimaryDutyConfig | None:
         """Get primary duty config for a faculty member."""
@@ -668,7 +676,7 @@ class FacultyClinicEquitySoftConstraint(SoftConstraint):
         self,
         weight: float = 15.0,
         duty_configs: dict[str, PrimaryDutyConfig] | None = None,
-        json_path: str | Path | None = None,
+        db_session=None,
     ) -> None:
         """Initialize the constraint."""
         super().__init__(
@@ -677,7 +685,9 @@ class FacultyClinicEquitySoftConstraint(SoftConstraint):
             weight=weight,
             priority=ConstraintPriority.MEDIUM,
         )
-        self._duty_configs = duty_configs or load_primary_duties_config(json_path)
+        self._duty_configs = duty_configs or load_primary_duties_config(
+            db_session=db_session
+        )
 
     def get_faculty_duty_config(self, faculty: Any) -> PrimaryDutyConfig | None:
         """Get primary duty config for a faculty member."""
