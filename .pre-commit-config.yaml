@@ -30,6 +30,16 @@ repos:
         always_run: true
         stages: [pre-commit]
 
+  # GlassWorm / Trojan Source defense - detect invisible Unicode attacks
+  # Catches bidi controls, zero-width chars, variation selectors, PUA codepoints
+  # Uses category-based analysis (Cf, Cc, PUA) for future-proofing
+  - repo: https://github.com/lirantal/anti-trojan-source
+    rev: v1.3.3
+    hooks:
+      - id: anti-trojan-source
+        name: Anti-Trojan Source (invisible Unicode scan)
+        stages: [pre-commit]
+
   # Secret detection - prevent accidentally committing credentials
   # Uses --no-git to scan files only (not git history which has many false positives from docs/tests)
   - repo: https://github.com/gitleaks/gitleaks

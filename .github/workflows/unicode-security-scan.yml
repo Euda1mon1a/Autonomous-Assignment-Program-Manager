@@ -1,0 +1,53 @@
+# Unicode Security Scan (GlassWorm / Trojan Source Defense)
+# Detects invisible Unicode characters that can hide malicious code:
+# - Bidi control characters (Trojan Source)
+# - Zero-width characters, variation selectors (GlassWorm)
+# - Private Use Area codepoints
+# - Format (Cf) and Control (Cc) categories
+#
+# Uses anti-trojan-source which covers 277+ confusable characters
+# plus category-based analysis for future-proofing.
+
+name: Unicode Security Scan
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  scan-invisible-chars:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Scan for invisible Unicode attacks
+        run: |
+          echo "=== Scanning for invisible Unicode characters (GlassWorm/Trojan Source) ==="
+          npx anti-trojan-source --files='backend/**/*.py' --json || BACKEND_FAIL=1
+          npx anti-trojan-source --files='frontend/src/**/*.{ts,tsx,js,jsx}' --json || FRONTEND_FAIL=1
+          npx anti-trojan-source --files='mcp-server/**/*.{py,ts,js}' --json || MCP_FAIL=1
+          npx anti-trojan-source --files='scripts/**/*.{sh,py}' --json || SCRIPTS_FAIL=1
+
+          if [ "${BACKEND_FAIL:-0}" = "1" ] || [ "${FRONTEND_FAIL:-0}" = "1" ] || \
+             [ "${MCP_FAIL:-0}" = "1" ] || [ "${SCRIPTS_FAIL:-0}" = "1" ]; then
+            echo "::error::Invisible Unicode characters detected! Review findings above."
+            exit 1
+          fi
+
+          echo "No invisible Unicode characters found."
