@@ -39,12 +39,14 @@
 - `docs/architecture/ENGINE_ASSIGNMENT_FLOW.md` — How solver routes assignments
 - `docs/architecture/CALL_CONSTRAINTS.md` — Call generation rules
 - `docs/architecture/CONSTRAINT_CATALOG.md` — Full constraint catalog
+- `docs/architecture/POLICY_STORAGE_BOUNDARY.md` — DB-backed policy vs Python code boundary
 - `docs/architecture/DISABLED_CONSTRAINTS_AUDIT.md` — 47 enabled / 4 disabled
 - `docs/architecture/FACULTY_FIX_ROADMAP.md` — Faculty scheduling (all phases complete)
 - `docs/scheduling/` — Solver models, block specs, domain knowledge
 
 ### Agent Learning
 - `docs/planning/TASK_HISTORY_LEARNING_ROADMAP.md` — 7-phase plan to activate dormant `task_history` table (pgvector)
+- `docs/development/AI_POLICY_STORAGE_BOUNDARY.md` — Agent rules for storing policy in DB instead of Python
 
 ### Excel Import/Export
 - `docs/architecture/excel-stateful-roundtrip-roadmap.md` — Phases 1-4

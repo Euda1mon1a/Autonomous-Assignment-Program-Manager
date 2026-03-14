@@ -38,6 +38,7 @@ Complete technical architecture documentation for the Residency Scheduler system
 |----------|-------------|
 | [Constraint Enablement Guide](CONSTRAINT_ENABLEMENT_GUIDE.md) | How to configure and enable constraints |
 | [Constraint Interaction Matrix](CONSTRAINT_INTERACTION_MATRIX.md) | Constraint dependencies and conflicts |
+| [Policy Storage Boundary](POLICY_STORAGE_BOUNDARY.md) | What policy belongs in Postgres vs Python |
 | [FMIT Constraints](FMIT_CONSTRAINTS.md) | Family Medicine In-Training rotation rules |
 | [Call Constraints](CALL_CONSTRAINTS.md) | Call scheduling constraints |
 | [Clinic Constraints](clinic-constraints.md) | Clinic assignment rules |
