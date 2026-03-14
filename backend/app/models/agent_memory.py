@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
+from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 from pgvector.sqlalchemy import Vector
 
@@ -84,6 +85,10 @@ class TaskHistory(Base):
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     session_id: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tags = mapped_column(PG_ARRAY(String), nullable=True)
+    files_touched = mapped_column(PG_ARRAY(String), nullable=True)
 
     def __repr__(self) -> str:
         return f"<TaskHistory(id={self.id}, agent='{self.agent_used}', model='{self.model_used}', success={self.success})>"
