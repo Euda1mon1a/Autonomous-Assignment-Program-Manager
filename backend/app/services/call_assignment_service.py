@@ -60,6 +60,10 @@ class CallAssignmentService:
                 await async_load_from_settings(self.db)
                 self._calendar_policy_loaded = True
             except Exception:
+                # Intentional: read-only paths (coverage reports) degrade
+                # gracefully with defaults rather than crashing the UI.
+                # Write paths (generate_pcat) call async_load_from_settings
+                # directly and let failures propagate.
                 logger.error(
                     "Failed to load calendar policy from DB — "
                     "proceeding with defaults for read-only operation",
