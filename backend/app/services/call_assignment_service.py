@@ -47,12 +47,24 @@ class CallAssignmentService:
         self._calendar_policy_loaded = False
 
     async def _ensure_calendar_policy_loaded(self) -> None:
-        """Load calendar policy from DB once per service instance."""
-        if not self._calendar_policy_loaded:
-            from app.scheduling.calendar_policy import async_load_from_settings
+        """Load calendar policy from DB once per service instance.
 
-            await async_load_from_settings(self.db)
-            self._calendar_policy_loaded = True
+        For read-only service paths (reports, PCAT), catches and logs at
+        ERROR so the endpoint still returns data with defaults rather than
+        crashing.  The error is visible in logs for investigation.
+        """
+        if not self._calendar_policy_loaded:
+            try:
+                from app.scheduling.calendar_policy import async_load_from_settings
+
+                await async_load_from_settings(self.db)
+                self._calendar_policy_loaded = True
+            except Exception:
+                logger.error(
+                    "Failed to load calendar policy from DB — "
+                    "proceeding with defaults for read-only operation",
+                    exc_info=True,
+                )
 
     async def _get_assignments_covered_by_person(
         self,

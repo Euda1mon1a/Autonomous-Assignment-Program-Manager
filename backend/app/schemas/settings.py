@@ -1,6 +1,20 @@
 from datetime import date
 
-from pydantic import ConfigDict, BaseModel, Field
+from pydantic import ConfigDict, BaseModel, Field, field_validator
+
+
+def _validate_weekday_list(v: list[int]) -> list[int]:
+    """Validate a list of weekday numbers (0=Mon .. 6=Sun)."""
+    if not v:
+        raise ValueError("overnight_call_weekdays must not be empty")
+    seen: set[int] = set()
+    for day in v:
+        if day < 0 or day > 6:
+            raise ValueError(f"weekday {day} out of range 0-6")
+        if day in seen:
+            raise ValueError(f"duplicate weekday {day}")
+        seen.add(day)
+    return sorted(v)
 
 
 class SettingsBase(BaseModel):
@@ -32,6 +46,11 @@ class SettingsBase(BaseModel):
         description="Weekday FMIT week starts (4=Friday)",
     )
 
+    @field_validator("overnight_call_weekdays")
+    @classmethod
+    def validate_weekdays(cls, v: list[int]) -> list[int]:
+        return _validate_weekday_list(v)
+
 
 class SettingsCreate(SettingsBase):
     pass
@@ -51,6 +70,13 @@ class SettingsUpdate(BaseModel):
     schedule_lock_date: date | None = None
     overnight_call_weekdays: list[int] | None = None
     fmit_week_start_weekday: int | None = None
+
+    @field_validator("overnight_call_weekdays")
+    @classmethod
+    def validate_weekdays(cls, v: list[int] | None) -> list[int] | None:
+        if v is None:
+            return v
+        return _validate_weekday_list(v)
 
 
 class SettingsResponse(SettingsBase):

@@ -20,7 +20,11 @@ interface Settings {
   enableHolidayScheduling: boolean
   defaultBlockDurationHours: number
   scheduleLockDate: string | null
+  overnightCallWeekdays: number[]  // 0=Mon .. 6=Sun
+  fmitWeekStartWeekday: number     // 0=Mon .. 6=Sun
 }
+
+const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 
 const defaultSettings: Settings = {
   schedulingAlgorithm: 'greedy',
@@ -34,6 +38,8 @@ const defaultSettings: Settings = {
   enableHolidayScheduling: false,
   defaultBlockDurationHours: 4,
   scheduleLockDate: null,
+  overnightCallWeekdays: [0, 1, 2, 3, 6],
+  fmitWeekStartWeekday: 4,
 }
 
 // API hooks for settings
@@ -394,6 +400,67 @@ export default function SettingsPage() {
                     Clear lock
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+          {/* Calendar Policy */}
+          <div className="card">
+            <h2 className="font-semibold text-lg mb-4">Calendar Policy</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Overnight Call Days
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {WEEKDAY_LABELS.map((label, idx) => {
+                    const isActive = settings.overnightCallWeekdays.includes(idx)
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          const next = isActive
+                            ? settings.overnightCallWeekdays.filter((d) => d !== idx)
+                            : [...settings.overnightCallWeekdays, idx].sort()
+                          if (next.length > 0) {
+                            updateSetting('overnightCallWeekdays', next)
+                          }
+                        }}
+                        className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                          isActive
+                            ? 'bg-blue-100 border-blue-400 text-blue-800'
+                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Nights requiring overnight call coverage. Fri-Sat are typically FMIT.
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  FMIT Week Start Day
+                </label>
+                <select
+                  className="input-field w-full"
+                  value={settings.fmitWeekStartWeekday}
+                  onChange={(e) =>
+                    updateSetting('fmitWeekStartWeekday', parseInt(e.target.value))
+                  }
+                >
+                  {WEEKDAY_LABELS.map((label, idx) => (
+                    <option key={idx} value={idx}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  FMIT weeks run 7 days starting this weekday (default: Friday)
+                </p>
               </div>
             </div>
           </div>

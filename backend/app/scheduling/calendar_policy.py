@@ -59,25 +59,21 @@ def load_from_settings(db_session) -> None:
     Load calendar policy from application_settings (sync session).
 
     Called once per scheduling run (engine.py) to override module defaults.
-    Falls back to hardcoded defaults if settings are missing or DB unavailable.
+    Raises on DB failure — callers must not silently proceed with wrong policy.
     """
     global _overnight_call_weekdays, _fmit_week_start_weekday
 
-    # Always reset to defaults first (prevents stale values on DB failure)
+    # Reset to defaults first (clean slate before DB read)
     _overnight_call_weekdays = set(_DEFAULT_OVERNIGHT_CALL_WEEKDAYS)
     _fmit_week_start_weekday = _DEFAULT_FMIT_WEEK_START_WEEKDAY
 
-    try:
-        from app.models.settings import ApplicationSettings
+    from app.models.settings import ApplicationSettings
 
-        settings = db_session.query(ApplicationSettings).first()
-        if settings is None:
-            return
+    settings = db_session.query(ApplicationSettings).first()
+    if settings is None:
+        return
 
-        _apply_settings(settings)
-
-    except Exception:
-        logger.warning("Failed to load calendar policy from DB, using defaults")
+    _apply_settings(settings)
 
 
 async def async_load_from_settings(db_session) -> None:
@@ -86,24 +82,21 @@ async def async_load_from_settings(db_session) -> None:
 
     Async counterpart of :func:`load_from_settings` for use in FastAPI
     services that hold an ``AsyncSession``.
+    Raises on DB failure — callers must not silently proceed with wrong policy.
     """
     global _overnight_call_weekdays, _fmit_week_start_weekday
 
-    # Always reset to defaults first (prevents stale values on DB failure)
+    # Reset to defaults first (clean slate before DB read)
     _overnight_call_weekdays = set(_DEFAULT_OVERNIGHT_CALL_WEEKDAYS)
     _fmit_week_start_weekday = _DEFAULT_FMIT_WEEK_START_WEEKDAY
 
-    try:
-        from sqlalchemy import select as sa_select
+    from sqlalchemy import select as sa_select
 
-        from app.models.settings import ApplicationSettings
+    from app.models.settings import ApplicationSettings
 
-        result = await db_session.execute(sa_select(ApplicationSettings).limit(1))
-        settings = result.scalar_one_or_none()
-        if settings is None:
-            return
+    result = await db_session.execute(sa_select(ApplicationSettings).limit(1))
+    settings = result.scalar_one_or_none()
+    if settings is None:
+        return
 
-        _apply_settings(settings)
-
-    except Exception:
-        logger.warning("Failed to load calendar policy from DB, using defaults")
+    _apply_settings(settings)
