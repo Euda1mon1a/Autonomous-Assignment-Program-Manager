@@ -120,7 +120,7 @@ def _ensure_seeded(db: Session) -> None:
         # Import seed logic inline to avoid circular imports at module level
         from seed_constraints import _get_category
 
-        manager = ConstraintManager.create_default(profile="faculty")
+        manager = ConstraintManager.create_default(profile="faculty", db_session=db)
         for constraint in manager.constraints:
             is_soft = not isinstance(constraint, HardConstraint)
             db.add(

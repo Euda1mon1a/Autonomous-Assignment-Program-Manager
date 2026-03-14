@@ -527,11 +527,21 @@ class ConstraintManager:
         """
         manager = cls()
 
-        # Hard constraints (ACGME compliance)
+        # Load settings from DB if session available
+        settings = None
+        if db_session is not None:
+            try:
+                from app.models.settings import ApplicationSettings
+
+                settings = db_session.query(ApplicationSettings).first()
+            except Exception:
+                pass
+
+        # ACGME compliance constraints (read settings from DB)
         manager.add(AvailabilityConstraint())
-        manager.add(EightyHourRuleConstraint())
-        manager.add(OneInSevenRuleConstraint())
-        manager.add(SupervisionRatioConstraint())
+        manager.add(EightyHourRuleConstraint(settings=settings))
+        manager.add(OneInSevenRuleConstraint(settings=settings))
+        manager.add(SupervisionRatioConstraint(settings=settings))
         # Faculty supervision at half-day level (ACGME AT coverage)
         manager.add(FacultySupervisionConstraint())
         manager.add(ClinicCapacityConstraint())
