@@ -340,9 +340,20 @@ class ConstraintManager:
 
         Args:
             profile: Constraint profile ("resident" or "faculty")
-            settings: ApplicationSettings instance for DB-backed ACGME values.
-            db_session: SQLAlchemy session for loading primary duty configs from DB.
+            settings: ApplicationSettings instance. If None and db_session
+                      is provided, auto-loaded from DB.
+            db_session: SQLAlchemy session. Single required param for
+                        DB-backed behavior (settings + primary duty).
         """
+        # Auto-load settings from db_session if not explicitly provided
+        if db_session is not None and settings is None:
+            try:
+                from app.models.settings import ApplicationSettings
+
+                settings = db_session.query(ApplicationSettings).first()
+            except Exception:
+                pass
+
         manager = cls()
 
         # === PHYSICALLY IMPOSSIBLE constraints (keep Hard) ===
@@ -665,9 +676,9 @@ class ConstraintManager:
         return manager
 
     @classmethod
-    def create_strict(cls) -> "ConstraintManager":
+    def create_strict(cls, db_session=None) -> "ConstraintManager":
         """Create manager with all constraints enabled at high weight."""
-        manager = cls.create_default()
+        manager = cls.create_default(db_session=db_session)
 
         # Increase soft constraint weights
         for c in manager._soft_constraints:

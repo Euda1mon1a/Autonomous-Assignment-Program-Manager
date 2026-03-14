@@ -573,7 +573,7 @@ class ConstraintService:
                 profile="faculty", db_session=self.db
             ),
             "minimal": ConstraintManager.create_minimal,
-            "strict": ConstraintManager.create_strict,
+            "strict": lambda: ConstraintManager.create_strict(db_session=self.db),
             "resilience": lambda: ConstraintManager.create_resilience_aware(
                 tier=2, db_session=self.db
             ),

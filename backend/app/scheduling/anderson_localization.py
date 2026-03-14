@@ -306,7 +306,7 @@ class AndersonLocalizer:
     ) -> None:
         self.db = db
         self.constraint_manager = (
-            constraint_manager or ConstraintManager.create_default()
+            constraint_manager or ConstraintManager.create_default(db_session=self.db)
         )
 
     def compute_localization_region(
