@@ -42,8 +42,8 @@ class FacultyRoleClinicConstraint(SoftConstraint):
 
     This constraint ensures faculty members do not exceed their clinic limits.
     Limits are determined by:
-    1. Person-specific `max_clinic_halfdays_per_week` if set and > 0
-    2. Role-based defaults from `weekly_clinic_limit` property
+    1. Person-specific `max_clinic_halfdays_per_week` if not NULL (0 is intentional)
+    2. Role-based defaults from `weekly_clinic_limit` property (NULL fallback only)
 
     Role Defaults (used when person-specific not set):
         - PD (Program Director): 0 clinic/week - Full admin
@@ -74,8 +74,9 @@ class FacultyRoleClinicConstraint(SoftConstraint):
         """
         Get effective min/max clinic half-days per week for a faculty member.
 
-        Uses person-specific limits if set and > 0, otherwise falls back
-        to role-based defaults.
+        Priority: DB fields (max_clinic_halfdays_per_week) > role defaults.
+        DB value of 0 is intentional (e.g., PD has 0 clinic). Only NULL
+        triggers fallback to the role-derived weekly_clinic_limit property.
 
         Args:
             faculty: Person model instance
@@ -83,11 +84,10 @@ class FacultyRoleClinicConstraint(SoftConstraint):
         Returns:
             Tuple of (min_limit, max_limit) clinic half-days per week
         """
-        # Check for person-specific max (takes precedence if set and > 0)
+        # DB field takes precedence if not NULL
         person_max = getattr(faculty, "max_clinic_halfdays_per_week", None)
-        if person_max is not None and person_max > 0:
+        if person_max is not None:
             max_limit = person_max
-            # Also check person-specific min if max is person-specific
             person_min = getattr(faculty, "min_clinic_halfdays_per_week", None)
             min_limit = person_min if person_min is not None else 0
         else:
@@ -266,7 +266,6 @@ class FacultyRoleClinicConstraint(SoftConstraint):
             min_limit, max_limit = self._get_effective_clinic_limits(faculty)
             is_person_specific = (
                 getattr(faculty, "max_clinic_halfdays_per_week", None) is not None
-                and faculty.max_clinic_halfdays_per_week > 0
             )
 
             for week_start, count in weekly_counts.items():

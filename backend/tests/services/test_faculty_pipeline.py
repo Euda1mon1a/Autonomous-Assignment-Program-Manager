@@ -203,13 +203,13 @@ class TestPersonSpecificClinicLimits:
         assert max_limit == 4  # Core faculty role limit
         assert min_limit == 0  # No min for role-based
 
-    def test_role_default_when_person_zero(self, core_faculty):
-        """Should use role default when person max is 0."""
+    def test_person_zero_is_intentional(self, core_faculty):
+        """DB value of 0 is intentional (e.g., PD) — not a fallback trigger."""
         core_faculty.max_clinic_halfdays_per_week = 0
         constraint = FacultyRoleClinicConstraint()
         min_limit, max_limit = constraint._get_effective_clinic_limits(core_faculty)
 
-        assert max_limit == 4  # Falls back to role
+        assert max_limit == 0  # DB value of 0 respected, not role fallback
 
     def test_min_limit_enforcement_in_validation(self, person_specific_faculty):
         """Validation should report under-min violations for person-specific limits."""

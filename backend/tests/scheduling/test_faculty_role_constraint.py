@@ -179,15 +179,15 @@ class TestGetEffectiveClinicLimits:
         assert max_limit == 3
         assert min_limit == 2
 
-    def test_person_max_zero_falls_back(self):
-        """Person-specific max == 0 falls back to role-based."""
+    def test_person_max_zero_is_intentional(self):
+        """Person-specific max == 0 is intentional (e.g., PD, Adjunct)."""
         c = FacultyRoleClinicConstraint()
         f = _person(
             weekly_clinic_limit=4,
             max_clinic_halfdays_per_week=0,
         )
         min_limit, max_limit = c._get_effective_clinic_limits(f)
-        assert max_limit == 4
+        assert max_limit == 0  # DB value of 0 is respected, not a fallback
         assert min_limit == 0
 
     def test_person_max_none_falls_back(self):
