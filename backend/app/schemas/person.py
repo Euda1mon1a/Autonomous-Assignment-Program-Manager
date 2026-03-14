@@ -64,6 +64,13 @@ class PersonBase(BaseModel):
         None, ge=0, le=10, description="Maximum clinic half-days per week"
     )
     admin_type: str | None = Field(None, description="Admin type: GME, DFM, SM")
+    call_pref_avoid_tuesday: bool | None = Field(
+        None, description="Avoid Tuesday call (default from role: True for PD/APD)"
+    )
+    call_pref_prefer_wednesday: bool | None = Field(
+        None,
+        description="Prefer Wednesday call (default from role: True for Dept Chief)",
+    )
 
     @field_validator("admin_type")
     @classmethod
@@ -129,6 +136,10 @@ class PersonUpdate(BaseModel):
         None, ge=0, le=10, description="Maximum clinic half-days per week"
     )
     admin_type: str | None = Field(None, description="Admin type: GME, DFM, SM")
+    call_pref_avoid_tuesday: bool | None = Field(None, description="Avoid Tuesday call")
+    call_pref_prefer_wednesday: bool | None = Field(
+        None, description="Prefer Wednesday call"
+    )
 
     @field_validator("name")
     @classmethod
@@ -202,6 +213,10 @@ class PersonResponse(PersonBase):
                 person, "max_clinic_halfdays_per_week"
             ),
             "admin_type": get_attr(person, "admin_type"),
+            "call_pref_avoid_tuesday": get_attr(person, "call_pref_avoid_tuesday"),
+            "call_pref_prefer_wednesday": get_attr(
+                person, "call_pref_prefer_wednesday"
+            ),
             "created_at": get_attr(person, "created_at"),
             "updated_at": get_attr(person, "updated_at"),
             "sunday_call_count": get_attr(person, "sunday_call_count", 0),

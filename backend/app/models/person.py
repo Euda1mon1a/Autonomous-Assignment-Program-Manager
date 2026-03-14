@@ -141,6 +141,17 @@ class Person(Base):
         Integer, default=100
     )  # Efficiency percentage (70-100)
 
+    # Call preferences (seeded from role defaults, editable per-person)
+    # NULL means "use role-derived default"; explicit True/False overrides.
+    call_pref_avoid_tuesday = Column(
+        Boolean,
+        comment="Avoid Tuesday call (NULL = role default: True for PD/APD)",
+    )
+    call_pref_prefer_wednesday = Column(
+        Boolean,
+        comment="Prefer Wednesday call (NULL = role default: True for Dept Chief)",
+    )
+
     # Call and FMIT equity tracking (reset annually)
     # These track cumulative counts for fair distribution
     sunday_call_count = Column(
@@ -324,12 +335,19 @@ class Person(Base):
         """
         Get 4-week block clinic half-day limit.
 
-        APD/OIC have flexibility within block (can do 0 one week, 4 another).
-        Core faculty have hard max of 16/block.
+        Reads from max_clinic_halfdays_per_week * 4 when the DB column
+        is set (not None), else falls back to role-derived defaults:
+        APD/OIC 8, Core 16, others weekly_clinic_limit * 4.
         """
         if not self.is_faculty:
             return 0
 
+        # DB column is the primary source of truth
+        db_max = self.max_clinic_halfdays_per_week
+        if db_max is not None:
+            return db_max * 4
+
+        # Legacy role-derived fallback
         role = self.role_enum
         if role in (FacultyRole.APD, FacultyRole.OIC):
             return 8  # 2/week * 4 weeks, but flexible
@@ -343,22 +361,49 @@ class Person(Base):
         """
         Get weekly SM clinic half-day target for sports medicine faculty.
 
+        Reads from the sm_max DB column when set (not None), else falls
+        back to the role-derived default (4 for SM faculty, 0 otherwise).
+
         Returns:
-            int: SM clinic half-days per week (4 for SM faculty, 0 otherwise)
+            int: SM clinic half-days per week
         """
+        # DB column is the primary source of truth
+        db_sm_max = self.sm_max
+        if db_sm_max is not None:
+            return db_sm_max
+
+        # Legacy role-derived fallback
         if self.role_enum == FacultyRole.SPORTS_MED:
             return 4
         return 0
 
     @property
     def avoid_tuesday_call(self) -> bool:
-        """Check if this faculty should avoid Tuesday call (academic commitments)."""
-        return self.role_enum in (FacultyRole.PD, FacultyRole.APD)
+        """Check if this faculty should avoid Tuesday call (academic commitments).
+
+        Reads from the call_pref_avoid_tuesday DB column when available,
+        else falls back to the role-derived default (True for PD/APD).
+        """
+        val = getattr(self, "call_pref_avoid_tuesday", None)
+        if val is not None:
+            return val
+        # Legacy role-derived fallback (for SimpleNamespace test objects)
+        role = self.role_enum
+        return role in (FacultyRole.PD, FacultyRole.APD) if role else False
 
     @property
     def prefer_wednesday_call(self) -> bool:
-        """Check if this faculty prefers Wednesday call (personal preference)."""
-        return self.role_enum == FacultyRole.DEPT_CHIEF
+        """Check if this faculty prefers Wednesday call (personal preference).
+
+        Reads from the call_pref_prefer_wednesday DB column when available,
+        else falls back to the role-derived default (True for Dept Chief).
+        """
+        val = getattr(self, "call_pref_prefer_wednesday", None)
+        if val is not None:
+            return val
+        # Legacy role-derived fallback (for SimpleNamespace test objects)
+        role = self.role_enum
+        return role == FacultyRole.DEPT_CHIEF if role else False
 
     @property
     def is_sports_medicine(self) -> bool:
