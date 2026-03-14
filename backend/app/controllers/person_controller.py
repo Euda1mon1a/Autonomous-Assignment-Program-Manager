@@ -79,6 +79,14 @@ class PersonController:
             target_clinical_blocks=getattr(person_in, "target_clinical_blocks", None),
             specialties=getattr(person_in, "specialties", None),
             performs_procedures=getattr(person_in, "performs_procedures", False),
+            faculty_role=getattr(person_in, "faculty_role", None),
+            primary_duty=getattr(person_in, "primary_duty", None),
+            min_clinic_halfdays_per_week=getattr(
+                person_in, "min_clinic_halfdays_per_week", None
+            ),
+            max_clinic_halfdays_per_week=getattr(
+                person_in, "max_clinic_halfdays_per_week", None
+            ),
         )
 
         if result["error"]:

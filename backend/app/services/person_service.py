@@ -180,6 +180,10 @@ class PersonService:
         target_clinical_blocks: int | None = None,
         specialties: list[str] | None = None,
         performs_procedures: bool = False,
+        faculty_role: str | None = None,
+        primary_duty: str | None = None,
+        min_clinic_halfdays_per_week: int | None = None,
+        max_clinic_halfdays_per_week: int | None = None,
     ) -> dict:
         """
         Create a new person (resident or faculty).
@@ -194,6 +198,10 @@ class PersonService:
             target_clinical_blocks: Optional target number of clinical blocks.
             specialties: Optional list of specialty strings (for faculty).
             performs_procedures: Whether the person performs procedures.
+            faculty_role: Optional faculty role (pd, apd, oic, etc.).
+            primary_duty: Optional primary duty description.
+            min_clinic_halfdays_per_week: Optional min clinic half-days/week.
+            max_clinic_halfdays_per_week: Optional max clinic half-days/week.
 
         Returns:
             A dict with 'person' (Person object or None) and 'error' (string or None).
@@ -219,6 +227,16 @@ class PersonService:
             person_data["specialties"] = specialties
         if performs_procedures:
             person_data["performs_procedures"] = performs_procedures
+        if faculty_role is not None:
+            person_data["faculty_role"] = (
+                faculty_role.value if hasattr(faculty_role, "value") else faculty_role
+            )
+        if primary_duty is not None:
+            person_data["primary_duty"] = primary_duty
+        if min_clinic_halfdays_per_week is not None:
+            person_data["min_clinic_halfdays_per_week"] = min_clinic_halfdays_per_week
+        if max_clinic_halfdays_per_week is not None:
+            person_data["max_clinic_halfdays_per_week"] = max_clinic_halfdays_per_week
 
         try:
             person = self.person_repo.create(person_data)

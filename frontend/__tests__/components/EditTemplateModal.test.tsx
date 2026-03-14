@@ -58,6 +58,11 @@ describe('EditTemplateModal', () => {
     requiresProcedureCredential: true,
     supervisionRequired: true,
     maxSupervisionRatio: 2,
+    isOffsite: false,
+    isLecExempt: false,
+    isContinuityExempt: false,
+    isSaturdayOff: false,
+    preloadActivityCode: null,
     createdAt: '2024-01-01T00:00:00Z',
   }
 

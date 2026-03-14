@@ -154,6 +154,13 @@ class RotationTemplateUpdate(BaseModel):
     supervision_required: bool | None = None
     max_supervision_ratio: int | None = None
 
+    # Preload classification (DB-backed)
+    is_offsite: bool | None = None
+    is_lec_exempt: bool | None = None
+    is_continuity_exempt: bool | None = None
+    is_saturday_off: bool | None = None
+    preload_activity_code: str | None = None
+
     @field_validator("name")
     @classmethod
     def validate_name(cls, v: str | None) -> str | None:

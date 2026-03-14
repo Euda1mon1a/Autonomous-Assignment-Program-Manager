@@ -89,6 +89,11 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
   const [supervisionRequired, setSupervisionRequired] = useState(true);
   const [maxSupervisionRatio, setMaxSupervisionRatio] = useState('4');
   const [isBlockHalfRotation, setIsBlockHalfRotation] = useState(false);
+  const [isOffsite, setIsOffsite] = useState(false);
+  const [isLecExempt, setIsLecExempt] = useState(false);
+  const [isContinuityExempt, setIsContinuityExempt] = useState(false);
+  const [isSaturdayOff, setIsSaturdayOff] = useState(false);
+  const [preloadActivityCode, setPreloadActivityCode] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [showRequirements, setShowRequirements] = useState(false);
 
@@ -118,6 +123,11 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
       setSupervisionRequired(template.supervisionRequired ?? true);
       setMaxSupervisionRatio(template.maxSupervisionRatio?.toString() ?? '4');
       setIsBlockHalfRotation(template.isBlockHalfRotation || false);
+      setIsOffsite(template.isOffsite ?? false);
+      setIsLecExempt(template.isLecExempt ?? false);
+      setIsContinuityExempt(template.isContinuityExempt ?? false);
+      setIsSaturdayOff(template.isSaturdayOff ?? false);
+      setPreloadActivityCode(template.preloadActivityCode || '');
     }
   }, [template]);
 
@@ -161,6 +171,11 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
       supervisionRequired: supervisionRequired,
       maxSupervisionRatio: parseInt(maxSupervisionRatio),
       isBlockHalfRotation: isBlockHalfRotation,
+      isOffsite: isOffsite,
+      isLecExempt: isLecExempt,
+      isContinuityExempt: isContinuityExempt,
+      isSaturdayOff: isSaturdayOff,
+      preloadActivityCode: preloadActivityCode.trim() || undefined,
     };
 
     try {
@@ -365,6 +380,70 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
               Half-block rotation (14 days instead of 28)
             </label>
           </div>
+        </div>
+
+        {/* Preload Classification */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Preload Classification</label>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="editIsOffsite"
+              checked={isOffsite}
+              onChange={(e) => setIsOffsite(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="editIsOffsite" className="text-sm text-gray-700">
+              Offsite rotation (TDY, HILO, OKI, etc.)
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="editIsLecExempt"
+              checked={isLecExempt}
+              onChange={(e) => setIsLecExempt(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="editIsLecExempt" className="text-sm text-gray-700">
+              Exempt from Wednesday PM lecture
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="editIsContinuityExempt"
+              checked={isContinuityExempt}
+              onChange={(e) => setIsContinuityExempt(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="editIsContinuityExempt" className="text-sm text-gray-700">
+              Exempt from intern continuity clinic
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="editIsSaturdayOff"
+              checked={isSaturdayOff}
+              onChange={(e) => setIsSaturdayOff(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="editIsSaturdayOff" className="text-sm text-gray-700">
+              Saturday off (preloaded as Weekend)
+            </label>
+          </div>
+
+          <Input
+            label="Preload Activity Code"
+            value={preloadActivityCode}
+            onChange={(e) => setPreloadActivityCode(e.target.value)}
+            placeholder="e.g., MUC, TDY, FMIT (blank = use solver)"
+          />
         </div>
 
         {/* Collapsible Activity Requirements Section */}

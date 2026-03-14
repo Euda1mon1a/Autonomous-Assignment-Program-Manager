@@ -185,6 +185,12 @@ export interface Person {
   primaryDuty: string | null;
   /** Faculty role (for faculty only) */
   facultyRole: FacultyRole | null;
+  /** Minimum clinic half-days per week (faculty only) */
+  minClinicHalfdaysPerWeek: number | null;
+  /** Maximum clinic half-days per week (faculty only) */
+  maxClinicHalfdaysPerWeek: number | null;
+  /** Admin type: GME, DFM, SM */
+  adminType: string | null;
   /** Timestamp when the record was created */
   createdAt: DateTimeString;
   /** Timestamp when the record was last updated */
@@ -211,6 +217,10 @@ export interface PersonCreate {
   primaryDuty?: string;
   /** Faculty role (for faculty only) */
   facultyRole?: FacultyRole;
+  /** Minimum clinic half-days per week (faculty only) */
+  minClinicHalfdaysPerWeek?: number;
+  /** Maximum clinic half-days per week (faculty only) */
+  maxClinicHalfdaysPerWeek?: number;
 }
 
 /**
@@ -233,6 +243,10 @@ export interface PersonUpdate {
   primaryDuty?: string;
   /** Faculty role (for faculty only) */
   facultyRole?: FacultyRole;
+  /** Minimum clinic half-days per week (faculty only) */
+  minClinicHalfdaysPerWeek?: number;
+  /** Maximum clinic half-days per week (faculty only) */
+  maxClinicHalfdaysPerWeek?: number;
 }
 
 // ============================================================================
@@ -548,6 +562,16 @@ export interface RotationTemplate {
   maxSupervisionRatio: number | null;
   /** True for half-block rotations (14 days instead of 28) */
   isBlockHalfRotation?: boolean;
+  /** Whether the rotation is offsite (TDY, HILO, etc.) */
+  isOffsite: boolean;
+  /** Exempt from Wednesday PM lecture requirement */
+  isLecExempt: boolean;
+  /** Exempt from intern continuity clinic requirement */
+  isContinuityExempt: boolean;
+  /** Saturday is off (preloaded as W) for this rotation */
+  isSaturdayOff: boolean;
+  /** Activity code to fill all half-day slots (e.g., MUC, TDY, FMIT) */
+  preloadActivityCode: string | null;
   /** Timestamp when the template was created */
   createdAt: DateTimeString;
 }
@@ -582,6 +606,16 @@ export interface RotationTemplateCreate {
   maxSupervisionRatio?: number;
   /** True for half-block rotations (14 days instead of 28) */
   isBlockHalfRotation?: boolean;
+  /** Whether the rotation is offsite */
+  isOffsite?: boolean;
+  /** Exempt from Wednesday PM lecture requirement */
+  isLecExempt?: boolean;
+  /** Exempt from intern continuity clinic requirement */
+  isContinuityExempt?: boolean;
+  /** Saturday is off for this rotation */
+  isSaturdayOff?: boolean;
+  /** Activity code to fill all half-day slots */
+  preloadActivityCode?: string;
 }
 
 /**
@@ -614,6 +648,16 @@ export interface RotationTemplateUpdate {
   maxSupervisionRatio?: number;
   /** True for half-block rotations (14 days instead of 28) */
   isBlockHalfRotation?: boolean;
+  /** Whether the rotation is offsite */
+  isOffsite?: boolean;
+  /** Exempt from Wednesday PM lecture requirement */
+  isLecExempt?: boolean;
+  /** Exempt from intern continuity clinic requirement */
+  isContinuityExempt?: boolean;
+  /** Saturday is off for this rotation */
+  isSaturdayOff?: boolean;
+  /** Activity code to fill all half-day slots */
+  preloadActivityCode?: string;
 }
 
 // ============================================================================
