@@ -1037,6 +1037,89 @@ class SchedulerAPIClient:
         response.raise_for_status()
         return response.json()
 
+    # ==================== TASK HISTORY LEARNING METHODS ====================
+
+    async def log_task_history(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Log a completed task to the learning system.
+
+        Args:
+            payload: Task data (task_description, agent_used, model_used, success, etc.)
+
+        Returns:
+            Created task history record
+        """
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/task-history/",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def query_task_history(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Search task history by vector similarity.
+
+        Args:
+            payload: Search params (query, top_k, success_filter, tags_filter, min_similarity)
+
+        Returns:
+            Dict with query, results, total_results
+        """
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/task-history/search",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_session_history(self, session_id: str) -> dict[str, Any]:
+        """Get all tasks from a session (episodic memory).
+
+        Args:
+            session_id: Session identifier
+
+        Returns:
+            Dict with session_id, tasks, total_tasks
+        """
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/task-history/session/{session_id}",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_file_lessons(
+        self,
+        file_paths: list[str],
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """Get lessons learned for specific files.
+
+        Args:
+            file_paths: List of file paths to query
+            limit: Maximum results
+
+        Returns:
+            List of task history records involving these files
+        """
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {"paths": file_paths, "limit": limit}
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/task-history/files",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+        return response.json()
+
     # ==================== ARO (Annual Rotation Optimizer) METHODS ====================
 
     async def create_annual_plan(
