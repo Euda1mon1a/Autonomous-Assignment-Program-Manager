@@ -238,6 +238,10 @@ function ConstraintRow({
               Save
             </button>
           </div>
+        ) : isCritical || c.weight === 1 ? (
+          <span className="text-sm text-gray-400" title="Hard constraint — weight not editable">
+            {c.weight}
+          </span>
         ) : (
           <button
             onClick={() => onStartEditWeight(c.name, c.weight)}

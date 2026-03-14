@@ -50,6 +50,7 @@ class ConstraintCategory(str, Enum):
     RESILIENCE = "RESILIENCE"  # Resilience framework
     TEMPORAL = "TEMPORAL"  # Time-based constraints
     FACULTY = "FACULTY"  # Faculty-specific constraints
+    SCHEDULING = "SCHEDULING"  # General scheduling constraints
 
 
 class ConstraintPriorityLevel(int, Enum):
