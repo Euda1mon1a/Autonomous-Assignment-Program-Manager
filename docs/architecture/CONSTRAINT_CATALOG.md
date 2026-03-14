@@ -1,8 +1,13 @@
 # Constraint Catalog - Residency Scheduler
 
-**Version:** 2.0
-**Last Updated:** 2025-12-31
+**Version:** 3.0
+**Last Updated:** 2026-03-13
 **Purpose:** Complete reference guide for all scheduling constraints
+
+> **Architecture change (PR #1297, 2026-03-13):** Constraint config is now DB-backed.
+> The `constraint_configurations` table is the single source of truth for enabled/weight.
+> The old `ConstraintConfigManager` / `get_constraint_config()` system is deprecated.
+> See `docs/rag-knowledge/constraint-catalog-summary.md` for the quick reference.
 
 ## Table of Contents
 
@@ -26,11 +31,13 @@
 
 The constraint system in the Residency Scheduler consists of:
 
-- **47 Constraint Classes** organized into 18 modules
-- **Hard Constraints (27)**: Must be satisfied; violations make schedule infeasible
-- **Soft Constraints (20)**: Optimization objectives; violations add penalty to objective
+- **53 Constraints** registered in `ConstraintManager.create_default()` (~21 hard, ~32 soft)
+- **44 Enabled / 9 Disabled** (as of 2026-03-13)
+- **Hard Constraints**: Must be satisfied; violations make schedule infeasible
+- **Soft Constraints**: Optimization objectives; violations add weighted penalty
 - **Base Classes**: `Constraint`, `HardConstraint`, `SoftConstraint`, `SchedulingContext`
 - **Manager**: `ConstraintManager` for orchestrating constraint application
+- **DB Config**: `constraint_configurations` table — engine reads at init via `_sync_constraints_from_db()`
 
 ### Core Architecture
 

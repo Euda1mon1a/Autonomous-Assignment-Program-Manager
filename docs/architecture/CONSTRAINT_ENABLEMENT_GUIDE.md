@@ -15,10 +15,10 @@ These constraints enforce regulatory compliance and basic scheduling requirement
 | Constraint | Category | Purpose |
 |------------|----------|---------|
 | `Availability` | ACGME | Enforces resident/faculty availability |
-| `EightyHourRule` | ACGME | 80-hour per week duty limit |
-| `OneInSevenRule` | ACGME | 1-in-7 day off requirement |
+| `80HourRule` | ACGME | 80-hour per week duty limit |
+| `1in7Rule` | ACGME | 1-in-7 day off requirement |
 | `SupervisionRatio` | ACGME | Faculty supervision ratios by PGY level |
-| `OnePersonPerBlock` | CAPACITY | Exactly one person per block-rotation |
+| `ResidentInpatientHeadcount` | CAPACITY | Exactly one person per block-rotation |
 | `ClinicCapacity` | CAPACITY | Clinic maximum occupancy limits |
 | `MaxPhysiciansInClinic` | CAPACITY | Maximum faculty supervising same clinic |
 | `Coverage` | COVERAGE | All required rotations must be covered |
