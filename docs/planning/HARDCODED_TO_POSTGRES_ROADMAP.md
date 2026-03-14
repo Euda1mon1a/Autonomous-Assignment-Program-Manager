@@ -1,6 +1,6 @@
 # Hardcoded-to-Postgres Migration Roadmap
 
-> **Created:** 2026-03-14 | **Status:** Planning | **Priority:** FOUNDATION
+> **Created:** 2026-03-14 | **Updated:** 2026-03-14 | **Status:** Tracks 1-4 Complete, Track 5-6 Backlog | **Priority:** FOUNDATION
 >
 > **Problem:** Almost nothing that is changeable by a human should be hardcoded in Python.
 > Multiple audits (Gemini, Claude) found that scheduling policy, preload rules, constraint
@@ -167,15 +167,26 @@ Role-based defaults (clinic limits, call preferences) are computed as Python pro
 
 ## Recommended Execution Order
 
-| # | Track | What | Effort | Impact |
-|---|-------|------|--------|--------|
-| 1 | **3** | Wire ACGME constraints to ApplicationSettings | S | 🔴 Fixes false sense of control |
-| 2 | **2.1** | Preload classification columns on rotation_templates | M | 🟡 Unlocks coordinator preload control |
-| 3 | **4** | Primary duty policy → Postgres | M | 🟡 Removes Airtable dependency |
-| 4 | **1** | Hard→soft constraint refactor (ACGME first) | L | 🟡 Enables graceful degradation |
-| 5 | **5** | Role defaults from DB, remove code fallbacks | S | 🟡 Single source of truth |
-| 6 | **2.2** | Complex day-of-week patterns via weekly_patterns | M | 🟡 Full preload data-drivenness |
-| 7 | **6** | Calendar policy → Postgres | S | 🟡 Nice-to-have |
+| # | Track | What | Effort | Impact | Status |
+|---|-------|------|--------|--------|--------|
+| 1 | **3** | Wire ACGME constraints to ApplicationSettings | S | 🔴 | **DONE** (PR #1301) |
+| 2 | **2.1** | Preload classification columns on rotation_templates | M | 🟡 | **DONE** (PR #1302) |
+| 3 | **4** | Primary duty policy → Postgres | M | 🟡 | **DONE** (PRs #1303-#1305, #1308, #1312) |
+| 4 | **1** | Hard→soft constraint refactor | L | 🟡 | **DONE** class change (PRs #1310-#1311). Solver semantics partial. |
+| 5 | **5** | Role defaults from DB, remove code fallbacks | S | 🟡 | Backlog |
+| 6 | **2.2** | Complex day-of-week patterns via weekly_patterns | M | 🟡 | Backlog |
+| 7 | **6** | Calendar policy → Postgres | S | 🟡 | Backlog |
+
+## Related Planning Documents
+
+| Document | Scope | Status |
+|----------|-------|--------|
+| `GUI_EDITABILITY_BOUNDARY.md` | What should be GUI-editable vs DB-only vs Python-only | Reference (architecture) |
+| `POLICY_STORAGE_BOUNDARY.md` | DB vs Python ownership decision rules | Reference (architecture) |
+| `AI_POLICY_STORAGE_BOUNDARY.md` | Agent guidance: never build GUI for Python constants | Reference (development) |
+| `POLICY_GUI_MIGRATION_BACKLOG_20260314.md` | Concrete follow-up list after PRs #1297-#1312 | Active backlog |
+| `MCP_FOLLOWUP_BACKLOG_20260314.md` | MCP tools needed for new DB-backed surfaces | Active backlog |
+| `OVERNIGHT_WORK_PLAN_20260314.md` | Completed overnight items (PRs #1307-#1311) | Done |
 
 **Total scope:** ~7 PRs across ~4 weeks if done sequentially. Tracks 1-3 are parallelizable.
 
