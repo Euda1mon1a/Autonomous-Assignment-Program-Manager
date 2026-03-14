@@ -105,32 +105,80 @@ class TestWeeklyClinicLimits:
 class TestBlockClinicLimits:
     """Test 4-week block clinic limit calculations."""
 
-    def test_block_limit_apd_flexible(self):
-        """Test APD has 8 block limit (2/week * 4 weeks, flexible)."""
-        person = Person(id=uuid4(), name="Dr. APD", type="faculty", faculty_role="apd")
-        assert person.block_clinic_limit == 8
-
-    def test_block_limit_oic_flexible(self):
-        """Test OIC has 8 block limit (flexible)."""
-        person = Person(id=uuid4(), name="Dr. OIC", type="faculty", faculty_role="oic")
-        assert person.block_clinic_limit == 8
-
-    def test_block_limit_core_hard_max(self):
-        """Test Core faculty has 16 block limit (hard max)."""
+    def test_block_limit_from_db_column(self):
+        """Test block limit computed from max_clinic_halfdays_per_week * 4."""
         person = Person(
-            id=uuid4(), name="Dr. Core", type="faculty", faculty_role="core"
+            id=uuid4(),
+            name="Dr. Core",
+            type="faculty",
+            faculty_role="core",
+            max_clinic_halfdays_per_week=3,
+        )
+        assert person.block_clinic_limit == 12  # 3 * 4
+
+    def test_block_limit_from_db_column_zero(self):
+        """Test block limit of 0 when DB column is 0."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. PD",
+            type="faculty",
+            faculty_role="pd",
+            max_clinic_halfdays_per_week=0,
+        )
+        assert person.block_clinic_limit == 0
+
+    def test_block_limit_apd_fallback(self):
+        """Test APD role fallback when DB column is NULL: 8 (2/week * 4)."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. APD",
+            type="faculty",
+            faculty_role="apd",
+            max_clinic_halfdays_per_week=None,
+        )
+        assert person.block_clinic_limit == 8
+
+    def test_block_limit_oic_fallback(self):
+        """Test OIC role fallback when DB column is NULL: 8."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. OIC",
+            type="faculty",
+            faculty_role="oic",
+            max_clinic_halfdays_per_week=None,
+        )
+        assert person.block_clinic_limit == 8
+
+    def test_block_limit_core_fallback(self):
+        """Test Core role fallback when DB column is NULL: 16."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. Core",
+            type="faculty",
+            faculty_role="core",
+            max_clinic_halfdays_per_week=None,
         )
         assert person.block_clinic_limit == 16
 
-    def test_block_limit_pd_zero(self):
-        """Test PD has 0 block limit."""
-        person = Person(id=uuid4(), name="Dr. PD", type="faculty", faculty_role="pd")
+    def test_block_limit_pd_fallback(self):
+        """Test PD role fallback when DB column is NULL: 0."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. PD",
+            type="faculty",
+            faculty_role="pd",
+            max_clinic_halfdays_per_week=None,
+        )
         assert person.block_clinic_limit == 0
 
-    def test_block_limit_dept_chief(self):
-        """Test Dept Chief has 4 block limit (1/week * 4)."""
+    def test_block_limit_dept_chief_fallback(self):
+        """Test Dept Chief role fallback when DB column is NULL: 4."""
         person = Person(
-            id=uuid4(), name="Dr. Chief", type="faculty", faculty_role="dept_chief"
+            id=uuid4(),
+            name="Dr. Chief",
+            type="faculty",
+            faculty_role="dept_chief",
+            max_clinic_halfdays_per_week=None,
         )
         assert person.block_clinic_limit == 4
 
@@ -138,17 +186,47 @@ class TestBlockClinicLimits:
 class TestSMClinicTarget:
     """Test Sports Medicine clinic target calculations."""
 
-    def test_sm_faculty_has_four_sm_clinic_target(self):
-        """Test SM faculty has 4 SM clinic half-days per week target."""
+    def test_sm_target_from_db_column(self):
+        """Test SM target reads from sm_max DB column when set."""
         person = Person(
-            id=uuid4(), name="Dr. Sports", type="faculty", faculty_role="sports_med"
+            id=uuid4(),
+            name="Dr. Sports",
+            type="faculty",
+            faculty_role="sports_med",
+            sm_max=6,
+        )
+        assert person.sm_clinic_weekly_target == 6
+
+    def test_sm_target_from_db_column_zero(self):
+        """Test SM target of 0 when DB column is explicitly 0."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. Core",
+            type="faculty",
+            faculty_role="core",
+            sm_max=0,
+        )
+        assert person.sm_clinic_weekly_target == 0
+
+    def test_sm_faculty_fallback(self):
+        """Test SM faculty fallback when sm_max is NULL: 4."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. Sports",
+            type="faculty",
+            faculty_role="sports_med",
+            sm_max=None,
         )
         assert person.sm_clinic_weekly_target == 4
 
-    def test_non_sm_faculty_has_zero_sm_target(self):
-        """Test non-SM faculty has 0 SM clinic target."""
+    def test_non_sm_faculty_fallback(self):
+        """Test non-SM faculty fallback when sm_max is NULL: 0."""
         person = Person(
-            id=uuid4(), name="Dr. Core", type="faculty", faculty_role="core"
+            id=uuid4(),
+            name="Dr. Core",
+            type="faculty",
+            faculty_role="core",
+            sm_max=None,
         )
         assert person.sm_clinic_weekly_target == 0
 
@@ -156,32 +234,102 @@ class TestSMClinicTarget:
 class TestCallPreferences:
     """Test call preference properties."""
 
-    def test_pd_avoids_tuesday(self):
-        """Test PD should avoid Tuesday call."""
-        person = Person(id=uuid4(), name="Dr. PD", type="faculty", faculty_role="pd")
+    def test_pd_avoids_tuesday_from_column(self):
+        """Test PD avoid Tuesday via DB column."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. PD",
+            type="faculty",
+            faculty_role="pd",
+            call_pref_avoid_tuesday=True,
+        )
         assert person.avoid_tuesday_call is True
 
-    def test_apd_avoids_tuesday(self):
-        """Test APD should avoid Tuesday call."""
-        person = Person(id=uuid4(), name="Dr. APD", type="faculty", faculty_role="apd")
+    def test_apd_avoids_tuesday_from_column(self):
+        """Test APD avoid Tuesday via DB column."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. APD",
+            type="faculty",
+            faculty_role="apd",
+            call_pref_avoid_tuesday=True,
+        )
+        assert person.avoid_tuesday_call is True
+
+    def test_column_overrides_role_avoid_tuesday(self):
+        """Test DB column False overrides PD role default."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. PD",
+            type="faculty",
+            faculty_role="pd",
+            call_pref_avoid_tuesday=False,
+        )
+        assert person.avoid_tuesday_call is False
+
+    def test_pd_avoids_tuesday_role_fallback(self):
+        """Test PD role fallback when column is NULL."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. PD",
+            type="faculty",
+            faculty_role="pd",
+            call_pref_avoid_tuesday=None,
+        )
         assert person.avoid_tuesday_call is True
 
     def test_oic_no_tuesday_preference(self):
-        """Test OIC has no Tuesday avoidance."""
-        person = Person(id=uuid4(), name="Dr. OIC", type="faculty", faculty_role="oic")
+        """Test OIC has no Tuesday avoidance (column NULL, role default False)."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. OIC",
+            type="faculty",
+            faculty_role="oic",
+            call_pref_avoid_tuesday=None,
+        )
         assert person.avoid_tuesday_call is False
 
-    def test_dept_chief_prefers_wednesday(self):
-        """Test Dept Chief prefers Wednesday call."""
+    def test_dept_chief_prefers_wednesday_from_column(self):
+        """Test Dept Chief prefers Wednesday via DB column."""
         person = Person(
-            id=uuid4(), name="Dr. Chief", type="faculty", faculty_role="dept_chief"
+            id=uuid4(),
+            name="Dr. Chief",
+            type="faculty",
+            faculty_role="dept_chief",
+            call_pref_prefer_wednesday=True,
+        )
+        assert person.prefer_wednesday_call is True
+
+    def test_column_overrides_role_prefer_wednesday(self):
+        """Test DB column False overrides Dept Chief role default."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. Chief",
+            type="faculty",
+            faculty_role="dept_chief",
+            call_pref_prefer_wednesday=False,
+        )
+        assert person.prefer_wednesday_call is False
+
+    def test_dept_chief_prefers_wednesday_role_fallback(self):
+        """Test Dept Chief role fallback when column is NULL."""
+        person = Person(
+            id=uuid4(),
+            name="Dr. Chief",
+            type="faculty",
+            faculty_role="dept_chief",
+            call_pref_prefer_wednesday=None,
         )
         assert person.prefer_wednesday_call is True
 
     def test_core_no_wednesday_preference(self):
-        """Test Core faculty has no Wednesday preference."""
+        """Test Core faculty has no Wednesday preference (column NULL, role default False)."""
         person = Person(
-            id=uuid4(), name="Dr. Core", type="faculty", faculty_role="core"
+            id=uuid4(),
+            name="Dr. Core",
+            type="faculty",
+            faculty_role="core",
+            call_pref_prefer_wednesday=None,
         )
         assert person.prefer_wednesday_call is False
 
