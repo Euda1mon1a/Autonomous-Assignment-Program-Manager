@@ -69,7 +69,7 @@ class SettingsUpdate(BaseModel):
     default_block_duration_hours: int | None = None
     schedule_lock_date: date | None = None
     overnight_call_weekdays: list[int] | None = None
-    fmit_week_start_weekday: int | None = None
+    fmit_week_start_weekday: int | None = Field(default=None, ge=0, le=6)
 
     @field_validator("overnight_call_weekdays")
     @classmethod

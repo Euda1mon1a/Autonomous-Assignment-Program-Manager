@@ -30,6 +30,8 @@ DEFAULT_SETTINGS = {
     "enable_holiday_scheduling": False,
     "default_block_duration_hours": 4,
     "schedule_lock_date": None,
+    "overnight_call_weekdays": [0, 1, 2, 3, 6],
+    "fmit_week_start_weekday": 4,
 }
 
 
