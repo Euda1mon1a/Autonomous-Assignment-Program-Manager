@@ -214,11 +214,12 @@ class FacultyPrimaryDutyClinicConstraint(SoftConstraint):
             weight=100,
             priority=ConstraintPriority.HIGH,
         )
-        self._duty_configs = (
-            duty_configs
-            if duty_configs is not None
-            else load_primary_duties_config(db_session=db_session)
-        )
+        if duty_configs is not None:
+            self._duty_configs = duty_configs
+        elif db_session is not None:
+            self._duty_configs = load_primary_duties_config(db_session=db_session)
+        else:
+            self._duty_configs = {}
 
     def get_faculty_duty_config(self, faculty: Any) -> PrimaryDutyConfig | None:
         """
@@ -503,11 +504,12 @@ class FacultyDayAvailabilityConstraint(SoftConstraint):
             weight=100,
             priority=ConstraintPriority.CRITICAL,
         )
-        self._duty_configs = (
-            duty_configs
-            if duty_configs is not None
-            else load_primary_duties_config(db_session=db_session)
-        )
+        if duty_configs is not None:
+            self._duty_configs = duty_configs
+        elif db_session is not None:
+            self._duty_configs = load_primary_duties_config(db_session=db_session)
+        else:
+            self._duty_configs = {}
 
     def get_faculty_duty_config(self, faculty: Any) -> PrimaryDutyConfig | None:
         """Get primary duty config for a faculty member."""
@@ -699,11 +701,12 @@ class FacultyClinicEquitySoftConstraint(SoftConstraint):
             weight=weight,
             priority=ConstraintPriority.MEDIUM,
         )
-        self._duty_configs = (
-            duty_configs
-            if duty_configs is not None
-            else load_primary_duties_config(db_session=db_session)
-        )
+        if duty_configs is not None:
+            self._duty_configs = duty_configs
+        elif db_session is not None:
+            self._duty_configs = load_primary_duties_config(db_session=db_session)
+        else:
+            self._duty_configs = {}
 
     def get_faculty_duty_config(self, faculty: Any) -> PrimaryDutyConfig | None:
         """Get primary duty config for a faculty member."""

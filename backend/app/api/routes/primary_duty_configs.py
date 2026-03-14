@@ -67,6 +67,17 @@ def create_primary_duty_config(
             detail=f"Duty name '{body.duty_name}' already exists",
         )
 
+    if body.clinic_min_per_week > body.clinic_max_per_week:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"clinic_min_per_week ({body.clinic_min_per_week}) cannot exceed clinic_max_per_week ({body.clinic_max_per_week})",
+        )
+    if not all(0 <= d <= 4 for d in body.available_days):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="available_days must contain only values 0-4 (Mon-Fri)",
+        )
+
     row = PrimaryDutyConfiguration(
         duty_name=body.duty_name,
         clinic_min_per_week=body.clinic_min_per_week,
@@ -96,13 +107,47 @@ def update_primary_duty_config(
             detail=f"Primary duty config '{config_id}' not found",
         )
 
-    if body.duty_name is not None:
+    if body.duty_name is not None and body.duty_name != row.duty_name:
+        existing = (
+            db.query(PrimaryDutyConfiguration)
+            .filter_by(duty_name=body.duty_name)
+            .first()
+        )
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Duty name '{body.duty_name}' already exists",
+            )
         row.duty_name = body.duty_name
+
     if body.clinic_min_per_week is not None:
         row.clinic_min_per_week = body.clinic_min_per_week
     if body.clinic_max_per_week is not None:
         row.clinic_max_per_week = body.clinic_max_per_week
+
+    # Validate min <= max
+    effective_min = (
+        body.clinic_min_per_week
+        if body.clinic_min_per_week is not None
+        else row.clinic_min_per_week
+    )
+    effective_max = (
+        body.clinic_max_per_week
+        if body.clinic_max_per_week is not None
+        else row.clinic_max_per_week
+    )
+    if effective_min > effective_max:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"clinic_min_per_week ({effective_min}) cannot exceed clinic_max_per_week ({effective_max})",
+        )
+
     if body.available_days is not None:
+        if not all(0 <= d <= 4 for d in body.available_days):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="available_days must contain only values 0-4 (Mon-Fri)",
+            )
         row.available_days = body.available_days
 
     db.commit()

@@ -507,6 +507,7 @@ class ConstraintManager:
         cls,
         target_utilization: float = 0.80,
         tier: int = 2,
+        db_session=None,
     ) -> "ConstraintManager":
         """
         Create manager with resilience-aware constraints enabled.
