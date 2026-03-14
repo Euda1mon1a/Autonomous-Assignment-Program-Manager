@@ -1,5 +1,11 @@
 # Constraint Enablement Guide
 
+> **ARCHITECTURE CHANGE (PR #1297, 2026-03-13):** Constraint configuration is now DB-backed.
+> The `constraint_configurations` table (53 rows) is the single source of truth.
+> Code examples below that reference `get_constraint_config()` or `ConstraintConfigManager`
+> are **DEPRECATED** — use the API (`PATCH /api/v1/constraints/{name}`) or direct DB queries instead.
+> See `docs/rag-knowledge/constraint-catalog-summary.md` for the current architecture.
+
 ## Overview
 
 This guide explains which constraints are enabled by default, which are disabled, why they are disabled, and when you should enable them.
@@ -15,10 +21,10 @@ These constraints enforce regulatory compliance and basic scheduling requirement
 | Constraint | Category | Purpose |
 |------------|----------|---------|
 | `Availability` | ACGME | Enforces resident/faculty availability |
-| `EightyHourRule` | ACGME | 80-hour per week duty limit |
-| `OneInSevenRule` | ACGME | 1-in-7 day off requirement |
+| `80HourRule` | ACGME | 80-hour per week duty limit |
+| `1in7Rule` | ACGME | 1-in-7 day off requirement |
 | `SupervisionRatio` | ACGME | Faculty supervision ratios by PGY level |
-| `OnePersonPerBlock` | CAPACITY | Exactly one person per block-rotation |
+| `ResidentInpatientHeadcount` | CAPACITY | Exactly one person per block-rotation |
 | `ClinicCapacity` | CAPACITY | Clinic maximum occupancy limits |
 | `MaxPhysiciansInClinic` | CAPACITY | Maximum faculty supervising same clinic |
 | `Coverage` | COVERAGE | All required rotations must be covered |
@@ -75,7 +81,7 @@ These constraints are disabled by default and can be enabled when needed:
 
 ### Capacity Constraints (Always Enabled)
 
-#### OnePersonPerBlock
+#### ResidentInpatientHeadcount (formerly OnePersonPerBlock)
 - **Status**: ENABLED
 - **Priority**: CRITICAL
 - **Purpose**: Ensures exactly one person is assigned to each block-rotation combination.
@@ -311,7 +317,7 @@ manager = ConstraintManager.create_minimal()
 config = get_constraint_config()
 config.apply_preset("minimal")
 ```
-- Only essential constraints enabled (Availability, OnePersonPerBlock, Coverage)
+- Only essential constraints enabled (Availability, ResidentInpatientHeadcount, Coverage)
 - All optional constraints disabled
 - **Use when**: Fast solving, testing, or simple schedules
 

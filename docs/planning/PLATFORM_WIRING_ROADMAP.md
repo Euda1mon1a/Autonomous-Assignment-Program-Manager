@@ -60,21 +60,13 @@ Effort estimates: **S** = a few hours, **M** = 1-2 days, **L** = 3-5 days, **XL*
 
 ---
 
-### 1.3 Constraints in DB (SCHEDULER-BLOCKING, M)
+### 1.3 Constraints in DB — DONE (PR #1297, 2026-03-13)
 
-| Table | Rows | Code Exists |
-|-------|------|-------------|
-| `constraint_configurations` | 0 | Model, `constraint_service.py`, MCP tools |
+| Table | Rows | Status |
+|-------|------|--------|
+| `constraint_configurations` | 53 | Seeded, engine reads at init |
 
-**What's missing:** All 47 constraints are hardcoded in Python. The table exists, the MCP tools exist, but the solver reads from code, not from the table.
-
-**Why it blocks:** Coordinators need to toggle constraints and adjust weights without a code deploy. The half-block initiative (Phase 8) depends on this.
-
-**Work:**
-- Seed table from current `ConstraintConfigManager` defaults
-- Solver reads enabled/weight/priority from DB at generation time
-- Admin UI for constraint toggles
-- Already on half-block roadmap as Phase 8
+**Completed:** Engine calls `_sync_constraints_from_db()` at init. API routes read/write DB directly. Seed script populates from `ConstraintManager` instances. Admin UI toggles + weight edits persist and take effect on next generation. `SCHEDULING` category added to enum (PR #1298).
 
 ---
 
@@ -343,7 +335,7 @@ For reference, every table with 0 rows or seed-only data, mapped to the item abo
 | `schedule_overrides` | 0 | 1.2 Draft & Publish |
 | `schedule_versions` | 0 | 2.4 Schedule Versioning |
 | `schedule_diffs` | 0 | 2.4 Schedule Versioning |
-| `constraint_configurations` | 0 | 1.3 Constraints in DB |
+| `constraint_configurations` | 53 | 1.3 Constraints in DB — DONE |
 | `email_logs` | 0 | 2.1 Email Notifications |
 | `scheduled_notifications` | 0 | 2.1 Email Notifications |
 | `scheduled_jobs` | 0 | 2.3 Background Jobs |

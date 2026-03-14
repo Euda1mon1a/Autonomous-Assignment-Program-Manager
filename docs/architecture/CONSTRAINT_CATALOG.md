@@ -1,8 +1,13 @@
 # Constraint Catalog - Residency Scheduler
 
-**Version:** 2.0
-**Last Updated:** 2025-12-31
+**Version:** 3.0
+**Last Updated:** 2026-03-13
 **Purpose:** Complete reference guide for all scheduling constraints
+
+> **Architecture change (PR #1297, 2026-03-13):** Constraint config is now DB-backed.
+> The `constraint_configurations` table is the single source of truth for enabled/weight.
+> The old `ConstraintConfigManager` / `get_constraint_config()` system is deprecated.
+> See `docs/rag-knowledge/constraint-catalog-summary.md` for the quick reference.
 
 ## Table of Contents
 
@@ -26,11 +31,13 @@
 
 The constraint system in the Residency Scheduler consists of:
 
-- **47 Constraint Classes** organized into 18 modules
-- **Hard Constraints (27)**: Must be satisfied; violations make schedule infeasible
-- **Soft Constraints (20)**: Optimization objectives; violations add penalty to objective
+- **53 Constraints** registered in `ConstraintManager.create_default()` (~21 hard, ~32 soft)
+- **44 Enabled / 9 Disabled** (as of 2026-03-13)
+- **Hard Constraints**: Must be satisfied; violations make schedule infeasible
+- **Soft Constraints**: Optimization objectives; violations add weighted penalty
 - **Base Classes**: `Constraint`, `HardConstraint`, `SoftConstraint`, `SchedulingContext`
 - **Manager**: `ConstraintManager` for orchestrating constraint application
+- **DB Config**: `constraint_configurations` table — engine reads at init via `_sync_constraints_from_db()`
 
 ### Core Architecture
 
@@ -60,13 +67,13 @@ Constraint (Abstract)
 | Name | Type | Category | Priority | Weight | File |
 |------|------|----------|----------|--------|------|
 | **Availability** | Hard | ACGME | CRITICAL | - | acgme.py |
-| **EightyHourRule** | Hard | ACGME | CRITICAL | - | acgme.py |
-| **OneInSevenRule** | Hard | ACGME | CRITICAL | - | acgme.py |
+| **80HourRule** | Hard | ACGME | CRITICAL | - | acgme.py |
+| **1in7Rule** | Hard | ACGME | CRITICAL | - | acgme.py |
 | **SupervisionRatio** | Hard | ACGME | CRITICAL | - | acgme.py |
-| **OnePersonPerBlock** | Hard | Capacity | HIGH | - | capacity.py |
+| **ResidentInpatientHeadcount** | Hard | Capacity | HIGH | - | capacity.py |
 | **ClinicCapacity** | Hard | Capacity | HIGH | - | capacity.py |
 | **MaxPhysiciansInClinic** | Hard | Capacity | HIGH | - | capacity.py |
-| **CoverageConstraint** | Soft | Coverage | HIGH | 1.0 | capacity.py |
+| **Coverage** | Soft | Coverage | HIGH | 1000 | capacity.py |
 | **PostCallAutoAssignment** | Hard | Call | CRITICAL | - | post_call.py |
 | **NightFloatPostCall** | Hard | Call | HIGH | - | night_float_post_call.py |
 | **OvernightCallCoverage** | Hard | Call | HIGH | - | call_coverage.py |
@@ -76,7 +83,7 @@ Constraint (Abstract)
 | **FacultyDayAvailability** | Hard | Faculty | HIGH | - | primary_duty.py |
 | **FacultyPrimaryDutyClinic** | Hard | Faculty | HIGH | - | primary_duty.py |
 | **FacultyRoleClinic** | Hard | Faculty | HIGH | - | faculty_role.py |
-| **SMFacultyClinic** | Hard | Faculty | HIGH | - | faculty_role.py |
+| **SMFacultyNoRegularClinic** | Hard | Faculty | HIGH | - | faculty_role.py |
 | **EquityConstraint** | Soft | Equity | MEDIUM | 2.0 | equity.py |
 | **ContinuityConstraint** | Soft | Equity | MEDIUM | 1.5 | equity.py |
 | **PreferenceConstraint** | Soft | Preference | MEDIUM | 1.0 | faculty.py |

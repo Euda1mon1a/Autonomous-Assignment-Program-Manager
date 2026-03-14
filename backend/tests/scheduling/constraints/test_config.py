@@ -33,7 +33,7 @@ class TestConstraintCategory:
         assert ConstraintCategory.RESILIENCE.value == "RESILIENCE"
 
     def test_member_count(self):
-        assert len(ConstraintCategory) == 10
+        assert len(ConstraintCategory) == 11
 
 
 # ---------------------------------------------------------------------------
