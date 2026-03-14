@@ -42,8 +42,8 @@ class FacultyRoleClinicConstraint(SoftConstraint):
 
     This constraint ensures faculty members do not exceed their clinic limits.
     Limits are determined by:
-    1. Person-specific `max_clinic_halfdays_per_week` if set and > 0
-    2. Role-based defaults from `weekly_clinic_limit` property
+    1. Person-specific `max_clinic_halfdays_per_week` if not NULL (0 is intentional)
+    2. Role-based defaults from `weekly_clinic_limit` property (NULL fallback only)
 
     Role Defaults (used when person-specific not set):
         - PD (Program Director): 0 clinic/week - Full admin
