@@ -19,13 +19,6 @@ from app.scheduling.constraints.base import HardConstraint
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Legacy DB names that don't match constraint instance names.
-LEGACY_RENAMES = {
-    "EightyHourRule": "80HourRule",
-    "OneInSevenRule": "1in7Rule",
-    "OnePersonPerBlock": "ResidentInpatientHeadcount",
-}
-
 # Canonical category map — keyed by constraint name.
 # Constraints not listed here get category from _infer_category().
 CATEGORY_MAP: dict[str, str] = {
@@ -113,20 +106,6 @@ def seed_constraints() -> None:
     try:
         added_count = 0
         updated_count = 0
-        renamed_count = 0
-
-        # Rename legacy DB entries to match manager names
-        for old_name, new_name in LEGACY_RENAMES.items():
-            existing = (
-                db.query(ConstraintConfiguration).filter_by(name=old_name).first()
-            )
-            if existing:
-                existing.name = new_name
-                renamed_count += 1
-                logger.info("Renamed constraint %s → %s", old_name, new_name)
-
-        if renamed_count:
-            db.flush()
 
         # Seed/update from manager instances
         for constraint in manager.constraints:
@@ -168,10 +147,9 @@ def seed_constraints() -> None:
 
         db.commit()
         logger.info(
-            "Seeded constraints: %d added, %d updated, %d renamed, %d orphans removed.",
+            "Seeded constraints: %d added, %d updated, %d orphans removed.",
             added_count,
             updated_count,
-            renamed_count,
             len(orphans),
         )
     except Exception as e:

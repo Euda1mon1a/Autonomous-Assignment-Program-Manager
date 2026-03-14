@@ -118,7 +118,7 @@ def _ensure_seeded(db: Session) -> None:
 
     try:
         # Import seed logic inline to avoid circular imports at module level
-        from seed_constraints import CATEGORY_MAP, LEGACY_RENAMES, _get_category
+        from seed_constraints import _get_category
 
         manager = ConstraintManager.create_default(profile="faculty")
         for constraint in manager.constraints:
@@ -142,6 +142,7 @@ def _ensure_seeded(db: Session) -> None:
 
 def _get_or_404(db: Session, name: str) -> ConstraintConfiguration:
     """Get constraint by name or raise 404."""
+    _ensure_seeded(db)
     row = (
         db.query(ConstraintConfiguration)
         .filter(ConstraintConfiguration.name == name)
