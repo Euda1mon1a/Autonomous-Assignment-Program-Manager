@@ -42,11 +42,7 @@ class TaskHistoryService:
         files_touched: list[str] | None = None,
     ) -> TaskHistory:
         """Log a task execution with embedded description for future search."""
-        embedding = None
-        try:
-            embedding = self.embedding_service.embed_text(task_description)
-        except Exception:
-            logger.warning("Failed to embed task description, storing without vector")
+        embedding = self.embedding_service.embed_text(task_description)
 
         entry = TaskHistory(
             task_description=task_description,
@@ -81,11 +77,7 @@ class TaskHistoryService:
         min_similarity: float = DEFAULT_MIN_SIMILARITY,
     ) -> list[dict[str, Any]]:
         """Vector similarity search over past tasks."""
-        try:
-            query_embedding = self.embedding_service.embed_text(query)
-        except Exception:
-            logger.error("Failed to embed query, cannot search")
-            return []
+        query_embedding = self.embedding_service.embed_text(query)
 
         similarity_expr = (
             1 - TaskHistory.embedding.cosine_distance(query_embedding)
