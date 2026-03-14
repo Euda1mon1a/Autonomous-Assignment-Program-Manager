@@ -81,11 +81,13 @@ class OvernightCallCoverageConstraint(SoftConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Add exactly-one-per-night constraint to CP-SAT model."""
+        """Add exactly-one-per-night coverage penalty to CP-SAT model."""
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
             logger.warning("No call variables found, skipping coverage constraint")
             return
+
+        obj_terms = variables.setdefault("objective_terms", [])
 
         call_eligible_faculty = getattr(
             context, "call_eligible_faculty", context.faculty
@@ -109,10 +111,20 @@ class OvernightCallCoverageConstraint(SoftConstraint):
                     date_call_vars.append(call_vars[f_i, b_i, "overnight"])
 
             if date_call_vars:
-                # Exactly one faculty on call this night
-                model.Add(sum(date_call_vars) == 1)
+                # Penalize under-coverage (gap: no one assigned)
+                gap = model.NewIntVar(0, 1, f"call_gap_{block.date}")
+                model.Add(gap >= 1 - sum(date_call_vars))
+                obj_terms.append((gap, int(self.weight)))
+
+                # Penalize over-coverage (excess: more than one assigned)
+                excess = model.NewIntVar(
+                    0, len(date_call_vars), f"call_excess_{block.date}"
+                )
+                model.Add(excess >= sum(date_call_vars) - 1)
+                obj_terms.append((excess, int(self.weight)))
+
                 logger.debug(
-                    f"Added coverage constraint for {block.date}: "
+                    f"Added coverage penalty for {block.date}: "
                     f"{len(date_call_vars)} eligible faculty"
                 )
 
@@ -254,10 +266,12 @@ class AdjunctCallExclusionConstraint(SoftConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Force adjunct call variables to 0 in CP-SAT."""
+        """Penalize adjunct call assignments in CP-SAT."""
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
             return
+
+        obj_terms = variables.setdefault("objective_terms", [])
 
         call_eligible_faculty = getattr(
             context, "call_eligible_faculty", context.faculty
@@ -276,13 +290,17 @@ class AdjunctCallExclusionConstraint(SoftConstraint):
                 if f_i is None:
                     continue
 
-                # Block all call assignments for this adjunct
+                # Penalize call assignments for this adjunct
                 for block in context.blocks:
                     b_i = context.block_idx[block.id]
                     if (f_i, b_i, "overnight") in call_vars:
-                        model.Add(call_vars[f_i, b_i, "overnight"] == 0)
+                        violation = model.NewBoolVar(f"adjunct_call_{f_i}_{b_i}")
+                        model.AddImplication(
+                            call_vars[f_i, b_i, "overnight"], violation
+                        )
+                        obj_terms.append((violation, int(self.weight)))
                         logger.debug(
-                            f"Blocked adjunct {faculty.name} from call on {block.date}"
+                            f"Added adjunct call penalty for {faculty.name} on {block.date}"
                         )
 
     def add_to_pulp(

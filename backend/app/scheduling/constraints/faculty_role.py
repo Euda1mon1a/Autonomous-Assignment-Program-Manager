@@ -104,15 +104,15 @@ class FacultyRoleClinicConstraint(SoftConstraint):
         context: SchedulingContext,
     ) -> None:
         """
-        Add role-based clinic limits to OR-Tools CP-SAT model.
+        Add role-based clinic limit penalties to OR-Tools CP-SAT model.
 
-        For each faculty member, adds constraints based on their role:
-        - Weekly constraints for roles with strict weekly limits
-        - Block constraints for roles with flexible limits (APD/OIC)
+        For each faculty member, penalizes exceeding their role-based weekly limit.
         """
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
+
+        obj_terms = variables.setdefault("objective_terms", [])
 
         # Identify clinic templates
         clinic_template_ids = {
@@ -131,13 +131,11 @@ class FacultyRoleClinicConstraint(SoftConstraint):
             if not hasattr(faculty, "faculty_role") or not faculty.faculty_role:
                 continue
 
-            f_i = context.resident_idx.get(faculty.id)
+            f_i = context.faculty_idx.get(faculty.id)
             if f_i is None:
-                # Faculty might be in a different index
                 continue
 
             _min_limit, weekly_limit = self._get_effective_clinic_limits(faculty)
-            block_limit = faculty.block_clinic_limit
 
             # Group blocks by week (Mon-Sun)
             weeks = self._group_blocks_by_week(context.blocks)
@@ -154,12 +152,18 @@ class FacultyRoleClinicConstraint(SoftConstraint):
                         if (f_i, b_i, t_i) in template_vars:
                             week_clinic_vars.append(template_vars[f_i, b_i, t_i])
 
-                # Add weekly constraint
+                # Penalize exceeding weekly limit
                 if week_clinic_vars and weekly_limit >= 0:
-                    model.Add(sum(week_clinic_vars) <= weekly_limit)
+                    over = model.NewIntVar(
+                        0,
+                        len(week_clinic_vars),
+                        f"role_clinic_over_{f_i}_{week_start}",
+                    )
+                    model.Add(over >= sum(week_clinic_vars) - weekly_limit)
+                    obj_terms.append((over, int(self.weight)))
                     count += 1
 
-        logger.info(f"Added {count} FacultyRoleClinic constraints")
+        logger.info(f"Added {count} FacultyRoleClinic penalty terms")
 
     def add_to_pulp(
         self,
@@ -170,7 +174,7 @@ class FacultyRoleClinicConstraint(SoftConstraint):
         """Add role-based clinic limits to PuLP model."""
         import pulp
 
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 
@@ -188,7 +192,7 @@ class FacultyRoleClinicConstraint(SoftConstraint):
             if not hasattr(faculty, "faculty_role") or not faculty.faculty_role:
                 continue
 
-            f_i = context.resident_idx.get(faculty.id)
+            f_i = context.faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -356,10 +360,12 @@ class SMFacultyClinicConstraint(SoftConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Block SM faculty from regular clinic in CP-SAT model."""
-        template_vars = variables.get("template_assignments", {})
+        """Penalize SM faculty regular clinic assignments in CP-SAT model."""
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
+
+        obj_terms = variables.setdefault("objective_terms", [])
 
         # Identify regular clinic templates (not SM clinic)
         regular_clinic_ids = {
@@ -390,20 +396,26 @@ class SMFacultyClinicConstraint(SoftConstraint):
                 hasattr(faculty, "faculty_role")
                 and faculty.faculty_role == "sports_med"
             ):
-                f_i = context.resident_idx.get(faculty.id)
+                f_i = context.faculty_idx.get(faculty.id)
                 if f_i is None:
                     continue
 
-                # Block from all regular clinic assignments
+                # Penalize regular clinic assignments
                 for block in context.blocks:
                     b_i = context.block_idx[block.id]
                     for template_id in regular_clinic_ids:
                         t_i = context.template_idx.get(template_id)
                         if t_i is not None and (f_i, b_i, t_i) in template_vars:
-                            model.Add(template_vars[f_i, b_i, t_i] == 0)
+                            violation = model.NewBoolVar(
+                                f"sm_reg_clinic_{f_i}_{b_i}_{t_i}"
+                            )
+                            model.AddImplication(
+                                template_vars[f_i, b_i, t_i], violation
+                            )
+                            obj_terms.append((violation, int(self.weight)))
                             count += 1
 
-        logger.info(f"Added {count} SMFacultyNoRegularClinic constraints")
+        logger.info(f"Added {count} SMFacultyNoRegularClinic penalty terms")
 
     def add_to_pulp(
         self,
@@ -412,7 +424,7 @@ class SMFacultyClinicConstraint(SoftConstraint):
         context: SchedulingContext,
     ) -> None:
         """Block SM faculty from regular clinic in PuLP model."""
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 
@@ -436,7 +448,7 @@ class SMFacultyClinicConstraint(SoftConstraint):
                 hasattr(faculty, "faculty_role")
                 and faculty.faculty_role == "sports_med"
             ):
-                f_i = context.resident_idx.get(faculty.id)
+                f_i = context.faculty_idx.get(faculty.id)
                 if f_i is None:
                     continue
 

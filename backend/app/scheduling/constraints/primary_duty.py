@@ -238,16 +238,18 @@ class FacultyPrimaryDutyClinicConstraint(SoftConstraint):
         context: SchedulingContext,
     ) -> None:
         """
-        Add primary duty clinic constraints to CP-SAT model.
+        Add primary duty clinic penalty terms to CP-SAT model.
 
         For each faculty with a primary duty config:
-        - Adds min constraint: sum(clinic_vars) >= min_per_week
-        - Adds max constraint: sum(clinic_vars) <= max_per_week
+        - Penalizes under-minimum: clinic count below min_per_week
+        - Penalizes over-maximum: clinic count above max_per_week
         """
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
-            logger.debug("No template_assignments variables found")
+            logger.debug("No faculty_template_assignments variables found")
             return
+
+        obj_terms = variables.setdefault("objective_terms", [])
 
         # Identify clinic templates
         clinic_template_ids = {
@@ -291,17 +293,29 @@ class FacultyPrimaryDutyClinicConstraint(SoftConstraint):
 
                 week_sum = sum(week_clinic_vars)
 
-                # Minimum constraint (coverage requirement)
+                # Penalize under-minimum (coverage shortfall)
                 if config.clinic_min_per_week > 0:
-                    model.Add(week_sum >= config.clinic_min_per_week)
+                    under = model.NewIntVar(
+                        0,
+                        config.clinic_min_per_week,
+                        f"duty_under_{f_i}_{week_start}",
+                    )
+                    model.Add(under >= config.clinic_min_per_week - week_sum)
+                    obj_terms.append((under, int(self.weight)))
                     constraints_added += 1
 
-                # Maximum constraint
+                # Penalize over-maximum
                 if config.clinic_max_per_week < 10:  # Only if explicitly limited
-                    model.Add(week_sum <= config.clinic_max_per_week)
+                    over = model.NewIntVar(
+                        0,
+                        len(week_clinic_vars),
+                        f"duty_over_{f_i}_{week_start}",
+                    )
+                    model.Add(over >= week_sum - config.clinic_max_per_week)
+                    obj_terms.append((over, int(self.weight)))
                     constraints_added += 1
 
-        logger.debug(f"Added {constraints_added} primary duty clinic constraints")
+        logger.debug(f"Added {constraints_added} primary duty clinic penalty terms")
 
     def add_to_pulp(
         self,
@@ -312,7 +326,7 @@ class FacultyPrimaryDutyClinicConstraint(SoftConstraint):
         """Add primary duty clinic constraints to PuLP model."""
         import pulp
 
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 
@@ -524,11 +538,13 @@ class FacultyDayAvailabilityConstraint(SoftConstraint):
         context: SchedulingContext,
     ) -> None:
         """
-        Block clinic assignments on unavailable days in CP-SAT model.
+        Penalize clinic assignments on unavailable days in CP-SAT model.
         """
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
+
+        obj_terms = variables.setdefault("objective_terms", [])
 
         clinic_template_ids = {
             t.id
@@ -554,19 +570,21 @@ class FacultyDayAvailabilityConstraint(SoftConstraint):
                 # Check if block's day is available
                 day_of_week = block.date.weekday()
                 if day_of_week in config.available_days:
-                    continue  # Available, no constraint needed
+                    continue  # Available, no penalty needed
 
-                # Block assignments on unavailable days
+                # Penalize assignments on unavailable days
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
                     if template.id not in clinic_template_ids:
                         continue
                     t_i = context.template_idx[template.id]
                     if (f_i, b_i, t_i) in template_vars:
-                        model.Add(template_vars[f_i, b_i, t_i] == 0)
+                        violation = model.NewBoolVar(f"day_avail_{f_i}_{b_i}_{t_i}")
+                        model.AddImplication(template_vars[f_i, b_i, t_i], violation)
+                        obj_terms.append((violation, int(self.weight)))
                         blocked_count += 1
 
-        logger.debug(f"Blocked {blocked_count} assignments on unavailable days")
+        logger.debug(f"Added {blocked_count} day-availability penalty terms")
 
     def add_to_pulp(
         self,
@@ -575,7 +593,7 @@ class FacultyDayAvailabilityConstraint(SoftConstraint):
         context: SchedulingContext,
     ) -> None:
         """Block clinic assignments on unavailable days in PuLP model."""
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 

@@ -63,11 +63,13 @@ class WednesdayAMInternOnlyConstraint(SoftConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Prevent non-intern assignments on Wednesday AM."""
+        """Penalize non-intern assignments on Wednesday AM."""
         template_vars = variables.get("template_assignments", {})
 
         if not template_vars:
             return
+
+        obj_terms = variables.setdefault("objective_terms", [])
 
         # Identify clinic templates
         clinic_template_ids = {
@@ -83,7 +85,7 @@ class WednesdayAMInternOnlyConstraint(SoftConstraint):
         pgy_levels = {r.id: r.pgy_level for r in context.residents}
 
         count = 0
-        # For Wednesday AM blocks, prevent non-PGY-1 clinic assignments
+        # For Wednesday AM blocks, penalize non-PGY-1 clinic assignments
         for block in context.blocks:
             if not self._is_wednesday_am(block):
                 continue
@@ -103,11 +105,14 @@ class WednesdayAMInternOnlyConstraint(SoftConstraint):
 
                     r_i = context.resident_idx[r.id]
                     if (r_i, b_i, t_i) in template_vars:
-                        # Force non-intern to 0 on Wednesday AM clinic
-                        model.Add(template_vars[r_i, b_i, t_i] == 0)
+                        violation = model.NewBoolVar(
+                            f"wed_am_nonintern_{r_i}_{b_i}_{t_i}"
+                        )
+                        model.AddImplication(template_vars[r_i, b_i, t_i], violation)
+                        obj_terms.append((violation, int(self.weight)))
                         count += 1
 
-        logger.info("Added %d WednesdayAMInternOnly constraints", count)
+        logger.info("Added %d WednesdayAMInternOnly penalty terms", count)
 
     def add_to_pulp(
         self,
