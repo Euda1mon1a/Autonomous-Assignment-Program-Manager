@@ -54,6 +54,9 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
   const [facultyRole, setFacultyRole] = useState<FacultyRole>(FacultyRole.CORE);
   const [performsProcedures, setPerformsProcedures] = useState(false);
   const [specialties, setSpecialties] = useState('');
+  const [primaryDuty, setPrimaryDuty] = useState('');
+  const [minClinicHalfdays, setMinClinicHalfdays] = useState('');
+  const [maxClinicHalfdays, setMaxClinicHalfdays] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
 
   const { data: personTypes } = usePersonTypes();
@@ -72,6 +75,9 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
       setFacultyRole(person.facultyRole || FacultyRole.CORE);
       setPerformsProcedures(person.performsProcedures);
       setSpecialties(person.specialties?.join(', ') || '');
+      setPrimaryDuty(person.primaryDuty || '');
+      setMinClinicHalfdays(person.minClinicHalfdaysPerWeek?.toString() || '');
+      setMaxClinicHalfdays(person.maxClinicHalfdaysPerWeek?.toString() || '');
     }
   }, [person]);
 
@@ -112,6 +118,11 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
       facultyRole: type === PersonType.FACULTY ? facultyRole : undefined,
       performsProcedures: performsProcedures,
       specialties: specialties ? specialties.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+      ...(type === PersonType.FACULTY && {
+        primaryDuty: primaryDuty.trim() || undefined,
+        minClinicHalfdaysPerWeek: minClinicHalfdays ? parseInt(minClinicHalfdays) : undefined,
+        maxClinicHalfdaysPerWeek: maxClinicHalfdays ? parseInt(maxClinicHalfdays) : undefined,
+      }),
     };
 
     try {
@@ -180,6 +191,37 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
             onChange={(e) => setFacultyRole(e.target.value as FacultyRole)}
             options={facultyRoleOptions}
           />
+        )}
+
+        {type === PersonType.FACULTY && (
+          <>
+            <Input
+              label="Primary Duty"
+              value={primaryDuty}
+              onChange={(e) => setPrimaryDuty(e.target.value)}
+              placeholder="e.g., Clinical, Admin, Research"
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Min Clinic Half-Days/Week"
+                type="number"
+                value={minClinicHalfdays}
+                onChange={(e) => setMinClinicHalfdays(e.target.value)}
+                placeholder="0"
+                min="0"
+                max="10"
+              />
+              <Input
+                label="Max Clinic Half-Days/Week"
+                type="number"
+                value={maxClinicHalfdays}
+                onChange={(e) => setMaxClinicHalfdays(e.target.value)}
+                placeholder="4"
+                min="0"
+                max="10"
+              />
+            </div>
+          </>
         )}
 
         <div className="flex items-center gap-2">

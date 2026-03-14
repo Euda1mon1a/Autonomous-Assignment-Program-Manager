@@ -35,6 +35,11 @@ describe('EditTemplateModal', () => {
     requiresProcedureCredential: false,
     supervisionRequired: true,
     maxSupervisionRatio: 4,
+    isOffsite: false,
+    isLecExempt: false,
+    isContinuityExempt: false,
+    isSaturdayOff: false,
+    preloadActivityCode: null,
     createdAt: '2024-01-01T00:00:00Z',
   };
   const mockOnClose = jest.fn();
