@@ -126,24 +126,17 @@ class TestPrimaryDutyConfig:
 
 
 class TestLoadPrimaryDutiesConfig:
-    """Tests for loading configuration from JSON."""
+    """Tests for loading configuration from DB."""
 
-    def test_load_from_default_path(self):
-        """Test loading from the default sanitized_primary_duties.json."""
-        configs = load_primary_duties_config()
+    def test_missing_session_raises(self):
+        """Test that missing db_session raises ValueError."""
+        with pytest.raises(ValueError, match="db_session is required"):
+            load_primary_duties_config(db_session=None)
 
-        # Should have loaded some records (if file exists)
-        if configs:
-            assert len(configs) > 0
-            # Check that we can access by name
-            assert "Faculty Alpha" in configs or "Program Director" in configs
-
-    def test_load_from_missing_file(self, tmp_path):
-        """Test graceful handling of missing file."""
-        missing_path = tmp_path / "nonexistent.json"
-        configs = load_primary_duties_config(missing_path)
-
-        assert configs == {}
+    def test_wrong_type_session_raises(self):
+        """Test that wrong-type db_session raises TypeError."""
+        with pytest.raises(TypeError, match="SQLAlchemy Session"):
+            load_primary_duties_config(db_session="/some/path.json")
 
 
 class TestFacultyPrimaryDutyClinicConstraint:
