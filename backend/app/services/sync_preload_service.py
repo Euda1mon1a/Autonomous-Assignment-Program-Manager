@@ -589,6 +589,7 @@ class SyncPreloadService:
                     pgy,
                     is_outpatient,
                     has_time_off_patterns,
+                    template=active_template,
                 )
 
                 if am_code:

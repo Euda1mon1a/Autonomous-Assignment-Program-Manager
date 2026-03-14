@@ -105,6 +105,41 @@ class RotationTemplate(Base):
         comment="True if rotation includes weekend assignments",
     )
 
+    # Preload classification (DB-backed, replaces Python constants)
+    is_offsite = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        server_default="false",
+        comment="Offsite rotation (TDY, HILO, OKI, JAPAN, PEDS-EM, MILITARY)",
+    )
+    is_lec_exempt = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        server_default="false",
+        comment="Exempt from Wednesday PM lecture requirement",
+    )
+    is_continuity_exempt = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        server_default="false",
+        comment="Exempt from intern continuity clinic requirement",
+    )
+    is_saturday_off = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        server_default="false",
+        comment="Saturday is off (preloaded as W) for this rotation",
+    )
+    preload_activity_code = Column(
+        String(20),
+        nullable=True,
+        comment="Activity code to fill all half-day slots (e.g., MUC, TDY, FMIT). NULL = use weekly_patterns or solver.",
+    )
+
     # Archive fields (soft delete)
     is_archived = Column(Boolean, default=False, nullable=False, index=True)
     archived_at = Column(DateTime, nullable=True)
