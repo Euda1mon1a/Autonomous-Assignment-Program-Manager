@@ -244,9 +244,9 @@ class FacultyPrimaryDutyClinicConstraint(SoftConstraint):
         - Penalizes under-minimum: clinic count below min_per_week
         - Penalizes over-maximum: clinic count above max_per_week
         """
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
-            logger.debug("No template_assignments variables found")
+            logger.debug("No faculty_template_assignments variables found")
             return
 
         obj_terms = variables.setdefault("objective_terms", [])
@@ -326,7 +326,7 @@ class FacultyPrimaryDutyClinicConstraint(SoftConstraint):
         """Add primary duty clinic constraints to PuLP model."""
         import pulp
 
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 
@@ -540,7 +540,7 @@ class FacultyDayAvailabilityConstraint(SoftConstraint):
         """
         Penalize clinic assignments on unavailable days in CP-SAT model.
         """
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 
@@ -593,7 +593,7 @@ class FacultyDayAvailabilityConstraint(SoftConstraint):
         context: SchedulingContext,
     ) -> None:
         """Block clinic assignments on unavailable days in PuLP model."""
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 

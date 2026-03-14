@@ -432,7 +432,13 @@ class FMITMandatoryCallConstraint(SoftConstraint):
                             obj_terms.append((missing, int(self.weight)))
                             count += 1
 
-        logger.info(f"Added {count} FMITMandatoryCall penalty terms")
+        if count == 0:
+            logger.info(
+                "FMIT Fri/Sat call is preloaded, not solver-generated "
+                "— skipping CP-SAT penalty terms"
+            )
+        else:
+            logger.info(f"Added {count} FMITMandatoryCall penalty terms")
 
     def add_to_pulp(
         self,
@@ -476,6 +482,12 @@ class FMITMandatoryCallConstraint(SoftConstraint):
                             )
                             constraint_count += 1
 
+        if constraint_count == 0:
+            logger.info(
+                "FMIT Fri/Sat call is preloaded, not solver-generated "
+                "— skipping PuLP constraints"
+            )
+
     def validate(
         self,
         assignments: list[Any],
@@ -489,11 +501,73 @@ class FMITMandatoryCallConstraint(SoftConstraint):
             return ConstraintResult(satisfied=True, violations=[])
 
         faculty_by_id = {f.id: f for f in context.faculty}
+        block_by_id = {b.id: b for b in context.blocks}
 
-        # Check call assignments for FMIT faculty
-        # This would require call assignment data in context
-        # For now, just return satisfied if we can't validate
-        return ConstraintResult(satisfied=True, violations=[])
+        # Build a lookup: (person_id, date) -> has call assignment
+        call_dates: set[tuple[Any, date]] = set()
+        for a in assignments:
+            # Call assignments have role="call" or similar indicator
+            is_call = getattr(a, "role", None) == "call" or getattr(a, "is_call", False)
+            if not is_call:
+                continue
+            block = block_by_id.get(a.block_id)
+            if block:
+                call_dates.add((a.person_id, block.date))
+
+        for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
+            faculty = faculty_by_id.get(faculty_id)
+            if not faculty:
+                continue
+
+            for friday_start, thursday_end in fmit_weeks:
+                saturday = friday_start + timedelta(days=1)
+
+                # Check Friday call
+                if (faculty_id, friday_start) not in call_dates:
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="CRITICAL",
+                            message=(
+                                f"{faculty.name} on FMIT week "
+                                f"({friday_start}–{thursday_end}) "
+                                f"missing mandatory Friday call on {friday_start}"
+                            ),
+                            person_id=faculty_id,
+                            details={
+                                "fmit_start": str(friday_start),
+                                "fmit_end": str(thursday_end),
+                                "missing_day": str(friday_start),
+                            },
+                        )
+                    )
+
+                # Check Saturday call
+                if (faculty_id, saturday) not in call_dates:
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="CRITICAL",
+                            message=(
+                                f"{faculty.name} on FMIT week "
+                                f"({friday_start}–{thursday_end}) "
+                                f"missing mandatory Saturday call on {saturday}"
+                            ),
+                            person_id=faculty_id,
+                            details={
+                                "fmit_start": str(friday_start),
+                                "fmit_end": str(thursday_end),
+                                "missing_day": str(saturday),
+                            },
+                        )
+                    )
+
+        return ConstraintResult(
+            satisfied=len(violations) == 0,
+            violations=violations,
+        )
 
     def _identify_fmit_weeks(
         self, context: SchedulingContext

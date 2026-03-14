@@ -108,7 +108,7 @@ class FacultyRoleClinicConstraint(SoftConstraint):
 
         For each faculty member, penalizes exceeding their role-based weekly limit.
         """
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 
@@ -131,9 +131,8 @@ class FacultyRoleClinicConstraint(SoftConstraint):
             if not hasattr(faculty, "faculty_role") or not faculty.faculty_role:
                 continue
 
-            f_i = context.resident_idx.get(faculty.id)
+            f_i = context.faculty_idx.get(faculty.id)
             if f_i is None:
-                # Faculty might be in a different index
                 continue
 
             _min_limit, weekly_limit = self._get_effective_clinic_limits(faculty)
@@ -175,7 +174,7 @@ class FacultyRoleClinicConstraint(SoftConstraint):
         """Add role-based clinic limits to PuLP model."""
         import pulp
 
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 
@@ -193,7 +192,7 @@ class FacultyRoleClinicConstraint(SoftConstraint):
             if not hasattr(faculty, "faculty_role") or not faculty.faculty_role:
                 continue
 
-            f_i = context.resident_idx.get(faculty.id)
+            f_i = context.faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -362,7 +361,7 @@ class SMFacultyClinicConstraint(SoftConstraint):
         context: SchedulingContext,
     ) -> None:
         """Penalize SM faculty regular clinic assignments in CP-SAT model."""
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 
@@ -397,7 +396,7 @@ class SMFacultyClinicConstraint(SoftConstraint):
                 hasattr(faculty, "faculty_role")
                 and faculty.faculty_role == "sports_med"
             ):
-                f_i = context.resident_idx.get(faculty.id)
+                f_i = context.faculty_idx.get(faculty.id)
                 if f_i is None:
                     continue
 
@@ -425,7 +424,7 @@ class SMFacultyClinicConstraint(SoftConstraint):
         context: SchedulingContext,
     ) -> None:
         """Block SM faculty from regular clinic in PuLP model."""
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         if not template_vars:
             return
 
@@ -449,7 +448,7 @@ class SMFacultyClinicConstraint(SoftConstraint):
                 hasattr(faculty, "faculty_role")
                 and faculty.faculty_role == "sports_med"
             ):
-                f_i = context.resident_idx.get(faculty.id)
+                f_i = context.faculty_idx.get(faculty.id)
                 if f_i is None:
                     continue
 
