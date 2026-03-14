@@ -94,6 +94,7 @@ from app.api.routes import (
     settings,
     sso,
     swap,
+    task_history,
     unified_heatmap,
     upload,
     visualization,
@@ -250,6 +251,9 @@ api_router.include_router(
 )
 api_router.include_router(ml.router, prefix="/ml", tags=["ml"])
 api_router.include_router(rag.router, prefix="/rag", tags=["rag"])
+api_router.include_router(
+    task_history.router, prefix="/task-history", tags=["task-history"]
+)
 api_router.include_router(
     qubo_templates.router, prefix="/qubo-templates", tags=["qubo-templates"]
 )
